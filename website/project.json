@@ -1,0 +1,101 @@
+{
+    "name": "website",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "website",
+    "projectType": "application",
+    "tags": [],
+    "targets": {
+        "panda": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": [
+                    {
+                        "command": "pnpm panda",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
+                "cwd": "website"
+            }
+        },
+        "parkui": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    {
+                        "command": "pnpx @park-ui/cli",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
+                "cwd": "website"
+            }
+        },
+        "setup": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm panda codegen",
+                "cwd": "website"
+            }
+        },
+        "serve": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node ./build/server.js | pino-pretty",
+                "cwd": "website"
+            },
+            "dependsOn": [
+                "build-server"
+            ]
+        },
+        "build-remix": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "remix vite:build",
+                "cwd": "website"
+            }
+        },
+        "build-server": {
+            "executor": "@nx/esbuild:esbuild",
+            "outputs": [
+                "{options.outputPath}"
+            ],
+            "options": {
+                "platform": "node",
+                "outputPath": "website/build",
+                "assets": [],
+                "format": [
+                    "esm"
+                ],
+                "bundle": true,
+                "skipTypeCheck": true,
+                "main": "website/server.ts",
+                "additionalEntryPoints": [
+                    "website/server.init.ts"
+                ],
+                "tsConfig": "website/tsconfig.json",
+                "esbuildOptions": {
+                    "external": [
+                        "./server/index.js",
+                        "./server.init.js"
+                    ],
+                    "target": "node20",
+                    "packages": "external",
+                    "sourcemap": true,
+                    "outExtension": {
+                        ".js": ".js"
+                    }
+                },
+                "thirdParty": true
+            }
+        },
+        "build": {
+            "executor": "nx:noop",
+            "options": {},
+            "dependsOn": [
+                "build-remix",
+                "build-server"
+            ]
+        }
+    }
+}

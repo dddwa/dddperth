@@ -1,0 +1,9 @@
+// This file is to ensure open telemetry is configured before anything else
+
+import sourceMapSupport from 'source-map-support'
+import { configureOpenTelemetry } from './app/setupOpenTelemetry.js'
+
+sourceMapSupport.install()
+configureOpenTelemetry()
+
+import('./server.init.js').then((server) => server.init())

@@ -1,0 +1,17 @@
+{
+    "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+    "version": "0.2",
+    "dictionaryDefinitions": [],
+    "dictionaries": [
+        "typescriptreact"
+    ],
+    "language": "en,en-AU",
+    "ignorePaths": [
+        "node_modules"
+    ],
+    "words": [
+        "corepack",
+        "isbot",
+        "Pipeable"
+    ]
+}
