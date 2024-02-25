@@ -7,11 +7,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
 import { Resource } from '@opentelemetry/resources'
-import {
-    BatchLogRecordProcessor,
-    ConsoleLogRecordExporter,
-    LoggerProvider,
-} from '@opentelemetry/sdk-logs'
+import { BatchLogRecordProcessor, ConsoleLogRecordExporter, LoggerProvider } from '@opentelemetry/sdk-logs'
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node'
@@ -24,8 +20,8 @@ import {
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
-} from './config.server'
-import { RemixInstrumentation } from './lib/remix-instrumentation'
+} from '../lib/config.server'
+import { RemixInstrumentation } from './remix-instrumentation'
 
 import {
     AzureMonitorLogExporter,
@@ -92,9 +88,7 @@ export function configureOpenTelemetry() {
         : undefined
 
     const loggerProvider = new LoggerProvider()
-    const logRecordProcessor = logsExporter
-        ? new BatchLogRecordProcessor(logsExporter)
-        : undefined
+    const logRecordProcessor = logsExporter ? new BatchLogRecordProcessor(logsExporter) : undefined
     if (logRecordProcessor) {
         loggerProvider.addLogRecordProcessor(logRecordProcessor)
     }
@@ -123,9 +117,7 @@ export function configureOpenTelemetry() {
                             '/@vite',
                             '/app/',
                         ]
-                        const shouldIgnore = ignorePaths.some((path) =>
-                            request.url?.startsWith(path),
-                        )
+                        const shouldIgnore = ignorePaths.some((path) => request.url?.startsWith(path))
 
                         return shouldIgnore
                     },
@@ -136,9 +128,8 @@ export function configureOpenTelemetry() {
             ],
             resource: new Resource({
                 [SemanticResourceAttributes.SERVICE_NAME]: 'DDD-Website',
-                [SemanticResourceAttributes.SERVICE_VERSION]: JSON.parse(
-                    fs.readFileSync('package.json', 'utf-8'),
-                ).version,
+                [SemanticResourceAttributes.SERVICE_VERSION]: JSON.parse(fs.readFileSync('package.json', 'utf-8'))
+                    .version,
             }),
         })
 

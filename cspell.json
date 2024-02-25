@@ -11,7 +11,17 @@
     ],
     "words": [
         "corepack",
+        "devkit",
+        "healthcheck",
         "isbot",
-        "Pipeable"
+        "lucide",
+        "opentelemetry",
+        "OTEL",
+        "otlp",
+        "outdir",
+        "pandacss",
+        "Pipeable",
+        "svgr",
+        "svitejs"
     ]
 }

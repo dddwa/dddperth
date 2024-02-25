@@ -6,10 +6,7 @@ export default defineConfig({
     preflight: true,
 
     // Where to look for your css declarations
-    include: [
-        './app/routes/**/*.{ts,tsx,js,jsx}',
-        './app/components/**/*.{ts,tsx,js,jsx}',
-    ],
+    include: ['./app/routes/**/*.{ts,tsx,js,jsx}', './app/components/**/*.{ts,tsx,js,jsx}'],
     presets: [
         '@pandacss/preset-base',
         createPreset({
@@ -26,7 +23,11 @@ export default defineConfig({
 
     // Useful for theme customization
     theme: {
-        extend: {},
+        extend: {
+            tokens: {
+                colors: {},
+            },
+        },
     },
 
     // The output directory for your css system
