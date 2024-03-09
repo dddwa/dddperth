@@ -1,9 +1,12 @@
 import type { MetaFunction } from '@remix-run/node'
 import { Outlet } from '@remix-run/react'
+import { Acknowledgement } from '../components/acknowledgement'
+import { Footer } from '../components/footer/footer'
 import { Header } from '../components/header/header'
+import { conferenceConfig } from '../config/conference-config'
 
 export const meta: MetaFunction = () => {
-    return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }]
+    return [{ title: conferenceConfig.name }, { name: 'description', content: conferenceConfig.description }]
 }
 
 export default function Index() {
@@ -11,6 +14,8 @@ export default function Index() {
         <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
             <Header />
             <Outlet />
+            <Footer />
+            <Acknowledgement />
         </div>
     )
 }

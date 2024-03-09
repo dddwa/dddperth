@@ -7,6 +7,9 @@ import type { ConferenceYear } from './years/year-config'
  */
 export interface ConferenceConfig {
     name: string
+    description: string
+
+    blogDescription: string
     current: ConferenceYear
 
     previous: Record<string, ConferenceYear>
@@ -14,6 +17,10 @@ export interface ConferenceConfig {
 
 export const conferenceConfig = {
     name: 'DDD Perth',
+
+    description: 'DDD Perth is an inclusive non-profit conference for the Perth software community.',
+
+    blogDescription: 'DDD Perth is an inclusive non-profit conference for the Perth software community.',
 
     current: conference2023,
 

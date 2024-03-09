@@ -6,4 +6,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "typescript.preferences.importModuleSpecifier": "project-relative",
+    "[xml]": {
+        "editor.defaultFormatter": "DotJoshJohnson.xml"
+    },
 }

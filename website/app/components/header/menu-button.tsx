@@ -1,13 +1,10 @@
-import { useState } from 'react'
 import { styled } from '../../../styled-system/jsx'
 
-export function MenuButton() {
-    const [isOpen, setIsOpen] = useState(false)
-
+export function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) {
     return (
         <styled.button
             id="navigation"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={onClick}
             w="28"
             h="20"
             fontFamily="display"

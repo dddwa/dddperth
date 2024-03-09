@@ -12,16 +12,24 @@
     "words": [
         "corepack",
         "devkit",
+        "ggoodman",
         "healthcheck",
         "isbot",
         "lucide",
+        "luxon",
+        "nostalgie",
+        "Nyoongar",
         "opentelemetry",
         "OTEL",
         "otlp",
         "outdir",
         "pandacss",
         "Pipeable",
+        "Rehype",
+        "Shiki",
         "svgr",
-        "svitejs"
+        "svitejs",
+        "vfile",
+        "Whadjuk"
     ]
 }
