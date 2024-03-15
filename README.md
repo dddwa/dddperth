@@ -43,6 +43,12 @@ Then add the following to your .env
 
 To open Jaeger, go to http://localhost:16686
 
+## ParkUI
+
+This project uses ParkUI as the UI framework. You can find the documentation [here](https://park-ui.com)
+
+You can use the ParkUI CLI to add components. `pnpm nx parkui website add <component>`
+
 ## Using NX
 
 While we have kept the NX usage to a minimum, it is still a powerful tool that can be used to manage the project. Below are some of the commands that can be used to manage the project.

@@ -30,6 +30,7 @@ import {
 } from '@azure/monitor-opentelemetry-exporter'
 
 export function configureOpenTelemetry() {
+    return
     const enableTracingConsoleFallback = true
 
     const traceExporter = APPLICATIONINSIGHTS_CONNECTION_STRING
