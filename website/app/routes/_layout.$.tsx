@@ -3,7 +3,6 @@ import type { HeadersFunction, LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import type { MetaFunction } from '@remix-run/react'
 import { useLoaderData } from '@remix-run/react'
-import invariant from 'tiny-invariant'
 
 import { renderToStaticMarkup } from 'react-dom/server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -14,8 +13,10 @@ import { socials } from '../config/socials'
 import { getPage } from '../lib/website-content-pages.server'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-    const { contentSlug } = params
-    invariant(!!contentSlug, 'Expected contentSlug param')
+    const contentSlug = params['*']
+    if (!contentSlug) {
+        throw new Error('Expected contentSlug param')
+    }
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
@@ -48,8 +49,10 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 
 export const meta: MetaFunction<typeof loader> = (args) => {
     const { data, params } = args
-    const { contentSlug } = params
-    invariant(!!contentSlug, 'Expected contentSlug param')
+    const contentSlug = params['*']
+    if (!contentSlug) {
+        throw new Error('Expected contentSlug param')
+    }
 
     const { siteUrl, post, frontmatter } = data || {}
     if (!post) {

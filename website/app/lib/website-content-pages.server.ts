@@ -14,7 +14,7 @@ const MarkdownPostFrontmatter = z.object({
 
 const postContentsBySlug = Object.fromEntries(
     Object.entries(
-        import.meta.glob(['../../../website-content/pages/*.md', '../../../website-content/pages/*.mdx'], {
+        import.meta.glob(['../../../website-content/pages/**/*.md', '../../../website-content/pages/**/*.mdx'], {
             eager: true,
         }),
     ).map(([filePath, contents]) => [
@@ -34,6 +34,7 @@ export async function getPage(slug: string): Promise<{
     default: MDXContent
 }> {
     const contents = postContentsBySlug[slug]
+    console.log('contents', postContentsBySlug, slug)
     if (!contents) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
