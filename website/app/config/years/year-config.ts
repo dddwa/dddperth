@@ -9,4 +9,6 @@ export interface ConferenceYear {
     conferenceDate: Date | undefined
 
     venue: ConferenceVenue | undefined
+
+    sessionizeEndpoint: string | undefined
 }

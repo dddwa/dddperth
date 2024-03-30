@@ -12,6 +12,7 @@
     "words": [
         "corepack",
         "devkit",
+        "Eariler",
         "flickr",
         "ggoodman",
         "healthcheck",
@@ -27,6 +28,8 @@
         "pandacss",
         "Pipeable",
         "Rehype",
+        "revalidates",
+        "sessionize",
         "Shiki",
         "svgr",
         "svitejs",

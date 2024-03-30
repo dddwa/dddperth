@@ -30,8 +30,7 @@ import {
 } from '@azure/monitor-opentelemetry-exporter'
 
 export function configureOpenTelemetry() {
-    return
-    const enableTracingConsoleFallback = true
+    const enableTracingConsoleFallback = false
 
     const traceExporter = APPLICATIONINSIGHTS_CONNECTION_STRING
         ? new AzureMonitorTraceExporter({
@@ -98,7 +97,7 @@ export function configureOpenTelemetry() {
         console.log('Configuring open telemetry')
 
         logs.setGlobalLoggerProvider(loggerProvider)
-        diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
+        diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR)
         const sdk = new NodeSDK({
             traceExporter: traceExporter,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

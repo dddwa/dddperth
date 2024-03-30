@@ -96,7 +96,7 @@ export default function BlogPost() {
                 <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
             ) : null}
             <div>
-                <Box position="relative" bg="white" w="100%" display="flex" zIndex="10">
+                <Box position="relative" bg="white" w="100%" display="flex" color="2023-green">
                     <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
                         <Heading as="h1" size="3xl">
                             {frontmatter.title}

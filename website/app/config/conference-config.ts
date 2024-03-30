@@ -14,6 +14,9 @@ export interface ConferenceConfig {
     description: string
 
     blogDescription: string
+
+    timezone: string
+
     current: ConferenceYear
 
     previous: Record<`${number}${number}${number}${number}`, ConferenceYear>
@@ -99,6 +102,8 @@ export const conferenceConfig = {
         instagram: 'dddperth',
         linkedin: 'ddd-wa-inc',
     },
+
+    timezone: 'Australia/Perth',
 
     current: conference2023,
 

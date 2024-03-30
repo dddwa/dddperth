@@ -5,4 +5,6 @@ export const conference2022: ConferenceYear = {
     conferenceDate: new Date('2022/10/07'),
 
     venue: undefined,
+
+    sessionizeEndpoint: undefined,
 }
