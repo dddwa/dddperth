@@ -2,8 +2,8 @@ import { json } from '@remix-run/node'
 import type { MetaFunction } from '@remix-run/react'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
-import { getBlogPostListings } from '~/lib/blog.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getBlogPostListings } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 
 export async function loader() {

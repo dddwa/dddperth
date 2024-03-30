@@ -4,13 +4,12 @@ import { json } from '@remix-run/node'
 import type { MetaFunction } from '@remix-run/react'
 import { useLoaderData } from '@remix-run/react'
 
-import { renderToStaticMarkup } from 'react-dom/server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, styled } from '../../styled-system/jsx'
-import { Heading } from '../components/ui/heading'
 import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
-import { getPage } from '../lib/website-content-pages.server'
+import { renderMdx } from '../lib/mdx-render.server'
+import { getPage } from '../lib/mdx.server'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
     const contentSlug = params['*']
@@ -20,23 +19,13 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getPage(contentSlug)
+    const post = getPage(contentSlug)
+
     return json(
         {
             siteUrl,
             frontmatter: post.frontmatter,
-            post: renderToStaticMarkup(
-                <post.default
-                    components={{
-                        a: ({ ref, ...props }) => <styled.a {...props} />,
-                        h1: ({ ref, ...props }) => <Heading as="h1" fontSize="3xl" {...props} />,
-                        h2: ({ ref, ...props }) => <Heading as="h2" fontSize="2xl" {...props} />,
-                        h3: ({ ref, ...props }) => <Heading as="h3" fontSize="xl" {...props} />,
-                        ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
-                    }}
-                    conference={conferenceConfig}
-                />,
-            ),
+            post: renderMdx(post.Component),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )
@@ -55,7 +44,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     }
 
     const { siteUrl, post, frontmatter } = data || {}
-    if (!post) {
+    if (!post || !frontmatter) {
         return [{ title: `404 Not Found | ${conferenceConfig.name}` }]
     }
 
@@ -98,9 +87,7 @@ export default function BlogPost() {
             <div>
                 <Box position="relative" bg="white" w="100%" display="flex" color="2023-green">
                     <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
-                        <Heading as="h1" size="3xl">
-                            {frontmatter.title}
-                        </Heading>
+                        <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
                         <div dangerouslySetInnerHTML={{ __html: post }} />
                         <hr />
                     </Box>

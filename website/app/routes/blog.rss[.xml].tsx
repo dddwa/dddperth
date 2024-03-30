@@ -1,6 +1,6 @@
 import { Feed } from 'feed'
-import { getBlogPostListings } from '~/lib/blog.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getBlogPostListings } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 
 export async function loader() {
@@ -13,7 +13,7 @@ export async function loader() {
         description: conferenceConfig.blogDescription,
         link: blogUrl,
         language: 'en',
-        updated: posts.length > 0 ? new Date(posts[0].dateDisplay) : new Date(),
+        updated: posts.length > 0 ? posts[0].date.toJSDate() : new Date(),
         generator: 'https://github.com/jpmonette/feed',
         copyright: '© DDD Perth',
     })
@@ -24,7 +24,7 @@ export async function loader() {
             id: postLink,
             title: post.title,
             link: postLink,
-            date: new Date(post.dateDisplay),
+            date: post.date.toJSDate(),
             description: post.summary,
         })
     })

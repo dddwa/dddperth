@@ -5,10 +5,11 @@ import { useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 
 import { useRef } from 'react'
-import { getBlogPost } from '~/lib/blog.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getBlogPost } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
+import { renderMdx } from '../lib/mdx-render.server'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
     const { slug } = params
@@ -16,8 +17,15 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getBlogPost(slug)
-    return json({ siteUrl, post }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
+    const post = getBlogPost(slug)
+    return json(
+        {
+            siteUrl,
+            frontmatter: post.frontmatter,
+            post: renderMdx(post.Component),
+        },
+        { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
+    )
 }
 
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
@@ -30,16 +38,16 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
 
-    const { siteUrl, post } = data || {}
-    if (!post) {
+    const { siteUrl, frontmatter } = data || {}
+    if (!frontmatter) {
         return [{ title: `404 Not Found | ${conferenceConfig.name}` }]
     }
 
     const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${slug}`) : null
     if (ogImageUrl) {
-        ogImageUrl.searchParams.set('title', post.title)
-        ogImageUrl.searchParams.set('date', post.dateDisplay)
-        for (const { name, title } of post.authors) {
+        ogImageUrl.searchParams.set('title', frontmatter.title)
+        ogImageUrl.searchParams.set('date', frontmatter.dateDisplay)
+        for (const { name, title } of frontmatter.blogAuthors) {
             ogImageUrl.searchParams.append('authorName', name)
             ogImageUrl.searchParams.append('authorTitle', title)
         }
@@ -49,32 +57,32 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     const url = siteUrl ? `${siteUrl}/blog/${slug}` : null
 
     return [
-        { title: `${post.title} | ${conferenceConfig.name}` },
-        { name: 'description', content: post.summary },
+        { title: `${frontmatter.title} | ${conferenceConfig.name}` },
+        { name: 'description', content: frontmatter.summary },
         { property: 'og:url', content: url },
-        { property: 'og:title', content: post.title },
+        { property: 'og:title', content: frontmatter.title },
         { property: 'og:image', content: socialImageUrl },
-        { property: 'og:description', content: post.summary },
+        { property: 'og:description', content: frontmatter.summary },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:creator', content: `@${socials.Twitter.Name}` },
         { name: 'twitter:site', content: `@${socials.Twitter.Name}` },
-        { name: 'twitter:title', content: post.title },
-        { name: 'twitter:description', content: post.summary },
+        { name: 'twitter:title', content: frontmatter.title },
+        { name: 'twitter:description', content: frontmatter.summary },
         { name: 'twitter:image', content: socialImageUrl },
         {
             name: 'twitter:image:alt',
-            content: socialImageUrl ? post.imageAlt : undefined,
+            content: socialImageUrl ? frontmatter.imageAlt : undefined,
         },
     ]
 }
 
 export default function BlogPost() {
-    const { post } = useLoaderData<typeof loader>()
+    const { post, frontmatter } = useLoaderData<typeof loader>()
     const mdRef = useRef<HTMLDivElement>(null)
 
     return (
         <>
-            {post.draft ? (
+            {frontmatter.draft ? (
                 <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
             ) : null}
             <div>
@@ -82,15 +90,15 @@ export default function BlogPost() {
                     <div>
                         <div>
                             <div>
-                                <img src={post.image} alt={post.imageAlt} />
+                                <img src={frontmatter.image} alt={frontmatter.imageAlt} />
                             </div>
                             <div>
                                 <div>
-                                    <div>{post.dateDisplay}</div>
-                                    <div>{post.title}</div>
+                                    <div>{frontmatter.dateDisplay}</div>
+                                    <div>{frontmatter.title}</div>
                                 </div>
                                 <div>
-                                    {post.authors.map((author) => (
+                                    {frontmatter.blogAuthors.map((author) => (
                                         <div key={author.name}>
                                             <div>
                                                 <img src={author.avatar} alt="" />
@@ -110,7 +118,7 @@ export default function BlogPost() {
                                 // so we don't need to do that here
                                 ref={mdRef}
                                 className="md-prose"
-                                dangerouslySetInnerHTML={{ __html: post.html }}
+                                dangerouslySetInnerHTML={{ __html: post }}
                             />
                             <hr />
                         </div>
