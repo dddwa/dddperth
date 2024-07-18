@@ -32,6 +32,21 @@ jobs:
             - name: Install azd
               uses: Azure/setup-azd@v1.0.0
 
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
+              with:
+                  version: 8
+                  run_install: false
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
             - name: Log in with Azure (Federated Credentials)
               if: ${{ env.AZURE_CLIENT_ID != '' }}
               run: |
