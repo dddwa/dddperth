@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Link, useLoaderData, type MetaFunction } from '@remix-run/react'
+import { Link, useLoaderData } from '@remix-run/react'
 import { ReactNode } from 'react'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import * as Tabs from '../components/ui/tabs'
@@ -52,13 +52,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
-}
-
-export const meta: MetaFunction = () => {
-    return [
-        { title: 'Remix Conf Schedule' },
-        { name: 'description', content: "What's happening and when at Remix Conf" },
-    ]
 }
 
 // export default function Agenda() {
