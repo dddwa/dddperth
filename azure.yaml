@@ -10,8 +10,3 @@ services:
         host: containerapp
         language: ts
         dist: website/build
-
-        hooks:
-            predeploy:
-                shell: sh
-                run: pnpm nx build website
