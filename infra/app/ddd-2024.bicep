@@ -84,6 +84,10 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
         }
       ]
       secrets: union([
+        {
+          name: 'clientSecret'
+          secretRef: authClientSecret
+        }
       ],
       map(secrets, secret => {
         name: secret.secretRef
@@ -141,7 +145,7 @@ resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview'
         enabled: true
         registration: {
           clientId: authClientId
-          clientSecretSettingName: authClientSecret
+          clientSecretSettingName: 'clientSecret'
           openIdIssuer: 'https://login.microsoftonline.com/${subscription().tenantId}/v2.0'
         }
       }
