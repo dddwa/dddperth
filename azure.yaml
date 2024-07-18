@@ -8,4 +8,8 @@ services:
         project: .
         host: containerapp
         language: ts
-        dist: dist
+        dist: website/build
+        hooks:
+            prepackage:
+                shell: sh
+                run: pnpm nx build website
