@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@remix-run/express'
 import type { ServerBuild } from '@remix-run/node'
@@ -5,17 +6,19 @@ import { installGlobals } from '@remix-run/node'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
+import path from 'node:path'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
 
 export function init() {
-    tracer.startActiveSpan('start', async (span) => {
+    return tracer.startActiveSpan('start', async (span) => {
         installGlobals()
 
         console.log('Starting')
         try {
             process.on('uncaughtException', (err: Error) => {
+                console.error('uncaughtException', JSON.stringify(err))
                 const activeSpan = trace.getActiveSpan()
                 if (activeSpan) {
                     activeSpan.recordException(resolveError(err))
@@ -61,6 +64,7 @@ export function init() {
                 ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
                 : // @ts-expect-error - this will not exist at build time
                   await import('../remix/server/index.js')
+
             const initialBuild = typeof resolveBuild === 'function' ? await resolveBuild() : resolveBuild
 
             const app = express()
@@ -92,13 +96,13 @@ export function init() {
             } else {
                 app.use(
                     '/assets',
-                    express.static('client/assets', {
+                    express.static(path.join(process.cwd(), 'remix/client/assets'), {
                         immutable: true,
                         maxAge: '1y',
                     }),
                 )
             }
-            app.use(express.static('client', { maxAge: '1h' }))
+            app.use(express.static(path.join(process.cwd(), 'remix/client'), { maxAge: '1h' }))
 
             app.all(
                 '*',
@@ -118,7 +122,6 @@ export function init() {
             })
 
             closeWithGrace(async ({ err }) => {
-                console.log('Closing with grace', err)
                 if (err) {
                     tracer.startActiveSpan('closeWithGrace', (span) => {
                         span.recordException(resolveError(err))
