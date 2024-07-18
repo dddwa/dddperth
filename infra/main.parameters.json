@@ -11,6 +11,12 @@
         "ddd2024Exists": {
             "value": "${SERVICE_DDD_2024_RESOURCE_EXISTS=false}"
         },
+        "authClientId": {
+            "value": "${AUTH_CLIENT_ID}"
+        },
+        "authClientSecret": {
+            "value": "${AUTH_CLIENT_SECRET}"
+        },
         "ddd2024Definition": {
             "value": {
                 "settings": [
