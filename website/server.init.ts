@@ -1,4 +1,4 @@
-import { trace } from '@opentelemetry/api'
+import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@remix-run/express'
 import type { ServerBuild } from '@remix-run/node'
 import { installGlobals } from '@remix-run/node'
@@ -13,17 +13,39 @@ export function init() {
     tracer.startActiveSpan('start', async (span) => {
         installGlobals()
 
+        console.log('Starting')
         try {
             process.on('uncaughtException', (err: Error) => {
-                span.recordException(err)
+                const activeSpan = trace.getActiveSpan()
+                if (activeSpan) {
+                    activeSpan.recordException(resolveError(err))
+                    activeSpan.setStatus({ code: SpanStatusCode.ERROR })
+                } else {
+                    tracer.startActiveSpan('uncaughtException', (span) => {
+                        span.recordException(resolveError(err))
+                        span.setStatus({ code: SpanStatusCode.ERROR })
+                        span.end()
+                    })
+                }
             })
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             process.on('unhandledRejection', (err) => {
-                span.recordException(resolveError(err))
+                console.error('unhandledRejection', JSON.stringify(err))
+                const activeSpan = trace.getActiveSpan()
+                if (activeSpan) {
+                    activeSpan.recordException(resolveError(err))
+                    activeSpan.setStatus({ code: SpanStatusCode.ERROR })
+                } else {
+                    tracer.startActiveSpan('uncaughtException', (span) => {
+                        span.recordException(resolveError(err))
+                        span.setStatus({ code: SpanStatusCode.ERROR })
+                        span.end()
+                    })
+                }
             })
 
             span.addEvent('start', { mode: process.env.NODE_ENV })
-            const port = process.env.PORT || 3000
+            const port = process.env.PORT || 3800
 
             const viteDevServer =
                 process.env.NODE_ENV === 'production'
@@ -35,19 +57,11 @@ export function init() {
                       )
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const resolveBuild: ServerBuild | (() => Promise<ServerBuild>) =
-                viteDevServer
-                    ? () =>
-                          viteDevServer.ssrLoadModule(
-                              'virtual:remix/server-build',
-                          )
-                    : // @ts-expect-error - this will not exist at build time
-                      // eslint-disable-next-line import/no-unresolved
-                      await import('./server/index.js')
-            const initialBuild =
-                typeof resolveBuild === 'function'
-                    ? await resolveBuild()
-                    : resolveBuild
+            const resolveBuild: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
+                ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
+                : // @ts-expect-error - this will not exist at build time
+                  await import('../remix/server/index.js')
+            const initialBuild = typeof resolveBuild === 'function' ? await resolveBuild() : resolveBuild
 
             const app = express()
 
@@ -56,10 +70,7 @@ export function init() {
                 if (process.env.AZURE_REGION) {
                     res.set('x-azure-region', process.env.AZURE_REGION)
                 }
-                res.set(
-                    'Strict-Transport-Security',
-                    `max-age=${60 * 60 * 24 * 365 * 100}`,
-                )
+                res.set('Strict-Transport-Security', `max-age=${60 * 60 * 24 * 365 * 100}`)
 
                 // /clean-urls/ -> /clean-urls
                 if (req.path.endsWith('/') && req.path.length > 1) {
@@ -107,6 +118,7 @@ export function init() {
             })
 
             closeWithGrace(async ({ err }) => {
+                console.log('Closing with grace', err)
                 if (err) {
                     tracer.startActiveSpan('closeWithGrace', (span) => {
                         span.recordException(resolveError(err))
@@ -116,12 +128,11 @@ export function init() {
                 }
 
                 await new Promise((resolve, reject) => {
-                    server.close((e) =>
-                        e ? reject(e) : resolve('Closed gracefully'),
-                    )
+                    server.close((e) => (e ? reject(e) : resolve('Closed gracefully')))
                 })
             })
         } catch (error) {
+            console.error('Error starting server', error)
             span.recordException(resolveError(error))
         } finally {
             span.end()

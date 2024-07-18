@@ -6,4 +6,8 @@ import { configureOpenTelemetry } from './app/lib/setupOpenTelemetry.js'
 sourceMapSupport.install()
 configureOpenTelemetry()
 
-import('./server.init.js').then((server) => server.init())
+import('./server.init.js')
+    .then((server) => server.init())
+    .catch((err) => {
+        console.error('Error initializing server', err)
+    })

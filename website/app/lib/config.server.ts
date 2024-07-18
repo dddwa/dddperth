@@ -23,7 +23,3 @@ export const {
         HONEYCOMB_API_KEY: z.string().optional(),
     })
     .parse(process.env)
-
-export const FULL_WEB_URL = `${
-    process.env.NODE_ENV === 'production' ? 'https://' : 'http://'
-}${WEB_URL}`

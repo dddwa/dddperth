@@ -1,5 +1,5 @@
 import { createAzureSdkInstrumentation } from '@azure/opentelemetry-instrumentation-azure-sdk'
-import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
@@ -11,8 +11,8 @@ import { BatchLogRecordProcessor, ConsoleLogRecordExporter, LoggerProvider } fro
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node'
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
-import fs from 'node:fs'
+import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
+import fs, { existsSync } from 'node:fs'
 import {
     APPLICATIONINSIGHTS_CONNECTION_STRING,
     HONEYCOMB_API_KEY,
@@ -127,9 +127,14 @@ export function configureOpenTelemetry() {
                 createAzureSdkInstrumentation(),
             ],
             resource: new Resource({
-                [SemanticResourceAttributes.SERVICE_NAME]: 'DDD-Website',
-                [SemanticResourceAttributes.SERVICE_VERSION]: JSON.parse(fs.readFileSync('package.json', 'utf-8'))
-                    .version,
+                [SEMRESATTRS_SERVICE_NAME]: 'DDD-Website',
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                [SEMRESATTRS_SERVICE_VERSION]: JSON.parse(
+                    existsSync('./server/package.json')
+                        ? fs.readFileSync('./server/package.json', 'utf-8')
+                        : fs.readFileSync('./package.json', 'utf-8'),
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                ),
             }),
         })
 
