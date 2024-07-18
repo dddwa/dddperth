@@ -3,13 +3,15 @@
 name: ddd-2024
 metadata:
     template: azd-init@1.9.5
+
 services:
     ddd-2024:
         project: .
         host: containerapp
         language: ts
         dist: website/build
+
         hooks:
-            prepackage:
+            predeploy:
                 shell: sh
                 run: pnpm nx build website
