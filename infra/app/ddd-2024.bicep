@@ -86,7 +86,7 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
       secrets: union([
         {
           name: 'clientSecret'
-          secretRef: authClientSecret
+          value: authClientSecret
         }
       ],
       map(secrets, secret => {
