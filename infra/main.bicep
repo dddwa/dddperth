@@ -13,11 +13,15 @@ param ddd2024Exists bool
 @secure()
 param ddd2024Definition object
 
+param authClientId string
+@secure()
+param authClientSecret string
+
 @description('Id of the user or app to assign application roles')
 param principalId string
 
 // Tags that should be applied to all resources.
-// 
+//
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
 // Example usage:
 //   tags: union(tags, { 'azd-service-name': <service name in azure.yaml> })
@@ -101,6 +105,9 @@ module ddd2024 './app/ddd-2024.bicep' = {
     containerRegistryName: registry.outputs.name
     exists: ddd2024Exists
     appDefinition: ddd2024Definition
+    environment: environmentName
+    authClientId: authClientId
+    authClientSecret: authClientSecret
   }
   scope: rg
 }

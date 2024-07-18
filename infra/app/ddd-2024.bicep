@@ -2,6 +2,9 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
+param environment string
+param authClientId string
+param authClientSecret string
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
@@ -128,7 +131,7 @@ output id string = app.id
 
 resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview' = if (environment == 'dev') {
   name: 'authconfig'
-  parent: containerAppResource
+  parent: app
   properties: {
     globalValidation: {
       unauthenticatedClientAction: 'RedirectToLoginPage'
