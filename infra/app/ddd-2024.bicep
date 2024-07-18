@@ -130,7 +130,7 @@ output uri string = 'https://${app.properties.configuration.ingress.fqdn}'
 output id string = app.id
 
 resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview' = if (environment == 'dev') {
-  name: 'authconfig'
+  name: 'current'
   parent: app
   properties: {
     globalValidation: {
