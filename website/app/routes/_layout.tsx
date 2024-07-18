@@ -6,16 +6,16 @@ import { Header } from '../components/header/header'
 import { conferenceConfig } from '../config/conference-config'
 
 export const meta: MetaFunction = () => {
-    return [{ title: conferenceConfig.name }, { name: 'description', content: conferenceConfig.description }]
+  return [{ title: conferenceConfig.name }, { name: 'description', content: conferenceConfig.description }]
 }
 
 export default function Index() {
-    return (
-        <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
-            <Header />
-            <Outlet />
-            <Footer />
-            <Acknowledgement />
-        </div>
-    )
+  return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
+      <Header />
+      <Outlet />
+      <Footer />
+      <Acknowledgement />
+    </div>
+  )
 }

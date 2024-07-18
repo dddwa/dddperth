@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="712px" height="850px" viewBox="0 0 712 850" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>d-pink</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#EF79CB" offset="0%"></stop>
+            <stop stop-color="#DA449C" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="51.9508375%" y1="9.07689521%" x2="50%" y2="85.7624925%" id="linearGradient-2">
+            <stop stop-color="#DA449C" stop-opacity="0.61" offset="0%"></stop>
+            <stop stop-color="#0C0C3B" stop-opacity="0" offset="87.1640079%"></stop>
+        </linearGradient>
+        <linearGradient x1="50.4943498%" y1="9.07689521%" x2="50%" y2="85.7624925%" id="linearGradient-3">
+            <stop stop-color="#DA449C" stop-opacity="0.61" offset="0%"></stop>
+            <stop stop-color="#0C0C3B" stop-opacity="0" offset="87.1640079%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-4">
+            <stop stop-color="#FF88CE" offset="0%"></stop>
+            <stop stop-color="#DA449C" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <radialGradient cx="38.4893486%" cy="100%" fx="38.4893486%" fy="100%" r="164.200699%" gradientTransform="translate(0.3849, 1), scale(0.3712, 1), translate(-0.3849, -1)" id="radialGradient-5">
+            <stop stop-color="#FF88CE" offset="0%"></stop>
+            <stop stop-color="#DA449C" stop-opacity="0" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Letters-Copy" transform="translate(-481, -97)">
+            <g id="d-pink" transform="translate(481.9784, 97.627)">
+                <path d="M0,0.00452919775 L237.357967,0.00452919775 C278.043974,-0.103898981 322.307132,3.60146804 367.050266,10.8635616 C410.502777,17.8770262 453.553653,27.6738026 494.045908,39.763041 C534.505758,51.8935529 571.591034,66.1566328 603.343209,81.799027 C635.845233,97.6962701 661.914772,114.795974 679.978146,132.065164 C698.078362,149.201571 708.008575,166.171388 709.185934,181.980548 C710.602725,197.679159 703.726006,212.004554 688.92292,224.191911 C674.066276,236.373129 651.687756,246.234112 622.94043,253.266766 C593.236313,260.556398 556.485138,264.26183 515.262458,264.123383 L277.963067,264.123383 L0,0.00452919775 Z" id="Path" fill="url(#linearGradient-1)" fill-rule="nonzero"></path>
+                <path d="M275.607779,847.482238 L515.279481,847.482238 C551.791585,850.931726 587.685392,847.319526 622.960901,836.645641 C645.872946,829.71277 671.315765,825.523549 688.956041,807.552793 C700.716225,795.572289 707.745294,781.514 710.043246,765.377927 L709.185934,181.980548 C710.602725,197.679159 703.726006,212.004554 688.92292,224.191911 C674.066276,236.373129 651.687756,246.234112 622.94043,253.266766 C593.236313,260.556398 556.485138,264.26183 515.262458,264.123383 L277.963067,264.123383 L275.607779,847.482238 Z" id="Path" fill="url(#linearGradient-2)" fill-rule="nonzero"></path>
+                <polygon id="Path" fill="url(#linearGradient-3)" fill-rule="nonzero" points="-8.95036018e-14 0.00452919775 2.25512562 583.40119 275.607779 847.482238 277.963067 264.123383"></polygon>
+                <line x1="278.021623" y1="264.54487" x2="278.021623" y2="745.54487" id="Line" stroke="url(#linearGradient-4)" stroke-linecap="square"></line>
+                <polyline id="Line-2" stroke="url(#radialGradient-5)" stroke-linecap="square" points="167.021623 158.372995 278.021623 264.54487 453.076311 264.54487"></polyline>
+            </g>
+        </g>
+    </g>
+</svg>
