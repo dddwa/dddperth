@@ -49,7 +49,7 @@ export const Footer = () => (
         <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
           Work With Us
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/`} color="#8282FB" _hover={{ color: 'white' }}>
           info@dddperth.com
         </styled.a>
       </Flex>
