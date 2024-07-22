@@ -29,7 +29,8 @@ var tags = {
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var prefix = 'dddperth'
+// Can only be 6 chars due to keyvault name length limit
+var prefix = 'dddper'
 
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   name: '${prefix}-rg-${environmentName}'
@@ -64,7 +65,7 @@ module registry './shared/registry.bicep' = {
   params: {
     location: location
     tags: tags
-    name: '${prefix}-${abbrs.containerRegistryRegistries}${resourceToken}'
+    name: '${prefix}${abbrs.containerRegistryRegistries}${resourceToken}'
   }
   scope: rg
 }
