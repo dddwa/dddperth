@@ -72,8 +72,8 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
       ]
       secrets: [
         {
-          name: 'clientSecret'
-          value: 'wat${authClientSecret}'
+          name: 'client-secret'
+          value: authClientSecret
         }
       ]
     }
@@ -111,26 +111,26 @@ output name string = app.name
 output uri string = 'https://${app.properties.configuration.ingress.fqdn}'
 output id string = app.id
 
-// resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview' = if (environment == 'dev') {
-//   name: 'current'
-//   parent: app
-//   properties: {
-//     globalValidation: {
-//       unauthenticatedClientAction: 'RedirectToLoginPage'
-//     }
-//     identityProviders: {
-//       azureActiveDirectory: {
-//         enabled: true
-//         registration: {
-//           clientId: authClientId
-//           clientSecretSettingName: 'clientSecret'
-//           openIdIssuer: 'https://login.microsoftonline.com/${subscription().tenantId}/v2.0'
-//         }
-//       }
-//     }
-//     platform: {
-//       enabled: true
-//       runtimeVersion: 'v2'
-//     }
-//   }
-// }
+resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview' = if (environment == 'dev') {
+  name: 'current'
+  parent: app
+  properties: {
+    globalValidation: {
+      unauthenticatedClientAction: 'RedirectToLoginPage'
+    }
+    identityProviders: {
+      azureActiveDirectory: {
+        enabled: true
+        registration: {
+          clientId: authClientId
+          clientSecretSettingName: 'client-secret'
+          openIdIssuer: 'https://login.microsoftonline.com/${subscription().tenantId}/v2.0'
+        }
+      }
+    }
+    platform: {
+      enabled: true
+      runtimeVersion: 'v2'
+    }
+  }
+}
