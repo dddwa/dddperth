@@ -40,7 +40,7 @@ export function Header() {
                 <styled.a
                   href="/about"
                   color="#520030"
-                  _hover={{ opacity: 0.5 }}
+                  _hover={{ gradientTo: '#FF52B7' }}
                   bgGradient="to-r"
                   gradientFrom="#FF52B7"
                   gradientTo="#FF8273"
