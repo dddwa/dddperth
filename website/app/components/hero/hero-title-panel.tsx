@@ -1,22 +1,10 @@
-import WaveDecoration from '~/images/svg/orange-wave-decoration.svg?react'
-import { css } from '../../../styled-system/css'
 import { Box, styled } from '../../../styled-system/jsx'
 import { ctaButton } from '../../recipes/button'
 import { AppLink } from '../app-link'
 
 export function HeroTitlePanel() {
   return (
-    <Box className={`homepage-title-panel`} w="100%" position="relative" bg="2023-white-i" zIndex="2">
-      <Box className={`background-decorations`} w="100%" position="absolute" inset="0" pointerEvents="none">
-        <WaveDecoration
-          className={css({
-            display: 'none',
-            position: 'absolute',
-            lg: { display: 'block', w: '32', top: '12', left: '-8' },
-            xl: { w: '64' },
-          })}
-        />
-      </Box>
+    <Box className={`homepage-title-panel`} w="100%" position="relative" color="white" zIndex="2">
       <Box className={`container-wrapper`} w="100%" maxW="1200px" mx="auto">
         <Box
           className={`padding-wrapper`}
@@ -36,20 +24,6 @@ export function HeroTitlePanel() {
             alignItems="flex-start"
             sm={{ justifyContent: 'center', alignItems: 'center' }}
           >
-            <styled.h1
-              fontFamily="display"
-              fontSize="xl"
-              fontWeight="bold"
-              maxW="18rem"
-              sm={{ textAlign: 'center', fontSize: '2xl', maxW: '32rem' }}
-              lg={{ fontSize: '3xl', maxW: '40rem' }}
-              xl={{ fontSize: '4xl', maxW: '52rem' }}
-            >
-              <styled.span color="2023-black">
-                A one day, fully inclusive, approachable and affordable tech conference for{' '}
-              </styled.span>
-              <styled.span color="2023-accessible-orange">everyone.</styled.span>
-            </styled.h1>
             <Box
               className={`paragraph-wrapper`}
               w="100%"

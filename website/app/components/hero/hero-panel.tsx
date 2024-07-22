@@ -2,26 +2,49 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
-import { Box, Flex } from '../../../styled-system/jsx'
+import { Box, Flex, styled } from '../../../styled-system/jsx'
 
 export function HomepageHeroPanel() {
   const { scrollY } = useScroll()
 
-  const y1 = useTransform(scrollY, [0, 200], [0, 0])
-  const y2 = useTransform(scrollY, [0, 200], [0, 100])
-  const y3 = useTransform(scrollY, [0, 200], [0, 200])
+  const y1 = useTransform(scrollY, [0, 400], [0, 0])
+  const y2 = useTransform(scrollY, [0, 400], [0, 100])
+  const y3 = useTransform(scrollY, [0, 400], [0, 200])
 
   return (
     <Flex
-      height="100vh"
-      width="full"
+      height="120vh"
+      overflow="hidden"
+      direction="column"
       alignItems="center"
-      justifyContent="center"
-      gradientTo="#0E0E43"
+      width="full"
       gradientFrom="#070727"
+      gradientTo="#0E0E43"
+      gap={48}
+      pt={24}
       bgGradient="to-b"
     >
-      <Box width="full" position="relative">
+      <Box maxW="1200px">
+        <styled.h2 color="#8282FB" fontSize="xl" fontWeight="bold" textWrap="balance" maxWidth="3/4">
+          Sat 7th October, 2023 • Optus Stadium, Perth
+        </styled.h2>
+        <styled.h1
+          fontFamily="sans-serif"
+          color="white"
+          fontSize="xl"
+          w="full"
+          fontWeight="bold"
+          textWrap="balance"
+          lineHeight={1.2}
+          maxWidth="3/4"
+          sm={{ fontSize: '3xl' }}
+          lg={{ fontSize: '4xl' }}
+          xl={{ fontSize: '6xl' }}
+        >
+          A one day, fully inclusive, approachable and affordable tech conference for everyone.
+        </styled.h1>
+      </Box>
+      <Box width="full" position="relative" bottom={0}>
         <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, y: y1, width: '38%' }}>
           <DGreen style={{ width: '100%', height: 'auto' }} />
         </motion.div>
