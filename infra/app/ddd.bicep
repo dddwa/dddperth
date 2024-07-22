@@ -73,7 +73,7 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
       secrets: [
         {
           name: 'clientSecret'
-          value: authClientSecret
+          value: 'wat${authClientSecret}'
         }
       ]
     }
