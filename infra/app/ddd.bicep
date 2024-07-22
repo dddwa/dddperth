@@ -82,7 +82,7 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
         {
           image: fetchLatestImage.outputs.?containers[?0].?image ?? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           name: 'main'
-          env: union([
+          env: [
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: applicationInsights.properties.ConnectionString
@@ -91,8 +91,7 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
               name: 'PORT'
               value: '80'
             }
-          ],
-          env)
+          ]
           resources: {
             cpu: json('1.0')
             memory: '2.0Gi'
