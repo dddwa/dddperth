@@ -8,8 +8,8 @@
         "location": {
             "value": "${AZURE_LOCATION}"
         },
-        "ddd2024Exists": {
-            "value": "${SERVICE_DDD_2024_RESOURCE_EXISTS=false}"
+        "dddExists": {
+            "value": "${SERVICE_DDD_RESOURCE_EXISTS=false}"
         },
         "authClientId": {
             "value": "${AUTH_CLIENT_ID}"
