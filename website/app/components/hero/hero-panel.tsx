@@ -44,7 +44,7 @@ export function HomepageHeroPanel() {
           A one day, fully inclusive, approachable and affordable tech conference for everyone.
         </styled.h1>
       </Box>
-      <Box width="full" position="relative" bottom={0}>
+      <Box width="full" position="relative" bottom={100}>
         <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, y: y1, width: '38%' }}>
           <DGreen style={{ width: '100%', height: 'auto' }} />
         </motion.div>
