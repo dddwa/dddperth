@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
-name: ddd-2024
+name: ddd
 metadata:
     template: azd-init@1.9.5
 
 services:
-    ddd-2024:
+    ddd:
         project: .
         host: containerapp
         language: ts

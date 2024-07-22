@@ -1,0 +1,12 @@
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploy-development:
+        uses: ./.github/workflows/deploy.yml
+        secrets: inherit
+        with:
+            AZURE_ENV_NAME: dev

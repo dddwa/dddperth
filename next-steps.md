@@ -22,8 +22,8 @@ Configure environment variables for running services by updating `settings` in [
 ### Configure CI/CD pipeline
 
 1. Create a workflow pipeline file locally. The following starters are available:
-   - [Deploy with GitHub Actions](https://github.com/Azure-Samples/azd-starter-bicep/blob/main/.github/workflows/azure-dev.yml)
-   - [Deploy with Azure Pipelines](https://github.com/Azure-Samples/azd-starter-bicep/blob/main/.azdo/pipelines/azure-dev.yml)
+    - [Deploy with GitHub Actions](https://github.com/Azure-Samples/azd-starter-bicep/blob/main/.github/workflows/azure-dev.yml)
+    - [Deploy with Azure Pipelines](https://github.com/Azure-Samples/azd-starter-bicep/blob/main/.azdo/pipelines/azure-dev.yml)
 2. Run `azd pipeline config` to configure the deployment pipeline to connect securely to Azure.
 
 ## What was added
@@ -43,10 +43,10 @@ To describe the infrastructure and application, `azure.yaml` along with Infrastr
 
 Each bicep file declares resources to be provisioned. The resources are provisioned when running `azd up` or `azd provision`.
 
-- [app/ddd-2024.bicep](./infra/app/ddd-2024.bicep) - Azure Container Apps resources to host the 'ddd-2024' service.
-- [shared/keyvault.bicep](./infra/shared/keyvault.bicep) - Azure KeyVault to store secrets.
-- [shared/monitoring.bicep](./infra/shared/monitoring.bicep) - Azure Log Analytics workspace and Application Insights to log and store instrumentation logs.
-- [shared/registry.bicep](./infra/shared/registry.bicep) - Azure Container Registry to store docker images.
+-   [app/dddperth.bicep](./infra/app/dddperth.bicep) - Azure Container Apps resources to host the 'dddperth' service.
+-   [shared/keyvault.bicep](./infra/shared/keyvault.bicep) - Azure KeyVault to store secrets.
+-   [shared/monitoring.bicep](./infra/shared/monitoring.bicep) - Azure Log Analytics workspace and Application Insights to log and store instrumentation logs.
+-   [shared/registry.bicep](./infra/shared/registry.bicep) - Azure Container Registry to store docker images.
 
 More information about [Bicep](https://aka.ms/bicep) language.
 
@@ -59,7 +59,7 @@ If your project does not contain a Dockerfile, we will use [Buildpacks](https://
 To produce and run the docker image locally:
 
 1. Run `azd package` to build the image.
-2. Copy the *Image Tag* shown.
+2. Copy the _Image Tag_ shown.
 3. Run `docker run -it <Image Tag>` to run the image locally.
 
 #### Exposed port
@@ -71,7 +71,7 @@ Oryx will automatically set `PORT` to a default value of `80` (port `8080` for J
 
 ## Billing
 
-Visit the *Cost Management + Billing* page in Azure Portal to track current spend. For more information about how you're billed, and how you can monitor the costs incurred in your Azure subscriptions, visit [billing overview](https://learn.microsoft.com/azure/developer/intro/azure-developer-billing).
+Visit the _Cost Management + Billing_ page in Azure Portal to track current spend. For more information about how you're billed, and how you can monitor the costs incurred in your Azure subscriptions, visit [billing overview](https://learn.microsoft.com/azure/developer/intro/azure-developer-billing).
 
 ## Troubleshooting
 
@@ -84,9 +84,9 @@ A: Your service may have failed to start, or it may be missing some configuratio
 3. Click on the failing revision under "Revisions with Issues".
 4. Review "Status details" for more information about the type of failure.
 5. Observe the log outputs from Console log stream and System log stream to identify any errors.
-6. If logs are written to disk, use *Console* in the navigation to connect to a shell within the running container.
+6. If logs are written to disk, use _Console_ in the navigation to connect to a shell within the running container.
 
-For more troubleshooting information, visit [Container Apps troubleshooting](https://learn.microsoft.com/azure/container-apps/troubleshooting). 
+For more troubleshooting information, visit [Container Apps troubleshooting](https://learn.microsoft.com/azure/container-apps/troubleshooting).
 
 ### Additional information
 

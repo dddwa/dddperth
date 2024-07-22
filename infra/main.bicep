@@ -9,9 +9,9 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
-param ddd2024Exists bool
+param dddExists bool
 @secure()
-param ddd2024Definition object
+param dddDefinition object
 
 param authClientId string
 @secure()
@@ -31,9 +31,10 @@ var tags = {
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var prefix = 'dddperth'
 
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-  name: 'rg-${environmentName}'
+  name: '${prefix}-rg-${environmentName}'
   location: location
   tags: tags
 }
@@ -43,8 +44,8 @@ module monitoring './shared/monitoring.bicep' = {
   params: {
     location: location
     tags: tags
-    logAnalyticsName: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
-    applicationInsightsName: '${abbrs.insightsComponents}${resourceToken}'
+    logAnalyticsName: '${prefix}-${abbrs.operationalInsightsWorkspaces}${resourceToken}'
+    applicationInsightsName: '${prefix}-${abbrs.insightsComponents}${resourceToken}'
   }
   scope: rg
 }
@@ -52,7 +53,7 @@ module monitoring './shared/monitoring.bicep' = {
 module dashboard './shared/dashboard-web.bicep' = {
   name: 'dashboard'
   params: {
-    name: '${abbrs.portalDashboards}${resourceToken}'
+    name: '${prefix}-${abbrs.portalDashboards}${resourceToken}'
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     location: location
     tags: tags
@@ -65,7 +66,7 @@ module registry './shared/registry.bicep' = {
   params: {
     location: location
     tags: tags
-    name: '${abbrs.containerRegistryRegistries}${resourceToken}'
+    name: '${prefix}-${abbrs.containerRegistryRegistries}${resourceToken}'
   }
   scope: rg
 }
@@ -75,7 +76,7 @@ module keyVault './shared/keyvault.bicep' = {
   params: {
     location: location
     tags: tags
-    name: '${abbrs.keyVaultVaults}${resourceToken}'
+    name: '${prefix}-${abbrs.keyVaultVaults}${resourceToken}'
     principalId: principalId
   }
   scope: rg
@@ -84,7 +85,7 @@ module keyVault './shared/keyvault.bicep' = {
 module appsEnv './shared/apps-env.bicep' = {
   name: 'apps-env'
   params: {
-    name: '${abbrs.appManagedEnvironments}${resourceToken}'
+    name: '${prefix}-${abbrs.appManagedEnvironments}${resourceToken}'
     location: location
     tags: tags
     applicationInsightsName: monitoring.outputs.applicationInsightsName
@@ -93,18 +94,18 @@ module appsEnv './shared/apps-env.bicep' = {
   scope: rg
 }
 
-module ddd2024 './app/ddd-2024.bicep' = {
-  name: 'ddd-2024'
+module ddd './app/ddd.bicep' = {
+  name: 'ddd'
   params: {
-    name: '${abbrs.appContainerApps}ddd-2024-${resourceToken}'
+    name: '${prefix}-${abbrs.appContainerApps}ddd-${resourceToken}'
     location: location
     tags: tags
-    identityName: '${abbrs.managedIdentityUserAssignedIdentities}ddd-2024-${resourceToken}'
+    identityName: '${prefix}-${abbrs.managedIdentityUserAssignedIdentities}ddd-${resourceToken}'
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     containerAppsEnvironmentName: appsEnv.outputs.name
     containerRegistryName: registry.outputs.name
-    exists: ddd2024Exists
-    appDefinition: ddd2024Definition
+    exists: dddExists
+    appDefinition: dddDefinition
     environment: environmentName
     authClientId: authClientId
     authClientSecret: authClientSecret
