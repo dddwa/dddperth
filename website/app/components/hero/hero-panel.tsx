@@ -1,26 +1,25 @@
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
 import { Box, Flex, styled } from '../../../styled-system/jsx'
 
-export function HomepageHeroPanel() {
+export const HomepageHeroPanel = () => {
   const { scrollY } = useScroll()
 
-  const y1 = useTransform(scrollY, [0, 400], [0, 0])
-  const y2 = useTransform(scrollY, [0, 400], [0, 100])
-  const y3 = useTransform(scrollY, [0, 400], [0, 200])
+  const y2 = useTransform(scrollY, [0, 400], [0, 100], { ease: easeOut })
+  const y3 = useTransform(scrollY, [0, 400], [0, 200], { ease: easeOut })
 
   return (
     <Flex
-      height="120vh"
+      height="auto"
       overflow="hidden"
       direction="column"
       alignItems="center"
       width="full"
       gradientFrom="#070727"
       gradientTo="#0E0E43"
-      gap={48}
+      gap={24}
       pt={24}
       bgGradient="to-b"
     >
@@ -44,8 +43,18 @@ export function HomepageHeroPanel() {
           A one day, fully inclusive, approachable and affordable tech conference for everyone.
         </styled.h1>
       </Box>
-      <Box width="full" position="relative" bottom={100}>
-        <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, y: y1, width: '38%' }}>
+      <Box width="full" position="relative" height={800}>
+        <Box
+          position="absolute"
+          zIndex={3}
+          bottom={0}
+          bgGradient="to-b"
+          gradientFrom="transparent"
+          gradientTo="#0E0E43"
+          width="full"
+          height={400}
+        ></Box>
+        <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%' }}>
           <DGreen style={{ width: '100%', height: 'auto' }} />
         </motion.div>
         <motion.div
