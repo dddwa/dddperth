@@ -10,8 +10,6 @@ param environmentName string
 param location string
 
 param dddExists bool
-@secure()
-param dddDefinition object
 
 param authClientId string
 @secure()
@@ -105,7 +103,6 @@ module ddd './app/ddd.bicep' = {
     containerAppsEnvironmentName: appsEnv.outputs.name
     containerRegistryName: registry.outputs.name
     exists: dddExists
-    appDefinition: dddDefinition
     environment: environmentName
     authClientId: authClientId
     authClientSecret: authClientSecret

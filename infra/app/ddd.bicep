@@ -10,19 +10,6 @@ param containerRegistryName string
 param containerAppsEnvironmentName string
 param applicationInsightsName string
 param exists bool
-@secure()
-param appDefinition object
-
-var appSettingsArray = filter(array(appDefinition.settings), i => i.name != '')
-var secrets = map(filter(appSettingsArray, i => i.?secret != null), i => {
-  name: i.name
-  value: i.value
-  secretRef: i.?secretRef ?? take(replace(replace(toLower(i.name), '_', '-'), '.', '-'), 32)
-})
-var env = map(filter(appSettingsArray, i => i.?secret == null), i => {
-  name: i.name
-  value: i.value
-})
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
@@ -63,7 +50,7 @@ module fetchLatestImage '../modules/fetch-container-image.bicep' = {
 resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
   name: name
   location: location
-  tags: union(tags, {'azd-service-name':  'ddd-2024' })
+  tags: union(tags, {'azd-service-name':  'ddd' })
   dependsOn: [ acrPullRole ]
   identity: {
     type: 'UserAssigned'
@@ -83,16 +70,12 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
           identity: identity.id
         }
       ]
-      secrets: union([
+      secrets: [
         {
           name: 'clientSecret'
           value: authClientSecret
         }
-      ],
-      map(secrets, secret => {
-        name: secret.secretRef
-        value: secret.value
-      }))
+      ]
     }
     template: {
       containers: [
@@ -109,11 +92,7 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
               value: '80'
             }
           ],
-          env,
-          map(secrets, secret => {
-            name: secret.name
-            secretRef: secret.secretRef
-          }))
+          env)
           resources: {
             cpu: json('1.0')
             memory: '2.0Gi'
