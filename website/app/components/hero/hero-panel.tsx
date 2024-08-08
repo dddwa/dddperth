@@ -1,96 +1,89 @@
-import { useEffect, useRef, useState } from 'react'
-import { Box, styled } from '../../../styled-system/jsx'
+import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
+import DGreen from '~/images/hero/d-green.svg?react'
+import DPink from '~/images/hero/d-pink.svg?react'
+import DPurple from '~/images/hero/d-purple.svg?react'
+import { Box, Flex, styled } from '../../../styled-system/jsx'
 
-import { css } from '../../../styled-system/css'
-import BannerDesktop from './banner-desktop.mp4'
-import BannerMobile from './banner-mobile.mp4'
+export const HomepageHeroPanel = () => {
+  const { scrollY } = useScroll()
 
-export function HomepageHeroPanel() {
-    const video = useRef<HTMLVideoElement>(null)
-    const [width, setWidth] = useState(0)
-    const [currentDevice, setCurrentDevice] = useState('')
+  const y2 = useTransform(scrollY, [0, 400], [0, 100], { ease: easeOut })
+  const y3 = useTransform(scrollY, [0, 400], [0, 200], { ease: easeOut })
 
-    const videoReady = () => {
-        video.current?.classList.remove('opacity_0')
-    }
-
-    useEffect(() => {
-        function handleResize() {
-            setWidth(window.innerWidth)
-        }
-
-        function updateVideoSrc() {
-            if (!video.current) return
-            if (width >= 768) {
-                if (currentDevice !== 'desktop') {
-                    video.current.src = BannerDesktop
-                }
-                setCurrentDevice('desktop')
-            } else {
-                if (currentDevice !== 'mobile') {
-                    video.current.src = BannerMobile
-                }
-                setCurrentDevice('mobile')
-            }
-        }
-
-        window.addEventListener('resize', handleResize)
-
-        handleResize()
-        updateVideoSrc()
-
-        return () => {
-            window.removeEventListener('resize', handleResize)
-        }
-    })
-
-    return (
-        <Box w="100%">
-            <Box
-                bg="black"
-                w="100%"
-                position="relative"
-                h="64"
-                className={css({
-                    xs: { h: '72' },
-                    sm: { h: '96' },
-                    lg: { h: '120' },
-                    xl: { h: '160' },
-                    '2xl': { h: '40rem' },
-                    '3xl': { h: '42rem' },
-                    '4xl': { h: '45rem' },
-                    '5xl': { h: '50rem' },
-                })}
-            >
-                {/* Use this if you need an image fallback for first frame of video */}
-                {/*<picture>*/}
-                {/*    <source media="(min-width: 1440px)" srcSet={``} />*/}
-                {/*    <source media="(min-width: 799px)" srcSet={``} />*/}
-                {/*    <img className={`image-fallback ${css({ w: '100%', h: '100%', objectFit: 'cover', objectPosition: 'center' })}`} src={``} alt={``} />*/}
-                {/*</picture>*/}
-                <styled.video
-                    w="100%"
-                    h="100%"
-                    position="absolute"
-                    inset="0"
-                    objectFit="cover"
-                    objectPosition="center"
-                    zIndex="2"
-                    transition="opacity"
-                    transitionDuration="1000"
-                    opacity="0"
-                    ref={video}
-                    onLoadedData={videoReady}
-                    width="100%"
-                    height="100%"
-                    muted
-                    loop
-                    playsInline
-                    autoPlay={true}
-                >
-                    <p>Your browser cannot play the provided video file.</p>
-                </styled.video>
-            </Box>
-        </Box>
-    )
+  return (
+    <Flex
+      height="auto"
+      overflow="hidden"
+      direction="column"
+      alignItems="center"
+      width="full"
+      gradientFrom="#070727"
+      gradientTo="#0E0E43"
+      gap={24}
+      pt={24}
+      bgGradient="to-b"
+    >
+      <Box maxW="1200px">
+        <styled.h2 color="#8282FB" fontSize="xl" fontWeight="bold" textWrap="balance" maxWidth="3/4">
+          Sat 7th October, 2023 • Optus Stadium, Perth
+        </styled.h2>
+        <styled.h1
+          fontFamily="sans-serif"
+          color="white"
+          fontSize="xl"
+          w="full"
+          fontWeight="bold"
+          textWrap="balance"
+          lineHeight={1.2}
+          maxWidth="3/4"
+          sm={{ fontSize: '3xl' }}
+          lg={{ fontSize: '4xl' }}
+          xl={{ fontSize: '6xl' }}
+        >
+          A one day, fully inclusive, approachable and affordable tech conference for everyone.
+        </styled.h1>
+      </Box>
+      <Box width="full" position="relative" height={800}>
+        <Box
+          position="absolute"
+          zIndex={3}
+          bottom={0}
+          bgGradient="to-b"
+          gradientFrom="transparent"
+          gradientTo="#0E0E43"
+          width="full"
+          height={400}
+        ></Box>
+        <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%' }}>
+          <DGreen style={{ width: '100%', height: 'auto' }} />
+        </motion.div>
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '0',
+            marginTop: '20px',
+            left: '30%',
+            zIndex: 1,
+            y: y2,
+            width: '38%',
+          }}
+        >
+          <DPink style={{ width: '100%', height: 'auto' }} />
+        </motion.div>
+        <motion.div
+          style={{
+            position: 'absolute',
+            top: '0',
+            marginTop: '40px',
+            left: '56%',
+            transform: 'translateX(-50%)',
+            y: y3,
+            width: '38%',
+          }}
+        >
+          <DPurple style={{ width: '100%', height: 'auto' }} />
+        </motion.div>
+      </Box>
+    </Flex>
+  )
 }
