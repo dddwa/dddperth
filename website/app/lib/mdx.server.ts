@@ -10,17 +10,6 @@ type MarkdownFilesBySlug<Schema extends ZodType> = Record<
     { Component: MDXContent; frontmatter: z.infer<Schema> }
 >
 
-const blogPostFiles = import.meta.glob(['../../../blog/posts/**/*.md', '../../../blog/posts/**/*.mdx'], {
-    eager: true,
-})
-
-const websitePagesFiles = import.meta.glob(
-    ['../../../website-content/pages/**/*.md', '../../../website-content/pages/**/*.mdx'],
-    {
-        eager: true,
-    },
-)
-
 const BlogPostFrontmatter = z.object({
     title: z.string(),
     date: z.string().transform((dateString) => {
@@ -47,13 +36,23 @@ const PageFrontmatter = z.object({
     layout: z.union([z.literal('with-sidebar'), z.literal('full-width')]).default('with-sidebar'),
 })
 
-const blogPostsBySlug = toPagesBySlug(blogPostFiles, '../../../blog/posts', BlogPostFrontmatter)
-const websitePagesBySlug = toPagesBySlug(websitePagesFiles, '../../../website-content/pages', PageFrontmatter)
+let blogPostFiles = import.meta.glob(['../../../blog/posts/**/*.md', '../../../blog/posts/**/*.mdx'], {
+    eager: true,
+})
+
+let websitePagesFiles = import.meta.glob(
+    ['../../../website-content/pages/**/*.md', '../../../website-content/pages/**/*.mdx'],
+    {
+        eager: true,
+    },
+)
+
+let blogPostsBySlug = toPagesBySlug(blogPostFiles, '../../../blog/posts', BlogPostFrontmatter)
+let websitePagesBySlug = toPagesBySlug(websitePagesFiles, '../../../website-content/pages', PageFrontmatter)
 
 export function getPage(slug: string) {
     const contents = websitePagesBySlug[slug]
     if (!contents) {
-        console.log('contents', websitePagesBySlug, slug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
@@ -74,7 +73,6 @@ export type BlogPost = {
 
 export function getBlogPost(slug: string) {
     const contents = blogPostsBySlug[slug]
-    console.log('contents', blogPostsBySlug, slug)
     if (!contents) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }

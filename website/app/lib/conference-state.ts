@@ -1,6 +1,8 @@
 import { DateTime } from 'luxon'
 import {
-    CallForPaperStates,
+    CFPClosed,
+    CFPNotOpenYet,
+    CFPOpen,
     ConferenceConfig,
     ConferenceState,
     ConferenceYear,
@@ -48,7 +50,7 @@ export function getCurrentConferenceState(
                           ticketPrice: previousConference[1].ticketPrice,
                       }
                     : undefined,
-            callForPapersState: getCfpState(currentDate, latestConference[1].cfpDates),
+            callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
             ticketSales: getTicketSalesState(currentDate, latestConference[1].ticketSalesDates),
             agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
             talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
@@ -82,7 +84,7 @@ export function getCurrentConferenceState(
             agenda: 'published',
             feedback: 'open',
 
-            callForPapersState: 'closed',
+            callForPapers: { state: 'closed' },
             ticketSales: 'closed',
             talkVoting: 'closed',
         }
@@ -98,7 +100,7 @@ export function getCurrentConferenceState(
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
             },
-            callForPapersState: 'not-open-yet',
+            callForPapers: { state: 'closed' },
             ticketSales: 'not-open-yet',
             agenda: 'not-released',
             talkVoting: 'not-open-yet',
@@ -128,7 +130,7 @@ export function getCurrentConferenceState(
                       ticketPrice: previousConference[1].ticketPrice,
                   }
                 : undefined,
-        callForPapersState: getCfpState(currentDate, latestConference[1].cfpDates),
+        callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
         ticketSales: getTicketSalesState(currentDate, latestConference[1].ticketSalesDates),
         agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
         talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
@@ -171,10 +173,14 @@ function getTicketSalesState(currentDate: DateTime, ticketSalesDates: DateTimeRa
           : 'closed'
 }
 
-function getCfpState(currentDate: DateTime, cfpDates: DateTimeRange | undefined): CallForPaperStates {
-    return !cfpDates || currentDate < cfpDates.opens
-        ? 'not-open-yet'
-        : currentDate < cfpDates.closes
-          ? 'open'
-          : 'closed'
+function getCfpState(
+    currentDate: DateTime,
+    cfpDates: DateTimeRange | undefined,
+    sessionizeUrl: string | undefined,
+): CFPOpen | CFPClosed | CFPNotOpenYet {
+    return cfpDates && currentDate < cfpDates.opens
+        ? { state: 'not-open-yet', opens: cfpDates.opens }
+        : cfpDates && currentDate < cfpDates.closes && sessionizeUrl
+          ? { state: 'open', closes: cfpDates.closes, sessionizeUrl }
+          : { state: 'closed' }
 }
