@@ -1,6 +1,8 @@
+import { DateTime } from 'luxon'
+
 export interface DateTimeProvider {
     now(): number
-    nowDate(): Date
+    nowDate(): DateTime
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout

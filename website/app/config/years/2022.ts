@@ -1,17 +1,18 @@
+import { DateTime } from 'luxon'
 import { ConferenceYear } from '../../lib/config-types'
 
 export const conference2022: ConferenceYear = {
     year: '2022',
-    conferenceDate: new Date('2022/10/07'),
+    conferenceDate: DateTime.fromISO('2022-10-07'),
     ticketPrice: '$60',
 
     venue: undefined,
 
-    sessionizeEndpoint: undefined,
+    sessions: undefined,
 
-    agendaPublishedDate: undefined,
+    agendaPublishedDateTime: undefined,
     cfpDates: undefined,
-    feedbackOpenUntilDate: undefined,
+    feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
     ticketSalesDates: undefined,
 }

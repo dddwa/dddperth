@@ -1,16 +1,20 @@
+import { DateTime } from 'luxon'
 import { ConferenceYear } from '../../lib/config-types'
 
 export const conference2023: ConferenceYear = {
     year: '2023',
-    conferenceDate: new Date('2023/10/07'),
+    conferenceDate: DateTime.fromISO('2023-10-07'),
     venue: undefined,
     ticketPrice: '$60',
 
-    sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+    sessions: {
+        kind: 'sessionize',
+        sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+    },
 
-    agendaPublishedDate: undefined,
+    agendaPublishedDateTime: undefined,
     cfpDates: undefined,
-    feedbackOpenUntilDate: undefined,
+    feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
     ticketSalesDates: undefined,
 }

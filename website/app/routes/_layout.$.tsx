@@ -31,7 +31,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
             currentPath,
             siteUrl,
             frontmatter: post.frontmatter,
-            post: renderMdx(post.Component),
+            post: renderMdx(post.Component, context.conferenceState),
             conferenceState: context.conferenceState,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
@@ -84,7 +84,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 }
 
 export default function WebsiteContentPage() {
-    const { post, frontmatter } = useLoaderData<typeof loader>()
+    const { post, frontmatter, currentPath, conferenceState, siteUrl } = useLoaderData<typeof loader>()
 
     return (
         <>
@@ -93,7 +93,15 @@ export default function WebsiteContentPage() {
             ) : null}
             <div>
                 <Box position="relative" bg="white" w="100%" display="flex" color="2023-green">
-                    <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}></Box>
+                    <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
+                        <ContentPageWithSidebar
+                            currentPath={currentPath}
+                            siteUrl={siteUrl}
+                            frontmatter={frontmatter}
+                            post={post}
+                            conferenceState={conferenceState}
+                        />
+                    </Box>
                 </Box>
             </div>
         </>
@@ -132,7 +140,8 @@ function ContentPageWithSidebar({ frontmatter, post, currentPath, conferenceStat
             <aside>
                 <EventDetailsSummary conferenceState={conferenceState} currentPath={currentPath} />
                 <h2>Important Dates</h2>
-                <ImportantDatesList layout="inline" conference={conference} currentDate={currentDate} />
+                {/* TODO Important date list */}
+                {/* <ImportantDatesList layout="inline" conference={conference} currentDate={currentDate} /> */}
             </aside>
         </div>
     )
@@ -147,10 +156,8 @@ export interface EventDetailsSummaryProps {
 export const EventDetailsSummary = ({ className, conferenceState, currentPath }: EventDetailsSummaryProps) => {
     const [primaryCta] = getConferenceActions(conferenceState).filter((a) => a.url !== currentPath)
 
-    const relevantDate =
-        conferenceState.conferenceState === 'before-conference'
-            ? conferenceConfig.current.conferenceDate
-            : conferenceState.previousConference?.date
+    const relevantDate = conferenceState.conference.date
+
     return (
         <div className={className}>
             {relevantDate ? (
@@ -188,7 +195,7 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                 {/* {conference.SellingPoints.map((point, i) => (
                     <li key={i}>{point}</li>
                 ))} */}
-                <li>Only {conferenceConfig.current.ticketPrice}</li>
+                <li>Only {conferenceState.conference.ticketPrice}</li>
             </ul>
             {primaryCta && (
                 <div style={{ textAlign: 'center' }}>

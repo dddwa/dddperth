@@ -1,8 +1,9 @@
+import { DateTime } from 'luxon'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {
-    nowDate(): Date {
-        return new Date()
+    nowDate(): DateTime {
+        return DateTime.now()
     }
     now() {
         return Date.now()

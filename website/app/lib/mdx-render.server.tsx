@@ -2,9 +2,9 @@
 import { MDXContent } from 'mdx/types'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { styled } from '../../styled-system/jsx'
-import { conferenceConfig } from '../config/conference-config'
+import { ConferenceState } from './config-types'
 
-export function renderMdx(Component: MDXContent): string {
+export function renderMdx(Component: MDXContent, conference: ConferenceState): string {
     return renderToStaticMarkup(
         <Component
             components={{
@@ -14,7 +14,7 @@ export function renderMdx(Component: MDXContent): string {
                 h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
                 ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
             }}
-            conference={conferenceConfig}
+            conference={conference}
         />,
     )
 }

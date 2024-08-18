@@ -1,9 +1,9 @@
-import { conferenceConfig } from '../config/conference-config'
+import { LoaderFunctionArgs } from '@remix-run/server-runtime'
 
 /** This route is used by the app or integrations to understand the state of the conference */
-export function loader(): AppConfig {
+export function loader({ context }: LoaderFunctionArgs): AppConfig {
     return {
-        conferenceDate: conferenceConfig.current.conferenceDate?.toISOString() ?? null,
+        conferenceDate: context.conferenceState.conference.date ?? null,
     }
 }
 

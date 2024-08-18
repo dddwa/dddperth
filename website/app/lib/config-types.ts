@@ -1,3 +1,7 @@
+import { DateTime } from 'luxon'
+
+export type Year = `${number}${number}${number}${number}`
+
 /**
  * Conference configuration which doesn't necessarily change year on year
  */
@@ -9,7 +13,7 @@ export interface ConferenceConfig {
 
     timezone: string
 
-    conferences: Record<`${number}${number}${number}${number}`, ConferenceYear>
+    conferences: Record<Year, ConferenceYear>
 
     importantContacts: {
         police: {
@@ -57,29 +61,29 @@ export interface ConferenceConfig {
         | undefined
 }
 
-export interface DateRange {
-    opens: Date
-    closes: Date
+export interface DateTimeRange {
+    opens: DateTime
+    closes: DateTime
 }
 
 /**
  * This year's conference configuration
  */
 export interface ConferenceYear {
-    year: string
+    year: Year
 
     ticketPrice: string
 
-    conferenceDate: Date | undefined
-    agendaPublishedDate: Date | undefined
-    cfpDates: DateRange | undefined
-    ticketSalesDates: DateRange | undefined
-    talkVotingDates: DateRange | undefined
-    feedbackOpenUntilDate: Date | undefined
+    conferenceDate: DateTime | undefined
+    agendaPublishedDateTime: DateTime | undefined
+    cfpDates: DateTimeRange | undefined
+    ticketSalesDates: DateTimeRange | undefined
+    talkVotingDates: DateTimeRange | undefined
+    feedbackOpenUntilDateTime: DateTime | undefined
 
     venue: ConferenceVenue | undefined
 
-    sessionizeEndpoint: string | undefined
+    sessions: SessionizeConferenceSessions | SessionData | undefined
 }
 
 export interface ConferenceVenue {
@@ -88,6 +92,23 @@ export interface ConferenceVenue {
 
 export interface ConferenceImportantInformation {
     date: string | undefined
+    year: Year
+    ticketPrice: string
+
+    sessions: SessionizeConferenceSessions | SessionData | undefined
+}
+
+export interface SessionizeConferenceSessions {
+    kind: 'sessionize'
+
+    sessionizeEndpoint: string
+}
+
+export interface SessionData {
+    kind: 'session-data'
+
+    // TODO
+    sessions: unknown
 }
 
 export type ConferenceState = BeforeConferenceState | ConferenceDayState | AfterConferenceState
@@ -128,7 +149,7 @@ export interface ConferenceDayState {
 export interface AfterConferenceState {
     conferenceState: 'conference-over'
 
-    previousConference: ConferenceImportantInformation
+    conference: ConferenceImportantInformation
 
     callForPapersState: NotOpenYet
     ticketSales: NotOpenYet

@@ -11,7 +11,7 @@ import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
 import { renderMdx } from '../lib/mdx-render.server'
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
+export async function loader({ params, request, context }: LoaderFunctionArgs) {
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
     const requestUrl = new URL(request.url)
@@ -22,7 +22,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
         {
             siteUrl,
             frontmatter: post.frontmatter,
-            post: renderMdx(post.Component),
+            post: renderMdx(post.Component, context.conferenceState),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )

@@ -1,5 +1,12 @@
-import { fromZonedTime } from 'date-fns-tz'
+import { DateTime, Settings } from 'luxon'
 import { ConferenceYear } from '../../lib/config-types'
+
+Settings.throwOnInvalid = true
+declare module 'luxon' {
+    interface TSSettings {
+        throwOnInvalid: true
+    }
+}
 
 export const conference2024: ConferenceYear = {
     year: '2024',
@@ -7,21 +14,40 @@ export const conference2024: ConferenceYear = {
 
     ticketPrice: '$60',
 
-    sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+    sessions: {
+        kind: 'sessionize',
+        sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+    },
 
-    conferenceDate: fromZonedTime('2024-11-16T08:00', '+08:00'),
-    agendaPublishedDate: fromZonedTime('2024-08-20T17:00:00', '+08:00'),
+    conferenceDate: DateTime.fromISO('2024-11-16'),
+    agendaPublishedDateTime: DateTime.fromISO('2024-08-20T17:00:00', {
+        zone: 'Australia/Perth',
+    }),
     cfpDates: {
-        opens: fromZonedTime('2024-06-14T08:00:00', '+08:00'),
-        closes: fromZonedTime('2024-07-12T23:59:59', '+08:00'),
+        opens: DateTime.fromISO('2024-06-14T08:00:00', {
+            zone: 'Australia/Perth',
+        }),
+        closes: DateTime.fromISO('2024-07-12T23:59:59', {
+            zone: 'Australia/Perth',
+        }),
     },
     talkVotingDates: {
-        opens: fromZonedTime('2024-07-23T00:00:00', '+08:00'),
-        closes: fromZonedTime('2024-08-06T23:59:59', '+08:00'),
+        opens: DateTime.fromISO('2024-07-23T00:00:00', {
+            zone: 'Australia/Perth',
+        }),
+        closes: DateTime.fromISO('2024-08-06T23:59:59', {
+            zone: 'Australia/Perth',
+        }),
     },
     ticketSalesDates: {
-        opens: fromZonedTime('2024-06-21T08:00:00', '+08:00'),
-        closes: fromZonedTime('2024-11-15T23:59:59', '+08:00'),
+        opens: DateTime.fromISO('2024-06-21T08:00:00', {
+            zone: 'Australia/Perth',
+        }),
+        closes: DateTime.fromISO('2024-11-15T23:59:59', {
+            zone: 'Australia/Perth',
+        }),
     },
-    feedbackOpenUntilDate: fromZonedTime('2024-11-21T23:59:59', '+08:00'),
+    feedbackOpenUntilDateTime: DateTime.fromISO('2024-11-21T23:59:59', {
+        zone: 'Australia/Perth',
+    }),
 }

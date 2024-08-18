@@ -1,3 +1,8 @@
+import {
+    AzureMonitorLogExporter,
+    AzureMonitorMetricExporter,
+    AzureMonitorTraceExporter,
+} from '@azure/monitor-opentelemetry-exporter'
 import { createAzureSdkInstrumentation } from '@azure/opentelemetry-instrumentation-azure-sdk'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
@@ -13,6 +18,7 @@ import { NodeSDK } from '@opentelemetry/sdk-node'
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node'
 import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 import fs, { existsSync } from 'node:fs'
+import { RemixInstrumentation } from 'opentelemetry-instrumentation-remix'
 import {
     APPLICATIONINSIGHTS_CONNECTION_STRING,
     HONEYCOMB_API_KEY,
@@ -21,13 +27,6 @@ import {
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
 } from '../lib/config.server'
-import { RemixInstrumentation } from './remix-instrumentation'
-
-import {
-    AzureMonitorLogExporter,
-    AzureMonitorMetricExporter,
-    AzureMonitorTraceExporter,
-} from '@azure/monitor-opentelemetry-exporter'
 
 export function configureOpenTelemetry() {
     const enableTracingConsoleFallback = false
@@ -43,7 +42,7 @@ export function configureOpenTelemetry() {
                     'x-honeycomb-team': HONEYCOMB_API_KEY,
                 },
             })
-          : OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT
+          : (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
             ? new OTLPTraceExporter()
             : enableTracingConsoleFallback
               ? new ConsoleSpanExporter()
@@ -60,7 +59,7 @@ export function configureOpenTelemetry() {
                     'x-honeycomb-team': HONEYCOMB_API_KEY,
                 },
             })
-          : OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT
+          : (OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
             ? new OTLPMetricExporter()
             : undefined
 
@@ -75,7 +74,7 @@ export function configureOpenTelemetry() {
                     'x-honeycomb-team': HONEYCOMB_API_KEY,
                 },
             })
-          : OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT
+          : (OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
             ? new OTLPLogExporter()
             : enableTracingConsoleFallback
               ? new ConsoleLogRecordExporter()

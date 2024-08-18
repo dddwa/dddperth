@@ -1,54 +1,65 @@
 import type { LoaderFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { ReactNode } from 'react'
+import { $path } from 'remix-routes'
+import { TypeOf } from 'zod'
+import { ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import * as Tabs from '../components/ui/tabs'
 import { conferenceConfig } from '../config/conference-config'
-import { ConferenceYear } from '../config/years/year-config'
-import { formatDate, getScheduleGrid } from '../lib/sessionize.server'
+import { formatDate, getScheduleGrid, gridSmartSchema } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 
-export async function loader({ params }: LoaderFunctionArgs) {
-    const year = params.year ?? conferenceConfig.current.year
+export async function loader({ params, context }: LoaderFunctionArgs) {
+    if (params.year && !/\d{4}/.test(params.year)) {
+        return redirect($path('/:year?/agenda', { year: undefined }))
+    }
 
-    const yearConfig: ConferenceYear =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        conferenceConfig.current.year === year ? conferenceConfig.current : (conferenceConfig.previous as any)[year]
-    if (!yearConfig.sessionizeEndpoint) {
+    const year =
+        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
+
+    const yearConfig: ConferenceImportantInformation = params.year
+        ? getImportantInformation((conferenceConfig.conferences as Record<Year, ConferenceYear>)[year])
+        : context.conferenceState.conference
+
+    if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
-    const schedules = await getScheduleGrid({
-        sessionizeEndpoint: yearConfig.sessionizeEndpoint,
-        confTimeZone: conferenceConfig.timezone,
-    })
+    const schedules: TypeOf<typeof gridSmartSchema> =
+        yearConfig.sessions?.kind === 'sessionize'
+            ? await getScheduleGrid({
+                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
+                  confTimeZone: conferenceConfig.timezone,
+              })
+            : // TODO Deal with data type
+              []
+
+    const schedule = schedules[0]
 
     return json(
         {
             year,
-            days: schedules.map((schedule) => {
-                return {
-                    ...schedule,
-                    dateSlug: slugify(
-                        formatDate(schedule.date, {
-                            month: 'short',
-                            day: 'numeric',
-                        }),
-                    ),
-                    dateISO: schedule.date,
-                    dateFormatted: formatDate(schedule.date, {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                    }),
-                    dateFormattedShort: formatDate(schedule.date, {
+            schedule: {
+                ...schedule,
+                dateSlug: slugify(
+                    formatDate(schedule.date, {
                         month: 'short',
                         day: 'numeric',
                     }),
-                    schedule,
-                }
-            }),
+                ),
+                dateISO: schedule.date,
+                dateFormatted: formatDate(schedule.date, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                }),
+                dateFormattedShort: formatDate(schedule.date, {
+                    month: 'short',
+                    day: 'numeric',
+                }),
+                schedule,
+            },
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
@@ -173,79 +184,68 @@ export async function loader({ params }: LoaderFunctionArgs) {
 //     )
 // }
 
-export default function Agenda(props: Tabs.RootProps) {
-    const { days } = useLoaderData<typeof loader>()
+export default function Agenda() {
+    const { schedule } = useLoaderData<typeof loader>()
 
     return (
-        <Tabs.Root defaultValue={days ? days[0]?.dateSlug : undefined} {...props}>
-            <Tabs.List>
-                {days.map((day) => (
-                    <Tabs.Trigger key={day.dateSlug} value={day.dateSlug}>
-                        {day.dateFormatted}
-                    </Tabs.Trigger>
+        <table>
+            <thead>
+                <th></th>
+                {schedule.rooms.map((room) => (
+                    <th key={room.id} scope="col" className="px-6 py-3 whitespace-nowrap min-w-[200px]">
+                        {room.name}
+                    </th>
                 ))}
-                <Tabs.Indicator />
-            </Tabs.List>
-            {days.map(({ dateSlug, rooms, timeSlots }) => (
-                <Tabs.Content key={dateSlug} value={dateSlug}>
-                    <table>
-                        <thead>
-                            <th></th>
-                            {rooms.map((room) => (
-                                <th key={room.id} scope="col" className="px-6 py-3 whitespace-nowrap min-w-[200px]">
-                                    {room.name}
-                                </th>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {timeSlots.map((timeSlot) => (
-                                <tr className="bg-white border-b" key={timeSlot.slotStart}>
-                                    <td className="whitespace-nowrap">{timeSlot.slotStart}</td>
-                                    {timeSlot.rooms.map((room) => {
-                                        // if (roomHasSpanningSession(room.id, timeSlot, timeSlots)) {
-                                        //     return null
-                                        // }
+            </thead>
+            <tbody>
+                {schedule.timeSlots.map((timeSlot) => (
+                    <tr className="bg-white border-b" key={timeSlot.slotStart}>
+                        <td className="whitespace-nowrap">{timeSlot.slotStart}</td>
+                        {timeSlot.rooms.map((room) => {
+                            // if (roomHasSpanningSession(room.id, timeSlot, timeSlots)) {
+                            //     return null
+                            // }
 
-                                        return (
-                                            <td
-                                                key={room.id}
-                                                // rowSpan={session ? calculateSlotSpan(session, timeSlots) : undefined}
-                                            >
-                                                <div key={room.session.id}>
-                                                    <Link to={`session/${room.session.id}`}>{room.session.title}</Link>
+                            return (
+                                <td
+                                    key={room.id}
+                                    // rowSpan={session ? calculateSlotSpan(session, timeSlots) : undefined}
+                                >
+                                    <div key={room.session.id}>
+                                        <Link to={`session/${room.session.id}`}>{room.session.title}</Link>
 
-                                                    <div>
-                                                        {room.session.speakers.reduce<ReactNode[]>((acc, speaker) => {
-                                                            if (acc.length > 0) {
-                                                                acc.push(', ')
-                                                            }
-                                                            acc.push(
-                                                                <Link
-                                                                    key={speaker.id}
-                                                                    to="#"
-                                                                    // to={`/agenda/${day}/speaker/${speaker.id}`}
-                                                                >
-                                                                    {speaker.name}
-                                                                </Link>,
-                                                            )
+                                        <div>
+                                            {room.session.speakers.reduce<ReactNode[]>((acc, speaker) => {
+                                                if (acc.length > 0) {
+                                                    acc.push(', ')
+                                                }
+                                                acc.push(
+                                                    <Link
+                                                        key={speaker.id}
+                                                        to="#"
+                                                        // to={`/agenda/${day}/speaker/${speaker.id}`}
+                                                    >
+                                                        {speaker.name}
+                                                    </Link>,
+                                                )
 
-                                                            return acc
-                                                        }, [])}
-                                                    </div>
+                                                return acc
+                                            }, [])}
+                                        </div>
 
-                                                    {/* {room.session..track ? (
+                                        {/* {room.session..track ? (
                                                         <div
                                                         >
                                                             {room.session.track.name}
                                                         </div>
                                                     ) : null} */}
-                                                </div>
-                                            </td>
-                                        )
-                                    })}
-                                </tr>
-                            ))}
-                            {/*    {sessions.map((session) => {
+                                    </div>
+                                </td>
+                            )
+                        })}
+                    </tr>
+                ))}
+                {/*    {sessions.map((session) => {
                                 return (
                                     <tr key={session.id}>
                                         <td>
@@ -295,10 +295,15 @@ export default function Agenda(props: Tabs.RootProps) {
                                     </tr>
                                 )
                             })} */}
-                        </tbody>
-                    </table>
-                </Tabs.Content>
-            ))}
-        </Tabs.Root>
+            </tbody>
+        </table>
     )
+}
+function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportantInformation {
+    return {
+        date: yearConfig.conferenceDate?.toISO(),
+        year: yearConfig.year,
+        sessions: yearConfig.sessions,
+        ticketPrice: yearConfig.ticketPrice,
+    }
 }
