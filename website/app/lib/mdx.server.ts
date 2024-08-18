@@ -53,6 +53,7 @@ const websitePagesBySlug = toPagesBySlug(websitePagesFiles, '../../../website-co
 export function getPage(slug: string) {
     const contents = websitePagesBySlug[slug]
     if (!contents) {
+        console.log('contents', websitePagesBySlug, slug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 

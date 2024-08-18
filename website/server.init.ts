@@ -2,7 +2,6 @@
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@remix-run/express'
 import type { ServerBuild } from '@remix-run/node'
-import { installGlobals } from '@remix-run/node'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
@@ -13,8 +12,6 @@ const tracer = trace.getTracerProvider().getTracer('server')
 
 export function init() {
     return tracer.startActiveSpan('start', async (span) => {
-        installGlobals()
-
         console.log('Starting')
         try {
             process.on('uncaughtException', (err: Error) => {

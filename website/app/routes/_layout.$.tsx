@@ -9,7 +9,7 @@ import getConferenceActions from '~/lib/conference-actions'
 import { ConferenceState } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { css } from '../../styled-system/css'
-import { Box, styled } from '../../styled-system/jsx'
+import { Box, Grid, styled } from '../../styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
 import { renderMdx } from '../lib/mdx-render.server'
@@ -20,7 +20,12 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
     if (!contentSlug) {
         throw new Error('Expected contentSlug param')
     }
+
     const requestUrl = new URL(request.url)
+    if (requestUrl.pathname.startsWith('/static')) {
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
     const post = getPage(contentSlug)
@@ -108,42 +113,22 @@ export default function WebsiteContentPage() {
     )
 }
 
-export const styledSidebarContainer = css({
-    display: 'table',
-    tableLayout: 'fixed',
-    marginTop: 'xl',
-    marginBottom: 'xl',
-
-    ['@supports(display: grid)']: {
-        display: 'grid',
-        gridGap: 'md',
-
-        md: {
-            gridTemplateColumns: 'minmax(1rem, 1fr) minmax(0, 90ch) minmax(0, 30ch) minmax(1rem, 1fr)',
-
-            '&main': {
-                gridColumn: 2,
-            },
-
-            '&aside': {
-                gridColumn: 3,
-            },
-        },
-    },
-})
+export const styledSidebarContainer = css({})
 
 function ContentPageWithSidebar({ frontmatter, post, currentPath, conferenceState }: SerializeFrom<typeof loader>) {
     return (
-        <div className={styledSidebarContainer}>
-            <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
-            <main id="content" dangerouslySetInnerHTML={{ __html: post }} />
+        <Grid gridTemplateColumns="1fr auto">
+            <main id="content">
+                <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
+                <Box dangerouslySetInnerHTML={{ __html: post }} />
+            </main>
             <aside>
                 <EventDetailsSummary conferenceState={conferenceState} currentPath={currentPath} />
                 <h2>Important Dates</h2>
                 {/* TODO Important date list */}
                 {/* <ImportantDatesList layout="inline" conference={conference} currentDate={currentDate} /> */}
             </aside>
-        </div>
+        </Grid>
     )
 }
 
