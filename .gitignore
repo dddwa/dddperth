@@ -39,6 +39,7 @@ testem.log
 Thumbs.db
 
 .nx/cache
+.nx/workspace-data
 vite.config.ts.timestamp*
 website/styled-system
 .azure
