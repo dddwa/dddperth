@@ -57,8 +57,18 @@ export default defineConfig({
                     body: { value: 'Roboto, sans-serif' },
                 },
                 sizes: {
-                    120: { value: '30rem' },
-                    160: { value: '40rem' },
+                    /** xs: 4 */
+                    xs: { value: '4' },
+                    /** sm: 8 */
+                    sm: { value: '8' },
+                    /** md: 16 */
+                    md: { value: '16' },
+                    /** lg: 24 */
+                    lg: { value: '24' },
+                    /** xl: 32 */
+                    xl: { value: '32' },
+                    /** xxl: 40 */
+                    xxl: { value: '40' },
                 },
                 zIndex: {
                     '9999': { value: 9999 },

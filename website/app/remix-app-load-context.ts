@@ -1,7 +1,12 @@
-import '@remix-run/node'
+import '@remix-run/server-runtime'
+import { ConferenceState } from './lib/config-types'
 
-declare module '@remix-run/node' {
-    export interface AppLoadContext {}
+declare module '@remix-run/server-runtime' {
+    export interface AppLoadContext {
+        requestId: string
+
+        conferenceState: ConferenceState
+    }
 
     // This is the module that is exported from apps/portal/app/entry.server.ts
     // server.ts always accesses the latest version of this file, enabling the

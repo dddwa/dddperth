@@ -19,6 +19,8 @@ Each markdown file should have a frontmatter section at the top of the file. Thi
 
 Rather than hardcoding conference data into the website, we can reference the data from the conference data file. This allows us to update the conference data in one place and have it reflected across the website.
 
+You access data with braces, eg. `{props.{property}}`
+
 ### Available data
 
 | Property                                             | Description                                        |
@@ -27,6 +29,7 @@ Rather than hardcoding conference data into the website, we can reference the da
 | description                                          | A brief description of the conference              |
 | blogDescription                                      | A description for the conference blog              |
 | current.year                                         | The current year of the conference                 |
+| current.ticketPrice                                  | The current ticket price for the conference        |
 | current.conferenceDate                               | The date of this year's conference                 |
 | current.venue.name                                   | The name of the conference venue                   |
 | previous['Year'].conferenceDate                      | The date of a previous year's conference           |
@@ -52,3 +55,14 @@ Rather than hardcoding conference data into the website, we can reference the da
 | socials.gitHub                                       | GitHub page for the conference                     |
 | socials.instagram                                    | Instagram page for the conference                  |
 | socials.linkedin                                     | LinkedIn page for the conference                   |
+
+### Current phase data
+
+In addition to data, the following is available to show and hide content based on the current phase of the conference, eg ticket sales open.
+
+| Property | Description |
+| -------- | ----------- |
+
+### Components
+
+The following components are available to use in the markdown files:

@@ -1,12 +1,18 @@
 {
     "cSpell.enabled": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
-    },
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
-    "typescript.preferences.importModuleSpecifier": "project-relative",
     "[xml]": {
         "editor.defaultFormatter": "DotJoshJohnson.xml"
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.preferences.importModuleSpecifier": "shortest",
+    "typescript.tsserver.maxTsServerMemory": 4096,
+    "eslint.runtime": "node",
+    "eslint.execArgv": [
+        "--max_old_space_size=4096"
+    ],
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
     },
 }

@@ -49,6 +49,11 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/blog.rss[.xml]').SearchParams>,
     };
   
+    "/config": {
+      params: never,
+      query: ExportedQuery<import('app/routes/config').SearchParams>,
+    };
+  
   }
 
   type RoutesWithParams = Pick<
@@ -66,7 +71,8 @@ declare module "remix-routes" {
     | 'routes/_layout.$'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
-    | 'routes/blog.rss[.xml]';
+    | 'routes/blog.rss[.xml]'
+    | 'routes/config';
 
   export function $path<
     Route extends keyof Routes,

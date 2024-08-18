@@ -5,12 +5,16 @@ import { createReadableStreamFromReadable } from '@remix-run/node'
 import { RemixServer } from '@remix-run/react'
 import * as isbotModule from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
+import { conferenceConfig } from './config/conference-config'
+import { getCurrentConferenceState } from './lib/conference-state'
+import { SystemDateTimeProvider } from './lib/dates/system-date-time-provider.server'
 
 const ABORT_DELAY = 5_000
 
-export function getLoadContext(requestId: string) {
+export function getLoadContext(requestId: string): AppLoadContext {
     return {
         requestId,
+        conferenceState: getCurrentConferenceState(new SystemDateTimeProvider(), conferenceConfig),
     }
 }
 
@@ -23,18 +27,8 @@ export default function handleRequest(
     _loadContext: AppLoadContext,
 ) {
     return isBotRequest(request.headers.get('user-agent'))
-        ? handleBotRequest(
-              request,
-              responseStatusCode,
-              responseHeaders,
-              remixContext,
-          )
-        : handleBrowserRequest(
-              request,
-              responseStatusCode,
-              responseHeaders,
-              remixContext,
-          )
+        ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
+        : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext)
 }
 
 function isBotRequest(userAgent: string | null) {
@@ -54,11 +48,7 @@ function handleBotRequest(
     return new Promise((resolve, reject) => {
         let shellRendered = false
         const { pipe, abort } = renderToPipeableStream(
-            <RemixServer
-                context={remixContext}
-                url={request.url}
-                abortDelay={ABORT_DELAY}
-            />,
+            <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
             {
                 onAllReady() {
                     shellRendered = true
@@ -104,11 +94,7 @@ function handleBrowserRequest(
     return new Promise((resolve, reject) => {
         let shellRendered = false
         const { pipe, abort } = renderToPipeableStream(
-            <RemixServer
-                context={remixContext}
-                url={request.url}
-                abortDelay={ABORT_DELAY}
-            />,
+            <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
             {
                 onShellReady() {
                     shellRendered = true

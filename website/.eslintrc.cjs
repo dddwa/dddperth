@@ -20,9 +20,6 @@ module.exports = {
         es6: true,
     },
 
-    // Base config
-    extends: ['eslint:recommended'],
-
     overrides: [
         // React
         {
@@ -47,6 +44,7 @@ module.exports = {
                     typescript: {},
                 },
             },
+            rules: {},
         },
 
         // Typescript
@@ -65,9 +63,16 @@ module.exports = {
                     },
                 },
             },
-            extends: ['plugin:@typescript-eslint/recommended', 'plugin:import/recommended', 'plugin:import/typescript'],
+            extends: [
+                'eslint:recommended',
+                'plugin:@typescript-eslint/recommended',
+                'plugin:import/recommended',
+                'plugin:import/typescript',
+            ],
             rules: {
                 'import/no-unresolved': 'off',
+                'prefer-const': 'off',
+                '@typescript-eslint/no-explicit-any': 'off',
             },
         },
 

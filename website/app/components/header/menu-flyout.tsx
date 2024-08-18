@@ -1,6 +1,6 @@
 import { css } from '../../../styled-system/css'
 import { Box } from '../../../styled-system/jsx'
-import { menuData } from '../../config/menu'
+import { menuData } from '../../lib/menu'
 import { AppLink } from '../app-link'
 
 export function MenuFlyout({ close }: { close: () => void }) {

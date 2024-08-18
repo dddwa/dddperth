@@ -1,63 +1,11 @@
+import { ConferenceConfig } from '../lib/config-types'
 import { conference2022 } from './years/2022'
 import { conference2023 } from './years/2023'
-import type { ConferenceYear } from './years/year-config'
+import { conference2024 } from './years/2024'
 
 //
 // If you update this, could you also update website-content/README.md
 //
-
-/**
- * Conference configuration which doesn't necessarily change year on year
- */
-export interface ConferenceConfig {
-    name: string
-    description: string
-
-    blogDescription: string
-
-    timezone: string
-
-    current: ConferenceYear
-
-    previous: Record<`${number}${number}${number}${number}`, ConferenceYear>
-
-    importantContacts: {
-        police: {
-            details: string
-            phone: string
-            mapUrl: string
-        }
-        centreAgainstSexualAssault: {
-            Details: string
-            Phone: string
-        }
-        emergencyMedical: {
-            details: string
-            mapUrl: string
-        }
-        nonEmergencyMedical: {
-            details: string
-            phone: string
-            mapUrl: string
-        }
-    }
-
-    socials: {
-        twitter: {
-            id: string
-            name: string
-        }
-        facebook: string
-        flickr: string
-        youtube: string
-        blog: string
-        email: string
-        mailingList: string
-        gitHub: string
-        instagram: string
-        linkedin: string
-    }
-}
 
 export const conferenceConfig = {
     name: 'DDD Perth',
@@ -105,9 +53,15 @@ export const conferenceConfig = {
 
     timezone: 'Australia/Perth',
 
-    current: conference2023,
-
-    previous: {
+    conferences: {
         '2022': conference2022,
+        '2023': conference2023,
+        '2024': conference2024,
+    },
+
+    volunteerForm: {
+        type: 'salesmate',
+        formId: 'e23713d2-8c3a-411b-b22c-2f8528b77c88',
+        linkName: 'dddperth.salesmate.io',
     },
 } satisfies ConferenceConfig

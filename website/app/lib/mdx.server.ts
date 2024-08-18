@@ -43,6 +43,8 @@ const PageFrontmatter = z.object({
     title: z.string(),
     summary: z.string().optional(),
     draft: z.boolean().optional(),
+
+    layout: z.union([z.literal('with-sidebar'), z.literal('full-width')]).default('with-sidebar'),
 })
 
 const blogPostsBySlug = toPagesBySlug(blogPostFiles, '../../../blog/posts', BlogPostFrontmatter)
@@ -81,7 +83,7 @@ export function getBlogPost(slug: string) {
     const validatedAuthors = getValidAuthorNames(postData.authors)
     if (validatedAuthors.length === 0) {
         console.warn(
-            'The author info in `%s` is incorrect and should be fixed to match what’s in the `authors.yaml` file.',
+            'The author info in `%s` is incorrect and should be fixed to match what’s in the `authors.yml` file.',
             slug,
         )
     }
