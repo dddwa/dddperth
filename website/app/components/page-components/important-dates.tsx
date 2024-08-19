@@ -17,7 +17,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-06-14T00:00:00.000Z',
     day: 'Friday',
     date: 'Jun 14',
-    time: '08:00AM',
+    time: '8:00am',
     event: 'Call for presentations open',
     eventCloseTitle: 'CFP Closed',
   },
@@ -25,7 +25,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-06-21T00:00:00.000Z',
     day: 'Friday',
     date: 'Jun 21',
-    time: '08:00AM',
+    time: '8:00am',
     event: 'Ticket sales open',
     eventCloseTitle: 'Buy Tickets',
     eventCloseHref: '/tickets',
@@ -35,7 +35,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-07-12T15:59:59.000Z',
     day: 'Friday',
     date: 'Jul 12',
-    time: '11:59PM',
+    time: '11:59pm',
     event: 'Call for presentations close',
     eventCloseTitle: 'CFP Closed',
   },
@@ -43,7 +43,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-07-22T16:00:00.000Z',
     day: 'Tuesday',
     date: 'Jul 23',
-    time: '12:00AM',
+    time: '12:00am',
     event: 'Voting open',
     eventCloseTitle: 'Voting Closed',
   },
@@ -51,7 +51,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-08-06T15:59:59.000Z',
     day: 'Tuesday',
     date: 'Aug 6',
-    time: '11:59PM',
+    time: '11:59pm',
     event: 'Voting close',
     eventCloseTitle: 'Voting Closed',
   },
@@ -59,7 +59,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-08-20T09:00:00.000Z',
     day: 'Tuesday',
     date: 'Aug 20',
-    time: '05:00PM',
+    time: '5:00pm',
     event: 'Agenda published',
     eventCloseTitle: 'View Agenda',
     eventCloseHref: '/agenda',
@@ -69,7 +69,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-11-15T09:15:00.000Z',
     day: 'Friday',
     date: 'Nov 15',
-    time: '05:15PM',
+    time: '05:15pm',
     event: 'Ticket sales close',
     eventLive: true,
   },
@@ -77,7 +77,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     datetime: '2024-11-16T00:00:00.000Z',
     day: 'Saturday',
     date: 'Nov 16',
-    time: '08:00AM',
+    time: '8:00am',
     event: 'Conference day',
     eventCloseTitle: 'Get Directions!',
     eventLive: true,
@@ -134,7 +134,7 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
       <Flex flexDirection="column">
         <time dateTime={datetime} />
         <styled.p fontSize="sm" color="#C2C2FF">
-          {day}, {date} - {time}
+          {day} {date}, {time}
         </styled.p>
         <styled.h3 fontSize="lg" fontWeight="semibold">
           {event}
@@ -181,8 +181,7 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
           rounded="lg"
           width={150}
           paddingY={1}
-          fontWeight="semibold"
-          color="#C2C2FF"
+          color="#9c9cd7"
           bgGradient="to-r"
           gradientFrom="white/5"
           gradientTo="transparent"
