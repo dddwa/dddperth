@@ -161,7 +161,7 @@ export default function Agenda() {
             md={{
               display: 'block',
               position: 'sticky',
-              top: 0,
+              top: 4,
               zIndex: 1000,
             }}
           >
