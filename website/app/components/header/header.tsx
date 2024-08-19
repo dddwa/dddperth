@@ -25,18 +25,18 @@ export function Header() {
                 </AppLink>
               </Flex>
               <Flex flexDir="row" alignItems="center" gap={12} fontWeight={600}>
-                <styled.a href="/event/speakers" color="white" _hover={{ color: '#8282FB' }}>
+                {/* <styled.a href="/event/speakers" color="white" _hover={{ color: '#8282FB' }}>
                   Speakers
-                </styled.a>
+                </styled.a> */}
                 <styled.a href="/agenda" color="white" _hover={{ color: '#8282FB' }}>
                   Agenda
                 </styled.a>
                 <styled.a href="/about" color="white" _hover={{ color: '#8282FB' }}>
                   About
                 </styled.a>
-                <styled.a href="/blog" color="white" _hover={{ color: '#8282FB' }}>
+                {/* <styled.a href="/blog" color="white" _hover={{ color: '#8282FB' }}>
                   Blog
-                </styled.a>
+                </styled.a> */}
                 <styled.a
                   href="/tickets"
                   color="#520030"
