@@ -3,11 +3,12 @@
 import { DateTime } from 'luxon'
 import { MDXContent } from 'mdx/types'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
 import { styled } from '../../styled-system/jsx'
 import { ConferenceState } from './config-types'
 
-export function renderMdx(Component: MDXContent, conference: ConferenceState): string {
+export function renderMdx(Component: MDXContent, conferenceState: ConferenceState): string {
     return renderToStaticMarkup(
         <Component
             components={{
@@ -16,14 +17,15 @@ export function renderMdx(Component: MDXContent, conference: ConferenceState): s
                 h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
                 h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
                 ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
+                VolunteerForm: ({ ref, ...props }) => <VolunteerForm />,
                 SubmitSession: ({ ref, ...props }) => {
-                    if (conference.callForPapers.state === 'open') {
-                        if (conference.callForPapers.sessionizeUrl) {
+                    if (conferenceState.callForPapers.state === 'open') {
+                        if (conferenceState.callForPapers.sessionizeUrl) {
                             return (
                                 <styled.div {...props}>
                                     <Button asChild>
                                         <a
-                                            href={conference.callForPapers.sessionizeUrl}
+                                            href={conferenceState.callForPapers.sessionizeUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
@@ -34,16 +36,16 @@ export function renderMdx(Component: MDXContent, conference: ConferenceState): s
                             )
                         }
                     }
-                    if (conference.callForPapers.state === 'closed') {
+                    if (conferenceState.callForPapers.state === 'closed') {
                         return <CFPClosed />
                     }
 
-                    if (conference.callForPapers.state === 'not-open-yet') {
-                        return <CFPNotOpenYet cfpOpens={conference.callForPapers.opens} />
+                    if (conferenceState.callForPapers.state === 'not-open-yet') {
+                        return <CFPNotOpenYet cfpOpens={conferenceState.callForPapers.opens} />
                     }
                 },
                 EditSession: ({ ref, ...props }) => {
-                    if (conference.callForPapers.state === 'open') {
+                    if (conferenceState.callForPapers.state === 'open') {
                         return (
                             <styled.div {...props}>
                                 <Button asChild>
@@ -58,16 +60,21 @@ export function renderMdx(Component: MDXContent, conference: ConferenceState): s
                             </styled.div>
                         )
                     }
-                    if (conference.callForPapers.state === 'closed') {
+                    if (conferenceState.callForPapers.state === 'closed') {
                         return <CFPClosed />
                     }
 
-                    if (conference.callForPapers.state === 'not-open-yet') {
-                        return <CFPNotOpenYet cfpOpens={conference.callForPapers.opens} />
+                    if (conferenceState.callForPapers.state === 'not-open-yet') {
+                        return <CFPNotOpenYet cfpOpens={conferenceState.callForPapers.opens} />
+                    }
+                },
+                VolunteersNeeded: ({ ref, ...props }) => {
+                    if (conferenceState.needsVolunteers) {
+                        return props.children
                     }
                 },
             }}
-            conference={conference}
+            conference={conferenceState}
         />,
     )
 }

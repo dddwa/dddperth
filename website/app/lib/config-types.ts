@@ -12,6 +12,7 @@ export interface ConferenceConfig {
     blogDescription: string
 
     timezone: string
+    needVolunteers: boolean
 
     conferences: Record<Year, ConferenceYear>
 
@@ -144,6 +145,8 @@ export interface BeforeConferenceState {
     talkVoting: TalkVotingStates
     feedback: NotOpenYet
     agenda: AgendaState
+
+    needsVolunteers: boolean
 }
 
 /**
@@ -160,6 +163,8 @@ export interface ConferenceDayState {
     talkVoting: Closed
     feedback: Open
     agenda: Published
+
+    needsVolunteers: false
 }
 
 /** Conference is over, there is no next conference configured */
@@ -173,6 +178,8 @@ export interface AfterConferenceState {
     talkVoting: NotOpenYet
     feedback: FeedbackState
     agenda: NotReleased
+
+    needsVolunteers: false
 }
 
 //

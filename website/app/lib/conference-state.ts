@@ -55,6 +55,7 @@ export function getCurrentConferenceState(
             agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
             talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
             feedback: 'not-open-yet',
+            needsVolunteers: conference.needVolunteers,
         }
     }
 
@@ -87,6 +88,7 @@ export function getCurrentConferenceState(
             callForPapers: { state: 'closed' },
             ticketSales: 'closed',
             talkVoting: 'closed',
+            needsVolunteers: false,
         }
     }
 
@@ -109,6 +111,7 @@ export function getCurrentConferenceState(
                 latestConference[1].feedbackOpenUntilDateTime,
                 latestConference[1].conferenceDate,
             ),
+            needsVolunteers: false,
         }
     }
 
@@ -135,6 +138,7 @@ export function getCurrentConferenceState(
         agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
         talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
         feedback: 'not-open-yet',
+        needsVolunteers: conference.needVolunteers,
     }
 }
 

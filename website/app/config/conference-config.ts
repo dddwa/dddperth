@@ -53,6 +53,8 @@ export const conferenceConfig = {
 
     timezone: 'Australia/Perth',
 
+    needVolunteers: true,
+
     conferences: {
         '2022': conference2022,
         '2023': conference2023,
