@@ -1,4 +1,5 @@
 import { Box, Flex } from '../../../styled-system/jsx'
+import ImportantDates from '../page-components/important-dates'
 import { HomepageHeroPanel } from './hero-panel'
 
 export function Hero() {
@@ -31,6 +32,7 @@ export function Hero() {
         </p>
         <p>Check out the agenda and talks from previous years , or hear more about how we do what we do on our blog.</p>
       </Flex>
+      <ImportantDates />
     </Box>
   )
 }

@@ -6,7 +6,7 @@ import { AppLink } from '../app-link'
 export function Header() {
   return (
     <>
-      <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" pt={4}>
+      <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" py={4}>
         <Box w="100%" position="relative" maxW="1200px" m="0 auto">
           <Box w="100%" position="relative">
             <Flex flexDir="row" justifyContent="space-between" alignItems="center">

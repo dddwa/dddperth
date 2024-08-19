@@ -11,45 +11,45 @@ export const Footer = () => (
         <Logo width={153} />
       </Flex>
       <Flex direction="column" gap={1} fontWeight="medium">
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/agenda`} color="white" _hover={{ color: '#8282FB' }}>
           Previous Years Sessions
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/speakers`} color="white" _hover={{ color: '#8282FB' }}>
           Speakers
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/agenda`} color="white" _hover={{ color: '#8282FB' }}>
           Agenda
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
-          Sponsors
+        <styled.a href={`/sponsorship`} color="white" _hover={{ color: '#8282FB' }}>
+          Sponsorship
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/about`} color="white" _hover={{ color: '#8282FB' }}>
           About
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/blog`} color="white" _hover={{ color: '#8282FB' }}>
           Blog
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/faq`} color="white" _hover={{ color: '#8282FB' }}>
           FAQ
         </styled.a>
       </Flex>
       <Flex direction="column" gap={1} fontWeight="medium">
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/code-of-conduct`} color="white" _hover={{ color: '#8282FB' }}>
           Code Of Conduct
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/terms-and-conditions`} color="white" _hover={{ color: '#8282FB' }}>
           Terms & Conditions
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/venue`} color="white" _hover={{ color: '#8282FB' }}>
           Venue
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
-          Covid-19 Policy
+        <styled.a href={`/health-policy`} color="white" _hover={{ color: '#8282FB' }}>
+          Health Policy
         </styled.a>
-        <styled.a href={`/`} color="white" _hover={{ color: '#8282FB' }}>
+        <styled.a href={`/volunteer`} color="white" _hover={{ color: '#8282FB' }}>
           Work With Us
         </styled.a>
-        <styled.a href={`/`} color="#8282FB" _hover={{ color: 'white' }}>
+        <styled.a href={`mailto:info@dddperth.com`} color="#8282FB" _hover={{ color: 'white' }}>
           info@dddperth.com
         </styled.a>
       </Flex>

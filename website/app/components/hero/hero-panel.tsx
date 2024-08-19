@@ -25,14 +25,14 @@ export const HomepageHeroPanel = () => {
     >
       <Box maxW="1200px">
         <styled.h2 color="#8282FB" fontSize="xl" fontWeight="bold" textWrap="balance" maxWidth="3/4">
-          Sat 7th October, 2023 • Optus Stadium, Perth
+          Sat 16th November, 2024 • Optus Stadium, Perth
         </styled.h2>
         <styled.h1
           fontFamily="sans-serif"
           color="white"
           fontSize="xl"
           w="full"
-          fontWeight="bold"
+          fontWeight="black"
           textWrap="balance"
           lineHeight={1.2}
           maxWidth="3/4"
