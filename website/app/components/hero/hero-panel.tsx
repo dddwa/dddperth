@@ -35,10 +35,9 @@ export const HomepageHeroPanel = () => {
           fontWeight="black"
           textWrap="balance"
           lineHeight={1.2}
-          maxWidth="3/4"
-          sm={{ fontSize: '3xl' }}
-          lg={{ fontSize: '4xl' }}
-          xl={{ fontSize: '6xl' }}
+          sm={{ fontSize: '3xl', maxWidth: 'full' }}
+          lg={{ fontSize: '5xl', maxWidth: '3/4' }}
+          xl={{ fontSize: '6xl', maxWidth: '3/4' }}
         >
           A one day, fully inclusive, approachable and affordable tech conference for everyone.
         </styled.h1>
