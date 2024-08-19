@@ -11,12 +11,6 @@
         "dddExists": {
             "value": "${SERVICE_DDD_RESOURCE_EXISTS=false}"
         },
-        "authClientId": {
-            "value": "${AUTH_CLIENT_ID}"
-        },
-        "authClientSecret": {
-            "value": "${AUTH_CLIENT_SECRET}"
-        },
         "ddd2024Definition": {
             "value": {
                 "settings": [
@@ -35,9 +29,6 @@
                     }
                 ]
             }
-        },
-        "principalId": {
-            "value": "${AZURE_PRINCIPAL_ID}"
         }
     }
 }

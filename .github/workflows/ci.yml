@@ -1,15 +1,9 @@
 on:
-    workflow_call:
-        inputs:
-            AZURE_ENV_NAME:
-                required: true
-                type: string
-        secrets:
-            AUTH_CLIENT_ID:
-                required: false
+    push:
+        branches:
+            - main
 
-            AUTH_CLIENT_SECRET:
-                required: false
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 # GitHub Actions workflow to deploy to Azure using azd
 # To configure required secrets for connecting to Azure, simply run `azd pipeline config`
@@ -23,12 +17,10 @@ permissions:
 jobs:
     build:
         runs-on: ubuntu-latest
-        environment: ${{ inputs.AZURE_ENV_NAME }}
+        environment: prd
         env:
-            AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID}}
-            AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID}}
             AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID}}
-            AZURE_ENV_NAME: ${{ inputs.AZURE_ENV_NAME }}
+            AZURE_ENV_NAME: prd
             AZURE_LOCATION: australiaeast
 
         steps:
@@ -62,9 +54,6 @@ jobs:
 
             - name: Provision Infrastructure
               run: azd provision --no-prompt
-              env:
-                  AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
-                  AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
 
             - name: Build application
               run: pnpm nx build website

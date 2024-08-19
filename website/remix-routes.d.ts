@@ -18,18 +18,18 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/root').SearchParams>,
     };
   
-    "/:year?/agenda": {
-      params: {
-        year?: string | number;
-      } ,
-      query: ExportedQuery<import('app/routes/_layout.($year).agenda').SearchParams>,
-    };
-  
     "/*": {
       params: {
         "*": string | number;
       } ,
       query: ExportedQuery<import('app/routes/_layout.$').SearchParams>,
+    };
+  
+    "/agenda/:year?": {
+      params: {
+        year?: string | number;
+      } ,
+      query: ExportedQuery<import('app/routes/_layout.agenda.($year)').SearchParams>,
     };
   
     "/blog": {
@@ -67,8 +67,8 @@ declare module "remix-routes" {
     | 'root'
     | 'routes/_layout'
     | 'routes/_layout._index'
-    | 'routes/_layout.($year).agenda'
     | 'routes/_layout.$'
+    | 'routes/_layout.agenda.($year)'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
     | 'routes/blog.rss[.xml]'

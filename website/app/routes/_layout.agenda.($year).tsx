@@ -6,7 +6,14 @@ import { Fragment } from 'react'
 import { $path } from 'remix-routes'
 import { Box, styled } from 'styled-system/jsx'
 import { TypeOf } from 'zod'
-import { ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
+import {
+    ConferenceConfigYear,
+    ConferenceImportantInformation,
+    ConferenceYear,
+    Sponsor,
+    Year,
+    YearSponsors,
+} from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
 import { formatDate, getScheduleGrid, gridSmartSchema } from '../lib/sessionize.server'
@@ -14,14 +21,19 @@ import { slugify } from '../lib/slugify'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
-        return redirect($path('/:year?/agenda', { year: undefined }))
+        return redirect($path('/agenda/:year?', { year: undefined }))
     }
 
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
+    const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[year]
+    if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
+        return redirect($path('/agenda/:year?', { year: undefined }))
+    }
+
     const yearConfig: ConferenceImportantInformation = params.year
-        ? getImportantInformation((conferenceConfig.conferences as Record<Year, ConferenceYear>)[year])
+        ? getImportantInformation(yearConfigLookup)
         : context.conferenceState.conference
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
@@ -42,6 +54,10 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     return json(
         {
             year,
+            sponsors: yearConfigLookup.sponsors,
+            conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
+                year: conf.year,
+            })),
             schedule: schedule
                 ? {
                       ...schedule,
@@ -69,7 +85,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function Agenda() {
-    const { schedule } = useLoaderData<typeof loader>()
+    const { schedule, sponsors, conferences } = useLoaderData<typeof loader>()
 
     if (!schedule) {
         return <Box bg="white">Agenda has not been announced</Box>
@@ -191,7 +207,82 @@ export default function Agenda() {
                     )
                 })}
             </Box>
+
+            <SponsorSection sponsors={sponsors} />
+
+            <ConferenceBrowser conferences={conferences} />
         </Box>
+    )
+}
+
+function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
+    return (
+        <styled.div padding="4">
+            <styled.h2 fontSize="xl" marginBottom="2">
+                Other Conferences
+            </styled.h2>
+            <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
+                {conferences.map((conf) => (
+                    <styled.a key={conf.year} href={`/agenda/${conf.year}`}>
+                        <styled.span fontSize="lg">{conf.year}</styled.span>
+                    </styled.a>
+                ))}
+            </styled.div>
+        </styled.div>
+    )
+}
+
+function SponsorSection({ sponsors }: { sponsors: YearSponsors | undefined }) {
+    const renderSponsorCategory = (
+        title: string,
+        sponsors: Sponsor[] | undefined,
+        logoSize: 'xs' | 'sm' | 'md' | 'lg',
+    ) => {
+        if (!sponsors || sponsors.length === 0) return null
+
+        return (
+            <styled.div marginBottom="4">
+                <styled.h2 fontSize="xl" marginBottom="2">
+                    {title}
+                </styled.h2>
+                <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
+                    {sponsors.map((sponsor) => (
+                        <styled.a key={sponsor.name} href={sponsor.website} target="_blank" rel="noopener noreferrer">
+                            <styled.img
+                                src={sponsor.logoUrl}
+                                alt={sponsor.name}
+                                maxWidth={
+                                    logoSize === 'lg'
+                                        ? '200px'
+                                        : logoSize === 'md'
+                                          ? '150px'
+                                          : logoSize === 'sm'
+                                            ? '100px'
+                                            : '75px'
+                                }
+                                width="100%"
+                                display="inline-block"
+                            />
+                        </styled.a>
+                    ))}
+                </styled.div>
+            </styled.div>
+        )
+    }
+
+    if (!sponsors) return null
+
+    return (
+        <styled.div padding="4">
+            {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
+            {renderSponsorCategory('Gold Sponsors', sponsors.gold, 'md')}
+            {renderSponsorCategory('Silver Sponsors', sponsors.silver, 'sm')}
+            {renderSponsorCategory('Bronze Sponsors', sponsors.bronze, 'xs')}
+            {renderSponsorCategory('Community Sponsors', sponsors.community, 'xs')}
+            {renderSponsorCategory('Coffee Cart Sponsors', sponsors.coffeeCart, 'xs')}
+            {renderSponsorCategory('Quiet Room Sponsors', sponsors.quietRoom, 'xs')}
+            {renderSponsorCategory('Keynote Sponsors', sponsors.keynotes, 'sm')}
+        </styled.div>
     )
 }
 
