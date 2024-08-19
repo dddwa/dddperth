@@ -4,7 +4,7 @@ import { useLoaderData } from '@remix-run/react'
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
 import { $path } from 'remix-routes'
-import { Box, Grid, styled } from 'styled-system/jsx'
+import { Box, styled } from 'styled-system/jsx'
 import { TypeOf } from 'zod'
 import { ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -76,9 +76,17 @@ export default function Agenda() {
     }
     return (
         <Box bg="white" maxWidth="1200px" mx="auto" p="4">
-            <Grid
+            <Box
                 style={
                     {
+                        /**
+                         * Note 1:
+                         * Use 24hr time for gridline names for simplicity
+                         *
+                         * Note 2: Use "auto" instead of "1fr" for a more compact schedule where height of a slot is not proportional to the session length. Implementing a "compact" shortcode attribute might make sense for this!
+                         *
+                         Try 0.5fr for more compact equal rows. I don't quite understand how that works :)
+                         */
                         '--slot-rows': [
                             '[rooms] auto',
                             ...schedule.timeSlots.map(
@@ -98,6 +106,7 @@ export default function Agenda() {
                     } as React.CSSProperties
                 }
                 md={{
+                    display: 'grid',
                     gridTemplateRows: 'var(--slot-rows)',
                     gridTemplateColumns: 'var(--room-columns)',
                     gridGap: '1',
@@ -181,7 +190,7 @@ export default function Agenda() {
                         </Fragment>
                     )
                 })}
-            </Grid>
+            </Box>
         </Box>
     )
 }
