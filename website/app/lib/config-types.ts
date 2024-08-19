@@ -118,7 +118,7 @@ export type ConferenceState = BeforeConferenceState | ConferenceDayState | After
 
 export interface CFPOpen {
     state: Open
-    closes: DateTime
+    closes: string
     sessionizeUrl: string
 }
 
@@ -128,7 +128,7 @@ export interface CFPClosed {
 
 export interface CFPNotOpenYet {
     state: NotOpenYet
-    opens: DateTime
+    opens: string
 }
 
 /**

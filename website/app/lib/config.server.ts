@@ -7,17 +7,27 @@ export const {
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
     OTEL_EXPORTER_OTLP_ENDPOINT,
-    HONEYCOMB_API_KEY,
+    USE_GITHUB_CONTENT,
+    GITHUB_ORGANIZATION,
+    GITHUB_REF,
+    GITHUB_REPO,
+    GITHUB_TOKEN,
 } = z
     .object({
-        NODE_ENV: z.string().default('development'),
-        SESSION_SECRET: z.string().default('SESSION_SECRET'),
+        NODE_ENV: z.string(),
+        SESSION_SECRET: z.string(),
 
         APPLICATIONINSIGHTS_CONNECTION_STRING: z.string().optional(),
         OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
         OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.string().optional(),
         OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: z.string().optional(),
         OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: z.string().optional(),
-        HONEYCOMB_API_KEY: z.string().optional(),
+
+        USE_GITHUB_CONTENT: z.string().transform((val) => val === 'true'),
+
+        GITHUB_REF: z.string().default('main'),
+        GITHUB_TOKEN: z.string().optional(),
+        GITHUB_ORGANIZATION: z.string(),
+        GITHUB_REPO: z.string(),
     })
     .parse(process.env)

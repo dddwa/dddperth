@@ -5,24 +5,31 @@ import { useLoaderData } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 
 import { useRef } from 'react'
+import { BlogAuthor, getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getBlogPost } from '~/lib/mdx.server'
+import { getPage } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
-import { renderMdx } from '../lib/mdx-render.server'
 
-export async function loader({ params, request, context }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = getBlogPost(slug)
+    const post = await getPage(slug, 'blog')
+    if (!post) {
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+
     return json(
         {
             siteUrl,
             frontmatter: post.frontmatter,
-            post: renderMdx(post.Component, context.conferenceState),
+            post: post.code,
+            blogAuthors: getValidAuthorNames(post.frontmatter.authors ?? [])
+                .map(getAuthor)
+                .filter((a): a is BlogAuthor => !!a),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )
@@ -45,11 +52,17 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
     const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${slug}`) : null
     if (ogImageUrl) {
-        ogImageUrl.searchParams.set('title', frontmatter.title)
-        ogImageUrl.searchParams.set('date', frontmatter.dateDisplay)
-        for (const { name, title } of frontmatter.blogAuthors) {
-            ogImageUrl.searchParams.append('authorName', name)
-            ogImageUrl.searchParams.append('authorTitle', title)
+        if (frontmatter.title) {
+            ogImageUrl.searchParams.set('title', frontmatter.title)
+        }
+        if (frontmatter.date) {
+            ogImageUrl.searchParams.set('date', frontmatter.date)
+        }
+        if (data?.blogAuthors) {
+            for (const { name, title } of data.blogAuthors) {
+                ogImageUrl.searchParams.append('authorName', name)
+                ogImageUrl.searchParams.append('authorTitle', title)
+            }
         }
     }
 
@@ -77,7 +90,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 }
 
 export default function BlogPost() {
-    const { post, frontmatter } = useLoaderData<typeof loader>()
+    const { post, frontmatter, blogAuthors } = useLoaderData<typeof loader>()
     const mdRef = useRef<HTMLDivElement>(null)
 
     return (
@@ -94,11 +107,11 @@ export default function BlogPost() {
                             </div>
                             <div>
                                 <div>
-                                    <div>{frontmatter.dateDisplay}</div>
+                                    <div>{frontmatter.date}</div>
                                     <div>{frontmatter.title}</div>
                                 </div>
                                 <div>
-                                    {frontmatter.blogAuthors.map((author) => (
+                                    {blogAuthors.map((author) => (
                                         <div key={author.name}>
                                             <div>
                                                 <img src={author.avatar} alt="" />

@@ -4,6 +4,8 @@ import { json } from '@remix-run/node'
 import type { MetaFunction } from '@remix-run/react'
 import { Link, useLoaderData } from '@remix-run/react'
 
+import { trace } from '@opentelemetry/api'
+import { PropsWithChildren } from 'react'
 import { Button } from '~/components/ui/button'
 import getConferenceActions from '~/lib/conference-actions'
 import { ConferenceState } from '~/lib/config-types'
@@ -12,7 +14,7 @@ import { css } from '../../styled-system/css'
 import { Box, Grid, styled } from '../../styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import { socials } from '../config/socials'
-import { renderMdx } from '../lib/mdx-render.server'
+import { useMdxPage } from '../lib/mdx'
 import { getPage } from '../lib/mdx.server'
 
 export async function loader({ params, request, context }: LoaderFunctionArgs) {
@@ -28,7 +30,17 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = getPage(contentSlug)
+    const post = await getPage(contentSlug, 'page')
+    if (!post) {
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+    if (post.frontmatter.draft) {
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+    if (!post.frontmatter.title) {
+        trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
     const currentPath = requestUrl.pathname
 
     return json(
@@ -36,7 +48,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
             currentPath,
             siteUrl,
             frontmatter: post.frontmatter,
-            post: renderMdx(post.Component, context.conferenceState),
+            post: post.code,
             conferenceState: context.conferenceState,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
@@ -61,7 +73,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     }
 
     const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${contentSlug}`) : null
-    if (ogImageUrl) {
+    if (ogImageUrl && frontmatter.title) {
         ogImageUrl.searchParams.set('title', frontmatter.title)
     }
 
@@ -90,6 +102,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 export default function WebsiteContentPage() {
     const { post, frontmatter, currentPath, conferenceState, siteUrl } = useLoaderData<typeof loader>()
+    const Component = useMdxPage(post, conferenceState)
 
     return (
         <>
@@ -101,11 +114,11 @@ export default function WebsiteContentPage() {
                     <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
                         <ContentPageWithSidebar
                             currentPath={currentPath}
-                            siteUrl={siteUrl}
                             frontmatter={frontmatter}
-                            post={post}
                             conferenceState={conferenceState}
-                        />
+                        >
+                            <Component />
+                        </ContentPageWithSidebar>
                     </Box>
                 </Box>
             </div>
@@ -115,12 +128,17 @@ export default function WebsiteContentPage() {
 
 export const styledSidebarContainer = css({})
 
-function ContentPageWithSidebar({ frontmatter, post, currentPath, conferenceState }: SerializeFrom<typeof loader>) {
+function ContentPageWithSidebar({
+    frontmatter,
+    currentPath,
+    conferenceState,
+    children,
+}: PropsWithChildren<Pick<SerializeFrom<typeof loader>, 'conferenceState' | 'frontmatter' | 'currentPath'>>) {
     return (
         <Grid gridTemplateColumns="1fr auto">
             <main id="content">
                 <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
-                <Box dangerouslySetInnerHTML={{ __html: post }} />
+                {children}
             </main>
             <aside>
                 <EventDetailsSummary conferenceState={conferenceState} currentPath={currentPath} />

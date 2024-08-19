@@ -183,8 +183,8 @@ function getCfpState(
     sessionizeUrl: string | undefined,
 ): CFPOpen | CFPClosed | CFPNotOpenYet {
     return cfpDates && currentDate < cfpDates.opens
-        ? { state: 'not-open-yet', opens: cfpDates.opens }
+        ? { state: 'not-open-yet', opens: cfpDates.opens.toISO() }
         : cfpDates && currentDate < cfpDates.closes && sessionizeUrl
-          ? { state: 'open', closes: cfpDates.closes, sessionizeUrl }
+          ? { state: 'open', closes: cfpDates.closes.toISO(), sessionizeUrl }
           : { state: 'closed' }
 }

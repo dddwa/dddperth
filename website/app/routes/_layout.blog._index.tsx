@@ -3,11 +3,11 @@ import type { MetaFunction } from '@remix-run/react'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getBlogPostListings } from '~/lib/mdx.server'
+import { getPagesList } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 
 export async function loader() {
-    return json({ posts: await getBlogPostListings() }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
+    return json({ posts: await getPagesList('blog') }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
 }
 
 export const meta: MetaFunction = () => {
@@ -25,6 +25,7 @@ export default function Blog() {
     const [latestPost, ...posts] = data.posts
 
     const featuredPosts = data.posts.filter((post) => post.featured)
+
     return (
         <main tabIndex={-1}>
             <div>

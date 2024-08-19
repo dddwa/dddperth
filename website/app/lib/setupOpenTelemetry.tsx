@@ -21,7 +21,6 @@ import fs, { existsSync } from 'node:fs'
 import { RemixInstrumentation } from 'opentelemetry-instrumentation-remix'
 import {
     APPLICATIONINSIGHTS_CONNECTION_STRING,
-    HONEYCOMB_API_KEY,
     OTEL_EXPORTER_OTLP_ENDPOINT,
     OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
     OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
@@ -35,50 +34,29 @@ export function configureOpenTelemetry() {
         ? new AzureMonitorTraceExporter({
               connectionString: APPLICATIONINSIGHTS_CONNECTION_STRING,
           })
-        : HONEYCOMB_API_KEY
-          ? new OTLPTraceExporter({
-                url: 'https://api.honeycomb.io/v1/traces',
-                headers: {
-                    'x-honeycomb-team': HONEYCOMB_API_KEY,
-                },
-            })
-          : (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
-            ? new OTLPTraceExporter()
-            : enableTracingConsoleFallback
-              ? new ConsoleSpanExporter()
-              : undefined
+        : (OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
+          ? new OTLPTraceExporter()
+          : enableTracingConsoleFallback
+            ? new ConsoleSpanExporter()
+            : undefined
 
     const metricExporter = APPLICATIONINSIGHTS_CONNECTION_STRING
         ? new AzureMonitorMetricExporter({
               connectionString: APPLICATIONINSIGHTS_CONNECTION_STRING,
           })
-        : HONEYCOMB_API_KEY
-          ? new OTLPMetricExporter({
-                url: 'https://api.honeycomb.io/v1/metrics',
-                headers: {
-                    'x-honeycomb-team': HONEYCOMB_API_KEY,
-                },
-            })
-          : (OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
-            ? new OTLPMetricExporter()
-            : undefined
+        : (OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
+          ? new OTLPMetricExporter()
+          : undefined
 
     const logsExporter = APPLICATIONINSIGHTS_CONNECTION_STRING
         ? new AzureMonitorLogExporter({
               connectionString: APPLICATIONINSIGHTS_CONNECTION_STRING,
           })
-        : HONEYCOMB_API_KEY
-          ? new OTLPLogExporter({
-                url: 'https://api.honeycomb.io/v1/logs',
-                headers: {
-                    'x-honeycomb-team': HONEYCOMB_API_KEY,
-                },
-            })
-          : (OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
-            ? new OTLPLogExporter()
-            : enableTracingConsoleFallback
-              ? new ConsoleLogRecordExporter()
-              : undefined
+        : (OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ?? OTEL_EXPORTER_OTLP_ENDPOINT)
+          ? new OTLPLogExporter()
+          : enableTracingConsoleFallback
+            ? new ConsoleLogRecordExporter()
+            : undefined
 
     const metricReader = metricExporter
         ? new PeriodicExportingMetricReader({
