@@ -2,6 +2,13 @@ import { DateTime } from 'luxon'
 
 export type Year = `${number}${number}${number}${number}`
 
+export type ConferenceConfigYear =
+    | ConferenceYear
+    | {
+          year: Year
+          cancelledMessage: string
+      }
+
 /**
  * Conference configuration which doesn't necessarily change year on year
  */
@@ -14,7 +21,7 @@ export interface ConferenceConfig {
     timezone: string
     needVolunteers: boolean
 
-    conferences: Record<Year, ConferenceYear>
+    conferences: Record<Year, ConferenceConfigYear>
 
     importantContacts: {
         police: {
@@ -87,6 +94,26 @@ export interface ConferenceYear {
     venue: ConferenceVenue | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
+
+    sponsors: YearSponsors
+}
+
+export interface YearSponsors {
+    platinum?: Sponsor[]
+    gold?: Sponsor[]
+    silver?: Sponsor[]
+    bronze?: Sponsor[]
+    community?: Sponsor[]
+    coffeeCart?: Sponsor[]
+    quietRoom?: Sponsor[]
+
+    keynotes?: Sponsor[]
+}
+
+export interface Sponsor {
+    name: string
+    logoUrl: string
+    website: string
 }
 
 export interface ConferenceVenue {
