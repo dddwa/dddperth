@@ -1,9 +1,9 @@
 on:
-    workflow_call:
-        inputs:
-            AZURE_ENV_NAME:
-                required: true
-                type: string
+    push:
+        branches:
+            - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 # GitHub Actions workflow to deploy to Azure using azd
 # To configure required secrets for connecting to Azure, simply run `azd pipeline config`
@@ -17,12 +17,10 @@ permissions:
 jobs:
     build:
         runs-on: ubuntu-latest
-        environment: ${{ inputs.AZURE_ENV_NAME }}
+        environment: prd
         env:
-            AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID}}
-            AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID}}
             AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID}}
-            AZURE_ENV_NAME: ${{ inputs.AZURE_ENV_NAME }}
+            AZURE_ENV_NAME: prd
             AZURE_LOCATION: australiaeast
 
         steps:
