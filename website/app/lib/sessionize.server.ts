@@ -158,6 +158,16 @@ const sessionSchema = z.object({
     isConfirmed: z.boolean(),
 })
 
+export const roomSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    session: sessionSchema,
+    index: z.number(),
+})
+export const timeSlotSchema = z.object({
+    slotStart: z.string(),
+    rooms: z.array(roomSchema),
+})
 export const gridSmartSchema = z.array(
     z.object({
         date: z.string(),
@@ -170,19 +180,7 @@ export const gridSmartSchema = z.array(
                 hasOnlyPlenumSessions: z.boolean(),
             }),
         ),
-        timeSlots: z.array(
-            z.object({
-                slotStart: z.string(),
-                rooms: z.array(
-                    z.object({
-                        id: z.number(),
-                        name: z.string(),
-                        session: sessionSchema,
-                        index: z.number(),
-                    }),
-                ),
-            }),
-        ),
+        timeSlots: z.array(timeSlotSchema),
     }),
 )
 
