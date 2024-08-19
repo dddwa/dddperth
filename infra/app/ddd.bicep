@@ -3,8 +3,6 @@ param location string = resourceGroup().location
 param tags object = {}
 
 param environment string
-param authClientId string
-param authClientSecret string
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
@@ -117,16 +115,6 @@ resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview'
   properties: {
     globalValidation: {
       unauthenticatedClientAction: 'RedirectToLoginPage'
-    }
-    identityProviders: {
-      azureActiveDirectory: {
-        enabled: true
-        registration: {
-          clientId: authClientId
-          clientSecretSettingName: 'client-secret'
-          openIdIssuer: 'https://login.microsoftonline.com/${subscription().tenantId}/v2.0'
-        }
-      }
     }
     platform: {
       enabled: true

@@ -11,13 +11,6 @@ param location string
 
 param dddExists bool
 
-param authClientId string
-@secure()
-param authClientSecret string
-
-@description('Id of the user or app to assign application roles')
-param principalId string
-
 // Tags that should be applied to all resources.
 //
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -105,8 +98,6 @@ module ddd './app/ddd.bicep' = {
     containerRegistryName: registry.outputs.name
     exists: dddExists
     environment: environmentName
-    authClientId: authClientId
-    authClientSecret: authClientSecret
   }
   scope: rg
 }

@@ -4,12 +4,6 @@ on:
             AZURE_ENV_NAME:
                 required: true
                 type: string
-        secrets:
-            AUTH_CLIENT_ID:
-                required: false
-
-            AUTH_CLIENT_SECRET:
-                required: false
 
 # GitHub Actions workflow to deploy to Azure using azd
 # To configure required secrets for connecting to Azure, simply run `azd pipeline config`
@@ -62,9 +56,6 @@ jobs:
 
             - name: Provision Infrastructure
               run: azd provision --no-prompt
-              env:
-                  AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
-                  AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
 
             - name: Build application
               run: pnpm nx build website
