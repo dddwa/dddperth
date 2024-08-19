@@ -13,6 +13,7 @@ export const conference2024: ConferenceYear = {
     venue: undefined,
 
     ticketPrice: '$60',
+    sessionizeUrl: 'https://sessionize.com/ddd-perth-2024',
 
     sessions: {
         kind: 'sessionize',

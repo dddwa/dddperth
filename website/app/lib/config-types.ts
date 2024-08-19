@@ -12,6 +12,7 @@ export interface ConferenceConfig {
     blogDescription: string
 
     timezone: string
+    needVolunteers: boolean
 
     conferences: Record<Year, ConferenceYear>
 
@@ -74,6 +75,8 @@ export interface ConferenceYear {
 
     ticketPrice: string
 
+    sessionizeUrl: string | undefined
+
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
     cfpDates: DateTimeRange | undefined
@@ -113,6 +116,21 @@ export interface SessionData {
 
 export type ConferenceState = BeforeConferenceState | ConferenceDayState | AfterConferenceState
 
+export interface CFPOpen {
+    state: Open
+    closes: DateTime
+    sessionizeUrl: string
+}
+
+export interface CFPClosed {
+    state: Closed
+}
+
+export interface CFPNotOpenYet {
+    state: NotOpenYet
+    opens: DateTime
+}
+
 /**
  * It is confirmed there is a new conference coming up, the date may not be announced yet
  */
@@ -122,11 +140,13 @@ export interface BeforeConferenceState {
     conference: ConferenceImportantInformation
     previousConference: ConferenceImportantInformation | undefined
 
-    callForPapersState: CallForPaperStates
+    callForPapers: CFPOpen | CFPClosed | CFPNotOpenYet
     ticketSales: TicketSalesStates
     talkVoting: TalkVotingStates
     feedback: NotOpenYet
     agenda: AgendaState
+
+    needsVolunteers: boolean
 }
 
 /**
@@ -138,11 +158,13 @@ export interface ConferenceDayState {
     conference: ConferenceImportantInformation
     previousConference: ConferenceImportantInformation | undefined
 
-    callForPapersState: Closed
+    callForPapers: CFPClosed
     ticketSales: Closed
     talkVoting: Closed
     feedback: Open
     agenda: Published
+
+    needsVolunteers: false
 }
 
 /** Conference is over, there is no next conference configured */
@@ -151,11 +173,13 @@ export interface AfterConferenceState {
 
     conference: ConferenceImportantInformation
 
-    callForPapersState: NotOpenYet
+    callForPapers: CFPClosed
     ticketSales: NotOpenYet
     talkVoting: NotOpenYet
     feedback: FeedbackState
     agenda: NotReleased
+
+    needsVolunteers: false
 }
 
 //

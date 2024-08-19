@@ -6,6 +6,7 @@ export const conference2023: ConferenceYear = {
     conferenceDate: DateTime.fromISO('2023-10-07'),
     venue: undefined,
     ticketPrice: '$60',
+    sessionizeUrl: 'https://sessionize.com/ddd-perth-2023',
 
     sessions: {
         kind: 'sessionize',

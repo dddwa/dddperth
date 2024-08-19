@@ -10,7 +10,7 @@ export interface CallToAction {
 export default function getConferenceActions(conferenceState: SerializeFrom<ConferenceState>): CallToAction[] {
     const actions: CallToAction[] = []
 
-    if (conferenceState.callForPapersState === 'open') {
+    if (conferenceState.callForPapers.state === 'open') {
         actions.push({
             category: 'content',
             title: 'Submit presentation',
