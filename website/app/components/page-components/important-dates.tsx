@@ -10,6 +10,8 @@ interface ImportantDateBoxProps {
   eventCloseTitle?: string
   eventCloseHref?: string
   eventLive?: boolean
+  smallSidebar?: boolean // New prop for small sidebar
+  showOnlyLive?: boolean // New prop to filter only live events
 }
 
 const importantDatesData: ImportantDateBoxProps[] = [
@@ -27,7 +29,7 @@ const importantDatesData: ImportantDateBoxProps[] = [
     date: 'Jun 21',
     time: '8:00am',
     event: 'Ticket sales open',
-    eventCloseTitle: 'Buy Tickets',
+    eventCloseTitle: 'Buy Tickets ↗',
     eventCloseHref: '/tickets',
     eventLive: true,
   },
@@ -93,7 +95,13 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
   eventCloseTitle,
   eventCloseHref,
   eventLive,
+  smallSidebar,
+  showOnlyLive,
 }) => {
+  if (showOnlyLive && !eventLive) {
+    return null
+  }
+
   const eventDate = new Date(datetime)
   const currentDate = new Date()
   const isPast = currentDate > eventDate
@@ -129,14 +137,14 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
       gradientFrom={isPast ? '#1F1F4E' : '#00BA8D4A'}
       gradientTo={isPast ? '#151544' : '#FF00E91A'}
       borderTop={isPast ? 'none' : '1px solid #FFFFFF2A'}
-      p={4}
+      p={smallSidebar ? 2 : 4}
     >
       <Flex flexDirection="column">
         <time dateTime={datetime} />
-        <styled.p fontSize="sm" color="#C2C2FF">
+        <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="#C2C2FF">
           {day} {date}, {time}
         </styled.p>
-        <styled.h3 fontSize="lg" fontWeight="semibold">
+        <styled.h3 fontSize={smallSidebar ? 'sm' : 'lg'} fontWeight="semibold">
           {event}
         </styled.h3>
       </Flex>
@@ -148,9 +156,11 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
           flexDirection="column"
           alignItems="center"
           justifyContent="center"
-          rounded="lg"
-          width={150}
+          borderRightRadius={100}
+          width={smallSidebar ? 100 : 150}
+          fontSize={smallSidebar ? 'xs' : 'md'}
           paddingY={1}
+          ml={smallSidebar ? 6 : 0}
           fontWeight="semibold"
           color={isPast ? '#520030' : '#FFF'}
           cursor="pointer"
@@ -179,7 +189,7 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
           alignItems="center"
           justifyContent="center"
           rounded="lg"
-          width={150}
+          width={smallSidebar ? 100 : 150}
           paddingY={1}
           color="#9c9cd7"
           bgGradient="to-r"
@@ -193,13 +203,16 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
   )
 }
 
-export const ImportantDates: React.FC = () => (
+export const ImportantDates: React.FC<{ smallSidebar?: boolean; showOnlyLive?: boolean }> = ({
+  smallSidebar,
+  showOnlyLive,
+}) => (
   <Flex flexDirection="column" gap={2}>
-    <styled.h2 fontSize="4xl" color="white" fontWeight="semibold" width="fit-content">
+    <styled.h2 fontSize={smallSidebar ? 'md' : '4xl'} color="white" fontWeight="semibold" width="fit-content">
       Important Dates
     </styled.h2>
     {importantDatesData.map((dateInfo, index) => (
-      <ImportantDateBox key={index} {...dateInfo} />
+      <ImportantDateBox key={index} {...dateInfo} smallSidebar={smallSidebar} showOnlyLive={showOnlyLive} />
     ))}
   </Flex>
 )

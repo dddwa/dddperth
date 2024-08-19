@@ -44,8 +44,8 @@ export function Header() {
                   bgGradient="to-r"
                   gradientFrom="#FF52B7"
                   gradientTo="#FF8273"
-                  fontWeight={600}
                   borderRightRadius={100}
+                  fontWeight={600}
                   py={2}
                   px={4}
                 >

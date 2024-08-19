@@ -28,7 +28,7 @@ export const HomepageHeroPanel = () => {
           Sat 16th November, 2024 • Optus Stadium, Perth
         </styled.h2>
         <styled.h1
-          fontFamily="sans-serif"
+          fontFamily="display"
           color="white"
           fontSize="xl"
           w="full"

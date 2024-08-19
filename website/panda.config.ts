@@ -1,5 +1,6 @@
 import { defineConfig } from '@pandacss/dev'
 import { createPreset } from '@park-ui/panda-preset'
+import typographyPreset from 'pandacss-preset-typography'
 
 export default defineConfig({
   // Whether to use css reset
@@ -8,6 +9,7 @@ export default defineConfig({
   // Where to look for your css declarations
   include: ['./app/routes/**/*.{ts,tsx,js,jsx}', './app/components/**/*.{ts,tsx,js,jsx}'],
   presets: [
+    typographyPreset(),
     '@pandacss/preset-base',
     createPreset({
       accentColor: 'indigo',

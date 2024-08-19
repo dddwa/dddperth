@@ -52,6 +52,7 @@
         "mdx-bundler": "^10.0.3",
         "opentelemetry-instrumentation-remix": "^0.7.1",
         "p-queue": "^8.0.1",
+        "pandacss-preset-typography": "^0.1.6",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "rehype-pretty-code": "^0.13.2",
