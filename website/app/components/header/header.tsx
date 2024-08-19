@@ -31,14 +31,14 @@ export function Header() {
                 <styled.a href="/agenda" color="white" _hover={{ color: '#8282FB' }}>
                   Agenda
                 </styled.a>
-                <styled.a href="/blog" color="white" _hover={{ color: '#8282FB' }}>
+                <styled.a href="/about" color="white" _hover={{ color: '#8282FB' }}>
                   About
                 </styled.a>
-                <styled.a href="/about" color="white" _hover={{ color: '#8282FB' }}>
+                <styled.a href="/blog" color="white" _hover={{ color: '#8282FB' }}>
                   Blog
                 </styled.a>
                 <styled.a
-                  href="/about"
+                  href="/tickets"
                   color="#520030"
                   _hover={{ gradientTo: '#FF52B7' }}
                   bgGradient="to-r"
