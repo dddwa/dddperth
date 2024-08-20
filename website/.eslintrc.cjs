@@ -73,6 +73,7 @@ module.exports = {
                 'import/no-unresolved': 'off',
                 'prefer-const': 'off',
                 '@typescript-eslint/no-explicit-any': 'off',
+                'react/prop-types': 'off',
             },
         },
 

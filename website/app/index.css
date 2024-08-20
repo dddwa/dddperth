@@ -1,1 +1,15 @@
 @layer reset, base, tokens, recipes, utilities;
+
+.sideBySideImages {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+.sideBySideImages img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+}

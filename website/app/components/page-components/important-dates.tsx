@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { Flex, styled } from 'styled-system/jsx'
 
 interface ImportantDateBoxProps {
@@ -102,14 +102,14 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
         return null
     }
 
-    const eventDate = new Date(datetime)
+    const eventDate = useMemo(() => new Date(datetime), [datetime])
     const currentDate = new Date()
     const isPast = currentDate > eventDate
 
-    const calculateDaysLeft = () => {
+    const calculateDaysLeft = useCallback(() => {
         const difference = +eventDate - +new Date()
         return Math.ceil(difference / (1000 * 60 * 60 * 24))
-    }
+    }, [eventDate])
 
     const [daysLeft, setDaysLeft] = useState(calculateDaysLeft())
 
@@ -124,7 +124,7 @@ const ImportantDateBox: FC<ImportantDateBoxProps> = ({
 
             return () => clearTimeout(timer)
         }
-    }, [daysLeft, isPast])
+    }, [calculateDaysLeft, daysLeft, isPast])
 
     return (
         <Flex
