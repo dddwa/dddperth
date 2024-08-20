@@ -85,7 +85,6 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
     }
-    secrets
     template: {
       containers: [
         {
