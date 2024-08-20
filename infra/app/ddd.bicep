@@ -73,8 +73,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       secrets: [
-        name: 'github-token'
-        value: gitHubToken
+        {
+            name: 'github-token'
+            value: gitHubToken
+        }
       ]
     }
     secrets
@@ -87,7 +89,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: applicationInsights.properties.ConnectionString
-            }
+            },
             {
               name: 'PORT'
               value: '80'
