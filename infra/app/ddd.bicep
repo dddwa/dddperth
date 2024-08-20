@@ -89,19 +89,19 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: applicationInsights.properties.ConnectionString
-            },
+            }
             {
               name: 'PORT'
               value: '80'
-            },
+            }
             {
                 name: 'GITHUB_ORGANIZATION',
                 value: gitHubOrganization
-            },
+            }
             {
                 name: 'GITHUB_REPO',
                 value: gitHubRepo
-            },
+            }
             {
                 name: 'GITHUB_TOKEN',
                 secretRef: 'github-token'
