@@ -2,7 +2,6 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
-param environment string
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
@@ -41,6 +40,9 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
+@secure()
+param sessionSecret string = uniqueString(newGuid())
+
 module fetchLatestImage '../modules/fetch-container-image.bicep' = {
   name: '${name}-fetch-image'
   params: {
@@ -77,6 +79,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             name: 'github-token'
             value: gitHubToken
         }
+        {
+            name: 'session-secret'
+            value: sessionSecret
+        }
       ]
     }
     secrets
@@ -105,6 +111,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'GITHUB_TOKEN',
                 secretRef: 'github-token'
+            }
+            {
+                name: 'SESSION_SECRET',
+                secretRef: 'session-secret'
             }
           ]
 

@@ -108,7 +108,6 @@ module ddd './app/ddd.bicep' = {
     containerAppsEnvironmentName: appsEnv.outputs.name
     containerRegistryName: registry.outputs.name
     exists: dddExists
-    environment: environmentName
     gitHubOrganization: gitHubOrganization
     gitHubRepo: gitHubRepo
     gitHubToken: gitHubToken
