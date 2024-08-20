@@ -25,6 +25,7 @@ jobs:
             AZURE_LOCATION: australiaeast
             AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
             AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+            # TODO Replace this PAT with a GitHub App
             GH_CONTENT_TOKEN: ${{ secrets.GH_CONTENT_TOKEN }}
 
         steps:

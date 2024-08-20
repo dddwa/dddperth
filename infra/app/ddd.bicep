@@ -9,6 +9,8 @@ param containerAppsEnvironmentName string
 param applicationInsightsName string
 param gitHubOrganization string
 param gitHubRepo string
+@secure()
+param gitHubToken string
 param exists bool
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -70,7 +72,12 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           identity: identity.id
         }
       ]
+      secrets: [
+        name: 'github-token'
+        value: gitHubToken
+      ]
     }
+    secrets
     template: {
       containers: [
         {
@@ -92,8 +99,13 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'GITHUB_REPO',
                 value: gitHubRepo
+            },
+            {
+                name: 'GITHUB_TOKEN',
+                secretRef: 'github-token'
             }
           ]
+
           resources: {
             cpu: json('1.0')
             memory: '2.0Gi'
