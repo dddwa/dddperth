@@ -23,6 +23,8 @@ jobs:
             AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID}}
             AZURE_ENV_NAME: prd
             AZURE_LOCATION: australiaeast
+            AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+            AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
 
         steps:
             - name: Checkout
@@ -48,13 +50,15 @@ jobs:
             - name: Log in with Azure (Federated Credentials)
               run: |
                   azd auth login `
-                    --client-id "${{ secrets.AUTH_CLIENT_ID }}"`
+                    --client-id "$Env:AZURE_CLIENT_ID" `
                     --federated-credential-provider "github" `
-                    --tenant-id "${{ secrets.AUTH_CLIENT_SECRET }}"
+                    --tenant-id "$Env:AZURE_TENANT_ID"
               shell: pwsh
 
             - name: Provision Infrastructure
               run: azd provision --no-prompt
+              env:
+                  AZD_INITIAL_ENVIRONMENT_CONFIG: ${{ secrets.AZD_INITIAL_ENVIRONMENT_CONFIG }}
 
             - name: Build application
               run: pnpm nx build website
