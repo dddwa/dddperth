@@ -2,6 +2,7 @@
 import { readdir, readFile } from 'fs/promises'
 import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { compileMdx } from './compile-mdx.server'
 import { GITHUB_ORGANIZATION, GITHUB_REF, GITHUB_REPO, USE_GITHUB_CONTENT } from './config.server'
@@ -183,6 +184,10 @@ async function getContentWithCache(contentDir: string, slug: string) {
     return contents
 }
 
+function hashContent(content: string): string {
+    return createHash('sha256').update(content).digest('hex')
+}
+
 async function getContents(contentDir: string, slug: string) {
     if (USE_GITHUB_CONTENT || process.env.NODE_ENV === 'production') {
         const file = await downloadMdxFileOrDirectory(`${contentDir}/${slug}`)
@@ -197,7 +202,7 @@ async function getContents(contentDir: string, slug: string) {
 }
 
 async function getMdxPageWithCache(slug: string, contents: string) {
-    const cacheKey = `mdx-${slug}`
+    const cacheKey = `mdx-${slug}-${hashContent(contents)}`
     const cached = compilationCache.get(cacheKey)
     if (!NO_CACHE && cached) {
         return JSON.parse(cached) as ReturnType<typeof getMdxPage>
