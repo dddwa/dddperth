@@ -4,10 +4,8 @@ import { z } from 'zod'
 
 const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' : undefined
 // const SPEAKERS_CACHE_KEY = 'speakers'
-const SESSIONS_CACHE_KEY = 'sessions'
-const SCHEDULE_CACHE_KEY = 'schedule'
 
-const scheduleCache = new LRUCache<typeof SCHEDULE_CACHE_KEY, z.infer<typeof gridSmartSchema>>({
+const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
     ttl: 1000 * 60 * 60 * 24, // 24 hours
@@ -15,7 +13,7 @@ const scheduleCache = new LRUCache<typeof SCHEDULE_CACHE_KEY, z.infer<typeof gri
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
 })
-const sessionsCache = new LRUCache<typeof SESSIONS_CACHE_KEY, z.infer<typeof sessionsSchema>>({
+const sessionsCache = new LRUCache<string, z.infer<typeof sessionsSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
     ttl: 1000 * 60 * 60 * 24, // 24 hours
@@ -93,7 +91,7 @@ export const sessionsSchema = z.array(
 export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gridSmartSchema>> {
     const { noCache = NO_CACHE ?? false } = opts
     if (!noCache) {
-        const cached = scheduleCache.get(SCHEDULE_CACHE_KEY)
+        const cached = scheduleCache.get(opts.sessionizeEndpoint)
         if (cached) {
             return cached as z.infer<typeof gridSmartSchema>
         }
@@ -117,7 +115,7 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
     const schedule = gridSmartSchema.parse(json)
 
     if (!noCache) {
-        scheduleCache.set(SCHEDULE_CACHE_KEY, schedule)
+        scheduleCache.set(opts.sessionizeEndpoint, schedule)
     }
 
     return schedule
@@ -126,7 +124,7 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
 export async function getConfSessions(opts: Options): Promise<z.infer<typeof sessionsSchema>> {
     const { noCache = NO_CACHE ?? false } = opts
     if (!noCache) {
-        const cached = sessionsCache.get(SESSIONS_CACHE_KEY)
+        const cached = sessionsCache.get(opts.sessionizeEndpoint)
         if (cached) {
             return cached as z.infer<typeof sessionsSchema>
         }
@@ -151,7 +149,7 @@ export async function getConfSessions(opts: Options): Promise<z.infer<typeof ses
     const sessions = sessionsSchema.parse(json)
 
     if (!noCache) {
-        sessionsCache.set(SESSIONS_CACHE_KEY, sessions)
+        sessionsCache.set(opts.sessionizeEndpoint, sessions)
     }
 
     return sessions
