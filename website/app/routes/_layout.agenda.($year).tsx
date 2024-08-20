@@ -211,9 +211,7 @@ export default function Agenda() {
                                 const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''
                                 const earliestEnd = !availableTimeSlots?.includes(timeSlotEnd)
                                     ? nextTimeSlotEnd
-                                    : timeSlotEnd > nextTimeSlotEnd
-                                      ? nextTimeSlotEnd
-                                      : timeSlotEnd
+                                    : (timeSlotEnd ?? nextTimeSlotEnd)
 
                                 return (
                                     <styled.div
