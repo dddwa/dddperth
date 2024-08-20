@@ -175,7 +175,7 @@ export default function Agenda() {
                     </Flex>
                 ))}
 
-                {schedule.timeSlots.map((timeSlot) => {
+                {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
                     const startTime12 = DateTime.fromISO(timeSlot.slotStart).toFormat('h:mm a').toLowerCase()
                     const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
 
@@ -194,13 +194,18 @@ export default function Agenda() {
                                     ? DateTime.fromISO(fullSession.endsAt).toFormat('h:mm a').toLowerCase()
                                     : undefined
 
+                                const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
+                                const nextTimeSlotEnd = nextTimeSlot?.slotStart.replace(/:/g, '')
+                                const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''
+                                const earliestEnd = timeSlotEnd > nextTimeSlotEnd ? nextTimeSlotEnd : timeSlotEnd
+
                                 return (
                                     <styled.div
                                         key={room.id}
                                         marginBottom="0"
                                         md={{ marginBottom: 1 }}
                                         style={{
-                                            gridRow: `time-${timeSlotSimple} / time-${endsAtTime?.replace(/:/g, '')}`,
+                                            gridRow: `time-${timeSlotSimple} / time-${earliestEnd}`,
                                             gridColumn:
                                                 timeSlot.rooms.length === 1
                                                     ? `room-${schedule.rooms.at(0)?.id} / room-${schedule.rooms.at(-1)?.id}`
