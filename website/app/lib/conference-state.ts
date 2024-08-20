@@ -4,6 +4,7 @@ import {
     CFPNotOpenYet,
     CFPOpen,
     ConferenceConfig,
+    ConferenceConfigYear,
     ConferenceState,
     ConferenceYear,
     DateTimeRange,
@@ -19,9 +20,11 @@ export function getCurrentConferenceState(
 ): ConferenceState {
     const currentDate = dateTimeProvider.nowDate()
 
-    const [latestConference, previousConference] = (
-        Object.entries(conference.conferences) as Array<[Year, ConferenceYear]>
+    const conferenceList = (Object.entries(conference.conferences) as Array<[Year, ConferenceConfigYear]>).filter(
+        (year): year is [Year, ConferenceYear] => !('cancelledMessage' in year[1]),
     )
+    const [latestConference, previousConference] = conferenceList
+
         .sort(([, a], [, b]) => {
             const dateA = a.conferenceDate?.valueOf() ?? Infinity
             const dateB = b.conferenceDate?.valueOf() ?? Infinity

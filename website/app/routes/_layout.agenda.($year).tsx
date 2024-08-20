@@ -29,6 +29,10 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 
     const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[year]
     if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
+        if (!params.year) {
+            throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
+        }
+
         return redirect($path('/agenda/:year?', { year: undefined }))
     }
 
@@ -120,7 +124,7 @@ export default function Agenda() {
                         '--slot-rows': [
                             '[rooms] auto',
                             ...schedule.timeSlots.map(
-                                (timeSlot) => `[time-${timeSlot.slotStart.replace(/:/g, '')}] 1fr`,
+                                (timeSlot) => `[time-${timeSlot.slotStart.replace(/:/g, '')}] auto`,
                             ),
                         ].join(' '),
                         '--room-columns': [
@@ -167,7 +171,7 @@ export default function Agenda() {
                             zIndex: 1000,
                         }}
                     >
-                        {room.name} - {room.id}
+                        {room.name}
                     </Flex>
                 ))}
 
@@ -177,7 +181,7 @@ export default function Agenda() {
 
                     return (
                         <Fragment key={timeSlot.slotStart}>
-                            <styled.h2 gridColumn="times" gridRow={`time-${timeSlotSimple}`}>
+                            <styled.h2 gridColumn="times" style={{ gridRow: `time-${timeSlotSimple}` }}>
                                 {startTime12}
                             </styled.h2>
 
@@ -195,17 +199,13 @@ export default function Agenda() {
                                         key={room.id}
                                         marginBottom="0"
                                         md={{ marginBottom: 1 }}
-                                        style={
-                                            {
-                                                '--talk-slot': `time-${timeSlotSimple} / time-${endsAtTime?.replace(/:/g, '')}`,
-                                                '--room-column':
-                                                    timeSlot.rooms.length === 1
-                                                        ? `room-${schedule.rooms.at(0)?.id} / room-${schedule.rooms.at(-1)?.id}`
-                                                        : `room-${room.id}`,
-                                            } as React.CSSProperties
-                                        }
-                                        gridRow="var(--talk-slot)"
-                                        gridColumn="var(--room-column)"
+                                        style={{
+                                            gridRow: `time-${timeSlotSimple} / time-${endsAtTime?.replace(/:/g, '')}`,
+                                            gridColumn:
+                                                timeSlot.rooms.length === 1
+                                                    ? `room-${schedule.rooms.at(0)?.id} / room-${schedule.rooms.at(-1)?.id}`
+                                                    : `room-${room.id}`,
+                                        }}
                                     >
                                         <Box
                                             rounded="sm"
@@ -226,10 +226,15 @@ export default function Agenda() {
                                             >
                                                 <a href="#">{fullSession?.title}</a>
                                             </styled.h3>
-                                            <styled.span display="block" color="#C2C2FF">
+                                            <styled.span display="block" color="#C2C2FF" textWrap="nowrap">
                                                 🕓 {startTime12} - {endTime12}
                                             </styled.span>
-                                            <styled.span display="block" color="#C2C2FF">
+                                            <styled.span
+                                                display="block"
+                                                color="#C2C2FF"
+                                                textOverflow="ellipsis"
+                                                textWrap="nowrap"
+                                            >
                                                 📍 {room.name}
                                             </styled.span>
                                             {fullSession?.speakers?.length ? (
@@ -280,8 +285,8 @@ function SponsorSection({ sponsors }: { sponsors: YearSponsors | undefined }) {
         if (!sponsors || sponsors.length === 0) return null
 
         return (
-            <styled.div marginBottom="4">
-                <styled.h2 fontSize="xl" marginBottom="2">
+            <styled.div marginBottom="4" background="white">
+                <styled.h2 marginBottom="3" fontSize="2xl" textAlign="center">
                     {title}
                 </styled.h2>
                 <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
