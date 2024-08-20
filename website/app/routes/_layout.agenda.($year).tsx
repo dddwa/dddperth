@@ -327,12 +327,12 @@ export default function Agenda() {
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
   return (
     <styled.div padding="4" color="white">
-      <styled.h2 fontSize="xl" marginBottom="2">
-        Other Conferences
+      <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
+        View Previous Conferences
       </styled.h2>
-      <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
+      <styled.div display="flex" flexWrap="wrap" gap={4}>
         {conferences.map((conf) => (
-          <styled.a key={conf.year} href={`/agenda/${conf.year}`}>
+          <styled.a key={conf.year} href={`/agenda/${conf.year}`} color="#8282FB">
             <styled.span fontSize="lg">{conf.year}</styled.span>
           </styled.a>
         ))}
