@@ -1,0 +1,199 @@
+import type { LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
+import { DateTime } from 'luxon'
+import { $params, $path } from 'remix-routes'
+import { Box, Flex, styled } from 'styled-system/jsx'
+import { TypeOf } from 'zod'
+import { AppLink } from '~/components/app-link'
+import {
+    ConferenceConfigYear,
+    ConferenceImportantInformation,
+    ConferenceYear,
+    Sponsor,
+    Year,
+    YearSponsors,
+} from '~/lib/config-types'
+import { localeTimeFormat } from '~/lib/dates/formatting'
+import { CACHE_CONTROL } from '~/lib/http.server'
+import { conferenceConfig } from '../config/conference-config'
+import { getConfSessions, sessionsSchema } from '../lib/sessionize.server'
+
+export async function loader({ params, context }: LoaderFunctionArgs) {
+    const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)
+
+    const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[
+        year as Year
+    ]
+    if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
+        if (!params.year) {
+            throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
+        }
+
+        return redirect($path('/agenda/:year?', { year: undefined }))
+    }
+
+    const yearConfig: ConferenceImportantInformation = params.year
+        ? getImportantInformation(yearConfigLookup)
+        : context.conferenceState.conference
+
+    if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    const sessions: TypeOf<typeof sessionsSchema> =
+        yearConfig.sessions?.kind === 'sessionize'
+            ? await getConfSessions({
+                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
+                  confTimeZone: conferenceConfig.timezone,
+              })
+            : []
+
+    const allGroup = sessions[0]
+    const session = allGroup?.sessions.find((session) => session.id === sessionId)
+    if (!session) {
+        throw new Response(JSON.stringify({ message: 'No session found' }), { status: 404 })
+    }
+
+    return json(
+        {
+            year: year as Year,
+            sponsors: yearConfigLookup.sponsors,
+            conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
+                year: conf.year,
+            })),
+            session,
+            sessionStart: DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE),
+            sessionEnd: DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE),
+        },
+        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
+    )
+}
+
+export default function Agenda() {
+    const { session, sponsors, conferences, year, sessionStart, sessionEnd } = useLoaderData<typeof loader>()
+
+    return (
+        <Flex
+            flexDirection="column"
+            alignContent="center"
+            bgGradient="to-b"
+            gradientFrom="#070727"
+            gradientToPosition="99%"
+            gradientTo="#0E0E43"
+            mx="auto"
+            p="4"
+        >
+            <Box maxWidth="1200px" color="#C2C2FF" mx="auto" p={1} fontSize="sm">
+                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block">
+                    Back to {year} Agenda
+                </AppLink>
+                <styled.h2 fontSize="lg">{session.title}</styled.h2>
+                <styled.span
+                    display="none"
+                    md={{
+                        display: 'block',
+                    }}
+                    color="#C2C2FF"
+                    textWrap="nowrap"
+                >
+                    🕓 {sessionStart} - {sessionEnd}
+                </styled.span>
+                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap">
+                    📍 {session.room}
+                </styled.span>
+                {session?.speakers?.length ? (
+                    <styled.span display="block" color="#C2C2FF">
+                        💬 {session?.speakers.map((speaker) => speaker.name)?.join(', ')}
+                    </styled.span>
+                ) : null}
+                <styled.div>{session.description}</styled.div>
+            </Box>
+
+            <SponsorSection sponsors={sponsors} year={year} />
+
+            <ConferenceBrowser conferences={conferences} />
+        </Flex>
+    )
+}
+
+function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
+    return (
+        <styled.div padding="4" color="white">
+            <styled.h2 fontSize="xl" marginBottom="2">
+                Other Conferences
+            </styled.h2>
+            <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
+                {conferences.map((conf) => (
+                    <styled.a key={conf.year} href={`/agenda/${conf.year}`}>
+                        <styled.span fontSize="lg">{conf.year}</styled.span>
+                    </styled.a>
+                ))}
+            </styled.div>
+        </styled.div>
+    )
+}
+
+function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
+    const renderSponsorCategory = (
+        title: string,
+        sponsors: Sponsor[] | undefined,
+        logoSize: 'xs' | 'sm' | 'md' | 'lg',
+    ) => {
+        if (!sponsors || sponsors.length === 0) return null
+
+        const maxLogoSize =
+            logoSize === 'lg' ? '250px' : logoSize === 'md' ? '150px' : logoSize === 'sm' ? '100px' : '75px'
+        return (
+            <styled.div marginBottom="4" background="white" padding="3" borderRadius="lg">
+                <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="slate.text">
+                    {title}
+                </styled.h3>
+                <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4" alignItems="center">
+                    {sponsors.map((sponsor) => (
+                        <styled.a key={sponsor.name} href={sponsor.website} target="_blank" rel="noopener noreferrer">
+                            <styled.img
+                                src={sponsor.logoUrl}
+                                alt={sponsor.name}
+                                maxWidth={maxLogoSize}
+                                width="100%"
+                                maxHeight={maxLogoSize}
+                                display="inline-block"
+                                objectFit="contain"
+                            />
+                        </styled.a>
+                    ))}
+                </styled.div>
+            </styled.div>
+        )
+    }
+
+    if (!sponsors) return null
+
+    return (
+        <styled.div padding="4">
+            <styled.h2 fontSize="4xl" textAlign="center" color="white">
+                {year} Sponsors
+            </styled.h2>
+            {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
+            {renderSponsorCategory('Gold Sponsors', sponsors.gold, 'md')}
+            {renderSponsorCategory('Silver Sponsors', sponsors.silver, 'sm')}
+            {renderSponsorCategory('Bronze Sponsors', sponsors.bronze, 'xs')}
+            {renderSponsorCategory('Community Sponsors', sponsors.community, 'xs')}
+            {renderSponsorCategory('Digital Sponsors', sponsors.digital, 'xs')}
+            {renderSponsorCategory('Coffee Cart Sponsors', sponsors.coffeeCart, 'xs')}
+            {renderSponsorCategory('Quiet Room Sponsors', sponsors.quietRoom, 'xs')}
+            {renderSponsorCategory('Keynote Sponsors', sponsors.keynotes, 'sm')}
+        </styled.div>
+    )
+}
+
+function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportantInformation {
+    return {
+        date: yearConfig.conferenceDate?.toISO(),
+        year: yearConfig.year,
+        sessions: yearConfig.sessions,
+        ticketPrice: yearConfig.ticketPrice,
+        votingOpens: yearConfig.talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+    }
+}
