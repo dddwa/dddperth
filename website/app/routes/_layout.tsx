@@ -1,4 +1,4 @@
-import type { MetaFunction } from '@remix-run/node'
+import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
 import { Outlet } from '@remix-run/react'
 import { Box, Flex } from 'styled-system/jsx'
 import { ErrorPage } from '~/components/error-page'
@@ -7,8 +7,17 @@ import { Footer } from '../components/footer/footer'
 import { Header } from '../components/header/header'
 import { conferenceConfig } from '../config/conference-config'
 
-export const meta: MetaFunction = () => {
-    return [{ title: conferenceConfig.name }, { name: 'description', content: conferenceConfig.description }]
+export function loader({ context }: LoaderFunctionArgs) {
+    return {
+        conferenceDate: context.conferenceState.conference.date,
+    }
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+    return [
+        { title: data?.conferenceDate ? `${conferenceConfig.name} | Sat 16th November, 2024` : conferenceConfig.name },
+        { name: 'description', content: conferenceConfig.description },
+    ]
 }
 
 export default function Index() {
