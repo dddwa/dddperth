@@ -46,7 +46,7 @@ async function downloadFirstMdxFile(list: Array<{ name: string; type: string; pa
 async function downloadMdxFileOrDirectory(
     relativeMdxFileOrDirectory: string,
 ): Promise<{ entry: string; files: Array<GitHubFile> }> {
-    const mdxFileOrDirectory = `content/${relativeMdxFileOrDirectory}`
+    const mdxFileOrDirectory = `${relativeMdxFileOrDirectory}`
 
     const parentDir = nodePath.dirname(mdxFileOrDirectory)
     const dirList = await downloadDirList(parentDir)
