@@ -13,7 +13,14 @@ export const Footer = () => (
         }}
     >
         <Divider color="#8D8DFF33" mb={6} />
-        <Grid gridTemplateColumns="repeat(4, 1fr)" width="full" gap={6} maxW="1200px" mx="auto">
+        <Grid
+            gridTemplateColumns="1fr"
+            md={{ gridTemplateColumns: 'repeat(4, 1fr)' }}
+            width="full"
+            gap={6}
+            maxW="1200px"
+            mx="auto"
+        >
             <Flex flexGrow={2}>
                 <Logo width={153} />
             </Flex>
@@ -34,8 +41,8 @@ export const Footer = () => (
                     About
                 </styled.a>
                 {/* <styled.a href={`/blog`} color="white" _hover={{ color: '#8282FB' }}>
-          Blog
-        </styled.a> */}
+                Blog
+                </styled.a> */}
                 <styled.a href={`/faq`} color="white" _hover={{ color: '#8282FB' }}>
                     FAQ
                 </styled.a>
