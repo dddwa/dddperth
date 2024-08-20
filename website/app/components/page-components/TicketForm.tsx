@@ -18,7 +18,7 @@ export function TicketForm({ state }: { state: SerializeFrom<TicketSalesState> }
 }
 
 export function TitoTicketForm({ accountId, eventId }: { eventId: string; accountId: string }) {
-    const status = useScript(`https://js.tito.io/v2/with/development_mode`, {
+    const status = useScript(`https://js.tito.io/v2`, {
         removeOnUnmount: false,
     })
 
