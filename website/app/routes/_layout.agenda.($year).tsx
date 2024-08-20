@@ -127,13 +127,13 @@ export default function Agenda() {
         style={
           {
             /**
-                       * Note 1:
-                       * Use 24hr time for gridline names for simplicity
-                       *
-                       * Note 2: Use "auto" instead of "1fr" for a more compact schedule where height of a slot is not proportional to the session length. Implementing a "compact" shortcode attribute might make sense for this!
-                       *
-                       Try 0.5fr for more compact equal rows. I don't quite understand how that works :)
-                        */
+                     * Note 1:
+                     * Use 24hr time for gridline names for simplicity
+                     *
+                     * Note 2: Use "auto" instead of "1fr" for a more compact schedule where height of a slot is not proportional to the session length. Implementing a "compact" shortcode attribute might make sense for this!
+                     *
+                     Try 0.5fr for more compact equal rows. I don't quite understand how that works :)
+                    */
             '--slot-rows': [
               '[rooms] auto',
               ...schedule.timeSlots.map((timeSlot) => `[time-${timeSlot.slotStart.replace(/:/g, '')}] auto`),
@@ -357,7 +357,7 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
 
   const renderSponsor = (sponsor: Sponsor, category: keyof typeof sponsorStyles, zIndex: number) => {
     const { gradientFrom, logoSize } = getSponsorStyle(category)
-    const maxLogoSize = logoSize === 'lg' ? '250px' : logoSize === 'md' ? '150px' : logoSize === 'sm' ? '100px' : '75px'
+
     return (
       <styled.a
         key={sponsor.name}
@@ -383,9 +383,10 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
         <styled.img
           src={sponsor.logoUrl}
           alt={sponsor.name}
-          maxWidth={maxLogoSize}
+          maxWidth={150}
           width="100%"
-          maxHeight={maxLogoSize}
+          maxHeight={100}
+          ml={-3}
           display="inline-block"
           objectFit="contain"
         />
@@ -435,9 +436,9 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
         { sponsors: sponsors.gold, category: 'gold' },
         { sponsors: sponsors.silver, category: 'silver' },
         { sponsors: sponsors.bronze, category: 'bronze' },
-        { sponsors: sponsors.digital, category: 'digital' },
       ])}
       {renderSponsorGroup('Minor Sponsors', [
+        { sponsors: sponsors.digital, category: 'digital' },
         { sponsors: sponsors.community, category: 'community' },
         { sponsors: sponsors.coffeeCart, category: 'coffeeCart' },
         { sponsors: sponsors.quietRoom, category: 'quietRoom' },

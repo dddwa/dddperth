@@ -69,34 +69,34 @@ export const conference2024: ConferenceYear = {
       {
         name: 'Mantel Group',
         website: 'https://mantelgroup.com.au/',
-        logoUrl: '/images/sponsors/2024-mantel-group.png',
+        logoUrl: '/images/sponsors/2024-mantel-group.svg',
       },
       {
         name: 'Virtual Gaming Worlds',
         website: 'https://www.vgw.co/',
-        logoUrl: '/images/sponsors/2024-vgw.png',
+        logoUrl: '/images/sponsors/2024-vgw.svg',
       },
       {
         name: 'Qoria',
         website: 'https://qoria.com/',
-        logoUrl: '/images/sponsors/2024-qoria.png',
+        logoUrl: '/images/sponsors/2024-qoria.svg',
       },
       {
         name: 'Tricentis',
         website: 'https://www.tricentis.com/',
-        logoUrl: '/images/sponsors/2024-tricentis.png',
+        logoUrl: '/images/sponsors/2024-tricentis.svg',
       },
       {
         name: 'Woodside Energy',
         website: 'https://www.woodside.com/',
-        logoUrl: '/images/sponsors/2024-woodside.png',
+        logoUrl: '/images/sponsors/2024-woodside.svg',
       },
     ],
     digital: [
       {
         name: 'Akkodis',
         website: 'https://akkodis.com/',
-        logoUrl: '/images/sponsors/2024-akkodis.png',
+        logoUrl: '/images/sponsors/2024-akkodis.svg',
       },
     ],
   },
