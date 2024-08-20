@@ -342,55 +342,108 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
 }
 
 function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
-  const renderSponsorCategory = (
-    title: string,
-    sponsors: Sponsor[] | undefined,
-    logoSize: 'xs' | 'sm' | 'md' | 'lg',
-  ) => {
-    if (!sponsors || sponsors.length === 0) return null
+  const sponsorStyles = {
+    platinum: { gradientFrom: '#496F7F', logoSize: 'lg' as 'lg' },
+    gold: { gradientFrom: '#453927', logoSize: 'md' as 'md' },
+    silver: { gradientFrom: '#2A3251', logoSize: 'sm' as 'sm' },
+    bronze: { gradientFrom: '#452927', logoSize: 'xs' as 'xs' },
+    digital: { gradientFrom: '#371F4E', logoSize: 'xs' as 'xs' },
+    community: { gradientFrom: '#1F1F4E', logoSize: 'xs' as 'xs' },
+    coffeeCart: { gradientFrom: '#1F1F4E', logoSize: 'xs' as 'xs' },
+    quietRoom: { gradientFrom: '#1F1F4E', logoSize: 'xs' as 'xs' },
+    keynotes: { gradientFrom: '#1F1F4E', logoSize: 'sm' as 'sm' },
+  }
+  const getSponsorStyle = (category: keyof typeof sponsorStyles) => sponsorStyles[category]
 
+  const renderSponsor = (sponsor: Sponsor, category: keyof typeof sponsorStyles, zIndex: number) => {
+    const { gradientFrom, logoSize } = getSponsorStyle(category)
     const maxLogoSize = logoSize === 'lg' ? '250px' : logoSize === 'md' ? '150px' : logoSize === 'sm' ? '100px' : '75px'
     return (
-      <styled.div marginBottom="4" background="white" padding="3" borderRadius="lg">
-        <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="slate.text">
+      <styled.a
+        key={sponsor.name}
+        href={sponsor.website}
+        target="_blank"
+        rel="noopener noreferrer"
+        position="relative"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        border="6px solid #0E0E43"
+        style={{
+          background: `linear-gradient(to bottom, ${gradientFrom}, #151544)`,
+          zIndex: zIndex,
+        }}
+        width={260}
+        height={220}
+        ml={-6}
+        zIndex={1}
+        boxShadow="inset -1px 1px 0 0 rgba(255,255,255,0.21)"
+        borderRightRadius="full"
+      >
+        <styled.img
+          src={sponsor.logoUrl}
+          alt={sponsor.name}
+          maxWidth={maxLogoSize}
+          width="100%"
+          maxHeight={maxLogoSize}
+          display="inline-block"
+          objectFit="contain"
+        />
+        <styled.h5 position="absolute" left={3} bottom={3} fontSize="xs" color="white" mixBlendMode="soft-light">
+          {category.charAt(0).toUpperCase() + category.slice(1)} Sponsor
+        </styled.h5>
+      </styled.a>
+    )
+  }
+
+  const renderSponsorGroup = (
+    title: string,
+    sponsorGroups: { sponsors: Sponsor[] | undefined; category: keyof typeof sponsorStyles }[],
+  ) => {
+    const allSponsors = sponsorGroups.flatMap((group) => group.sponsors || [])
+    if (allSponsors.length === 0) return null
+
+    let zIndex = allSponsors.length
+
+    return (
+      <Flex flexDirection="column" alignItems="flex-start" marginBottom="4">
+        <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="#C2C2FF">
           {title}
         </styled.h3>
-        <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4" alignItems="center">
-          {sponsors.map((sponsor) => (
-            <styled.a key={sponsor.name} href={sponsor.website} target="_blank" rel="noopener noreferrer">
-              <styled.img
-                src={sponsor.logoUrl}
-                alt={sponsor.name}
-                maxWidth={maxLogoSize}
-                width="100%"
-                maxHeight={maxLogoSize}
-                display="inline-block"
-                objectFit="contain"
-              />
-            </styled.a>
-          ))}
-        </styled.div>
-      </styled.div>
+        <Flex flexWrap="wrap" alignItems="center" p={6}>
+          {sponsorGroups.map((group) =>
+            group.sponsors?.map((sponsor) => {
+              const sponsorElement = renderSponsor(sponsor, group.category, zIndex)
+              zIndex -= 1
+              return sponsorElement
+            }),
+          )}
+        </Flex>
+      </Flex>
     )
   }
 
   if (!sponsors) return null
 
   return (
-    <styled.div padding="4">
+    <Flex flexDirection="column" alignItems="flex-start" padding={12} marginY={24}>
       <styled.h2 fontSize="4xl" textAlign="center" color="white">
         {year} Sponsors
       </styled.h2>
-      {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
-      {renderSponsorCategory('Gold Sponsors', sponsors.gold, 'md')}
-      {renderSponsorCategory('Silver Sponsors', sponsors.silver, 'sm')}
-      {renderSponsorCategory('Bronze Sponsors', sponsors.bronze, 'xs')}
-      {renderSponsorCategory('Community Sponsors', sponsors.community, 'xs')}
-      {renderSponsorCategory('Digital Sponsors', sponsors.digital, 'xs')}
-      {renderSponsorCategory('Coffee Cart Sponsors', sponsors.coffeeCart, 'xs')}
-      {renderSponsorCategory('Quiet Room Sponsors', sponsors.quietRoom, 'xs')}
-      {renderSponsorCategory('Keynote Sponsors', sponsors.keynotes, 'sm')}
-    </styled.div>
+      {renderSponsorGroup('Major Sponsors', [
+        { sponsors: sponsors.platinum, category: 'platinum' },
+        { sponsors: sponsors.gold, category: 'gold' },
+        { sponsors: sponsors.silver, category: 'silver' },
+        { sponsors: sponsors.bronze, category: 'bronze' },
+        { sponsors: sponsors.digital, category: 'digital' },
+      ])}
+      {renderSponsorGroup('Minor Sponsors', [
+        { sponsors: sponsors.community, category: 'community' },
+        { sponsors: sponsors.coffeeCart, category: 'coffeeCart' },
+        { sponsors: sponsors.quietRoom, category: 'quietRoom' },
+        { sponsors: sponsors.keynotes, category: 'keynotes' },
+      ])}
+    </Flex>
   )
 }
 

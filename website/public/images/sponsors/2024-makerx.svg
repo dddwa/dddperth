@@ -1,0 +1,30 @@
+<svg class="astro-hpnw4vwy" fill="none" viewBox="0 0 180 25">
+	<path class="logo_text" fill="#fff" fill-rule="evenodd" d="M18.87 8.223v14.364h3.765V2.557h-4.04L12.02 12.03 5.444 2.557H1.4v20.028h3.768V8.278l6.759 9.385h.123l6.82-9.442v.002Zm95.726-5.666H98.608v3.177h15.988V2.557Zm30.908 20.028-5.832-7.582a8.265 8.265 0 0 0 2.082-.816 6.248 6.248 0 0 0 1.62-1.287 5.702 5.702 0 0 0 1.065-1.746c.256-.659.387-1.406.387-2.245 0-.971-.185-1.854-.555-2.647-.37-.79-.9-1.458-1.59-2.002-.691-.544-1.534-.965-2.533-1.26-.996-.297-2.11-.443-3.346-.443h-9.631v3.177h9.306c1.425 0 2.532.28 3.311.848.787.563 1.179 1.401 1.179 2.512 0 1.036-.402 1.86-1.211 2.471-.801.615-1.886.921-3.25.921h-9.337v10.099h3.767v-6.981h4.767l5.326 6.98h4.475ZM98.605 10.884v11.7h16.144V19.41h-12.378v-5.353h10.834v-3.175h-14.6v.002Zm-20.54.286 8.98-8.613h-4.66L72.109 12.628V2.558h-3.767v20.027h3.767v-5.808l3.364-3.205 7.377 9.013h4.599l-9.382-11.418v.003ZM47.25 2.415h-3.517l-9.505 20.172h3.889c3.836-8.35 3.232-7.132 7.315-15.964 3.79 8.128 3.805 8.22 7.314 15.964h4.012L47.249 2.415Z" clip-rule="evenodd"></path>
+	<path class="logo_blue" fill="#009ADE" fill-rule="evenodd" d="M155.355 1.714h9.325l3.576 5.538-1.354 2.096-2.979 4.62-.332.511-1.85 2.867-2.438 3.783h3.918l1.654-2.567 1.354 2.096-1.696 2.628h-9.326l6.357-9.853.675-1.047-6.884-10.672Z" clip-rule="evenodd"></path>
+	<path class="logo_blue_gradient" fill="url(#a)" fill-rule="evenodd" d="M155.355 1.714h9.325l3.576 5.538-1.354 2.096-2.979 4.62-.332.511-1.85 2.867-2.438 3.783h3.918l1.654-2.567 1.354 2.096-1.696 2.628h-9.326l6.357-9.853.675-1.047-6.884-10.672Z" clip-rule="evenodd"></path>
+	<path class="logo_yellow_gradient" fill="url(#b)" fill-rule="evenodd" d="M176.553 23.286h-7.279l-1.393-2.157-.695-1.08-1.226-1.899-1.691-2.624 1.351-2.096 1.691 2.627 2.579 3.993.696 1.079h3.918l-5.642-8.743 5.494-8.515h-3.921l-1.504 2.334-1.353-2.096 1.546-2.395h9.328l-6.887 10.672 7.035 10.9h-2.047Z" clip-rule="evenodd"></path>
+	<path class="logo_pink_gradient" fill="url(#c)" fill-rule="evenodd" d="M176.553 23.286h-7.279l-1.393-2.157-.695-1.08-1.226-1.899-1.691-2.624 1.351-2.096 1.691 2.627 2.579 3.993.696 1.079h3.918l-5.642-8.743 5.494-8.515h-3.921l-1.504 2.334-1.353-2.096 1.546-2.395h9.328l-6.887 10.672 7.035 10.9h-2.047Z" clip-rule="evenodd"></path>
+	<path class="logo_blue_dark_gradient" fill="url(#d)" fill-rule="evenodd" d="m156.622 3.675 5.617 8.709 3.529-5.466-9.146-3.243Z" clip-rule="evenodd"></path>
+	<defs>
+		<linearGradient id="a" x1="162.474" x2="160.732" y1="22.623" y2="2.565" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#00B2E3" stop-opacity="0"></stop>
+			<stop offset="1" stop-color="#00B2E3"></stop>
+		</linearGradient>
+		<linearGradient id="b" x1="171.801" x2="171.248" y1="23.46" y2="1.867" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#FFC600"></stop>
+			<stop offset="1" stop-color="#FFC600"></stop>
+		</linearGradient>
+		<linearGradient id="c" x1="171.801" x2="171.248" y1="23.46" y2="1.867" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#E50695" stop-opacity="0"></stop>
+			<stop offset="1" stop-color="#E50695"></stop>
+		</linearGradient>
+		<linearGradient id="d" x1="161.206" x2="161.022" y1="4.946" y2="12.217" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#051C2C" stop-opacity="0"></stop>
+			<stop offset="1" stop-color="#051C2C"></stop>
+		</linearGradient>
+		<linearGradient id="d_current" x1="161.206" x2="161.022" y1="4.946" y2="12.217" gradientUnits="userSpaceOnUse">
+			<stop stop-color="currentColor" stop-opacity="0"></stop>
+			<stop offset="1" stop-color="currentColor"></stop>
+		</linearGradient>
+	</defs>
+</svg>
