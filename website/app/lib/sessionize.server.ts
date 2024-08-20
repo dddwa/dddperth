@@ -4,10 +4,18 @@ import { z } from 'zod'
 
 const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' : undefined
 // const SPEAKERS_CACHE_KEY = 'speakers'
-// const SESSIONS_CACHE_KEY = 'sessions'
+const SESSIONS_CACHE_KEY = 'sessions'
 const SCHEDULE_CACHE_KEY = 'schedule'
 
-const scheduleCache = new LRUCache<'schedule', z.infer<typeof gridSmartSchema>>({
+const scheduleCache = new LRUCache<typeof SCHEDULE_CACHE_KEY, z.infer<typeof gridSmartSchema>>({
+    max: 250,
+    maxSize: 1024 * 1024 * 12, // 12 mb
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    sizeCalculation(value, key) {
+        return JSON.stringify(value).length + (key ? key.length : 0)
+    },
+})
+const sessionsCache = new LRUCache<typeof SESSIONS_CACHE_KEY, z.infer<typeof sessionsSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
     ttl: 1000 * 60 * 60 * 24, // 24 hours
@@ -74,6 +82,14 @@ export const gridSmartSchema = z.array(
     }),
 )
 
+export const sessionsSchema = z.array(
+    z.object({
+        groupId: z.string().nullable(),
+        groupName: z.string().nullable(),
+        sessions: z.array(sessionSchema),
+    }),
+)
+
 export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gridSmartSchema>> {
     const { noCache = NO_CACHE ?? false } = opts
     if (!noCache) {
@@ -105,6 +121,40 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
     }
 
     return schedule
+}
+
+export async function getConfSessions(opts: Options): Promise<z.infer<typeof sessionsSchema>> {
+    const { noCache = NO_CACHE ?? false } = opts
+    if (!noCache) {
+        const cached = sessionsCache.get(SESSIONS_CACHE_KEY)
+        if (cached) {
+            return cached as z.infer<typeof sessionsSchema>
+        }
+    }
+
+    const fetched = await fetch(`${opts.sessionizeEndpoint}/view/Sessions`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+
+    if (!fetched.ok) {
+        throw new Error('Error fetching sessions, responded with status: ' + fetched.status)
+    }
+
+    const json = await fetched.json()
+    if (!json || !Array.isArray(json)) {
+        throw new Error('Error fetching sessions. Expected an array, received:\n\n' + json)
+    }
+
+    const sessions = sessionsSchema.parse(json)
+
+    if (!noCache) {
+        sessionsCache.set(SESSIONS_CACHE_KEY, sessions)
+    }
+
+    return sessions
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {

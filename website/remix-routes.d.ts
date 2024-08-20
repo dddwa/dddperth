@@ -32,6 +32,13 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/_layout.agenda.($year)').SearchParams>,
     };
   
+    "/agenda/:year/talk/:sessionId": {
+      params: {
+        year: string | number;sessionId: string | number;
+      } ,
+      query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId').SearchParams>,
+    };
+  
     "/blog": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.blog._index').SearchParams>,
@@ -69,6 +76,7 @@ declare module "remix-routes" {
     | 'routes/_layout._index'
     | 'routes/_layout.$'
     | 'routes/_layout.agenda.($year)'
+    | 'routes/_layout.agenda.$year.talk.$sessionId'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
     | 'routes/blog.rss[.xml]'
