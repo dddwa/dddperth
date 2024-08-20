@@ -20,7 +20,7 @@ export const HomepageHeroPanel = () => {
       gradientFrom="#070727"
       gradientTo="#0E0E43"
       gap={6}
-      pt={24}
+      pt={{ base: 6, md: 12, lg: 24 }}
       bgGradient="to-b"
       md={{ gap: '12' }}
       lg={{ gap: '20' }}
@@ -28,7 +28,7 @@ export const HomepageHeroPanel = () => {
         gap: '24',
       }}
     >
-      <Box maxW="1200px" ml="12" xl={{ ml: '0' }}>
+      <Box maxW="1200px" ml={{ base: 6, md: 12, lg: 24 }}>
         <styled.h2
           color="#8282FB"
           fontSize={{ base: 'md', md: 'xl' }}
@@ -48,14 +48,12 @@ export const HomepageHeroPanel = () => {
         <styled.h1
           fontFamily="display"
           color="white"
-          fontSize="xl"
           w="full"
           fontWeight="black"
           textWrap="balance"
           lineHeight={1.2}
-          sm={{ fontSize: '3xl', maxWidth: 'full' }}
-          lg={{ fontSize: '5xl', maxWidth: '3/4' }}
-          xl={{ fontSize: '6xl', maxWidth: '3/4' }}
+          fontSize={{ base: '3xl', md: '5xl', lg: '6xl' }}
+          maxWidth={{ base: 'full', md: '3/4', lg: '3/4' }}
         >
           A one day, fully inclusive, approachable and affordable tech conference for everyone.
         </styled.h1>
