@@ -17,7 +17,7 @@ export const conference2024: ConferenceYear = {
 
     sessions: {
         kind: 'sessionize',
-        sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+        sessionizeEndpoint: 'https://sessionize.com/api/v2/vedvlykn',
     },
 
     conferenceDate: DateTime.fromISO('2024-11-16'),
@@ -53,6 +53,46 @@ export const conference2024: ConferenceYear = {
     }),
 
     sponsors: {
-
-    }
+        platinum: [
+            {
+                name: 'MakerX',
+                website: 'https://makerx.com.au/',
+                logoUrl: '/images/sponsors/2024-makerx.png',
+            },
+        ],
+        gold: [
+            {
+                name: 'Mantel Group',
+                website: 'https://mantelgroup.com.au/',
+                logoUrl: '/images/sponsors/2024-mantel-group.png',
+            },
+            {
+                name: 'Virtual Gaming Worlds',
+                website: 'https://www.vgw.co/',
+                logoUrl: '/images/sponsors/2024-vgw.png',
+            },
+            {
+                name: 'Qoria',
+                website: 'https://qoria.com/',
+                logoUrl: '/images/sponsors/2024-qoria.png',
+            },
+            {
+                name: 'Tricentis',
+                website: 'https://www.tricentis.com/',
+                logoUrl: '/images/sponsors/2024-tricentis.png',
+            },
+            {
+                name: 'Woodside Energy',
+                website: 'https://www.woodside.com/',
+                logoUrl: '/images/sponsors/2024-woodside.png',
+            },
+        ],
+        digital: [
+            {
+                name: 'Akkodis',
+                website: 'https://akkodis.com/',
+                logoUrl: '/images/sponsors/2024-akkodis.png',
+            },
+        ],
+    },
 }

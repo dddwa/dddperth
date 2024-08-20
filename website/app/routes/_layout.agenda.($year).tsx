@@ -89,11 +89,23 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences } = useLoaderData<typeof loader>()
+    const { schedule, sponsors, conferences, year } = useLoaderData<typeof loader>()
+    const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
     if (!schedule) {
-        return <Box color="white">Agenda has not been announced</Box>
+        return (
+            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+                <p>
+                    {conferenceConfig.name} {year} agenda has not been announced
+                </p>
+
+                <SponsorSection year={year} sponsors={sponsors} />
+
+                <ConferenceBrowser conferences={conferences} />
+            </Box>
+        )
     }
+
     return (
         <Flex
             flexDirection="column"
@@ -197,7 +209,11 @@ export default function Agenda() {
                                 const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
                                 const nextTimeSlotEnd = nextTimeSlot?.slotStart.replace(/:/g, '')
                                 const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''
-                                const earliestEnd = timeSlotEnd > nextTimeSlotEnd ? nextTimeSlotEnd : timeSlotEnd
+                                const earliestEnd = !availableTimeSlots?.includes(timeSlotEnd)
+                                    ? nextTimeSlotEnd
+                                    : timeSlotEnd > nextTimeSlotEnd
+                                      ? nextTimeSlotEnd
+                                      : timeSlotEnd
 
                                 return (
                                     <styled.div
@@ -257,7 +273,7 @@ export default function Agenda() {
                 })}
             </Box>
 
-            <SponsorSection sponsors={sponsors} />
+            <SponsorSection sponsors={sponsors} year={year} />
 
             <ConferenceBrowser conferences={conferences} />
         </Flex>
@@ -281,7 +297,7 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     )
 }
 
-function SponsorSection({ sponsors }: { sponsors: YearSponsors | undefined }) {
+function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
     const renderSponsorCategory = (
         title: string,
         sponsors: Sponsor[] | undefined,
@@ -289,28 +305,24 @@ function SponsorSection({ sponsors }: { sponsors: YearSponsors | undefined }) {
     ) => {
         if (!sponsors || sponsors.length === 0) return null
 
+        const maxLogoSize =
+            logoSize === 'lg' ? '250px' : logoSize === 'md' ? '150px' : logoSize === 'sm' ? '100px' : '75px'
         return (
-            <styled.div marginBottom="4" background="white">
-                <styled.h2 marginBottom="3" fontSize="2xl" textAlign="center">
+            <styled.div marginBottom="4" background="white" padding="3" borderRadius="lg">
+                <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="slate.text">
                     {title}
-                </styled.h2>
-                <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
+                </styled.h3>
+                <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4" alignItems="center">
                     {sponsors.map((sponsor) => (
                         <styled.a key={sponsor.name} href={sponsor.website} target="_blank" rel="noopener noreferrer">
                             <styled.img
                                 src={sponsor.logoUrl}
                                 alt={sponsor.name}
-                                maxWidth={
-                                    logoSize === 'lg'
-                                        ? '200px'
-                                        : logoSize === 'md'
-                                          ? '150px'
-                                          : logoSize === 'sm'
-                                            ? '100px'
-                                            : '75px'
-                                }
+                                maxWidth={maxLogoSize}
                                 width="100%"
+                                maxHeight={maxLogoSize}
                                 display="inline-block"
+                                objectFit="contain"
                             />
                         </styled.a>
                     ))}
@@ -323,11 +335,15 @@ function SponsorSection({ sponsors }: { sponsors: YearSponsors | undefined }) {
 
     return (
         <styled.div padding="4">
+            <styled.h2 fontSize="4xl" textAlign="center">
+                {year} Sponsors
+            </styled.h2>
             {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
             {renderSponsorCategory('Gold Sponsors', sponsors.gold, 'md')}
             {renderSponsorCategory('Silver Sponsors', sponsors.silver, 'sm')}
             {renderSponsorCategory('Bronze Sponsors', sponsors.bronze, 'xs')}
             {renderSponsorCategory('Community Sponsors', sponsors.community, 'xs')}
+            {renderSponsorCategory('Digital Sponsors', sponsors.digital, 'xs')}
             {renderSponsorCategory('Coffee Cart Sponsors', sponsors.coffeeCart, 'xs')}
             {renderSponsorCategory('Quiet Room Sponsors', sponsors.quietRoom, 'xs')}
             {renderSponsorCategory('Keynote Sponsors', sponsors.keynotes, 'sm')}

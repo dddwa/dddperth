@@ -102,6 +102,7 @@ export interface YearSponsors {
     platinum?: Sponsor[]
     gold?: Sponsor[]
     silver?: Sponsor[]
+    digital?: Sponsor[]
     bronze?: Sponsor[]
     community?: Sponsor[]
     coffeeCart?: Sponsor[]
