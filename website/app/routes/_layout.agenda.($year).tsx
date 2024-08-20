@@ -368,7 +368,7 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
         display="flex"
         justifyContent="center"
         alignItems="center"
-        border="6px solid #0E0E43"
+        border="6px solid #0D0D3F"
         style={{
           background: `linear-gradient(to bottom, ${gradientFrom}, #151544)`,
           zIndex: zIndex,
@@ -385,7 +385,7 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
           alt={sponsor.name}
           maxWidth={150}
           width="100%"
-          maxHeight={100}
+          maxHeight={90}
           ml={-3}
           display="inline-block"
           objectFit="contain"
