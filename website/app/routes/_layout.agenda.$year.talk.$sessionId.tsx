@@ -6,14 +6,8 @@ import { $params, $path } from 'remix-routes'
 import { Box, Flex, styled } from 'styled-system/jsx'
 import { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
-import {
-    ConferenceConfigYear,
-    ConferenceImportantInformation,
-    ConferenceYear,
-    Sponsor,
-    Year,
-    YearSponsors,
-} from '~/lib/config-types'
+import { SponsorSection } from '~/components/page-components/SponsorSection'
+import { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { localeTimeFormat } from '~/lib/dates/formatting'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
@@ -130,60 +124,6 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
                     </styled.a>
                 ))}
             </styled.div>
-        </styled.div>
-    )
-}
-
-function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
-    const renderSponsorCategory = (
-        title: string,
-        sponsors: Sponsor[] | undefined,
-        logoSize: 'xs' | 'sm' | 'md' | 'lg',
-    ) => {
-        if (!sponsors || sponsors.length === 0) return null
-
-        const maxLogoSize =
-            logoSize === 'lg' ? '250px' : logoSize === 'md' ? '150px' : logoSize === 'sm' ? '100px' : '75px'
-        return (
-            <styled.div marginBottom="4" background="white" padding="3" borderRadius="lg">
-                <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="slate.text">
-                    {title}
-                </styled.h3>
-                <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4" alignItems="center">
-                    {sponsors.map((sponsor) => (
-                        <styled.a key={sponsor.name} href={sponsor.website} target="_blank" rel="noopener noreferrer">
-                            <styled.img
-                                src={sponsor.logoUrl}
-                                alt={sponsor.name}
-                                maxWidth={maxLogoSize}
-                                width="100%"
-                                maxHeight={maxLogoSize}
-                                display="inline-block"
-                                objectFit="contain"
-                            />
-                        </styled.a>
-                    ))}
-                </styled.div>
-            </styled.div>
-        )
-    }
-
-    if (!sponsors) return null
-
-    return (
-        <styled.div padding="4">
-            <styled.h2 fontSize="4xl" textAlign="center" color="white">
-                {year} Sponsors
-            </styled.h2>
-            {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
-            {renderSponsorCategory('Gold Sponsors', sponsors.gold, 'md')}
-            {renderSponsorCategory('Silver Sponsors', sponsors.silver, 'sm')}
-            {renderSponsorCategory('Bronze Sponsors', sponsors.bronze, 'xs')}
-            {renderSponsorCategory('Community Sponsors', sponsors.community, 'xs')}
-            {renderSponsorCategory('Digital Sponsors', sponsors.digital, 'xs')}
-            {renderSponsorCategory('Coffee Cart Sponsors', sponsors.coffeeCart, 'xs')}
-            {renderSponsorCategory('Quiet Room Sponsors', sponsors.quietRoom, 'xs')}
-            {renderSponsorCategory('Keynote Sponsors', sponsors.keynotes, 'sm')}
         </styled.div>
     )
 }
