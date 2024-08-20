@@ -7,6 +7,8 @@ param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
 param applicationInsightsName string
+param gitHubOrganization string
+param gitHubRepo string
 param exists bool
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -45,7 +47,7 @@ module fetchLatestImage '../modules/fetch-container-image.bicep' = {
   }
 }
 
-resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
+resource app 'Microsoft.App/containerApps@2024-03-01' = {
   name: name
   location: location
   tags: union(tags, {'azd-service-name':  'ddd' })
@@ -82,6 +84,14 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
             {
               name: 'PORT'
               value: '80'
+            },
+            {
+                name: 'GITHUB_ORGANIZATION',
+                value: gitHubOrganization
+            },
+            {
+                name: 'GITHUB_REPO',
+                value: gitHubRepo
             }
           ]
           resources: {

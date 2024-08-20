@@ -32,6 +32,15 @@
         },
         "principalId": {
             "value": "${AZURE_PRINCIPAL_ID}"
+        },
+        "gitHubOrganization": {
+            "value": "dddwa"
+        },
+        "gitHubRepo": {
+            "value": "dddperth"
+        },
+        "gitHubToken": {
+            "value": "${GH_CONTENT_TOKEN}"
         }
     }
 }

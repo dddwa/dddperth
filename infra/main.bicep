@@ -14,6 +14,14 @@ param dddExists bool
 @description('Id of the user or app to assign application roles')
 param principalId string
 
+@minLength(1)
+param gitHubOrganization string
+@minLength(1)
+param gitHubRepo string
+@minLength(1)
+@secure()
+param gitHubToken string
+
 // Tags that should be applied to all resources.
 //
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
