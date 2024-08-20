@@ -101,19 +101,19 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: '80'
             }
             {
-                name: 'GITHUB_ORGANIZATION',
+                name: 'GITHUB_ORGANIZATION'
                 value: gitHubOrganization
             }
             {
-                name: 'GITHUB_REPO',
+                name: 'GITHUB_REPO'
                 value: gitHubRepo
             }
             {
-                name: 'GITHUB_TOKEN',
+                name: 'GITHUB_TOKEN'
                 secretRef: 'github-token'
             }
             {
-                name: 'SESSION_SECRET',
+                name: 'SESSION_SECRET'
                 secretRef: 'session-secret'
             }
           ]
