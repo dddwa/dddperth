@@ -61,6 +61,7 @@
         "remark-slug": "^7.0.1",
         "remix-auth": "^3.7.0",
         "remix-auth-oauth2": "^2.3.0",
+        "remix-routes": "^1.7.7",
         "remix-utils": "^7.6.0",
         "shiki": "^1.14.1",
         "source-map-support": "^0.5.21",
