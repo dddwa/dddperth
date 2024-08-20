@@ -108,17 +108,3 @@ output defaultDomain string = containerAppsEnvironment.properties.defaultDomain
 output name string = app.name
 output uri string = 'https://${app.properties.configuration.ingress.fqdn}'
 output id string = app.id
-
-resource authConfig 'Microsoft.App/containerApps/authConfigs@2023-11-02-preview' = if (environment == 'dev') {
-  name: 'current'
-  parent: app
-  properties: {
-    globalValidation: {
-      unauthenticatedClientAction: 'RedirectToLoginPage'
-    }
-    platform: {
-      enabled: true
-      runtimeVersion: 'v2'
-    }
-  }
-}

@@ -48,7 +48,7 @@ jobs:
             - name: Log in with Azure (Federated Credentials)
               run: |
                   azd auth login `
-                    --client-id "${{ secrets.AUTH_CLIENT_ID }}`
+                    --client-id "${{ secrets.AUTH_CLIENT_ID }}"`
                     --federated-credential-provider "github" `
                     --tenant-id "${{ secrets.AUTH_CLIENT_SECRET }}"
               shell: pwsh
