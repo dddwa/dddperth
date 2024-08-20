@@ -187,11 +187,19 @@ export default function Agenda() {
         {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
           const startTime12 = DateTime.fromISO(timeSlot.slotStart).toFormat('h:mm a').toLowerCase()
           const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
+          const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
+          const nextTimeSlotStart = nextTimeSlot?.slotStart.replace(/:/g, '')
 
           return (
             <Fragment key={timeSlot.slotStart}>
-              <styled.h2 gridColumn="times" style={{ gridRow: `time-${timeSlotSimple}` }}>
+              <styled.h2 gridColumn="times" style={{ gridRow: `time-${timeSlotSimple}` }} mt="2" md={{ mt: 0 }}>
                 {startTime12}
+                {nextTimeSlot?.slotStart ? (
+                  <styled.span display={{}} md={{ display: 'none' }}>
+                    {' '}
+                    - {DateTime.fromISO(nextTimeSlot.slotStart).toFormat('h:mm a').toLowerCase()}
+                  </styled.span>
+                ) : null}
               </styled.h2>
 
               {timeSlot.rooms.map((room) => {
@@ -203,12 +211,10 @@ export default function Agenda() {
                   ? DateTime.fromISO(fullSession.endsAt).toFormat('h:mm a').toLowerCase()
                   : undefined
 
-                const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
-                const nextTimeSlotEnd = nextTimeSlot?.slotStart.replace(/:/g, '')
                 const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''
                 const earliestEnd = !availableTimeSlots?.includes(timeSlotEnd)
-                  ? nextTimeSlotEnd
-                  : timeSlotEnd ?? nextTimeSlotEnd
+                  ? nextTimeSlotStart
+                  : timeSlotEnd ?? nextTimeSlotStart
 
                 return (
                   <styled.div
@@ -223,7 +229,17 @@ export default function Agenda() {
                           : `room-${room.id}`,
                     }}
                   >
-                    <Box rounded="sm" bgColor="#1F1F4E" fontSize="sm" height="full" padding={2}>
+                    <Box
+                      rounded="sm"
+                      bgColor="#1F1F4E"
+                      fontSize="sm"
+                      height="full"
+                      padding={2}
+                      mt="2"
+                      md={{
+                        mt: 0,
+                      }}
+                    >
                       <styled.h3
                         wordWrap="break-word"
                         color="white"
@@ -234,15 +250,22 @@ export default function Agenda() {
                       >
                         <a href="#">{fullSession?.title}</a>
                       </styled.h3>
-                      <styled.span display="block" color="#C2C2FF" textWrap="nowrap">
-                        {startTime12} → {endTime12}
+                      <styled.span
+                        display="none"
+                        md={{
+                          display: 'block',
+                        }}
+                        color="#C2C2FF"
+                        textWrap="nowrap"
+                      >
+                        🕓 {startTime12} - {endTime12}
                       </styled.span>
                       <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap">
-                        {room.name}
+                        📍 {room.name}
                       </styled.span>
                       {fullSession?.speakers?.length ? (
                         <styled.span display="block" color="#C2C2FF">
-                          {fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}
+                          💬 {fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}
                         </styled.span>
                       ) : null}
                     </Box>
