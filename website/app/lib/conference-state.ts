@@ -13,6 +13,7 @@ import {
     Year,
 } from './config-types'
 import { DateTimeProvider } from './dates/date-time-provider.server'
+import { localeTimeFormat } from './dates/formatting'
 
 export function getCurrentConferenceState(
     dateTimeProvider: DateTimeProvider,
@@ -43,6 +44,7 @@ export function getCurrentConferenceState(
                 year: latestConference[0],
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
+                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
             },
             previousConference:
                 previousConference && previousConference[1].conferenceDate
@@ -51,6 +53,7 @@ export function getCurrentConferenceState(
                           year: previousConference[0],
                           sessions: previousConference[1].sessions,
                           ticketPrice: previousConference[1].ticketPrice,
+                          votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                       }
                     : undefined,
             callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
@@ -74,6 +77,7 @@ export function getCurrentConferenceState(
                 year: latestConference[0],
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
+                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
             },
             previousConference:
                 previousConference && previousConference[1].conferenceDate
@@ -82,6 +86,7 @@ export function getCurrentConferenceState(
                           year: previousConference[0],
                           sessions: previousConference[1].sessions,
                           ticketPrice: previousConference[1].ticketPrice,
+                          votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                       }
                     : undefined,
 
@@ -104,6 +109,7 @@ export function getCurrentConferenceState(
                 year: latestConference[0],
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
+                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
             },
             callForPapers: { state: 'closed' },
             ticketSales: { state: 'closed' },
@@ -126,6 +132,7 @@ export function getCurrentConferenceState(
             year: latestConference[0],
             sessions: latestConference[1].sessions,
             ticketPrice: latestConference[1].ticketPrice,
+            votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
         },
         previousConference:
             previousConference && previousConference[1].conferenceDate
@@ -134,6 +141,7 @@ export function getCurrentConferenceState(
                       year: previousConference[0],
                       sessions: previousConference[1].sessions,
                       ticketPrice: previousConference[1].ticketPrice,
+                      votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                   }
                 : undefined,
         callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),

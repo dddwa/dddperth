@@ -14,6 +14,7 @@ import {
     Year,
     YearSponsors,
 } from '~/lib/config-types'
+import { localeTimeFormat } from '~/lib/dates/formatting'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
 import { formatDate, getScheduleGrid, gridSmartSchema } from '../lib/sessionize.server'
@@ -377,5 +378,6 @@ function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportan
         year: yearConfig.year,
         sessions: yearConfig.sessions,
         ticketPrice: yearConfig.ticketPrice,
+        votingOpens: yearConfig.talkVotingDates?.opens.toLocaleString(localeTimeFormat),
     }
 }

@@ -23,43 +23,6 @@ export interface ConferenceConfig {
 
     conferences: Record<Year, ConferenceConfigYear>
 
-    importantContacts: {
-        police: {
-            details: string
-            phone: string
-            mapUrl: string
-        }
-        centreAgainstSexualAssault: {
-            Details: string
-            Phone: string
-        }
-        emergencyMedical: {
-            details: string
-            mapUrl: string
-        }
-        nonEmergencyMedical: {
-            details: string
-            phone: string
-            mapUrl: string
-        }
-    }
-
-    socials: {
-        twitter: {
-            id: string
-            name: string
-        }
-        facebook: string
-        flickr: string
-        youtube: string
-        blog: string
-        email: string
-        mailingList: string
-        gitHub: string
-        instagram: string
-        linkedin: string
-    }
-
     volunteerForm:
         | {
               type: 'salesmate'
@@ -135,6 +98,7 @@ export interface ConferenceImportantInformation {
     date: string | undefined
     year: Year
     ticketPrice: string
+    votingOpens: string | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
 }
