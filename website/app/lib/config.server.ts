@@ -23,7 +23,10 @@ export const {
         OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: z.string().optional(),
         OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: z.string().optional(),
 
-        USE_GITHUB_CONTENT: z.string().transform((val) => val === 'true'),
+        USE_GITHUB_CONTENT: z
+            .string()
+            .transform((val) => val === 'true')
+            .default('true'),
 
         GITHUB_REF: z.string().default('main'),
         GITHUB_TOKEN: z.string().optional(),
