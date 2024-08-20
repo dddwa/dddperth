@@ -145,12 +145,13 @@ function ContentPageWithSidebar({
     children,
 }: PropsWithChildren<Pick<SerializeFrom<typeof loader>, 'conferenceState' | 'frontmatter' | 'currentPath'>>) {
     return (
-        <Grid gridTemplateColumns="1fr auto">
-            <main id="content">
+        <Grid gridTemplateColumns={{ base: '1ft', lg: '1fr auto' }}>
+            <styled.main id="content" marginX={{ base: 6, lg: 0 }}>
                 <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
                 <Box className={prose({ size: 'lg' })}>{children}</Box>
-            </main>
-            <Flex
+            </styled.main>
+            <styled.aside
+                display="flex"
                 flexDirection="column"
                 height="fit-content"
                 bgGradient="to-r"
@@ -166,7 +167,7 @@ function ContentPageWithSidebar({
 
                 {/* TODO Important date list */}
                 {/* <ImportantDatesList layout="inline" conference={conference} currentDate={currentDate} /> */}
-            </Flex>
+            </styled.aside>
         </Grid>
     )
 }
