@@ -14,7 +14,6 @@ import {
     Year,
     YearSponsors,
 } from '~/lib/config-types'
-import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
 import { formatDate, getScheduleGrid, gridSmartSchema } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
@@ -84,7 +83,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
                   }
                 : undefined,
         },
-        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
+        // { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
