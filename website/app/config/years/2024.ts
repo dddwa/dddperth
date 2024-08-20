@@ -51,6 +51,11 @@ export const conference2024: ConferenceYear = {
     feedbackOpenUntilDateTime: DateTime.fromISO('2024-11-21T23:59:59', {
         zone: 'Australia/Perth',
     }),
+    ticketInfo: {
+        type: 'tito',
+        accountId: 'dddperth',
+        eventId: '2024',
+    },
 
     sponsors: {
         platinum: [

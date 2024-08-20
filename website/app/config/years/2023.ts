@@ -18,6 +18,11 @@ export const conference2023: ConferenceYear = {
     feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
     ticketSalesDates: undefined,
+    ticketInfo: {
+        type: 'tito',
+        accountId: 'dddperth',
+        eventId: '2023',
+    },
 
     sponsors: {
         platinum: [

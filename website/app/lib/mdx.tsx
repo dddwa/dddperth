@@ -6,6 +6,7 @@ import { DateTime } from 'luxon'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
 import { MDXComponents } from 'mdx/types'
 import { useMemo } from 'react'
+import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
 import { styled } from '../../styled-system/jsx'
@@ -89,6 +90,21 @@ function getMdxComponent(code: string, conferenceState: SerializeFrom<Conference
         VolunteersNeeded: ({ children }) => {
             if (conferenceState.needsVolunteers) {
                 return children
+            }
+        },
+        TicketWaitListOpen: ({ children }) => {
+            if (conferenceState.ticketSales.state === 'wait-list-open') {
+                return children
+            }
+        },
+        TicketSalesOpen: ({ children }) => {
+            if (conferenceState.ticketSales.state === 'open') {
+                return children
+            }
+        },
+        BuyTicketForm: () => {
+            if (conferenceState.ticketSales.state === 'open') {
+                return <TicketForm state={conferenceState.ticketSales} />
             }
         },
     }

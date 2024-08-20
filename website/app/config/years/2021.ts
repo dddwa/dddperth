@@ -19,6 +19,7 @@ export const conference2021: ConferenceYear = {
     feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
     ticketSalesDates: undefined,
+    ticketInfo: undefined,
 
     sponsors: {
         platinum: [

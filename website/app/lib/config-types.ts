@@ -74,6 +74,14 @@ export interface DateTimeRange {
     closes: DateTime
 }
 
+export interface TitoTicketInfo {
+    type: 'tito'
+    accountId: string
+    eventId: string
+}
+
+export type TicketInfo = TitoTicketInfo
+
 /**
  * This year's conference configuration
  */
@@ -83,6 +91,8 @@ export interface ConferenceYear {
     ticketPrice: string
 
     sessionizeUrl: string | undefined
+
+    ticketInfo: TicketInfo | undefined
 
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
@@ -169,7 +179,7 @@ export interface BeforeConferenceState {
     previousConference: ConferenceImportantInformation | undefined
 
     callForPapers: CFPOpen | CFPClosed | CFPNotOpenYet
-    ticketSales: TicketSalesStates
+    ticketSales: TicketSalesState
     talkVoting: TalkVotingStates
     feedback: NotOpenYet
     agenda: AgendaState
@@ -187,7 +197,7 @@ export interface ConferenceDayState {
     previousConference: ConferenceImportantInformation | undefined
 
     callForPapers: CFPClosed
-    ticketSales: Closed
+    ticketSales: TicketSalesClosed
     talkVoting: Closed
     feedback: Open
     agenda: Published
@@ -202,7 +212,7 @@ export interface AfterConferenceState {
     conference: ConferenceImportantInformation
 
     callForPapers: CFPClosed
-    ticketSales: NotOpenYet
+    ticketSales: TicketSalesClosed
     talkVoting: NotOpenYet
     feedback: FeedbackState
     agenda: NotReleased
@@ -214,7 +224,6 @@ export interface AfterConferenceState {
 // State groups
 //
 export type CallForPaperStates = NotOpenYet | Open | Closed
-export type TicketSalesStates = NotOpenYet | Open | SoldOut | Closed | WaitListOpen
 export type TalkVotingStates = NotOpenYet | Open | Closed
 export type AgendaState = NotReleased | Published
 export type FeedbackState = Open | Closed
@@ -229,3 +238,34 @@ export type SoldOut = 'sold-out'
 export type WaitListOpen = 'wait-list-open'
 export type Published = 'published'
 export type NotReleased = 'not-released'
+
+export type TicketSalesState =
+    | TicketSalesOpen
+    | TicketSalesClosed
+    | TicketSalesSoldOut
+    | TicketSalesWaitListOpen
+    | TicketSalesNotOpenYet
+
+export interface TicketSalesOpen {
+    state: Open
+    closes: string
+
+    ticketInfo: TicketInfo | undefined
+}
+
+export interface TicketSalesClosed {
+    state: Closed
+}
+
+export interface TicketSalesSoldOut {
+    state: SoldOut
+}
+
+export interface TicketSalesWaitListOpen {
+    state: WaitListOpen
+}
+
+export interface TicketSalesNotOpenYet {
+    state: NotOpenYet
+    opens: string | undefined
+}

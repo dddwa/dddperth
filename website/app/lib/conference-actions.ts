@@ -26,7 +26,7 @@ export default function getConferenceActions(conferenceState: SerializeFrom<Conf
         })
     }
 
-    if (conferenceState.ticketSales === 'open') {
+    if (conferenceState.ticketSales.state === 'open') {
         actions.push({
             category: 'tickets',
             title: 'Purchase a ticket',

@@ -9,7 +9,7 @@ import {
     ConferenceYear,
     DateTimeRange,
     TalkVotingStates,
-    TicketSalesStates,
+    TicketSalesState,
     Year,
 } from './config-types'
 import { DateTimeProvider } from './dates/date-time-provider.server'
@@ -54,7 +54,7 @@ export function getCurrentConferenceState(
                       }
                     : undefined,
             callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
-            ticketSales: getTicketSalesState(currentDate, latestConference[1].ticketSalesDates),
+            ticketSales: getTicketSalesState(currentDate, latestConference[1]),
             agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
             talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
             feedback: 'not-open-yet',
@@ -89,7 +89,7 @@ export function getCurrentConferenceState(
             feedback: 'open',
 
             callForPapers: { state: 'closed' },
-            ticketSales: 'closed',
+            ticketSales: { state: 'closed' },
             talkVoting: 'closed',
             needsVolunteers: false,
         }
@@ -106,7 +106,7 @@ export function getCurrentConferenceState(
                 ticketPrice: latestConference[1].ticketPrice,
             },
             callForPapers: { state: 'closed' },
-            ticketSales: 'not-open-yet',
+            ticketSales: { state: 'closed' },
             agenda: 'not-released',
             talkVoting: 'not-open-yet',
             feedback: getFeedbackState(
@@ -137,7 +137,7 @@ export function getCurrentConferenceState(
                   }
                 : undefined,
         callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
-        ticketSales: getTicketSalesState(currentDate, latestConference[1].ticketSalesDates),
+        ticketSales: getTicketSalesState(currentDate, latestConference[1]),
         agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
         talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
         feedback: 'not-open-yet',
@@ -172,12 +172,12 @@ function getTalkVotingState(currentDate: DateTime, talkVotingDates: DateTimeRang
           : 'closed'
 }
 
-function getTicketSalesState(currentDate: DateTime, ticketSalesDates: DateTimeRange | undefined): TicketSalesStates {
-    return !ticketSalesDates || currentDate < ticketSalesDates.opens
-        ? 'not-open-yet'
-        : currentDate < ticketSalesDates.closes
-          ? 'open'
-          : 'closed'
+function getTicketSalesState(currentDate: DateTime, yearConfig: ConferenceYear): TicketSalesState {
+    return !yearConfig.ticketSalesDates || currentDate < yearConfig.ticketSalesDates.opens
+        ? { state: 'not-open-yet', opens: yearConfig.ticketSalesDates?.opens.toISO() }
+        : currentDate < yearConfig.ticketSalesDates.closes
+          ? { state: 'open', closes: yearConfig.ticketSalesDates.closes.toISO(), ticketInfo: yearConfig.ticketInfo }
+          : { state: 'closed' }
 }
 
 function getCfpState(
