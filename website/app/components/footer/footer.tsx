@@ -1,21 +1,19 @@
 import Logo from '~/images/svg/logo.svg?react'
 import { css } from '../../../styled-system/css'
-import { Divider, Flex, Grid, styled } from '../../../styled-system/jsx'
+import { Box, Divider, Flex, Grid, styled } from '../../../styled-system/jsx'
 import { socialsData } from '../../config/socials-data'
 
 export const Footer = () => (
-    <Flex
+    <Box
         mt={48}
-        direction="column"
         gap={6}
-        maxW="1200px"
         mx="5"
         xl={{
             mx: 0,
         }}
     >
         <Divider color="#8D8DFF33" mb={6} />
-        <Grid gridTemplateColumns="repeat(4, 1fr)" width="full" gap={6}>
+        <Grid gridTemplateColumns="repeat(4, 1fr)" width="full" gap={6} maxW="1200px" mx="auto">
             <Flex flexGrow={2}>
                 <Logo width={153} />
             </Flex>
@@ -101,5 +99,5 @@ export const Footer = () => (
                 </Flex>
             </Flex>
         </Grid>
-    </Flex>
+    </Box>
 )

@@ -333,7 +333,7 @@ function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined
 
     return (
         <styled.div padding="4">
-            <styled.h2 fontSize="4xl" textAlign="center">
+            <styled.h2 fontSize="4xl" textAlign="center" color="white">
                 {year} Sponsors
             </styled.h2>
             {renderSponsorCategory('Platinum Sponsors', sponsors.platinum, 'lg')}
