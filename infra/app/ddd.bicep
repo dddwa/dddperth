@@ -68,12 +68,6 @@ resource app 'Microsoft.App/containerApps@2023-05-02-preview' = {
           identity: identity.id
         }
       ]
-      secrets: [
-        {
-          name: 'client-secret'
-          value: authClientSecret
-        }
-      ]
     }
     template: {
       containers: [
