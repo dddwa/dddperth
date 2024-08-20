@@ -11,7 +11,6 @@ import ImportantDates from '~/components/page-components/important-dates'
 import { Button } from '~/components/ui/button'
 import getConferenceActions from '~/lib/conference-actions'
 import { ConferenceState } from '~/lib/config-types'
-import { CACHE_CONTROL } from '~/lib/http.server'
 import { css } from '../../styled-system/css'
 import { Box, Flex, Grid, styled } from '../../styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
@@ -53,7 +52,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
             post: post.code,
             conferenceState: context.conferenceState,
         },
-        { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
+        // { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
     )
 }
 

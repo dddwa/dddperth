@@ -9,7 +9,6 @@ import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { localeTimeFormat } from '~/lib/dates/formatting'
-import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
 import { getConfSessions, sessionsSchema } from '../lib/sessionize.server'
 
@@ -60,7 +59,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
             sessionStart: DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE),
             sessionEnd: DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE),
         },
-        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
+        // { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
