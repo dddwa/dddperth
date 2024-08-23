@@ -15,7 +15,7 @@ export const Acknowledgement = () => (
       <Divider color="#8D8DFF33" mb={6} />
       <AboriginalLogo width={58} />
       <styled.p fontSize={{ base: 'md', md: 'xl' }} color="#C2C2FF">
-        It’s such a privledge to be able to run this conference and DDD Perth would love to acknowledge the traditional
+        It’s such a privilege to be able to run this conference and DDD Perth would love to acknowledge the traditional
         custodians of the land in which DDD is created, presented, and shared, the{' '}
         <styled.span color="white" fontWeight="semibold">
           Whadjuk people of the Noongar Nation
