@@ -21,6 +21,14 @@ const sessionsCache = new LRUCache<string, z.infer<typeof sessionsSchema>>({
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
 })
+const speakersCache = new LRUCache<string, z.infer<typeof speakersSchema>>({
+    max: 250,
+    maxSize: 1024 * 1024 * 12, // 12 mb
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    sizeCalculation(value, key) {
+        return JSON.stringify(value).length + (key ? key.length : 0)
+    },
+})
 
 interface Options {
     sessionizeEndpoint: string
@@ -85,6 +93,34 @@ export const sessionsSchema = z.array(
         groupId: z.string().nullable(),
         groupName: z.string().nullable(),
         sessions: z.array(sessionSchema),
+    }),
+)
+
+export const speakersSchema = z.array(
+    z.object({
+        id: z.string().uuid(),
+        firstName: z.string(),
+        lastName: z.string(),
+        fullName: z.string(),
+        bio: z.string(),
+        tagLine: z.string(),
+        profilePicture: z.string().url(),
+        sessions: z.array(
+            z.object({
+                id: z.number(),
+                name: z.string(),
+            }),
+        ),
+        isTopSpeaker: z.boolean(),
+        links: z.array(
+            z.object({
+                title: z.string(),
+                url: z.string().url(),
+                linkType: z.string(),
+            }),
+        ),
+        questionAnswers: z.array(z.any()),
+        categories: z.array(z.any()),
     }),
 )
 
@@ -153,6 +189,40 @@ export async function getConfSessions(opts: Options): Promise<z.infer<typeof ses
     }
 
     return sessions
+}
+
+export async function getConfSpeakers(opts: Options): Promise<z.infer<typeof speakersSchema>> {
+    const { noCache = NO_CACHE ?? false } = opts
+    if (!noCache) {
+        const cached = speakersCache.get(opts.sessionizeEndpoint)
+        if (cached) {
+            return cached as z.infer<typeof speakersSchema>
+        }
+    }
+
+    const fetched = await fetch(`${opts.sessionizeEndpoint}/view/Speakers`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+
+    if (!fetched.ok) {
+        throw new Error('Error fetching speakers, responded with status: ' + fetched.status)
+    }
+
+    const json = await fetched.json()
+    if (!json || !Array.isArray(json)) {
+        throw new Error('Error fetching speakers. Expected an array, received:\n\n' + json)
+    }
+
+    const speakers = speakersSchema.parse(json)
+
+    if (!noCache) {
+        speakersCache.set(opts.sessionizeEndpoint, speakers)
+    }
+
+    return speakers
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {
