@@ -7,6 +7,7 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
         gold: { gradientFrom: '#453927', logoSize: 'md' },
         silver: { gradientFrom: '#2A3251', logoSize: 'sm' },
         bronze: { gradientFrom: '#452927', logoSize: 'xs' },
+        room: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
         digital: { gradientFrom: '#371F4E', logoSize: 'xs' },
         community: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
         coffeeCart: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
@@ -94,18 +95,17 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
     if (!sponsors) return null
 
     return (
-        <Flex flexDirection="column" alignItems="flex-start" padding={12} marginY={24}>
+        <Flex flexDirection="column" alignItems="flex-start" marginY={16}>
             <styled.h2 fontSize="4xl" textAlign="center" color="white">
                 {year} Sponsors
             </styled.h2>
-            {renderSponsorGroup('Major Sponsors', [
-                { sponsors: sponsors.platinum, category: 'platinum' },
-                { sponsors: sponsors.gold, category: 'gold' },
-                { sponsors: sponsors.silver, category: 'silver' },
-                { sponsors: sponsors.bronze, category: 'bronze' },
-            ])}
-            {renderSponsorGroup('Minor Sponsors', [
-                { sponsors: sponsors.digital, category: 'digital' },
+            {renderSponsorGroup('Platinum', [{ sponsors: sponsors.platinum, category: 'platinum' }])}
+            {renderSponsorGroup('Gold', [{ sponsors: sponsors.gold, category: 'gold' }])}
+            {renderSponsorGroup('Silver', [{ sponsors: sponsors.silver, category: 'silver' }])}
+            {renderSponsorGroup('Bronze', [{ sponsors: sponsors.bronze, category: 'bronze' }])}
+            {renderSponsorGroup('Room', [{ sponsors: sponsors.room, category: 'room' }])}
+            {renderSponsorGroup('Digital', [{ sponsors: sponsors.digital, category: 'digital' }])}
+            {renderSponsorGroup('Other Sponsors', [
                 { sponsors: sponsors.community, category: 'community' },
                 { sponsors: sponsors.coffeeCart, category: 'coffeeCart' },
                 { sponsors: sponsors.quietRoom, category: 'quietRoom' },

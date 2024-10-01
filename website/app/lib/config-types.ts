@@ -82,6 +82,7 @@ export interface YearSponsors {
     quietRoom?: Sponsor[]
 
     keynotes?: Sponsor[]
+    room?: Sponsor[]
 }
 
 export interface Sponsor {

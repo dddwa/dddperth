@@ -10,7 +10,7 @@ import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { localeTimeFormat } from '~/lib/dates/formatting'
 import { conferenceConfig } from '../config/conference-config'
-import { getConfSessions, sessionsSchema } from '../lib/sessionize.server'
+import { getConfSessions, getConfSpeakers, sessionsSchema, speakersSchema } from '../lib/sessionize.server'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
     const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)
@@ -48,6 +48,15 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
         throw new Response(JSON.stringify({ message: 'No session found' }), { status: 404 })
     }
 
+    const speakers: TypeOf<typeof speakersSchema> =
+        yearConfig.sessions?.kind === 'sessionize'
+            ? await getConfSpeakers({
+                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
+                  confTimeZone: conferenceConfig.timezone,
+              })
+            : []
+    const talkSpeakers = session.speakers.map((speakerId) => speakers.find((speaker) => speaker.id === speakerId.id))
+
     return json(
         {
             year: year as Year,
@@ -56,6 +65,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
                 year: conf.year,
             })),
             session,
+            talkSpeakers,
             sessionStart: DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE),
             sessionEnd: DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE),
         },
@@ -64,7 +74,8 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function Agenda() {
-    const { session, sponsors, conferences, year, sessionStart, sessionEnd } = useLoaderData<typeof loader>()
+    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers } =
+        useLoaderData<typeof loader>()
 
     return (
         <Flex
@@ -78,10 +89,12 @@ export default function Agenda() {
             p="4"
         >
             <Box maxWidth="1200px" color="#C2C2FF" mx="auto" p={1} fontSize="sm">
-                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block">
+                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
                     Back to {year} Agenda
                 </AppLink>
-                <styled.h2 fontSize="lg">{session.title}</styled.h2>
+                <styled.h2 fontSize="lg" pb={3}>
+                    {session.title}
+                </styled.h2>
                 <styled.span
                     display="none"
                     md={{
@@ -89,23 +102,34 @@ export default function Agenda() {
                     }}
                     color="#C2C2FF"
                     textWrap="nowrap"
+                    pb={3}
                 >
                     🕓 {sessionStart} - {sessionEnd}
                 </styled.span>
-                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap">
+                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap" pb={3}>
                     📍 {session.room}
                 </styled.span>
-                {session?.speakers?.length ? (
-                    <styled.span display="block" color="#C2C2FF">
-                        💬 {session?.speakers.map((speaker) => speaker.name)?.join(', ')}
-                    </styled.span>
-                ) : null}
                 <styled.div>{session.description}</styled.div>
+                {session?.speakers?.length ? (
+                    <styled.div display="block" color="#C2C2FF">
+                        {talkSpeakers.map((speaker) => (
+                            <styled.div key={speaker.id} display="flex" alignItems="center">
+                                <styled.img
+                                    src={speaker.profilePicture}
+                                    alt={speaker.fullName}
+                                    width="120"
+                                    height="120"
+                                    borderRightRadius="50%"
+                                    mr="2"
+                                />
+                                {speaker.fullName}
+                            </styled.div>
+                        ))}
+                    </styled.div>
+                ) : null}
+                <SponsorSection sponsors={sponsors} year={year} />
+                <ConferenceBrowser conferences={conferences} />
             </Box>
-
-            <SponsorSection sponsors={sponsors} year={year} />
-
-            <ConferenceBrowser conferences={conferences} />
         </Flex>
     )
 }

@@ -109,7 +109,13 @@ function getMdxComponent(code: string, conferenceState: SerializeFrom<Conference
         },
     }
     function MdxComponent({ components, ...rest }: Parameters<typeof Component>['0']) {
-        return <Component conference={conferenceState} components={{ ...mdxComponents, ...components }} {...rest} />
+        return (
+            <Component
+                conference={conferenceState.conference}
+                components={{ ...mdxComponents, ...components }}
+                {...rest}
+            />
+        )
     }
     return MdxComponent
 }
