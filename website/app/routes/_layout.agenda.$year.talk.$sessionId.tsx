@@ -89,10 +89,12 @@ export default function Agenda() {
             p="4"
         >
             <Box maxWidth="1200px" color="#C2C2FF" mx="auto" p={1} fontSize="sm">
-                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block">
+                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
                     Back to {year} Agenda
                 </AppLink>
-                <styled.h2 fontSize="lg">{session.title}</styled.h2>
+                <styled.h2 fontSize="lg" pb={3}>
+                    {session.title}
+                </styled.h2>
                 <styled.span
                     display="none"
                     md={{
@@ -100,12 +102,14 @@ export default function Agenda() {
                     }}
                     color="#C2C2FF"
                     textWrap="nowrap"
+                    pb={3}
                 >
                     🕓 {sessionStart} - {sessionEnd}
                 </styled.span>
-                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap">
+                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap" pb={3}>
                     📍 {session.room}
                 </styled.span>
+                <styled.div>{session.description}</styled.div>
                 {session?.speakers?.length ? (
                     <styled.div display="block" color="#C2C2FF">
                         {talkSpeakers.map((speaker) => (
@@ -123,12 +127,9 @@ export default function Agenda() {
                         ))}
                     </styled.div>
                 ) : null}
-                <styled.div>{session.description}</styled.div>
+                <SponsorSection sponsors={sponsors} year={year} />
+                <ConferenceBrowser conferences={conferences} />
             </Box>
-
-            <SponsorSection sponsors={sponsors} year={year} />
-
-            <ConferenceBrowser conferences={conferences} />
         </Flex>
     )
 }
