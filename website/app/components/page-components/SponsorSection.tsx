@@ -42,7 +42,7 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
                 borderRightRadius="full"
             >
                 <styled.img
-                    src={sponsor.logoUrlDark}
+                    src={sponsor.logoUrlDarkMode}
                     alt={sponsor.name}
                     maxWidth={150}
                     width="100%"

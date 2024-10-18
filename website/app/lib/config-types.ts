@@ -87,11 +87,10 @@ export interface YearSponsors {
 
 export interface Sponsor {
     name: string
-    logoUrlDark: string
-    logoUrlLight: string
+    logoUrlDarkMode: string
+    logoUrlLightMode: string
     website: string
-
-    quote: string | undefined
+    quote?: string
 }
 
 export interface ConferenceVenue {
