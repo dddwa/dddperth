@@ -8,9 +8,10 @@ import { Box, Flex, styled } from 'styled-system/jsx'
 import { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
-import { localeTimeFormat } from '~/lib/dates/formatting'
+import { Year } from '~/lib/config-types'
+import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
+import { getYearConfig } from '../lib/get-year-config'
 import { formatDate, getScheduleGrid, gridSmartSchema } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 
@@ -22,18 +23,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[year]
-    if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
-        if (!params.year) {
-            throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
-        }
-
-        throw redirect($path('/agenda/:year?', { year: undefined }))
-    }
-
-    const yearConfig: ConferenceImportantInformation = params.year
-        ? getImportantInformation(yearConfigLookup)
-        : context.conferenceState.conference
+    const { yearConfig, yearConfigLookup } = getYearConfig(year, context.conferenceState.conference)
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -79,7 +69,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
                   }
                 : undefined,
         },
-        // { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
+        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
@@ -360,14 +350,4 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
             </styled.div>
         </styled.div>
     )
-}
-
-function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportantInformation {
-    return {
-        date: yearConfig.conferenceDate?.toISO(),
-        year: yearConfig.year,
-        sessions: yearConfig.sessions,
-        ticketPrice: yearConfig.ticketPrice,
-        votingOpens: yearConfig.talkVotingDates?.opens.toLocaleString(localeTimeFormat),
-    }
 }

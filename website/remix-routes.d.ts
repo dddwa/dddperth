@@ -39,6 +39,11 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId').SearchParams>,
     };
   
+    "/app-config": {
+      params: never,
+      query: ExportedQuery<import('app/routes/app-config').SearchParams>,
+    };
+  
     "/blog": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.blog._index').SearchParams>,
@@ -54,11 +59,6 @@ declare module "remix-routes" {
     "/blog/rss.xml": {
       params: never,
       query: ExportedQuery<import('app/routes/blog.rss[.xml]').SearchParams>,
-    };
-  
-    "/config": {
-      params: never,
-      query: ExportedQuery<import('app/routes/config').SearchParams>,
     };
   
   }
@@ -79,8 +79,8 @@ declare module "remix-routes" {
     | 'routes/_layout.agenda.$year.talk.$sessionId'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
-    | 'routes/blog.rss[.xml]'
-    | 'routes/config';
+    | 'routes/app-config'
+    | 'routes/blog.rss[.xml]';
 
   export function $path<
     Route extends keyof Routes,

@@ -87,8 +87,11 @@ export interface YearSponsors {
 
 export interface Sponsor {
     name: string
-    logoUrl: string
+    logoUrlDark: string
+    logoUrlLight: string
     website: string
+
+    quote: string | undefined
 }
 
 export interface ConferenceVenue {
@@ -102,6 +105,8 @@ export interface ConferenceImportantInformation {
     votingOpens: string | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
+
+    sponsors: YearSponsors
 }
 
 export interface SessionizeConferenceSessions {

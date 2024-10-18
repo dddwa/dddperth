@@ -23,22 +23,30 @@ export const conference2018: ConferenceYear = {
 
     sponsors: {
         platinum: [
-            { name: 'Virtual Gaming Worlds', logoUrl: '/images/sponsors/vgw-2018.png', website: 'https://www.vgw.co/' },
+            {
+                name: 'Virtual Gaming Worlds',
+                logoUrlDark: '/images/sponsors/vgw-2018.png',
+                logoUrlLight: '/images/sponsors/vgw-2018.png',
+                website: 'https://www.vgw.co/',
+            },
         ],
         gold: [
             {
                 name: 'Amazon Web Services',
-                logoUrl: '/images/sponsors/2018-aws.png',
+                logoUrlDark: '/images/sponsors/2018-aws.png',
+                logoUrlLight: '/images/sponsors/2018-aws.png',
                 website: 'https://aws.amazon.com/',
             },
             {
                 name: 'Livehire',
-                logoUrl: '/images/sponsors/2018-livehire.png',
+                logoUrlDark: '/images/sponsors/2018-livehire.png',
+                logoUrlLight: '/images/sponsors/2018-livehire.png',
                 website: 'https://www.livehire.com/',
             },
             {
                 name: 'Microsoft',
-                logoUrl: '/images/sponsors/2018-microsoft.png',
+                logoUrlDark: '/images/sponsors/2018-microsoft.png',
+                logoUrlLight: '/images/sponsors/2018-microsoft.png',
                 website: 'https://www.microsoft.com/',
             },
         ],

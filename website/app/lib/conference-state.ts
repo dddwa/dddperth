@@ -38,10 +38,10 @@ export function getCurrentConferenceState(
     if (!latestConference[1].conferenceDate) {
         return {
             conferenceState: 'before-conference',
-
             conference: {
                 date: undefined,
                 year: latestConference[0],
+                sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -51,6 +51,7 @@ export function getCurrentConferenceState(
                     ? {
                           date: previousConference[1].conferenceDate.toISO(),
                           year: previousConference[0],
+                          sponsors: previousConference[1].sponsors,
                           sessions: previousConference[1].sessions,
                           ticketPrice: previousConference[1].ticketPrice,
                           votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -75,6 +76,7 @@ export function getCurrentConferenceState(
             conference: {
                 date: latestConference[1].conferenceDate.toISODate(),
                 year: latestConference[0],
+                sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -84,6 +86,7 @@ export function getCurrentConferenceState(
                     ? {
                           date: previousConference[1].conferenceDate.toISODate(),
                           year: previousConference[0],
+                          sponsors: previousConference[1].sponsors,
                           sessions: previousConference[1].sessions,
                           ticketPrice: previousConference[1].ticketPrice,
                           votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -107,6 +110,7 @@ export function getCurrentConferenceState(
             conference: {
                 date: latestConference[1].conferenceDate.toISODate(),
                 year: latestConference[0],
+                sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 ticketPrice: latestConference[1].ticketPrice,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -130,6 +134,7 @@ export function getCurrentConferenceState(
         conference: {
             date: latestConference[1].conferenceDate.toISODate(),
             year: latestConference[0],
+            sponsors: latestConference[1].sponsors,
             sessions: latestConference[1].sessions,
             ticketPrice: latestConference[1].ticketPrice,
             votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
@@ -139,6 +144,7 @@ export function getCurrentConferenceState(
                 ? {
                       date: previousConference[1].conferenceDate.toISODate(),
                       year: previousConference[0],
+                      sponsors: previousConference[1].sponsors,
                       sessions: previousConference[1].sessions,
                       ticketPrice: previousConference[1].ticketPrice,
                       votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
