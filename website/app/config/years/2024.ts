@@ -164,6 +164,13 @@ export const conference2024: ConferenceYear = {
                 quote: undefined,
             },
             {
+                name: 'WADSIH',
+                website: 'https://wadsih.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2024-wadsih-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-wadsih-light.svg',
+                quote: undefined,
+            },
+            {
                 name: 'UWA Data Institute',
                 website: 'https://uwadatainstitute.org.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-uwa-di-dark.png',
