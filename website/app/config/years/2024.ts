@@ -124,6 +124,20 @@ export const conference2024: ConferenceYear = {
                 logoUrlLightMode: '/images/sponsors/2024-woodside-light.svg',
                 quote: "We’re thrilled to announce Woodside's partnership with DDD Perth 2024 as they celebrate their 10th anniversary and Woodside marks 70 years since its establishment. This collaboration demonstrates our dedication to fostering innovation and collaboration within Australia's tech landscape. We are proud to support the local tech community through DDD Perth and engage with diverse minds who are shaping the future of energy and technology.",
             },
+            {
+                name: 'SKAO',
+                website: 'https://www.skao.int/en',
+                logoUrlDarkMode: '/images/sponsors/2024-skao-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-skao-light.svg',
+                quote: undefined,
+            },
+            {
+                name: 'Datastax',
+                website: 'https://www.datastax.com/',
+                logoUrlDarkMode: '/images/sponsors/2024-datastax-dark.png',
+                logoUrlLightMode: '/images/sponsors/2024-datastax-light.png',
+                quote: undefined,
+            },
         ],
         room: [
             {
@@ -182,6 +196,27 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.versegroup.com.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-verse-group-dark.png',
                 logoUrlLightMode: '/images/sponsors/2024-verse-group-light.png',
+                quote: "Verse are super excited to be proudly sponsoring the DDD Perth event this year. As a supporter of diversity and inclusion in tech, we are thrilled to be part of this community-driven conference and we look forward to supporting the growth of Perth's vibrant tech community.",
+            },
+            {
+                name: 'DNX Solutions',
+                website: 'https://dnx.solutions/',
+                logoUrlDarkMode: '/images/sponsors/2024-dnx-solutions-dark.png',
+                logoUrlLightMode: '/images/sponsors/2024-dnx-solutions-light.png',
+                quote: 'As a sponsor, DNX is committed to supporting the growth and inclusivity of the tech community.',
+            },
+            {
+                name: 'NDC Melbourne',
+                website: 'https://ndcmelbourne.com/',
+                logoUrlDarkMode: '/images/sponsors/2024-ndc-melbourne-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-ndc-melbourne-light.svg',
+                quote: 'NDC Melbourne 2025 is a three-day event for software developers. It includes one day of hands-on workshops, followed by two conference days with multiple tracks. The Early Bird offer ends on 31 December. Secure your tickets now at ndcmelbourne.com.',
+            },
+            {
+                name: 'AWS',
+                website: 'https://aws.amazon.com/',
+                logoUrlDarkMode: '/images/sponsors/2024-aws-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-aws-light.svg',
                 quote: undefined,
             },
         ],
