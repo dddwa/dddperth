@@ -44,6 +44,13 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/app-config').SearchParams>,
     };
   
+    "/app-content/*": {
+      params: {
+        "*": string | number;
+      } ,
+      query: ExportedQuery<import('app/routes/_layout.app-content.$').SearchParams>,
+    };
+  
     "/blog": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.blog._index').SearchParams>,
@@ -77,6 +84,7 @@ declare module "remix-routes" {
     | 'routes/_layout.$'
     | 'routes/_layout.agenda.($year)'
     | 'routes/_layout.agenda.$year.talk.$sessionId'
+    | 'routes/_layout.app-content.$'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
     | 'routes/app-config'
