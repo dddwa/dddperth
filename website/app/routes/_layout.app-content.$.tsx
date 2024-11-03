@@ -33,6 +33,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
         {
             frontmatter: post.frontmatter,
             post: post.code,
+            conferenceState: context.conferenceState,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
     )
