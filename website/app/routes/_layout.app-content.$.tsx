@@ -35,7 +35,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
             post: post.code,
             conferenceState: context.conferenceState,
         },
-        { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
+        { headers: { 'Cache-Control': CACHE_CONTROL.doc, 'Access-Control-Allow-Origin': '*' } },
     )
 }
 
