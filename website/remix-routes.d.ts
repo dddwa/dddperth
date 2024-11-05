@@ -39,6 +39,21 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId').SearchParams>,
     };
   
+    "/app-agenda-grid": {
+      params: never,
+      query: ExportedQuery<import('app/routes/app-agenda-grid').SearchParams>,
+    };
+  
+    "/app-agenda-sessions": {
+      params: never,
+      query: ExportedQuery<import('app/routes/app-agenda-sessions').SearchParams>,
+    };
+  
+    "/app-agenda-speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/app-agenda-speakers').SearchParams>,
+    };
+  
     "/app-config": {
       params: never,
       query: ExportedQuery<import('app/routes/app-config').SearchParams>,
@@ -48,7 +63,7 @@ declare module "remix-routes" {
       params: {
         "*": string | number;
       } ,
-      query: ExportedQuery<import('app/routes/_layout.app-content.$').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-content.$').SearchParams>,
     };
   
     "/blog": {
@@ -84,10 +99,13 @@ declare module "remix-routes" {
     | 'routes/_layout.$'
     | 'routes/_layout.agenda.($year)'
     | 'routes/_layout.agenda.$year.talk.$sessionId'
-    | 'routes/_layout.app-content.$'
     | 'routes/_layout.blog._index'
     | 'routes/_layout.blog.$slug'
+    | 'routes/app-agenda-grid'
+    | 'routes/app-agenda-sessions'
+    | 'routes/app-agenda-speakers'
     | 'routes/app-config'
+    | 'routes/app-content.$'
     | 'routes/blog.rss[.xml]';
 
   export function $path<

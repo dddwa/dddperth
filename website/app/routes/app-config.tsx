@@ -10,6 +10,10 @@ export function loader({ context }: LoaderFunctionArgs) {
         home: {
             after: 'https://raw.githubusercontent.com/dddwa/dddperth/refs/heads/main/website-content/pages/post-conference.mdx',
         },
+        v2: {
+            support: 'https://dddperth.com/app-content/support',
+            after: 'https://dddperth.com/app-content/post-conference',
+        },
     }
 
     return json(data, {
@@ -24,6 +28,11 @@ interface AppConfig {
     sponsors: YearSponsors
     support: string
     home: {
+        after: string
+    }
+
+    v2: {
+        support: string
         after: string
     }
 }
