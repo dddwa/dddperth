@@ -97,11 +97,11 @@ export const conference2024: ConferenceYear = {
                 quote: undefined,
             },
             {
-                name: 'Telstra / Versent',
+                name: 'Telstra | Versent',
                 website: 'https://purple.telstra.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-telstra-versent-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-telstra-versent-light.svg',
-                quote: 'We are excited to announce that Versent & Telstra Purple will be a Gold Sponsor for this year’s DDD Perth conference, celebrating our 10th anniversary! This is a community that’s passionate about innovation, and getting together to share ideas in an open forum. And that’s exactly the sort of culture we like to encourage. We are excited to be back again this year',
+                quote: "We are excited to announce that Versent & Telstra Purple will be a Gold Sponsor for this year's DDD Perth conference, celebrating our 10th anniversary! This is a community that's passionate about innovation, and getting together to share ideas in an open forum. And that's exactly the sort of culture we like to encourage. We are excited to be back again this year",
             },
             {
                 name: 'Tricentis',
