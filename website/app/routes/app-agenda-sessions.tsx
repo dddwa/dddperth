@@ -20,7 +20,12 @@ export async function loader({ context }: LoaderFunctionArgs) {
               })
             : []
 
-    return json(sessions, { headers: { 'Cache-Control': CACHE_CONTROL.conf } })
+    return json(sessions, {
+        headers: {
+            'Cache-Control': CACHE_CONTROL.conf,
+            'Access-Control-Allow-Origin': '*',
+        },
+    })
 }
 
 export const headers: HeadersFunction = ({ loaderHeaders }) => {

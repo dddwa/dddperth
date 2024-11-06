@@ -22,6 +22,11 @@ param gitHubRepo string
 @secure()
 param gitHubToken string
 
+@secure()
+param googleFormsApiKey string
+@secure()
+param googleFormsFileId string
+
 // Tags that should be applied to all resources.
 //
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -111,6 +116,8 @@ module ddd './app/ddd.bicep' = {
     gitHubOrganization: gitHubOrganization
     gitHubRepo: gitHubRepo
     gitHubToken: gitHubToken
+    googleFormsApiKey: googleFormsApiKey
+    googleFormsFileId: googleFormsFileId
   }
   scope: rg
 }

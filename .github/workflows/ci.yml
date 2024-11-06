@@ -30,6 +30,8 @@ jobs:
             AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
             # TODO Replace this PAT with a GitHub App
             GH_CONTENT_TOKEN: ${{ secrets.GH_CONTENT_TOKEN }}
+            GOOGLE_FORMS_API_KEY: ${{ secrets.GOOGLE_FORMS_API_KEY }}
+            GOOGLE_FORMS_FORM_ID: ${{ secrets.GOOGLE_FORMS_FORM_ID }}
 
         steps:
             - name: Checkout
