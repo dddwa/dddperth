@@ -9,7 +9,7 @@ export type GoogleFormUpdates = {
 /** This route is used by the app for on the day announcements */
 export async function loader() {
     const apiKey = process.env.GOOGLE_FORMS_API_KEY
-    const fileId = process.env.GOOGLE_FORMS_FORM_ID
+    const fileId = process.env.GOOGLE_FORMS_FILE_ID
     if (!apiKey || !fileId) {
         return new Response(JSON.stringify({ message: 'No Google Forms API key or form ID' }), { status: 404 })
     }
