@@ -1,5 +1,6 @@
 import { json, LoaderFunctionArgs } from '@remix-run/server-runtime'
 import { YearSponsors } from '~/lib/config-types'
+import { CACHE_CONTROL } from '~/lib/http.server'
 
 /** This route is used by the app or integrations to understand the state of the conference */
 export function loader({ context }: LoaderFunctionArgs) {
@@ -18,6 +19,7 @@ export function loader({ context }: LoaderFunctionArgs) {
 
     return json(data, {
         headers: {
+            'Cache-Control': CACHE_CONTROL.doc,
             'Access-Control-Allow-Origin': '*',
         },
     })

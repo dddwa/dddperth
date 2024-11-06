@@ -23,7 +23,12 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
     const schedule = schedules[0]
 
-    return json(schedule, { headers: { 'Cache-Control': CACHE_CONTROL.conf } })
+    return json(schedule, {
+        headers: {
+            'Cache-Control': CACHE_CONTROL.conf,
+            'Access-Control-Allow-Origin': '*',
+        },
+    })
 }
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
     // Inherit the caching headers from the loader so we don't cache 404s

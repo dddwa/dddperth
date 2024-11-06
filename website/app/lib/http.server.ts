@@ -7,6 +7,11 @@ export const CACHE_CONTROL = {
      * back button
      */
     DEFAULT: 'max-age=300',
+
+    /**
+     * Add 1 minutes cache control for announcements
+     */
+    announce: 'max-age=60',
     /**
      * Keep it in the browser (and CDN) for 5 minutes so when they click
      * back/forward/etc. it's super fast. SWR for 1 week on CDN so it stays fast,

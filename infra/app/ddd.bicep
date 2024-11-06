@@ -10,6 +10,10 @@ param gitHubOrganization string
 param gitHubRepo string
 @secure()
 param gitHubToken string
+@secure()
+param googleFormsApiKey string
+@secure()
+param googleFormsFileId string
 param exists bool
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
@@ -83,6 +87,14 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             name: 'session-secret'
             value: sessionSecret
         }
+        {
+            name: 'google-forms-api-key'
+            value: googleFormsApiKey
+        }
+        {
+            name: 'google-forms-file-id'
+            value: googleFormsFileId
+        }
       ]
     }
     template: {
@@ -114,6 +126,14 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'SESSION_SECRET'
                 secretRef: 'session-secret'
+            }
+            {
+                name: 'GOOGLE_FORMS_API_KEY'
+                secretRef: 'google-forms-api-key'
+            }
+            {
+                name: 'GOOGLE_FORMS_FILE_ID'
+                secretRef: 'google-forms-file-id'
             }
           ]
 

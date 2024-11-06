@@ -1,0 +1,42 @@
+import { json } from '@remix-run/server-runtime'
+import { CACHE_CONTROL } from '~/lib/http.server'
+
+export type GoogleFormUpdates = {
+    Timestamp: string
+    Message: string
+}
+
+/** This route is used by the app for on the day announcements */
+export async function loader() {
+    const apiKey = process.env.GOOGLE_FORMS_API_KEY
+    const fileId = process.env.GOOGLE_FORMS_FORM_ID
+    if (!apiKey || !fileId) {
+        return new Response(JSON.stringify({ message: 'No Google Forms API key or form ID' }), { status: 404 })
+    }
+
+    const BASE_URL = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`
+
+    const response = await fetch(BASE_URL, {
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+    })
+
+    const responseData = (await response.json()) as GoogleFormUpdates[]
+
+    const announcementData = responseData
+        .map((row) => {
+            return { createdTime: row.Timestamp, update: row.Message }
+        })
+        .sort((a, b) => {
+            return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+        })
+
+    return json(announcementData, {
+        headers: {
+            'Cache-Control': CACHE_CONTROL.announce,
+            'Access-Control-Allow-Origin': '*',
+        },
+    })
+}
