@@ -42,8 +42,8 @@
         "googleFormsApiKey": {
             "value": "${GOOGLE_FORMS_API_KEY}"
         },
-        "googleFormsFormId": {
-            "value": "${GOOGLE_FORMS_FORM_ID}"
+        "googleFormsFileId": {
+            "value": "${GOOGLE_FORMS_FILE_ID}"
         }
     }
 }
