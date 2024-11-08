@@ -21,9 +21,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
             : // TODO Deal with data type
               []
 
-    const schedule = schedules[0]
-
-    return json(schedule, {
+    return json(schedules, {
         headers: {
             'Cache-Control': CACHE_CONTROL.conf,
             'Access-Control-Allow-Origin': '*',
