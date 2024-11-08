@@ -54,6 +54,11 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/app-agenda-speakers').SearchParams>,
     };
   
+    "/app-announcements": {
+      params: never,
+      query: ExportedQuery<import('app/routes/app-announcements').SearchParams>,
+    };
+  
     "/app-config": {
       params: never,
       query: ExportedQuery<import('app/routes/app-config').SearchParams>,
@@ -104,6 +109,7 @@ declare module "remix-routes" {
     | 'routes/app-agenda-grid'
     | 'routes/app-agenda-sessions'
     | 'routes/app-agenda-speakers'
+    | 'routes/app-announcements'
     | 'routes/app-config'
     | 'routes/app-content.$'
     | 'routes/blog.rss[.xml]';
