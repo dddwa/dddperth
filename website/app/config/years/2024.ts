@@ -44,7 +44,7 @@ export const conference2024: ConferenceYear = {
         opens: DateTime.fromISO('2024-06-21T08:00:00', {
             zone: 'Australia/Perth',
         }),
-        closes: DateTime.fromISO('2024-11-15T23:59:59', {
+        closes: DateTime.fromISO('2024-11-11T23:59:59', {
             zone: 'Australia/Perth',
         }),
     },
