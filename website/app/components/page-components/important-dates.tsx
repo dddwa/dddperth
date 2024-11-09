@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { Flex, styled } from 'styled-system/jsx'
 
@@ -68,10 +69,12 @@ const importantDatesData: ImportantDateBoxProps[] = [
         eventLive: true,
     },
     {
-        datetime: '2024-11-15T09:15:00.000Z',
+        datetime: DateTime.fromISO('2024-11-11T23:59:59', {
+            zone: 'Australia/Perth',
+        }).toISO(),
         day: 'Friday',
-        date: 'Nov 15',
-        time: '05:15pm',
+        date: 'Nov 11',
+        time: '11:59pm',
         event: 'Ticket sales close',
         eventLive: true,
     },
