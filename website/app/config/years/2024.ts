@@ -64,14 +64,14 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.bankwest.com.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-bankwest-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-bankwest-light.svg',
-                quote: undefined,
+                quote: 'We are excited to partner with DDD as a platinum sponsor at this year’s DDD Perth Conference. As one of Perth’s largest Tech employers in WA with a focused investment in technology and digital services, Bankwest is proud to be a part of Perth’s largest community-run conference which is open to everyone to attend. We look forward to seeing you there and make sure to come and chat to the Bankwest team about career opportunities and hear more about how we are becoming Australia’s favourite digital bank.',
             },
             {
                 name: 'MakerX',
                 website: 'https://makerx.com.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-makerx-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-makerx-light.svg',
-                quote: undefined,
+                quote: "MakerX is thrilled to be a platinum sponsor for the 10-year anniversary of DDD Perth. DDD Perth holds a special place in our hearts as a conference originally founded by two of MakerX's co-founders Matt Davies and Rob Moore, which has since grown beyond our wildest imagination through the hard work of a fantastic diverse team of volunteers. We're thrilled to support and celebrate the enormous progress DDD Perth has made towards inclusively connecting the Perth tech community, supporting all those who can't normally attend or speak at a large tech conference, and look forward to helping attendees learn more about what it takes to build and launch startups of your own!",
             },
         ],
         gold: [
@@ -94,7 +94,7 @@ export const conference2024: ConferenceYear = {
                 website: 'https://qoria.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-qoria-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-qoria-light.svg',
-                quote: undefined,
+                quote: "Our staff have always enjoyed attending, speaking or volunteering at DDD Perth, so we're thrilled to return as a gold sponsor for DDD's 10th anniversary. Ten years is a long time in tech - and it's amazing to see how DDD Perth has grown and evolved into the inclusive and highly-engaging conference that it is today.",
             },
             {
                 name: 'Telstra | Versent',
@@ -115,7 +115,10 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.vgw.co/',
                 logoUrlDarkMode: '/images/sponsors/2024-vgw-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-vgw-light.svg',
-                quote: undefined,
+                quote: `At VGW, we are passionate about building a vibrant and inclusive tech community. DDD Perth aligns with our commitment to fostering innovation, and engaging with tech professionals and enthusiasts in our community.
+
+- Yvette Mandanas, Chief People Officer @ VGW
+`,
             },
             {
                 name: 'Woodside Energy',
@@ -129,7 +132,12 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.skao.int/en',
                 logoUrlDarkMode: '/images/sponsors/2024-skao-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-skao-light.svg',
-                quote: undefined,
+                quote: `The SKA Observatory (SKAO) is excited to be supporting the Perth-based software and tech community by being a Gold Sponsor of the upcoming 10th anniversary of hashtag#DDDPerth.
+
+We are building one of the largest scientific instruments of the 21st Century, a radio telescope that will revolutionise our understanding of the Universe and the laws of fundamental physics, right here in Western Australia.
+
+Computing, software and big data will be critical in the success of this mega science project, and we’re recruiting highly motivated developers across the computing and software domains to take part.
+`,
             },
             {
                 name: 'Datastax',
@@ -145,14 +153,16 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.microsoft.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-microsoft-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-microsoft-light.svg',
-                quote: undefined,
+                quote: `Microsoft is super excited to be a Room Sponsor for the 10th Anniversary of hashtag#DDDPerth. Being able to support the largest hashtag#developer conference in the country year after year has put us right at the heart of a community we love. I still remember standing in a room of 100 developers, which was probably the 2nd year the conference ran and everyone was so proud because they had doubled the numbers from the year before. None of us expected back then that it would continue to double each year until the pandemic, and even then, it hardly stuttered. Whilst Microsoft cannot boast those kind of stats 😉 Our Partnerships with OpenAI, GitHub and Nvidia have enabled us to build a cutting edge, safe and secure environment for developers to build modern AI Apps on Azure. Come say hello to us in our room, we'd love to see you"
+
+- Michelle Sandford from Microsoft`,
             },
             {
                 name: 'SoftwareOne',
                 website: 'https://www.softwareone.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-softwareone-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-softwareone-light.svg',
-                quote: undefined,
+                quote: 'SoftwareONE are delighted to be able to contribute to such the 10th anniversary celebrations for DDD Perth. DDD has such a positive impact on the local technology scene and we would like to congratulate you on such an incredible milestone!',
             },
         ],
         digital: [
@@ -161,28 +171,32 @@ export const conference2024: ConferenceYear = {
                 website: 'https://www.afgonline.com.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-afg-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-afg-light.svg',
-                quote: undefined,
+                quote: 'AFG is on a digital transformation journey where our tech supports outstanding experiences and market leading digital products for our customers. We are thrilled to sponsor DDD Perth and support our home state and the Perth tech community. AFG architects, software engineers, quality assurance specialists, and product owners will all be there on the day, excited to collaborate and learn from like-minded Perth people',
             },
             {
                 name: 'Akkodis',
                 website: 'https://akkodis.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-akkodis-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-akkodis-light.svg',
-                quote: undefined,
+                quote: 'Akkodis is excited to be the Digital Sponsor of the 10-year anniversary DDD Perth event, supporting its mission to create an inclusive community for all tech professionals and enthusiasts.',
             },
             {
                 name: 'Interfuze',
                 website: 'https://interfuze.com/',
                 logoUrlDarkMode: '/images/sponsors/2024-interfuze-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-interfuze-light.svg',
-                quote: undefined,
+                quote: `As a proudly WA-owned IT consultancy, we’re excited to support the 2024 DDD Conference, Perth’s largest community-run tech event. It’s an honour to be involved in celebrating 10 years of connecting and sharing with the local tech community. Sharing knowledge and collaborating with our local tech community is core to our passion for advancing innovation that lives here in WA! A big thank you to the DDD Perth team for creating such a welcoming event for our tech community and congratulations on a decade of incredible work
+
+- Lindsey Duncan, Managing Director of Interfuze Consulting`,
             },
             {
                 name: 'WADSIH',
                 website: 'https://wadsih.org.au/',
                 logoUrlDarkMode: '/images/sponsors/2024-wadsih-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-wadsih-light.svg',
-                quote: undefined,
+                quote: `The WA Data Science Innovation Hub is proud to support DDD Perth 2024 in its 10th year as it continues to successfully bring together the tech community, building a strong ecosystem of talent in Western Australia
+
+- Alex Jenkins, Director, WADSIH`,
             },
             {
                 name: 'UWA Data Institute',
