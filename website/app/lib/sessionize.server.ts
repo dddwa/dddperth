@@ -102,8 +102,8 @@ export const speakersSchema = z.array(
         firstName: z.string(),
         lastName: z.string(),
         fullName: z.string(),
-        bio: z.string().optional(),
-        profilePicture: z.string().url().optional(),
+        bio: z.string().nullable().optional(),
+        profilePicture: z.string().url().nullable().optional(),
         tagLine: z.string(),
         sessions: z.array(
             z.object({
