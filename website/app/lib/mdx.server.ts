@@ -234,6 +234,7 @@ function getContentDirectory(type: 'blog' | 'page'): string {
 
 function formatDate(date: DateTime) {
     const offset = new Date().getTimezoneOffset()
+
     return (
         date
             // Necessary to set the offset for local development

@@ -7,7 +7,7 @@ export interface CallToAction {
     category: 'conference' | 'tickets' | 'agenda' | 'content' | 'voting'
 }
 
-export default function getConferenceActions(conferenceState: SerializeFrom<ConferenceState>): CallToAction[] {
+export function getConferenceActions(conferenceState: SerializeFrom<ConferenceState>): CallToAction[] {
     const actions: CallToAction[] = []
 
     if (conferenceState.callForPapers.state === 'open') {

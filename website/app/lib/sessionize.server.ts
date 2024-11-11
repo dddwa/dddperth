@@ -8,7 +8,7 @@ const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' 
 const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    ttl: 1000 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
@@ -16,7 +16,7 @@ const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
 const sessionsCache = new LRUCache<string, z.infer<typeof sessionsSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    ttl: 1000 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
@@ -24,7 +24,7 @@ const sessionsCache = new LRUCache<string, z.infer<typeof sessionsSchema>>({
 const speakersCache = new LRUCache<string, z.infer<typeof speakersSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    ttl: 1000 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
@@ -102,9 +102,9 @@ export const speakersSchema = z.array(
         firstName: z.string(),
         lastName: z.string(),
         fullName: z.string(),
-        bio: z.string(),
+        bio: z.string().nullable().optional(),
+        profilePicture: z.string().url().nullable().optional(),
         tagLine: z.string(),
-        profilePicture: z.string().url(),
         sessions: z.array(
             z.object({
                 id: z.number(),

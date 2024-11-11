@@ -19,6 +19,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[
         year as Year
     ]
+
     if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
         if (!params.year) {
             throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
@@ -115,14 +116,16 @@ export default function Agenda() {
                     <styled.div display="block" color="#C2C2FF">
                         {talkSpeakers.map((speaker) => (
                             <styled.div key={speaker.id} display="flex" alignItems="center">
-                                <styled.img
-                                    src={speaker.profilePicture}
-                                    alt={speaker.fullName}
-                                    width="120"
-                                    height="120"
-                                    borderRightRadius="50%"
-                                    mr="2"
-                                />
+                                {speaker.profilePicture ? (
+                                    <styled.img
+                                        src={speaker.profilePicture}
+                                        alt={speaker.fullName}
+                                        width="120"
+                                        height="120"
+                                        borderRightRadius="50%"
+                                        mr="2"
+                                    />
+                                ) : null}
                                 {speaker.fullName}
                             </styled.div>
                         ))}

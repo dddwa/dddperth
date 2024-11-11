@@ -12,7 +12,7 @@ export function loader({ context }: LoaderFunctionArgs) {
             after: 'https://raw.githubusercontent.com/dddwa/dddperth/refs/heads/main/website-content/pages/post-conference.mdx',
         },
         v2: {
-            support: 'https://dddperth.com/app-content/support',
+            support: 'https://dddperth.com/app-content/conference-day',
             after: 'https://dddperth.com/app-content/post-conference',
         },
     }

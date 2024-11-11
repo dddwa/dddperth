@@ -3,18 +3,21 @@ import { PassThrough } from 'node:stream'
 import type { AppLoadContext, EntryContext } from '@remix-run/node'
 import { createReadableStreamFromReadable } from '@remix-run/node'
 import { RemixServer } from '@remix-run/react'
+import express from 'express'
 import * as isbotModule from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import { conferenceConfig } from './config/conference-config'
 import { getCurrentConferenceState } from './lib/conference-state'
-import { SystemDateTimeProvider } from './lib/dates/system-date-time-provider.server'
+import { OverridableDateTimeProvider } from './lib/dates/overridable-date-time-provider'
 
 const ABORT_DELAY = 5_000
 
-export function getLoadContext(requestId: string): AppLoadContext {
+export function getLoadContext({ query }: { query: express.Request['query'] }): AppLoadContext {
+    const dateTimeProvider = new OverridableDateTimeProvider(query)
+
     return {
-        requestId,
-        conferenceState: getCurrentConferenceState(new SystemDateTimeProvider(), conferenceConfig),
+        dateTimeProvider,
+        conferenceState: getCurrentConferenceState(dateTimeProvider, conferenceConfig),
     }
 }
 
