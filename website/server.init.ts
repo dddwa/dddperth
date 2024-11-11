@@ -108,8 +108,10 @@ export function init() {
                     build: resolveBuild,
                     mode: initialBuild.mode,
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    getLoadContext: (_req) => {
-                        return initialBuild.entry.module.getLoadContext()
+                    getLoadContext: (req) => {
+                        return initialBuild.entry.module.getLoadContext({
+                            query: req.query,
+                        })
                     },
                 }),
             )

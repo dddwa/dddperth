@@ -5,11 +5,12 @@ import type { MetaFunction } from '@remix-run/react'
 import { useLoaderData } from '@remix-run/react'
 
 import { trace } from '@opentelemetry/api'
+import { DateTime } from 'luxon'
 import { PropsWithChildren } from 'react'
 import { prose } from 'styled-system/recipes'
-import ImportantDates from '~/components/page-components/important-dates'
+import { ImportantDates } from '~/components/page-components/important-dates'
 import { Button } from '~/components/ui/button'
-import getConferenceActions from '~/lib/conference-actions'
+import { getConferenceActions } from '~/lib/conference-actions'
 import { ConferenceState } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { css } from '../../styled-system/css'
@@ -47,6 +48,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
 
     return json(
         {
+            currentDate: context.dateTimeProvider.nowDate().toISODate(),
             currentPath,
             siteUrl,
             frontmatter: post.frontmatter,
@@ -103,7 +105,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 }
 
 export default function WebsiteContentPage() {
-    const { post, frontmatter, currentPath, conferenceState, siteUrl } = useLoaderData<typeof loader>()
+    const { post, frontmatter, currentPath, conferenceState, currentDate } = useLoaderData<typeof loader>()
     const Component = useMdxPage(post, conferenceState)
 
     return (
@@ -126,6 +128,7 @@ export default function WebsiteContentPage() {
                             currentPath={currentPath}
                             frontmatter={frontmatter}
                             conferenceState={conferenceState}
+                            currentDate={DateTime.fromISO(currentDate)}
                         >
                             <Component />
                         </ContentPageWithSidebar>
@@ -142,8 +145,11 @@ function ContentPageWithSidebar({
     frontmatter,
     currentPath,
     conferenceState,
+    currentDate,
     children,
-}: PropsWithChildren<Pick<SerializeFrom<typeof loader>, 'conferenceState' | 'frontmatter' | 'currentPath'>>) {
+}: PropsWithChildren<
+    { currentDate: DateTime } & Pick<SerializeFrom<typeof loader>, 'conferenceState' | 'frontmatter' | 'currentPath'>
+>) {
     return (
         <Grid gridTemplateColumns={{ base: '1ft', lg: '1fr auto' }}>
             <styled.main id="content" marginX={{ base: 6, lg: 0 }}>
@@ -163,7 +169,12 @@ function ContentPageWithSidebar({
             >
                 {/* <EventDetailsSummary conferenceState={conferenceState} currentPath={currentPath} /> */}
 
-                <ImportantDates smallSidebar={true} showOnlyLive={true} />
+                <ImportantDates
+                    smallSidebar={true}
+                    showOnlyLive={true}
+                    year={conferenceState.conference.year}
+                    currentDate={currentDate}
+                />
 
                 {/* TODO Important date list */}
                 {/* <ImportantDatesList layout="inline" conference={conference} currentDate={currentDate} /> */}

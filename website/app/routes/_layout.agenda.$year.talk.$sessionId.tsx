@@ -19,6 +19,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[
         year as Year
     ]
+
     if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
         if (!params.year) {
             throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
