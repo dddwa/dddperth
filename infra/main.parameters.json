@@ -47,6 +47,12 @@
         },
         "googleFormsFileId": {
             "value": "${GOOGLE_FORMS_FILE_ID}"
+        },
+        "domainName": {
+            "value": "dddperth.com"
+        },
+        "certificateId": {
+            "value": "cloudflare"
         }
     }
 }
