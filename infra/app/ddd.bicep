@@ -2,6 +2,8 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
+param domainName string
+param certificateId string
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
@@ -71,6 +73,13 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         external: true
         targetPort: 80
         transport: 'auto'
+        customDomains: [
+          {
+            bindingType: 'SniEnabled'
+            certificateId: certificateId
+            name: domainName
+          }
+        ]
       }
       registries: [
         {
