@@ -8,11 +8,18 @@ import { Box, Flex, styled } from 'styled-system/jsx'
 import { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { Year } from '~/lib/config-types'
+import { Year, YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { conferenceConfig } from '../config/conference-config'
 import { getYearConfig } from '../lib/get-year-config'
-import { formatDate, getScheduleGrid, gridSmartSchema, roomSchema, timeSlotSchema } from '../lib/sessionize.server'
+import {
+    formatDate,
+    getScheduleGrid,
+    gridRoomSchema,
+    gridSmartSchema,
+    roomSchema,
+    timeSlotSchema,
+} from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
@@ -142,34 +149,9 @@ export default function Agenda() {
                         gridGap: '1',
                     }}
                 >
-                    {schedule.rooms.map((room) => (
-                        /* hidden on small screens and browsers without grid support */
-                        <Flex
-                            key={room.id}
-                            style={{ '--room-column': `room-${room.id}` } as React.CSSProperties}
-                            aria-hidden="true"
-                            justifyContent="center"
-                            alignItems="center"
-                            textAlign="center"
-                            gridColumn="var(--room-column)"
-                            gridRow="rooms"
-                            display="none"
-                            rounded="sm"
-                            bgColor="#8D8DFF"
-                            color="#070727"
-                            fontWeight="semibold"
-                            fontSize="sm"
-                            padding={2}
-                            xl={{
-                                display: 'block',
-                                position: 'sticky',
-                                top: 4,
-                                zIndex: 1000,
-                            }}
-                        >
-                            {room.name}
-                        </Flex>
-                    ))}
+                    {schedule.rooms.map((room) => {
+                        return <RoomTitle key={room.id} room={room} sponsors={sponsors} />
+                    })}
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
                         const startTime12 = DateTime.fromISO(timeSlot.slotStart).toFormat('h:mm a').toLowerCase()
@@ -218,6 +200,53 @@ export default function Agenda() {
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
+        </Flex>
+    )
+}
+
+function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; sponsors: YearSponsors }) {
+    const roomSponsor = sponsors.room?.find((r) => r.roomName === room.name)
+
+    return (
+        <Flex
+            key={room.id}
+            style={{ '--room-column': `room-${room.id}` } as React.CSSProperties}
+            aria-hidden="true"
+            justifyContent="center"
+            alignItems="center"
+            textAlign="center"
+            gridColumn="var(--room-column)"
+            gridRow="rooms"
+            display="none"
+            rounded="sm"
+            bgColor="#8D8DFF"
+            color="#070727"
+            fontWeight="semibold"
+            fontSize="sm"
+            padding={2}
+            xl={{
+                display: 'block',
+                position: 'sticky',
+                top: 4,
+                zIndex: 1000,
+            }}
+        >
+            {room.name}
+            {roomSponsor ? (
+                <>
+                    <br />
+                    Sponsored by{' '}
+                    <styled.img
+                        src={roomSponsor.logoUrlLightMode}
+                        alt={roomSponsor.name}
+                        maxWidth={100}
+                        width="100%"
+                        maxHeight={50}
+                        display="inline-block"
+                        objectFit="contain"
+                    />
+                </>
+            ) : null}
         </Flex>
     )
 }
