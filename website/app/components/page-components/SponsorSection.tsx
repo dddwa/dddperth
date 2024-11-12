@@ -9,10 +9,10 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
         bronze: { gradientFrom: '#452927', logoSize: 'xs' },
         room: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
         digital: { gradientFrom: '#371F4E', logoSize: 'xs' },
-        community: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
-        coffeeCart: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
-        quietRoom: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
-        keynotes: { gradientFrom: '#1F1F4E', logoSize: 'sm' },
+        community: { gradientFrom: '#134343', logoSize: 'xs' },
+        coffeeCart: { gradientFrom: '#134343', logoSize: 'xs' },
+        quietRoom: { gradientFrom: '#134343', logoSize: 'xs' },
+        keynotes: { gradientFrom: '#134343', logoSize: 'sm' },
     } as const
     const getSponsorStyle = (category: keyof typeof sponsorStyles) => sponsorStyles[category]
 
