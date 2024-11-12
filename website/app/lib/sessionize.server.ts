@@ -72,18 +72,17 @@ export const timeSlotSchema = z.object({
     slotStart: z.string(),
     rooms: z.array(roomSchema),
 })
+export const gridRoomSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    sessions: z.array(sessionSchema),
+    hasOnlyPlenumSessions: z.boolean(),
+})
 export const gridSmartSchema = z.array(
     z.object({
         date: z.string(),
         isDefault: z.boolean(),
-        rooms: z.array(
-            z.object({
-                id: z.number(),
-                name: z.string(),
-                sessions: z.array(sessionSchema),
-                hasOnlyPlenumSessions: z.boolean(),
-            }),
-        ),
+        rooms: z.array(gridRoomSchema),
         timeSlots: z.array(timeSlotSchema),
     }),
 )

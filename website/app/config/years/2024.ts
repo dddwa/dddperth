@@ -44,7 +44,7 @@ export const conference2024: ConferenceYear = {
         opens: DateTime.fromISO('2024-06-21T08:00:00', {
             zone: 'Australia/Perth',
         }),
-        closes: DateTime.fromISO('2024-11-11T23:59:59', {
+        closes: DateTime.fromISO('2024-11-15T23:59:59', {
             zone: 'Australia/Perth',
         }),
     },
@@ -156,6 +156,7 @@ Computing, software and big data will be critical in the success of this mega sc
                 quote: `Microsoft is super excited to be a Room Sponsor for the 10th Anniversary of hashtag#DDDPerth. Being able to support the largest hashtag#developer conference in the country year after year has put us right at the heart of a community we love. I still remember standing in a room of 100 developers, which was probably the 2nd year the conference ran and everyone was so proud because they had doubled the numbers from the year before. None of us expected back then that it would continue to double each year until the pandemic, and even then, it hardly stuttered. Whilst Microsoft cannot boast those kind of stats 😉 Our Partnerships with OpenAI, GitHub and Nvidia have enabled us to build a cutting edge, safe and secure environment for developers to build modern AI Apps on Azure. Come say hello to us in our room, we'd love to see you"
 
 - Michelle Sandford from Microsoft`,
+                roomName: 'Room 1 - River room',
             },
             {
                 name: 'SoftwareOne',
@@ -163,6 +164,7 @@ Computing, software and big data will be critical in the success of this mega sc
                 logoUrlDarkMode: '/images/sponsors/2024-softwareone-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-softwareone-light.svg',
                 quote: 'SoftwareONE are delighted to be able to contribute to such the 10th anniversary celebrations for DDD Perth. DDD has such a positive impact on the local technology scene and we would like to congratulate you on such an incredible milestone!',
+                roomName: 'Room 3 - River room',
             },
         ],
         digital: [

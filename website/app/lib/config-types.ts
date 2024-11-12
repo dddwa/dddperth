@@ -82,7 +82,7 @@ export interface YearSponsors {
     quietRoom?: Sponsor[]
 
     keynotes?: Sponsor[]
-    room?: Sponsor[]
+    room?: Array<Sponsor & { roomName: string }>
 }
 
 export interface Sponsor {
