@@ -258,8 +258,8 @@ Computing, software and big data will be critical in the success of this mega sc
             {
                 name: 'Breast Cancer Partners',
                 website: 'https://breastcancerpartners.org/',
-                logoUrlDarkMode: '/images/sponsors/2024-breast-cancer-partners-dark.svg',
-                logoUrlLightMode: '/images/sponsors/2024-breast-cancer-partners-light.svg',
+                logoUrlDarkMode: '/images/sponsors/2024-breast-cancer-partners-dark-2.svg',
+                logoUrlLightMode: '/images/sponsors/2024-breast-cancer-partners-light-2.svg',
             },
         ],
     },
