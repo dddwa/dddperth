@@ -236,5 +236,31 @@ Computing, software and big data will be critical in the success of this mega sc
                 quote: undefined,
             },
         ],
+        community: [
+            {
+                name: 'WITWA',
+                website: 'https://www.witwa.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2024-witwa-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-witwa-light.svg',
+            },
+            {
+                name: 'Bloom',
+                website: 'https://bloom.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2024-bloom-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-bloom-light.svg',
+            },
+            {
+                name: 'She Codes',
+                website: 'https://shecodes.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2024-she-codes-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-she-codes-light.svg',
+            },
+            {
+                name: 'Breast Cancer Partners',
+                website: 'https://breastcancerpartners.org/',
+                logoUrlDarkMode: '/images/sponsors/2024-breast-cancer-partners-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2024-breast-cancer-partners-light.svg',
+            },
+        ],
     },
 }
