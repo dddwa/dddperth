@@ -23,7 +23,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
     return json(schedules, {
         headers: {
-            'Cache-Control': CACHE_CONTROL.conf,
+            'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',
         },
     })
