@@ -22,6 +22,8 @@ param eventsAirClientId string
 param eventsAirClientSecret string
 param eventsAirTenantId string
 param eventsAirEventId string
+@secure()
+param titoSecurityToken string
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
@@ -125,6 +127,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             name: 'events-air-event-id'
             value: eventsAirEventId
         }
+        {
+            name: 'tito-security-token'
+            value: titoSecurityToken
+        }
       ]
     }
     template: {
@@ -164,6 +170,26 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'GOOGLE_FORMS_FILE_ID'
                 secretRef: 'google-forms-file-id'
+            }
+            {
+                name: 'TITO_SECURITY_TOKEN'
+                secretRef: 'tito-security-token'
+            }
+            {
+                name: 'EVENTS_AIR_CLIENT_ID'
+                secretRef: 'events-air-client-id'
+            }
+            {
+                name: 'EVENTS_AIR_CLIENT_SECRET'
+                secretRef: 'events-air-client-secret'
+            }
+            {
+                name: 'EVENTS_AIR_TENANT_ID'
+                secretRef: 'events-air-tenant-id'
+            }
+            {
+                name: 'EVENTS_AIR_EVENT_ID'
+                secretRef: 'events-air-event-id'
             }
           ]
 

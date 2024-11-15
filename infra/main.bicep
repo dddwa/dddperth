@@ -37,6 +37,9 @@ param eventsAirClientId string
 param eventsAirClientSecret string
 param eventsAirTenantId string
 param eventsAirEventId string
+@secure()
+param titoSecurityToken string
+
 
 // Tags that should be applied to all resources.
 //
@@ -135,6 +138,7 @@ module ddd './app/ddd.bicep' = {
     eventsAirClientSecret: eventsAirClientSecret
     eventsAirTenantId: eventsAirTenantId
     eventsAirEventId: eventsAirEventId
+    titoSecurityToken: titoSecurityToken
   }
   scope: rg
 }

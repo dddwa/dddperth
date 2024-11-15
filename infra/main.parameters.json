@@ -65,6 +65,9 @@
         },
         "eventsAirEventId": {
             "value": "${EVENTS_AIR_EVENT_ID}"
+        },
+        "titoSecurityToken": {
+            "value": "${TITO_SECURITY_TOKEN}"
         }
     }
 }
