@@ -3,10 +3,14 @@ import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {
     nowDate(): DateTime {
-        return DateTime.now()
+        return DateTime.local({
+            zone: 'Australia/Perth',
+        })
     }
     now() {
-        return Date.now()
+        return DateTime.local({
+            zone: 'Australia/Perth',
+        }).toMillis()
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
