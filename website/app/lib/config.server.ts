@@ -16,6 +16,7 @@ export const {
     EVENTS_AIR_CLIENT_ID,
     EVENTS_AIR_CLIENT_SECRET,
     EVENTS_AIR_TENANT_ID,
+    EVENTS_AIR_EVENT_ID,
 } = z
     .object({
         NODE_ENV: z.string(),
@@ -40,5 +41,6 @@ export const {
         EVENTS_AIR_CLIENT_ID: z.string().optional(),
         EVENTS_AIR_CLIENT_SECRET: z.string().optional(),
         EVENTS_AIR_TENANT_ID: z.string().optional(),
+        EVENTS_AIR_EVENT_ID: z.string().optional(),
     })
     .parse(process.env)

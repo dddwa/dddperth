@@ -17,6 +17,11 @@ param googleFormsApiKey string
 @secure()
 param googleFormsFileId string
 param exists bool
+param eventsAirClientId string
+@secure()
+param eventsAirClientSecret string
+param eventsAirTenantId string
+param eventsAirEventId string
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
@@ -103,6 +108,22 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         {
             name: 'google-forms-file-id'
             value: googleFormsFileId
+        }
+        {
+            name: 'events-air-client-id'
+            value: eventsAirClientId
+        }
+        {
+            name: 'events-air-client-secret'
+            value: eventsAirClientSecret
+        }
+        {
+            name: 'events-air-tenant-id'
+            value: eventsAirTenantId
+        }
+        {
+            name: 'events-air-event-id'
+            value: eventsAirEventId
         }
       ]
     }

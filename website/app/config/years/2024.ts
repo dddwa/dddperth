@@ -51,10 +51,24 @@ export const conference2024: ConferenceYear = {
     feedbackOpenUntilDateTime: DateTime.fromISO('2024-11-21T23:59:59', {
         zone: 'Australia/Perth',
     }),
+
     ticketInfo: {
         type: 'tito',
         accountId: 'dddperth',
         eventId: '2024',
+
+        generalTicketSlugs: [
+            'general-attendee',
+            'dqvd7i58iig',
+            'general-attendee-company',
+            'general-attendee-free',
+            'lyfer',
+            'volunteer',
+            'speaker',
+            'sponsor',
+        ],
+        afterPartyTicketSlugs: ['after-party', 'el5pexoj6m8'],
+        afterPartyUpgradeActivityId: '1071952',
     },
 
     sponsors: {
@@ -234,6 +248,46 @@ Computing, software and big data will be critical in the success of this mega sc
                 logoUrlDarkMode: '/images/sponsors/2024-aws-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2024-aws-light.svg',
                 quote: undefined,
+            },
+        ],
+    },
+
+    foodInfo: {
+        lunch: [
+            {
+                meal: 'Vegetable Korma, potato, cauliflower, carrots, peas, steamed basmati rice (V DF, contains coconut milk)',
+                shortCode: 'VK',
+                foodZone: '1',
+            },
+            {
+                meal: 'Slow cooked beef cheek in red wine sauce with creamy mashed potato (GF)',
+                shortCode: 'BR',
+                foodZone: '1',
+            },
+            {
+                meal: 'Roast pork belly with pineapple jus, cheesy roast potatoes and mustard spring beans (GF)',
+                shortCode: 'PB',
+                foodZone: '2',
+            },
+            {
+                meal: 'Classic Caesar salad, cos lettuce, parmesan cheese, egg, bacon, Caesar dressing',
+                shortCode: 'CS',
+                foodZone: '3',
+            },
+            {
+                meal: 'Cashew butter chicken with basmati rice, yoghurt, and coriander (GF)',
+                shortCode: 'BC',
+                foodZone: '3',
+            },
+            {
+                meal: 'Beef cheese and bacon burger served with chips',
+                shortCode: 'BU',
+                foodZone: '4',
+            },
+            {
+                meal: 'Caribbean chicken salad with honey lime dressing (DF)',
+                shortCode: 'CC',
+                foodZone: '4',
             },
         ],
     },

@@ -41,6 +41,10 @@ export interface TitoTicketInfo {
     type: 'tito'
     accountId: string
     eventId: string
+
+    generalTicketSlugs?: string[]
+    afterPartyTicketSlugs?: string[]
+    afterPartyUpgradeActivityId?: string
 }
 
 export type TicketInfo = TitoTicketInfo
@@ -69,6 +73,14 @@ export interface ConferenceYear {
     sessions: SessionizeConferenceSessions | SessionData | undefined
 
     sponsors: YearSponsors
+
+    foodInfo?: {
+        lunch: Array<{
+            meal: string
+            foodZone: string
+            shortCode: string
+        }>
+    }
 }
 
 export interface YearSponsors {

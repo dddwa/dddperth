@@ -32,6 +32,12 @@ param domainName string
 @minLength(1)
 param certificateId string
 
+param eventsAirClientId string
+@secure()
+param eventsAirClientSecret string
+param eventsAirTenantId string
+param eventsAirEventId string
+
 // Tags that should be applied to all resources.
 //
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -125,6 +131,10 @@ module ddd './app/ddd.bicep' = {
     googleFormsFileId: googleFormsFileId
     domainName: domainName
     certificateId: certificateId
+    eventsAirClientId: eventsAirClientId
+    eventsAirClientSecret: eventsAirClientSecret
+    eventsAirTenantId: eventsAirTenantId
+    eventsAirEventId: eventsAirEventId
   }
   scope: rg
 }
