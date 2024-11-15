@@ -20,7 +20,20 @@ export async function loader({ context }: LoaderFunctionArgs) {
               })
             : []
 
-    return json(sessions, {
+    const patchedSessions = sessions.map((session) => {
+        const groupSessions = session.sessions.map((inner) => {
+            if (inner.isServiceSession) {
+                // We need to override the room for service sessions
+                inner.room = 'Level 3'
+            }
+
+            return inner
+        })
+
+        return { ...session, sessions: groupSessions }
+    })
+
+    return json(patchedSessions, {
         headers: {
             'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',

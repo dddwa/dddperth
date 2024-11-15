@@ -82,6 +82,7 @@ export const action: ActionFunction = async ({ request, context }) => {
                 await updateEventsAirContact(accessToken, { userDefinedField3: 'Y' }, existingTicketHolder.id)
             }
         }
+
         return json({ success: true })
     }
 
@@ -109,6 +110,10 @@ export const action: ActionFunction = async ({ request, context }) => {
                 // Note, ticket re-assignment we will just update the name of the contact
                 webhookType === 'ticket.reassigned'
             ) {
+                // Randomly wait between 0-5 seconds to hopefully mitigate the race conditions around double
+                // events being sent from Tito
+                await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 5_000)))
+
                 const contactId = await ensureContactExistsByExternalId(
                     accessToken,
                     externalIdentifier,
