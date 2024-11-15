@@ -21,7 +21,23 @@ export async function loader({ context }: LoaderFunctionArgs) {
             : // TODO Deal with data type
               []
 
-    return json(schedules, {
+    const patchedSchedules = schedules.map((schedule) => {
+        const patchedTimeSlot = schedule.timeSlots.map((timeSlot) => {
+            const patchedRooms = timeSlot.rooms.map((slotRooms) => {
+                if (slotRooms.session.isServiceSession) {
+                    // We need to override the room for service sessions
+                    return { ...slotRooms, room: 'Level 3' }
+                }
+
+                return slotRooms
+            })
+
+            return { ...timeSlot, rooms: patchedRooms }
+        })
+        return { ...schedule, timeSlots: patchedTimeSlot }
+    })
+
+    return json(patchedSchedules, {
         headers: {
             'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',
