@@ -25,7 +25,6 @@ export function getCurrentConferenceState(
         (year): year is [Year, ConferenceYear] => !('cancelledMessage' in year[1]),
     )
     const [latestConference, previousConference] = conferenceList
-
         .sort(([, a], [, b]) => {
             const dateA = a.conferenceDate?.valueOf() ?? Infinity
             const dateB = b.conferenceDate?.valueOf() ?? Infinity

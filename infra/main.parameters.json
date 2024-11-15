@@ -53,6 +53,21 @@
         },
         "certificateId": {
             "value": "/subscriptions/dd079971-2023-4b56-be3a-85a346d51344/resourceGroups/dddper-rg-prd/providers/Microsoft.App/managedEnvironments/dddper-cae-ivoki745ew4qo/certificates/cloudflare"
+        },
+        "eventsAirClientId": {
+            "value": "${EVENTS_AIR_CLIENT_ID}"
+        },
+        "eventsAirClientSecret": {
+            "value": "${EVENTS_AIR_CLIENT_SECRET}"
+        },
+        "eventsAirTenantId": {
+            "value": "${EVENTS_AIR_TENANT_ID}"
+        },
+        "eventsAirEventId": {
+            "value": "${EVENTS_AIR_EVENT_ID}"
+        },
+        "titoSecurityToken": {
+            "value": "${TITO_SECURITY_TOKEN}"
         }
     }
 }

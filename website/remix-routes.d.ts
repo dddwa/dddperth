@@ -88,6 +88,11 @@ declare module "remix-routes" {
       query: ExportedQuery<import('app/routes/blog.rss[.xml]').SearchParams>,
     };
   
+    "/tito-webhook": {
+      params: never,
+      query: ExportedQuery<import('app/routes/tito-webhook').SearchParams>,
+    };
+  
   }
 
   type RoutesWithParams = Pick<
@@ -112,7 +117,8 @@ declare module "remix-routes" {
     | 'routes/app-announcements'
     | 'routes/app-config'
     | 'routes/app-content.$'
-    | 'routes/blog.rss[.xml]';
+    | 'routes/blog.rss[.xml]'
+    | 'routes/tito-webhook';
 
   export function $path<
     Route extends keyof Routes,
