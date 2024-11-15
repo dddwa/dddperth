@@ -107,6 +107,16 @@ function getMdxComponent(code: string, conferenceState: SerializeFrom<Conference
                 return <TicketForm state={conferenceState.ticketSales} />
             }
         },
+        ConferenceDay: ({ children }) => {
+            if (conferenceState.conferenceState === 'conference-day') {
+                return children
+            }
+        },
+        OutsideConferenceDay: ({ children }) => {
+            if (conferenceState.conferenceState !== 'conference-day') {
+                return children
+            }
+        },
     }
     function MdxComponent({ components, ...rest }: Parameters<typeof Component>['0']) {
         return (

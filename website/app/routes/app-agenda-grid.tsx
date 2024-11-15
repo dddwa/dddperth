@@ -26,7 +26,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
             const patchedRooms = timeSlot.rooms.map((slotRooms) => {
                 if (slotRooms.session.isServiceSession) {
                     // We need to override the room for service sessions
-                    return { ...slotRooms, room: 'Level 3' }
+                    return { ...slotRooms, session: { ...slotRooms.session, room: 'Level 3' } }
                 }
 
                 return slotRooms
@@ -34,7 +34,11 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
             return { ...timeSlot, rooms: patchedRooms }
         })
-        return { ...schedule, timeSlots: patchedTimeSlot }
+
+        return {
+            ...schedule,
+            timeSlots: patchedTimeSlot,
+        }
     })
 
     return json(patchedSchedules, {
