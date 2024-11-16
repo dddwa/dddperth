@@ -1,5 +1,7 @@
+import { trace } from '@opentelemetry/api'
 import { json } from '@remix-run/server-runtime'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { resolveError } from '~/lib/resolve-error'
 
 export type GoogleFormUpdates = {
     Timestamp: string
@@ -14,29 +16,39 @@ export async function loader() {
         return new Response(JSON.stringify({ message: 'No Google Forms API key or form ID' }), { status: 404 })
     }
 
-    const BASE_URL = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`
+    try {
+        const BASE_URL = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`
 
-    const response = await fetch(BASE_URL, {
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-        },
-    })
-
-    const responseData = (await response.json()) as GoogleFormUpdates[]
-
-    const announcementData = responseData
-        .map((row) => {
-            return { createdTime: row.Timestamp, update: row.Message }
-        })
-        .sort((a, b) => {
-            return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+        const response = await fetch(BASE_URL, {
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
         })
 
-    return json(announcementData, {
-        headers: {
-            'Cache-Control': CACHE_CONTROL.announce,
-            'Access-Control-Allow-Origin': '*',
-        },
-    })
+        const responseData = (await response.json()) as GoogleFormUpdates[]
+
+        const announcementData = responseData
+            .map((row) => {
+                return { createdTime: row.Timestamp, update: row.Message }
+            })
+            .sort((a, b) => {
+                return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+            })
+
+        return json(announcementData, {
+            headers: {
+                'Cache-Control': CACHE_CONTROL.announce,
+                'Access-Control-Allow-Origin': '*',
+            },
+        })
+    } catch (err) {
+        trace.getActiveSpan()?.recordException(resolveError(err))
+        return json([], {
+            headers: {
+                'Cache-Control': CACHE_CONTROL.announce,
+                'Access-Control-Allow-Origin': '*',
+            },
+        })
+    }
 }
