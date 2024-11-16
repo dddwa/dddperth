@@ -91,6 +91,15 @@ function importantDates(year: ConferenceYear): ImportantDateBoxProps[] {
         })
     }
 
+    importantDates.push({
+        type: 'important-date',
+        dateTime: year.conferenceDate?.set({ hour: 17, minute: 30, second: 0, millisecond: 0 }) ?? DateTime.local(),
+        event: 'After Party Tickets',
+        onDayMessage: 'Buy Ticket',
+        onDayHref: 'https://ti.to/dddperth/2024/with/el5pexoj6m8',
+        eventClosedMessage: 'After Party Over',
+    })
+
     if (year.talkVotingDates) {
         importantDates.push({
             type: 'start-event',
