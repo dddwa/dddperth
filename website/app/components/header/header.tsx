@@ -59,7 +59,7 @@ export function Header() {
                                 Blog
                             </AppLink> */}
                             <styled.div gap={2} display="grid">
-                                <styled.a
+                                {/* <styled.a
                                     href="/tickets"
                                     color="#520030"
                                     _hover={{ gradientTo: '#FF52B7' }}
@@ -81,7 +81,7 @@ export function Header() {
                                 >
                                     Buy Tickets{' '}
                                     <styled.span display={{ base: 'hidden', md: 'inline-block' }}>↗</styled.span>
-                                </styled.a>
+                                </styled.a> */}
                                 <styled.a
                                     href="https://dddperth.deco-apparel.com/"
                                     color="#520030"
