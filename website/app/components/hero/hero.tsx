@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import yearbookQR from '~/images/yearbook-link.png'
 import { Year } from '~/lib/config-types'
 import { Box, Flex } from '../../../styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
@@ -35,6 +36,12 @@ export function Hero({ year, currentDate }: { year: Year; currentDate: DateTime 
                         Check out the agenda and talks from previous years , or hear more about how we do what we do on
                         our blog.
                     </p>
+                    <div>Get your 2024 Yearbook!</div>
+                    <div>
+                        <a href="https://ti.to/dddperth/2024/with/yearbook">
+                            <img src={yearbookQR} alt="Yearbook QR Code" />
+                        </a>
+                    </div>
                 </Flex>
 
                 <ImportantDates year={year} currentDate={currentDate} />
