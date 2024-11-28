@@ -101,82 +101,94 @@ export const action: ActionFunction = async ({ request, context }) => {
         userDefinedField3: hasAfterPartyUpgrade ? 'Y' : undefined,
     }
 
-    await trace.getTracer('default').startActiveSpan('processTitoWebhook', async (span) => {
-        try {
-            if (
-                webhookType === 'ticket.completed' ||
-                webhookType === 'ticket.updated' ||
-                webhookType === 'ticket.unvoided' ||
-                // Note, ticket re-assignment we will just update the name of the contact
-                webhookType === 'ticket.reassigned'
-            ) {
-                // Randomly wait between 0-5 seconds to hopefully mitigate the race conditions around double
-                // events being sent from Tito
-                await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 5_000)))
+    await trace.getTracer('default').startActiveSpan(
+        'processTitoWebhook',
+        {
+            attributes: {
+                slug,
+            },
+        },
+        async (span) => {
+            try {
+                if (
+                    webhookType === 'ticket.completed' ||
+                    webhookType === 'ticket.updated' ||
+                    webhookType === 'ticket.unvoided' ||
+                    // Note, ticket re-assignment we will just update the name of the contact
+                    webhookType === 'ticket.reassigned'
+                ) {
+                    // Randomly wait between 0-5 seconds to hopefully mitigate the race conditions around double
+                    // events being sent from Tito
+                    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 5_000)))
 
-                const contactId = await ensureContactExistsByExternalId(
-                    accessToken,
-                    externalIdentifier,
-                    eventId,
-                    contactData,
-                )
-
-                await ensureRegistrationExists(release_slug, accessToken, contactId, eventId)
-            }
-
-            if (webhookType === 'ticket.voided') {
-                const existingTicketHolder = await checkIfContactExistsByExternalIdentifier(
-                    accessToken,
-                    eventId,
-                    externalIdentifier,
-                )
-
-                if (existingTicketHolder) {
-                    const registrations = await getContactRegistrations(accessToken, eventId, existingTicketHolder.id)
-                    const existingRegistrationOfType = registrations.find(
-                        (reg) => reg.type.id === ticketTypeMapping[release_slug as keyof typeof ticketTypeMapping],
+                    const contactId = await ensureContactExistsByExternalId(
+                        accessToken,
+                        externalIdentifier,
+                        eventId,
+                        contactData,
                     )
 
-                    if (existingRegistrationOfType) {
-                        await deleteRegistration(
+                    await ensureRegistrationExists(release_slug, accessToken, contactId, eventId)
+                }
+
+                if (webhookType === 'ticket.voided') {
+                    const existingTicketHolder = await checkIfContactExistsByExternalIdentifier(
+                        accessToken,
+                        eventId,
+                        externalIdentifier,
+                    )
+
+                    if (existingTicketHolder) {
+                        const registrations = await getContactRegistrations(
                             accessToken,
                             eventId,
                             existingTicketHolder.id,
-                            existingRegistrationOfType.id,
                         )
+                        const existingRegistrationOfType = registrations.find(
+                            (reg) => reg.type.id === ticketTypeMapping[release_slug as keyof typeof ticketTypeMapping],
+                        )
+
+                        if (existingRegistrationOfType) {
+                            await deleteRegistration(
+                                accessToken,
+                                eventId,
+                                existingTicketHolder.id,
+                                existingRegistrationOfType.id,
+                            )
+                        }
                     }
                 }
+                // Leaving this here, which will instead remove the external id of the current ticket holder
+                // Then ensure a new contact is created with the ticket's external id, and fixes up the registrations
+                // else if (webhookType === 'ticket.reassigned') {
+                //     const existingTicketHolder = await checkIfContactExistsByExternalIdentifier(
+                //         accessToken,
+                //         eventId,
+                //         externalIdentifier,
+                //     )
+
+                //     // Remove externalIdentifier from the existing ticket holder
+                //     if (existingTicketHolder) {
+                //         await updateEventsAirContact(
+                //             accessToken,
+                //             { ...contactData, externalIdentifier: null },
+                //             existingTicketHolder.id,
+                //         )
+                //         // TODO Remove the current ticket holder's registration
+                //     }
+
+                //     const contactId = await ensureContactExistsByEmail(accessToken, email, eventId, contactData)
+                //     await ensureRegistrationExists(release_slug, accessToken, contactId, eventId)
+                // }
+            } catch (error) {
+                console.error('Error processing Tito webhook:', error)
+                trace.getActiveSpan()?.recordException(resolveError(error))
+                return json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' })
+            } finally {
+                span.end()
             }
-            // Leaving this here, which will instead remove the external id of the current ticket holder
-            // Then ensure a new contact is created with the ticket's external id, and fixes up the registrations
-            // else if (webhookType === 'ticket.reassigned') {
-            //     const existingTicketHolder = await checkIfContactExistsByExternalIdentifier(
-            //         accessToken,
-            //         eventId,
-            //         externalIdentifier,
-            //     )
-
-            //     // Remove externalIdentifier from the existing ticket holder
-            //     if (existingTicketHolder) {
-            //         await updateEventsAirContact(
-            //             accessToken,
-            //             { ...contactData, externalIdentifier: null },
-            //             existingTicketHolder.id,
-            //         )
-            //         // TODO Remove the current ticket holder's registration
-            //     }
-
-            //     const contactId = await ensureContactExistsByEmail(accessToken, email, eventId, contactData)
-            //     await ensureRegistrationExists(release_slug, accessToken, contactId, eventId)
-            // }
-        } catch (error) {
-            console.error('Error processing Tito webhook:', error)
-            trace.getActiveSpan()?.recordException(resolveError(error))
-            return json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' })
-        } finally {
-            span.end()
-        }
-    })
+        },
+    )
 
     return json({ success: true })
 }
