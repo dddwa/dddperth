@@ -91,14 +91,15 @@ function importantDates(year: ConferenceYear): ImportantDateBoxProps[] {
         })
     }
 
-    importantDates.push({
-        type: 'important-date',
-        dateTime: year.conferenceDate?.set({ hour: 17, minute: 30, second: 0, millisecond: 0 }) ?? DateTime.local(),
-        event: 'After Party Tickets',
-        onDayMessage: 'Buy Ticket',
-        onDayHref: 'https://ti.to/dddperth/2024/with/el5pexoj6m8',
-        eventClosedMessage: 'After Party Over',
-    })
+    // TODO Drive by config
+    // importantDates.push({
+    //     type: 'important-date',
+    //     dateTime: year.conferenceDate?.set({ hour: 17, minute: 30, second: 0, millisecond: 0 }) ?? DateTime.local(),
+    //     event: 'After Party Tickets',
+    //     onDayMessage: 'Buy Ticket',
+    //     onDayHref: 'https://ti.to/dddperth/2024/with/el5pexoj6m8',
+    //     eventClosedMessage: 'After Party Over',
+    // })
 
     if (year.talkVotingDates) {
         importantDates.push({
@@ -554,7 +555,12 @@ export function Workshops({ currentDate }: { currentDate: DateTime }) {
                 great Bio to go with it.
             </styled.p>
 
-            <ImportantDateBox
+            <styled.p fontSize="xl" color="#C2C2FF">
+                Coming soon!
+            </styled.p>
+
+            {/* TODO Drive by config */}
+            {/* <ImportantDateBox
                 dateInfo={{
                     type: 'important-date',
                     dateTime: DateTime.fromISO('2024-06-25T09:30:00.000Z'),
@@ -563,7 +569,7 @@ export function Workshops({ currentDate }: { currentDate: DateTime }) {
                     eventClosedMessage: 'Workshop Completed',
                 }}
                 currentDate={currentDate}
-            />
+            /> */}
         </Flex>
     )
 }

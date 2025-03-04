@@ -5,6 +5,7 @@ import { conference2021 } from './years/2021'
 import { conference2022 } from './years/2022'
 import { conference2023 } from './years/2023'
 import { conference2024 } from './years/2024'
+import { conference2025 } from './years/2025'
 
 //
 // If you update this, could you also update website-content/README.md
@@ -33,6 +34,7 @@ export const conferenceConfig = {
         '2022': conference2022,
         '2023': conference2023,
         '2024': conference2024,
+        '2025': conference2025,
     },
 
     volunteerForm: {

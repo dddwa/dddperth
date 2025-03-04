@@ -1,12 +1,5 @@
-import { DateTime, Settings } from 'luxon'
+import { DateTime } from 'luxon'
 import { ConferenceYear } from '../../lib/config-types'
-
-Settings.throwOnInvalid = true
-declare module 'luxon' {
-    interface TSSettings {
-        throwOnInvalid: true
-    }
-}
 
 export const conference2024: ConferenceYear = {
     year: '2024',
