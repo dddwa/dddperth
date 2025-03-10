@@ -1,6 +1,5 @@
 import mdx from '@mdx-js/rollup'
 import { vitePlugin as remix } from '@remix-run/dev'
-import rehypePrettyCode from 'rehype-pretty-code'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { remixDevTools } from 'remix-development-tools'
@@ -27,7 +26,7 @@ export default defineConfig({
         remixDevTools(),
         mdx({
             remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
-            rehypePlugins: [[rehypePrettyCode, prettyCodeOptions]],
+            rehypePlugins: [],
             /* jsxImportSource: …, otherOptions… */
         }),
         remix({

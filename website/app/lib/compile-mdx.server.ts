@@ -6,9 +6,9 @@ import type * as H from 'hast'
 import { MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
-import remarkAutolinkHeadings from 'remark-autolink-headings'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import rehypeSlug from 'rehype-slug'
 import gfm from 'remark-gfm'
-import remarkSlug from 'remark-slug'
 import type * as U from 'unified'
 import { visit } from 'unist-util-visit'
 
@@ -123,14 +123,13 @@ async function compileMdx<FrontmatterType>(slug: string, content: string) {
         const { frontmatter, code } = await bundleMDX({
             source: content,
             mdxOptions(options) {
-                options.remarkPlugins = [
-                    ...(options.remarkPlugins ?? []),
-                    remarkSlug,
-                    [remarkAutolinkHeadings, { behavior: 'wrap' }],
-                    gfm,
-                    ...remarkPlugins,
+                options.remarkPlugins = [...(options.remarkPlugins ?? []), gfm, ...remarkPlugins]
+                options.rehypePlugins = [
+                    ...(options.rehypePlugins ?? []),
+                    rehypeSlug,
+                    [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+                    ...rehypePlugins,
                 ]
-                options.rehypePlugins = [...(options.rehypePlugins ?? []), ...rehypePlugins]
                 return options
             },
         })
