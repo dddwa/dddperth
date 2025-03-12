@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, useRouteError } from '@remix-run/react'
+import { isRouteErrorResponse, useRouteError } from 'react-router';
 import type { ReactNode } from 'react'
 import { Center, Flex, styled } from 'styled-system/jsx'
 

@@ -1,7 +1,6 @@
-import type { LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
 import { DateTime } from 'luxon'
+import type { LoaderFunctionArgs } from 'react-router'
+import { data, redirect, useLoaderData } from 'react-router'
 import { $params, $path } from 'remix-routes'
 import { Box, Flex, styled } from 'styled-system/jsx'
 import { TypeOf } from 'zod'
@@ -57,9 +56,11 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
                   confTimeZone: conferenceConfig.timezone,
               })
             : []
-    const talkSpeakers = session.speakers.map((speakerId) => speakers.find((speaker) => speaker.id === speakerId.id))
+    const talkSpeakers = session.speakers
+        .map((speakerId) => speakers.find((speaker) => speaker.id === speakerId.id))
+        .filter((speaker): speaker is TypeOf<typeof speakersSchema>[number] => !!speaker)
 
-    return json(
+    return data(
         {
             year: year as Year,
             sponsors: yearConfigLookup.sponsors,

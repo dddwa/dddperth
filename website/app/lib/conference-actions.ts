@@ -1,4 +1,3 @@
-import { SerializeFrom } from '@remix-run/server-runtime'
 import { ConferenceState } from './config-types'
 
 export interface CallToAction {
@@ -7,7 +6,7 @@ export interface CallToAction {
     category: 'conference' | 'tickets' | 'agenda' | 'content' | 'voting'
 }
 
-export function getConferenceActions(conferenceState: SerializeFrom<ConferenceState>): CallToAction[] {
+export function getConferenceActions(conferenceState: ConferenceState): CallToAction[] {
     const actions: CallToAction[] = []
 
     if (conferenceState.callForPapers.state === 'open') {

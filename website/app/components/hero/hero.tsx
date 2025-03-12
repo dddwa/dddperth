@@ -1,4 +1,3 @@
-import { SerializeFrom } from '@remix-run/server-runtime'
 import { DateTime } from 'luxon'
 import { ConferenceImportantInformation, Year } from '~/lib/config-types'
 import { Box, Flex } from '../../../styled-system/jsx'
@@ -12,7 +11,7 @@ export function Hero({
 }: {
     year: Year
     currentDate: DateTime
-    config: SerializeFrom<ConferenceImportantInformation>
+    config: ConferenceImportantInformation
 }) {
     return (
         <Box overflowX="hidden">

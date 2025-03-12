@@ -2,7 +2,8 @@
     "include": [
         "env.d.ts",
         "**/*.ts",
-        "**/*.tsx"
+        "**/*.tsx",
+        ".react-router/types/**/*"
     ],
     "compilerOptions": {
         "lib": [
@@ -28,6 +29,10 @@
                 "./app/*"
             ]
         },
-        "noEmit": true
+        "noEmit": true,
+        "rootDirs": [
+            ".",
+            "./.react-router/types"
+        ]
     }
 }

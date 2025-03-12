@@ -1,10 +1,10 @@
-import { json, LoaderFunctionArgs } from '@remix-run/server-runtime'
+import { data, LoaderFunctionArgs } from 'react-router'
 import { YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
 
 /** This route is used by the app or integrations to understand the state of the conference */
 export function loader({ context }: LoaderFunctionArgs) {
-    const data: AppConfig = {
+    const appConfig: AppConfig = {
         conferenceDate: context.conferenceState.conference.date ?? null,
         sponsors: context.conferenceState.conference.sponsors,
         support: 'https://raw.githubusercontent.com/dddwa/dddperth/refs/heads/main/website-content/pages/support.mdx',
@@ -17,7 +17,7 @@ export function loader({ context }: LoaderFunctionArgs) {
         },
     }
 
-    return json(data, {
+    return data(appConfig, {
         headers: {
             'Cache-Control': CACHE_CONTROL.doc,
             'Access-Control-Allow-Origin': '*',

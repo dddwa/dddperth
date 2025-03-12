@@ -1,6 +1,5 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { SerializeFrom } from '@remix-run/server-runtime'
 import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
@@ -16,7 +15,7 @@ const mdxComponentCache = new LRUCache<string, ReturnType<typeof getMdxComponent
     max: 1000,
 })
 
-export function useMdxPage(code: string, conferenceState: SerializeFrom<ConferenceState>) {
+export function useMdxPage(code: string, conferenceState: ConferenceState) {
     return useMemo(() => {
         if (mdxComponentCache.has(code)) {
             return mdxComponentCache.get(code)!
@@ -32,7 +31,7 @@ export function useMdxPage(code: string, conferenceState: SerializeFrom<Conferen
  * @param code the code to get the component from
  * @returns the component
  */
-function getMdxComponent(code: string, conferenceState: SerializeFrom<ConferenceState>) {
+function getMdxComponent(code: string, conferenceState: ConferenceState) {
     const Component = mdxBundler.getMDXComponent(code)
     const mdxComponents: MDXComponents = {
         a: ({ ref, ...props }) => <styled.a {...props} />,

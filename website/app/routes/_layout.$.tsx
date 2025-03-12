@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { HeadersFunction, LoaderFunctionArgs, SerializeFrom } from '@remix-run/node'
-import { json } from '@remix-run/node'
-import type { MetaFunction } from '@remix-run/react'
-import { useLoaderData } from '@remix-run/react'
+import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router'
+import { data, useLoaderData } from 'react-router'
 
 import { trace } from '@opentelemetry/api'
 import { DateTime } from 'luxon'
@@ -46,7 +44,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
     }
     const currentPath = requestUrl.pathname
 
-    return json(
+    return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISODate(),
             currentPath,
@@ -148,7 +146,10 @@ function ContentPageWithSidebar({
     currentDate,
     children,
 }: PropsWithChildren<
-    { currentDate: DateTime } & Pick<SerializeFrom<typeof loader>, 'conferenceState' | 'frontmatter' | 'currentPath'>
+    { currentDate: DateTime } & Pick<
+        Awaited<ReturnType<typeof useLoaderData<typeof loader>>>,
+        'conferenceState' | 'frontmatter' | 'currentPath'
+    >
 >) {
     return (
         <Grid gridTemplateColumns={{ base: '1ft', lg: '1fr auto' }}>
@@ -184,7 +185,7 @@ function ContentPageWithSidebar({
 }
 
 export interface EventDetailsSummaryProps {
-    conferenceState: SerializeFrom<ConferenceState>
+    conferenceState: ConferenceState
     currentPath: string
     className?: string
 }

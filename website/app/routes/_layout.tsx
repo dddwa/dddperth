@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
-import { Outlet } from '@remix-run/react'
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
+import { Outlet } from 'react-router';
 import { Box, Flex } from 'styled-system/jsx'
 import { ErrorPage } from '~/components/error-page'
 import { Acknowledgement } from '../components/acknowledgement'

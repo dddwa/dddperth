@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { HeadersFunction, LoaderFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router'
 
 import { trace } from '@opentelemetry/api'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -29,7 +28,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    return json(
+    return data(
         {
             frontmatter: post.frontmatter,
             post: post.code,

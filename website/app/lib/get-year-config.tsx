@@ -1,4 +1,4 @@
-import { redirect } from '@remix-run/server-runtime'
+import { redirect } from 'react-router';
 import { $path } from 'remix-routes'
 import { conferenceConfig } from '~/config/conference-config'
 import { ConferenceConfigYear, ConferenceImportantInformation, Year } from '~/lib/config-types'

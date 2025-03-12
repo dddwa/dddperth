@@ -1,4 +1,4 @@
-import { HeadersFunction, json, LoaderFunctionArgs } from '@remix-run/node'
+import { data, HeadersFunction, LoaderFunctionArgs } from 'react-router'
 import { TypeOf } from 'zod'
 import { conferenceConfig } from '~/config/conference-config'
 import { getYearConfig } from '~/lib/get-year-config'
@@ -41,7 +41,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
         }
     })
 
-    return json(patchedSchedules, {
+    return data(patchedSchedules, {
         headers: {
             'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',

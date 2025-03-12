@@ -1,4 +1,4 @@
-import { json } from '@remix-run/server-runtime'
+import { data } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 
 export type GoogleFormUpdates = {
@@ -50,7 +50,7 @@ export async function loader() {
     //     })
     // }
 
-    return json(
+    return data(
         [
             {
                 createdTime: new Date().toISOString(),

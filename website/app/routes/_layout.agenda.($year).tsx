@@ -1,8 +1,7 @@
-import type { LoaderFunctionArgs, SerializeFrom } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
+import type { LoaderFunctionArgs } from 'react-router'
+import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'remix-routes'
 import { Box, Flex, styled } from 'styled-system/jsx'
 import { TypeOf, z } from 'zod'
@@ -47,7 +46,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 
     const schedule = schedules[0]
 
-    return json(
+    return data(
         {
             year,
             sponsors: yearConfigLookup.sponsors,
@@ -262,7 +261,7 @@ function RoomTimeSlot({
     startTime12,
     timeSlotIndex,
 }: {
-    schedule: NonNullable<SerializeFrom<typeof loader>['schedule']>
+    schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
     availableTimeSlots: string[] | undefined
     nextTimeSlotStart: string
