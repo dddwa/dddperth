@@ -1,5 +1,5 @@
-import { css } from '../../../styled-system/css'
-import { Box, styled } from '../../../styled-system/jsx'
+import { css } from '~/styled-system/css'
+import { Box, styled } from '~/styled-system/jsx'
 
 export default function CircleDateModule() {
     const backgroundText = 'Oct 7 ⏺ Oct 7 ⏺ Oct 7 ⏺ Oct 7 ⏺ ' // Make sure to add space at end

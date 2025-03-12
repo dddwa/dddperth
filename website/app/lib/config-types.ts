@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import type { DateTime } from 'luxon'
 
 export type Year = `${number}${number}${number}${number}`
 

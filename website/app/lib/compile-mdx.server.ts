@@ -1,9 +1,8 @@
 import { remarkCodeBlocksShiki } from '@kentcdodds/md-temp'
-// eslint-disable-next-line import/default
 import remarkEmbedder, { type TransformerInfo } from '@remark-embedder/core'
 import oembedTransformer from '@remark-embedder/transformer-oembed'
 import type * as H from 'hast'
-import { MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
+import type { MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
 import { bundleMDX } from 'mdx-bundler'
 import PQueue from 'p-queue'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'

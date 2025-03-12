@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@react-router/express'
 import closeWithGrace from 'close-with-grace'
@@ -28,7 +27,7 @@ export function init() {
                     })
                 }
             })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             process.on('unhandledRejection', (err) => {
                 console.error('unhandledRejection', JSON.stringify(err))
                 const activeSpan = trace.getActiveSpan()
@@ -56,10 +55,10 @@ export function init() {
                           }),
                       )
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const resolveBuild: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
                 ? () => viteDevServer.ssrLoadModule('virtual:react-router/server-build')
                 : // @ts-expect-error - this will not exist at build time
+                  // eslint-disable-next-line @nx/enforce-module-boundaries
                   await import('../remix/server/index.js')
 
             const initialBuild = typeof resolveBuild === 'function' ? await resolveBuild() : resolveBuild

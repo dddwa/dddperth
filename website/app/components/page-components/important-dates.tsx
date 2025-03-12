@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon'
-import { FC, PropsWithChildren } from 'react'
-import { css } from 'styled-system/css'
-import { Flex, styled } from 'styled-system/jsx'
+import type { FC, PropsWithChildren } from 'react'
 import { conferenceConfig } from '~/config/conference-config'
-import { ConferenceYear, Year } from '~/lib/config-types'
+import type { ConferenceYear, Year } from '~/lib/config-types'
+import { css } from '~/styled-system/css'
+import { Flex, styled } from '~/styled-system/jsx'
 
 interface StartEventImportantDateBoxProps {
     type: 'start-event'

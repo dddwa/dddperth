@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream'
 
 import { createReadableStreamFromReadable } from '@react-router/node'
-import express from 'express'
+import type express from 'express'
 import * as isbotModule from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import type { AppLoadContext, EntryContext } from 'react-router'
@@ -26,7 +26,7 @@ export default function handleRequest(
     responseStatusCode: number,
     responseHeaders: Headers,
     reactRouterContext: EntryContext,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _loadContext: AppLoadContext,
 ) {
     return isBotRequest(request.headers.get('user-agent'))
@@ -70,6 +70,7 @@ function handleBotRequest(
                     pipe(body)
                 },
                 onShellError(error: unknown) {
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                     reject(error)
                 },
                 onError(error: unknown) {
@@ -116,6 +117,7 @@ function handleBrowserRequest(
                     pipe(body)
                 },
                 onShellError(error: unknown) {
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                     reject(error)
                 },
                 onError(error: unknown) {

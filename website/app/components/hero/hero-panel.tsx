@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
-import { ConferenceImportantInformation } from '~/lib/config-types'
+import type { ConferenceImportantInformation } from '~/lib/config-types'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 export function HomepageHeroPanel({ config }: { config: ConferenceImportantInformation }) {

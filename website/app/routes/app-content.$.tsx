@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router'
 
 import { trace } from '@opentelemetry/api'

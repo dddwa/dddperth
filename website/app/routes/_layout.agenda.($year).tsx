@@ -3,21 +3,22 @@ import { Fragment } from 'react'
 import type { LoaderFunctionArgs } from 'react-router'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'remix-routes'
-import { Box, Flex, styled } from 'styled-system/jsx'
-import { TypeOf, z } from 'zod'
+import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { Year, YearSponsors } from '~/lib/config-types'
+import type { Year, YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import { getYearConfig } from '../lib/get-year-config'
-import {
-    formatDate,
-    getScheduleGrid,
+import type {
     gridRoomSchema,
     gridSmartSchema,
     roomSchema,
-    timeSlotSchema,
+    timeSlotSchema} from '../lib/sessionize.server';
+import {
+    formatDate,
+    getScheduleGrid
 } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 

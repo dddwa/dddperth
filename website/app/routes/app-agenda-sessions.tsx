@@ -1,9 +1,11 @@
-import { data, HeadersFunction, LoaderFunctionArgs } from 'react-router'
-import { TypeOf } from 'zod'
+import type { HeadersFunction, LoaderFunctionArgs } from 'react-router';
+import { data } from 'react-router'
+import type { TypeOf } from 'zod'
 import { conferenceConfig } from '~/config/conference-config'
 import { getYearConfig } from '~/lib/get-year-config'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getConfSessions, sessionsSchema } from '~/lib/sessionize.server'
+import type { sessionsSchema } from '~/lib/sessionize.server';
+import { getConfSessions } from '~/lib/sessionize.server'
 
 export async function loader({ context }: LoaderFunctionArgs) {
     const { yearConfig } = getYearConfig(context.conferenceState.conference.year, context.conferenceState.conference)

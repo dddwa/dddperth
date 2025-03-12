@@ -3,6 +3,7 @@
         "env.d.ts",
         "**/*.ts",
         "**/*.tsx",
+        "vite.config.mjs",
         ".react-router/types/**/*"
     ],
     "compilerOptions": {

@@ -1,14 +1,15 @@
 import { trace } from '@opentelemetry/api'
-import { ActionFunction, data } from 'react-router'
+import type { ActionFunction } from 'react-router'
+import { data } from 'react-router'
 import { conferenceConfig } from '~/config/conference-config'
-import { ConferenceYear, Year } from '~/lib/config-types'
+import type { ConferenceYear, Year } from '~/lib/config-types'
 import { EVENTS_AIR_EVENT_ID } from '~/lib/config.server'
+import type { EventsAirContactData } from '~/lib/events-air.server'
 import {
     checkIfContactExistsByExternalIdentifier,
     createEventsAirContact,
     createEventsAirRegistration,
     deleteRegistration,
-    EventsAirContactData,
     getAccessToken,
     getContactRegistrations,
     registrationTypes,
@@ -202,6 +203,7 @@ async function ensureContactExistsByExternalId(
     }
 
     const contactId = contactExists?.id ?? createdContactId
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return contactId!
 }
 

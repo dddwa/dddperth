@@ -8,7 +8,7 @@ import svgr from 'vite-plugin-svgr'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-    // eslint-disable-next-line no-undef
+     
     root: __dirname,
     ssr: {
         // Needed because Open Telemetry doesn't have compliant ESM packages which cause issues

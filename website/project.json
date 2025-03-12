@@ -69,7 +69,7 @@
                 "{options.outputPath}/build/remix/*.*"
             ],
             "options": {
-                "command": "remix vite:build",
+                "command": "react-router build",
                 "cwd": "website"
             }
         },

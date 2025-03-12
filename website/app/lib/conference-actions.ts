@@ -1,4 +1,4 @@
-import { ConferenceState } from './config-types'
+import type { ConferenceState } from './config-types'
 
 export interface CallToAction {
     title: string

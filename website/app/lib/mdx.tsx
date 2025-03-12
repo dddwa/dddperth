@@ -1,15 +1,13 @@
-/* eslint-disable react/prop-types */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import * as mdxBundler from 'mdx-bundler/client/index.js'
-import { MDXComponents } from 'mdx/types'
+import type { MDXComponents } from 'mdx/types'
 import { useMemo } from 'react'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
-import { styled } from '../../styled-system/jsx'
-import { ConferenceState } from './config-types'
+import { styled } from '~/styled-system/jsx'
+import type { ConferenceState } from './config-types'
 
 const mdxComponentCache = new LRUCache<string, ReturnType<typeof getMdxComponent>>({
     max: 1000,
@@ -18,6 +16,7 @@ const mdxComponentCache = new LRUCache<string, ReturnType<typeof getMdxComponent
 export function useMdxPage(code: string, conferenceState: ConferenceState) {
     return useMemo(() => {
         if (mdxComponentCache.has(code)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return mdxComponentCache.get(code)!
         }
         const component = getMdxComponent(code, conferenceState)

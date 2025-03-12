@@ -2,15 +2,16 @@ import { DateTime } from 'luxon'
 import type { LoaderFunctionArgs } from 'react-router'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $params, $path } from 'remix-routes'
-import { Box, Flex, styled } from 'styled-system/jsx'
-import { TypeOf } from 'zod'
+import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
+import type { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
 import { localeTimeFormat } from '~/lib/dates/formatting'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
-import { getConfSessions, getConfSpeakers, sessionsSchema, speakersSchema } from '../lib/sessionize.server'
+import type { sessionsSchema, speakersSchema } from '../lib/sessionize.server';
+import { getConfSessions, getConfSpeakers } from '../lib/sessionize.server'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
     const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)

@@ -1,6 +1,6 @@
 import { conferenceConfig } from '~/config/conference-config'
 import Logo from '~/images/svg/logo.svg?react'
-import { Box, Flex, Grid, styled } from '../../../styled-system/jsx'
+import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 
 export function Header() {

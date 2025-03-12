@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import {
+import type { DateTime } from 'luxon'
+import type {
     CFPClosed,
     CFPNotOpenYet,
     CFPOpen,
@@ -12,7 +12,7 @@ import {
     TicketSalesState,
     Year,
 } from './config-types'
-import { DateTimeProvider } from './dates/date-time-provider.server'
+import type { DateTimeProvider } from './dates/date-time-provider.server'
 import { localeTimeFormat } from './dates/formatting'
 
 export function getCurrentConferenceState(

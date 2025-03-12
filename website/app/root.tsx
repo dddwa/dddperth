@@ -1,4 +1,4 @@
-import { LinksFunction } from 'react-router';
+import type { LinksFunction } from 'react-router';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 
 import { Settings } from 'luxon'
