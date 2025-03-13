@@ -93,6 +93,8 @@
     "dependencies": {
         "@react-router/dev": "^7.3.0",
         "@react-router/fs-routes": "^7.3.0",
+        "@svgr/plugin-jsx": "^8.1.0",
+        "@svgr/plugin-svgo": "^8.1.0",
         "@swc-node/core": "^1.13.3",
         "@swc-node/register": "^1.10.9",
         "eslint-plugin-import": "^2.31.0",
