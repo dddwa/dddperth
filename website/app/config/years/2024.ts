@@ -5,7 +5,6 @@ export const conference2024: ConferenceYear = {
     year: '2024',
     venue: undefined,
 
-    ticketPrice: '$60',
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2024',
 
     sessions: {
@@ -33,14 +32,20 @@ export const conference2024: ConferenceYear = {
             zone: 'Australia/Perth',
         }),
     },
-    ticketSalesDates: {
-        opens: DateTime.fromISO('2024-06-21T08:00:00', {
-            zone: 'Australia/Perth',
-        }),
-        closes: DateTime.fromISO('2024-11-15T23:59:59', {
-            zone: 'Australia/Perth',
-        }),
-    },
+    ticketReleases: [
+        {
+            releaseName: 'General Tickets',
+            price: '$60',
+            range: {
+                opens: DateTime.fromISO('2024-06-21T08:00:00', {
+                    zone: 'Australia/Perth',
+                }),
+                closes: DateTime.fromISO('2024-11-15T23:59:59', {
+                    zone: 'Australia/Perth',
+                }),
+            },
+        },
+    ],
     feedbackOpenUntilDateTime: DateTime.fromISO('2024-11-21T23:59:59', {
         zone: 'Australia/Perth',
     }),
@@ -50,6 +55,7 @@ export const conference2024: ConferenceYear = {
         accountId: 'dddperth',
         eventId: '2024',
 
+        /** Early bird, regular and final releases also go in here */
         generalTicketSlugs: [
             'general-attendee',
             'dqvd7i58iig',

@@ -4,7 +4,6 @@ import type { ConferenceYear } from '../../lib/config-types'
 export const conference2021: ConferenceYear = {
     year: '2021',
     conferenceDate: DateTime.fromISO('2021-08-14'),
-    ticketPrice: '$60',
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2021',
 
     venue: undefined,
@@ -18,7 +17,7 @@ export const conference2021: ConferenceYear = {
     cfpDates: undefined,
     feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
-    ticketSalesDates: undefined,
+    ticketReleases: [],
     ticketInfo: undefined,
 
     sponsors: {

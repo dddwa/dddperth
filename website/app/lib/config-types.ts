@@ -49,13 +49,17 @@ export interface TitoTicketInfo {
 
 export type TicketInfo = TitoTicketInfo
 
+export interface TicketRelease {
+    releaseName: string
+    range: DateTimeRange
+    price: string
+}
+
 /**
  * This year's conference configuration
  */
 export interface ConferenceYear {
     year: Year
-
-    ticketPrice: string
 
     sessionizeUrl: string | undefined
 
@@ -64,7 +68,7 @@ export interface ConferenceYear {
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
     cfpDates: DateTimeRange | undefined
-    ticketSalesDates: DateTimeRange | undefined
+    ticketReleases: Array<TicketRelease>
     talkVotingDates: DateTimeRange | undefined
     feedbackOpenUntilDateTime: DateTime | undefined
 
@@ -112,12 +116,18 @@ export interface ConferenceVenue {
 export interface ConferenceImportantInformation {
     date: string | undefined
     year: Year
-    ticketPrice: string
     votingOpens: string | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
 
     sponsors: YearSponsors
+
+    currentTicketSale:
+        | {
+              price: string
+              closes: string
+          }
+        | undefined
 }
 
 export interface SessionizeConferenceSessions {

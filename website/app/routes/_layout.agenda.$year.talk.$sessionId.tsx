@@ -1,19 +1,19 @@
 import { DateTime } from 'luxon'
-import type { LoaderFunctionArgs } from 'react-router'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $params, $path } from 'remix-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import type { ConferenceConfigYear, ConferenceImportantInformation, ConferenceYear, Year } from '~/lib/config-types'
-import { localeTimeFormat } from '~/lib/dates/formatting'
+import type { ConferenceConfigYear, ConferenceImportantInformation, Year } from '~/lib/config-types'
+import { getImportantInformation } from '~/lib/get-important-information'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import type { sessionsSchema, speakersSchema } from '../lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '../lib/sessionize.server'
+import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
-export async function loader({ params, context }: LoaderFunctionArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
     const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)
 
     const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[
@@ -29,7 +29,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     }
 
     const yearConfig: ConferenceImportantInformation = params.year
-        ? getImportantInformation(yearConfigLookup)
+        ? getImportantInformation(yearConfigLookup, context.dateTimeProvider)
         : context.conferenceState.conference
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
@@ -155,15 +155,4 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
             </styled.div>
         </styled.div>
     )
-}
-
-function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportantInformation {
-    return {
-        date: yearConfig.conferenceDate?.toISO(),
-        year: yearConfig.year,
-        sponsors: yearConfig.sponsors,
-        sessions: yearConfig.sessions,
-        ticketPrice: yearConfig.ticketPrice,
-        votingOpens: yearConfig.talkVotingDates?.opens.toLocaleString(localeTimeFormat),
-    }
 }

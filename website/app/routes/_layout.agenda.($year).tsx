@@ -1,6 +1,5 @@
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
-import type { LoaderFunctionArgs } from 'react-router'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'remix-routes'
 import type { TypeOf, z } from 'zod'
@@ -14,8 +13,9 @@ import { getYearConfig } from '../lib/get-year-config'
 import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '../lib/sessionize.server'
 import { formatDate, getScheduleGrid } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
+import type { Route } from './+types/_layout.agenda.($year)'
 
-export async function loader({ params, context }: LoaderFunctionArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
         throw redirect($path('/agenda/:year?', { year: undefined }))
     }
@@ -23,7 +23,11 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const { yearConfig, yearConfigLookup } = getYearConfig(year, context.conferenceState.conference)
+    const { yearConfig, yearConfigLookup } = getYearConfig(
+        year,
+        context.conferenceState.conference,
+        context.dateTimeProvider,
+    )
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
