@@ -5,7 +5,6 @@ export const conference2023: ConferenceYear = {
     year: '2023',
     conferenceDate: DateTime.fromISO('2023-10-07'),
     venue: undefined,
-    ticketPrice: '$60',
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2023',
 
     sessions: {
@@ -17,7 +16,7 @@ export const conference2023: ConferenceYear = {
     cfpDates: undefined,
     feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
-    ticketSalesDates: undefined,
+    ticketReleases: [],
     ticketInfo: {
         type: 'tito',
         accountId: 'dddperth',

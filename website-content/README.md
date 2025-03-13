@@ -23,12 +23,11 @@ You access data with braces, eg. `{property}`
 
 ### Available data
 
-| Property                     | Description                                 |
-| ---------------------------- | ------------------------------------------- |
-| props.conference.year        | The current year of the conference          |
-| props.conference.ticketPrice | The current ticket price for the conference |
-| props.conference.date        | The date of this year's conference          |
-| props.conference.votingOpens | The date of this year's conference          |
+| Property                     | Description                        |
+| ---------------------------- | ---------------------------------- |
+| props.conference.year        | The current year of the conference |
+| props.conference.date        | The date of this year's conference |
+| props.conference.votingOpens | The date of this year's conference |
 
 ### Current phase data
 

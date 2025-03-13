@@ -1,4 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
+import { DateTime } from 'luxon'
+import type { MetaFunction } from 'react-router'
 import { Outlet } from 'react-router'
 import { ErrorPage } from '~/components/error-page'
 import { Box, Flex } from '~/styled-system/jsx'
@@ -6,8 +7,9 @@ import { Acknowledgement } from '../components/acknowledgement'
 import { Footer } from '../components/footer/footer'
 import { Header } from '../components/header/header'
 import { conferenceConfig } from '../config/conference-config'
+import type { Route } from './+types/_layout'
 
-export function loader({ context }: LoaderFunctionArgs) {
+export function loader({ context }: Route.LoaderArgs) {
     return {
         conferenceDate: context.conferenceState.conference.date,
     }
@@ -15,7 +17,16 @@ export function loader({ context }: LoaderFunctionArgs) {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [
-        { title: data?.conferenceDate ? `${conferenceConfig.name} | Sat 16th November, 2024` : conferenceConfig.name },
+        {
+            title: data?.conferenceDate
+                ? `${conferenceConfig.name} | ${DateTime.fromISO(data.conferenceDate).toLocaleString(
+                      DateTime.DATE_HUGE,
+                      {
+                          locale: 'en-AU',
+                      },
+                  )}`
+                : conferenceConfig.name,
+        },
         { name: 'description', content: conferenceConfig.description },
     ]
 }

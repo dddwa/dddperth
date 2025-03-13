@@ -231,9 +231,11 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                 {/* {conference.SellingPoints.map((point, i) => (
                     <li key={i}>{point}</li>
                 ))} */}
-                <styled.li fontSize="xl" fontWeight="semibold">
-                    Only {conferenceState.conference.ticketPrice}
-                </styled.li>
+                {conferenceState.ticketSales.state === 'open' && conferenceState.conference.currentTicketSale ? (
+                    <styled.li fontSize="xl" fontWeight="semibold">
+                        Currently only {conferenceState.conference.currentTicketSale.price}
+                    </styled.li>
+                ) : null}
             </ul>
             {primaryCta && (
                 <div style={{ textAlign: 'center' }}>

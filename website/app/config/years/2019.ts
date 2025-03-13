@@ -4,7 +4,6 @@ import type { ConferenceYear } from '../../lib/config-types'
 export const conference2019: ConferenceYear = {
     year: '2019',
     conferenceDate: DateTime.fromISO('2019-08-03'),
-    ticketPrice: '$60',
     sessionizeUrl: 'https://sessionize.com/dddperth2019',
 
     venue: undefined,
@@ -18,7 +17,7 @@ export const conference2019: ConferenceYear = {
     cfpDates: undefined,
     feedbackOpenUntilDateTime: undefined,
     talkVotingDates: undefined,
-    ticketSalesDates: undefined,
+    ticketReleases: [],
     ticketInfo: undefined,
 
     sponsors: {
@@ -39,8 +38,8 @@ export const conference2019: ConferenceYear = {
             },
             {
                 name: 'Hudson',
-                logoUrlDarkMode: '/images/sponsors/2019-bankwest.png',
-                logoUrlLightMode: '/images/sponsors/2019-bankwest.png',
+                logoUrlDarkMode: '/images/sponsors/2019-hudson.png',
+                logoUrlLightMode: '/images/sponsors/2019-hudson.png',
                 website: 'https://au.hudson.com/',
                 quote: undefined,
             },
@@ -60,7 +59,7 @@ export const conference2019: ConferenceYear = {
             },
             {
                 name: 'Readify + Kloud',
-                logoUrlDarkMode: '/images/sponsors/2019-modis.png',
+                logoUrlDarkMode: '/images/sponsors/2019-readify-kloud.png',
                 logoUrlLightMode: '/images/sponsors/2019-readify-kloud.png',
                 website: 'https://readify.net/',
                 quote: undefined,

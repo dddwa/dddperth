@@ -48,7 +48,7 @@ type ImportantDateBoxProps =
     | EndEventImportantDateBoxProps
     | StandaloneImportantDateBoxProps
 
-function importantDates(year: ConferenceYear): ImportantDateBoxProps[] {
+function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantDateBoxProps[] {
     const importantDates: ImportantDateBoxProps[] = []
 
     if (year.cfpDates) {
@@ -71,25 +71,42 @@ function importantDates(year: ConferenceYear): ImportantDateBoxProps[] {
         })
     }
 
-    if (year.ticketSalesDates) {
-        importantDates.push({
-            type: 'start-event',
-            dateTime: year.ticketSalesDates.opens,
-            endDateTime: year.ticketSalesDates.closes,
-            event: 'Ticket Sales Open',
-            eventActiveMessage: 'Buy Tickets ↗',
-            eventActiveHref: '/tickets',
-            eventClosedMessage: 'Ticket Sales Closed',
-        })
-        importantDates.push({
-            type: 'end-event',
-            startDateTime: year.ticketSalesDates.opens,
-            dateTime: year.ticketSalesDates.closes,
-            event: 'Ticket Sales Close',
-            eventActiveHref: '/tickets',
-            eventClosedMessage: 'Ticket Sales Closed',
-        })
-    }
+    const ticketReleases = year.ticketReleases.map((ticketSale, index): ImportantDateBoxProps[] => {
+        if (index === year.ticketReleases.length - 1) {
+            return [
+                {
+                    type: 'start-event',
+                    dateTime: ticketSale.range.opens,
+                    endDateTime: ticketSale.range.closes,
+                    event: `${ticketSale.releaseName} Tickets Open`,
+                    eventActiveMessage: 'Buy Tickets ↗',
+                    eventActiveHref: '/tickets',
+                    eventClosedMessage: 'Ticket Sales Closed',
+                },
+                {
+                    type: 'end-event',
+                    startDateTime: ticketSale.range.opens,
+                    dateTime: ticketSale.range.closes,
+                    event: `Ticket Sales Close`,
+                    eventClosedMessage: 'Ticket Sales Closed',
+                },
+            ]
+        }
+
+        return [
+            {
+                type: 'start-event',
+                dateTime: ticketSale.range.opens,
+                endDateTime: ticketSale.range.closes,
+                event: `${ticketSale.releaseName} Tickets Open`,
+                eventActiveMessage: 'Buy Tickets ↗',
+                eventActiveHref: '/tickets',
+                eventClosedMessage: 'Ticket Sales Closed',
+            },
+        ]
+    })
+    const ticketReleasesFlat = ticketReleases.flat()
+    importantDates.push(...ticketReleasesFlat)
 
     // TODO Drive by config
     // importantDates.push({
@@ -530,7 +547,7 @@ export const ImportantDates: React.FC<{
                 Important Dates
             </styled.h2>
             {yearConfigLookup
-                ? importantDates(yearConfigLookup).map((dateInfo, index) => (
+                ? importantDates(yearConfigLookup, currentDate).map((dateInfo, index) => (
                       <ImportantDateBox
                           key={index}
                           currentDate={currentDate}
