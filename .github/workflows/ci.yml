@@ -59,6 +59,10 @@ jobs:
 
             - name: Install dependencies
               run: pnpm install
+            - name: Type Check
+              run: pnpm tsc -b
+            - name: Link and Build
+              run: pnpm nx run-many --target=build,lint --all
 
             - name: Log in with Azure (Federated Credentials)
               run: |
@@ -72,9 +76,6 @@ jobs:
               run: azd provision --no-prompt
               env:
                   AZD_INITIAL_ENVIRONMENT_CONFIG: ${{ secrets.AZD_INITIAL_ENVIRONMENT_CONFIG }}
-
-            - name: Build application
-              run: pnpm nx build website
 
             - name: Deploy Application
               run: azd deploy --no-prompt
