@@ -1,17 +1,7 @@
 {
-    "include": [
-        "env.d.ts",
-        "**/*.ts",
-        "**/*.tsx",
-        "vite.config.mjs",
-        ".react-router/types/**/*"
-    ],
+    "include": ["env.d.ts", "**/*.ts", "**/*.tsx", "vite.config.mjs", ".react-router/types/**/*"],
     "compilerOptions": {
-        "lib": [
-            "DOM",
-            "DOM.Iterable",
-            "ES2022"
-        ],
+        "lib": ["DOM", "DOM.Iterable", "ES2022"],
         "isolatedModules": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",
@@ -26,14 +16,9 @@
         "forceConsistentCasingInFileNames": true,
         "baseUrl": ".",
         "paths": {
-            "~/*": [
-                "./app/*"
-            ]
+            "~/*": ["./app/*"]
         },
         "noEmit": true,
-        "rootDirs": [
-            ".",
-            "./.react-router/types"
-        ]
+        "rootDirs": [".", "./.react-router/types"]
     }
 }

@@ -3,7 +3,7 @@ import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
 
 import { useRef } from 'react'
-import type { BlogAuthor} from '~/lib/authors.server';
+import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '~/lib/mdx.server'

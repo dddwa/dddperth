@@ -1,4 +1,3 @@
- 
 import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
 

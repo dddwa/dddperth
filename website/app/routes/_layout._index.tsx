@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { HeadersFunction, LoaderFunctionArgs} from 'react-router';
+import type { HeadersFunction, LoaderFunctionArgs } from 'react-router'
 import { data, useLoaderData } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config'
 import { CACHE_CONTROL } from '~/lib/http.server'

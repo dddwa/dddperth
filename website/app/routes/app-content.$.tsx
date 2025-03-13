@@ -1,4 +1,3 @@
- 
 import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router'
 
 import { trace } from '@opentelemetry/api'

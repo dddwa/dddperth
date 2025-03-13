@@ -13,7 +13,6 @@ export class SystemDateTimeProvider implements DateTimeProvider {
         }).toMillis()
     }
 
-     
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout
     setTimeout(callback: (args: void) => void, ms?: number): NodeJS.Timeout
     setTimeout(callback: () => void, delay: number) {

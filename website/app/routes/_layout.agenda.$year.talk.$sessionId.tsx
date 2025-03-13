@@ -10,7 +10,7 @@ import { localeTimeFormat } from '~/lib/dates/formatting'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
-import type { sessionsSchema, speakersSchema } from '../lib/sessionize.server';
+import type { sessionsSchema, speakersSchema } from '../lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '../lib/sessionize.server'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {

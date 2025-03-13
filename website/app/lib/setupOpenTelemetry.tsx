@@ -78,7 +78,7 @@ export function configureOpenTelemetry() {
         diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR)
         const sdk = new NodeSDK({
             traceExporter: traceExporter,
-             
+
             metricReader: metricReader as any,
             logRecordProcessor,
             instrumentations: [
@@ -107,12 +107,11 @@ export function configureOpenTelemetry() {
             ],
             resource: new Resource({
                 [SEMRESATTRS_SERVICE_NAME]: 'DDD-Website',
-                 
+
                 [SEMRESATTRS_SERVICE_VERSION]: JSON.parse(
                     existsSync('./server/package.json')
                         ? fs.readFileSync('./server/package.json', 'utf-8')
                         : fs.readFileSync('./package.json', 'utf-8'),
-                     
                 ),
             }),
         })

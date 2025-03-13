@@ -41,33 +41,23 @@
         "serve": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": [
-                    "node --inspect=127.0.0.1:9600 ./build/server/server.js"
-                ],
+                "commands": ["node --inspect=127.0.0.1:9600 ./build/server/server.js"],
                 "cwd": "website"
             },
-            "dependsOn": [
-                "build-server"
-            ]
+            "dependsOn": ["build-server"]
         },
         "start-prod": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": [
-                    "node ./server/server.js"
-                ],
+                "commands": ["node ./server/server.js"],
                 "cwd": "website/build"
             }
         },
         "build-remix": {
             "executor": "nx:run-commands",
             "cache": true,
-            "inputs": [
-                "{projectRoot}/app/**/*.*"
-            ],
-            "outputs": [
-                "{options.outputPath}/build/remix/*.*"
-            ],
+            "inputs": ["{projectRoot}/app/**/*.*"],
+            "outputs": ["{options.outputPath}/build/remix/*.*"],
             "options": {
                 "command": "react-router build",
                 "cwd": "website"
@@ -76,35 +66,22 @@
         "build-server": {
             "executor": "@nx/esbuild:esbuild",
             "cache": true,
-            "inputs": [
-                "{projectRoot}/server.ts",
-                "{projectRoot}/server.init.ts",
-                "{projectRoot}/app/**/*.*"
-            ],
-            "outputs": [
-                "{options.outputPath}/**/*.*"
-            ],
+            "inputs": ["{projectRoot}/server.ts", "{projectRoot}/server.init.ts", "{projectRoot}/app/**/*.*"],
+            "outputs": ["{options.outputPath}/**/*.*"],
             "dependsOn": [],
             "options": {
                 "platform": "node",
                 "outputPath": "website/build/server",
                 "assets": [],
-                "format": [
-                    "esm"
-                ],
+                "format": ["esm"],
                 "bundle": true,
                 "skipTypeCheck": true,
                 "declaration": false,
                 "main": "website/server.ts",
-                "additionalEntryPoints": [
-                    "website/server.init.ts"
-                ],
+                "additionalEntryPoints": ["website/server.init.ts"],
                 "tsConfig": "website/tsconfig.json",
                 "esbuildOptions": {
-                    "external": [
-                        "../remix/server/index.js",
-                        "./server.init.js"
-                    ],
+                    "external": ["../remix/server/index.js", "./server.init.js"],
                     "target": "node20",
                     "packages": "external",
                     "sourcemap": true,
@@ -118,10 +95,7 @@
         "build": {
             "executor": "nx:noop",
             "options": {},
-            "dependsOn": [
-                "build-remix",
-                "build-server"
-            ]
+            "dependsOn": ["build-remix", "build-server"]
         }
     }
 }

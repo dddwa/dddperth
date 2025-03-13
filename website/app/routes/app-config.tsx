@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from 'react-router';
+import type { LoaderFunctionArgs } from 'react-router'
 import { data } from 'react-router'
 import type { YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'

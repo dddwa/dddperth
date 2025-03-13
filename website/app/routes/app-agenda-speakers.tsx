@@ -1,10 +1,10 @@
-import type { HeadersFunction, LoaderFunctionArgs } from 'react-router';
+import type { HeadersFunction, LoaderFunctionArgs } from 'react-router'
 import { data } from 'react-router'
 import type { TypeOf } from 'zod'
 import { conferenceConfig } from '~/config/conference-config'
 import { getYearConfig } from '~/lib/get-year-config'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { speakersSchema } from '~/lib/sessionize.server';
+import type { speakersSchema } from '~/lib/sessionize.server'
 import { getConfSpeakers } from '~/lib/sessionize.server'
 
 export async function loader({ context }: LoaderFunctionArgs) {

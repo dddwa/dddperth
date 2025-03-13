@@ -11,15 +11,8 @@ import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import { getYearConfig } from '../lib/get-year-config'
-import type {
-    gridRoomSchema,
-    gridSmartSchema,
-    roomSchema,
-    timeSlotSchema} from '../lib/sessionize.server';
-import {
-    formatDate,
-    getScheduleGrid
-} from '../lib/sessionize.server'
+import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '../lib/sessionize.server'
+import { formatDate, getScheduleGrid } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
