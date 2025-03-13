@@ -1,14 +1,15 @@
 import { trace } from '@opentelemetry/api'
-import { ActionFunction, json } from '@remix-run/node'
+import type { ActionFunction } from 'react-router'
+import { data } from 'react-router'
 import { conferenceConfig } from '~/config/conference-config'
-import { ConferenceYear, Year } from '~/lib/config-types'
+import type { ConferenceYear, Year } from '~/lib/config-types'
 import { EVENTS_AIR_EVENT_ID } from '~/lib/config.server'
+import type { EventsAirContactData } from '~/lib/events-air.server'
 import {
     checkIfContactExistsByExternalIdentifier,
     createEventsAirContact,
     createEventsAirRegistration,
     deleteRegistration,
-    EventsAirContactData,
     getAccessToken,
     getContactRegistrations,
     registrationTypes,
@@ -41,7 +42,7 @@ export const action: ActionFunction = async ({ request, context }) => {
         trace.getActiveSpan()?.addEvent('Failed to parse Tito payload', {
             error: JSON.stringify(parsedPayload.error),
         })
-        return json({ success: false, error: 'Invalid Tito payload' }, { status: 400 })
+        return data({ success: false, error: 'Invalid Tito payload' }, { status: 400 })
     }
 
     const { slug, release_slug, email, first_name, last_name, responses, upgrade_ids } = parsedPayload.data
@@ -53,12 +54,12 @@ export const action: ActionFunction = async ({ request, context }) => {
     if (!isGeneralTicket && !isAfterPartyTicket) {
         trace.getActiveSpan()?.addEvent('Unknown ticket type', { release_slug })
         // Not a ticket we care about
-        return json({ success: true })
+        return data({ success: true })
     }
 
     if (!EVENTS_AIR_EVENT_ID) {
         trace.getActiveSpan()?.recordException(new Error('EVENTS_AIR_EVENT_ID is not set'))
-        return json({ success: true })
+        return data({ success: true })
     }
 
     const accessToken = await getAccessToken()
@@ -83,7 +84,7 @@ export const action: ActionFunction = async ({ request, context }) => {
             }
         }
 
-        return json({ success: true })
+        return data({ success: true })
     }
 
     const lunch = configForYear?.foodInfo?.lunch.find(
@@ -172,13 +173,13 @@ export const action: ActionFunction = async ({ request, context }) => {
         } catch (error) {
             console.error('Error processing Tito webhook:', error)
             trace.getActiveSpan()?.recordException(resolveError(error))
-            return json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' })
+            return data({ success: false, error: error instanceof Error ? error.message : 'Unknown error' })
         } finally {
             span.end()
         }
     })
 
-    return json({ success: true })
+    return data({ success: true })
 }
 
 async function ensureContactExistsByExternalId(
@@ -202,6 +203,7 @@ async function ensureContactExistsByExternalId(
     }
 
     const contactId = contactExists?.id ?? createdContactId
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return contactId!
 }
 

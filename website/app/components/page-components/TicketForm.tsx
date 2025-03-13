@@ -1,11 +1,10 @@
-import { SerializeFrom } from '@remix-run/server-runtime'
 import { useScript } from '@uidotdev/usehooks'
 import { useEffect } from 'react'
-import { TicketSalesState } from '~/lib/config-types'
+import type { TicketSalesState } from '~/lib/config-types'
 
 declare const tito: any
 
-export function TicketForm({ state }: { state: SerializeFrom<TicketSalesState> }) {
+export function TicketForm({ state }: { state: TicketSalesState }) {
     if (state.state === 'open') {
         if (state.ticketInfo?.type === 'tito') {
             return <TitoTicketForm accountId={state.ticketInfo.accountId} eventId={state.ticketInfo.eventId} />

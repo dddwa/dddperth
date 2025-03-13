@@ -22,7 +22,6 @@ export class OverridableDateTimeProvider implements DateTimeProvider {
         return this._override?.toMillis() ?? this._system.now()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout
     setTimeout(callback: (args: void) => void, ms?: number): NodeJS.Timeout
     setTimeout(callback: () => void, delay: number) {

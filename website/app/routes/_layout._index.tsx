@@ -1,6 +1,6 @@
-import { useLoaderData } from '@remix-run/react'
-import { HeadersFunction, json, LoaderFunctionArgs } from '@remix-run/server-runtime'
 import { DateTime } from 'luxon'
+import type { HeadersFunction, LoaderFunctionArgs } from 'react-router'
+import { data, useLoaderData } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Hero } from '../components/hero/hero'
@@ -13,7 +13,7 @@ export const headers: HeadersFunction = () => {
 export async function loader({ context }: LoaderFunctionArgs) {
     const { yearConfig } = getYearConfig(context.conferenceState.conference.year, context.conferenceState.conference)
 
-    return json(
+    return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISODate(),
             conferenceYear: context.conferenceState.conference.year,

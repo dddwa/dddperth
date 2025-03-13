@@ -128,7 +128,7 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
     if (!noCache) {
         const cached = scheduleCache.get(opts.sessionizeEndpoint)
         if (cached) {
-            return cached as z.infer<typeof gridSmartSchema>
+            return cached
         }
     }
 
@@ -161,7 +161,7 @@ export async function getConfSessions(opts: Options): Promise<z.infer<typeof ses
     if (!noCache) {
         const cached = sessionsCache.get(opts.sessionizeEndpoint)
         if (cached) {
-            return cached as z.infer<typeof sessionsSchema>
+            return cached
         }
     }
 
@@ -195,7 +195,7 @@ export async function getConfSpeakers(opts: Options): Promise<z.infer<typeof spe
     if (!noCache) {
         const cached = speakersCache.get(opts.sessionizeEndpoint)
         if (cached) {
-            return cached as z.infer<typeof speakersSchema>
+            return cached
         }
     }
 

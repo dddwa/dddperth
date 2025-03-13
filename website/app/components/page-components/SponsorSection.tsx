@@ -1,5 +1,5 @@
-import { Flex, styled } from 'styled-system/jsx'
-import { Sponsor, Year, YearSponsors } from '~/lib/config-types'
+import type { Sponsor, Year, YearSponsors } from '~/lib/config-types'
+import { Flex, styled } from '~/styled-system/jsx'
 
 export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
     const sponsorStyles = {

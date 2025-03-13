@@ -1,9 +1,9 @@
-import '@remix-run/server-runtime'
-import { Request } from 'express'
-import { ConferenceState } from './lib/config-types'
-import { DateTimeProvider } from './lib/dates/date-time-provider.server'
+import type { Request } from 'express'
+import 'react-router'
+import type { ConferenceState } from './lib/config-types'
+import type { DateTimeProvider } from './lib/dates/date-time-provider.server'
 
-declare module '@remix-run/server-runtime' {
+declare module 'react-router' {
     export interface AppLoadContext {
         conferenceState: ConferenceState
         dateTimeProvider: DateTimeProvider

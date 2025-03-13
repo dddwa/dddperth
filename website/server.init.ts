@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import { SpanStatusCode, trace } from '@opentelemetry/api'
-import { createRequestHandler } from '@remix-run/express'
-import type { ServerBuild } from '@remix-run/node'
+import { createRequestHandler } from '@react-router/express'
 import closeWithGrace from 'close-with-grace'
 import compression from 'compression'
 import express from 'express'
 import path from 'node:path'
+import type { ServerBuild } from 'react-router'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
@@ -28,7 +27,7 @@ export function init() {
                     })
                 }
             })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             process.on('unhandledRejection', (err) => {
                 console.error('unhandledRejection', JSON.stringify(err))
                 const activeSpan = trace.getActiveSpan()
@@ -56,10 +55,10 @@ export function init() {
                           }),
                       )
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const resolveBuild: ServerBuild | (() => Promise<ServerBuild>) = viteDevServer
-                ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
+                ? () => viteDevServer.ssrLoadModule('virtual:react-router/server-build')
                 : // @ts-expect-error - this will not exist at build time
+                  // eslint-disable-next-line @nx/enforce-module-boundaries
                   await import('../remix/server/index.js')
 
             const initialBuild = typeof resolveBuild === 'function' ? await resolveBuild() : resolveBuild
@@ -103,17 +102,14 @@ export function init() {
 
             app.all(
                 '*',
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 createRequestHandler({
                     build: resolveBuild,
-                    mode: initialBuild.mode,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     getLoadContext: (req) => {
                         return initialBuild.entry.module.getLoadContext({
                             query: req.query,
                         })
                     },
-                }),
+                }) as any,
             )
 
             const server = app.listen(port, () => {

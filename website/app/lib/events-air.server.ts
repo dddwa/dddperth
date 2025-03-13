@@ -27,7 +27,9 @@ export async function getAccessToken(): Promise<string> {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: new URLSearchParams({
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         client_id: EVENTS_AIR_CLIENT_ID!,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         client_secret: EVENTS_AIR_CLIENT_SECRET!,
                         scope: 'https://eventsairprod.onmicrosoft.com/85d8f626-4e3d-4357-89c6-327d4e6d3d93/.default',
                         grant_type: 'client_credentials',

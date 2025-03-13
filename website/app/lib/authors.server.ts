@@ -1,4 +1,5 @@
 import yaml from 'yaml'
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import authorsYamlFileContents from '../../../blog/authors.yml?raw'
 
 export interface BlogAuthor {

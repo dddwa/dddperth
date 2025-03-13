@@ -1,21 +1,19 @@
 import mdx from '@mdx-js/rollup'
-import { vitePlugin as remix } from '@remix-run/dev'
-import rehypePrettyCode from 'rehype-pretty-code'
+import { reactRouter } from '@react-router/dev/vite'
+import { reactRouterDevTools } from 'react-router-devtools'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
-import { remixDevTools } from 'remix-development-tools'
-import { remixRoutes } from 'remix-routes/vite'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
-const prettyCodeOptions = {
-    theme: 'catppuccin-latte',
-}
-
 export default defineConfig({
-    // eslint-disable-next-line no-undef
     root: __dirname,
+    ssr: {
+        // Needed because Open Telemetry doesn't have compliant ESM packages which cause issues
+        noExternal: ['@opentelemetry/api'],
+    },
+
     server: {
         port: 3800,
         hmr: {
@@ -24,18 +22,14 @@ export default defineConfig({
     },
     plugins: [
         tsconfigPaths(),
-        remixDevTools(),
+        reactRouterDevTools(),
         mdx({
             remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
-            rehypePlugins: [[rehypePrettyCode, prettyCodeOptions]],
+            rehypePlugins: [],
             /* jsxImportSource: …, otherOptions… */
         }),
-        remix({
+        reactRouter({
             buildDirectory: 'build/remix',
-        }),
-        remixRoutes({
-            outDir: '.',
-            strict: true,
         }),
         svgr({
             svgrOptions: {

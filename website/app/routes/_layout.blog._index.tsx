@@ -1,13 +1,12 @@
-import { json } from '@remix-run/node'
-import type { MetaFunction } from '@remix-run/react'
-import { Link, useLoaderData } from '@remix-run/react'
 import * as React from 'react'
+import type { MetaFunction } from 'react-router'
+import { data, Link, useLoaderData } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPagesList } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
 
 export async function loader() {
-    return json({ posts: await getPagesList('blog') }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
+    return data({ posts: await getPagesList('blog') }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
 }
 
 export const meta: MetaFunction = () => {

@@ -1,25 +1,18 @@
-import type { LoaderFunctionArgs, SerializeFrom } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
+import type { LoaderFunctionArgs } from 'react-router'
+import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'remix-routes'
-import { Box, Flex, styled } from 'styled-system/jsx'
-import { TypeOf, z } from 'zod'
+import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { Year, YearSponsors } from '~/lib/config-types'
+import type { Year, YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { Box, Flex, styled } from '~/styled-system/jsx'
 import { conferenceConfig } from '../config/conference-config'
 import { getYearConfig } from '../lib/get-year-config'
-import {
-    formatDate,
-    getScheduleGrid,
-    gridRoomSchema,
-    gridSmartSchema,
-    roomSchema,
-    timeSlotSchema,
-} from '../lib/sessionize.server'
+import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '../lib/sessionize.server'
+import { formatDate, getScheduleGrid } from '../lib/sessionize.server'
 import { slugify } from '../lib/slugify'
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
@@ -47,7 +40,7 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 
     const schedule = schedules[0]
 
-    return json(
+    return data(
         {
             year,
             sponsors: yearConfigLookup.sponsors,
@@ -262,7 +255,7 @@ function RoomTimeSlot({
     startTime12,
     timeSlotIndex,
 }: {
-    schedule: NonNullable<SerializeFrom<typeof loader>['schedule']>
+    schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
     availableTimeSlots: string[] | undefined
     nextTimeSlotStart: string

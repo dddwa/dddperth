@@ -1,4 +1,4 @@
-import { DateTimeFormatOptions } from 'luxon'
+import type { DateTimeFormatOptions } from 'luxon'
 
 export const localeTimeFormat: DateTimeFormatOptions = {
     weekday: 'short',

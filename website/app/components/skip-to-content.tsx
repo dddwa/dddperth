@@ -1,5 +1,5 @@
-import { css } from '../../styled-system/css'
-import { styled } from '../../styled-system/jsx'
+import { css } from '~/styled-system/css'
+import { styled } from '~/styled-system/jsx'
 
 const commonLinkStyles = css({
     bg: 'black',

@@ -1,13 +1,12 @@
-import { SerializeFrom } from '@remix-run/server-runtime'
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
-import { ConferenceImportantInformation } from '~/lib/config-types'
-import { Box, Flex, styled } from '../../../styled-system/jsx'
+import type { ConferenceImportantInformation } from '~/lib/config-types'
+import { Box, Flex, styled } from '~/styled-system/jsx'
 
-export function HomepageHeroPanel({ config }: { config: SerializeFrom<ConferenceImportantInformation> }) {
+export function HomepageHeroPanel({ config }: { config: ConferenceImportantInformation }) {
     const { scrollY } = useScroll()
 
     const y2 = useTransform(scrollY, [0, 400], [0, 100], { ease: easeOut })
@@ -40,7 +39,11 @@ export function HomepageHeroPanel({ config }: { config: SerializeFrom<Conference
                         textWrap="nowrap"
                         maxWidth="3/4"
                     >
-                        <styled.span>{DateTime.fromISO(config.date).toLocaleString(DateTime.DATE_HUGE)}</styled.span>
+                        <styled.span>
+                            {DateTime.fromISO(config.date).toLocaleString(DateTime.DATE_HUGE, {
+                                locale: 'en-AU',
+                            })}
+                        </styled.span>
                         <styled.span display="none" md={{ display: 'inline' }}>
                             {' '}
                             •{' '}

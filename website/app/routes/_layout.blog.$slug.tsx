@@ -1,11 +1,10 @@
-import type { HeadersFunction, LoaderFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
-import type { MetaFunction } from '@remix-run/react'
-import { useLoaderData } from '@remix-run/react'
+import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router'
+import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
 
 import { useRef } from 'react'
-import { BlogAuthor, getAuthor, getValidAuthorNames } from '~/lib/authors.server'
+import type { BlogAuthor } from '~/lib/authors.server'
+import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '~/lib/mdx.server'
 import { conferenceConfig } from '../config/conference-config'
@@ -22,7 +21,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    return json(
+    return data(
         {
             siteUrl,
             frontmatter: post.frontmatter,
@@ -55,9 +54,10 @@ export const meta: MetaFunction<typeof loader> = (args) => {
         if (frontmatter.title) {
             ogImageUrl.searchParams.set('title', frontmatter.title)
         }
-        if (frontmatter.date) {
-            ogImageUrl.searchParams.set('date', frontmatter.date)
-        }
+        // TODO Figure out what is going on here
+        // if (frontmatter.date) {
+        //     ogImageUrl.searchParams.set('date', frontmatter.date.toString())
+        // }
         if (data?.blogAuthors) {
             for (const { name, title } of data.blogAuthors) {
                 ogImageUrl.searchParams.append('authorName', name)
@@ -107,7 +107,7 @@ export default function BlogPost() {
                             </div>
                             <div>
                                 <div>
-                                    <div>{frontmatter.date}</div>
+                                    {/* <div>{frontmatter.date}</div> */}
                                     <div>{frontmatter.title}</div>
                                 </div>
                                 <div>

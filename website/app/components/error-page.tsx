@@ -1,6 +1,6 @@
-import { isRouteErrorResponse, useRouteError } from '@remix-run/react'
 import type { ReactNode } from 'react'
-import { Center, Flex, styled } from 'styled-system/jsx'
+import { isRouteErrorResponse, useRouteError } from 'react-router'
+import { Center, Flex, styled } from '~/styled-system/jsx'
 
 export function ErrorPage() {
     const error = useRouteError()

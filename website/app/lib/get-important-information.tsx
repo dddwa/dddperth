@@ -1,4 +1,4 @@
-import { ConferenceImportantInformation, ConferenceYear } from '~/lib/config-types'
+import type { ConferenceImportantInformation, ConferenceYear } from '~/lib/config-types'
 import { localeTimeFormat } from '~/lib/dates/formatting'
 
 export function getImportantInformation(yearConfig: ConferenceYear): ConferenceImportantInformation {

@@ -44,3 +44,5 @@ vite.config.ts.timestamp*
 website/styled-system
 .azure
 website/vite.config.*timestamp-*.mjs
+
+tsconfig.tsbuildinfo
