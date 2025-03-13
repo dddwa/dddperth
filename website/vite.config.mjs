@@ -28,9 +28,7 @@ export default defineConfig({
             rehypePlugins: [],
             /* jsxImportSource: …, otherOptions… */
         }),
-        reactRouter({
-            buildDirectory: 'build/remix',
-        }),
+        reactRouter(),
         svgr({
             svgrOptions: {
                 plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],
