@@ -9,6 +9,7 @@
         "lint": "nx run-many --target lint --all",
         "test": "nx run-many --target test --all",
         "e2e": "nx run-many --target e2e --all",
+        "prepare": "pnpm run setup",
         "setup": "nx run-many --target setup --all",
         "start": "nx run-many --target serve --all --output-style stream",
         "install-browsers": "pnpm playwright install"

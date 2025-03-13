@@ -39,7 +39,11 @@ export function HomepageHeroPanel({ config }: { config: ConferenceImportantInfor
                         textWrap="nowrap"
                         maxWidth="3/4"
                     >
-                        <styled.span>{DateTime.fromISO(config.date).toLocaleString(DateTime.DATE_HUGE)}</styled.span>
+                        <styled.span>
+                            {DateTime.fromISO(config.date).toLocaleString(DateTime.DATE_HUGE, {
+                                locale: 'en-AU',
+                            })}
+                        </styled.span>
                         <styled.span display="none" md={{ display: 'inline' }}>
                             {' '}
                             •{' '}
