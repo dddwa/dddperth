@@ -9,7 +9,7 @@ export function getYearConfig(
     year: Year,
     conference: ConferenceImportantInformation,
     dateTimeProvider: DateTimeProvider,
-    allowCancelled: boolean = false,
+    allowCancelled = false,
 ) {
     const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[year]
     const cancelled = yearConfigLookup && 'cancelledMessage' in yearConfigLookup
