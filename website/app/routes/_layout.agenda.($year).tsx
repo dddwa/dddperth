@@ -23,18 +23,19 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const { yearConfig, yearConfigLookup } = getYearConfig(
+    const { yearConfig, yearConfigLookup, cancelledMessage } = getYearConfig(
         year,
         context.conferenceState.conference,
         context.dateTimeProvider,
+        true,
     )
 
-    if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
+    if (yearConfig?.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
     const schedules: TypeOf<typeof gridSmartSchema> =
-        yearConfig.sessions?.kind === 'sessionize'
+        yearConfig?.sessions?.kind === 'sessionize'
             ? await getScheduleGrid({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
                   confTimeZone: conferenceConfig.timezone,
@@ -47,7 +48,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     return data(
         {
             year,
-            sponsors: yearConfigLookup.sponsors,
+            cancelledMessage,
+            sponsors: 'sponsors' in yearConfigLookup ? yearConfigLookup.sponsors : {},
             conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
                 year: conf.year,
             })),
@@ -78,24 +80,35 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year } = useLoaderData<typeof loader>()
+    const { schedule, sponsors, conferences, year, cancelledMessage } = useLoaderData<typeof loader>()
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
-    if (!schedule) {
-        return (
-            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
-                <p>
-                    {conferenceConfig.name} {year} agenda has not been announced
-                </p>
+    const isLatestConference = conferences.every((c) => c.year <= year)
 
-                <SponsorSection year={year} sponsors={sponsors} />
-
-                <ConferenceBrowser conferences={conferences} />
+    return cancelledMessage ? (
+        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+            <p>
+                {conferenceConfig.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+            </p>
+            <Box color="white" textAlign="center" fontSize="lg" mt="10">
+                <p>{cancelledMessage}</p>
             </Box>
-        )
-    }
-
-    return (
+            {/* Should sponsors be displayed for a cancelled conference? */}
+            <SponsorSection sponsors={sponsors} year={year} />
+            <ConferenceBrowser conferences={conferences} />
+        </Box>
+    ) : !schedule ? (
+        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+            <p>
+                {conferenceConfig.name} {year} agenda has not been{' '}
+                {isLatestConference
+                    ? 'announced yet.'
+                    : `imported from the previous ${conferenceConfig.name} site yet.`}
+            </p>
+            <SponsorSection sponsors={sponsors} year={year} />
+            <ConferenceBrowser conferences={conferences} />
+        </Box>
+    ) : (
         <Flex
             flexDirection="column"
             alignContent="center"

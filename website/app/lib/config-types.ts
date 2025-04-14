@@ -2,12 +2,12 @@ import type { DateTime } from 'luxon'
 
 export type Year = `${number}${number}${number}${number}`
 
-export type ConferenceConfigYear =
-    | ConferenceYear
-    | {
-          year: Year
-          cancelledMessage: string
-      }
+export type CancelledConferenceYear = {
+    year: Year
+    cancelledMessage: string
+}
+
+export type ConferenceConfigYear = ConferenceYear | CancelledConferenceYear
 
 /**
  * Conference configuration which doesn't necessarily change year on year
