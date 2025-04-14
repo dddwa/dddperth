@@ -2,54 +2,17 @@ import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
 import { conferenceConfig } from '~/config/conference-config'
 import type { ConferenceYear, Year } from '~/lib/config-types'
+import type {
+    EndEventImportantDate,
+    ImportantDate,
+    StandaloneImportantDate,
+    StartEventImportantDate,
+} from '~/lib/important-dates'
 import { css } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
 
-interface StartEventImportantDateBoxProps {
-    type: 'start-event'
-    dateTime: DateTime
-    endDateTime: DateTime
-    event: string
-
-    eventActiveMessage: string
-    eventActiveHref?: string
-    eventClosedMessage: string
-}
-
-interface EndEventImportantDateBoxProps {
-    type: 'end-event'
-    startDateTime: DateTime
-    dateTime: DateTime
-    event: string
-
-    /** End events count down while active, so no active message */
-    eventActiveHref?: string
-    eventClosedMessage: string
-}
-
-interface StandaloneImportantDateBoxProps {
-    type: 'important-date'
-
-    dateTime: DateTime
-
-    event: string
-
-    eventHref?: string
-
-    eventClosedMessage: string
-    eventClosedHref?: string
-
-    onDayMessage?: string
-    onDayHref?: string
-}
-
-type ImportantDateBoxProps =
-    | StartEventImportantDateBoxProps
-    | EndEventImportantDateBoxProps
-    | StandaloneImportantDateBoxProps
-
-function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantDateBoxProps[] {
-    const importantDates: ImportantDateBoxProps[] = []
+function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantDate[] {
+    const importantDates: ImportantDate[] = []
 
     if (year.cfpDates) {
         importantDates.push({
@@ -71,7 +34,7 @@ function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantD
         })
     }
 
-    const ticketReleases = year.ticketReleases.map((ticketSale, index): ImportantDateBoxProps[] => {
+    const ticketReleases = year.ticketReleases.map((ticketSale, index): ImportantDate[] => {
         if (index === year.ticketReleases.length - 1) {
             return [
                 {
@@ -164,7 +127,7 @@ const ImportantDateBox: FC<{
     currentDate: DateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
-    dateInfo: ImportantDateBoxProps
+    dateInfo: ImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
     if (dateInfo.type === 'start-event') {
         return (
@@ -194,7 +157,7 @@ const StartEventImportantDateBox: FC<{
     currentDate: DateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
-    dateInfo: StartEventImportantDateBoxProps
+    dateInfo: StartEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
     if (showOnlyLive) {
         // Only show if it's not yet started
@@ -215,6 +178,7 @@ const StartEventImportantDateBox: FC<{
                     <EventLink
                         highlighted
                         smallSidebar={smallSidebar}
+                        eventHref={dateInfo.eventActiveHref}
                         message={currentDate.hasSame(dateInfo.dateTime, 'day') ? 'Today!' : 'Tomorrow!'}
                     />
                 ) : (
@@ -252,7 +216,7 @@ const EndEventImportantDateBox: FC<{
     currentDate: DateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
-    dateInfo: EndEventImportantDateBoxProps
+    dateInfo: EndEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
     if (showOnlyLive) {
         // Don't show when event hasn't started (the start countdown will already be showing)
@@ -294,7 +258,7 @@ const StandaloneEventImportantDateBox: FC<{
     currentDate: DateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
-    dateInfo: StandaloneImportantDateBoxProps
+    dateInfo: StandaloneImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
     if (showOnlyLive) {
         // Don't show when event has ended and has no ended href
@@ -359,7 +323,7 @@ const StandaloneEventImportantDateBox: FC<{
     )
 }
 
-function getDaysLeft(dateInfo: ImportantDateBoxProps, currentDate: DateTime<true>) {
+function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
     return Math.floor(dateInfo.dateTime.diff(currentDate, 'days').days)
 }
 
@@ -481,13 +445,7 @@ function EventCountdown({
     )
 }
 
-function DisabledButton({
-    smallSidebar,
-    dateInfo,
-}: {
-    smallSidebar: boolean | undefined
-    dateInfo: ImportantDateBoxProps
-}) {
+function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | undefined; dateInfo: ImportantDate }) {
     return (
         <styled.button
             disabled
@@ -508,7 +466,7 @@ function DisabledButton({
     )
 }
 
-function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDateBoxProps; smallSidebar: boolean | undefined }) {
+function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallSidebar: boolean | undefined }) {
     return (
         <Flex flexDirection="column">
             <time dateTime={dateInfo.dateTime.toISO()} />
