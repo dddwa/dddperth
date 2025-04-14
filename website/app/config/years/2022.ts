@@ -117,4 +117,5 @@ export const conference2022: ConferenceYear = {
             },
         ],
     },
+    importantDates: [],
 }

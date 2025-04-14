@@ -12,9 +12,25 @@ export const conference2025: ConferenceYear = {
     conferenceDate: DateTime.fromISO('2025-09-20T09:00:00', {
         zone: 'Australia/Perth',
     }),
-    agendaPublishedDateTime: undefined,
-    cfpDates: undefined,
-    talkVotingDates: undefined,
+    agendaPublishedDateTime: DateTime.fromISO('2025-08-11T00:00:00', {
+        zone: 'Australia/Perth',
+    }),
+    cfpDates: {
+        opens: DateTime.fromISO('2025-05-05T00:00:00', {
+            zone: 'Australia/Perth',
+        }),
+        closes: DateTime.fromISO('2025-06-15T23:59:59', {
+            zone: 'Australia/Perth',
+        }),
+    },
+    talkVotingDates: {
+        opens: DateTime.fromISO('2025-06-30T00:00:00', {
+            zone: 'Australia/Perth',
+        }),
+        closes: DateTime.fromISO('2025-07-20T23:59:59', {
+            zone: 'Australia/Perth',
+        }),
+    },
     ticketReleases: [
         {
             releaseName: 'Early Bird',
@@ -55,6 +71,7 @@ export const conference2025: ConferenceYear = {
             },
         },
     ],
+
     feedbackOpenUntilDateTime: undefined,
 
     ticketInfo: {
@@ -73,4 +90,6 @@ export const conference2025: ConferenceYear = {
     foodInfo: {
         lunch: [],
     },
+
+    importantDates: [],
 }

@@ -1,4 +1,5 @@
 import type { DateTime } from 'luxon'
+import type { ImportantDate } from './important-dates'
 
 export type Year = `${number}${number}${number}${number}`
 
@@ -85,6 +86,8 @@ export interface ConferenceYear {
             shortCode: string
         }>
     }
+
+    importantDates: ImportantDate[]
 }
 
 export interface YearSponsors {

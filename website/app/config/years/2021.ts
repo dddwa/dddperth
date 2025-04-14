@@ -89,4 +89,5 @@ export const conference2021: ConferenceYear = {
             },
         ],
     },
+    importantDates: [],
 }
