@@ -21,7 +21,7 @@ function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantD
             endDateTime: year.cfpDates.closes,
             event: 'Call for presentations open',
             eventActiveMessage: 'Submit Talk ↗',
-            eventActiveHref: '/cfp',
+            eventActiveHref: '/call-for-presentations',
             eventClosedMessage: 'CFP Closed',
         })
 

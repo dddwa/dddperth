@@ -13,7 +13,7 @@ export function getConferenceActions(conferenceState: ConferenceState): CallToAc
         actions.push({
             category: 'content',
             title: 'Submit presentation',
-            url: '/cfp',
+            url: '/call-for-presentations',
         })
     }
 
