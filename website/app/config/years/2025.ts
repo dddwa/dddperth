@@ -5,7 +5,7 @@ export const conference2025: ConferenceYear = {
     year: '2025',
     venue: undefined,
 
-    sessionizeUrl: undefined,
+    sessionizeUrl: 'https://sessionize.com/ddd-perth-2025',
 
     sessions: undefined,
 
