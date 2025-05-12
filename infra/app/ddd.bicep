@@ -140,6 +140,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'main'
           env: [
             {
+              name: 'WEB_URL'
+              value: 'https://${domainName}'
+            }
+            {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: applicationInsights.properties.ConnectionString
             }

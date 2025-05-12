@@ -1,16 +1,26 @@
 import { useScript } from '@uidotdev/usehooks'
 import { useEffect } from 'react'
+import type { ConferenceConfig } from '~/lib/config-types'
 import { conferenceConfig } from '../../config/conference-config'
 
 declare const SmFormSettings: any
 
 export const VolunteerForm = () => {
-    if (conferenceConfig.volunteerForm?.type === 'salesmate') {
+    const config: ConferenceConfig = conferenceConfig
+    if (config.volunteerForm?.type === 'salesmate') {
+        return <SalesMateForm linkName={config.volunteerForm.linkName} formId={config.volunteerForm.formId} />
+    } else if (config.volunteerForm?.type === 'tito') {
         return (
-            <SalesMateForm
-                linkName={conferenceConfig.volunteerForm.linkName}
-                formId={conferenceConfig.volunteerForm.formId}
-            />
+            <div className="my-4">
+                <a
+                    href={config.volunteerForm.ticketUrl}
+                    className="inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Register as a Volunteer
+                </a>
+            </div>
         )
     }
 

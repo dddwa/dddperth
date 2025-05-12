@@ -1,9 +1,11 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '../../lib/config-types'
 
+import { optusStadiumVenue } from '../venues/optus-stadium';
+
 export const conference2024: ConferenceYear = {
     year: '2024',
-    venue: undefined,
+    venue: optusStadiumVenue,
 
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2024',
 

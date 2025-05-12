@@ -38,8 +38,7 @@ export const conferenceConfig = {
     },
 
     volunteerForm: {
-        type: 'salesmate',
-        formId: 'e23713d2-8c3a-411b-b22c-2f8528b77c88',
-        linkName: 'dddperth.salesmate.io',
+        type: 'tito',
+        ticketUrl: 'https://ti.to/dddperth/2025/with/volunteer',
     },
 } satisfies ConferenceConfig
