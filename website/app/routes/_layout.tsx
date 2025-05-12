@@ -13,6 +13,7 @@ import type { Route } from './+types/_layout'
 export function loader({ context }: Route.LoaderArgs) {
     return {
         conferenceState: context.conferenceState,
+        webUrl: WEB_URL,
     }
 }
 
@@ -27,7 +28,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
         : conferenceConfig.name
 
     const description = conferenceConfig.description
-    const url = `${WEB_URL}${location.pathname}`
+    const url = `${data?.webUrl ?? ''}${location.pathname}`
 
     return [
         { title },
@@ -35,10 +36,10 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
         { property: 'og:title', content: title },
         { property: 'og:description', content: description },
         { property: 'og:url', content: url },
-        { property: 'og:image', content: `${WEB_URL}/images/logo.png` },
+        { property: 'og:image', content: `${data?.webUrl ?? ''}/images/logo.png` },
         { name: 'twitter:title', content: title },
         { name: 'twitter:description', content: description },
-        { name: 'twitter:image', content: `${WEB_URL}/images/logo.png` },
+        { name: 'twitter:image', content: `${data?.webUrl ?? ''}/images/logo.png` },
         { name: 'keywords', content: 'DDD, Perth, Conference, Software Development, Programming, Tech' },
         { rel: 'canonical', href: url },
     ]
@@ -47,7 +48,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
 import { useLoaderData } from 'react-router'
 
 export default function Index() {
-    const { conferenceState } = useLoaderData<typeof loader>()
+    const { conferenceState, webUrl } = useLoaderData<typeof loader>()
     const conference = conferenceState.conference
     const venue = conference.venue
 
@@ -96,12 +97,12 @@ export default function Index() {
                                     longitude: venue.longitude,
                                 },
                             },
-                            image: ['https://dddperth.com/favicon.svg'],
+                            image: [`${webUrl}/favicon.svg`],
                             description: conferenceConfig.description,
                             organizer: {
                                 '@type': 'Organization',
                                 name: conferenceConfig.name,
-                                url: 'https://dddperth.com',
+                                url: webUrl,
                             },
                         }),
                     }}
