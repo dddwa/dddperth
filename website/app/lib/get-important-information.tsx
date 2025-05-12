@@ -20,5 +20,6 @@ export function getImportantInformation(
         currentTicketSale: currentTicketRelease
             ? { closes: currentTicketRelease.range.closes.toISO(), price: currentTicketRelease.price }
             : undefined,
+        venue: yearConfig.venue,
     }
 }
