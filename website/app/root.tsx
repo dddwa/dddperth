@@ -35,6 +35,7 @@ export default function App() {
                 <link rel="icon" href="favicon.svg" />
                 <Meta />
                 <Links />
+                <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
             </head>
             <body style={{ backgroundColor: '#0E0E43' }}>
                 <Outlet />

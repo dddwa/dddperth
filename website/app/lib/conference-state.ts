@@ -45,6 +45,7 @@ export function getCurrentConferenceState(
                 sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
             previousConference:
@@ -55,6 +56,7 @@ export function getCurrentConferenceState(
                           sponsors: previousConference[1].sponsors,
                           sessions: previousConference[1].sessions,
                           votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                          venue: previousConference[1].venue,
                           currentTicketSale: undefined,
                       }
                     : undefined,
@@ -80,6 +82,7 @@ export function getCurrentConferenceState(
                 sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
             previousConference:
@@ -90,6 +93,7 @@ export function getCurrentConferenceState(
                           sponsors: previousConference[1].sponsors,
                           sessions: previousConference[1].sessions,
                           votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                          venue: previousConference[1].venue,
                           currentTicketSale: undefined,
                       }
                     : undefined,
@@ -114,6 +118,7 @@ export function getCurrentConferenceState(
                 sponsors: latestConference[1].sponsors,
                 sessions: latestConference[1].sessions,
                 votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
             callForPapers: { state: 'closed' },
@@ -141,6 +146,7 @@ export function getCurrentConferenceState(
             sponsors: latestConference[1].sponsors,
             sessions: latestConference[1].sessions,
             votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+            venue: latestConference[1].venue,
             currentTicketSale: currentTicketRelease
                 ? {
                       closes: currentTicketRelease.range.closes.toISO(),
@@ -156,6 +162,7 @@ export function getCurrentConferenceState(
                       sponsors: previousConference[1].sponsors,
                       sessions: previousConference[1].sessions,
                       votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
+                      venue: previousConference[1].venue,
                       currentTicketSale: undefined,
                   }
                 : undefined,

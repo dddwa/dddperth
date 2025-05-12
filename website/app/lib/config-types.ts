@@ -30,6 +30,10 @@ export interface ConferenceConfig {
               formId: string
               linkName: string
           }
+        | {
+              type: 'tito'
+              ticketUrl: string
+          }
         | undefined
 }
 
@@ -114,12 +118,23 @@ export interface Sponsor {
 
 export interface ConferenceVenue {
     name: string
+    address: {
+        streetAddress: string
+        addressLocality: string
+        addressRegion: string
+        postalCode: string
+        addressCountry: string
+    }
+
+    latitude: number
+    longitude: number
 }
 
 export interface ConferenceImportantInformation {
     date: string | undefined
     year: Year
     votingOpens: string | undefined
+    venue: ConferenceVenue | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
 

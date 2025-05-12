@@ -73,31 +73,49 @@ export const meta: MetaFunction<typeof loader> = (args) => {
         return [{ title: `404 Not Found | ${conferenceConfig.name}` }]
     }
 
-    const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${contentSlug}`) : null
+    // Generate a description if summary isn't available
+    const description =
+        frontmatter.summary ||
+        `${frontmatter.title} - DDD Perth is an inclusive non-profit conference for the Perth software community.`
+
+    // Generate keywords based on the content slug and title
+    const baseKeywords = 'DDD Perth, Conference, Software Development, Perth Tech'
+    const pageKeywords = `${frontmatter.title}, ${contentSlug.replace(/[/]/g, ', ').replace(/-/g, ' ')}`
+    const keywords = `${pageKeywords}, ${baseKeywords}`
+
+    // Fix the image URL generation
+    const ogImageUrl = siteUrl ? new URL(`${siteUrl}/images/logo.png`) : null
     if (ogImageUrl && frontmatter.title) {
+        // Use the existing logo as fallback if no specific image
         ogImageUrl.searchParams.set('title', frontmatter.title)
     }
 
     const socialImageUrl = ogImageUrl?.toString()
-    const url = siteUrl ? `${siteUrl}/blog/${contentSlug}` : null
+
+    // Fix the URL to point to the correct content page, not blog
+    const url = siteUrl ? `${siteUrl}/${contentSlug}` : null
+    const canonicalUrl = url
 
     return [
         { title: `${frontmatter.title} | ${conferenceConfig.name}` },
-        { name: 'description', content: frontmatter.summary },
+        { name: 'description', content: description },
+        { name: 'keywords', content: keywords },
+        { property: 'og:type', content: 'article' },
         { property: 'og:url', content: url },
-        { property: 'og:title', content: frontmatter.title },
+        { property: 'og:title', content: `${frontmatter.title} | ${conferenceConfig.name}` },
         { property: 'og:image', content: socialImageUrl },
-        { property: 'og:description', content: frontmatter.summary },
+        { property: 'og:description', content: description },
+        { property: 'og:site_name', content: conferenceConfig.name },
+        { property: 'og:locale', content: 'en_AU' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:creator', content: `@${socials.Twitter.Name}` },
         { name: 'twitter:site', content: `@${socials.Twitter.Name}` },
         { name: 'twitter:title', content: frontmatter.title },
-        { name: 'twitter:description', content: frontmatter.summary },
+        { name: 'twitter:description', content: description },
         { name: 'twitter:image', content: socialImageUrl },
-        // {
-        //     name: 'twitter:image:alt',
-        //     // content: socialImageUrl ? post.imageAlt : undefined,
-        // },
+        { name: 'robots', content: 'index, follow' },
+        { name: 'canonical', content: canonicalUrl },
+        { name: 'article:published_time', content: new Date().toISOString() },
     ]
 }
 

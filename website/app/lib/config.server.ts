@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const {
+    WEB_URL,
     SESSION_SECRET,
     APPLICATIONINSIGHTS_CONNECTION_STRING,
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
@@ -21,6 +22,7 @@ export const {
     .object({
         NODE_ENV: z.string(),
         SESSION_SECRET: z.string(),
+        WEB_URL: z.string(),
 
         APPLICATIONINSIGHTS_CONNECTION_STRING: z.string().optional(),
         OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
