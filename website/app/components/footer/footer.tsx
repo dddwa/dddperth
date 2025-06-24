@@ -46,6 +46,9 @@ export const Footer = () => (
                 <styled.a href={`/faq`} color="white" _hover={{ color: '#8282FB' }}>
                     FAQ
                 </styled.a>
+                <styled.a href={`/admin`} color="white" _hover={{ color: '#8282FB' }}>
+                    Admin
+                </styled.a>
             </Flex>
             <Flex direction="column" gap={1} fontWeight="medium">
                 <styled.a href={`/code-of-conduct`} color="white" _hover={{ color: '#8282FB' }}>

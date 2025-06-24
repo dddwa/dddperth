@@ -38,6 +38,11 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
+            - name: Setup Azure CLI
+              uses: azure/setup-cli@v2
+              with:
+                  version: latest
+
             - name: Type Check
               run: pnpm tsc -b
             - name: Link and Build

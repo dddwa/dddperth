@@ -1,31 +1,112 @@
+import { App } from '@octokit/app'
 import { throttling } from '@octokit/plugin-throttling'
 import { Octokit as createOctokit } from '@octokit/rest'
 import nodePath from 'path'
-import { GITHUB_ORGANIZATION, GITHUB_REF, GITHUB_REPO, GITHUB_TOKEN } from './config.server'
+import { 
+    GITHUB_ORGANIZATION, 
+    GITHUB_REF, 
+    GITHUB_REPO, 
+    GITHUB_TOKEN, 
+    GITHUB_APP_ID,
+    getGitHubPrivateKey 
+} from './config.server'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
 const Octokit = createOctokit.plugin(throttling)
 type GitHubFile = { path: string; content: string }
+type GitHubClient = InstanceType<typeof Octokit>
 
-const octokit = new Octokit({
-    auth: GITHUB_TOKEN,
-    throttle: {
-        onRateLimit: (retryAfter, options) => {
-            const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-            const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-            console.warn(`Request quota exhausted for request ${method} ${url}. Retrying after ${retryAfter} seconds.`)
+// Create GitHub client with App or PAT authentication
+async function createGitHubClient(): Promise<GitHubClient> {
+    const privateKey = getGitHubPrivateKey()
+    
+    // Prefer GitHub App authentication if available
+    if (GITHUB_APP_ID && privateKey) {
+        try {
+            console.log('Using GitHub App authentication')
+            const app = new App({
+                appId: GITHUB_APP_ID,
+                privateKey,
+            })
+            
+            // Get the installation for the organization
+            const installations = await app.octokit.request('GET /app/installations')
+            const installation = installations.data.find(
+                (inst: any) => inst.account?.login === GITHUB_ORGANIZATION
+            )
+            
+            if (!installation) {
+                console.warn(
+                    `GitHub App is not installed for organization "${GITHUB_ORGANIZATION}". ` +
+                    `Falling back to PAT authentication if available.`
+                )
+                if (!GITHUB_TOKEN) {
+                    throw new Error(
+                        `GitHub App is not installed for organization "${GITHUB_ORGANIZATION}". ` +
+                        `Please install the app or set GITHUB_TOKEN as fallback.`
+                    )
+                }
+            } else {
+                // Get installation access token
+                const installationOctokit = await app.getInstallationOctokit(installation.id)
+                console.log('GitHub App authentication successful')
+                return installationOctokit as GitHubClient
+            }
+        } catch (error) {
+            console.warn(`GitHub App authentication failed: ${error.message}`)
+            console.warn('Falling back to PAT authentication if available')
+            
+            if (!GITHUB_TOKEN) {
+                throw new Error(
+                    `GitHub App authentication failed and no GITHUB_TOKEN fallback available. ` +
+                    `Error: ${error.message}`
+                )
+            }
+        }
+    }
+    
+    // Fallback to PAT authentication
+    if (GITHUB_TOKEN) {
+        console.log('Using Personal Access Token authentication')
+        return new Octokit({
+            auth: GITHUB_TOKEN,
+            throttle: {
+                onRateLimit: (retryAfter, options) => {
+                    const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
+                    const url = 'url' in options ? options.url : 'URL_UNKNOWN'
+                    console.warn(`Request quota exhausted for request ${method} ${url}. Retrying after ${retryAfter} seconds.`)
+                    return true
+                },
+                onSecondaryRateLimit: (retryAfter, options) => {
+                    const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
+                    const url = 'url' in options ? options.url : 'URL_UNKNOWN'
+                    console.warn(`Abuse detected for request ${method} ${url}`)
+                },
+            },
+        })
+    }
+    
+    throw new Error(
+        'No GitHub authentication configured. Please set either:\n' +
+        '- GITHUB_APP_ID and GITHUB_PRIVATE_KEY for GitHub App authentication, or\n' +
+        '- GITHUB_TOKEN for Personal Access Token authentication'
+    )
+}
 
-            return true
-        },
-        onSecondaryRateLimit: (retryAfter, options) => {
-            const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-            const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-            // does not retry, only logs a warning
-            octokit.log.warn(`Abuse detected for request ${method} ${url}`)
-        },
-    },
-})
+// Cache the client promise to avoid recreating it
+let octokitPromise: Promise<GitHubClient> | null = null
+
+async function getOctokit(): Promise<GitHubClient> {
+    if (!octokitPromise) {
+        octokitPromise = createGitHubClient().catch((error) => {
+            // Clear the cached promise on error so it can be retried
+            octokitPromise = null
+            throw error
+        })
+    }
+    return octokitPromise
+}
 
 async function downloadFirstMdxFile(list: Array<{ name: string; type: string; path: string; sha: string }>) {
     const filesOnly = list.filter(({ type }) => type === 'file')
@@ -116,7 +197,8 @@ async function downloadDirectory(dir: string): Promise<Array<GitHubFile>> {
  * @returns a promise that resolves to a string of the contents of the file
  */
 async function downloadFileBySha(sha: string) {
-    const { data } = await octokit.git.getBlob({
+    const octokit = await getOctokit()
+    const { data } = await octokit.rest.git.getBlob({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         file_sha: sha,
@@ -130,11 +212,12 @@ async function downloadFileBySha(sha: string) {
 // https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}
 // nice thing is it's not rate limited
 async function downloadFile(path: string) {
-    const { data } = await octokit.repos.getContent({
+    const octokit = await getOctokit()
+    const { data } = await octokit.rest.repos.getContent({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         path,
-        GITHUB_REF,
+        ref: GITHUB_REF,
     })
 
     if ('content' in data && 'encoding' in data) {
@@ -154,11 +237,12 @@ async function downloadFile(path: string) {
  * @returns a promise that resolves to a file ListItem of the files/directories in the given directory (not recursive)
  */
 async function downloadDirList(path: string) {
-    const resp = await octokit.repos.getContent({
+    const octokit = await getOctokit()
+    const resp = await octokit.rest.repos.getContent({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         path,
-        GITHUB_REF,
+        ref: GITHUB_REF,
     })
     const data = resp.data
 

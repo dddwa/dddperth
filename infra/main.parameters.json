@@ -39,9 +39,6 @@
         "gitHubRepo": {
             "value": "dddperth"
         },
-        "gitHubToken": {
-            "value": "${GH_CONTENT_TOKEN}"
-        },
         "googleFormsApiKey": {
             "value": "${GOOGLE_FORMS_API_KEY}"
         },
@@ -68,6 +65,21 @@
         },
         "titoSecurityToken": {
             "value": "${TITO_SECURITY_TOKEN}"
+        },
+        "gitHubAppId": {
+            "value": "${GITHUB_APP_ID}"
+        },
+        "gitHubClientId": {
+            "value": "${GITHUB_CLIENT_ID}"
+        },
+        "gitHubClientSecret": {
+            "value": "${GITHUB_CLIENT_SECRET}"
+        },
+        "gitHubPrivateKey": {
+            "value": "${GITHUB_PRIVATE_KEY}"
+        },
+        "gitHubInstallationId": {
+            "value": "${GITHUB_INSTALLATION_ID}"
         }
     }
 }

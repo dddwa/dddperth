@@ -17,11 +17,13 @@ node scripts/setup-github-app.mjs
 ```
 
 This starts a web server at `http://localhost:3333` with a user-friendly interface to:
+
 - Create GitHub Apps for local development
 - Create GitHub Apps for production
 - View created apps and their configuration
 
 #### Benefits of GitHub Apps
+
 - Granular, repository-level permissions
 - Better security model and audit trails
 - Can act on behalf of the app itself
@@ -30,6 +32,7 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 - Higher rate limits (5,000 vs 1,000 requests/hour)
 
 #### Features
+
 - **Web-based setup**: Clean UI for creating apps
 - **Manifest flow**: Uses GitHub's official app creation process
 - **Automatic configuration**: Updates `.env` files and GitHub secrets
@@ -43,61 +46,69 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 ### For Local Development
 
 1. **Start the GitHub App setup server:**
-   ```bash
-   node scripts/setup-github-app.mjs
-   ```
+
+    ```bash
+    node scripts/setup-github-app.mjs
+    ```
 
 2. **Open your browser** to `http://localhost:3333`
 
 3. **Create a local GitHub App:**
-   - Click the "Local Development" tab
-   - Keep the default settings (or customize as needed)
-   - Click "Create Local GitHub App"
-   - Follow the GitHub redirect to authorize the app creation
+
+    - Click the "Local Development" tab
+    - Keep the default settings (or customize as needed)
+    - Click "Create Local GitHub App"
+    - Follow the GitHub redirect to authorize the app creation
 
 4. **Configure permissions:**
-   - After creation, click "Open App Settings"
-   - Ensure "Request user authorization (OAuth) during installation" is enabled
-   - Verify OAuth scope includes `user:email`
+
+    - After creation, click "Open App Settings"
+    - Ensure "Request user authorization (OAuth) during installation" is enabled
+    - Verify OAuth scope includes `user:email`
 
 5. **Add your GitHub username** to admin handles in `website/app/lib/config.server.ts`:
-   ```typescript
-   export const ADMIN_HANDLES = [
-       'your-github-username',
-       // ... other admins
-   ] as const
-   ```
+
+    ```typescript
+    export const ADMIN_HANDLES = [
+        'your-github-username',
+        // ... other admins
+    ] as const
+    ```
 
 6. **Start development server:**
-   ```bash
-   pnpm start
-   ```
+
+    ```bash
+    pnpm start
+    ```
 
 7. **Test admin login** at `http://localhost:3800/auth/login`
 
 8. **Optional - Enable content from your fork:**
-   - The setup automatically set `GITHUB_ORGANIZATION` to your username
-   - Set `USE_GITHUB_CONTENT=true` in `.env` to load blog posts from your GitHub fork
-   - Leave as `false` to use local content files
+    - The setup automatically set `GITHUB_ORGANIZATION` to your username
+    - Set `USE_GITHUB_CONTENT=true` in `.env` to load blog posts from your GitHub fork
+    - Leave as `false` to use local content files
 
 ### For Production
 
 1. **Start the GitHub App setup server:**
-   ```bash
-   node scripts/setup-github-app.mjs
-   ```
+
+    ```bash
+    node scripts/setup-github-app.mjs
+    ```
 
 2. **Create a production GitHub App:**
-   - Click the "Production" tab
-   - Enter your production domain (e.g., `https://dddperth.com/`)
-   - Optionally provide GitHub repository for automatic secret management
-   - Click "Create Production GitHub App"
+
+    - Click the "Production" tab
+    - Enter your production domain (e.g., `https://dddperth.com/`)
+    - Optionally provide GitHub repository for automatic secret management
+    - Click "Create Production GitHub App"
 
 3. **Configure app permissions** (same as local setup)
 
 4. **Set up deployment:**
-   - If you provided a GitHub repository, secrets are automatically set
-   - Otherwise, manually configure your deployment with the app credentials
+
+    - If you provided a GitHub repository, secrets are automatically set
+    - Otherwise, manually configure your deployment with the app credentials
 
 5. **Deploy your application**
 
@@ -106,6 +117,7 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 ### GitHub App Credentials
 
 #### Local (`.env` file)
+
 - `GITHUB_APP_ID` - GitHub App identifier
 - `GITHUB_CLIENT_ID` - OAuth client ID (for user authentication)
 - `GITHUB_CLIENT_SECRET` - OAuth client secret (for user authentication)
@@ -116,6 +128,7 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 - `SESSION_SECRET` - Generated session secret
 
 #### Production (GitHub Secrets)
+
 Same variables but stored as repository secrets for CI/CD deployment. The private key is automatically base64 encoded for both environments.
 
 ## Authentication Flow
@@ -146,11 +159,13 @@ The OAuth authentication flow for users:
 ### GitHub App Setup Issues
 
 **"Manifest conversion failed"**
+
 - Ensure you're using a valid redirect URL
 - Check that the GitHub App manifest is properly formatted
 - Try refreshing the setup page and creating again
 
 **"App permissions not working"**
+
 - Verify "Request user authorization (OAuth) during installation" is enabled
 - Check that OAuth scope includes `user:email`
 - Ensure the app has proper account permissions
@@ -158,16 +173,19 @@ The OAuth authentication flow for users:
 ### General Authentication Issues
 
 **"Access denied" error**
+
 - Add your GitHub username to `ADMIN_HANDLES` in `website/app/lib/config.server.ts`
 - Verify the app has correct permissions
 - Check that OAuth callback URL matches your configuration
 
 **"Authentication failed" error**
+
 - Verify client ID and secret are correctly set
 - Check that the app is configured for the correct environment
 - Ensure OAuth callback URL is accessible
 
 **"Failed to set GitHub secrets"**
+
 - Ensure you have admin access to the repository
 - Check that the repository exists and the format is correct (`owner/repo`)
 - You may need to set secrets manually in repository settings
@@ -179,10 +197,10 @@ If you prefer manual setup, you can create GitHub Apps manually:
 1. Go to GitHub Settings → Developer settings → GitHub Apps
 2. Click "New GitHub App"
 3. Configure OAuth settings and permissions:
-   - Set authorization callback URL to `{your-url}/auth/github/callback`
-   - Enable "Request user authorization (OAuth) during installation"
-   - Set OAuth scope to `user:email`
-   - Set account permissions → Metadata: Read
+    - Set authorization callback URL to `{your-url}/auth/github/callback`
+    - Enable "Request user authorization (OAuth) during installation"
+    - Set OAuth scope to `user:email`
+    - Set account permissions → Metadata: Read
 4. Copy the credentials to your environment variables
 
 ## Using the Private Key
@@ -194,11 +212,11 @@ import { getGitHubPrivateKey } from '~/lib/config.server'
 
 const privateKey = getGitHubPrivateKey() // Automatically decodes from base64
 if (privateKey) {
-  // Use with @octokit/app or similar for GitHub App API calls
-  const app = new App({
-    appId: GITHUB_APP_ID,
-    privateKey,
-  })
+    // Use with @octokit/app or similar for GitHub App API calls
+    const app = new App({
+        appId: GITHUB_APP_ID,
+        privateKey,
+    })
 }
 ```
 
@@ -214,6 +232,7 @@ For local development, the GitHub App setup automatically configures content loa
 4. **Local Development**: Keep `USE_GITHUB_CONTENT=false` to use local files
 
 This allows you to:
+
 - Test blog posts and content changes from your fork
 - Develop with realistic content without local files
 - Switch between local and fork content easily

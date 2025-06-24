@@ -13,6 +13,7 @@ A new script `scripts/setup-github-app.mjs` has been created that:
 - **Works with existing OAuth authentication code** - no code changes needed
 - **Supports both local and production environments**
 - **Automatically updates environment variables** and GitHub repository secrets
+- **Each developer creates their own personal GitHub App** with their name/handle
 
 ### Key Benefits
 
@@ -21,10 +22,27 @@ A new script `scripts/setup-github-app.mjs` has been created that:
 3. **Future-proof** - GitHub Apps support additional features like webhooks and installation tokens
 4. **Same OAuth flow** - Your existing authentication code continues to work unchanged
 5. **User-friendly setup** - Web interface instead of command-line prompts
+6. **Personal apps** - Each developer creates their own app, no shared credentials
+7. **Conflict-free** - Personalized app names prevent conflicts between developers
 
 ## Quick Start
 
+### Prerequisites
+
+**GitHub CLI Authentication Required:**
+```bash
+# Install GitHub CLI if not already installed
+# macOS: brew install gh
+# Windows: winget install GitHub.cli
+# Linux: https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+
+# Authenticate with GitHub CLI (no Personal Access Token needed!)
+gh auth login
+```
+
 ### For Local Development
+
+**⚠️ Important: Each developer should create their own personal GitHub App**
 
 1. **Run the setup server:**
    ```bash
@@ -34,8 +52,12 @@ A new script `scripts/setup-github-app.mjs` has been created that:
 2. **Open your browser** to `http://localhost:3333`
 
 3. **Click "Local Development" tab** and create a GitHub App
+   - **Customize the app name** to include your name/handle (e.g., "DDD Admin App (Local) - YourName")
+   - This prevents conflicts with other developers' apps
 
-4. **Configure app permissions** after creation (the script will guide you)
+4. **Install the app** to your personal account/organization
+   - Click the "Install App" link after creation
+   - Select the repositories you need access to
 
 5. **Add your GitHub username** to admin handles in `website/app/lib/config.server.ts`
 
@@ -54,9 +76,13 @@ A new script `scripts/setup-github-app.mjs` has been created that:
 ### For Production
 
 1. Follow the same steps but use the "Production" tab
-2. Provide your production domain and GitHub repository
-3. The script automatically sets up GitHub repository secrets
-4. Deploy your application
+2. **Customize the app name** to include your organization/team name
+3. Provide your production domain and GitHub repository
+4. The script automatically sets up GitHub repository secrets
+5. **Install the production app** to your production organization
+6. Deploy your application
+
+**Note:** Production apps should be created by the team lead or DevOps team to avoid multiple production apps.
 
 ## How It Works
 
@@ -99,6 +125,9 @@ SESSION_SECRET=randomly-generated-secret
 - `GITHUB_PRIVATE_KEY` is automatically base64 encoded to prevent newline issues
 - `GITHUB_ORGANIZATION` is automatically set to your username for fork development
 - Set `USE_GITHUB_CONTENT=true` to load blog posts and content from your GitHub fork
+- **These credentials are unique to your personal GitHub App** - never share them
+- Each developer will have different values for these variables
+- **No GITHUB_TOKEN required** - the setup script uses GitHub CLI for secure API access
 
 ### Production (GitHub Repository Secrets)
 Same variables but stored as repository secrets for secure CI/CD deployment. The private key is automatically base64 encoded for both local and production environments.
@@ -115,6 +144,11 @@ The setup script automatically configures all required environment variables:
 ## Troubleshooting
 
 ### Common Issues
+
+**"GitHub CLI not available or not authenticated"**
+- Install GitHub CLI: `brew install gh` (macOS) or visit https://cli.github.com
+- Authenticate: `gh auth login`
+- Verify: `gh auth status`
 
 **"App permissions not working"**
 - Ensure "Request user authorization (OAuth) during installation" is enabled
@@ -137,11 +171,14 @@ The setup script automatically configures all required environment variables:
 
 ## Security Considerations
 
+- **Personal apps** - Each developer creates their own GitHub App with personal credentials
+- **No shared secrets** - Developers never share GitHub App credentials
 - **Environment separation** - Use different apps for local vs production
 - **Credential security** - Never commit `.env` files, use repository secrets for production
 - **Permission principle** - GitHub Apps use minimal required permissions
 - **Private key encoding** - Private keys are base64 encoded to prevent formatting issues
 - **Regular audits** - Review app permissions and access regularly
+- **App naming** - Include your name/handle in app names to prevent conflicts
 
 ## Additional GitHub App Features
 
@@ -154,10 +191,25 @@ Beyond user authentication, GitHub Apps can also provide:
 
 ## Next Steps
 
-1. **Set up local development** using the new script
-2. **Configure production deployment** with GitHub App credentials  
+1. **Each developer sets up their own local GitHub App** using the new script
+2. **Team lead configures production deployment** with production GitHub App credentials  
 3. **Add team members** to admin handles as needed
-4. **Consider additional GitHub App features** like webhooks or installation tokens
+4. **Share the setup instructions** with new team members
+5. **Consider additional GitHub App features** like webhooks or installation tokens
+
+## Developer Onboarding
+
+For new team members:
+
+1. **Install and authenticate GitHub CLI:** `gh auth login`
+2. **Clone the repository** and install dependencies
+3. **Run the GitHub App setup script** to create your personal development app
+4. **Include your name/handle** in the app name to avoid conflicts
+5. **Install your app** to your personal GitHub account
+6. **Add your GitHub username** to the admin handles list
+7. **Start developing** with your own secure GitHub App credentials
+
+**Never share GitHub App credentials between developers** - each person should have their own app.
 
 ## Technical Details
 
@@ -171,6 +223,7 @@ Beyond user authentication, GitHub Apps can also provide:
 | Webhooks | Built-in event handling |
 | Security | Better audit trails and isolation |
 | Future-proof | GitHub's recommended approach |
+| Authentication | Uses GitHub CLI (no PAT required) |
 
 ### Files Modified
 

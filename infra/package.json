@@ -1,0 +1,6 @@
+{
+    "name": "infra",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Infrastructure as Code using Azure Bicep"
+}

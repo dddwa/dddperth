@@ -18,9 +18,21 @@ param principalId string
 param gitHubOrganization string
 @minLength(1)
 param gitHubRepo string
+
+// GitHub App configuration
 @minLength(1)
+param gitHubAppId string
 @secure()
-param gitHubToken string
+@minLength(1)
+param gitHubClientId string
+@secure()
+@minLength(1)
+param gitHubClientSecret string
+@secure()
+@minLength(1)
+param gitHubPrivateKey string
+@minLength(1)
+param gitHubInstallationId string
 
 @secure()
 param googleFormsApiKey string
@@ -129,7 +141,11 @@ module ddd './app/ddd.bicep' = {
     exists: dddExists
     gitHubOrganization: gitHubOrganization
     gitHubRepo: gitHubRepo
-    gitHubToken: gitHubToken
+    gitHubAppId: gitHubAppId
+    gitHubClientId: gitHubClientId
+    gitHubClientSecret: gitHubClientSecret
+    gitHubPrivateKey: gitHubPrivateKey
+    gitHubInstallationId: gitHubInstallationId
     googleFormsApiKey: googleFormsApiKey
     googleFormsFileId: googleFormsFileId
     domainName: domainName
