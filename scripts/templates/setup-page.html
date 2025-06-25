@@ -1,109 +1,179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub App Setup</title>
-    <link rel="stylesheet" href="/static/github-app-setup.css">
-</head>
-<body>
-    <h1>🚀 GitHub App Setup</h1>
-    <p class="subtitle">Create GitHub Apps for your DDD website authentication</p>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>GitHub App Setup</title>
+        <link rel="stylesheet" href="/static/github-app-setup.css" />
+    </head>
+    <body>
+        <h1>🚀 GitHub App Setup</h1>
+        <p class="subtitle">Create GitHub Apps for your DDD website authentication</p>
 
-    <div class="nav-tabs">
-        <button class="nav-tab active" onclick="showTab('local')">Local Development</button>
-        <button class="nav-tab" onclick="showTab('production')">Production</button>
-        <button class="nav-tab" onclick="showTab('created')">Created Apps</button>
-    </div>
-
-    <div id="local" class="tab-content active">
-        <div class="container">
-            <h2>Create Local Development GitHub App</h2>
-            <div class="info-box">
-                <p><strong>Local Development Setup:</strong> This will create a GitHub App configured for local development at http://localhost:3800</p>
-                <p><strong>Content Loading:</strong> The app will automatically configure GITHUB_ORGANIZATION to point to your username, allowing you to optionally load content from your fork instead of local files.</p>
-                <p><strong>Personalization:</strong> Please customize the app name to include your name/handle to avoid conflicts with other developers.</p>
-                <p><strong>Prerequisites:</strong> Ensure GitHub CLI is installed and authenticated (run "gh auth login" if needed).</p>
-            </div>
-
-            <form action="https://github.com/settings/apps/new" method="POST">
-                <input type="hidden" name="environment" value="local">
-
-                <div class="form-group">
-                    <label for="local-app-name">App Name: <span id="local-app-spinner" class="spinner-small"></span></label>
-                    <input type="text" id="local-app-name" name="appName" value="" placeholder="Loading your GitHub username..." class="loading-placeholder" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="local-description">Description:</label>
-                    <textarea id="local-description" name="description">GitHub App for DDD website admin authentication (Local Development)</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="local-homepage">Homepage URL:</label>
-                    <input type="url" id="local-homepage" name="homepageUrl" value="http://localhost:3800" required>
-                </div>
-
-                <button type="submit">Create Local GitHub App</button>
-            </form>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('local')">Local Development</button>
+            <button class="nav-tab" onclick="showTab('production')">Production</button>
+            <button class="nav-tab" onclick="showTab('created')">Created Apps</button>
         </div>
-    </div>
 
-    <div id="production" class="tab-content">
-        <div class="container">
-            <h2>Create Production GitHub App</h2>
-            <div class="warning-box">
-                <p><strong>Production Setup:</strong> Make sure to use your actual production domain. You'll need to configure GitHub repository secrets afterward.</p>
-                <p><strong>Personalization:</strong> Please customize the app name to include your name/handle to avoid conflicts with other developers.</p>
-                <p><strong>Prerequisites:</strong> Ensure GitHub CLI is installed and authenticated (run "gh auth login" if needed).</p>
+        <div id="local" class="tab-content active">
+            <div class="container">
+                <h2>Create Local Development GitHub App</h2>
+                <div class="info-box">
+                    <p>
+                        <strong>Local Development Setup:</strong> This will create a GitHub App configured for local
+                        development at http://localhost:3800
+                    </p>
+                    <p>
+                        <strong>Content Loading:</strong> The app will automatically configure GITHUB_ORGANIZATION to
+                        point to your username, allowing you to optionally load content from your fork instead of local
+                        files.
+                    </p>
+                    <p>
+                        <strong>Personalization:</strong> Please customize the app name to include your name/handle to
+                        avoid conflicts with other developers.
+                    </p>
+                    <p>
+                        <strong>Prerequisites:</strong> Ensure GitHub CLI is installed and authenticated (run "gh auth
+                        login" if needed).
+                    </p>
+                </div>
+
+                <form action="https://github.com/settings/apps/new" method="POST">
+                    <div class="form-group">
+                        <label for="local-app-name"
+                            >App Name: <span id="local-app-spinner" class="spinner-small"></span
+                        ></label>
+                        <input
+                            type="text"
+                            id="local-app-name"
+                            name="appName"
+                            value=""
+                            placeholder="Loading your GitHub username..."
+                            class="loading-placeholder"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="local-description">Description:</label>
+                        <textarea id="local-description" name="description">
+GitHub App for DDD website admin authentication (Local Development)</textarea
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="local-homepage">Homepage URL:</label>
+                        <input
+                            type="url"
+                            id="local-homepage"
+                            name="homepageUrl"
+                            value="http://localhost:3800"
+                            required
+                        />
+                    </div>
+
+                    <button type="submit">Create Local GitHub App</button>
+                </form>
             </div>
-
-            <form action="https://github.com/settings/apps/new" method="POST">
-                <input type="hidden" name="environment" value="production">
-
-                <div class="form-group">
-                    <label for="prod-app-name">App Name: <span id="prod-app-spinner" class="spinner-small"></span></label>
-                    <input type="text" id="prod-app-name" name="appName" value="" placeholder="Loading your GitHub username..." class="loading-placeholder" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="prod-description">Description:</label>
-                    <textarea id="prod-description" name="description">GitHub App for DDD website admin authentication (Production)</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="prod-homepage">Homepage URL:</label>
-                    <input type="url" id="prod-homepage" name="homepageUrl" placeholder="https://dddwa.org" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="github-repo">GitHub Repository (for secrets):</label>
-                    <input type="text" id="github-repo" name="githubRepo" placeholder="owner/repo" pattern="[^/]+/[^/]+" title="Format: owner/repo">
-                    <small>Leave empty to skip setting GitHub secrets</small>
-                </div>
-
-                <button type="submit">Create Production GitHub App</button>
-            </form>
         </div>
-    </div>
 
-    <div id="created" class="tab-content">
-        <div class="container">
-            <h2>GitHub Apps Overview</h2>
-            <p>This shows all GitHub Apps configured for this project:</p>
-            <div class="info-box">
-                <ul>
-                    <li><strong>Local Development:</strong> Apps configured in your .env file</li>
-                    <li><strong>Production:</strong> Apps configured in GitHub repository variables/secrets</li>
-                </ul>
-                <p><strong>Note:</strong> App IDs and Client IDs are stored as repository variables (public), while secrets like client secrets and private keys are stored as repository secrets (encrypted).</p>
-                <p><strong>GitHub CLI Required:</strong> This tool uses GitHub CLI for secure API access - no Personal Access Token needed!</p>
+        <div id="production" class="tab-content">
+            <div class="container">
+                <h2>Create Production GitHub App</h2>
+                <div class="warning-box">
+                    <p>
+                        <strong>Production Setup:</strong> This will create a GitHub App under the
+                        <strong>dddwa</strong> organization. Make sure you have permissions to create apps in that
+                        organization.
+                    </p>
+                    <p>
+                        <strong>App Name:</strong> The production app will be created as "DDD Perth Website App" to
+                        ensure consistency across deployments.
+                    </p>
+                    <p>
+                        <strong>Domain:</strong> Make sure to use your actual production domain. You'll need to
+                        configure GitHub repository secrets afterward.
+                    </p>
+                    <p>
+                        <strong>Prerequisites:</strong> You must be a member of the dddwa organization with app creation
+                        permissions.
+                    </p>
+                </div>
+
+                <form action="https://github.com/organizations/dddwa/settings/apps/new" method="POST">
+                    <div class="form-group">
+                        <label for="prod-app-name">App Name:</label>
+                        <input
+                            type="text"
+                            id="prod-app-name"
+                            name="appName"
+                            value="DDD Perth Website App"
+                            required
+                            readonly
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-description">Description:</label>
+                        <textarea id="prod-description" name="description">
+GitHub App for DDD website admin authentication (Production)</textarea
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-homepage">Homepage URL:</label>
+                        <input
+                            type="url"
+                            id="prod-homepage"
+                            name="homepageUrl"
+                            value="https://dddperth.com/"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="github-repo">GitHub Repository (for secrets):</label>
+                        <input
+                            type="text"
+                            id="github-repo"
+                            name="githubRepo"
+                            placeholder="owner/repo"
+                            pattern="[^/]+/[^/]+"
+                            title="Format: owner/repo"
+                            value="dddwa/dddperth"
+                        />
+                        <small>Leave empty to skip setting GitHub secrets</small>
+                    </div>
+
+                    <button type="submit">Create Production GitHub App</button>
+                </form>
             </div>
-            <div id="created-apps"></div>
-            <button onclick="refreshApps()">Refresh Apps</button>
         </div>
-    </div>
 
-    <script src="/static/github-app-setup.js"></script>
-</body>
+        <div id="created" class="tab-content">
+            <div class="container">
+                <h2>GitHub Apps Overview</h2>
+                <p>This shows all GitHub Apps configured for this project:</p>
+                <div class="info-box">
+                    <ul>
+                        <li><strong>Local Development:</strong> Apps configured in your .env file</li>
+                        <li><strong>Production:</strong> Apps configured in GitHub repository variables/secrets</li>
+                    </ul>
+                    <p>
+                        <strong>Note:</strong> App IDs and Client IDs are stored as repository variables (public), while
+                        secrets like client secrets and private keys are stored as repository secrets (encrypted).
+                    </p>
+                    <p>
+                        <strong>GitHub CLI Required:</strong> This tool uses GitHub CLI for secure API access - no
+                        Personal Access Token needed!
+                    </p>
+                </div>
+                <div id="created-apps"></div>
+                <button onclick="refreshApps()">Refresh Apps</button>
+            </div>
+        </div>
+
+        <script src="/static/github-app-setup.js"></script>
+    </body>
 </html>

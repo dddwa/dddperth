@@ -108,48 +108,61 @@ async function fetchGitHubRepoInfo(repoOwner, repoName) {
     }
 }
 
-// Helper function to get app slug from app ID using GH CLI
-async function getAppSlugFromId(appId) {
-    if (!appId) return null
-
+// Check GitHub CLI status and permissions
+async function checkGitHubCLIStatus() {
     try {
-        // Check if GitHub CLI is available and authenticated
-        execSync('gh auth status', { stdio: 'ignore' })
-
-        // Try to get app info using GH CLI
-        try {
-            const appOutput = execSync(`gh api app`, {
-                encoding: 'utf8',
-                stdio: ['ignore', 'pipe', 'ignore'],
-            })
-            const appData = JSON.parse(appOutput)
-            if (appData.id.toString() === appId.toString()) {
-                return appData.slug
-            }
-        } catch (error) {
-            // App endpoint might not be accessible or this isn't the right app
-        }
-
-        // Fallback: try to get from installations
-        try {
-            const installationsOutput = execSync(`gh api app/installations`, {
-                encoding: 'utf8',
-                stdio: ['ignore', 'pipe', 'ignore'],
-            })
-            const installations = JSON.parse(installationsOutput)
-            for (const installation of installations) {
-                if (installation.app_id.toString() === appId.toString()) {
-                    return installation.app_slug
-                }
-            }
-        } catch (error) {
-            // Installations endpoint might not be accessible
-        }
+        // Check if GitHub CLI is available
+        execSync('gh --version', { stdio: 'ignore' })
     } catch (error) {
-        // GitHub CLI not available or not authenticated
+        return {
+            available: false,
+            authenticated: false,
+            hasRepoAccess: false,
+            error: 'GitHub CLI is not installed. Install it from https://cli.github.com/',
+            username: null,
+        }
     }
 
-    return null
+    try {
+        // Check if authenticated
+        execSync('gh auth status', { stdio: 'ignore' })
+    } catch (error) {
+        return {
+            available: true,
+            authenticated: false,
+            hasRepoAccess: false,
+            error: 'GitHub CLI is not authenticated. Run "gh auth login" to authenticate.',
+            username: null,
+        }
+    }
+
+    // Get username
+    let username = null
+    try {
+        username = execSync('gh api user --jq .login', {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore'],
+        }).trim()
+    } catch (error) {
+        // Username fetch failed but auth is working
+    }
+
+    // Check repository access for production setup
+    let hasRepoAccess = false
+    try {
+        execSync('gh repo view "dddwa/dddperth" --json nameWithOwner', { stdio: 'ignore' })
+        hasRepoAccess = true
+    } catch (error) {
+        // No access to production repository
+    }
+
+    return {
+        available: true,
+        authenticated: true,
+        hasRepoAccess,
+        error: null,
+        username,
+    }
 }
 
 // Function to read existing GitHub App configurations
@@ -158,13 +171,15 @@ async function getExistingAppConfigs() {
 
     // Read from local .env file
     const localEnv = parseEnvFile(config.envFile)
-    if (localEnv.GITHUB_APP_ID) {
-        // Try to get app slug from env first, then fallback to API
-        const appSlug = localEnv.GITHUB_APP_SLUG || (await getAppSlugFromId(localEnv.GITHUB_APP_ID))
+    if (localEnv.WEBSITE_GITHUB_APP_ID) {
+        const appSlug = localEnv.WEBSITE_GITHUB_APP_SLUG || null
+        if (!appSlug) {
+            print.warning('Local app slug not found in .env file')
+        }
 
         configs.push({
-            id: localEnv.GITHUB_APP_ID,
-            client_id: localEnv.GITHUB_CLIENT_ID || 'Not set',
+            id: localEnv.WEBSITE_GITHUB_APP_ID,
+            client_id: localEnv.WEBSITE_GITHUB_APP_CLIENT_ID || 'Not set',
             name: 'Local Development App',
             environment: 'local',
             homepage_url:
@@ -177,10 +192,10 @@ async function getExistingAppConfigs() {
             source: '.env file',
             organization: localEnv.GITHUB_ORGANIZATION,
             hasAllCredentials: !!(
-                localEnv.GITHUB_APP_ID &&
-                localEnv.GITHUB_CLIENT_ID &&
-                localEnv.GITHUB_CLIENT_SECRET &&
-                localEnv.GITHUB_PRIVATE_KEY
+                localEnv.WEBSITE_GITHUB_APP_ID &&
+                localEnv.WEBSITE_GITHUB_APP_CLIENT_ID &&
+                localEnv.WEBSITE_GITHUB_APP_CLIENT_SECRET &&
+                localEnv.WEBSITE_GITHUB_APP_PRIVATE_KEY
             ),
         })
     }
@@ -192,18 +207,16 @@ async function getExistingAppConfigs() {
         if (repoInfo) {
             const { variables, secretNames } = await fetchGitHubRepoInfo(repoInfo.owner, repoInfo.repo)
 
-            if (variables.GITHUB_APP_ID || secretNames.includes('GITHUB_APP_ID')) {
-                const appId = variables.GITHUB_APP_ID || 'Set as secret'
-                // Try to get app slug from variables first, then fallback to API
-                const appSlug =
-                    variables.GITHUB_APP_SLUG ||
-                    (variables.GITHUB_APP_ID ? await getAppSlugFromId(variables.GITHUB_APP_ID) : null)
+            if (variables.WEBSITE_GITHUB_APP_ID || secretNames.includes('WEBSITE_GITHUB_APP_ID')) {
+                const appId = variables.WEBSITE_GITHUB_APP_ID || 'Set as secret'
+                // App slug is optional - just for convenience links
+                const appSlug = variables.WEBSITE_GITHUB_APP_SLUG || null
 
                 configs.push({
                     id: appId,
                     client_id:
-                        variables.GITHUB_CLIENT_ID ||
-                        (secretNames.includes('GITHUB_CLIENT_ID') ? 'Set as variable' : 'Not set'),
+                        variables.WEBSITE_GITHUB_APP_CLIENT_ID ||
+                        (secretNames.includes('WEBSITE_GITHUB_APP_CLIENT_ID') ? 'Set as variable' : 'Not set'),
                     name: 'Production App',
                     environment: 'production',
                     homepage_url: variables.WEB_URL || 'Not set',
@@ -212,12 +225,13 @@ async function getExistingAppConfigs() {
                     app_slug: appSlug,
                     source: `GitHub Repository (${repoInfo.owner}/${repoInfo.repo})`,
                     repository: `${repoInfo.owner}/${repoInfo.repo}`,
-                    hasSecrets: secretNames.filter((name) => name.startsWith('GITHUB_')).length > 0,
+                    hasSecrets: secretNames.filter((name) => name.startsWith('WEBSITE_GITHUB_APP_')).length > 0,
                     hasAllCredentials: !!(
-                        (variables.GITHUB_APP_ID || secretNames.includes('GITHUB_APP_ID')) &&
-                        (variables.GITHUB_CLIENT_ID || secretNames.includes('GITHUB_CLIENT_ID')) &&
-                        secretNames.includes('GITHUB_CLIENT_SECRET') &&
-                        secretNames.includes('GITHUB_PRIVATE_KEY')
+                        (variables.WEBSITE_GITHUB_APP_ID || secretNames.includes('WEBSITE_GITHUB_APP_ID')) &&
+                        (variables.WEBSITE_GITHUB_APP_CLIENT_ID ||
+                            secretNames.includes('WEBSITE_GITHUB_APP_CLIENT_ID')) &&
+                        secretNames.includes('WEBSITE_GITHUB_APP_CLIENT_SECRET') &&
+                        secretNames.includes('WEBSITE_GITHUB_APP_PRIVATE_KEY')
                     ),
                 })
             }
@@ -322,26 +336,21 @@ function createServer() {
                 // Get all existing configurations from .env and GitHub
                 const allConfigs = await getExistingAppConfigs()
                 sendJSON(res, allConfigs)
+            } else if (pathname === '/github-status' && method === 'get') {
+                // Check GitHub CLI authentication status
+                const status = await checkGitHubCLIStatus()
+                sendJSON(res, status)
             } else if (pathname === '/github-username' && method === 'get') {
-                // Try to get GitHub username from GitHub CLI
+                // Get GitHub username for local development app naming (optional)
                 try {
-                    // First try to get from GitHub CLI
                     const ghUsername = execSync('gh api user --jq .login', {
                         encoding: 'utf8',
                         stdio: ['ignore', 'pipe', 'ignore'],
                     }).trim()
                     sendJSON(res, { username: ghUsername || null })
                 } catch (error) {
-                    // Fallback to git config
-                    try {
-                        const gitUsername = execSync('git config user.name || git config github.user', {
-                            encoding: 'utf8',
-                            stdio: ['ignore', 'pipe', 'ignore'],
-                        }).trim()
-                        sendJSON(res, { username: gitUsername || null })
-                    } catch (gitError) {
-                        sendJSON(res, { username: null })
-                    }
+                    // GitHub CLI not available or not authenticated - that's fine
+                    sendJSON(res, { username: null })
                 }
             } else if (pathname === '/setup-env' && method === 'post') {
                 const body = await parseBody(req)
@@ -372,7 +381,7 @@ function createServer() {
                 if (installation_id && setup_action === 'install') {
                     try {
                         // Save installation ID to .env file
-                        await updateLocalEnv({ GITHUB_INSTALLATION_ID: installation_id })
+                        updateLocalEnvVar('WEBSITE_GITHUB_APP_INSTALLATION_ID', installation_id)
                         print.success(`Saved installation ID ${installation_id} to .env file`)
                     } catch (error) {
                         print.warning(`Could not save installation ID to .env: ${error.message}`)
@@ -391,7 +400,9 @@ function createServer() {
                         print.warning(`Could not save installation ID to GitHub variables: ${error.message}`)
                     }
 
-                    sendHTML(res, `
+                    sendHTML(
+                        res,
+                        `
                         <!DOCTYPE html>
                         <html>
                         <head>
@@ -419,7 +430,8 @@ function createServer() {
                             </div>
                         </body>
                         </html>
-                    `)
+                    `,
+                    )
                     return
                 }
 
@@ -480,6 +492,29 @@ function updateEnvVar(content, varName, varValue) {
     }
 }
 
+// Update a single environment variable in .env file
+function updateLocalEnvVar(varName, varValue) {
+    print.info(`Updating ${varName} in local .env file...`)
+
+    let envContent = ''
+
+    // Create .env file if it doesn't exist
+    if (!existsSync(config.envFile)) {
+        print.warning('.env file not found, creating from .env.example')
+        if (existsSync(config.envExampleFile)) {
+            envContent = readFileSync(config.envExampleFile, 'utf8')
+        }
+    } else {
+        envContent = readFileSync(config.envFile, 'utf8')
+    }
+
+    // Update the specific variable
+    envContent = updateEnvVar(envContent, varName, varValue)
+
+    writeFileSync(config.envFile, envContent)
+    print.success(`${varName} updated in .env file`)
+}
+
 // Fetch app owner information using GitHub App details
 async function fetchAppOwnerInfo(app) {
     try {
@@ -524,18 +559,18 @@ function updateLocalEnv(app, homepageUrl, userInfo = null) {
     }
 
     // Update GitHub App variables (OAuth credentials for user authentication)
-    envContent = updateEnvVar(envContent, 'GITHUB_APP_ID', app.id.toString())
-    envContent = updateEnvVar(envContent, 'GITHUB_CLIENT_ID', app.client_id)
-    envContent = updateEnvVar(envContent, 'GITHUB_CLIENT_SECRET', app.client_secret)
+    envContent = updateEnvVar(envContent, 'WEBSITE_GITHUB_APP_ID', app.id.toString())
+    envContent = updateEnvVar(envContent, 'WEBSITE_GITHUB_APP_CLIENT_ID', app.client_id)
+    envContent = updateEnvVar(envContent, 'WEBSITE_GITHUB_APP_CLIENT_SECRET', app.client_secret)
     // Private key base64 encoded to prevent newline issues
     const privateKeyBase64 = Buffer.from(app.pem).toString('base64')
-    envContent = updateEnvVar(envContent, 'GITHUB_PRIVATE_KEY', privateKeyBase64)
+    envContent = updateEnvVar(envContent, 'WEBSITE_GITHUB_APP_PRIVATE_KEY', privateKeyBase64)
 
     // Save the app slug if available
     if (app.slug) {
-        envContent = updateEnvVar(envContent, 'GITHUB_APP_SLUG', app.slug)
+        envContent = updateEnvVar(envContent, 'WEBSITE_GITHUB_APP_SLUG', app.slug)
     } else {
-        print.warning('App slug not found, skipping GITHUB_APP_SLUG update')
+        print.warning('App slug not found, skipping WEBSITE_GITHUB_APP_SLUG update')
     }
 
     // Update GITHUB_ORGANIZATION for local development if we have user info
@@ -575,30 +610,55 @@ async function setGitHubVariables(app, homepageUrl, githubRepo) {
     try {
         // Check if GitHub CLI is available
         execSync('gh --version', { stdio: 'ignore' })
-        execSync('gh auth status', { stdio: 'ignore' })
+
+        // Check auth status and permissions
+        try {
+            execSync('gh auth status', { stdio: 'ignore' })
+        } catch (authError) {
+            print.error('GitHub CLI is not authenticated. Run "gh auth login" first.')
+            return
+        }
+
+        // Check if user has access to the repository
+        try {
+            execSync(`gh repo view "${githubRepo}" --json nameWithOwner`, { stdio: 'ignore' })
+        } catch (repoError) {
+            print.error(`Cannot access repository "${githubRepo}". Check your permissions.`)
+            print.info('You need admin access to set variables and secrets.')
+            return
+        }
 
         // Set public variables (non-sensitive)
-        execSync(`echo "${app.id}" | gh variable set GITHUB_APP_ID --repo "${githubRepo}"`, { stdio: 'ignore' })
-        execSync(`echo "${app.client_id}" | gh variable set GITHUB_CLIENT_ID --repo "${githubRepo}"`, {
-            stdio: 'ignore',
+        // Using WEBSITE_GITHUB_APP_ prefix to avoid GitHub's GITHUB_ reserved namespace
+        // These get mapped back to GITHUB_ variables in the CI/CD workflow
+        execSync(`echo "${app.id}" | gh variable set WEBSITE_GITHUB_APP_ID --repo "${githubRepo}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
         })
-        execSync(`echo "${homepageUrl}" | gh variable set WEB_URL --repo "${githubRepo}"`, { stdio: 'ignore' })
+        execSync(`echo "${app.client_id}" | gh variable set WEBSITE_GITHUB_APP_CLIENT_ID --repo "${githubRepo}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
+        })
+        execSync(`echo "${homepageUrl}" | gh variable set WEB_URL --repo "${githubRepo}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
+        })
 
         // Also save the app slug if available
         if (app.slug) {
-            execSync(`echo "${app.slug}" | gh variable set GITHUB_APP_SLUG --repo "${githubRepo}"`, { stdio: 'ignore' })
+            execSync(`echo "${app.slug}" | gh variable set WEBSITE_GITHUB_APP_SLUG --repo "${githubRepo}"`, {
+                stdio: ['pipe', 'pipe', 'pipe'],
+            })
         }
 
         print.success('GitHub variables set successfully')
-        print.info('  GITHUB_APP_ID: Set as variable')
-        print.info('  GITHUB_CLIENT_ID: Set as variable')
+        print.info('  WEBSITE_GITHUB_APP_ID: Set as variable')
+        print.info('  WEBSITE_GITHUB_APP_CLIENT_ID: Set as variable')
         print.info('  WEB_URL: Set as variable')
         if (app.slug) {
-            print.info('  GITHUB_APP_SLUG: Set as variable')
+            print.info('  WEBSITE_GITHUB_APP_SLUG: Set as variable')
         }
     } catch (error) {
         print.error(`Failed to set GitHub variables: ${error.message}`)
         print.warning('You may need to set these manually in your repository settings')
+        print.info(`Repository: https://github.com/${githubRepo}/settings/variables/actions`)
     }
 }
 
@@ -617,15 +677,18 @@ async function setGitHubInstallationId(installationId, githubRepo) {
         execSync('gh auth status', { stdio: 'ignore' })
 
         // Set installation ID as a repository variable
-        execSync(`echo "${installationId}" | gh variable set GITHUB_INSTALLATION_ID --repo "${githubRepo}"`, { 
-            stdio: 'ignore' 
-        })
+        execSync(
+            `echo "${installationId}" | gh variable set WEBSITE_GITHUB_APP_INSTALLATION_ID --repo "${githubRepo}"`,
+            {
+                stdio: 'ignore',
+            },
+        )
 
         print.success('GitHub installation ID variable set successfully')
-        print.info('  GITHUB_INSTALLATION_ID: Set as variable')
+        print.info('  WEBSITE_GITHUB_APP_INSTALLATION_ID: Set as variable')
     } catch (error) {
         print.error(`Failed to set GitHub installation ID variable: ${error.message}`)
-        print.warning('You may need to set GITHUB_INSTALLATION_ID manually in your repository settings')
+        print.warning('You may need to set WEBSITE_GITHUB_APP_INSTALLATION_ID manually in your repository settings')
     }
 }
 
@@ -640,31 +703,51 @@ async function setGitHubSecrets(app, homepageUrl, githubRepo) {
     try {
         // Check if GitHub CLI is available
         execSync('gh --version', { stdio: 'ignore' })
-        execSync('gh auth status', { stdio: 'ignore' })
+
+        // Check auth status and permissions
+        try {
+            execSync('gh auth status', { stdio: 'ignore' })
+        } catch (authError) {
+            print.error('GitHub CLI is not authenticated. Run "gh auth login" first.')
+            return
+        }
+
+        // Check if user has access to the repository
+        try {
+            execSync(`gh repo view "${githubRepo}" --json nameWithOwner`, { stdio: 'ignore' })
+        } catch (repoError) {
+            print.error(`Cannot access repository "${githubRepo}". Check your permissions.`)
+            print.info('You need admin access to set variables and secrets.')
+            return
+        }
 
         // Set the secrets (sensitive data only)
-        execSync(`echo "${app.client_secret}" | gh secret set GITHUB_CLIENT_SECRET --repo "${githubRepo}"`, {
-            stdio: 'ignore',
-        })
+        execSync(
+            `echo "${app.client_secret}" | gh secret set WEBSITE_GITHUB_APP_CLIENT_SECRET --repo "${githubRepo}"`,
+            {
+                stdio: ['pipe', 'pipe', 'pipe'],
+            },
+        )
         // Base64 encode private key to prevent newline issues in GitHub secrets
         const privateKeyBase64 = Buffer.from(app.pem).toString('base64')
-        execSync(`echo "${privateKeyBase64}" | gh secret set GITHUB_PRIVATE_KEY --repo "${githubRepo}"`, {
-            stdio: 'ignore',
+        execSync(`echo "${privateKeyBase64}" | gh secret set WEBSITE_GITHUB_APP_PRIVATE_KEY --repo "${githubRepo}"`, {
+            stdio: ['pipe', 'pipe', 'pipe'],
         })
 
         // Generate and set SESSION_SECRET for production
         const prodSessionSecret = crypto.randomBytes(32).toString('hex')
         execSync(`echo "${prodSessionSecret}" | gh secret set SESSION_SECRET --repo "${githubRepo}"`, {
-            stdio: 'ignore',
+            stdio: ['pipe', 'pipe', 'pipe'],
         })
 
         print.success('GitHub secrets set successfully')
-        print.info('  GITHUB_CLIENT_SECRET: Set as secret')
-        print.info('  GITHUB_PRIVATE_KEY: Set as secret (base64 encoded)')
+        print.info('  WEBSITE_GITHUB_APP_CLIENT_SECRET: Set as secret')
+        print.info('  WEBSITE_GITHUB_APP_PRIVATE_KEY: Set as secret (base64 encoded)')
         print.info('  SESSION_SECRET: Set as secret (generated for production)')
     } catch (error) {
         print.error(`Failed to set GitHub secrets: ${error.message}`)
         print.warning('You may need to set these manually in your repository settings')
+        print.info(`Repository: https://github.com/${githubRepo}/settings/secrets/actions`)
     }
 }
 

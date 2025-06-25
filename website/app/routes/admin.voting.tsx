@@ -1,11 +1,11 @@
 import { AppLink } from '~/components/app-link'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
-export default function AdminContent() {
+export default function AdminVoting() {
     return (
         <Box p="8" maxW="7xl" mx="auto">
             <styled.h1 fontSize="3xl" fontWeight="bold" mb="8" color="white">
-                Content Management
+                Voting
             </styled.h1>
 
             <Box
@@ -22,7 +22,7 @@ export default function AdminContent() {
                 </styled.div>
 
                 <styled.h2 fontSize="2xl" fontWeight="semibold" mb="4" color="gray.900">
-                    Content Management Coming Soon
+                    Voting Coming Soon
                 </styled.h2>
 
                 <Flex justify="center" gap="4" flexWrap="wrap">

@@ -8,7 +8,6 @@ export class OverridableDateTimeProvider implements DateTimeProvider {
     private _system = new SystemDateTimeProvider()
 
     constructor(query: Request['query']) {
-        console.log('Query', query)
         if (query['date']) {
             this._override = DateTime.fromISO(query['date'] as string)
             console.log('Overriding date', this._override.toISO())

@@ -34,6 +34,9 @@ window.addEventListener('load', async () => {
             showTab(tab)
         }
 
+        // Check GitHub CLI status first and show warnings if needed
+        await checkGitHubStatus()
+
         // Show loading state for created apps
         const container = document.getElementById('created-apps')
         container.innerHTML =
@@ -52,42 +55,128 @@ window.addEventListener('load', async () => {
     }
 })
 
+async function checkGitHubStatus() {
+    try {
+        const response = await fetch('/github-status')
+        const status = await response.json()
+
+        // Add status indicators to forms
+        addStatusIndicators(status)
+
+        // If there are issues, show warnings
+        if (!status.authenticated || !status.available) {
+            showGitHubWarnings(status)
+        }
+
+        return status
+    } catch (error) {
+        console.error('Failed to check GitHub status:', error)
+        showGitHubWarnings({
+            available: false,
+            authenticated: false,
+            hasRepoAccess: false,
+            error: 'Failed to check GitHub CLI status',
+        })
+        return null
+    }
+}
+
+function addStatusIndicators(status) {
+    // Add status indicators to both forms
+    const localForm = document.querySelector('#local form')
+    const productionForm = document.querySelector('#production form')
+
+    // Remove existing status indicators
+    document.querySelectorAll('.github-status').forEach((el) => el.remove())
+
+    const localStatus = createStatusIndicator(status, 'local')
+    const productionStatus = createStatusIndicator(status, 'production')
+
+    if (localForm) {
+        localForm.insertBefore(localStatus, localForm.firstChild)
+    }
+
+    if (productionForm) {
+        productionForm.insertBefore(productionStatus, productionForm.firstChild)
+    }
+}
+
+function createStatusIndicator(status, environment) {
+    const div = document.createElement('div')
+    div.className = 'github-status info-box'
+
+    if (!status.available) {
+        div.className += ' warning-box'
+        div.innerHTML = `
+            <p><strong>⚠️ GitHub CLI Required</strong></p>
+            <p>Install GitHub CLI from <a href="https://cli.github.com/" target="_blank">cli.github.com</a></p>
+        `
+        return div
+    }
+
+    if (!status.authenticated) {
+        div.className += ' warning-box'
+        div.innerHTML = `
+            <p><strong>⚠️ Authentication Required</strong></p>
+            <p>Run <code>gh auth login</code> to authenticate with GitHub CLI</p>
+        `
+        return div
+    }
+
+    if (environment === 'production' && !status.hasRepoAccess) {
+        div.className += ' warning-box'
+        div.innerHTML = `
+            <p><strong>⚠️ Limited Access</strong></p>
+            <p>You don't have access to dddwa/dddperth repository. The app will be created but variables/secrets must be set manually.</p>
+        `
+        return div
+    }
+
+    // All good
+    div.innerHTML = `
+        <p><strong>✅ GitHub CLI Ready</strong></p>
+        <p>Authenticated as <strong>${status.username}</strong>${environment === 'production' && status.hasRepoAccess ? ' with repository access' : ''}</p>
+    `
+    return div
+}
+
+function showGitHubWarnings(status) {
+    // Disable form submission if critical issues
+    if (!status.available || !status.authenticated) {
+        const submitButtons = document.querySelectorAll('button[type="submit"]')
+        submitButtons.forEach((button) => {
+            button.disabled = true
+            button.textContent = button.textContent + ' (GitHub CLI Required)'
+        })
+    }
+}
+
 async function populateUserSpecificAppNames() {
     const localInput = document.getElementById('local-app-name')
-    const prodInput = document.getElementById('prod-app-name')
     const localSpinner = document.getElementById('local-app-spinner')
-    const prodSpinner = document.getElementById('prod-app-spinner')
 
     try {
-        // Try to get GitHub username from GitHub CLI via backend
+        // Try to get GitHub username for local development only (optional)
         const response = await fetch('/github-username')
         if (response.ok) {
             const data = await response.json()
             const username = data.username
             if (username) {
                 localInput.value = 'DDD Admin App (Local) - ' + username
-                prodInput.value = 'DDD Admin App (Production) - ' + username
-                localInput.classList.remove('loading-placeholder')
-                prodInput.classList.remove('loading-placeholder')
             } else {
-                // No username found
                 localInput.placeholder = 'DDD Admin App (Local) - Your Name'
-                prodInput.placeholder = 'DDD Admin App (Production) - Your Name'
-                localInput.classList.remove('loading-placeholder')
-                prodInput.classList.remove('loading-placeholder')
             }
+        } else {
+            localInput.placeholder = 'DDD Admin App (Local) - Your Name'
         }
     } catch (error) {
-        // Fallback to prompting user to customize
+        // GitHub CLI not available - use fallback
         localInput.placeholder = 'DDD Admin App (Local) - Your Name'
-        prodInput.placeholder = 'DDD Admin App (Production) - Your Name'
-        localInput.classList.remove('loading-placeholder')
-        prodInput.classList.remove('loading-placeholder')
     }
+    localInput.classList.remove('loading-placeholder')
 
-    // Hide spinners
+    // Hide spinner
     localSpinner.style.display = 'none'
-    prodSpinner.style.display = 'none'
 }
 
 function displayCreatedApps(apps) {
@@ -212,7 +301,6 @@ document.addEventListener('submit', (e) => {
 
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]')
-    const originalText = submitBtn.textContent
     submitBtn.textContent = 'Creating...'
     submitBtn.disabled = true
 

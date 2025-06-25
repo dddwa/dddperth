@@ -195,23 +195,23 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
                 value: eventsAirEventId
             }
             {
-                name: 'GITHUB_APP_ID'
+                name: 'WEBSITE_GITHUB_APP_ID'
                 value: gitHubAppId
             }
             {
-                name: 'GITHUB_CLIENT_ID'
+                name: 'WEBSITE_GITHUB_APP_CLIENT_ID'
                 secretRef: 'github-client-id'
             }
             {
-                name: 'GITHUB_CLIENT_SECRET'
+                name: 'WEBSITE_GITHUB_APP_CLIENT_SECRET'
                 secretRef: 'github-client-secret'
             }
             {
-                name: 'GITHUB_PRIVATE_KEY'
+                name: 'WEBSITE_GITHUB_APP_PRIVATE_KEY'
                 secretRef: 'github-private-key'
             }
             {
-                name: 'GITHUB_INSTALLATION_ID'
+                name: 'WEBSITE_GITHUB_APP_INSTALLATION_ID'
                 value: gitHubInstallationId
             }
           ]

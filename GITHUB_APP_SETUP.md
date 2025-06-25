@@ -30,6 +30,7 @@ A new script `scripts/setup-github-app.mjs` has been created that:
 ### Prerequisites
 
 **GitHub CLI Authentication Required:**
+
 ```bash
 # Install GitHub CLI if not already installed
 # macOS: brew install gh
@@ -45,33 +46,37 @@ gh auth login
 **⚠️ Important: Each developer should create their own personal GitHub App**
 
 1. **Run the setup server:**
-   ```bash
-   node scripts/setup-github-app.mjs
-   ```
+
+    ```bash
+    node scripts/setup-github-app.mjs
+    ```
 
 2. **Open your browser** to `http://localhost:3333`
 
 3. **Click "Local Development" tab** and create a GitHub App
-   - **Customize the app name** to include your name/handle (e.g., "DDD Admin App (Local) - YourName")
-   - This prevents conflicts with other developers' apps
+
+    - **Customize the app name** to include your name/handle (e.g., "DDD Admin App (Local) - YourName")
+    - This prevents conflicts with other developers' apps
 
 4. **Install the app** to your personal account/organization
-   - Click the "Install App" link after creation
-   - Select the repositories you need access to
+
+    - Click the "Install App" link after creation
+    - Select the repositories you need access to
 
 5. **Add your GitHub username** to admin handles in `website/app/lib/config.server.ts`
 
 6. **Start the dev server:**
-   ```bash
-   pnpm start
-   ```
+
+    ```bash
+    pnpm start
+    ```
 
 7. **Test login** at `http://localhost:3800/auth/login`
 
 8. **Optional - Enable content loading from your fork:**
-   - Set `USE_GITHUB_CONTENT=true` in your `.env` file
-   - The setup automatically configured `GITHUB_ORGANIZATION` to your username
-   - Blog posts and content will now load from your GitHub fork instead of local files
+    - Set `USE_GITHUB_CONTENT=true` in your `.env` file
+    - The setup automatically configured `GITHUB_ORGANIZATION` to your username
+    - Blog posts and content will now load from your GitHub fork instead of local files
 
 ### For Production
 
@@ -99,7 +104,7 @@ gh auth login
 The OAuth authentication flow remains exactly the same:
 
 1. User clicks "Sign in with GitHub"
-2. Redirects to GitHub OAuth authorization  
+2. Redirects to GitHub OAuth authorization
 3. User authorizes the app
 4. GitHub redirects back with code
 5. App exchanges code for access token
@@ -110,18 +115,20 @@ The OAuth authentication flow remains exactly the same:
 ## Environment Variables
 
 ### Local Development (.env file)
+
 ```env
-GITHUB_APP_ID=123456
-GITHUB_CLIENT_ID=Iv1.abc123def456
-GITHUB_CLIENT_SECRET=ghp_abc123def456...
-GITHUB_PRIVATE_KEY=LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ==
-GITHUB_ORGANIZATION=your-username
+WEBSITE_GITHUB_APP_ID=123456
+WEBSITE_GITHUB_APP_CLIENT_ID=Iv1.abc123def456
+WEBSITE_GITHUB_APP_CLIENT_SECRET=ghp_abc123def456...
+WEBSITE_GITHUB_APP_PRIVATE_KEY=LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ==
+WEBSITE_GITHUB_APP_ORGANIZATION=your-username
 USE_GITHUB_CONTENT=false
 WEB_URL=http://localhost:3800
 SESSION_SECRET=randomly-generated-secret
 ```
 
-**Notes:** 
+**Notes:**
+
 - `GITHUB_PRIVATE_KEY` is automatically base64 encoded to prevent newline issues
 - `GITHUB_ORGANIZATION` is automatically set to your username for fork development
 - Set `USE_GITHUB_CONTENT=true` to load blog posts and content from your GitHub fork
@@ -130,6 +137,7 @@ SESSION_SECRET=randomly-generated-secret
 - **No GITHUB_TOKEN required** - the setup script uses GitHub CLI for secure API access
 
 ### Production (GitHub Repository Secrets)
+
 Same variables but stored as repository secrets for secure CI/CD deployment. The private key is automatically base64 encoded for both local and production environments.
 
 ## Environment Variable Configuration
@@ -146,26 +154,30 @@ The setup script automatically configures all required environment variables:
 ### Common Issues
 
 **"GitHub CLI not available or not authenticated"**
+
 - Install GitHub CLI: `brew install gh` (macOS) or visit https://cli.github.com
 - Authenticate: `gh auth login`
 - Verify: `gh auth status`
 
 **"App permissions not working"**
+
 - Ensure "Request user authorization (OAuth) during installation" is enabled
 - Check OAuth scope includes `user:email`
 
 **"Access denied" during login**
+
 - Add your GitHub username to `ADMIN_HANDLES` in config
 - Verify app has correct permissions
 
 **"Authentication failed"**
+
 - Check client ID and secret are correctly set
 - Ensure callback URL matches your configuration
 
 ### Getting Help
 
 1. **Check the web interface** - Shows created apps and next steps
-2. **Review the logs** - Server shows detailed error messages  
+2. **Review the logs** - Server shows detailed error messages
 3. **Verify GitHub App settings** - Use the "Open App Settings" link
 4. **Test OAuth flow manually** - Visit `/auth/login` to debug
 
@@ -192,7 +204,7 @@ Beyond user authentication, GitHub Apps can also provide:
 ## Next Steps
 
 1. **Each developer sets up their own local GitHub App** using the new script
-2. **Team lead configures production deployment** with production GitHub App credentials  
+2. **Team lead configures production deployment** with production GitHub App credentials
 3. **Add team members** to admin handles as needed
 4. **Share the setup instructions** with new team members
 5. **Consider additional GitHub App features** like webhooks or installation tokens
@@ -215,15 +227,15 @@ For new team members:
 
 ### GitHub App Benefits
 
-| Feature | Benefit |
-|---------|---------|
-| Permissions | Granular, repository-level control |
-| Rate Limits | 5,000 requests/hour (5x higher) |
-| Installation | Organization-wide deployment |
-| Webhooks | Built-in event handling |
-| Security | Better audit trails and isolation |
-| Future-proof | GitHub's recommended approach |
-| Authentication | Uses GitHub CLI (no PAT required) |
+| Feature        | Benefit                            |
+| -------------- | ---------------------------------- |
+| Permissions    | Granular, repository-level control |
+| Rate Limits    | 5,000 requests/hour (5x higher)    |
+| Installation   | Organization-wide deployment       |
+| Webhooks       | Built-in event handling            |
+| Security       | Better audit trails and isolation  |
+| Future-proof   | GitHub's recommended approach      |
+| Authentication | Uses GitHub CLI (no PAT required)  |
 
 ### Files Modified
 

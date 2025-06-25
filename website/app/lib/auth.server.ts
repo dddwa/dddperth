@@ -2,7 +2,7 @@ import { Authenticator } from 'remix-auth'
 import { GitHubStrategy } from 'remix-auth-github'
 import { redirect } from 'react-router'
 import { sessionStorage } from './session.server'
-import { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, WEB_URL, isAdminHandle } from './config.server'
+import { WEBSITE_GITHUB_APP_CLIENT_ID, WEBSITE_GITHUB_APP_CLIENT_SECRET, WEB_URL, isAdminHandle } from './config.server'
 
 // Define the User type
 export interface User {
@@ -19,8 +19,8 @@ export const authenticator = new Authenticator<User>()
 // GitHub OAuth configuration (works with GitHub Apps too)
 const gitHubStrategy = new GitHubStrategy(
   {
-    clientId: GITHUB_CLIENT_ID || '',
-    clientSecret: GITHUB_CLIENT_SECRET || '',
+    clientId: WEBSITE_GITHUB_APP_CLIENT_ID || '',
+    clientSecret: WEBSITE_GITHUB_APP_CLIENT_SECRET || '',
     redirectURI: `${WEB_URL}/auth/github/callback`,
     scopes: ['user:email'],
   },

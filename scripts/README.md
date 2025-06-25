@@ -118,10 +118,10 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 
 #### Local (`.env` file)
 
-- `GITHUB_APP_ID` - GitHub App identifier
-- `GITHUB_CLIENT_ID` - OAuth client ID (for user authentication)
-- `GITHUB_CLIENT_SECRET` - OAuth client secret (for user authentication)
-- `GITHUB_PRIVATE_KEY` - App private key (base64 encoded to prevent newline issues)
+- `WEBSITE_GITHUB_APP_ID` - GitHub App identifier
+- `WEBSITE_GITHUB_APP_CLIENT_ID` - OAuth client ID (for user authentication)
+- `WEBSITE_GITHUB_APP_CLIENT_SECRET` - OAuth client secret (for user authentication)
+- `WEBSITE_GITHUB_APP_PRIVATE_KEY` - App private key (base64 encoded to prevent newline issues)
 - `GITHUB_ORGANIZATION` - Set to your username for local fork development
 - `USE_GITHUB_CONTENT` - Set to `true` to load content from GitHub (defaults to `false`)
 - `WEB_URL` - Your website URL
@@ -214,7 +214,7 @@ const privateKey = getGitHubPrivateKey() // Automatically decodes from base64
 if (privateKey) {
     // Use with @octokit/app or similar for GitHub App API calls
     const app = new App({
-        appId: GITHUB_APP_ID,
+        appId: WEBSITE_GITHUB_APP_ID,
         privateKey,
     })
 }

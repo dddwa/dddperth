@@ -1,8 +1,10 @@
 import type { LoaderFunctionArgs } from 'react-router'
-import { Outlet, useLoaderData, NavLink, Form } from 'react-router'
+import { Outlet, useLoaderData, Form } from 'react-router'
 import { requireAdmin, type User } from '~/lib/auth.server'
 import { Box, Flex } from '~/styled-system/jsx'
 import { styled } from '~/styled-system/jsx'
+import { AppNavLink } from '~/components/app-nav-link'
+import { AppLink } from '~/components/app-link'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireAdmin(request)
@@ -15,60 +17,46 @@ export default function AdminLayout() {
   return (
     <Box minH="100vh" bg="gray.50">
       <styled.nav
-        bg="#0E0E43"
+        bg="accent.7"
         color="white"
         py="4"
         px="8"
+        borderBottom="2px solid accent.6"
       >
         <Flex justify="space-between" align="center">
           <Flex align="center" gap="8">
-            <styled.h1 m="0" fontSize="xl" fontWeight="bold">DDD Admin</styled.h1>
+            <AppLink to="/" color="white" textDecoration="none">
+              <styled.h1 m="0" fontSize="xl" fontWeight="bold">
+                DDD Admin
+              </styled.h1>
+            </AppLink>
             <Flex gap="4">
-              <styled.div>
-                <NavLink
-                  to="/admin"
-                  style={({ isActive }) => ({
-                    color: isActive ? '#fbbf24' : 'white',
-                    textDecoration: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    backgroundColor: isActive ? 'rgba(251, 191, 36, 0.1)' : 'transparent'
-                  })}
-                >
-                  Dashboard
-                </NavLink>
-              </styled.div>
-              <styled.div>
-                <NavLink
-                  to="/admin/content"
-                  style={({ isActive }) => ({
-                    color: isActive ? '#fbbf24' : 'white',
-                    textDecoration: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    backgroundColor: isActive ? 'rgba(251, 191, 36, 0.1)' : 'transparent'
-                  })}
-                >
-                  Content
-                </NavLink>
-              </styled.div>
-              <styled.div>
-                <NavLink
-                  to="/admin/events"
-                  style={({ isActive }) => ({
-                    color: isActive ? '#fbbf24' : 'white',
-                    textDecoration: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    backgroundColor: isActive ? 'rgba(251, 191, 36, 0.1)' : 'transparent'
-                  })}
-                >
-                  Events
-                </NavLink>
-              </styled.div>
+              <AppNavLink to="/admin/dashboard" variant="admin">
+                Dashboard
+              </AppNavLink>
+              <AppNavLink to="/admin/voting" variant="admin">
+                Voting
+              </AppNavLink>
+              <AppNavLink to="/admin/content" variant="admin">
+                Content
+              </AppNavLink>
             </Flex>
           </Flex>
           <Flex align="center" gap="4">
+            <AppLink
+              to="/"
+              color="white"
+              textDecoration="none"
+              py="1.5"
+              px="3"
+              borderRadius="md"
+              border="1px solid white/30"
+              fontSize="sm"
+              transition="colors"
+              _hover={{ bg: "white/10" }}
+            >
+              ← Back to Site
+            </AppLink>
             <styled.img
               src={user.avatar_url}
               alt={user.login}

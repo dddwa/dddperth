@@ -1,103 +1,58 @@
 import { App } from '@octokit/app'
-import { throttling } from '@octokit/plugin-throttling'
-import { Octokit as createOctokit } from '@octokit/rest'
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
+import { Octokit } from '@octokit/rest'
 import nodePath from 'path'
-import { 
-    GITHUB_ORGANIZATION, 
-    GITHUB_REF, 
-    GITHUB_REPO, 
-    GITHUB_TOKEN, 
-    GITHUB_APP_ID,
-    getGitHubPrivateKey 
+import {
+    getGitHubPrivateKey,
+    GITHUB_ORGANIZATION,
+    GITHUB_REF,
+    GITHUB_REPO,
+    WEBSITE_GITHUB_APP_ID,
+    WEBSITE_GITHUB_APP_INSTALLATION_ID,
 } from './config.server'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
-const Octokit = createOctokit.plugin(throttling)
 type GitHubFile = { path: string; content: string }
-type GitHubClient = InstanceType<typeof Octokit>
 
-// Create GitHub client with App or PAT authentication
-async function createGitHubClient(): Promise<GitHubClient> {
-    const privateKey = getGitHubPrivateKey()
-    
-    // Prefer GitHub App authentication if available
-    if (GITHUB_APP_ID && privateKey) {
+import { trace } from '@opentelemetry/api'
+import { recordException } from './record-exception'
+
+const tracer = trace.getTracer('github.server')
+
+const MyOctokit = Octokit.plugin(restEndpointMethods)
+
+async function createGitHubClient() {
+    return await tracer.startActiveSpan('createGitHubClient', async (span) => {
         try {
             console.log('Using GitHub App authentication')
+            const privateKey = getGitHubPrivateKey()
             const app = new App({
-                appId: GITHUB_APP_ID,
+                appId: WEBSITE_GITHUB_APP_ID,
                 privateKey,
+                Octokit: MyOctokit,
             })
-            
-            // Get the installation for the organization
-            const installations = await app.octokit.request('GET /app/installations')
-            const installation = installations.data.find(
-                (inst: any) => inst.account?.login === GITHUB_ORGANIZATION
-            )
-            
-            if (!installation) {
-                console.warn(
-                    `GitHub App is not installed for organization "${GITHUB_ORGANIZATION}". ` +
-                    `Falling back to PAT authentication if available.`
-                )
-                if (!GITHUB_TOKEN) {
-                    throw new Error(
-                        `GitHub App is not installed for organization "${GITHUB_ORGANIZATION}". ` +
-                        `Please install the app or set GITHUB_TOKEN as fallback.`
-                    )
-                }
-            } else {
-                // Get installation access token
-                const installationOctokit = await app.getInstallationOctokit(installation.id)
-                console.log('GitHub App authentication successful')
-                return installationOctokit as GitHubClient
-            }
+
+            console.log(`Using stored installation ID: ${WEBSITE_GITHUB_APP_INSTALLATION_ID}`)
+            const installationId = parseInt(WEBSITE_GITHUB_APP_INSTALLATION_ID)
+
+            // Get installation access token
+            const installationOctokit = await app.getInstallationOctokit(installationId)
+            console.log('GitHub App authentication successful')
+            return installationOctokit
         } catch (error) {
-            console.warn(`GitHub App authentication failed: ${error.message}`)
-            console.warn('Falling back to PAT authentication if available')
-            
-            if (!GITHUB_TOKEN) {
-                throw new Error(
-                    `GitHub App authentication failed and no GITHUB_TOKEN fallback available. ` +
-                    `Error: ${error.message}`
-                )
-            }
+            recordException(error, { span })
+            throw error
+        } finally {
+            span.end()
         }
-    }
-    
-    // Fallback to PAT authentication
-    if (GITHUB_TOKEN) {
-        console.log('Using Personal Access Token authentication')
-        return new Octokit({
-            auth: GITHUB_TOKEN,
-            throttle: {
-                onRateLimit: (retryAfter, options) => {
-                    const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-                    const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-                    console.warn(`Request quota exhausted for request ${method} ${url}. Retrying after ${retryAfter} seconds.`)
-                    return true
-                },
-                onSecondaryRateLimit: (retryAfter, options) => {
-                    const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-                    const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-                    console.warn(`Abuse detected for request ${method} ${url}`)
-                },
-            },
-        })
-    }
-    
-    throw new Error(
-        'No GitHub authentication configured. Please set either:\n' +
-        '- GITHUB_APP_ID and GITHUB_PRIVATE_KEY for GitHub App authentication, or\n' +
-        '- GITHUB_TOKEN for Personal Access Token authentication'
-    )
+    })
 }
 
 // Cache the client promise to avoid recreating it
-let octokitPromise: Promise<GitHubClient> | null = null
+let octokitPromise: ReturnType<typeof createGitHubClient> | null = null
 
-async function getOctokit(): Promise<GitHubClient> {
+async function getOctokit() {
     if (!octokitPromise) {
         octokitPromise = createGitHubClient().catch((error) => {
             // Clear the cached promise on error so it can be retried
@@ -105,7 +60,14 @@ async function getOctokit(): Promise<GitHubClient> {
             throw error
         })
     }
-    return octokitPromise
+    const client = await octokitPromise
+
+    // Debug: Check if client has expected properties
+    if (!client) {
+        throw new Error('GitHub client is null or undefined')
+    }
+
+    return client
 }
 
 async function downloadFirstMdxFile(list: Array<{ name: string; type: string; path: string; sha: string }>) {
@@ -127,39 +89,52 @@ async function downloadFirstMdxFile(list: Array<{ name: string; type: string; pa
 async function downloadMdxFileOrDirectory(
     relativeMdxFileOrDirectory: string,
 ): Promise<{ entry: string; files: Array<GitHubFile> }> {
-    const mdxFileOrDirectory = `${relativeMdxFileOrDirectory}`
+    return await tracer.startActiveSpan('downloadMdxFileOrDirectory', async (span) => {
+        span.setAttribute('relativeMdxFileOrDirectory', relativeMdxFileOrDirectory)
+        try {
+            const mdxFileOrDirectory = `${relativeMdxFileOrDirectory}`
 
-    const parentDir = nodePath.dirname(mdxFileOrDirectory)
-    const dirList = await downloadDirList(parentDir)
+            const parentDir = nodePath.dirname(mdxFileOrDirectory)
+            span.setAttribute('parentDir', parentDir)
+            const dirList = await downloadDirList(parentDir)
 
-    const basename = nodePath.basename(mdxFileOrDirectory)
-    const mdxFileWithoutExt = nodePath.parse(mdxFileOrDirectory).name
-    const potentials = dirList.filter(({ name }) => name.startsWith(basename))
-    const exactMatch = potentials.find(({ name }) => nodePath.parse(name).name === mdxFileWithoutExt)
-    const dirPotential = potentials.find(({ type }) => type === 'dir')
+            const basename = nodePath.basename(mdxFileOrDirectory)
+            const mdxFileWithoutExt = nodePath.parse(mdxFileOrDirectory).name
+            span.setAttribute('basename', basename)
+            const potentials = dirList.filter(({ name }) => name.startsWith(basename))
+            const exactMatch = potentials.find(({ name }) => nodePath.parse(name).name === mdxFileWithoutExt)
+            const dirPotential = potentials.find(({ type }) => type === 'dir')
 
-    const content = await downloadFirstMdxFile(exactMatch ? [exactMatch] : potentials)
-    let files: Array<GitHubFile> = []
-    let entry = mdxFileOrDirectory
-    if (content) {
-        // technically you can get the blog post by adding .mdx at the end... Weird
-        // but may as well handle it since that's easy...
-        entry = mdxFileOrDirectory.endsWith('.mdx') ? mdxFileOrDirectory : `${mdxFileOrDirectory}.mdx`
-        // /content/about.mdx => entry is about.mdx, but compileMdx needs
-        // the entry to be called "/content/index.mdx" so we'll set it to that
-        // because this is the entry for this path
-        files = [
-            {
-                path: safePath(nodePath.join(mdxFileOrDirectory, 'index.mdx')),
-                content,
-            },
-        ]
-    } else if (dirPotential) {
-        entry = dirPotential.path
-        files = await downloadDirectory(mdxFileOrDirectory)
-    }
+            const content = await downloadFirstMdxFile(exactMatch ? [exactMatch] : potentials)
+            let files: Array<GitHubFile> = []
+            let entry = mdxFileOrDirectory
+            if (content) {
+                // technically you can get the blog post by adding .mdx at the end... Weird
+                // but may as well handle it since that's easy...
+                entry = mdxFileOrDirectory.endsWith('.mdx') ? mdxFileOrDirectory : `${mdxFileOrDirectory}.mdx`
+                // /content/about.mdx => entry is about.mdx, but compileMdx needs
+                // the entry to be called "/content/index.mdx" so we'll set it to that
+                // because this is the entry for this path
+                files = [
+                    {
+                        path: safePath(nodePath.join(mdxFileOrDirectory, 'index.mdx')),
+                        content,
+                    },
+                ]
+            } else if (dirPotential) {
+                entry = dirPotential.path
+                files = await downloadDirectory(mdxFileOrDirectory)
+            }
 
-    return { entry, files }
+            span.setAttribute('entry', entry)
+            return { entry, files }
+        } catch (error) {
+            recordException(error, { span })
+            throw error
+        } finally {
+            span.end()
+        }
+    })
 }
 
 /**
@@ -203,7 +178,7 @@ async function downloadFileBySha(sha: string) {
         repo: GITHUB_REPO,
         file_sha: sha,
     })
-    //                                lol
+
     const encoding = data.encoding as Parameters<typeof Buffer.from>['1']
     return Buffer.from(data.content, encoding).toString()
 }

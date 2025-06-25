@@ -66,7 +66,7 @@ export function AdminStatus({ className = '', showAvatar = true, showLoginButton
         <Flex gap="2">
           <styled.div color="#0E0E43">
             <Link
-              to="/admin"
+              to="/dashboard"
               style={{
                 color: 'inherit',
                 textDecoration: 'none',
