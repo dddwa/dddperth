@@ -36,9 +36,7 @@ async function createGitHubClient() {
             console.log(`Using stored installation ID: ${WEBSITE_GITHUB_APP_INSTALLATION_ID}`)
             const installationId = parseInt(WEBSITE_GITHUB_APP_INSTALLATION_ID)
 
-            // Get installation access token
             const installationOctokit = await app.getInstallationOctokit(installationId)
-            console.log('GitHub App authentication successful')
             return installationOctokit
         } catch (error) {
             recordException(error, { span })

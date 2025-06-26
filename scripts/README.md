@@ -22,25 +22,6 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 - Create GitHub Apps for production
 - View created apps and their configuration
 
-#### Benefits of GitHub Apps
-
-- Granular, repository-level permissions
-- Better security model and audit trails
-- Can act on behalf of the app itself
-- Official GitHub recommendation for new integrations
-- **Works with your existing OAuth authentication flow**
-- Higher rate limits (5,000 vs 1,000 requests/hour)
-
-#### Features
-
-- **Web-based setup**: Clean UI for creating apps
-- **Manifest flow**: Uses GitHub's official app creation process
-- **Automatic configuration**: Updates `.env` files and GitHub secrets
-- **Environment separation**: Separate apps for local and production
-- **Visual feedback**: See created apps and their configuration
-- **Base64 private keys**: Prevents newline issues in environment variables
-- **Fork-aware setup**: Automatically configures local development to point to your fork
-
 ## Recommended Workflow
 
 ### For Local Development

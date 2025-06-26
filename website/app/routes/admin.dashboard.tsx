@@ -1,5 +1,11 @@
 import { AppLink } from '~/components/app-link'
+import { requireAdmin } from '~/lib/auth.server'
 import { Box, Grid, styled } from '~/styled-system/jsx'
+import type { Route } from './+types/admin.dashboard'
+
+export async function loader({ request }: Route.LoaderArgs) {
+    await requireAdmin(request)
+}
 
 export default function AdminDashboard() {
     return (

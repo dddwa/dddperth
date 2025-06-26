@@ -1,5 +1,13 @@
 import { z } from 'zod'
 
+// Admin handles, should be lowercase
+export const ADMIN_HANDLES = [
+    'jakeginnivan',
+    'vickiturns',
+    // Add more admin GitHub handles here
+    // Example: 'john-doe', 'jane-smith'
+] as const
+
 export const {
     WEB_URL,
     SESSION_SECRET,
@@ -43,10 +51,18 @@ export const {
         GITHUB_ORGANIZATION: z.string(),
         GITHUB_REPO: z.string(),
         WEBSITE_GITHUB_APP_ID: z.string().min(1, 'WEBSITE_GITHUB_APP_ID is required for GitHub App authentication'),
-        WEBSITE_GITHUB_APP_CLIENT_ID: z.string().min(1, 'WEBSITE_GITHUB_APP_CLIENT_ID is required for GitHub App authentication'),
-        WEBSITE_GITHUB_APP_CLIENT_SECRET: z.string().min(1, 'WEBSITE_GITHUB_APP_CLIENT_SECRET is required for GitHub App authentication'),
-        WEBSITE_GITHUB_APP_PRIVATE_KEY: z.string().min(1, 'WEBSITE_GITHUB_APP_PRIVATE_KEY is required for GitHub App authentication'),
-        WEBSITE_GITHUB_APP_INSTALLATION_ID: z.string().min(1, 'WEBSITE_GITHUB_APP_INSTALLATION_ID is required for GitHub App authentication'),
+        WEBSITE_GITHUB_APP_CLIENT_ID: z
+            .string()
+            .min(1, 'WEBSITE_GITHUB_APP_CLIENT_ID is required for GitHub App authentication'),
+        WEBSITE_GITHUB_APP_CLIENT_SECRET: z
+            .string()
+            .min(1, 'WEBSITE_GITHUB_APP_CLIENT_SECRET is required for GitHub App authentication'),
+        WEBSITE_GITHUB_APP_PRIVATE_KEY: z
+            .string()
+            .min(1, 'WEBSITE_GITHUB_APP_PRIVATE_KEY is required for GitHub App authentication'),
+        WEBSITE_GITHUB_APP_INSTALLATION_ID: z
+            .string()
+            .min(1, 'WEBSITE_GITHUB_APP_INSTALLATION_ID is required for GitHub App authentication'),
         TITO_SECURITY_TOKEN: z.string().optional(),
         EVENTS_AIR_CLIENT_ID: z.string().optional(),
         EVENTS_AIR_CLIENT_SECRET: z.string().optional(),
@@ -54,13 +70,6 @@ export const {
         EVENTS_AIR_EVENT_ID: z.string().optional(),
     })
     .parse(process.env)
-
-// Admin configuration
-export const ADMIN_HANDLES = [
-    'jakeginnivan',
-    // Add more admin GitHub handles here
-    // Example: 'john-doe', 'jane-smith'
-] as const
 
 export type AdminHandle = (typeof ADMIN_HANDLES)[number]
 
@@ -75,18 +84,8 @@ export function getGitHubPrivateKey(): string {
         return Buffer.from(WEBSITE_GITHUB_APP_PRIVATE_KEY, 'base64').toString('utf8')
     } catch (error) {
         console.error('Failed to decode GitHub private key:', error)
-        throw new Error('Failed to decode GitHub private key. Ensure WEBSITE_GITHUB_APP_PRIVATE_KEY is a valid base64 encoded string.')
+        throw new Error(
+            'Failed to decode GitHub private key. Ensure WEBSITE_GITHUB_APP_PRIVATE_KEY is a valid base64 encoded string.',
+        )
     }
 }
-
-// Usage example for GitHub App operations:
-// import { getGitHubPrivateKey } from '~/lib/config.server'
-//
-// const privateKey = getGitHubPrivateKey()
-// if (privateKey) {
-//   // Use with @octokit/app or similar for GitHub App API calls
-//   const app = new App({
-//     appId: WEBSITE_GITHUB_APP_ID,
-//     privateKey,
-//   })
-// }

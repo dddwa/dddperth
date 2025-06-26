@@ -237,17 +237,4 @@ For new team members:
 | Future-proof   | GitHub's recommended approach      |
 | Authentication | Uses GitHub CLI (no PAT required)  |
 
-### Files Modified
-
-- `scripts/setup-github-app.mjs` - GitHub App setup script with base64 private key encoding
-- `scripts/README.md` - Complete setup documentation
-- `website/.env.example` - GitHub App variables with encoding notes
-- `website/app/lib/config.server.ts` - GitHub App config support and private key decoder
-
-### Files Unchanged
-
-- `website/app/lib/auth.server.ts` - OAuth flow unchanged
-- `website/app/routes/auth.*.tsx` - Authentication routes unchanged
-- All other application code - No changes needed
-
 GitHub Apps provide OAuth credentials that work seamlessly with your existing authentication code, giving you all the benefits of modern GitHub Apps without requiring any code changes.

@@ -67,19 +67,19 @@
             "value": "${TITO_SECURITY_TOKEN}"
         },
         "gitHubAppId": {
-            "value": "${GITHUB_APP_ID}"
+            "value": "${WEBSITE_GITHUB_APP_ID}"
         },
-        "gitHubClientId": {
-            "value": "${GITHUB_CLIENT_ID}"
+        "gitHubAppClientId": {
+            "value": "${WEBSITE_GITHUB_APP_CLIENT_ID}"
         },
-        "gitHubClientSecret": {
-            "value": "${GITHUB_CLIENT_SECRET}"
+        "gitHubAppClientSecret": {
+            "value": "${WEBSITE_GITHUB_APP_CLIENT_SECRET}"
         },
-        "gitHubPrivateKey": {
-            "value": "${GITHUB_PRIVATE_KEY}"
+        "gitHubAppPrivateKey": {
+            "value": "${WEBSITE_GITHUB_APP_PRIVATE_KEY}"
         },
-        "gitHubInstallationId": {
-            "value": "${GITHUB_INSTALLATION_ID}"
+        "gitHubAppInstallationId": {
+            "value": "${WEBSITE_GITHUB_APP_INSTALLATION_ID}"
         }
     }
 }

@@ -1,5 +1,4 @@
 import { trace } from '@opentelemetry/api'
-import type { ActionFunction } from 'react-router'
 import { data } from 'react-router'
 import { conferenceConfig } from '~/config/conference-config'
 import type { ConferenceYear, Year } from '~/lib/config-types'
@@ -17,6 +16,7 @@ import {
 } from '~/lib/events-air.server'
 import { resolveError } from '~/lib/resolve-error'
 import { TitoPayloadSchema } from '~/lib/tito.server'
+import type { Route } from './+types/tito-webhook'
 
 const ticketTypeMapping = {
     'general-attendee': registrationTypes.Attendee,
@@ -29,7 +29,7 @@ const ticketTypeMapping = {
     sponsor: registrationTypes.Sponsor,
 } as const
 
-export const action: ActionFunction = async ({ request, context }) => {
+export async function action({ request, context }: Route.ActionArgs) {
     const configForYear = (conferenceConfig.conferences as unknown as Record<Year, ConferenceYear | undefined>)[
         context.conferenceState.conference.year
     ]
@@ -72,7 +72,7 @@ export const action: ActionFunction = async ({ request, context }) => {
             // There will be a race condition here if someone buys both tickets, to keep things simple and avoid a queue
             // we will just sleep for 5 seconds to give the other webhook time to process. It should be fine
             // as the ticket assignment is second, so really should never cause a problem
-            await new Promise((resolve) => setTimeout(resolve, 5_00))
+            await new Promise((resolve) => setTimeout(resolve, 500))
             const existingTicketHolder = await checkIfContactExistsByExternalIdentifier(
                 accessToken,
                 eventId,
@@ -113,7 +113,7 @@ export const action: ActionFunction = async ({ request, context }) => {
             ) {
                 // Randomly wait between 0-5 seconds to hopefully mitigate the race conditions around double
                 // events being sent from Tito
-                await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 5_000)))
+                await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 5000)))
 
                 const contactId = await ensureContactExistsByExternalId(
                     accessToken,
@@ -156,7 +156,6 @@ export const action: ActionFunction = async ({ request, context }) => {
             //         eventId,
             //         externalIdentifier,
             //     )
-
             //     // Remove externalIdentifier from the existing ticket holder
             //     if (existingTicketHolder) {
             //         await updateEventsAirContact(
@@ -166,7 +165,6 @@ export const action: ActionFunction = async ({ request, context }) => {
             //         )
             //         // TODO Remove the current ticket holder's registration
             //     }
-
             //     const contactId = await ensureContactExistsByEmail(accessToken, email, eventId, contactData)
             //     await ensureRegistrationExists(release_slug, accessToken, contactId, eventId)
             // }

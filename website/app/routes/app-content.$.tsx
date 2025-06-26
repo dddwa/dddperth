@@ -1,10 +1,10 @@
-import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router'
-
 import { trace } from '@opentelemetry/api'
+import { data, type HeadersFunction } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '../lib/mdx.server'
+import type { Route } from './+types/app-content.$'
 
-export async function loader({ params, request, context }: LoaderFunctionArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
     const contentSlug = params['*']
     if (!contentSlug) {
         throw new Error('Expected contentSlug param')

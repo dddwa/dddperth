@@ -12,13 +12,12 @@ param gitHubOrganization string
 param gitHubRepo string
 // GitHub App configuration
 param gitHubAppId string
+param gitHubAppClientId string
+param gitHubAppInstallationId string
 @secure()
-param gitHubClientId string
+param gitHubAppClientSecret string
 @secure()
-param gitHubClientSecret string
-@secure()
-param gitHubPrivateKey string
-param gitHubInstallationId string
+param gitHubAppPrivateKey string
 @secure()
 param googleFormsApiKey string
 @secure()
@@ -123,16 +122,12 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             value: titoSecurityToken
         }
         {
-            name: 'github-client-id'
-            value: gitHubClientId
+            name: 'github-app-client-secret'
+            value: gitHubAppClientSecret
         }
         {
-            name: 'github-client-secret'
-            value: gitHubClientSecret
-        }
-        {
-            name: 'github-private-key'
-            value: gitHubPrivateKey
+            name: 'github-app-private-key'
+            value: gitHubAppPrivateKey
         }
       ]
     }
@@ -200,19 +195,19 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             }
             {
                 name: 'WEBSITE_GITHUB_APP_CLIENT_ID'
-                secretRef: 'github-client-id'
+                value: gitHubAppClientId
             }
             {
                 name: 'WEBSITE_GITHUB_APP_CLIENT_SECRET'
-                secretRef: 'github-client-secret'
+                secretRef: 'github-app-client-secret'
             }
             {
                 name: 'WEBSITE_GITHUB_APP_PRIVATE_KEY'
-                secretRef: 'github-private-key'
+                secretRef: 'github-app-private-key'
             }
             {
                 name: 'WEBSITE_GITHUB_APP_INSTALLATION_ID'
-                value: gitHubInstallationId
+                value: gitHubAppInstallationId
             }
           ]
 
