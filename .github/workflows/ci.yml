@@ -54,55 +54,55 @@ jobs:
                   errors=0
 
                   # Check required GitHub App variables
-                  if [ -z "${{ $WEBSITE_GITHUB_APP_ID }}" ]; then
+                  if [ -z "$WEBSITE_GITHUB_APP_ID" ]; then
                     echo "❌ WEBSITE_GITHUB_APP_ID repository variable is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $WEBSITE_GITHUB_APP_INSTALLATION_ID }}" ]; then
+                  if [ -z "$WEBSITE_GITHUB_APP_INSTALLATION_ID" ]; then
                     echo "❌ WEBSITE_GITHUB_APP_INSTALLATION_ID repository variable is not set"
                     errors=$((errors + 1))
                   fi
 
                   # Check required GitHub App secrets
-                  if [ -z "${{ $WEBSITE_GITHUB_APP_CLIENT_ID }}" ]; then
+                  if [ -z "$WEBSITE_GITHUB_APP_CLIENT_ID" ]; then
                     echo "❌ WEBSITE_GITHUB_APP_CLIENT_ID secret is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $WEBSITE_GITHUB_APP_CLIENT_SECRET }}" ]; then
+                  if [ -z "$WEBSITE_GITHUB_APP_CLIENT_SECRET" ]; then
                     echo "❌ WEBSITE_GITHUB_APP_CLIENT_SECRET secret is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $WEBSITE_GITHUB_APP_PRIVATE_KEY }}" ]; then
+                  if [ -z "$WEBSITE_GITHUB_APP_PRIVATE_KEY" ]; then
                     echo "❌ WEBSITE_GITHUB_APP_PRIVATE_KEY secret is not set"
                     errors=$((errors + 1))
                   fi
 
                   # Check other required secrets
-                  if [ -z "${{ $GOOGLE_FORMS_API_KEY }}" ]; then
+                  if [ -z "$GOOGLE_FORMS_API_KEY" ]; then
                     echo "❌ GOOGLE_FORMS_API_KEY secret is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $GOOGLE_FORMS_FILE_ID }}" ]; then
+                  if [ -z "$GOOGLE_FORMS_FILE_ID" ]; then
                     echo "❌ GOOGLE_FORMS_FILE_ID secret is not set"
                     errors=$((errors + 1))
                   fi
 
                   # Check Azure variables
-                  if [ -z "${{ $AZURE_SUBSCRIPTION_ID }}" ]; then
+                  if [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
                     echo "❌ AZURE_SUBSCRIPTION_ID repository variable is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $AZURE_CLIENT_ID }}" ]; then
+                  if [ -z "$AZURE_CLIENT_ID" ]; then
                     echo "❌ AZURE_CLIENT_ID repository variable is not set"
                     errors=$((errors + 1))
                   fi
 
-                  if [ -z "${{ $AZURE_TENANT_ID }}" ]; then
+                  if [ -z "$AZURE_TENANT_ID" ]; then
                     echo "❌ AZURE_TENANT_ID repository variable is not set"
                     errors=$((errors + 1))
                   fi
