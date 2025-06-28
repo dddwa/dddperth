@@ -29,8 +29,13 @@ jobs:
             AZURE_LOCATION: australiaeast
             AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
             AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-            # TODO Replace this PAT with a GitHub App
-            GH_CONTENT_TOKEN: ${{ secrets.GH_CONTENT_TOKEN }}
+            # GitHub App configuration using WEBSITE_GITHUB_APP_ prefix
+            # Note: GitHub Actions reserves GITHUB_ prefix, so we use WEBSITE_GITHUB_APP_ consistently
+            WEBSITE_GITHUB_APP_ID: ${{ vars.WEBSITE_GITHUB_APP_ID }}
+            WEBSITE_GITHUB_APP_CLIENT_ID: ${{ vars.WEBSITE_GITHUB_APP_CLIENT_ID }}
+            WEBSITE_GITHUB_APP_CLIENT_SECRET: ${{ secrets.WEBSITE_GITHUB_APP_CLIENT_SECRET }}
+            WEBSITE_GITHUB_APP_PRIVATE_KEY: ${{ secrets.WEBSITE_GITHUB_APP_PRIVATE_KEY }}
+            WEBSITE_GITHUB_APP_INSTALLATION_ID: ${{ vars.WEBSITE_GITHUB_APP_INSTALLATION_ID }}
             GOOGLE_FORMS_API_KEY: ${{ secrets.GOOGLE_FORMS_API_KEY }}
             GOOGLE_FORMS_FILE_ID: ${{ secrets.GOOGLE_FORMS_FILE_ID }}
             EVENTS_AIR_CLIENT_ID: ${{ secrets.EVENTS_AIR_CLIENT_ID }}
@@ -42,6 +47,76 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+
+            - name: Validate required environment variables
+              run: |
+                  echo "Validating required environment variables..."
+                  errors=0
+
+                  # Check required GitHub App variables
+                  if [ -z "${{ vars.WEBSITE_GITHUB_APP_ID }}" ]; then
+                    echo "❌ WEBSITE_GITHUB_APP_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ vars.WEBSITE_GITHUB_APP_INSTALLATION_ID }}" ]; then
+                    echo "❌ WEBSITE_GITHUB_APP_INSTALLATION_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  # Check required GitHub App secrets
+                  if [ -z "${{ secrets.WEBSITE_GITHUB_APP_CLIENT_ID }}" ]; then
+                    echo "❌ WEBSITE_GITHUB_APP_CLIENT_ID secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ secrets.WEBSITE_GITHUB_APP_CLIENT_SECRET }}" ]; then
+                    echo "❌ WEBSITE_GITHUB_APP_CLIENT_SECRET secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ secrets.WEBSITE_GITHUB_APP_PRIVATE_KEY }}" ]; then
+                    echo "❌ WEBSITE_GITHUB_APP_PRIVATE_KEY secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  # Check other required secrets
+                  if [ -z "${{ secrets.GOOGLE_FORMS_API_KEY }}" ]; then
+                    echo "❌ GOOGLE_FORMS_API_KEY secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ secrets.GOOGLE_FORMS_FILE_ID }}" ]; then
+                    echo "❌ GOOGLE_FORMS_FILE_ID secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  # Check Azure variables
+                  if [ -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]; then
+                    echo "❌ AZURE_SUBSCRIPTION_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ vars.AZURE_CLIENT_ID }}" ]; then
+                    echo "❌ AZURE_CLIENT_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "${{ vars.AZURE_TENANT_ID }}" ]; then
+                    echo "❌ AZURE_TENANT_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ $errors -gt 0 ]; then
+                    echo ""
+                    echo "❌ Found $errors missing environment variables/secrets"
+                    echo "Please configure the missing variables in GitHub repository settings:"
+                    echo "- Variables: Settings → Secrets and variables → Actions → Variables"
+                    echo "- Secrets: Settings → Secrets and variables → Actions → Secrets"
+                    exit 1
+                  else
+                    echo "✅ All required environment variables and secrets are configured"
+                  fi
 
             - name: Install azd
               uses: Azure/setup-azd@v2

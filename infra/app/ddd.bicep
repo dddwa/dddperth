@@ -10,8 +10,14 @@ param containerAppsEnvironmentName string
 param applicationInsightsName string
 param gitHubOrganization string
 param gitHubRepo string
+// GitHub App configuration
+param gitHubAppId string
+param gitHubAppClientId string
+param gitHubAppInstallationId string
 @secure()
-param gitHubToken string
+param gitHubAppClientSecret string
+@secure()
+param gitHubAppPrivateKey string
 @secure()
 param googleFormsApiKey string
 @secure()
@@ -96,10 +102,6 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       secrets: [
         {
-            name: 'github-token'
-            value: gitHubToken
-        }
-        {
             name: 'session-secret'
             value: sessionSecret
         }
@@ -112,24 +114,20 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             value: googleFormsFileId
         }
         {
-            name: 'events-air-client-id'
-            value: eventsAirClientId
-        }
-        {
             name: 'events-air-client-secret'
             value: eventsAirClientSecret
         }
         {
-            name: 'events-air-tenant-id'
-            value: eventsAirTenantId
-        }
-        {
-            name: 'events-air-event-id'
-            value: eventsAirEventId
-        }
-        {
             name: 'tito-security-token'
             value: titoSecurityToken
+        }
+        {
+            name: 'github-app-client-secret'
+            value: gitHubAppClientSecret
+        }
+        {
+            name: 'github-app-private-key'
+            value: gitHubAppPrivateKey
         }
       ]
     }
@@ -160,10 +158,6 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
                 value: gitHubRepo
             }
             {
-                name: 'GITHUB_TOKEN'
-                secretRef: 'github-token'
-            }
-            {
                 name: 'SESSION_SECRET'
                 secretRef: 'session-secret'
             }
@@ -181,7 +175,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             }
             {
                 name: 'EVENTS_AIR_CLIENT_ID'
-                secretRef: 'events-air-client-id'
+                value: eventsAirClientId
             }
             {
                 name: 'EVENTS_AIR_CLIENT_SECRET'
@@ -189,11 +183,31 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             }
             {
                 name: 'EVENTS_AIR_TENANT_ID'
-                secretRef: 'events-air-tenant-id'
+                value: eventsAirTenantId
             }
             {
                 name: 'EVENTS_AIR_EVENT_ID'
-                secretRef: 'events-air-event-id'
+                value: eventsAirEventId
+            }
+            {
+                name: 'WEBSITE_GITHUB_APP_ID'
+                value: gitHubAppId
+            }
+            {
+                name: 'WEBSITE_GITHUB_APP_CLIENT_ID'
+                value: gitHubAppClientId
+            }
+            {
+                name: 'WEBSITE_GITHUB_APP_CLIENT_SECRET'
+                secretRef: 'github-app-client-secret'
+            }
+            {
+                name: 'WEBSITE_GITHUB_APP_PRIVATE_KEY'
+                secretRef: 'github-app-private-key'
+            }
+            {
+                name: 'WEBSITE_GITHUB_APP_INSTALLATION_ID'
+                value: gitHubAppInstallationId
             }
           ]
 

@@ -46,3 +46,5 @@ website/styled-system
 website/vite.config.*timestamp-*.mjs
 
 tsconfig.tsbuildinfo
+infra/main.json
+infra/modules/fetch-container-image.json

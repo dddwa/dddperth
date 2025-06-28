@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+    <head>
+        <title>GitHub App Created Successfully</title>
+        <link rel="stylesheet" href="/static/github-app-setup.css" />
+    </head>
+    <body>
+        <div class="success-box">
+            <h1>🎉 GitHub App Created Successfully!</h1>
+            <p>Your GitHub App "{{appName}}" has been created.</p>
+            <div id="setup-status">
+                <div class="spinner"></div>
+                <p>Setting up your environment...</p>
+            </div>
+        </div>
+
+        <div class="app-details">
+            <h2>App Details</h2>
+            <p><strong>App ID:</strong> {{appId}}</p>
+            <p><strong>Client ID:</strong> {{clientId}}</p>
+            <p>
+                <strong>App URL:</strong>
+                <a href="https://github.com/apps/{{appSlug}}" target="_blank">View App Details</a>
+            </p>
+        </div>
+
+        <div class="info-box">
+            <p>
+                <strong>✅ App Created:</strong> Your GitHub App has been created with the correct permissions
+                (Contents: Read, Metadata: Read, OAuth enabled).
+            </p>
+            <p>
+                <strong>⚠️ Installation Required:</strong> You must now install this app to access repository content.
+            </p>
+        </div>
+
+        <script>
+            const appData = {{appDataJson}};
+            const config = JSON.parse(sessionStorage.getItem('github-app-config') || '{}');
+
+            // Setup environment via API call
+            fetch('/setup-env', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app: appData, config: config })
+            }).then(response => response.json())
+              .then(result => {
+                  const statusDiv = document.getElementById('setup-status');
+                  if (result.success) {
+                      statusDiv.innerHTML = '<p>✅ Environment setup completed successfully!</p>';
+                      if (result.environment === 'local') {
+                          statusDiv.innerHTML += '<p>Your .env file has been updated with GitHub App credentials.</p>';
+                          statusDiv.innerHTML += '<p><strong>Optional:</strong> Set USE_GITHUB_CONTENT=true in .env to load content from your fork after you have installed the app.</p>';
+                      } else {
+                          statusDiv.innerHTML += '<p>GitHub repository variables and secrets have been configured.</p>';
+                          statusDiv.innerHTML += '<p>Your production deployment is ready!</p>';
+                      }
+                      // Add continue button
+                      statusDiv.innerHTML += '<p><a href="/?tab=created" class="button">Continue to Created Apps</a></p>';
+                  } else {
+                      statusDiv.innerHTML = '<p>⚠️ Setup completed with warnings: ' + (result.message || 'Unknown error') + '</p>';
+                      statusDiv.innerHTML += '<p>You may need to configure some settings manually.</p>';
+                      statusDiv.innerHTML += '<p><a href="/?tab=created" class="button">Continue to Created Apps</a></p>';
+                  }
+              })
+              .catch(error => {
+                  const statusDiv = document.getElementById('setup-status');
+                  statusDiv.innerHTML = '<p>❌ Setup failed: ' + error.message + '</p>';
+                  statusDiv.innerHTML += '<p>Please configure your environment manually.</p>';
+                  statusDiv.innerHTML += '<p><a href="/?tab=created" class="button">Continue to Created Apps</a></p>';
+              });
+        </script>
+    </body>
+</html>

@@ -1,10 +1,10 @@
-import type { LoaderFunctionArgs } from 'react-router'
 import { data } from 'react-router'
 import type { YearSponsors } from '~/lib/config-types'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import type { Route } from './+types/app-config'
 
 /** This route is used by the app or integrations to understand the state of the conference */
-export function loader({ context }: LoaderFunctionArgs) {
+export function loader({ context }: Route.LoaderArgs) {
     const appConfig: AppConfig = {
         conferenceDate: context.conferenceState.conference.date ?? null,
         sponsors: context.conferenceState.conference.sponsors,

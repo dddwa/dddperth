@@ -42,16 +42,16 @@ export function Header() {
                                     md: 'repeat(4, 1fr)',
                                 }}
                             >
-                                <AppLink to="/sponsorship" color="white" _hover={{ color: '#8282FB' }}>
+                                <AppLink to="/sponsorship" variant="primary">
                                     Sponsorship
                                 </AppLink>
-                                <AppLink to="/agenda" color="white" _hover={{ color: '#8282FB' }}>
+                                <AppLink to="/agenda" variant="primary">
                                     Agenda
                                 </AppLink>
-                                <AppLink to="/about" color="white" _hover={{ color: '#8282FB' }}>
+                                <AppLink to="/about" variant="primary">
                                     About
                                 </AppLink>
-                                <AppLink to="/team" color="white" _hover={{ color: '#8282FB' }}>
+                                <AppLink to="/team" variant="primary">
                                     Team
                                 </AppLink>
                             </Grid>

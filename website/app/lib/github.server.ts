@@ -1,31 +1,72 @@
-import { throttling } from '@octokit/plugin-throttling'
-import { Octokit as createOctokit } from '@octokit/rest'
+import { App } from '@octokit/app'
+import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
+import { Octokit } from '@octokit/rest'
 import nodePath from 'path'
-import { GITHUB_ORGANIZATION, GITHUB_REF, GITHUB_REPO, GITHUB_TOKEN } from './config.server'
+import {
+    getGitHubPrivateKey,
+    GITHUB_ORGANIZATION,
+    GITHUB_REF,
+    GITHUB_REPO,
+    WEBSITE_GITHUB_APP_ID,
+    WEBSITE_GITHUB_APP_INSTALLATION_ID,
+} from './config.server'
 
 const safePath = (s: string) => s.replace(/\\/g, '/')
 
-const Octokit = createOctokit.plugin(throttling)
 type GitHubFile = { path: string; content: string }
 
-const octokit = new Octokit({
-    auth: GITHUB_TOKEN,
-    throttle: {
-        onRateLimit: (retryAfter, options) => {
-            const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-            const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-            console.warn(`Request quota exhausted for request ${method} ${url}. Retrying after ${retryAfter} seconds.`)
+import { trace } from '@opentelemetry/api'
+import { recordException } from './record-exception'
 
-            return true
-        },
-        onSecondaryRateLimit: (retryAfter, options) => {
-            const method = 'method' in options ? options.method : 'METHOD_UNKNOWN'
-            const url = 'url' in options ? options.url : 'URL_UNKNOWN'
-            // does not retry, only logs a warning
-            octokit.log.warn(`Abuse detected for request ${method} ${url}`)
-        },
-    },
-})
+const tracer = trace.getTracer('github.server')
+
+const MyOctokit = Octokit.plugin(restEndpointMethods)
+
+async function createGitHubClient() {
+    return await tracer.startActiveSpan('createGitHubClient', async (span) => {
+        try {
+            console.log('Using GitHub App authentication')
+            const privateKey = getGitHubPrivateKey()
+            const app = new App({
+                appId: WEBSITE_GITHUB_APP_ID,
+                privateKey,
+                Octokit: MyOctokit,
+            })
+
+            console.log(`Using stored installation ID: ${WEBSITE_GITHUB_APP_INSTALLATION_ID}`)
+            const installationId = parseInt(WEBSITE_GITHUB_APP_INSTALLATION_ID)
+
+            const installationOctokit = await app.getInstallationOctokit(installationId)
+            return installationOctokit
+        } catch (error) {
+            recordException(error, { span })
+            throw error
+        } finally {
+            span.end()
+        }
+    })
+}
+
+// Cache the client promise to avoid recreating it
+let octokitPromise: ReturnType<typeof createGitHubClient> | null = null
+
+async function getOctokit() {
+    if (!octokitPromise) {
+        octokitPromise = createGitHubClient().catch((error) => {
+            // Clear the cached promise on error so it can be retried
+            octokitPromise = null
+            throw error
+        })
+    }
+    const client = await octokitPromise
+
+    // Debug: Check if client has expected properties
+    if (!client) {
+        throw new Error('GitHub client is null or undefined')
+    }
+
+    return client
+}
 
 async function downloadFirstMdxFile(list: Array<{ name: string; type: string; path: string; sha: string }>) {
     const filesOnly = list.filter(({ type }) => type === 'file')
@@ -46,39 +87,52 @@ async function downloadFirstMdxFile(list: Array<{ name: string; type: string; pa
 async function downloadMdxFileOrDirectory(
     relativeMdxFileOrDirectory: string,
 ): Promise<{ entry: string; files: Array<GitHubFile> }> {
-    const mdxFileOrDirectory = `${relativeMdxFileOrDirectory}`
+    return await tracer.startActiveSpan('downloadMdxFileOrDirectory', async (span) => {
+        span.setAttribute('relativeMdxFileOrDirectory', relativeMdxFileOrDirectory)
+        try {
+            const mdxFileOrDirectory = `${relativeMdxFileOrDirectory}`
 
-    const parentDir = nodePath.dirname(mdxFileOrDirectory)
-    const dirList = await downloadDirList(parentDir)
+            const parentDir = nodePath.dirname(mdxFileOrDirectory)
+            span.setAttribute('parentDir', parentDir)
+            const dirList = await downloadDirList(parentDir)
 
-    const basename = nodePath.basename(mdxFileOrDirectory)
-    const mdxFileWithoutExt = nodePath.parse(mdxFileOrDirectory).name
-    const potentials = dirList.filter(({ name }) => name.startsWith(basename))
-    const exactMatch = potentials.find(({ name }) => nodePath.parse(name).name === mdxFileWithoutExt)
-    const dirPotential = potentials.find(({ type }) => type === 'dir')
+            const basename = nodePath.basename(mdxFileOrDirectory)
+            const mdxFileWithoutExt = nodePath.parse(mdxFileOrDirectory).name
+            span.setAttribute('basename', basename)
+            const potentials = dirList.filter(({ name }) => name.startsWith(basename))
+            const exactMatch = potentials.find(({ name }) => nodePath.parse(name).name === mdxFileWithoutExt)
+            const dirPotential = potentials.find(({ type }) => type === 'dir')
 
-    const content = await downloadFirstMdxFile(exactMatch ? [exactMatch] : potentials)
-    let files: Array<GitHubFile> = []
-    let entry = mdxFileOrDirectory
-    if (content) {
-        // technically you can get the blog post by adding .mdx at the end... Weird
-        // but may as well handle it since that's easy...
-        entry = mdxFileOrDirectory.endsWith('.mdx') ? mdxFileOrDirectory : `${mdxFileOrDirectory}.mdx`
-        // /content/about.mdx => entry is about.mdx, but compileMdx needs
-        // the entry to be called "/content/index.mdx" so we'll set it to that
-        // because this is the entry for this path
-        files = [
-            {
-                path: safePath(nodePath.join(mdxFileOrDirectory, 'index.mdx')),
-                content,
-            },
-        ]
-    } else if (dirPotential) {
-        entry = dirPotential.path
-        files = await downloadDirectory(mdxFileOrDirectory)
-    }
+            const content = await downloadFirstMdxFile(exactMatch ? [exactMatch] : potentials)
+            let files: Array<GitHubFile> = []
+            let entry = mdxFileOrDirectory
+            if (content) {
+                // technically you can get the blog post by adding .mdx at the end... Weird
+                // but may as well handle it since that's easy...
+                entry = mdxFileOrDirectory.endsWith('.mdx') ? mdxFileOrDirectory : `${mdxFileOrDirectory}.mdx`
+                // /content/about.mdx => entry is about.mdx, but compileMdx needs
+                // the entry to be called "/content/index.mdx" so we'll set it to that
+                // because this is the entry for this path
+                files = [
+                    {
+                        path: safePath(nodePath.join(mdxFileOrDirectory, 'index.mdx')),
+                        content,
+                    },
+                ]
+            } else if (dirPotential) {
+                entry = dirPotential.path
+                files = await downloadDirectory(mdxFileOrDirectory)
+            }
 
-    return { entry, files }
+            span.setAttribute('entry', entry)
+            return { entry, files }
+        } catch (error) {
+            recordException(error, { span })
+            throw error
+        } finally {
+            span.end()
+        }
+    })
 }
 
 /**
@@ -116,12 +170,13 @@ async function downloadDirectory(dir: string): Promise<Array<GitHubFile>> {
  * @returns a promise that resolves to a string of the contents of the file
  */
 async function downloadFileBySha(sha: string) {
-    const { data } = await octokit.git.getBlob({
+    const octokit = await getOctokit()
+    const { data } = await octokit.rest.git.getBlob({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         file_sha: sha,
     })
-    //                                lol
+
     const encoding = data.encoding as Parameters<typeof Buffer.from>['1']
     return Buffer.from(data.content, encoding).toString()
 }
@@ -130,11 +185,12 @@ async function downloadFileBySha(sha: string) {
 // https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}
 // nice thing is it's not rate limited
 async function downloadFile(path: string) {
-    const { data } = await octokit.repos.getContent({
+    const octokit = await getOctokit()
+    const { data } = await octokit.rest.repos.getContent({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         path,
-        GITHUB_REF,
+        ref: GITHUB_REF,
     })
 
     if ('content' in data && 'encoding' in data) {
@@ -154,11 +210,12 @@ async function downloadFile(path: string) {
  * @returns a promise that resolves to a file ListItem of the files/directories in the given directory (not recursive)
  */
 async function downloadDirList(path: string) {
-    const resp = await octokit.repos.getContent({
+    const octokit = await getOctokit()
+    const resp = await octokit.rest.repos.getContent({
         owner: GITHUB_ORGANIZATION,
         repo: GITHUB_REPO,
         path,
-        GITHUB_REF,
+        ref: GITHUB_REF,
     })
     const data = resp.data
 

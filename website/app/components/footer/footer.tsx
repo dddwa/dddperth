@@ -2,6 +2,7 @@ import Logo from '~/images/svg/logo.svg?react'
 import { css } from '~/styled-system/css'
 import { Box, Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from '../../config/socials-data'
+import { AppLink } from '../app-link'
 
 export const Footer = () => (
     <Box
@@ -25,42 +26,45 @@ export const Footer = () => (
                 <Logo width={153} />
             </Flex>
             <Flex direction="column" gap={1} fontWeight="medium">
-                <styled.a href={`/agenda#previous-years`} color="white" _hover={{ color: '#8282FB' }}>
+                <AppLink to="/agenda#previous-years" variant="primary">
                     Previous Years Sessions
-                </styled.a>
+                </AppLink>
                 {/* <styled.a href={`/speakers`} color="white" _hover={{ color: '#8282FB' }}>
                     Speakers
                 </styled.a> */}
-                <styled.a href={`/agenda`} color="white" _hover={{ color: '#8282FB' }}>
+                <AppLink to="/agenda" variant="primary">
                     Agenda
-                </styled.a>
+                </AppLink>
                 {/* <styled.a href={`/sponsorship`} color="white" _hover={{ color: '#8282FB' }}>
                     Sponsorship
                 </styled.a> */}
-                <styled.a href={`/about`} color="white" _hover={{ color: '#8282FB' }}>
+                <AppLink to="/about" variant="primary">
                     About
-                </styled.a>
+                </AppLink>
                 {/* <styled.a href={`/blog`} color="white" _hover={{ color: '#8282FB' }}>
                 Blog
                 </styled.a> */}
-                <styled.a href={`/faq`} color="white" _hover={{ color: '#8282FB' }}>
+                <AppLink to="/faq" variant="primary">
                     FAQ
-                </styled.a>
+                </AppLink>
+                <AppLink to="/admin" variant="primary">
+                    Admin
+                </AppLink>
             </Flex>
             <Flex direction="column" gap={1} fontWeight="medium">
-                <styled.a href={`/code-of-conduct`} color="white" _hover={{ color: '#8282FB' }}>
+                <AppLink to="/code-of-conduct" variant="primary">
                     Code Of Conduct
-                </styled.a>
-                <styled.a href={`/venue`} color="white" _hover={{ color: '#8282FB' }}>
+                </AppLink>
+                <AppLink to="/venue" variant="primary">
                     Venue
-                </styled.a>
-                <styled.a href={`/health-policy`} color="white" _hover={{ color: '#8282FB' }}>
+                </AppLink>
+                <AppLink to="/health-policy" variant="primary">
                     Health Policy
-                </styled.a>
-                <styled.a href={`/volunteer`} color="white" _hover={{ color: '#8282FB' }}>
+                </AppLink>
+                <AppLink to="/volunteer" variant="primary">
                     Work With Us
-                </styled.a>
-                <styled.a href={`mailto:info@dddperth.com`} color="#8282FB" _hover={{ color: 'white' }}>
+                </AppLink>
+                <styled.a href="mailto:info@dddperth.com" color="#8282FB" _hover={{ color: 'white' }}>
                     info@dddperth.com
                 </styled.a>
             </Flex>
