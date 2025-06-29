@@ -43,6 +43,7 @@ jobs:
             EVENTS_AIR_TENANT_ID: ${{ secrets.EVENTS_AIR_TENANT_ID }}
             EVENTS_AIR_EVENT_ID: ${{ secrets.EVENTS_AIR_EVENT_ID }}
             TITO_SECURITY_TOKEN: ${{ secrets.TITO_SECURITY_TOKEN }}
+            SESSIONIZE_2025_ALL_SESSIONS: ${{ secrets.SESSIONIZE_2025_ALL_SESSIONS }}
 
         steps:
             - name: Checkout
@@ -104,6 +105,11 @@ jobs:
 
                   if [ -z "$AZURE_TENANT_ID" ]; then
                     echo "❌ AZURE_TENANT_ID repository variable is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "$SESSIONIZE_2025_ALL_SESSIONS" ]; then
+                    echo "❌ SESSIONIZE_2025_ALL_SESSIONS secret is not set"
                     errors=$((errors + 1))
                   fi
 

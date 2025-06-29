@@ -30,6 +30,10 @@ param eventsAirTenantId string
 param eventsAirEventId string
 @secure()
 param titoSecurityToken string
+@secure()
+param sessionize2025AllSessions string
+param storageAccountName string
+param storageAccountResourceId string
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: identityName
@@ -59,6 +63,33 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
+  scope: resourceGroup()
+}
+
+// Grant Storage Blob Data Contributor role to the app's managed identity
+resource storageBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccountResourceId, identity.id, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+    principalType: 'ServicePrincipal'
+    principalId: identity.properties.principalId
+  }
+}
+
+// Grant Storage Table Data Contributor role to the app's managed identity
+resource storageTableRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccountResourceId, identity.id, '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
+    principalType: 'ServicePrincipal'
+    principalId: identity.properties.principalId
+  }
+}
+
 @secure()
 param sessionSecret string = uniqueString(newGuid())
 
@@ -74,7 +105,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
   name: name
   location: location
   tags: union(tags, {'azd-service-name':  'ddd' })
-  dependsOn: [ acrPullRole ]
+  dependsOn: [ acrPullRole, storageBlobRole, storageTableRole ]
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: { '${identity.id}': {} }
@@ -128,6 +159,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         {
             name: 'github-app-private-key'
             value: gitHubAppPrivateKey
+        }
+        {
+            name: 'sessionize-2025-all-sessions'
+            value: sessionize2025AllSessions
         }
       ]
     }
@@ -208,6 +243,14 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'WEBSITE_GITHUB_APP_INSTALLATION_ID'
                 value: gitHubAppInstallationId
+            }
+            {
+                name: 'SESSIONIZE_2025_ALL_SESSIONS'
+                secretRef: 'sessionize-2025-all-sessions'
+            }
+            {
+                name: 'AZURE_STORAGE_ACCOUNT_NAME'
+                value: storageAccountName
             }
           ]
 

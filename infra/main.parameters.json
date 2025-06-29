@@ -80,6 +80,9 @@
         },
         "gitHubAppInstallationId": {
             "value": "${WEBSITE_GITHUB_APP_INSTALLATION_ID}"
+        },
+        "sessionize2025AllSessions": {
+            "value": "${SESSIONIZE_2025_ALL_SESSIONS}"
         }
     }
 }

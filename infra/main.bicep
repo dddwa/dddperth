@@ -51,6 +51,8 @@ param eventsAirTenantId string
 param eventsAirEventId string
 @secure()
 param titoSecurityToken string
+@secure()
+param sessionize2025AllSessions string
 
 
 // Tags that should be applied to all resources.
@@ -116,6 +118,16 @@ module keyVault './shared/keyvault.bicep' = {
   scope: rg
 }
 
+module storageAccount './shared/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    tags: tags
+    name: '${prefix}${abbrs.storageStorageAccounts}${resourceToken}'
+  }
+  scope: rg
+}
+
 module appsEnv './shared/apps-env.bicep' = {
   name: 'apps-env'
   params: {
@@ -155,6 +167,9 @@ module ddd './app/ddd.bicep' = {
     eventsAirTenantId: eventsAirTenantId
     eventsAirEventId: eventsAirEventId
     titoSecurityToken: titoSecurityToken
+    sessionize2025AllSessions: sessionize2025AllSessions
+    storageAccountName: storageAccount.outputs.name
+    storageAccountResourceId: storageAccount.outputs.resourceId
   }
   scope: rg
 }
