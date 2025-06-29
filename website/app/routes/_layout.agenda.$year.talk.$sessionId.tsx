@@ -4,33 +4,24 @@ import { $params, $path } from 'remix-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import type { ConferenceConfigYear, ConferenceImportantInformation, Year } from '~/lib/config-types'
-import { getImportantInformation } from '~/lib/get-important-information'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfig } from '~/config/conference-config.server'
+import type { Year } from '~/lib/conference-state-client-safe'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import type { sessionsSchema, speakersSchema } from '~/lib/sessionize.server'
+import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import { conferenceConfig } from '../config/conference-config'
-import type { sessionsSchema, speakersSchema } from '../lib/sessionize.server'
-import { getConfSessions, getConfSpeakers } from '../lib/sessionize.server'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ params }: Route.LoaderArgs) {
     const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)
 
-    const yearConfigLookup = (conferenceConfig.conferences as Record<Year, ConferenceConfigYear | undefined>)[
-        year as Year
-    ]
+    const yearConfig = getYearConfig(year)
 
-    if (!yearConfigLookup || 'cancelledMessage' in yearConfigLookup) {
-        if (!params.year) {
-            throw new Response(JSON.stringify({ message: 'No config for year' }), { status: 404 })
-        }
-
+    if (yearConfig.kind === 'cancelled') {
         return redirect($path('/agenda/:year?', { year: undefined }))
     }
-
-    const yearConfig: ConferenceImportantInformation = params.year
-        ? getImportantInformation(yearConfigLookup, context.dateTimeProvider)
-        : context.conferenceState.conference
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -40,7 +31,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfig.timezone,
+                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
 
@@ -54,7 +45,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSpeakers({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfig.timezone,
+                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
     const talkSpeakers = session.speakers
@@ -64,14 +55,18 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     return data(
         {
             year: year as Year,
-            sponsors: yearConfigLookup.sponsors,
+            sponsors: yearConfig.sponsors,
             conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
                 year: conf.year,
             })),
             session,
             talkSpeakers,
-            sessionStart: DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE),
-            sessionEnd: DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE),
+            sessionStart: session.startsAt
+                ? DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })
+                : null,
+            sessionEnd: session.endsAt
+                ? DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })
+                : null,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.schedule } },
     )

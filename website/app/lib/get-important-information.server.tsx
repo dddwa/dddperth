@@ -1,22 +1,31 @@
-import type { ConferenceImportantInformation, ConferenceYear } from '~/lib/config-types'
-import { localeTimeFormat } from '~/lib/dates/formatting'
+import type { conferenceConfig, ConferenceYears } from '~/config/conference-config.server'
+import type { ConferenceImportantInformation } from './conference-state-client-safe'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
 
 export function getImportantInformation(
-    yearConfig: ConferenceYear,
+    yearConfig: (typeof conferenceConfig.conferences)[ConferenceYears],
     dateTimeProvider: DateTimeProvider,
 ): ConferenceImportantInformation {
     const now = dateTimeProvider.nowDate()
 
+    if (yearConfig.kind === 'cancelled') {
+        return {
+            date: undefined,
+            year: yearConfig.year,
+            sponsors: {},
+            currentTicketSale: undefined,
+            venue: undefined,
+        }
+    }
+
     const currentTicketRelease = yearConfig.ticketReleases.find((release) => {
         return now >= release.range.opens && now <= release.range.closes
     })
+
     return {
         date: yearConfig.conferenceDate?.toISO(),
-        year: yearConfig.year,
+        year: yearConfig.year as ConferenceYears,
         sponsors: yearConfig.sponsors,
-        sessions: yearConfig.sessions,
-        votingOpens: yearConfig.talkVotingDates?.opens.toLocaleString(localeTimeFormat),
         currentTicketSale: currentTicketRelease
             ? { closes: currentTicketRelease.range.closes.toISO(), price: currentTicketRelease.price }
             : undefined,

@@ -1,7 +1,5 @@
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
-import { conferenceConfig } from '~/config/conference-config'
-import type { ConferenceYear, Year } from '~/lib/config-types'
 import type {
     EndEventImportantDate,
     ImportantDate,
@@ -10,118 +8,6 @@ import type {
 } from '~/lib/important-dates'
 import { css } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
-
-function importantDates(year: ConferenceYear, currentDate: DateTime): ImportantDate[] {
-    const importantDates: ImportantDate[] = []
-
-    if (year.cfpDates) {
-        importantDates.push({
-            type: 'start-event',
-            dateTime: year.cfpDates.opens,
-            endDateTime: year.cfpDates.closes,
-            event: 'Call for presentations open',
-            eventActiveMessage: 'Submit Talk ↗',
-            eventActiveHref: '/call-for-presentations',
-            eventClosedMessage: 'CFP Closed',
-        })
-
-        importantDates.push({
-            type: 'end-event',
-            startDateTime: year.cfpDates.opens,
-            dateTime: year.cfpDates.closes,
-            event: 'Call for presentations close',
-            eventClosedMessage: 'CFP Closed',
-        })
-    }
-
-    const ticketReleases = year.ticketReleases.map((ticketSale, index): ImportantDate[] => {
-        if (index === year.ticketReleases.length - 1) {
-            return [
-                {
-                    type: 'start-event',
-                    dateTime: ticketSale.range.opens,
-                    endDateTime: ticketSale.range.closes,
-                    event: `${ticketSale.releaseName} Tickets Open`,
-                    eventActiveMessage: 'Buy Tickets ↗',
-                    eventActiveHref: '/tickets',
-                    eventClosedMessage: 'Ticket Sales Closed',
-                },
-                {
-                    type: 'end-event',
-                    startDateTime: ticketSale.range.opens,
-                    dateTime: ticketSale.range.closes,
-                    event: `Ticket Sales Close`,
-                    eventClosedMessage: 'Ticket Sales Closed',
-                },
-            ]
-        }
-
-        return [
-            {
-                type: 'start-event',
-                dateTime: ticketSale.range.opens,
-                endDateTime: ticketSale.range.closes,
-                event: `${ticketSale.releaseName} Tickets Open`,
-                eventActiveMessage: 'Buy Tickets ↗',
-                eventActiveHref: '/tickets',
-                eventClosedMessage: 'Ticket Sales Closed',
-            },
-        ]
-    })
-    const ticketReleasesFlat = ticketReleases.flat()
-    importantDates.push(...ticketReleasesFlat)
-
-    // TODO Drive by config
-    // importantDates.push({
-    //     type: 'important-date',
-    //     dateTime: year.conferenceDate?.set({ hour: 17, minute: 30, second: 0, millisecond: 0 }) ?? DateTime.local(),
-    //     event: 'After Party Tickets',
-    //     onDayMessage: 'Buy Ticket',
-    //     onDayHref: 'https://ti.to/dddperth/2024/with/el5pexoj6m8',
-    //     eventClosedMessage: 'After Party Over',
-    // })
-
-    if (year.talkVotingDates) {
-        importantDates.push({
-            type: 'start-event',
-            dateTime: year.talkVotingDates.opens,
-            endDateTime: year.talkVotingDates.closes,
-            event: 'Voting Opens',
-            eventClosedMessage: 'Voting Closed',
-            eventActiveMessage: 'Vote for Agenda',
-        })
-        importantDates.push({
-            type: 'end-event',
-            startDateTime: year.talkVotingDates.opens,
-            dateTime: year.talkVotingDates.closes,
-            event: 'Voting Closes',
-            eventClosedMessage: 'Voting Closed',
-        })
-    }
-
-    if (year.agendaPublishedDateTime) {
-        importantDates.push({
-            type: 'important-date',
-            dateTime: year.agendaPublishedDateTime,
-            event: 'Agenda published',
-            eventClosedMessage: 'View Agenda',
-            eventClosedHref: '/agenda',
-        })
-    }
-
-    if (year.conferenceDate) {
-        importantDates.push({
-            type: 'important-date',
-            dateTime: year.conferenceDate,
-            event: 'Conference day',
-            onDayMessage: 'Important Info',
-            onDayHref: '/conference-day',
-            eventClosedMessage: 'Conference over',
-        })
-    }
-
-    return importantDates.sort((a, b) => a.dateTime.diff(b.dateTime).milliseconds)
-}
 
 const ImportantDateBox: FC<{
     currentDate: DateTime
@@ -159,15 +45,18 @@ const StartEventImportantDateBox: FC<{
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StartEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+    const eventEndTime = DateTime.fromISO(dateInfo.endDateTime)
+
     if (showOnlyLive) {
         // Only show if it's not yet started
-        if (currentDate >= dateInfo.dateTime) {
+        if (currentDate >= eventDateTime) {
             return null
         }
     }
 
     // When the event is coming up, we should countdown with an active row
-    if (currentDate < dateInfo.dateTime) {
+    if (currentDate < eventDateTime) {
         const daysLeft = getDaysLeft(dateInfo, currentDate)
 
         return (
@@ -179,7 +68,7 @@ const StartEventImportantDateBox: FC<{
                         highlighted
                         smallSidebar={smallSidebar}
                         eventHref={dateInfo.eventActiveHref}
-                        message={currentDate.hasSame(dateInfo.dateTime, 'day') ? 'Today!' : 'Tomorrow!'}
+                        message={currentDate.hasSame(eventDateTime, 'day') ? 'Today!' : 'Tomorrow!'}
                     />
                 ) : (
                     <EventCountdown smallSidebar={smallSidebar} daysLeft={daysLeft} />
@@ -188,7 +77,7 @@ const StartEventImportantDateBox: FC<{
         )
     }
 
-    if (currentDate < dateInfo.endDateTime) {
+    if (currentDate < eventEndTime) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
@@ -218,19 +107,22 @@ const EndEventImportantDateBox: FC<{
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: EndEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+    const eventStartTime = DateTime.fromISO(dateInfo.startDateTime)
+
     if (showOnlyLive) {
         // Don't show when event hasn't started (the start countdown will already be showing)
-        if (currentDate < dateInfo.startDateTime) {
+        if (currentDate < eventStartTime) {
             return null
         }
 
         // Don't show when event has ended
-        if (currentDate > dateInfo.dateTime) {
+        if (currentDate > eventDateTime) {
             return null
         }
     }
 
-    if (currentDate < dateInfo.dateTime) {
+    if (currentDate < eventDateTime) {
         const daysLeft = getDaysLeft(dateInfo, currentDate)
         return (
             <ActiveRow smallSidebar={smallSidebar}>
@@ -260,14 +152,16 @@ const StandaloneEventImportantDateBox: FC<{
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StandaloneImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+
     if (showOnlyLive) {
         // Don't show when event has ended and has no ended href
-        if (currentDate > dateInfo.dateTime && !dateInfo.eventClosedHref) {
+        if (currentDate > eventDateTime && !dateInfo.eventClosedHref) {
             return null
         }
     }
 
-    if (currentDate.hasSame(dateInfo.dateTime, 'day') && dateInfo.onDayMessage) {
+    if (currentDate.hasSame(eventDateTime, 'day') && dateInfo.onDayMessage) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
@@ -283,7 +177,7 @@ const StandaloneEventImportantDateBox: FC<{
     }
 
     // When the event is coming up, we should countdown with an active row
-    if (currentDate < dateInfo.dateTime) {
+    if (currentDate < eventDateTime) {
         const daysLeft = getDaysLeft(dateInfo, currentDate)
         return (
             <ActiveRow smallSidebar={smallSidebar}>
@@ -324,7 +218,7 @@ const StandaloneEventImportantDateBox: FC<{
 }
 
 function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
-    return Math.floor(dateInfo.dateTime.diff(currentDate, 'days').days)
+    return Math.floor(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
 }
 
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
@@ -467,12 +361,14 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
 }
 
 function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallSidebar: boolean | undefined }) {
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+
     return (
         <Flex flexDirection="column">
-            <time dateTime={dateInfo.dateTime.toISO()} />
+            <time dateTime={dateInfo.dateTime} />
             <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="#C2C2FF">
-                {dateInfo.dateTime.weekdayLong} {dateInfo.dateTime.toFormat('LLL dd')},{' '}
-                {dateInfo.dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}
+                {eventDateTime.weekdayLong} {eventDateTime.toFormat('LLL dd')},{' '}
+                {eventDateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}
             </styled.p>
             <styled.h3
                 fontSize={{ base: smallSidebar ? 'md' : 'md', md: smallSidebar ? 'md' : 'lg' }}
@@ -488,12 +384,8 @@ export const ImportantDates: React.FC<{
     smallSidebar?: boolean
     showOnlyLive?: boolean
     currentDate: DateTime
-    year: Year | undefined
-}> = ({ smallSidebar, showOnlyLive, year, currentDate }) => {
-    const yearConfigLookup = year
-        ? (conferenceConfig.conferences as unknown as Record<Year, ConferenceYear | undefined>)[year]
-        : undefined
-
+    importantDates: ImportantDate[]
+}> = ({ smallSidebar, showOnlyLive, currentDate, importantDates }) => {
     return (
         <Flex flexDirection="column" gap={2} mx={smallSidebar ? 0 : 4}>
             <styled.h2
@@ -504,8 +396,8 @@ export const ImportantDates: React.FC<{
             >
                 Important Dates
             </styled.h2>
-            {yearConfigLookup
-                ? importantDates(yearConfigLookup, currentDate).map((dateInfo, index) => (
+            {importantDates.length
+                ? importantDates.map((dateInfo, index) => (
                       <ImportantDateBox
                           key={index}
                           currentDate={currentDate}

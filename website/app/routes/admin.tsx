@@ -33,6 +33,9 @@ export default function AdminLayout() {
                             <AppNavLink to="/admin/content" variant="admin">
                                 Content
                             </AppNavLink>
+                            <AppNavLink to="/admin/settings" variant="admin">
+                                Settings
+                            </AppNavLink>
                         </Flex>
                     </Flex>
                     <Flex align="center" gap="4">

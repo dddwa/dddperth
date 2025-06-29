@@ -1,6 +1,6 @@
 import { useScript } from '@uidotdev/usehooks'
 import { useEffect } from 'react'
-import type { TicketSalesState } from '~/lib/config-types'
+import type { TicketSalesState } from '~/lib/conference-state-client-safe'
 
 declare const tito: any
 

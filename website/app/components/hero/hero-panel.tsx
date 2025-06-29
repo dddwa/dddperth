@@ -3,10 +3,9 @@ import { DateTime } from 'luxon'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
-import type { ConferenceImportantInformation } from '~/lib/config-types'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
-export function HomepageHeroPanel({ config }: { config: ConferenceImportantInformation }) {
+export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
     const { scrollY } = useScroll()
 
     const y2 = useTransform(scrollY, [0, 400], [0, 100], { ease: easeOut })
@@ -31,7 +30,7 @@ export function HomepageHeroPanel({ config }: { config: ConferenceImportantInfor
             }}
         >
             <Box maxW="1200px" ml={{ base: 6, md: 12, lg: 24 }}>
-                {config.date ? (
+                {conferenceDate ? (
                     <styled.h2
                         color="#8282FB"
                         fontSize={{ base: 'md', md: 'xl' }}
@@ -40,7 +39,7 @@ export function HomepageHeroPanel({ config }: { config: ConferenceImportantInfor
                         maxWidth="3/4"
                     >
                         <styled.span>
-                            {DateTime.fromISO(config.date).toLocaleString(DateTime.DATE_HUGE, {
+                            {DateTime.fromISO(conferenceDate).toLocaleString(DateTime.DATE_HUGE, {
                                 locale: 'en-AU',
                             })}
                         </styled.span>

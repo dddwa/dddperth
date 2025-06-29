@@ -1,3 +1,6 @@
+import { TableClient, TableServiceClient } from '@azure/data-tables'
+import { DefaultAzureCredential } from '@azure/identity'
+import { BlobServiceClient } from '@azure/storage-blob'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@react-router/express'
 import closeWithGrace from 'close-with-grace'
@@ -5,11 +8,34 @@ import compression from 'compression'
 import express from 'express'
 import path from 'node:path'
 import type { ServerBuild } from 'react-router'
+import { VOTING_SESSIONS_TABLE } from '~/lib/azure-storage.server.js'
+import { AZURE_STORAGE_ACCOUNT_NAME } from '~/lib/config.server.js'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
 
 export function init() {
+    // Initialize clients
+    let blobServiceClient: BlobServiceClient
+    let tableServiceClient: TableServiceClient
+    let tableClient: TableClient
+
+    if (AZURE_STORAGE_ACCOUNT_NAME) {
+        const connectionString = 'UseDevelopmentStorage=true'
+        blobServiceClient = BlobServiceClient.fromConnectionString(connectionString)
+        tableServiceClient = TableServiceClient.fromConnectionString(connectionString)
+        tableClient = TableClient.fromConnectionString(connectionString, VOTING_SESSIONS_TABLE)
+    } else {
+        // Use managed identity for production
+        const credential = new DefaultAzureCredential()
+        const blobUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`
+        const tableUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.table.core.windows.net`
+
+        blobServiceClient = new BlobServiceClient(blobUrl, credential)
+        tableServiceClient = new TableServiceClient(tableUrl, credential)
+        tableClient = new TableClient(tableUrl, VOTING_SESSIONS_TABLE)
+    }
+
     return tracer.startActiveSpan('start', async (span) => {
         console.log('Starting')
         try {
@@ -104,9 +130,12 @@ export function init() {
                 '*',
                 createRequestHandler({
                     build: resolveBuild,
-                    getLoadContext: (req) => {
+                    getLoadContext: (req, res) => {
                         return initialBuild.entry.module.getLoadContext({
-                            query: req.query,
+                            request: req,
+                            blobServiceClient,
+                            tableServiceClient,
+                            tableClient,
                         })
                     },
                 }) as any,

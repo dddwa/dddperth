@@ -1,4 +1,4 @@
-import type { ConferenceVenue } from '~/lib/config-types'
+import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 
 export const pcecVenue: ConferenceVenue = {
     name: 'Perth Convention and Exhibition Centre',

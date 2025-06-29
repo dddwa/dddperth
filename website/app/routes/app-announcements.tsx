@@ -1,7 +1,7 @@
 import { data } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 
-export type GoogleFormUpdates = {
+export interface GoogleFormUpdates {
     Timestamp: string
     Message: string
 }

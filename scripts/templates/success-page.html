@@ -55,6 +55,14 @@
                           statusDiv.innerHTML += '<p>GitHub repository variables and secrets have been configured.</p>';
                           statusDiv.innerHTML += '<p>Your production deployment is ready!</p>';
                       }
+                      
+                      // Add installation link
+                      if (result.appSlug) {
+                          const installUrl = `https://github.com/apps/${result.appSlug}/installations/new`;
+                          statusDiv.innerHTML += `<p><strong>Next Step:</strong> <a href="${installUrl}" target="_blank" class="button">Install the App</a></p>`;
+                          statusDiv.innerHTML += '<p>The installation will automatically configure the correct environment by detecting the app ID.</p>';
+                      }
+                      
                       // Add continue button
                       statusDiv.innerHTML += '<p><a href="/?tab=created" class="button">Continue to Created Apps</a></p>';
                   } else {

@@ -1,26 +1,6 @@
-import fs from 'fs'
-import path from 'path'
+import { getContentPages } from '~/lib/get-content-pages.server'
 
-// Function to get all content pages from the website-content directory
-const getContentPages = () => {
-    const contentDir = path.join(process.cwd(), '..', 'website-content', 'pages')
-    try {
-        const files = fs.readdirSync(contentDir)
-        return files
-            .filter((file) => file.endsWith('.mdx'))
-            .map((file) => ({
-                path: `/${file.replace('.mdx', '')}`,
-                lastmod: new Date().toISOString().split('T')[0],
-                changefreq: 'monthly',
-                priority: 0.7,
-            }))
-    } catch (error) {
-        console.error('Error reading content directory:', error)
-        return []
-    }
-}
-
-export const loader = async () => {
+export async function loader() {
     // Get the current date in ISO format for the lastmod field
     const today = new Date().toISOString().split('T')[0]
 

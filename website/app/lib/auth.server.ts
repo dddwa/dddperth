@@ -81,13 +81,13 @@ export async function requireAdmin(request: Request): Promise<User> {
     return user
 }
 
-export async function getUser(request: Request): Promise<User | null> {
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
+export async function getUser(requestHeaders: Headers): Promise<User | null> {
+    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
     return session.get('user') as User | null
 }
 
-export async function createUserSession(request: Request, user: User, redirectTo: string) {
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
+export async function createUserSession(requestHeaders: Headers, user: User, redirectTo: string) {
+    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
     session.set('user', user)
     return redirect(redirectTo, {
         headers: {
@@ -96,8 +96,8 @@ export async function createUserSession(request: Request, user: User, redirectTo
     })
 }
 
-export async function logout(request: Request, redirectTo = '/') {
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
+export async function logout(requestHeaders: Headers, redirectTo = '/') {
+    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
     return redirect(redirectTo, {
         headers: {
             'Set-Cookie': await sessionStorage.destroySession(session),

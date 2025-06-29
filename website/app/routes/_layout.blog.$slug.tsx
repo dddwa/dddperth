@@ -1,16 +1,15 @@
-import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router'
+import { useRef } from 'react'
 import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
-
-import { useRef } from 'react'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { socials } from '~/config/socials'
 import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '~/lib/mdx.server'
-import { conferenceConfig } from '../config/conference-config'
-import { socials } from '../config/socials'
+import type { Route } from './+types/_layout.blog.$slug'
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
     const requestUrl = new URL(request.url)
@@ -34,19 +33,19 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     )
 }
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
     // Inherit the caching headers from the loader so we do't cache 404s
     return loaderHeaders
 }
 
-export const meta: MetaFunction<typeof loader> = (args) => {
+export function meta(args: Route.MetaArgs) {
     const { data, params } = args
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
 
     const { siteUrl, frontmatter } = data || {}
     if (!frontmatter) {
-        return [{ title: `404 Not Found | ${conferenceConfig.name}` }]
+        return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
     }
 
     const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${slug}`) : null
@@ -70,7 +69,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     const url = siteUrl ? `${siteUrl}/blog/${slug}` : null
 
     return [
-        { title: `${frontmatter.title} | ${conferenceConfig.name}` },
+        { title: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
         { name: 'description', content: frontmatter.summary },
         { property: 'og:url', content: url },
         { property: 'og:title', content: frontmatter.title },

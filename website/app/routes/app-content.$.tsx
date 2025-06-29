@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api'
-import { data, type HeadersFunction } from 'react-router'
+import { data } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '../lib/mdx.server'
 import type { Route } from './+types/app-content.$'
@@ -42,7 +42,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     )
 }
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
     // Inherit the caching headers from the loader so we don't cache 404s
     return loaderHeaders
 }

@@ -1,5 +1,6 @@
 import type { Request } from 'express'
 import { DateTime } from 'luxon'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import type { DateTimeProvider } from './date-time-provider.server'
 import { SystemDateTimeProvider } from './system-date-time-provider.server'
 
@@ -9,7 +10,9 @@ export class OverridableDateTimeProvider implements DateTimeProvider {
 
     constructor(query: Request['query']) {
         if (query['date']) {
-            this._override = DateTime.fromISO(query['date'] as string)
+            this._override = DateTime.fromISO(query['date'] as string, {
+                zone: conferenceConfigPublic.timezone,
+            })
             console.log('Overriding date', this._override.toISO())
         }
     }

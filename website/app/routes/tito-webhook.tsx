@@ -1,33 +1,23 @@
 import { trace } from '@opentelemetry/api'
 import { data } from 'react-router'
-import { conferenceConfig } from '~/config/conference-config'
-import type { ConferenceYear, Year } from '~/lib/config-types'
+import { conferenceConfig } from '~/config/conference-config.server'
+import type { Year } from '~/lib/conference-state-client-safe'
+import type { ConferenceYear } from '~/lib/config-types.server'
 import { EVENTS_AIR_EVENT_ID } from '~/lib/config.server'
 import type { EventsAirContactData } from '~/lib/events-air.server'
 import {
     checkIfContactExistsByExternalIdentifier,
-    createEventsAirContact,
-    createEventsAirRegistration,
     deleteRegistration,
     getAccessToken,
     getContactRegistrations,
-    registrationTypes,
     updateEventsAirContact,
 } from '~/lib/events-air.server'
+import { ensureContactExistsByExternalId } from '~/lib/events-air/ensure-contact-exists-by-external-id.server'
+import { ensureRegistrationExists } from '~/lib/events-air/ensure-registration-exists.server'
+import { ticketTypeMapping } from '~/lib/events-air/ticket-mapping.server'
 import { resolveError } from '~/lib/resolve-error'
 import { TitoPayloadSchema } from '~/lib/tito.server'
 import type { Route } from './+types/tito-webhook'
-
-const ticketTypeMapping = {
-    'general-attendee': registrationTypes.Attendee,
-    dqvd7i58iig: registrationTypes.Attendee,
-    'general-attendee-company': registrationTypes.Attendee,
-    'general-attendee-free': registrationTypes.Attendee,
-    lyfer: registrationTypes.Attendee,
-    volunteer: registrationTypes.Volunteer,
-    speaker: registrationTypes.Speaker,
-    sponsor: registrationTypes.Sponsor,
-} as const
 
 export async function action({ request, context }: Route.ActionArgs) {
     const configForYear = (conferenceConfig.conferences as unknown as Record<Year, ConferenceYear | undefined>)[
@@ -178,70 +168,4 @@ export async function action({ request, context }: Route.ActionArgs) {
     })
 
     return data({ success: true })
-}
-
-async function ensureContactExistsByExternalId(
-    accessToken: string,
-    externalIdentifier: string,
-    eventId: string,
-    contactData: EventsAirContactData,
-) {
-    const contactExists = await checkIfContactExistsByExternalIdentifier(accessToken, eventId, externalIdentifier)
-    let createdContactId: string | undefined
-
-    if (contactExists) {
-        await updateEventsAirContact(accessToken, contactData, contactExists.id)
-    } else {
-        createdContactId = await createEventsAirContact(accessToken, {
-            ...contactData,
-            // Default new contact to not having an after party upgrade
-            userDefinedField3: contactData.userDefinedField3 ?? 'N',
-            eventId,
-        })
-    }
-
-    const contactId = contactExists?.id ?? createdContactId
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return contactId!
-}
-
-// async function ensureContactExistsByEmail(
-//     accessToken: string,
-//     email: string,
-//     eventId: string,
-//     contactData: EventsAirContactData,
-// ) {
-//     const contactExists = await checkIfContactExistsByEmail(accessToken, eventId, email)
-//     let createdContactId: string | undefined
-
-//     if (contactExists) {
-//         await updateEventsAirContact(accessToken, contactData, contactExists.id)
-//     } else {
-//         createdContactId = await createEventsAirContact(accessToken, {
-//             ...contactData,
-//             eventId,
-//         })
-//     }
-
-//     const contactId = contactExists?.id ?? createdContactId
-//     return contactId!
-// }
-
-async function ensureRegistrationExists(release_slug: string, accessToken: string, contactId: string, eventId: string) {
-    const mappedTicketType = ticketTypeMapping[release_slug as keyof typeof ticketTypeMapping]
-    const registrations = await getContactRegistrations(accessToken, eventId, contactId)
-    const existingRegistrationOfType = registrations.find((reg) => reg.type.id === mappedTicketType)
-
-    if (!existingRegistrationOfType) {
-        await createEventsAirRegistration(accessToken, {
-            eventId,
-            contactId,
-            paymentDetails: {
-                adjustmentAmount: 0,
-                paymentStatus: 'INCLUSIVE',
-            },
-            registrationTypeId: mappedTicketType,
-            dateTime: new Date().toISOString(),
-        })
-    }
 }

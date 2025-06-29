@@ -1,9 +1,7 @@
-import type { DateTime } from 'luxon'
-
 export interface StartEventImportantDate {
     type: 'start-event'
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: string
+    endDateTime: string
     event: string
 
     eventActiveMessage: string
@@ -13,8 +11,8 @@ export interface StartEventImportantDate {
 
 export interface EndEventImportantDate {
     type: 'end-event'
-    startDateTime: DateTime
-    dateTime: DateTime
+    startDateTime: string
+    dateTime: string
     event: string
 
     /** End events count down while active, so no active message */
@@ -25,7 +23,7 @@ export interface EndEventImportantDate {
 export interface StandaloneImportantDate {
     type: 'important-date'
 
-    dateTime: DateTime
+    dateTime: string
 
     event: string
 

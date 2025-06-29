@@ -88,12 +88,13 @@ GitHub App for DDD website admin authentication (Local Development)</textarea
                         organization.
                     </p>
                     <p>
-                        <strong>App Name:</strong> The production app will be created as "DDD Perth Website App" to
-                        ensure consistency across deployments.
+                        <strong>IMPORTANT:</strong> After clicking "Create Production GitHub App", you'll be redirected to GitHub.
+                        <strong>Make sure to set the "User authorization callback URL" to your production domain + /auth/github/callback</strong>
+                        (e.g., https://dddperth.com/auth/github/callback)
                     </p>
                     <p>
                         <strong>Domain:</strong> Make sure to use your actual production domain. You'll need to
-                        configure GitHub repository secrets afterward.
+                        configure GitHub repository secrets afterward using this setup script.
                     </p>
                     <p>
                         <strong>Prerequisites:</strong> You must be a member of the dddwa organization with app creation
@@ -101,52 +102,109 @@ GitHub App for DDD website admin authentication (Local Development)</textarea
                     </p>
                 </div>
 
-                <form action="https://github.com/organizations/dddwa/settings/apps/new" method="POST">
+                <div class="info-box">
+                    <h3>Step 1: Create the GitHub App Manually</h3>
+                    <p>Click the link below to create a new GitHub App at the organization level:</p>
+                    <p><a href="https://github.com/organizations/dddwa/settings/apps/new" target="_blank" class="button">Create App at dddwa Organization</a></p>
+                    
+                    <h4>Required Settings When Creating the App:</h4>
+                    <ul>
+                        <li><strong>App Name:</strong> DDD Perth Website App</li>
+                        <li><strong>Homepage URL:</strong> https://dddperth.com/</li>
+                        <li><strong>User authorization callback URL:</strong> https://dddperth.com/auth/github/callback</li>
+                        <li><strong>Permissions:</strong>
+                            <ul>
+                                <li>Repository permissions → Contents: Read</li>
+                                <li>Repository permissions → Metadata: Read</li>
+                                <li>Account permissions → Email addresses: Read</li>
+                            </ul>
+                        </li>
+                        <li><strong>Request user authorization (OAuth) during installation:</strong> ✅ Checked</li>
+                    </ul>
+                </div>
+
+                <div class="success-box">
+                    <h3>Step 2: Configure Repository Variables & Secrets</h3>
+                    <p>After creating the app, fill in the details below to configure the GitHub repository:</p>
+                </div>
+
+                <form id="production-config-form">
                     <div class="form-group">
-                        <label for="prod-app-name">App Name:</label>
+                        <label for="prod-app-id">App ID:</label>
                         <input
                             type="text"
-                            id="prod-app-name"
-                            name="appName"
-                            value="DDD Perth Website App"
+                            id="prod-app-id"
+                            name="appId"
+                            placeholder="123456"
                             required
-                            readonly
                         />
+                        <small>Found in your app settings under "About"</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="prod-description">Description:</label>
-                        <textarea id="prod-description" name="description">
-GitHub App for DDD website admin authentication (Production)</textarea
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-homepage">Homepage URL:</label>
+                        <label for="prod-client-id">Client ID:</label>
                         <input
-                            type="url"
-                            id="prod-homepage"
-                            name="homepageUrl"
-                            value="https://dddperth.com/"
+                            type="text"
+                            id="prod-client-id"
+                            name="clientId"
+                            placeholder="Iv1.abc123def456"
                             required
                         />
+                        <small>Found in your app settings under "OAuth"</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="github-repo">GitHub Repository (for secrets):</label>
+                        <label for="prod-client-secret">Client Secret:</label>
+                        <input
+                            type="password"
+                            id="prod-client-secret"
+                            name="clientSecret"
+                            placeholder="Enter client secret"
+                            required
+                        />
+                        <small>Generate and copy from your app settings under "OAuth"</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-private-key">Private Key:</label>
+                        <textarea
+                            id="prod-private-key"
+                            name="privateKey"
+                            placeholder="-----BEGIN RSA PRIVATE KEY-----
+...
+-----END RSA PRIVATE KEY-----"
+                            rows="6"
+                            required
+                        ></textarea>
+                        <small>Generate and copy from your app settings under "Private keys"</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prod-app-slug">App Slug (optional):</label>
+                        <input
+                            type="text"
+                            id="prod-app-slug"
+                            name="appSlug"
+                            placeholder="ddd-perth-website-app"
+                        />
+                        <small>Found in the app URL: github.com/apps/{slug}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="github-repo">GitHub Repository:</label>
                         <input
                             type="text"
                             id="github-repo"
                             name="githubRepo"
-                            placeholder="owner/repo"
+                            value="dddwa/dddperth"
                             pattern="[^/]+/[^/]+"
                             title="Format: owner/repo"
-                            value="dddwa/dddperth"
+                            required
                         />
-                        <small>Leave empty to skip setting GitHub secrets</small>
                     </div>
 
-                    <button type="submit">Create Production GitHub App</button>
+                    <input type="hidden" name="environment" value="production" />
+                    <button type="submit">Configure Repository Secrets</button>
                 </form>
             </div>
         </div>

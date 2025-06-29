@@ -30,6 +30,8 @@ export const {
     EVENTS_AIR_CLIENT_SECRET,
     EVENTS_AIR_TENANT_ID,
     EVENTS_AIR_EVENT_ID,
+    AZURE_STORAGE_ACCOUNT_NAME,
+    SESSIONIZE_2025_ALL_SESSIONS,
 } = z
     .object({
         NODE_ENV: z.string(),
@@ -68,6 +70,9 @@ export const {
         EVENTS_AIR_CLIENT_SECRET: z.string().optional(),
         EVENTS_AIR_TENANT_ID: z.string().optional(),
         EVENTS_AIR_EVENT_ID: z.string().optional(),
+
+        SESSIONIZE_2025_ALL_SESSIONS: z.string().optional(),
+        AZURE_STORAGE_ACCOUNT_NAME: z.string(),
     })
     .parse(process.env)
 

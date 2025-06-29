@@ -1,4 +1,4 @@
-import type { ConferenceState } from './config-types'
+import type { ConferenceState } from './conference-state-client-safe'
 
 export interface CallToAction {
     title: string
@@ -17,11 +17,11 @@ export function getConferenceActions(conferenceState: ConferenceState): CallToAc
         })
     }
 
-    if (conferenceState.talkVoting === 'open') {
+    if (conferenceState.talkVoting.state === 'open') {
         actions.push({
             category: 'voting',
             title: 'Vote for agenda',
-            url: '/vote',
+            url: '/voting',
         })
     }
 
