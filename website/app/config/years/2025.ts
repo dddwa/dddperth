@@ -26,7 +26,7 @@ export const conference2025: ConferenceYear = {
         }),
     },
     talkVotingDates: {
-        opens: DateTime.fromISO('2025-06-30T00:00:00', {
+        opens: DateTime.fromISO('2025-07-01T09:00:00', {
             zone: 'Australia/Perth',
         }),
         closes: DateTime.fromISO('2025-07-20T23:59:59', {
