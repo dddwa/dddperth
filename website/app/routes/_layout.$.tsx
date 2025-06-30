@@ -27,25 +27,25 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const requestUrl = new URL(request.url)
     if (contentSlug.startsWith('/static')) {
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
     if (contentSlug.includes('.well-known')) {
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
     const post = await getPage(contentSlug, 'page')
     if (!post) {
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (post.frontmatter.draft) {
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (!post.frontmatter.title) {
         trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
