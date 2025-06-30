@@ -90,6 +90,17 @@ resource storageTableRole 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
+// Grant Storage Account Contributor role for table creation
+resource storageAccountContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccountResourceId, identity.id, '17d1049b-9a84-46fb-8f53-869881c3d3ab')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')
+    principalType: 'ServicePrincipal'
+    principalId: identity.properties.principalId
+  }
+}
+
 @secure()
 param sessionSecret string = uniqueString(newGuid())
 
@@ -105,7 +116,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
   name: name
   location: location
   tags: union(tags, {'azd-service-name':  'ddd' })
-  dependsOn: [ acrPullRole, storageBlobRole, storageTableRole ]
+  dependsOn: [ acrPullRole, storageBlobRole, storageTableRole, storageAccountContributorRole ]
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: { '${identity.id}': {} }
