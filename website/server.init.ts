@@ -1,5 +1,5 @@
 import { TableClient, TableServiceClient } from '@azure/data-tables'
-import { DefaultAzureCredential } from '@azure/identity'
+import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity'
 import { BlobServiceClient } from '@azure/storage-blob'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@react-router/express'
@@ -8,7 +8,7 @@ import compression from 'compression'
 import express from 'express'
 import path from 'node:path'
 import type { ServerBuild } from 'react-router'
-import { AZURE_STORAGE_ACCOUNT_NAME } from '~/lib/config.server.js'
+import { AZURE_CLIENT_ID, AZURE_STORAGE_ACCOUNT_NAME } from '~/lib/config.server.js'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
@@ -27,7 +27,9 @@ export function init() {
         }
     } else {
         // Use managed identity for production
-        const credential = new DefaultAzureCredential()
+        const credential = AZURE_CLIENT_ID
+            ? new ManagedIdentityCredential(AZURE_CLIENT_ID)
+            : new DefaultAzureCredential()
         const blobUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`
         const tableUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.table.core.windows.net`
 

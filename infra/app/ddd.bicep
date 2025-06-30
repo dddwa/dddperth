@@ -252,6 +252,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
                 name: 'AZURE_STORAGE_ACCOUNT_NAME'
                 value: storageAccountName
             }
+            {
+                name: 'AZURE_CLIENT_ID'
+                value: identity.properties.clientId
+            }
           ]
 
           resources: {
