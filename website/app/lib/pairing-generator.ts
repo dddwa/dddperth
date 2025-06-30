@@ -9,19 +9,18 @@ export class FairPairingGenerator {
         this.seed = seed
     }
 
-    // Simple but effective shuffle using LCG
     private shuffleIndex(index: number): number {
-        // Linear Congruential Generator parameters
-        const a = 1664525
-        const c = 1013904223
-        const m = 2147483647 // 2^31 - 1 (Mersenne prime)
+        // Use a better mixing function
+        let hash = index
 
-        // Mix the index with seed
-        let hash = (index * a + this.seed * c) % m
-        hash = (hash * a + c) % m
+        // Mix with seed
+        hash ^= this.seed
+        hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b)
+        hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35)
+        hash ^= hash >>> 16
 
-        // Map to our range
-        return hash % this.totalPairs
+        // Ensure positive and in range
+        return Math.abs(hash) % this.totalPairs
     }
 
     // Convert index to talk pair
@@ -38,23 +37,11 @@ export class FairPairingGenerator {
         return [i, j]
     }
 
-    // Get a specific pair by position in sequence
     getPairAtPosition(position: number): [number, number] | null {
         if (position >= this.totalPairs) return null
 
-        // Use cycle walking to ensure we get a valid permutation
-        let shuffled = position
-        const seen = new Set<number>()
-
-        do {
-            shuffled = this.shuffleIndex(shuffled)
-        } while (seen.has(shuffled) && seen.size < this.totalPairs)
-
-        if (seen.has(shuffled)) {
-            // Fallback: use position directly if we can't find unique
-            shuffled = position
-        }
-        seen.add(shuffled)
+        // Simple approach - just shuffle the index once
+        const shuffled = this.shuffleIndex(position)
 
         return this.indexToPair(shuffled)
     }

@@ -55,7 +55,7 @@ export interface VoteRecord {
 }
 
 // Interface for table storage (arrays converted to JSON strings)
-interface VotingSession {
+export interface VotingSession {
     partitionKey: 'session'
     rowKey: `session_${SessionId}`
     sessionId: SessionId
