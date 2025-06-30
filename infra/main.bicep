@@ -53,6 +53,8 @@ param eventsAirEventId string
 param titoSecurityToken string
 @secure()
 param sessionize2025AllSessions string
+@secure()
+param sessionSecret string
 
 
 // Tags that should be applied to all resources.
@@ -168,6 +170,7 @@ module ddd './app/ddd.bicep' = {
     eventsAirEventId: eventsAirEventId
     titoSecurityToken: titoSecurityToken
     sessionize2025AllSessions: sessionize2025AllSessions
+    sessionSecret: sessionSecret
     storageAccountName: storageAccount.outputs.name
     storageAccountResourceId: storageAccount.outputs.resourceId
   }

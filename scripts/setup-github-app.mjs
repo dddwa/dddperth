@@ -44,57 +44,60 @@ async function getInstallationDetails(installationId) {
     const localEnv = parseEnvFile(config.envFile)
     if (localEnv.WEBSITE_GITHUB_APP_ID && localEnv.WEBSITE_GITHUB_APP_PRIVATE_KEY) {
         try {
-            print.info(`Checking if installation ${installationId} belongs to local app (ID: ${localEnv.WEBSITE_GITHUB_APP_ID})`)
-            
+            print.info(
+                `Checking if installation ${installationId} belongs to local app (ID: ${localEnv.WEBSITE_GITHUB_APP_ID})`,
+            )
+
             // Create JWT for GitHub App authentication
             const jwt = createGitHubAppJWT(localEnv.WEBSITE_GITHUB_APP_ID, localEnv.WEBSITE_GITHUB_APP_PRIVATE_KEY)
-            
+
             // Get installation details from GitHub API
             const response = await fetch(`https://api.github.com/app/installations/${installationId}`, {
                 headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${jwt}`,
-                    'User-Agent': 'DDD-GitHub-App-Setup'
-                }
+                    Accept: 'application/vnd.github.v3+json',
+                    Authorization: `Bearer ${jwt}`,
+                    'User-Agent': 'DDD-GitHub-App-Setup',
+                },
             })
-            
+
             if (response.ok) {
                 const installation = await response.json()
-                print.success(`Installation ${installationId} belongs to local app (ID: ${localEnv.WEBSITE_GITHUB_APP_ID})`)
-                
+                print.success(
+                    `Installation ${installationId} belongs to local app (ID: ${localEnv.WEBSITE_GITHUB_APP_ID})`,
+                )
+
                 // Add the app info to the installation object for reference
                 installation._detectedApp = {
                     appId: localEnv.WEBSITE_GITHUB_APP_ID,
                     source: 'local .env',
-                    environment: 'local'
+                    environment: 'local',
                 }
-                
+
                 return installation
             } else if (response.status === 404) {
                 print.info(`Installation ${installationId} not found for local app - assuming it's a production app`)
             } else {
                 print.warning(`GitHub API error for local app: ${response.status} ${response.statusText}`)
             }
-            
         } catch (error) {
             print.warning(`Failed to query installation details with local app: ${error.message}`)
         }
     } else {
         print.info('No local app credentials found - assuming production app')
     }
-    
+
     // If we get here, it's not a local app, so assume it's production
     // We can't query the GitHub API for production apps without the private key,
     // but we can return a placeholder indicating it's production
     print.info(`Assuming installation ${installationId} belongs to production app`)
-    
+
     return {
         _isProduction: true,
         _detectedApp: {
             appId: 'unknown',
             source: 'assumed production',
-            environment: 'production'
-        }
+            environment: 'production',
+        },
     }
 }
 
@@ -103,25 +106,24 @@ function createGitHubAppJWT(appId, privateKeyBase64) {
     try {
         // Decode base64 private key
         const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf8')
-        
+
         // Create JWT payload
         const now = Math.floor(Date.now() / 1000)
         const payload = {
             iat: now - 60, // issued 60 seconds ago to account for clock skew
-            exp: now + (10 * 60), // expires in 10 minutes
-            iss: appId
+            exp: now + 10 * 60, // expires in 10 minutes
+            iss: appId,
         }
-        
+
         // Simple JWT implementation (for production, use a proper JWT library)
         const header = { alg: 'RS256', typ: 'JWT' }
         const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
         const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
-        
+
         const signData = `${encodedHeader}.${encodedPayload}`
         const signature = crypto.sign('RSA-SHA256', Buffer.from(signData), privateKey).toString('base64url')
-        
+
         return `${signData}.${signature}`
-        
     } catch (error) {
         throw new Error(`Failed to create JWT: ${error.message}`)
     }
@@ -459,10 +461,10 @@ function createServer() {
                         print.success('Production environment setup completed successfully')
                     }
 
-                    sendJSON(res, { 
-                        success: true, 
+                    sendJSON(res, {
+                        success: true,
                         environment: config.environment,
-                        appSlug: app.slug
+                        appSlug: app.slug,
                     })
                 } catch (error) {
                     print.error(`Setup failed: ${error.message}`)
@@ -479,18 +481,18 @@ function createServer() {
                         client_id: clientId,
                         client_secret: clientSecret,
                         pem: privateKey,
-                        slug: appSlug || null
+                        slug: appSlug || null,
                     }
 
                     // Set both variables and secrets for production
                     await setGitHubVariables(app, 'https://dddperth.com/', githubRepo)
                     await setGitHubSecrets(app, githubRepo)
-                    
+
                     print.success('Production GitHub App configured successfully')
-                    sendJSON(res, { 
-                        success: true, 
+                    sendJSON(res, {
+                        success: true,
                         message: 'Production app configured successfully',
-                        appId: appId
+                        appId: appId,
                     })
                 } catch (error) {
                     print.error(`Production configuration failed: ${error.message}`)
@@ -502,15 +504,15 @@ function createServer() {
                 // Handle installation callback (after installing the app)
                 if (installation_id && setup_action === 'install') {
                     print.info(`Processing installation callback for installation ID: ${installation_id}`)
-                    
+
                     // Try to detect which app this installation belongs to
                     const installation = await getInstallationDetails(installation_id)
-                    
+
                     if (installation && installation._detectedApp) {
                         const detectedApp = installation._detectedApp
-                        
+
                         print.info(`Installation ${installation_id} detected as ${detectedApp.environment} app`)
-                        
+
                         // Save installation ID based on detected app environment
                         if (detectedApp.environment === 'local') {
                             try {
@@ -526,7 +528,9 @@ function createServer() {
                                 if (repoInfo) {
                                     const githubRepo = `${repoInfo.owner}/${repoInfo.repo}`
                                     await setGitHubInstallationId(installation_id, githubRepo)
-                                    print.success(`Saved installation ID ${installation_id} to GitHub variables for production app`)
+                                    print.success(
+                                        `Saved installation ID ${installation_id} to GitHub variables for production app`,
+                                    )
                                 } else {
                                     print.warning('Could not detect repository info for production app')
                                 }
@@ -534,7 +538,6 @@ function createServer() {
                                 print.warning(`Could not save installation ID to GitHub variables: ${error.message}`)
                             }
                         }
-                        
                     } else {
                         print.warning('Could not detect app environment - manual configuration may be required')
                     }
@@ -558,21 +561,25 @@ function createServer() {
                                     <p><strong>Next Steps:</strong></p>
                                     <ul>
                                         <li>Your app is now ready to access repository content</li>
-                                        ${installation?._detectedApp?.environment === 'local'
-                                            ? '<li>✅ Installation ID has been saved to your .env file</li>'
-                                            : ''
+                                        ${
+                                            installation?._detectedApp?.environment === 'local'
+                                                ? '<li>✅ Installation ID has been saved to your .env file</li>'
+                                                : ''
                                         }
-                                        ${installation?._detectedApp?.environment === 'production'
-                                            ? '<li>✅ Installation ID has been saved to GitHub repository variables</li>'
-                                            : ''
+                                        ${
+                                            installation?._detectedApp?.environment === 'production'
+                                                ? '<li>✅ Installation ID has been saved to GitHub repository variables</li>'
+                                                : ''
                                         }
-                                        ${installation?._detectedApp?.environment === 'local'
-                                            ? '<li>For local development: Set <code>USE_GITHUB_CONTENT=true</code> in your .env file to load content from GitHub</li>'
-                                            : ''
+                                        ${
+                                            installation?._detectedApp?.environment === 'local'
+                                                ? '<li>For local development: Set <code>USE_GITHUB_CONTENT=true</code> in your .env file to load content from GitHub</li>'
+                                                : ''
                                         }
-                                        ${!installation?._detectedApp
-                                            ? '<li>⚠️ App environment could not be detected - you may need to manually configure the installation ID</li>'
-                                            : ''
+                                        ${
+                                            !installation?._detectedApp
+                                                ? '<li>⚠️ App environment could not be detected - you may need to manually configure the installation ID</li>'
+                                                : ''
                                         }
                                         <li>Start your development server: <code>pnpm start</code></li>
                                     </ul>
@@ -752,11 +759,6 @@ function updateLocalEnv(app, homepageUrl, userInfo = null) {
         envContent = updateEnvVar(envContent, 'WEB_URL', homepageUrl)
     }
 
-    if (!envContent.includes('SESSION_SECRET=')) {
-        const sessionSecret = crypto.randomBytes(32).toString('hex')
-        envContent = updateEnvVar(envContent, 'SESSION_SECRET', sessionSecret)
-    }
-
     writeFileSync(config.envFile, envContent)
     print.success('Local .env file updated')
 }
@@ -897,16 +899,9 @@ async function setGitHubSecrets(app, githubRepo) {
             stdio: ['pipe', 'pipe', 'pipe'],
         })
 
-        // Generate and set SESSION_SECRET for production
-        const prodSessionSecret = crypto.randomBytes(32).toString('hex')
-        execSync(`echo "${prodSessionSecret}" | gh secret set SESSION_SECRET --repo "${githubRepo}"`, {
-            stdio: ['pipe', 'pipe', 'pipe'],
-        })
-
         print.success('GitHub secrets set successfully')
         print.info('  WEBSITE_GITHUB_APP_CLIENT_SECRET: Set as secret')
         print.info('  WEBSITE_GITHUB_APP_PRIVATE_KEY: Set as secret (base64 encoded)')
-        print.info('  SESSION_SECRET: Set as secret (generated for production)')
     } catch (error) {
         print.error(`Failed to set GitHub secrets: ${error.message}`)
         print.warning('You may need to set these manually in your repository settings')

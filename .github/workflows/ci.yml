@@ -51,6 +51,7 @@ jobs:
             EVENTS_AIR_EVENT_ID: ${{ secrets.EVENTS_AIR_EVENT_ID }}
             TITO_SECURITY_TOKEN: ${{ secrets.TITO_SECURITY_TOKEN }}
             SESSIONIZE_2025_ALL_SESSIONS: ${{ secrets.SESSIONIZE_2025_ALL_SESSIONS }}
+            SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
 
         steps:
             - name: Checkout
@@ -117,6 +118,11 @@ jobs:
 
                   if [ -z "$SESSIONIZE_2025_ALL_SESSIONS" ]; then
                     echo "❌ SESSIONIZE_2025_ALL_SESSIONS secret is not set"
+                    errors=$((errors + 1))
+                  fi
+
+                  if [ -z "$SESSION_SECRET" ]; then
+                    echo "❌ SESSION_SECRET secret is not set"
                     errors=$((errors + 1))
                   fi
 
