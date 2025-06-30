@@ -1,0 +1,24 @@
+services:
+    # aspire:
+    #     image: mcr.microsoft.com/dotnet/nightly/aspire-dashboard:${ASPIRE_VERSION:-latest}
+    #     restart: always
+    #     ports:
+    #         - '18888:18888'
+    #         - '4317:18889'
+
+    jaeger:
+        image: jaegertracing/all-in-one:${JAEGER_VERSION:-latest}
+        restart: always
+        ports:
+            - '16686:16686'
+            - '4318:4318'
+            - '4317:4317'
+
+    azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:${AZURITE_VERSION:-latest}
+        command: azurite --skipApiVersionCheck -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+        restart: always
+        ports:
+            - '10000:10000'
+            - '10001:10001'
+            - '10002:10002'

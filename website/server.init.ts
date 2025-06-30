@@ -8,23 +8,23 @@ import compression from 'compression'
 import express from 'express'
 import path from 'node:path'
 import type { ServerBuild } from 'react-router'
-import { VOTING_SESSIONS_TABLE } from '~/lib/azure-storage.server.js'
 import { AZURE_STORAGE_ACCOUNT_NAME } from '~/lib/config.server.js'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
 
 export function init() {
-    // Initialize clients
     let blobServiceClient: BlobServiceClient
     let tableServiceClient: TableServiceClient
-    let tableClient: TableClient
+    let getTableClient: (tableName: string) => TableClient
 
-    if (AZURE_STORAGE_ACCOUNT_NAME) {
+    if (AZURE_STORAGE_ACCOUNT_NAME === 'local') {
         const connectionString = 'UseDevelopmentStorage=true'
         blobServiceClient = BlobServiceClient.fromConnectionString(connectionString)
         tableServiceClient = TableServiceClient.fromConnectionString(connectionString)
-        tableClient = TableClient.fromConnectionString(connectionString, VOTING_SESSIONS_TABLE)
+        getTableClient = (tableName: string): TableClient => {
+            return TableClient.fromConnectionString(connectionString, tableName)
+        }
     } else {
         // Use managed identity for production
         const credential = new DefaultAzureCredential()
@@ -33,7 +33,9 @@ export function init() {
 
         blobServiceClient = new BlobServiceClient(blobUrl, credential)
         tableServiceClient = new TableServiceClient(tableUrl, credential)
-        tableClient = new TableClient(tableUrl, VOTING_SESSIONS_TABLE)
+        getTableClient = (tableName: string): TableClient => {
+            return new TableClient(tableUrl, tableName, credential)
+        }
     }
 
     return tracer.startActiveSpan('start', async (span) => {
@@ -135,7 +137,7 @@ export function init() {
                             request: req,
                             blobServiceClient,
                             tableServiceClient,
-                            tableClient,
+                            getTableClient,
                         })
                     },
                 }) as any,

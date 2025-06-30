@@ -1,5 +1,5 @@
 import { redirect } from 'react-router'
-import { $path } from 'remix-routes'
+import { $path } from 'safe-routes'
 import type { ConferenceYears } from '~/config/conference-config.server'
 import { conferenceConfig } from '~/config/conference-config.server'
 

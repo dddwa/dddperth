@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getUser, isAdmin } from '~/lib/auth.server'
-import { sessionStorage } from '~/lib/session.server'
+import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import type { DateTimeProvider } from './date-time-provider.server'
 import { SystemDateTimeProvider } from './system-date-time-provider.server'
 
@@ -19,8 +19,8 @@ export class AdminDateTimeProvider implements DateTimeProvider {
         }
 
         // Check for date override in session
-        const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
-        const overrideDate = session.get('adminDateOverride') as string | undefined
+        const session = await adminDateTimeSessionStorage.getSession(requestHeaders.get('cookie'))
+        const overrideDate = session.get('adminDateOverride')
 
         if (overrideDate) {
             provider._override = DateTime.fromISO(overrideDate, {

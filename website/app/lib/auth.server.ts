@@ -2,16 +2,8 @@ import { redirect } from 'react-router'
 import { Authenticator } from 'remix-auth'
 import { GitHubStrategy } from 'remix-auth-github'
 import { WEBSITE_GITHUB_APP_CLIENT_ID, WEBSITE_GITHUB_APP_CLIENT_SECRET, WEB_URL, isAdminHandle } from './config.server'
-import { sessionStorage } from './session.server'
-
-// Define the User type
-export interface User {
-    id: string
-    login: string
-    avatar_url: string
-    name: string | null
-    email: string | null
-}
+import type { User } from './session.server'
+import { authSessionStorage } from './session.server'
 
 // Create an instance of the authenticator
 export const authenticator = new Authenticator<User>()
@@ -52,7 +44,7 @@ const gitHubStrategy = new GitHubStrategy(
         return {
             id: profile.id.toString(),
             login: profile.login,
-            avatar_url: profile.avatar_url,
+            avatarUrl: profile.avatar_url,
             name: profile.name,
             email: primaryEmail,
         }
@@ -67,8 +59,8 @@ export function isAdmin(user: User | null): boolean {
 }
 
 export async function requireAdmin(request: Request): Promise<User> {
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
-    const user = session.get('user') as User | undefined
+    const session = await authSessionStorage.getSession(request.headers.get('cookie'))
+    const user = session.get('user')
 
     if (!user) {
         throw redirect('/auth/login')
@@ -82,25 +74,25 @@ export async function requireAdmin(request: Request): Promise<User> {
 }
 
 export async function getUser(requestHeaders: Headers): Promise<User | null> {
-    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
+    const session = await authSessionStorage.getSession(requestHeaders.get('cookie'))
     return session.get('user') as User | null
 }
 
 export async function createUserSession(requestHeaders: Headers, user: User, redirectTo: string) {
-    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
+    const session = await authSessionStorage.getSession(requestHeaders.get('cookie'))
     session.set('user', user)
     return redirect(redirectTo, {
         headers: {
-            'Set-Cookie': await sessionStorage.commitSession(session),
+            'Set-Cookie': await authSessionStorage.commitSession(session),
         },
     })
 }
 
 export async function logout(requestHeaders: Headers, redirectTo = '/') {
-    const session = await sessionStorage.getSession(requestHeaders.get('cookie'))
+    const session = await authSessionStorage.getSession(requestHeaders.get('cookie'))
     return redirect(redirectTo, {
         headers: {
-            'Set-Cookie': await sessionStorage.destroySession(session),
+            'Set-Cookie': await authSessionStorage.commitSession(session),
         },
     })
 }

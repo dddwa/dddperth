@@ -8,7 +8,7 @@ import { Header } from '~/components/header/header'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getUser, isAdmin } from '~/lib/auth.server'
 import { WEB_URL } from '~/lib/config.server' // Ensure this path is correct
-import { sessionStorage } from '~/lib/session.server'
+import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import { Box, Flex } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout'
 
@@ -17,13 +17,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     let adminData = null
 
     if (user && isAdmin(user)) {
-        const session = await sessionStorage.getSession(request.headers.get('cookie'))
-        const overrideDate = session.get('adminDateOverride') as string | undefined
+        const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
+        const overrideDate = session.get('adminDateOverride')
 
         adminData = {
             user: {
                 login: user.login,
-                avatarUrl: user.avatar_url,
+                avatarUrl: user.avatarUrl,
             },
             overrideDate: overrideDate || null,
             currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),

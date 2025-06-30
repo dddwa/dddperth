@@ -1,15 +1,15 @@
 import { DateTime } from 'luxon'
-import { useEffect, useState } from 'react'
-import { data, Form, redirect, useLoaderData, useNavigation } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useLoaderData } from 'react-router'
+import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
-import { getActiveVotingSession, getVotingPairs, getVotingProgress, recordVote } from '~/lib/azure-storage.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { initializeVoting } from '~/lib/voting.server'
-import { css } from '~/styled-system/css'
-import { Box, Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
+import type { TalkPair } from '~/lib/voting.server'
+import { ensureVotesTableExists, getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
+import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
 
     if (yearConfig.kind === 'cancelled') {
@@ -19,10 +19,9 @@ export async function loader({ context }: Route.LoaderArgs) {
     if (context.conferenceState.talkVoting.state === 'not-open-yet') {
         return {
             talkVoting: context.conferenceState.talkVoting,
-            currentPair: null,
-            progress: null,
-            totalPairs: 0,
             sessionId: null,
+            startingIndex: 0,
+            hasSession: false,
         }
     }
 
@@ -30,98 +29,139 @@ export async function loader({ context }: Route.LoaderArgs) {
     if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
         return {
             talkVoting: context.conferenceState.talkVoting,
-            currentPair: null,
-            progress: null,
-            totalPairs: 0,
             sessionId: null,
+            hasSession: false,
+            startingIndex: 0,
             error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
         }
     }
 
-    // Get or create active voting session
-    let session = await getActiveVotingSession(context.tableClient, context.conferenceState.conference.year)
+    const sessions = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
+    const tableClient = await ensureVotesTableExists(
+        context.tableServiceClient,
+        context.getTableClient,
+        context.conferenceState.conference.year,
+    )
 
-    if (!session) {
-        // Initialize voting if not started
-        try {
-            const sessionId = await initializeVoting(
-                context.blobServiceClient,
-                context.tableServiceClient,
-                context.tableClient,
-                yearConfig,
-                context.conferenceState,
-            )
-            session = await getActiveVotingSession(context.tableClient, context.conferenceState.conference.year)
-        } catch (error) {
-            console.error('Failed to initialize voting:', error)
-            return {
-                talkVoting: context.conferenceState.talkVoting,
-                currentPair: null,
-                progress: null,
-                totalPairs: 0,
-                sessionId: null,
-                error: 'Failed to initialize voting',
-            }
-        }
-    }
-
-    if (!session) {
-        throw new Error('Failed to get voting session')
-    }
-
-    // Get voting pairs and progress
-    const pairs = await getVotingPairs(context.blobServiceClient, context.conferenceState.conference.year)
-    const progress = await getVotingProgress(context.blobServiceClient, session.sessionId)
-
-    if (!pairs) {
-        throw new Error('Voting pairs not found')
-    }
-
-    // Get current pair based on progress
-    const currentPair = progress.currentIndex < pairs.pairs.length ? pairs.pairs[progress.currentIndex] : null
+    // This will create a session and redirect
+    const votingSession = await getVotingSession(request, tableClient, sessions)
 
     return {
         talkVoting: context.conferenceState.talkVoting,
-        currentPair,
-        progress: {
-            current: progress.currentIndex,
-            total: pairs.pairs.length,
-            votes: progress.votes,
-        },
-        totalPairs: pairs.pairs.length,
-        sessionId: session.sessionId,
+        sessionId: votingSession.sessionId,
+        startingIndex: votingSession.currentIndex,
+        hasSession: true,
     }
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
-    const formData = await request.formData()
-    const vote = formData.get('vote') as 'A' | 'B'
-    const sessionId = formData.get('sessionId') as string
-
-    if (!vote || !sessionId) {
-        return data({ error: 'Invalid vote', status: 400 })
+interface VotingBatch {
+    batch: {
+        pairs: TalkPair[]
+        currentIndex: number
+        totalPairs: number
+        hasMore: boolean
     }
-
-    try {
-        await recordVote(context.blobServiceClient, sessionId, vote)
-        return redirect('/voting')
-    } catch (error) {
-        console.error('Failed to record vote:', error)
-        return data({ error: 'Failed to record vote', status: 500 })
-    }
+    sessionId: string
+    votingState: string
 }
 
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
-    const navigation = useNavigation()
-    const [selectedVote, setSelectedVote] = useState<'A' | 'B' | null>(null)
+    const [currentPairIndex, setCurrentPairIndex] = useState(0)
+    const [overallIndex, setOverallIndex] = useState(data.startingIndex)
+    const [pairs, setPairs] = useState<TalkPair[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const fetchingRef = useRef(false)
+    const nextBatchFetchedRef = useRef(false)
 
-    const isSubmitting = navigation.state === 'submitting'
-
+    // Fetch initial batch on mount
     useEffect(() => {
-        // Reset selection when new pair loads
-        setSelectedVote(null)
-    }, [data.currentPair])
+        if (data.hasSession && data.sessionId) {
+            void fetchBatch()
+        }
+    }, [data.hasSession, data.sessionId])
+
+    // Check if we need to fetch next batch
+    useEffect(() => {
+        const remainingInBatch = pairs.length - currentPairIndex
+        if (remainingInBatch <= 10 && remainingInBatch > 0 && !nextBatchFetchedRef.current && !fetchingRef.current) {
+            nextBatchFetchedRef.current = true
+            void fetchNextBatch()
+        }
+    }, [currentPairIndex, pairs.length])
+
+    async function fetchBatch() {
+        if (fetchingRef.current) return
+        fetchingRef.current = true
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch('/api/voting/batch')
+            const result: VotingBatch | { error: string; needsSession?: boolean } = await response.json()
+
+            if (!response.ok) {
+                if ('needsSession' in result && result.needsSession) {
+                    // Redirect to create session
+                    window.location.href = '/voting'
+                    return
+                }
+                throw new Error('error' in result ? result.error : 'Failed to fetch voting batch')
+            }
+
+            const votingBatch = result as VotingBatch
+            setPairs(votingBatch.batch.pairs)
+            setCurrentPairIndex(0)
+            nextBatchFetchedRef.current = false
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load voting data')
+        } finally {
+            setIsLoading(false)
+            fetchingRef.current = false
+        }
+    }
+
+    async function fetchNextBatch() {
+        if (fetchingRef.current) return
+        fetchingRef.current = true
+
+        try {
+            const nextIndex = overallIndex + pairs.length
+            const response = await fetch(`/api/voting/batch?from=${nextIndex}`)
+            const result: VotingBatch | { error: string } = await response.json()
+
+            if (response.ok && 'batch' in result) {
+                // Append new pairs to existing ones
+                setPairs((prev) => [...prev, ...result.batch.pairs])
+            }
+        } catch (err) {
+            console.error('Failed to fetch next batch:', err)
+        } finally {
+            fetchingRef.current = false
+        }
+    }
+
+    async function handleVote(vote: 'A' | 'B' | 'skip') {
+        const currentPair = pairs[currentPairIndex]
+        if (!currentPair) return
+
+        // Fire and forget vote submission
+        const formData = new FormData()
+        formData.append('vote', vote)
+        formData.append('voteIndex', currentPair.index.toString())
+
+        void fetch('/api/voting/vote', {
+            method: 'POST',
+            body: formData,
+        }).catch((err) => {
+            console.error('Failed to submit vote:', err)
+        })
+
+        // Move to next pair
+        setCurrentPairIndex((prev) => prev + 1)
+        setOverallIndex((prev) => prev + 1)
+    }
 
     if (data.talkVoting.state === 'not-open-yet') {
         return (
@@ -148,7 +188,7 @@ export default function VotingPage() {
         )
     }
 
-    if ('error' in data) {
+    if ('error' in data && data.error) {
         return (
             <Container py={12}>
                 <VStack gap={6}>
@@ -161,206 +201,100 @@ export default function VotingPage() {
         )
     }
 
-    if (!data.currentPair) {
+    if (isLoading && pairs.length === 0) {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Thank You!</styled.h2>
-                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
-                        You've completed all voting pairs. Thank you for helping us select the best talks!
-                    </styled.p>
-                    {data.progress && (
-                        <styled.p fontSize="md" color="fg.subtle">
-                            Total votes: {data.progress.current}
-                        </styled.p>
-                    )}
+                    <styled.h2 fontSize="2xl">Loading talks...</styled.h2>
                 </VStack>
             </Container>
         )
     }
 
-    const pair = data.currentPair
+    if (error) {
+        return (
+            <Container py={12}>
+                <VStack gap={6}>
+                    <styled.h2 fontSize="2xl">Talk Voting</styled.h2>
+                    <styled.p fontSize="lg" color="red.500">
+                        {error}
+                    </styled.p>
+                    <Button onClick={() => void fetchBatch()}>Try Again</Button>
+                </VStack>
+            </Container>
+        )
+    }
+
+    if (currentPairIndex >= pairs.length) {
+        return (
+            <Container py={12}>
+                <VStack gap={6}>
+                    <styled.h2 fontSize="2xl">Grabbing more talks!</styled.h2>
+                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
+                        We're loading more talks to vote on...
+                    </styled.p>
+                </VStack>
+            </Container>
+        )
+    }
+
+    const currentPair = pairs[currentPairIndex]
+    if (!currentPair) {
+        return null
+    }
 
     return (
         <Container py={12} maxW="6xl">
             <VStack gap={8}>
                 <VStack gap={4}>
-                    <styled.h2 fontSize="2xl">Which talk would you prefer to see?</styled.h2>
-                    <styled.p fontSize="lg" color="fg.muted">
-                        Progress: {data.progress?.current || 0} / {data.totalPairs}
-                    </styled.p>
-                    <Box
-                        className={css({
-                            width: 'full',
-                            maxW: '400px',
-                            height: '8px',
-                            bg: 'gray.200',
-                            borderRadius: 'full',
-                            overflow: 'hidden',
-                        })}
-                    >
-                        <Box
-                            className={css({
-                                height: 'full',
-                                bg: 'brand.500',
-                                transition: 'width 0.3s ease',
-                                borderRadius: 'full',
-                            })}
-                            style={{
-                                width: `${((data.progress?.current || 0) / data.totalPairs) * 100}%`,
-                            }}
-                        />
-                    </Box>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Which talk would you prefer to see?
+                    </styled.h2>
                 </VStack>
 
-                <Form method="post">
-                    <input type="hidden" name="sessionId" value={data.sessionId || ''} />
-                    <input type="hidden" name="vote" value={selectedVote || ''} />
+                <Flex gap={6} direction={{ base: 'column', lg: 'row' }} w="full">
+                    {/* Left Session Card */}
+                    <TalkOptionCard
+                        title={currentPair.left.title}
+                        description={currentPair.left.description}
+                        tags={currentPair.left.tags}
+                        onClick={() => void handleVote('A')}
+                        highlight={false}
+                    />
 
-                    <Flex gap={6} direction={{ base: 'column', lg: 'row' }}>
-                        {/* Left Session Card */}
-                        <Box
-                            flex={1}
-                            className={css({
-                                borderRadius: 'lg',
-                                border: '2px solid',
-                                borderColor: selectedVote === 'A' ? 'brand.500' : 'gray.200',
-                                bg: selectedVote === 'A' ? 'brand.50' : 'white',
-                                p: 6,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                _hover: {
-                                    borderColor: selectedVote === 'A' ? 'brand.600' : 'gray.300',
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: 'lg',
-                                },
-                            })}
-                            onClick={() => setSelectedVote('A')}
+                    {/* VS Divider */}
+                    <Flex justify="center" align="center" px={4}>
+                        <styled.p
+                            fontSize="2xl"
+                            fontWeight="bold"
+                            color="white"
+                            display={{ base: 'none', lg: 'block' }}
                         >
-                            <VStack gap={4}>
-                                <styled.h2 fontSize="lg">{pair.left.title}</styled.h2>
-
-                                {pair.left.speakers.length > 0 && (
-                                    <styled.p color="fg.muted" fontWeight="medium">
-                                        {pair.left.speakers.map((s) => s.name).join(', ')}
-                                    </styled.p>
-                                )}
-
-                                {pair.left.description && (
-                                    <styled.p
-                                        color="fg.subtle"
-                                        className={css({
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 6,
-                                            overflow: 'hidden',
-                                        })}
-                                    >
-                                        {pair.left.description}
-                                    </styled.p>
-                                )}
-
-                                <HStack gap={2} flexWrap="wrap">
-                                    {pair.left.categories.map((cat) =>
-                                        cat.categoryItems.map((item) => (
-                                            <Box
-                                                key={`${cat.id}-${item.id}`}
-                                                className={css({
-                                                    px: 3,
-                                                    py: 1,
-                                                    bg: 'gray.100',
-                                                    borderRadius: 'full',
-                                                    fontSize: 'sm',
-                                                })}
-                                            >
-                                                {item.name}
-                                            </Box>
-                                        )),
-                                    )}
-                                </HStack>
-                            </VStack>
-                        </Box>
-
-                        {/* VS Divider */}
-                        <Flex justify="center" px={4}>
-                            <styled.p
-                                fontSize="2xl"
-                                fontWeight="bold"
-                                color="fg.muted"
-                                display={{ base: 'none', lg: 'block' }}
-                            >
-                                VS
-                            </styled.p>
-                        </Flex>
-
-                        {/* Right Session Card */}
-                        <Box
-                            flex={1}
-                            className={css({
-                                borderRadius: 'lg',
-                                border: '2px solid',
-                                borderColor: selectedVote === 'B' ? 'brand.500' : 'gray.200',
-                                bg: selectedVote === 'B' ? 'brand.50' : 'white',
-                                p: 6,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                _hover: {
-                                    borderColor: selectedVote === 'B' ? 'brand.600' : 'gray.300',
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: 'lg',
-                                },
-                            })}
-                            onClick={() => setSelectedVote('B')}
-                        >
-                            <VStack gap={4}>
-                                <styled.h2 fontSize="lg">{pair.right.title}</styled.h2>
-
-                                {pair.right.speakers.length > 0 && (
-                                    <styled.p color="fg.muted" fontWeight="medium">
-                                        {pair.right.speakers.map((s) => s.name).join(', ')}
-                                    </styled.p>
-                                )}
-
-                                {pair.right.description && (
-                                    <styled.p
-                                        color="fg.subtle"
-                                        className={css({
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 6,
-                                            overflow: 'hidden',
-                                        })}
-                                    >
-                                        {pair.right.description}
-                                    </styled.p>
-                                )}
-
-                                <HStack gap={2} flexWrap="wrap">
-                                    {pair.right.categories.map((cat) =>
-                                        cat.categoryItems.map((item) => (
-                                            <Box
-                                                key={`${cat.id}-${item.id}`}
-                                                className={css({
-                                                    px: 3,
-                                                    py: 1,
-                                                    bg: 'gray.100',
-                                                    borderRadius: 'full',
-                                                    fontSize: 'sm',
-                                                })}
-                                            >
-                                                {item.name}
-                                            </Box>
-                                        )),
-                                    )}
-                                </HStack>
-                            </VStack>
-                        </Box>
+                            OR
+                        </styled.p>
                     </Flex>
 
-                    <Flex justify="center" mt={8}>
-                        <Button type="submit" size="lg" disabled={!selectedVote || isSubmitting} loading={isSubmitting}>
-                            {isSubmitting ? 'Submitting...' : 'Submit Vote'}
-                        </Button>
-                    </Flex>
-                </Form>
+                    {/* Right Session Card */}
+                    <TalkOptionCard
+                        title={currentPair.right.title}
+                        description={currentPair.right.description}
+                        tags={currentPair.right.tags}
+                        onClick={() => void handleVote('B')}
+                        highlight={false}
+                    />
+                </Flex>
+
+                <HStack justify="center" gap={4}>
+                    <Button size="lg" colorPalette="green" onClick={() => void handleVote('A')}>
+                        OPTION 1
+                    </Button>
+                    <Button size="lg" colorPalette="blue" variant="solid" onClick={() => void handleVote('skip')}>
+                        SKIP
+                    </Button>
+                    <Button size="lg" colorPalette="pink" onClick={() => void handleVote('B')}>
+                        OPTION 2
+                    </Button>
+                </HStack>
             </VStack>
         </Container>
     )

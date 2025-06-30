@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
 import { data, redirect, useLoaderData } from 'react-router'
-import { $path } from 'remix-routes'
+import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'

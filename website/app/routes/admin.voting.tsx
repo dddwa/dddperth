@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import { useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { requireAdmin } from '~/lib/auth.server'
-import { getActiveVotingSession, getVotingPairs } from '~/lib/azure-storage.server'
+import { getVotesTableName } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
@@ -10,26 +10,32 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request)
 
     const conferenceState = context.conferenceState
+    const year = conferenceState.conference.year
 
-    // Check if voting is configured
-    const votingState = conferenceState.talkVoting.state
+    // Get the voting session counter
+    let sessionCount = 0
+    try {
+        const tableName = getVotesTableName(year)
+        const tableClient = context.getTableClient(tableName)
 
-    // Get voting session if it exists
-    const activeSession = await getActiveVotingSession(context.tableClient, conferenceState.conference.year)
-    const votingPairs = activeSession
-        ? await getVotingPairs(context.blobServiceClient, conferenceState.conference.year)
-        : null
+        const entity = await tableClient.getEntity('ddd', 'voting')
+        sessionCount = (entity.numberSessions as number) || 0
+    } catch (error: any) {
+        if (error.statusCode !== 404) {
+            console.error('Error getting session count:', error)
+        }
+        // If entity doesn't exist, sessionCount remains 0
+    }
 
     return {
-        votingState,
+        votingState: conferenceState.talkVoting.state,
         conferenceState,
-        activeSession,
-        votingPairs,
+        sessionCount,
     }
 }
 
 export default function AdminVoting() {
-    const { votingState, conferenceState, activeSession, votingPairs } = useLoaderData<typeof loader>()
+    const { votingState, conferenceState, sessionCount } = useLoaderData<typeof loader>()
 
     return (
         <Box p="8" maxW="7xl" mx="auto">
@@ -49,6 +55,15 @@ export default function AdminVoting() {
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium" textTransform="capitalize">
                             {votingState}
+                        </styled.p>
+                    </Box>
+
+                    <Box flex="1">
+                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                            Total Voting Sessions
+                        </styled.p>
+                        <styled.p fontSize="lg" fontWeight="medium">
+                            {sessionCount}
                         </styled.p>
                     </Box>
 
@@ -111,10 +126,7 @@ export default function AdminVoting() {
                 ) : votingState === 'not-open-yet' ? (
                     <Box>
                         <styled.p color="gray.600" mb="4">
-                            Voting hasn't opened yet, but as an admin you can vote early.
-                        </styled.p>
-                        <styled.p color="orange.600" fontSize="sm" mb="4">
-                            Note: Make sure you have set a date override in settings to simulate the voting period.
+                            Voting hasn't opened yet, but as an admin you can jump forward in time to start voting.
                         </styled.p>
                         <Flex gap="4">
                             <AppLink
@@ -155,36 +167,7 @@ export default function AdminVoting() {
                             >
                                 Go to Voting
                             </AppLink>
-                            <AppLink
-                                to="/voting/results"
-                                display="inline-block"
-                                bg="gray.600"
-                                color="white"
-                                py="2"
-                                px="4"
-                                borderRadius="md"
-                                textDecoration="none"
-                                fontSize="sm"
-                                fontWeight="medium"
-                                _hover={{ bg: 'gray.700' }}
-                            >
-                                View Results
-                            </AppLink>
                         </Flex>
-                    </Box>
-                )}
-
-                {activeSession && votingPairs && (
-                    <Box mt="6" pt="6" borderTop="1px solid" borderColor="gray.200">
-                        <styled.h3 fontSize="lg" fontWeight="medium" mb="2">
-                            Session Information
-                        </styled.h3>
-                        <styled.p fontSize="sm" color="gray.600">
-                            Active Session ID: {activeSession.sessionId}
-                        </styled.p>
-                        <styled.p fontSize="sm" color="gray.600">
-                            Total Pairs: {votingPairs.pairs.length}
-                        </styled.p>
                     </Box>
                 )}
             </Box>

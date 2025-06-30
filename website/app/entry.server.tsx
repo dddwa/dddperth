@@ -18,12 +18,12 @@ export async function getLoadContext({
     request,
     blobServiceClient,
     tableServiceClient,
-    tableClient,
+    getTableClient,
 }: {
     request: express.Request
     blobServiceClient: BlobServiceClient
     tableServiceClient: TableServiceClient
-    tableClient: TableClient
+    getTableClient: (tableName: string) => TableClient
 }): Promise<AppLoadContext> {
     const dateTimeProvider = await AdminDateTimeProvider.create(createRemixHeaders(request.headers))
 
@@ -31,7 +31,7 @@ export async function getLoadContext({
         dateTimeProvider,
         blobServiceClient,
         tableServiceClient,
-        tableClient,
+        getTableClient,
         conferenceState: getCurrentConferenceState(dateTimeProvider, conferenceConfig),
     }
 }

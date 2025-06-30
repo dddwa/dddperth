@@ -5,15 +5,15 @@ import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { sessionStorage } from '~/lib/session.server'
+import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import { Box, Flex, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.settings'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request)
 
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
-    const overrideDate = session.get('adminDateOverride') as string | undefined
+    const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
+    const overrideDate = session.get('adminDateOverride')
 
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
 
@@ -33,7 +33,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     const formData = await request.formData()
     const action = formData.get('_action')
-    const session = await sessionStorage.getSession(request.headers.get('cookie'))
+    const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
 
     if (action === 'setDate') {
         const dateStr = formData.get('date') as string
@@ -74,7 +74,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     return redirect('/admin/settings', {
         headers: {
-            'Set-Cookie': await sessionStorage.commitSession(session),
+            'Set-Cookie': await adminDateTimeSessionStorage.commitSession(session),
         },
     })
 }

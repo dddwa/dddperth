@@ -26,11 +26,11 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     }
 
     const requestUrl = new URL(request.url)
-    if (requestUrl.pathname.startsWith('/static')) {
+    if (contentSlug.startsWith('/static')) {
         return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    if (requestUrl.pathname.includes('.well-known')) {
+    if (contentSlug.includes('.well-known')) {
         return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
@@ -48,15 +48,13 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const currentPath = requestUrl.pathname
-
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISODate(),
-            currentPath,
+            currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
             post: post.code,

@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { data, redirect, useLoaderData } from 'react-router'
-import { $params, $path } from 'remix-routes'
+import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
@@ -14,9 +14,7 @@ import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
-export async function loader({ params }: Route.LoaderArgs) {
-    const { year, sessionId } = $params('/agenda/:year/talk/:sessionId', params)
-
+export async function loader({ params: { year, sessionId } }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year)
 
     if (yearConfig.kind === 'cancelled') {

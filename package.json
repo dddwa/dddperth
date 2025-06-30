@@ -74,7 +74,6 @@
         "nx": "20.5.0",
         "prettier": "^3.5.3",
         "react-router-devtools": "^1.1.6",
-        "remix-routes": "^1.7.7",
         "tslib": "^2.3.0",
         "tsx": "^4.19.3",
         "typescript": "5.8.2",
@@ -82,7 +81,8 @@
         "vite": "~6.2.1",
         "vite-plugin-svgr": "^4.3.0",
         "vite-tsconfig-paths": "^5.1.4",
-        "vitest": "3.0.8"
+        "vitest": "3.0.8",
+        "safe-routes": "^1.0.13"
     },
     "pnpm": {
         "overrides": {

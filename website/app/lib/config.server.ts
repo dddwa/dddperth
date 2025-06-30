@@ -4,6 +4,7 @@ import { z } from 'zod'
 export const ADMIN_HANDLES = [
     'jakeginnivan',
     'vickiturns',
+    'amykapernick',
     // Add more admin GitHub handles here
     // Example: 'john-doe', 'jane-smith'
 ] as const

@@ -11,7 +11,7 @@ declare module 'react-router' {
         dateTimeProvider: DateTimeProvider
         blobServiceClient: BlobServiceClient
         tableServiceClient: TableServiceClient
-        tableClient: TableClient
+        getTableClient: (tableName: string) => TableClient
     }
 
     // This is the module that is exported from apps/portal/app/entry.server.ts
@@ -22,12 +22,12 @@ declare module 'react-router' {
             request,
             blobServiceClient,
             tableServiceClient,
-            tableClient,
+            getTableClient,
         }: {
             request: Request
             blobServiceClient: BlobServiceClient
             tableServiceClient: TableServiceClient
-            tableClient: TableClient
+            getTableClient: (tableName: string) => TableClient
         }): Promise<AppLoadContext>
     }
 }
