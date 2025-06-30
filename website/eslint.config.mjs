@@ -82,7 +82,7 @@ export default [
                         '{projectRoot}/eslint.config.{js,cjs,mjs}',
                         '{projectRoot}/vite.config.{js,ts,mjs,mts}',
                     ],
-                    ignoredDependencies: ['tslib', 'safe-routes', 'vite', '@react-router/dev', '@pandacss/dev'],
+                    ignoredDependencies: ['tslib', 'vite', '@react-router/dev', '@pandacss/dev', 'msw', 'vitest'],
                 },
             ],
         },
