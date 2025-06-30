@@ -1,4 +1,4 @@
-import type { TableClient, TableServiceClient } from '@azure/data-tables'
+import type { GetTableEntityResponse, TableClient, TableServiceClient } from '@azure/data-tables'
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
@@ -34,7 +34,7 @@ export function getVotesTableName(year: string): string {
 }
 
 // Global voting counter record
-export interface VotingCounterRecord {
+export interface VotingGlobal {
     partitionKey: 'ddd'
     rowKey: 'voting'
     numberSessions: number
@@ -54,25 +54,10 @@ export interface VoteRecord {
     timestamp: string
 }
 
-// New interface for user session records
-export interface UserVotingRecord {
-    // Table storage keys
-    partitionKey: `session_${SessionId}`
-    rowKey: 'session'
-
-    // Session data
-    sessionId: SessionId
-    seed: number // Random seed for deterministic pair generation
-    totalPairs: number // Total possible pairs for this session
-    inputSessionizeTalkIds: string[] // Array of talk IDs for change detection and results hydration
-    currentIndex: VoteIndex
-    createdAt: string
-}
-
 // Interface for table storage (arrays converted to JSON strings)
-interface UserVotingRecordStorage {
-    partitionKey: `session_${SessionId}`
-    rowKey: 'session'
+interface VotingSession {
+    partitionKey: 'session'
+    rowKey: `session_${SessionId}`
     sessionId: SessionId
     seed: number
     totalPairs: number
@@ -106,33 +91,36 @@ export async function incrementNumberSessions(votesTableClient: TableClient): Pr
     let attempt = 0
     while (attempt < maxRetries) {
         try {
+            const partitionKey: VotingGlobal['partitionKey'] = 'ddd'
+            const rowKey: VotingGlobal['rowKey'] = 'voting'
             // Try to get existing counter
-            const entity = await votesTableClient.getEntity('ddd', 'voting')
-            const currentNumber = (entity.numberSessions as number) || 0
+            const entity = (await votesTableClient.getEntity(
+                partitionKey,
+                rowKey,
+            )) as GetTableEntityResponse<VotingGlobal>
+            const currentNumber = entity.numberSessions || 0
             const nextNumber = currentNumber + 1
 
+            const dddVoting: VotingGlobal = {
+                partitionKey,
+                rowKey,
+                numberSessions: nextNumber,
+            }
             // Update the counter using optimistic concurrency (ETag)
-            await votesTableClient.updateEntity(
-                {
-                    partitionKey: 'ddd',
-                    rowKey: 'voting',
-                    numberSessions: nextNumber,
-                },
-                'Merge',
-                {
-                    etag: entity.etag,
-                },
-            )
+            await votesTableClient.updateEntity(dddVoting, 'Merge', {
+                etag: entity.etag,
+            })
             return
         } catch (error: any) {
             // If not found, create the counter
             if (error.statusCode === 404) {
                 try {
-                    await votesTableClient.upsertEntity({
+                    const votingGlobal: VotingGlobal = {
                         partitionKey: 'ddd',
                         rowKey: 'voting',
                         numberSessions: 1,
-                    })
+                    }
+                    await votesTableClient.upsertEntity(votingGlobal)
                     return
                 } catch (createError: any) {
                     // If this is a concurrency error, retry
@@ -184,36 +172,37 @@ export async function recordVoteInTable(
     // Create the vote record
     await votesTableClient.createEntity(voteRecord)
 
+    const votingSession: Pick<VotingSession, 'partitionKey' | 'rowKey'> & Partial<VotingSession> = {
+        partitionKey: 'session',
+        rowKey: `session_${sessionId}`,
+        currentIndex: voteIndex + 1,
+    }
     // Update currentIndex on the session record using merge strategy
-    await votesTableClient.upsertEntity(
-        {
-            partitionKey: `session_${sessionId}`,
-            rowKey: 'session',
-            currentIndex: voteIndex + 1, // Set to next index
-        },
-        'Merge',
-    )
+    await votesTableClient.updateEntity(votingSession, 'Merge')
 }
 
 export async function getVotingSession(
     request: Request,
     votesTableClient: TableClient,
     currentSessions: TalkVotingData[],
-): Promise<UserVotingRecord> {
+): Promise<VotingSession> {
     try {
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         const sessionId = votingStorageSession.get('sessionId')
 
-        const entity = await votesTableClient.getEntity(`session_${sessionId}`, 'session')
+        const partitionKey: VotingSession['partitionKey'] = 'session'
+        const rowKey: VotingSession['rowKey'] = `session_${sessionId}`
+        const entity = (await votesTableClient.getEntity(partitionKey, rowKey)) as GetTableEntityResponse<VotingSession>
+
         return {
-            partitionKey: entity.partitionKey as `session_${string}`,
-            rowKey: entity.rowKey as 'session',
-            sessionId: entity.sessionId as string,
-            seed: entity.seed as number,
-            totalPairs: entity.totalPairs as number,
-            inputSessionizeTalkIds: JSON.parse(entity.inputSessionizeTalkIdsJson as string) as string[],
-            currentIndex: entity.currentIndex as number,
-            createdAt: entity.createdAt as string,
+            partitionKey,
+            rowKey,
+            sessionId: entity.sessionId,
+            seed: entity.seed,
+            totalPairs: entity.totalPairs,
+            inputSessionizeTalkIdsJson: entity.inputSessionizeTalkIdsJson,
+            currentIndex: entity.currentIndex,
+            createdAt: entity.createdAt,
         }
     } catch (error: any) {
         if (error.statusCode === 404) {
@@ -262,9 +251,9 @@ export async function createUserVotingSessionAndRedirect(
     const totalPairs = (totalTalks * (totalTalks - 1)) / 2
 
     // Create session in table storage
-    const sessionRecord: UserVotingRecordStorage = {
-        partitionKey: `session_${sessionId}`,
-        rowKey: 'session',
+    const sessionRecord: VotingSession = {
+        partitionKey: 'session',
+        rowKey: `session_${sessionId}`,
         sessionId,
         seed,
         totalPairs,
@@ -290,14 +279,14 @@ export async function createUserVotingSessionAndRedirect(
 export async function getCurrentVotingBatch(
     request: Request,
     currentSessions: TalkVotingData[],
-    userSession: UserVotingRecord,
+    votingSession: VotingSession,
     batchSize = 50,
     fromIndex?: number,
 ): Promise<{ pairs: TalkPair[]; currentIndex: number; hasMore: boolean }> {
     const currentSessionIds = extractSessionIds(currentSessions)
 
     // Check if sessions have changed
-    if (hasSessionsChanged(currentSessionIds, userSession.inputSessionizeTalkIds)) {
+    if (hasSessionsChanged(currentSessionIds, JSON.parse(votingSession.inputSessionizeTalkIdsJson))) {
         console.warn('Sessions have changed since voting started, clearing session and redirecting')
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         votingStorageSession.set('sessionId', undefined)
@@ -310,8 +299,8 @@ export async function getCurrentVotingBatch(
     }
 
     // Generate pairs using FairPairingGenerator
-    const generator = new FairPairingGenerator(currentSessions.length, userSession.seed)
-    const startPosition = fromIndex ?? userSession.currentIndex
+    const generator = new FairPairingGenerator(currentSessions.length, votingSession.seed)
+    const startPosition = fromIndex ?? votingSession.currentIndex
     const pairIndices = generator.getNextPairs(startPosition, batchSize)
 
     // Convert indices to TalkPair objects
@@ -321,11 +310,11 @@ export async function getCurrentVotingBatch(
         right: currentSessions[rightIndex],
     }))
 
-    const hasMore = startPosition + batchSize < userSession.totalPairs
+    const hasMore = startPosition + batchSize < votingSession.totalPairs
 
     return {
         pairs,
-        currentIndex: userSession.currentIndex,
+        currentIndex: votingSession.currentIndex,
         hasMore,
     }
 }
@@ -341,7 +330,6 @@ export async function getSessionsForVoting(allSessionsEndpoint: string) {
     for (const group of sessionGroups) {
         for (const session of group.sessions) {
             if (!session.isServiceSession && !session.isPlenumSession) {
-                console.log('Session', session)
                 regularSessions.push({
                     id: session.id,
                     title: session.title,

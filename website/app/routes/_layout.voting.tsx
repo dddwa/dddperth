@@ -167,7 +167,9 @@ export default function VotingPage() {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Talk Voting</styled.h2>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Talk Voting
+                    </styled.h2>
                     <styled.p fontSize="lg" color="fg.muted" textAlign="center">
                         {data.talkVoting.opens
                             ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens).toLocaleString(
@@ -192,7 +194,9 @@ export default function VotingPage() {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Talk Voting</styled.h2>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Talk Voting
+                    </styled.h2>
                     <styled.p fontSize="lg" color="red.500">
                         {data.error}
                     </styled.p>
@@ -205,7 +209,9 @@ export default function VotingPage() {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Loading talks...</styled.h2>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Loading talks...
+                    </styled.h2>
                 </VStack>
             </Container>
         )
@@ -215,7 +221,9 @@ export default function VotingPage() {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Talk Voting</styled.h2>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Talk Voting
+                    </styled.h2>
                     <styled.p fontSize="lg" color="red.500">
                         {error}
                     </styled.p>
@@ -229,7 +237,9 @@ export default function VotingPage() {
         return (
             <Container py={12}>
                 <VStack gap={6}>
-                    <styled.h2 fontSize="2xl">Grabbing more talks!</styled.h2>
+                    <styled.h2 fontSize="2xl" color="white">
+                        Grabbing more talks!
+                    </styled.h2>
                     <styled.p fontSize="lg" color="fg.muted" textAlign="center">
                         We're loading more talks to vote on...
                     </styled.p>
