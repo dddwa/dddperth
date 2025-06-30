@@ -1,33 +1,55 @@
 import { DateTime } from 'luxon'
-import type { MetaFunction } from 'react-router'
-import { Outlet } from 'react-router'
+import { Outlet, useLoaderData } from 'react-router'
+import { Acknowledgement } from '~/components/acknowledgement'
+import { AdminOverlay } from '~/components/admin-overlay'
 import { ErrorPage } from '~/components/error-page'
+import { Footer } from '~/components/footer/footer'
+import { Header } from '~/components/header/header'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { getUser, isAdmin } from '~/lib/auth.server'
+import { WEB_URL } from '~/lib/config.server' // Ensure this path is correct
+import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import { Box, Flex } from '~/styled-system/jsx'
-import { Acknowledgement } from '../components/acknowledgement'
-import { Footer } from '../components/footer/footer'
-import { Header } from '../components/header/header'
-import { conferenceConfig } from '../config/conference-config'
-import { WEB_URL } from '../lib/config.server' // Ensure this path is correct
 import type { Route } from './+types/_layout'
 
-export function loader({ context }: Route.LoaderArgs) {
+export async function loader({ context, request }: Route.LoaderArgs) {
+    const user = await getUser(request.headers)
+    let adminData = null
+
+    if (user && isAdmin(user)) {
+        const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
+        const overrideDate = session.get('adminDateOverride')
+
+        adminData = {
+            user: {
+                login: user.login,
+                avatarUrl: user.avatarUrl,
+            },
+            overrideDate: overrideDate || null,
+            currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),
+            timezone: conferenceConfigPublic.timezone,
+        }
+    }
+
     return {
+        conferenceDescription: conferenceConfigPublic.description,
         conferenceState: context.conferenceState,
         webUrl: WEB_URL,
+        adminData,
     }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
+export function meta({ data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
-        ? `${conferenceConfig.name} | ${DateTime.fromISO(data.conferenceState.conference.date).toLocaleString(
+        ? `${conferenceConfigPublic.name} | ${DateTime.fromISO(data.conferenceState.conference.date).toLocaleString(
               DateTime.DATE_HUGE,
               {
                   locale: 'en-AU',
               },
           )}`
-        : conferenceConfig.name
+        : conferenceConfigPublic.name
 
-    const description = conferenceConfig.description
+    const description = data.conferenceDescription
     const url = `${data?.webUrl ?? ''}${location.pathname}`
 
     return [
@@ -45,10 +67,8 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     ]
 }
 
-import { useLoaderData } from 'react-router'
-
 export default function Index() {
-    const { conferenceState, webUrl } = useLoaderData<typeof loader>()
+    const { conferenceDescription, conferenceState, webUrl, adminData } = useLoaderData<typeof loader>()
     const conference = conferenceState.conference
     const venue = conference.venue
 
@@ -71,6 +91,14 @@ export default function Index() {
 
     return (
         <div>
+            {adminData && (
+                <AdminOverlay
+                    user={adminData.user}
+                    overrideDate={adminData.overrideDate}
+                    currentDate={adminData.currentDate}
+                    timezone={adminData.timezone}
+                />
+            )}
             <Header />
             {venue && (
                 <script
@@ -98,10 +126,10 @@ export default function Index() {
                                 },
                             },
                             image: [`${webUrl}/favicon.svg`],
-                            description: conferenceConfig.description,
+                            description: conferenceDescription,
                             organizer: {
                                 '@type': 'Organization',
-                                name: conferenceConfig.name,
+                                name: conferenceConfigPublic.name,
                                 url: webUrl,
                             },
                         }),

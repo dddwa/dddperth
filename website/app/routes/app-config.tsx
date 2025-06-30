@@ -1,7 +1,21 @@
 import { data } from 'react-router'
-import type { YearSponsors } from '~/lib/config-types'
+import type { YearSponsors } from '~/lib/conference-state-client-safe'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/app-config'
+
+interface AppConfig {
+    conferenceDate: string | null
+    sponsors: YearSponsors
+    support: string
+    home: {
+        after: string
+    }
+
+    v2: {
+        support: string
+        after: string
+    }
+}
 
 /** This route is used by the app or integrations to understand the state of the conference */
 export function loader({ context }: Route.LoaderArgs) {
@@ -24,18 +38,4 @@ export function loader({ context }: Route.LoaderArgs) {
             'Access-Control-Allow-Origin': '*',
         },
     })
-}
-
-interface AppConfig {
-    conferenceDate: string | null
-    sponsors: YearSponsors
-    support: string
-    home: {
-        after: string
-    }
-
-    v2: {
-        support: string
-        after: string
-    }
 }

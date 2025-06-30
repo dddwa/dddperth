@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types'
+import type { ConferenceYear } from '~/lib/config-types.server'
 
 export const conference2019: ConferenceYear = {
+    kind: 'conference',
     year: '2019',
     conferenceDate: DateTime.fromISO('2019-08-03'),
     sessionizeUrl: 'https://sessionize.com/dddperth2019',
@@ -11,6 +12,7 @@ export const conference2019: ConferenceYear = {
     sessions: {
         kind: 'sessionize',
         sessionizeEndpoint: 'https://sessionize.com/api/v2/9onvkr8n',
+        allSessionsEndpoint: undefined,
     },
 
     agendaPublishedDateTime: undefined,
@@ -73,5 +75,4 @@ export const conference2019: ConferenceYear = {
             },
         ],
     },
-    importantDates: [],
 }

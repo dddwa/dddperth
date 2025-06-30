@@ -1,7 +1,7 @@
 import { Feed } from 'feed'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPagesList } from '~/lib/mdx.server'
-import { conferenceConfig } from '../config/conference-config'
 
 export async function loader() {
     const blogUrl = `https://dddperth.com/blog`
@@ -9,8 +9,8 @@ export async function loader() {
 
     const feed = new Feed({
         id: blogUrl,
-        title: conferenceConfig.name + ' Blog',
-        description: conferenceConfig.blogDescription,
+        title: conferenceConfigPublic.name + ' Blog',
+        description: conferenceConfigPublic.blogDescription,
         link: blogUrl,
         language: 'en',
         updated: posts.length > 0 && posts[0].date ? new Date(posts[0].date) : new Date(),

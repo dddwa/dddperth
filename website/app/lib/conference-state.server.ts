@@ -1,31 +1,29 @@
 import type { DateTime } from 'luxon'
+import type { conferenceConfig, ConferenceYears } from '~/config/conference-config.server'
 import type {
     CFPClosed,
     CFPNotOpenYet,
     CFPOpen,
-    ConferenceConfig,
-    ConferenceConfigYear,
     ConferenceState,
-    ConferenceYear,
-    DateTimeRange,
+    TalkVotingClosed,
+    TalkVotingNotOpenYet,
+    TalkVotingOpen,
     TalkVotingStates,
     TicketInfo,
-    TicketRelease,
     TicketSalesState,
-    Year,
-} from './config-types'
+} from './conference-state-client-safe'
+import type { ConferenceConfigYear, ConferenceYear, DateTimeRange, TicketRelease } from './config-types.server'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
-import { localeTimeFormat } from './dates/formatting'
 
 export function getCurrentConferenceState(
     dateTimeProvider: DateTimeProvider,
-    conference: ConferenceConfig,
+    conference: typeof conferenceConfig,
 ): ConferenceState {
     const currentDate = dateTimeProvider.nowDate()
 
-    const conferenceList = (Object.entries(conference.conferences) as Array<[Year, ConferenceConfigYear]>).filter(
-        (year): year is [Year, ConferenceYear] => !('cancelledMessage' in year[1]),
-    )
+    const conferenceList = (
+        Object.entries(conference.conferences) as Array<[ConferenceYears, ConferenceConfigYear]>
+    ).filter((year): year is [ConferenceYears, ConferenceYear] => year[1].kind === 'conference')
     const [latestConference, previousConference] = conferenceList
         .sort(([, a], [, b]) => {
             const dateA = a.conferenceDate?.valueOf() ?? Infinity
@@ -43,8 +41,6 @@ export function getCurrentConferenceState(
                 date: undefined,
                 year: latestConference[0],
                 sponsors: latestConference[1].sponsors,
-                sessions: latestConference[1].sessions,
-                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                 venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
@@ -54,8 +50,6 @@ export function getCurrentConferenceState(
                           date: previousConference[1].conferenceDate.toISO(),
                           year: previousConference[0],
                           sponsors: previousConference[1].sponsors,
-                          sessions: previousConference[1].sessions,
-                          votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                           venue: previousConference[1].venue,
                           currentTicketSale: undefined,
                       }
@@ -63,9 +57,12 @@ export function getCurrentConferenceState(
             callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
             ticketSales: { state: 'not-open-yet', opens: undefined },
             agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
-            talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
+            talkVoting: getTalkVotingForBeforeConference(currentDate, latestConference[1].talkVotingDates),
             feedback: 'not-open-yet',
-            needsVolunteers: conference.needVolunteers,
+            volunteering: {
+                needsVolunteers: conference.needVolunteers,
+                form: conference.volunteerForm,
+            },
         }
     }
 
@@ -80,8 +77,6 @@ export function getCurrentConferenceState(
                 date: latestConference[1].conferenceDate.toISODate(),
                 year: latestConference[0],
                 sponsors: latestConference[1].sponsors,
-                sessions: latestConference[1].sessions,
-                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                 venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
@@ -91,8 +86,6 @@ export function getCurrentConferenceState(
                           date: previousConference[1].conferenceDate.toISODate(),
                           year: previousConference[0],
                           sponsors: previousConference[1].sponsors,
-                          sessions: previousConference[1].sessions,
-                          votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                           venue: previousConference[1].venue,
                           currentTicketSale: undefined,
                       }
@@ -103,8 +96,13 @@ export function getCurrentConferenceState(
 
             callForPapers: { state: 'closed' },
             ticketSales: { state: 'closed' },
-            talkVoting: 'closed',
-            needsVolunteers: false,
+            talkVoting: {
+                state: 'closed',
+            },
+            volunteering: {
+                needsVolunteers: false,
+                form: undefined,
+            },
         }
     }
 
@@ -116,21 +114,24 @@ export function getCurrentConferenceState(
                 date: latestConference[1].conferenceDate.toISODate(),
                 year: latestConference[0],
                 sponsors: latestConference[1].sponsors,
-                sessions: latestConference[1].sessions,
-                votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                 venue: latestConference[1].venue,
                 currentTicketSale: undefined,
             },
             callForPapers: { state: 'closed' },
             ticketSales: { state: 'closed' },
             agenda: 'not-released',
-            talkVoting: 'not-open-yet',
+            talkVoting: {
+                state: 'closed',
+            },
             feedback: getFeedbackState(
                 currentDate,
                 latestConference[1].feedbackOpenUntilDateTime,
                 latestConference[1].conferenceDate,
             ),
-            needsVolunteers: false,
+            volunteering: {
+                needsVolunteers: false,
+                form: undefined,
+            },
         }
     }
 
@@ -144,8 +145,6 @@ export function getCurrentConferenceState(
             date: latestConference[1].conferenceDate.toISODate(),
             year: latestConference[0],
             sponsors: latestConference[1].sponsors,
-            sessions: latestConference[1].sessions,
-            votingOpens: latestConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
             venue: latestConference[1].venue,
             currentTicketSale: currentTicketRelease
                 ? {
@@ -160,8 +159,6 @@ export function getCurrentConferenceState(
                       date: previousConference[1].conferenceDate.toISODate(),
                       year: previousConference[0],
                       sponsors: previousConference[1].sponsors,
-                      sessions: previousConference[1].sessions,
-                      votingOpens: previousConference[1].talkVotingDates?.opens.toLocaleString(localeTimeFormat),
                       venue: previousConference[1].venue,
                       currentTicketSale: undefined,
                   }
@@ -169,9 +166,12 @@ export function getCurrentConferenceState(
         callForPapers: getCfpState(currentDate, latestConference[1].cfpDates, latestConference[1].sessionizeUrl),
         ticketSales: getTicketSalesState(currentDate, currentTicketRelease, latestConference[1].ticketInfo),
         agenda: getAgendaState(currentDate, latestConference[1].agendaPublishedDateTime),
-        talkVoting: getTalkVotingState(currentDate, latestConference[1].talkVotingDates),
+        talkVoting: getTalkVotingForBeforeConference(currentDate, latestConference[1].talkVotingDates),
         feedback: 'not-open-yet',
-        needsVolunteers: conference.needVolunteers,
+        volunteering: {
+            needsVolunteers: conference.needVolunteers,
+            form: conference.volunteerForm,
+        },
     }
 }
 
@@ -228,5 +228,16 @@ function getCfpState(
         ? { state: 'not-open-yet', opens: cfpDates.opens.toISO() }
         : cfpDates && currentDate < cfpDates.closes && sessionizeUrl
           ? { state: 'open', closes: cfpDates.closes.toISO(), sessionizeUrl }
+          : { state: 'closed' }
+}
+
+function getTalkVotingForBeforeConference(
+    currentDate: DateTime<true>,
+    talkVotingDates: DateTimeRange | undefined,
+): TalkVotingOpen | TalkVotingClosed | TalkVotingNotOpenYet {
+    return talkVotingDates && currentDate < talkVotingDates.opens
+        ? { state: 'not-open-yet', opens: talkVotingDates.opens.toISO(), closes: talkVotingDates.closes.toISO() }
+        : talkVotingDates && currentDate < talkVotingDates.closes
+          ? { state: 'open', closes: talkVotingDates.closes.toISO() }
           : { state: 'closed' }
 }

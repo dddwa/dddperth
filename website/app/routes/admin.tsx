@@ -33,6 +33,9 @@ export default function AdminLayout() {
                             <AppNavLink to="/admin/content" variant="admin">
                                 Content
                             </AppNavLink>
+                            <AppNavLink to="/admin/settings" variant="admin">
+                                Settings
+                            </AppNavLink>
                         </Flex>
                     </Flex>
                     <Flex align="center" gap="4">
@@ -50,7 +53,7 @@ export default function AdminLayout() {
                         >
                             ← Back to Site
                         </AppLink>
-                        <styled.img src={user.avatar_url} alt={user.login} w="8" h="8" borderRadius="full" />
+                        <styled.img src={user.avatarUrl} alt={user.login} w="8" h="8" borderRadius="full" />
                         <Box fontSize="sm">{user.name || user.login}</Box>
                         <Form method="post" action="/auth/logout">
                             <styled.button

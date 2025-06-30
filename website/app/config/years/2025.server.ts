@@ -1,15 +1,21 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types'
+import type { ConferenceYear } from '~/lib/config-types.server'
 
+import { SESSIONIZE_2025_ALL_SESSIONS } from '~/lib/config.server'
 import { optusStadiumVenue } from '../venues/optus-stadium'
 
 export const conference2025: ConferenceYear = {
+    kind: 'conference',
     year: '2025',
     venue: optusStadiumVenue,
 
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2025',
 
-    sessions: undefined,
+    sessions: {
+        kind: 'sessionize',
+        allSessionsEndpoint: SESSIONIZE_2025_ALL_SESSIONS,
+        sessionizeEndpoint: 'https://sessionize.com/api/v2/vhwwzm15',
+    },
 
     conferenceDate: DateTime.fromISO('2025-09-20T09:00:00', {
         zone: 'Australia/Perth',
@@ -92,6 +98,4 @@ export const conference2025: ConferenceYear = {
     foodInfo: {
         lunch: [],
     },
-
-    importantDates: [],
 }

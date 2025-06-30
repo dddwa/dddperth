@@ -1,18 +1,19 @@
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
 import { data, redirect, useLoaderData } from 'react-router'
-import { $path } from 'remix-routes'
+import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import type { Year, YearSponsors } from '~/lib/config-types'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfig } from '~/config/conference-config.server'
+import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
+import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
+import { slugify } from '~/lib/slugify'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import { conferenceConfig } from '../config/conference-config'
-import { getYearConfig } from '../lib/get-year-config'
-import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '../lib/sessionize.server'
-import { formatDate, getScheduleGrid } from '../lib/sessionize.server'
-import { slugify } from '../lib/slugify'
 import type { Route } from './+types/_layout.agenda.($year)'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
@@ -23,22 +24,18 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const { yearConfig, yearConfigLookup, cancelledMessage } = getYearConfig(
-        year,
-        context.conferenceState.conference,
-        context.dateTimeProvider,
-        true,
-    )
+    const yearConfig = getYearConfig(year)
+    const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
-    if (yearConfig?.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
+    if (conferenceYearConfig?.sessions?.kind === 'sessionize' && !conferenceYearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
     const schedules: TypeOf<typeof gridSmartSchema> =
-        yearConfig?.sessions?.kind === 'sessionize'
+        conferenceYearConfig?.sessions?.kind === 'sessionize'
             ? await getScheduleGrid({
-                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfig.timezone,
+                  sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
+                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : // TODO Deal with data type
               []
@@ -48,8 +45,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     return data(
         {
             year,
-            cancelledMessage,
-            sponsors: 'sponsors' in yearConfigLookup ? yearConfigLookup.sponsors : {},
+            cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
+            sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
             conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
                 year: conf.year,
             })),
@@ -88,7 +85,7 @@ export default function Agenda() {
     return cancelledMessage ? (
         <Box color="white" textAlign="center" fontSize="3xl" mt="10">
             <p>
-                {conferenceConfig.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+                {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
             </p>
             <Box color="white" textAlign="center" fontSize="lg" mt="10">
                 <p>{cancelledMessage}</p>
@@ -100,10 +97,10 @@ export default function Agenda() {
     ) : !schedule ? (
         <Box color="white" textAlign="center" fontSize="3xl" mt="10">
             <p>
-                {conferenceConfig.name} {year} agenda has not been{' '}
+                {conferenceConfigPublic.name} {year} agenda has not been{' '}
                 {isLatestConference
                     ? 'announced yet.'
-                    : `imported from the previous ${conferenceConfig.name} site yet.`}
+                    : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
             </p>
             <SponsorSection sponsors={sponsors} year={year} />
             <ConferenceBrowser conferences={conferences} />
@@ -285,7 +282,7 @@ function RoomTimeSlot({
     const fullSession = schedule.rooms
         .find((r) => r.id === room.id)
         ?.sessions.find((session) => session.id === room.session.id)
-    const endsAtTime = fullSession?.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '')
+    const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
         ? DateTime.fromISO(fullSession.endsAt).toFormat('h:mm a').toLowerCase()
         : undefined
@@ -302,7 +299,7 @@ function RoomTimeSlot({
     const conflictingEarlierTimeslots =
         timeSlot.rooms.length === 1 &&
         earlierTimeSlots.filter((ts) => {
-            const slotEndTimes = ts.rooms.map((r) => r.session.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, ''))
+            const slotEndTimes = ts.rooms.map((r) => r.session.endsAt?.replace(/\d{4}-\d{2}-\d{2}T/, ''))
             const maxEndTime = slotEndTimes.sort().at(-1)
             if (maxEndTime && maxEndTime > timeSlot.slotStart) {
                 return true

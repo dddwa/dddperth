@@ -6,7 +6,7 @@ import type { Route } from './+types/auth.login'
 
 export async function loader({ request }: Route.LoaderArgs) {
     // If user is already authenticated, redirect to admin
-    const user = await getUser(request)
+    const user = await getUser(request.headers)
     if (user) {
         throw redirect('/admin')
     }

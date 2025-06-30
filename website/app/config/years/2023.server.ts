@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types'
+import type { ConferenceYear } from '~/lib/config-types.server'
 
-import { optusStadiumVenue } from '../venues/optus-stadium';
+import { optusStadiumVenue } from '../venues/optus-stadium'
 
 export const conference2023: ConferenceYear = {
+    kind: 'conference',
     year: '2023',
     conferenceDate: DateTime.fromISO('2023-10-07'),
     venue: optusStadiumVenue,
@@ -12,6 +13,7 @@ export const conference2023: ConferenceYear = {
     sessions: {
         kind: 'sessionize',
         sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
+        allSessionsEndpoint: undefined,
     },
 
     agendaPublishedDateTime: undefined,
@@ -101,5 +103,4 @@ export const conference2023: ConferenceYear = {
             },
         ],
     },
-    importantDates: [],
 }

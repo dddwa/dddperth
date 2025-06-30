@@ -40,8 +40,8 @@ const sessionSchema = z.object({
     id: z.string(),
     title: z.string(),
     description: z.nullable(z.string()),
-    startsAt: z.string(),
-    endsAt: z.string(),
+    startsAt: z.nullable(z.string()),
+    endsAt: z.nullable(z.string()),
     isServiceSession: z.boolean(),
     isPlenumSession: z.boolean(),
     speakers: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -49,17 +49,21 @@ const sessionSchema = z.object({
         z.object({
             id: z.number(),
             name: z.string(),
-            categoryItems: z.array(z.object({ id: z.number(), name: z.string() })),
-            sort: z.number(),
+            categoryItems: z.array(z.object({ 
+                id: z.number(), 
+                name: z.string() 
+            })),
+            sort: z.nullable(z.number()),
         }),
     ),
-    roomId: z.number(),
-    room: z.string(),
+    roomId: z.nullable(z.number()),
+    room: z.nullable(z.string()),
     liveUrl: z.nullable(z.string()),
     recordingUrl: z.nullable(z.string()),
     status: z.nullable(z.string()),
     isInformed: z.boolean(),
     isConfirmed: z.boolean(),
+    questionAnswers: z.array(z.any()),
 })
 
 export const roomSchema = z.object({
@@ -91,6 +95,7 @@ export const sessionsSchema = z.array(
     z.object({
         groupId: z.string().nullable(),
         groupName: z.string().nullable(),
+        isDefault: z.boolean(),
         sessions: z.array(sessionSchema),
     }),
 )

@@ -1,4 +1,4 @@
-import { conferenceConfig } from '~/config/conference-config'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import Logo from '~/images/svg/logo.svg?react'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
@@ -11,7 +11,7 @@ export function Header() {
                     <Flex flexDir="row" justifyContent="space-between" alignItems="center">
                         <Flex flexDir="row" justifyContent="flex-start" alignItems="flex-start" p={{ base: 4, md: 0 }}>
                             <AppLink
-                                aria-label={`Visit the ${conferenceConfig.name} homepage`}
+                                aria-label={`Visit the ${conferenceConfigPublic.name} homepage`}
                                 to={`/`}
                                 display="flex"
                                 justifyContent="flex-start"

@@ -16,6 +16,8 @@ export default [
             'infra/project.json',
             'infra/**/*.json',
             'nx.json',
+            '**/vite.config.*.timestamp*',
+            '**/vitest.config.*.timestamp*',
         ],
     },
     { plugins: { '@nx': nxEslintPlugin } },

@@ -1,22 +1,37 @@
 import { PassThrough } from 'node:stream'
 
+import type { TableClient, TableServiceClient } from '@azure/data-tables'
+import type { BlobServiceClient } from '@azure/storage-blob'
 import { createReadableStreamFromReadable } from '@react-router/node'
 import type express from 'express'
 import * as isbotModule from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
 import type { AppLoadContext, EntryContext } from 'react-router'
 import { ServerRouter } from 'react-router'
-import { conferenceConfig } from './config/conference-config'
-import { getCurrentConferenceState } from './lib/conference-state'
-import { OverridableDateTimeProvider } from './lib/dates/overridable-date-time-provider'
+import { conferenceConfig } from './config/conference-config.server'
+import { getCurrentConferenceState } from './lib/conference-state.server'
+import { AdminDateTimeProvider } from './lib/dates/admin-date-time-provider.server'
 
 const ABORT_DELAY = 5_000
 
-export function getLoadContext({ query }: { query: express.Request['query'] }): AppLoadContext {
-    const dateTimeProvider = new OverridableDateTimeProvider(query)
+export async function getLoadContext({
+    request,
+    blobServiceClient,
+    tableServiceClient,
+    getTableClient,
+}: {
+    request: express.Request
+    blobServiceClient: BlobServiceClient
+    tableServiceClient: TableServiceClient
+    getTableClient: (tableName: string) => TableClient
+}): Promise<AppLoadContext> {
+    const dateTimeProvider = await AdminDateTimeProvider.create(createRemixHeaders(request.headers))
 
     return {
         dateTimeProvider,
+        blobServiceClient,
+        tableServiceClient,
+        getTableClient,
         conferenceState: getCurrentConferenceState(dateTimeProvider, conferenceConfig),
     }
 }
@@ -134,4 +149,22 @@ function handleBrowserRequest(
 
         setTimeout(abort, ABORT_DELAY)
     })
+}
+
+export function createRemixHeaders(requestHeaders: express.Request['headers']): Headers {
+    let headers = new Headers()
+
+    for (let [key, values] of Object.entries(requestHeaders)) {
+        if (values) {
+            if (Array.isArray(values)) {
+                for (let value of values) {
+                    headers.append(key, value)
+                }
+            } else {
+                headers.set(key, values)
+            }
+        }
+    }
+
+    return headers
 }

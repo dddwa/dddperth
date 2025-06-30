@@ -1,21 +1,21 @@
 import type { DateTime } from 'luxon'
-import type { ConferenceImportantInformation, Year } from '~/lib/config-types'
+import type { ImportantDate } from '~/lib/important-dates'
 import { Box, Flex } from '~/styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
 import { HomepageHeroPanel } from './hero-panel'
 
 export function Hero({
-    year,
     currentDate,
-    config,
+    conferenceDate,
+    importantDates,
 }: {
-    year: Year
     currentDate: DateTime
-    config: ConferenceImportantInformation
+    conferenceDate: string | undefined
+    importantDates: ImportantDate[]
 }) {
     return (
         <Box overflowX="hidden">
-            <HomepageHeroPanel config={config} />
+            <HomepageHeroPanel conferenceDate={conferenceDate} />
             <Flex flexDirection="column" width="fit" mx="auto" maxWidth={800} gap={12}>
                 <Flex
                     className={`paragraph-wrapper`}
@@ -45,7 +45,7 @@ export function Hero({
                     </p>
                 </Flex>
 
-                <ImportantDates year={year} currentDate={currentDate} />
+                <ImportantDates currentDate={currentDate} importantDates={importantDates} />
                 <Workshops currentDate={currentDate} />
             </Flex>
         </Box>

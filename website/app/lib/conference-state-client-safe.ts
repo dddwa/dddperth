@@ -1,97 +1,17 @@
-import type { DateTime } from 'luxon'
-import type { ImportantDate } from './important-dates'
-
 export type Year = `${number}${number}${number}${number}`
 
-export type CancelledConferenceYear = {
-    year: Year
-    cancelledMessage: string
-}
-
-export type ConferenceConfigYear = ConferenceYear | CancelledConferenceYear
-
-/**
- * Conference configuration which doesn't necessarily change year on year
- */
-export interface ConferenceConfig {
+export interface ConferenceVenue {
     name: string
-    description: string
-
-    blogDescription: string
-
-    timezone: string
-    needVolunteers: boolean
-
-    conferences: Record<Year, ConferenceConfigYear>
-
-    volunteerForm:
-        | {
-              type: 'salesmate'
-              formId: string
-              linkName: string
-          }
-        | {
-              type: 'tito'
-              ticketUrl: string
-          }
-        | undefined
-}
-
-export interface DateTimeRange {
-    opens: DateTime
-    closes: DateTime
-}
-
-export interface TitoTicketInfo {
-    type: 'tito'
-    accountId: string
-    eventId: string
-
-    generalTicketSlugs?: string[]
-    afterPartyTicketSlugs?: string[]
-    afterPartyUpgradeActivityId?: string
-}
-
-export type TicketInfo = TitoTicketInfo
-
-export interface TicketRelease {
-    releaseName: string
-    range: DateTimeRange
-    price: string
-}
-
-/**
- * This year's conference configuration
- */
-export interface ConferenceYear {
-    year: Year
-
-    sessionizeUrl: string | undefined
-
-    ticketInfo: TicketInfo | undefined
-
-    conferenceDate: DateTime | undefined
-    agendaPublishedDateTime: DateTime | undefined
-    cfpDates: DateTimeRange | undefined
-    ticketReleases: Array<TicketRelease>
-    talkVotingDates: DateTimeRange | undefined
-    feedbackOpenUntilDateTime: DateTime | undefined
-
-    venue: ConferenceVenue | undefined
-
-    sessions: SessionizeConferenceSessions | SessionData | undefined
-
-    sponsors: YearSponsors
-
-    foodInfo?: {
-        lunch: Array<{
-            meal: string
-            foodZone: string
-            shortCode: string
-        }>
+    address: {
+        streetAddress: string
+        addressLocality: string
+        addressRegion: string
+        postalCode: string
+        addressCountry: string
     }
 
-    importantDates: ImportantDate[]
+    latitude: number
+    longitude: number
 }
 
 export interface YearSponsors {
@@ -116,27 +36,10 @@ export interface Sponsor {
     quote?: string
 }
 
-export interface ConferenceVenue {
-    name: string
-    address: {
-        streetAddress: string
-        addressLocality: string
-        addressRegion: string
-        postalCode: string
-        addressCountry: string
-    }
-
-    latitude: number
-    longitude: number
-}
-
 export interface ConferenceImportantInformation {
     date: string | undefined
     year: Year
-    votingOpens: string | undefined
     venue: ConferenceVenue | undefined
-
-    sessions: SessionizeConferenceSessions | SessionData | undefined
 
     sponsors: YearSponsors
 
@@ -146,19 +49,6 @@ export interface ConferenceImportantInformation {
               closes: string
           }
         | undefined
-}
-
-export interface SessionizeConferenceSessions {
-    kind: 'sessionize'
-
-    sessionizeEndpoint: string
-}
-
-export interface SessionData {
-    kind: 'session-data'
-
-    // TODO
-    sessions: unknown
 }
 
 export type ConferenceState = BeforeConferenceState | ConferenceDayState | AfterConferenceState
@@ -178,6 +68,33 @@ export interface CFPNotOpenYet {
     opens: string
 }
 
+export interface TalkVotingOpen {
+    state: Open
+    closes: string
+}
+
+export interface TalkVotingClosed {
+    state: Closed
+}
+
+export interface TalkVotingNotOpenYet {
+    state: NotOpenYet
+    opens: string
+    closes: string
+}
+
+export type VolunteerForm =
+    | {
+          type: 'salesmate'
+          formId: string
+          linkName: string
+      }
+    | {
+          type: 'tito'
+          ticketUrl: string
+      }
+    | undefined
+
 /**
  * It is confirmed there is a new conference coming up, the date may not be announced yet
  */
@@ -189,11 +106,14 @@ export interface BeforeConferenceState {
 
     callForPapers: CFPOpen | CFPClosed | CFPNotOpenYet
     ticketSales: TicketSalesState
-    talkVoting: TalkVotingStates
+    talkVoting: TalkVotingOpen | TalkVotingClosed | TalkVotingNotOpenYet
     feedback: NotOpenYet
     agenda: AgendaState
 
-    needsVolunteers: boolean
+    volunteering: {
+        needsVolunteers: boolean
+        form: VolunteerForm
+    }
 }
 
 /**
@@ -207,11 +127,14 @@ export interface ConferenceDayState {
 
     callForPapers: CFPClosed
     ticketSales: TicketSalesClosed
-    talkVoting: Closed
+    talkVoting: TalkVotingClosed
     feedback: Open
     agenda: Published
 
-    needsVolunteers: false
+    volunteering: {
+        needsVolunteers: false
+        form: undefined
+    }
 }
 
 /** Conference is over, there is no next conference configured */
@@ -222,11 +145,14 @@ export interface AfterConferenceState {
 
     callForPapers: CFPClosed
     ticketSales: TicketSalesClosed
-    talkVoting: NotOpenYet
+    talkVoting: TalkVotingClosed
     feedback: FeedbackState
     agenda: NotReleased
 
-    needsVolunteers: false
+    volunteering: {
+        needsVolunteers: false
+        form: undefined
+    }
 }
 
 //
@@ -254,6 +180,18 @@ export type TicketSalesState =
     | TicketSalesSoldOut
     | TicketSalesWaitListOpen
     | TicketSalesNotOpenYet
+
+export interface TitoTicketInfo {
+    type: 'tito'
+    accountId: string
+    eventId: string
+
+    generalTicketSlugs?: string[]
+    afterPartyTicketSlugs?: string[]
+    afterPartyUpgradeActivityId?: string
+}
+
+export type TicketInfo = TitoTicketInfo
 
 export interface TicketSalesOpen {
     state: Open

@@ -299,22 +299,30 @@ document.addEventListener('submit', (e) => {
     const formData = new FormData(form)
     const data = Object.fromEntries(formData)
 
+    // Handle production configuration form separately
+    if (form.id === 'production-config-form') {
+        e.preventDefault()
+        handleProductionConfig(form, data)
+        return
+    }
+
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]')
     submitBtn.textContent = 'Creating...'
     submitBtn.disabled = true
 
     // Create GitHub App manifest with user-specific naming
+    const appUrl = data.homepageUrl.startsWith('http') ? data.homepageUrl : 'http://' + data.homepageUrl
+    
     const manifest = {
         name: data.appName,
-        url: data.homepageUrl,
-        redirect_url: window.location.origin + '/callback',
+        url: appUrl,
+        redirect_url: appUrl + '/auth/github/callback',
         callback_urls: [
-            // For app creation, use setup script callback
-            window.location.origin + '/callback',
-            // Also include the app's eventual callback URL for OAuth flows
-            (data.homepageUrl.startsWith('http') ? data.homepageUrl : 'http://' + data.homepageUrl) +
-                '/auth/github/callback',
+            // Primary callback URL for OAuth flows in the app
+            appUrl + '/auth/github/callback',
+            // Secondary callback for setup script (only for local development)
+            ...(data.environment === 'local' ? [window.location.origin + '/callback'] : [])
         ],
         public: false,
         default_permissions: {
@@ -356,3 +364,55 @@ document.addEventListener('submit', (e) => {
 
     // Continue with form submission to GitHub
 })
+
+// Handle production configuration
+async function handleProductionConfig(form, data) {
+    const submitBtn = form.querySelector('button[type="submit"]')
+    const originalText = submitBtn.textContent
+    
+    // Show loading state
+    submitBtn.textContent = 'Configuring...'
+    submitBtn.disabled = true
+    
+    try {
+        const response = await fetch('/configure-production', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        
+        const result = await response.json()
+        
+        if (result.success) {
+            // Show success message
+            const successDiv = document.createElement('div')
+            successDiv.className = 'success-box'
+            successDiv.innerHTML = `
+                <h3>✅ Production App Configured Successfully!</h3>
+                <p>GitHub repository variables and secrets have been set for app ID: ${result.appId}</p>
+                <p>Your production deployment is now ready to use this GitHub App.</p>
+                <p><a href="/?tab=created" class="button">View Created Apps</a></p>
+            `
+            form.parentNode.insertBefore(successDiv, form.nextSibling)
+            
+            // Hide the form
+            form.style.display = 'none'
+        } else {
+            throw new Error(result.message || 'Configuration failed')
+        }
+    } catch (error) {
+        // Show error message
+        const errorDiv = document.createElement('div')
+        errorDiv.className = 'warning-box'
+        errorDiv.innerHTML = `
+            <h3>❌ Configuration Failed</h3>
+            <p>Error: ${error.message}</p>
+            <p>Please check your app details and try again.</p>
+        `
+        form.parentNode.insertBefore(errorDiv, form.nextSibling)
+    } finally {
+        // Reset button
+        submitBtn.textContent = originalText
+        submitBtn.disabled = false
+    }
+}

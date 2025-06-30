@@ -1,20 +1,27 @@
 import * as React from 'react'
-import type { MetaFunction } from 'react-router'
 import { data, Link, useLoaderData } from 'react-router'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPagesList } from '~/lib/mdx.server'
-import { conferenceConfig } from '../config/conference-config'
+import type { Route } from './+types/_layout.blog._index'
 
 export async function loader() {
-    return data({ posts: await getPagesList('blog') }, { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } })
+    return data(
+        {
+            conferenceName: conferenceConfigPublic.name,
+            blogDescription: conferenceConfigPublic.blogDescription,
+            posts: await getPagesList('blog'),
+        },
+        { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
+    )
 }
 
-export const meta: MetaFunction = () => {
+export function meta({ data }: Route.MetaArgs) {
     return [
-        { title: conferenceConfig.name + ' Blog' },
+        { title: data.conferenceName + ' Blog' },
         {
             name: 'description',
-            content: conferenceConfig.blogDescription,
+            content: data.blogDescription,
         },
     ]
 }

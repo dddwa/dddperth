@@ -1,3 +1,6 @@
+import { TableClient, TableServiceClient } from '@azure/data-tables'
+import { DefaultAzureCredential } from '@azure/identity'
+import { BlobServiceClient } from '@azure/storage-blob'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import { createRequestHandler } from '@react-router/express'
 import closeWithGrace from 'close-with-grace'
@@ -5,11 +8,36 @@ import compression from 'compression'
 import express from 'express'
 import path from 'node:path'
 import type { ServerBuild } from 'react-router'
+import { AZURE_STORAGE_ACCOUNT_NAME } from '~/lib/config.server.js'
 import { resolveError } from './app/lib/resolve-error.js'
 
 const tracer = trace.getTracerProvider().getTracer('server')
 
 export function init() {
+    let blobServiceClient: BlobServiceClient
+    let tableServiceClient: TableServiceClient
+    let getTableClient: (tableName: string) => TableClient
+
+    if (AZURE_STORAGE_ACCOUNT_NAME === 'local') {
+        const connectionString = 'UseDevelopmentStorage=true'
+        blobServiceClient = BlobServiceClient.fromConnectionString(connectionString)
+        tableServiceClient = TableServiceClient.fromConnectionString(connectionString)
+        getTableClient = (tableName: string): TableClient => {
+            return TableClient.fromConnectionString(connectionString, tableName)
+        }
+    } else {
+        // Use managed identity for production
+        const credential = new DefaultAzureCredential()
+        const blobUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`
+        const tableUrl = `https://${AZURE_STORAGE_ACCOUNT_NAME}.table.core.windows.net`
+
+        blobServiceClient = new BlobServiceClient(blobUrl, credential)
+        tableServiceClient = new TableServiceClient(tableUrl, credential)
+        getTableClient = (tableName: string): TableClient => {
+            return new TableClient(tableUrl, tableName, credential)
+        }
+    }
+
     return tracer.startActiveSpan('start', async (span) => {
         console.log('Starting')
         try {
@@ -104,9 +132,12 @@ export function init() {
                 '*',
                 createRequestHandler({
                     build: resolveBuild,
-                    getLoadContext: (req) => {
+                    getLoadContext: (req, res) => {
                         return initialBuild.entry.module.getLoadContext({
-                            query: req.query,
+                            request: req,
+                            blobServiceClient,
+                            tableServiceClient,
+                            getTableClient,
                         })
                     },
                 }) as any,

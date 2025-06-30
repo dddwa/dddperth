@@ -1,8 +1,6 @@
-import mdx from '@mdx-js/rollup'
 import { reactRouter } from '@react-router/dev/vite'
 import { reactRouterDevTools } from 'react-router-devtools'
-import remarkFrontmatter from 'remark-frontmatter'
-import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
+import { safeRoutes } from 'safe-routes/vite'
 import { defineConfig } from 'vite'
 import svgr from 'vite-plugin-svgr'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -21,14 +19,13 @@ export default defineConfig({
         },
     },
     plugins: [
-        tsconfigPaths(),
         reactRouterDevTools(),
-        mdx({
-            remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
-            rehypePlugins: [],
-            /* jsxImportSource: …, otherOptions… */
-        }),
         reactRouter(),
+        safeRoutes({
+            outDir: '.',
+            strict: true,
+        }),
+        tsconfigPaths(),
         svgr({
             svgrOptions: {
                 plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],
@@ -38,4 +35,15 @@ export default defineConfig({
             },
         }),
     ],
+    test: {
+        watch: false,
+        globals: false,
+        environment: 'node',
+        include: ['app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        reporters: ['default'],
+        coverage: {
+            reportsDirectory: '../coverage/website',
+            provider: 'v8',
+        },
+    },
 })

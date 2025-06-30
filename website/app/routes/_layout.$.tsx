@@ -1,4 +1,3 @@
-import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
 
 import { trace } from '@opentelemetry/api'
@@ -6,62 +5,72 @@ import { DateTime } from 'luxon'
 import type { PropsWithChildren } from 'react'
 import { ImportantDates } from '~/components/page-components/important-dates'
 import { Button } from '~/components/ui/button'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { socials } from '~/config/socials'
+import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getConferenceActions } from '~/lib/conference-actions'
-import type { ConferenceState } from '~/lib/config-types'
+import type { ConferenceState } from '~/lib/conference-state-client-safe'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { useMdxPage } from '~/lib/mdx'
+import { getPage } from '~/lib/mdx.server'
 import { css } from '~/styled-system/css'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
-import { conferenceConfig } from '../config/conference-config'
-import { socials } from '../config/socials'
-import { useMdxPage } from '../lib/mdx'
-import { getPage } from '../lib/mdx.server'
+import type { Route } from './+types/_layout.$'
 
-export async function loader({ params, request, context }: LoaderFunctionArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
     const contentSlug = params['*']
     if (!contentSlug) {
         throw new Error('Expected contentSlug param')
     }
 
     const requestUrl = new URL(request.url)
-    if (requestUrl.pathname.startsWith('/static')) {
-        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    if (contentSlug.startsWith('/static')) {
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+
+    if (contentSlug.includes('.well-known')) {
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
     const post = await getPage(contentSlug, 'page')
     if (!post) {
-        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (post.frontmatter.draft) {
-        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (!post.frontmatter.title) {
         trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
-        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
-    const currentPath = requestUrl.pathname
+
+    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISODate(),
-            currentPath,
+            currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
             post: post.code,
             conferenceState: context.conferenceState,
+            importantDates,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
     )
 }
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
     // Inherit the caching headers from the loader so we don't cache 404s
     return loaderHeaders
 }
 
-export const meta: MetaFunction<typeof loader> = (args) => {
+export function meta(args: Route.MetaArgs) {
     const { data, params } = args
     const contentSlug = params['*']
     if (!contentSlug) {
@@ -70,7 +79,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
     const { siteUrl, post, frontmatter } = data || {}
     if (!post || !frontmatter) {
-        return [{ title: `404 Not Found | ${conferenceConfig.name}` }]
+        return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
     }
 
     // Generate a description if summary isn't available
@@ -97,15 +106,15 @@ export const meta: MetaFunction<typeof loader> = (args) => {
     const canonicalUrl = url
 
     return [
-        { title: `${frontmatter.title} | ${conferenceConfig.name}` },
+        { title: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
         { name: 'description', content: description },
         { name: 'keywords', content: keywords },
         { property: 'og:type', content: 'article' },
         { property: 'og:url', content: url },
-        { property: 'og:title', content: `${frontmatter.title} | ${conferenceConfig.name}` },
+        { property: 'og:title', content: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
         { property: 'og:image', content: socialImageUrl },
         { property: 'og:description', content: description },
-        { property: 'og:site_name', content: conferenceConfig.name },
+        { property: 'og:site_name', content: conferenceConfigPublic.name },
         { property: 'og:locale', content: 'en_AU' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:creator', content: `@${socials.Twitter.Name}` },
@@ -120,7 +129,8 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 }
 
 export default function WebsiteContentPage() {
-    const { post, frontmatter, currentPath, conferenceState, currentDate } = useLoaderData<typeof loader>()
+    const { post, frontmatter, currentPath, conferenceState, currentDate, importantDates } =
+        useLoaderData<typeof loader>()
     const Component = useMdxPage(post, conferenceState)
 
     return (
@@ -144,6 +154,7 @@ export default function WebsiteContentPage() {
                             frontmatter={frontmatter}
                             conferenceState={conferenceState}
                             currentDate={DateTime.fromISO(currentDate)}
+                            importantDates={importantDates}
                         >
                             <Component />
                         </ContentPageWithSidebar>
@@ -158,14 +169,13 @@ export const styledSidebarContainer = css({})
 
 function ContentPageWithSidebar({
     frontmatter,
-    currentPath,
-    conferenceState,
+    importantDates,
     currentDate,
     children,
 }: PropsWithChildren<
     { currentDate: DateTime } & Pick<
         Awaited<ReturnType<typeof useLoaderData<typeof loader>>>,
-        'conferenceState' | 'frontmatter' | 'currentPath'
+        'conferenceState' | 'frontmatter' | 'currentPath' | 'importantDates'
     >
 >) {
     return (
@@ -190,7 +200,7 @@ function ContentPageWithSidebar({
                 <ImportantDates
                     smallSidebar={true}
                     showOnlyLive={true}
-                    year={conferenceState.conference.year}
+                    importantDates={importantDates}
                     currentDate={currentDate}
                 />
 

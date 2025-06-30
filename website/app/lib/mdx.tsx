@@ -7,7 +7,7 @@ import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
 import { styled } from '~/styled-system/jsx'
-import type { ConferenceState } from './config-types'
+import type { ConferenceState } from './conference-state-client-safe'
 
 const mdxComponentCache = new LRUCache<string, ReturnType<typeof getMdxComponent>>({
     max: 1000,
@@ -38,7 +38,7 @@ function getMdxComponent(code: string, conferenceState: ConferenceState) {
         h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
         h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
         ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
-        VolunteerForm: () => <VolunteerForm />,
+        VolunteerForm: () => <VolunteerForm conferenceState={conferenceState} />,
         SubmitSession: () => {
             if (conferenceState.callForPapers.state === 'open') {
                 if (conferenceState.callForPapers.sessionizeUrl) {
@@ -86,7 +86,7 @@ function getMdxComponent(code: string, conferenceState: ConferenceState) {
             }
         },
         VolunteersNeeded: ({ children }) => {
-            if (conferenceState.needsVolunteers) {
+            if (conferenceState.volunteering.needsVolunteers) {
                 return children
             }
         },
@@ -132,7 +132,10 @@ export function CFPNotOpenYet({ cfpOpens }: { cfpOpens: DateTime }) {
     return (
         <styled.div>
             <Button disabled>
-                Call for Papers not open yet, it opens on {cfpOpens.toLocaleString(DateTime.DATETIME_SHORT)}
+                Call for Papers not open yet, it opens on{' '}
+                {cfpOpens.toLocaleString(DateTime.DATETIME_SHORT, {
+                    locale: 'en-AU',
+                })}
             </Button>
         </styled.div>
     )

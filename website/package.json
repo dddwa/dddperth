@@ -6,8 +6,11 @@
     "scripts": {},
     "dependencies": {
         "@ark-ui/react": "^5.0.1",
+        "@azure/data-tables": "^13.3.1",
+        "@azure/identity": "^4.10.0",
         "@azure/monitor-opentelemetry-exporter": "1.0.0-beta.29",
         "@azure/opentelemetry-instrumentation-azure-sdk": "1.0.0-beta.8",
+        "@azure/storage-blob": "^12.27.0",
         "@kentcdodds/md-temp": "^9.1.0",
         "@octokit/app": "^16.0.1",
         "@octokit/plugin-rest-endpoint-methods": "^16.0.0",
@@ -26,9 +29,7 @@
         "@opentelemetry/sdk-node": "^0.57.2",
         "@opentelemetry/sdk-trace-node": "^1.30.1",
         "@opentelemetry/semantic-conventions": "^1.30.0",
-        "@pandacss/dev": "^0.53.1",
         "@park-ui/panda-preset": "^0.43.1",
-        "@react-router/dev": "^7.3.0",
         "@react-router/express": "^7.3.0",
         "@react-router/fs-routes": "^7.3.0",
         "@react-router/node": "^7.3.0",
@@ -56,17 +57,15 @@
         "remark-gfm": "^4.0.1",
         "remix-auth": "^4.2.0",
         "remix-auth-github": "^3.0.2",
-        "remix-routes": "^1.7.7",
         "serialize-error": "^12.0.0",
         "source-map-support": "^0.5.21",
         "tiny-invariant": "^1.3.3",
         "unified": "^11.0.5",
         "unist-util-visit": "^5.0.0",
-        "vite": "~6.2.1",
         "yaml": "^2.7.0",
         "zod": "^3.24.2"
     },
     "engines": {
-        "node": ">=20.0.0"
+        "node": ">=22.0.0"
     }
 }

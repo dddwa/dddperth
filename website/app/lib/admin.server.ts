@@ -1,8 +1,9 @@
 import { redirect } from 'react-router'
-import { getUser, isAdmin, type User } from './auth.server'
+import { getUser, isAdmin } from './auth.server'
+import type { User } from './session.server'
 
 export async function requireAdminUser(request: Request): Promise<User> {
-    const user = await getUser(request)
+    const user = await getUser(request.headers)
 
     if (!user) {
         throw redirect('/auth/login')
@@ -19,6 +20,6 @@ export async function requireAdminUser(request: Request): Promise<User> {
 }
 
 export async function getOptionalAdminUser(request: Request): Promise<User | null> {
-    const user = await getUser(request)
+    const user = await getUser(request.headers)
     return user && isAdmin(user) ? user : null
 }

@@ -7,4 +7,4 @@ styled-system
 .react-router
 
 /.nx/workspace-data
-remix-routes.d.ts
+safe-routes.d.ts

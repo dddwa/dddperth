@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types'
+import type { ConferenceYear } from '~/lib/config-types.server'
 
-import { optusStadiumVenue } from '../venues/optus-stadium';
+import { optusStadiumVenue } from '../venues/optus-stadium'
 
 export const conference2024: ConferenceYear = {
+    kind: 'conference',
     year: '2024',
     venue: optusStadiumVenue,
 
@@ -12,6 +13,7 @@ export const conference2024: ConferenceYear = {
     sessions: {
         kind: 'sessionize',
         sessionizeEndpoint: 'https://sessionize.com/api/v2/vedvlykn',
+        allSessionsEndpoint: undefined,
     },
 
     conferenceDate: DateTime.fromISO('2024-11-16'),
@@ -318,5 +320,4 @@ Computing, software and big data will be critical in the success of this mega sc
             },
         ],
     },
-    importantDates: [],
 }

@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
 import type { HeadersFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
-import { getYearConfig } from '~/lib/get-year-config'
+import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Hero } from '../components/hero/hero'
 import { SkipToContent } from '../components/skip-to-content'
@@ -12,29 +13,30 @@ export const headers: HeadersFunction = () => {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const { yearConfig } = getYearConfig(
-        context.conferenceState.conference.year,
-        context.conferenceState.conference,
-        context.dateTimeProvider,
-    )
+    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISODate(),
-            conferenceYear: context.conferenceState.conference.year,
-            yearConfig,
+            conferenceDate: context.conferenceState.conference.date,
+            importantDates,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
 export default function Index() {
-    const { conferenceYear, currentDate, yearConfig } = useLoaderData<typeof loader>()
+    const { importantDates, currentDate, conferenceDate } = useLoaderData<typeof loader>()
 
     return (
         <>
             <SkipToContent />
-            <Hero year={conferenceYear} currentDate={DateTime.fromISO(currentDate)} config={yearConfig} />
+            <Hero
+                currentDate={DateTime.fromISO(currentDate)}
+                conferenceDate={conferenceDate}
+                importantDates={importantDates}
+            />
         </>
     )
 }

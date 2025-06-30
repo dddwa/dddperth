@@ -13,7 +13,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         }
 
         // Create user session and redirect to admin
-        return await createUserSession(request, user, '/admin')
+        return await createUserSession(request.headers, user, '/admin')
     } catch (error) {
         // If authentication fails, redirect to login
         if (error instanceof Response) {

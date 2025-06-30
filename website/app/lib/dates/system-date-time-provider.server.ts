@@ -1,15 +1,16 @@
 import { DateTime } from 'luxon'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {
     nowDate(): DateTime {
         return DateTime.local({
-            zone: 'Australia/Perth',
+            zone: conferenceConfigPublic.timezone,
         })
     }
     now() {
         return DateTime.local({
-            zone: 'Australia/Perth',
+            zone: conferenceConfigPublic.timezone,
         }).toMillis()
     }
 

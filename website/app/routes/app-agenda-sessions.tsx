@@ -1,19 +1,18 @@
-import type { HeadersFunction } from 'react-router'
 import { data } from 'react-router'
 import type { TypeOf } from 'zod'
-import { conferenceConfig } from '~/config/conference-config'
-import { getYearConfig } from '~/lib/get-year-config'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { sessionsSchema } from '~/lib/sessionize.server'
 import { getConfSessions } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-sessions'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const { yearConfig } = getYearConfig(
-        context.conferenceState.conference.year,
-        context.conferenceState.conference,
-        context.dateTimeProvider,
-    )
+    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
 
     if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -23,7 +22,7 @@ export async function loader({ context }: Route.LoaderArgs) {
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfig.timezone,
+                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
 
@@ -48,7 +47,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     })
 }
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export function headers({ loaderHeaders }: Route.HeadersArgs) {
     // Inherit the caching headers from the loader so we don't cache 404s
     return loaderHeaders
 }
