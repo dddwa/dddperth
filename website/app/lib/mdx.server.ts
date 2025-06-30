@@ -26,7 +26,16 @@ export interface FrontmatterProperties {
     authors?: string[]
 }
 
-const contentCache = new LRUCache<string, string>({
+type ContentResultValue =
+    | {
+          kind: 'found'
+          content: string
+      }
+    | {
+          kind: 'not-found'
+      }
+
+const contentCache = new LRUCache<string, ContentResultValue>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
     ttl: 1000 * 60 * 10, // 10 mins
@@ -85,10 +94,12 @@ const contentListingCache = new LRUCache<string, string[]>({
 
 export async function getPage(slug: string, type: 'blog' | 'page') {
     const pageContents = await getContentWithCache(getContentDirectory(type), slug)
+    if (pageContents.kind === 'found') {
+        const compiledPage = await getMdxPageWithCache(slug, pageContents.content)
+        return compiledPage
+    }
 
-    const compiledPage = await getMdxPageWithCache(slug, pageContents)
-
-    return compiledPage
+    return null
 }
 
 /** This will have the side effect of priming the page cache */
@@ -187,17 +198,18 @@ function hashContent(content: string): string {
     return createHash('sha256').update(content).digest('hex')
 }
 
-async function getContents(contentDir: string, slug: string) {
+async function getContents(contentDir: string, slug: string): Promise<ContentResultValue> {
     if (USE_GITHUB_CONTENT || process.env.NODE_ENV === 'production') {
         const file = await downloadMdxFileOrDirectory(`${contentDir}/${slug}`)
         if (file.files.length !== 1) {
-            throw new Error(`Expected exactly one file for ${slug}, got ${file.files.length}`)
+            return { kind: 'not-found' }
         }
 
-        return file.files[0].content
+        return { kind: 'found', content: file.files[0].content }
     }
 
-    return await readFile(path.resolve(process.cwd(), '../', contentDir, `${slug}.mdx`), 'utf-8')
+    const content = await readFile(path.resolve(process.cwd(), '../', contentDir, `${slug}.mdx`), 'utf-8')
+    return { kind: 'found', content }
 }
 
 async function getMdxPageWithCache(slug: string, contents: string) {
