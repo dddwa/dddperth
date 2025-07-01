@@ -1,9 +1,18 @@
+import { $path } from 'safe-routes'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import Logo from '~/images/svg/logo.svg?react'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 
-export function Header() {
+export function Header({
+    cfpOpen,
+    votingOpen,
+    ticketSalesOpen,
+}: {
+    cfpOpen: boolean
+    votingOpen: boolean
+    ticketSalesOpen: boolean
+}) {
     return (
         <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" py={4}>
             <Box w="100%" position="relative" maxW="1200px" m="0 auto">
@@ -59,57 +68,46 @@ export function Header() {
                                 Blog
                             </AppLink> */}
                             <styled.div gap={2} display="grid">
-                                {/* <styled.a
-                                    href="/tickets"
-                                    color="#520030"
-                                    _hover={{ gradientTo: '#FF52B7' }}
-                                    bgGradient="to-r"
-                                    gradientFrom="#FF52B7"
-                                    gradientTo="#FF8273"
-                                    borderRightRadius={100}
-                                    display="flex"
-                                    whiteSpace="nowrap"
-                                    flexWrap="nowrap"
-                                    fontWeight={600}
-                                    gap={2}
-                                    px={{ base: 2, md: 4 }}
-                                    py={2}
-                                    mr={4}
-                                    xl={{
-                                        mr: 0,
-                                    }}
-                                >
-                                    Buy Tickets{' '}
-                                    <styled.span display={{ base: 'hidden', md: 'inline-block' }}>↗</styled.span>
-                                </styled.a> */}
-                                <styled.a
-                                    href="https://dddperth.deco-apparel.com/"
-                                    color="#520030"
-                                    _hover={{ gradientTo: '#FF52B7' }}
-                                    bgGradient="to-r"
-                                    gradientFrom="#FF52B7"
-                                    gradientTo="#FF8273"
-                                    borderRightRadius={100}
-                                    display="flex"
-                                    whiteSpace="nowrap"
-                                    flexWrap="nowrap"
-                                    fontWeight={600}
-                                    gap={2}
-                                    px={{ base: 2, md: 4 }}
-                                    py={2}
-                                    mr={4}
-                                    xl={{
-                                        mr: 0,
-                                    }}
-                                >
-                                    Buy Merch{' '}
-                                    <styled.span display={{ base: 'hidden', md: 'inline-block' }}>↗</styled.span>
-                                </styled.a>
+                                {votingOpen ? (
+                                    <CtaLink to={$path('/voting')} label="Vote!" />
+                                ) : cfpOpen ? (
+                                    <CtaLink to={'/call-for-presentations'} label="Propose a Talk" />
+                                ) : ticketSalesOpen ? (
+                                    <CtaLink to={'/tickets'} label="Buy Tickets" />
+                                ) : null}
                             </styled.div>
                         </Flex>
                     </Flex>
                 </Box>
             </Box>
         </styled.header>
+    )
+}
+
+function CtaLink({ to, label, isExternal }: { to: string; label: string; isExternal?: boolean }) {
+    return (
+        <AppLink
+            to={to}
+            color="#520030"
+            _hover={{ gradientTo: '#FF52B7' }}
+            bgGradient="to-r"
+            gradientFrom="#FF52B7"
+            gradientTo="#FF8273"
+            borderRightRadius={100}
+            display="flex"
+            whiteSpace="nowrap"
+            flexWrap="nowrap"
+            fontWeight={600}
+            gap={2}
+            px={{ base: 2, md: 4 }}
+            py={2}
+            mr={4}
+            xl={{
+                mr: 0,
+            }}
+        >
+            {label}
+            {isExternal ? <styled.span display={{ base: 'hidden', md: 'inline-block' }}>↗</styled.span> : null}
+        </AppLink>
     )
 }
