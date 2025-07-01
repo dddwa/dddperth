@@ -75,6 +75,7 @@ export default function VotingPage() {
     const fetchingRef = useRef(false)
     const nextBatchFetchedRef = useRef(false)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
+    const startingIndexRef = useRef(data.startingIndex)
 
     // Fetch initial batch on mount
     useEffect(() => {
@@ -128,7 +129,9 @@ export default function VotingPage() {
         fetchingRef.current = true
 
         try {
-            const response = await fetch(`/api/voting/batch?from=${overallIndex}`)
+            // Calculate the index of the next pair to fetch based on stable starting index + loaded pairs
+            const nextIndex = startingIndexRef.current + pairs.length
+            const response = await fetch(`/api/voting/batch?from=${nextIndex}`)
             const result: VotingBatch | { error: string } = await response.json()
 
             if (response.ok && 'batch' in result) {
