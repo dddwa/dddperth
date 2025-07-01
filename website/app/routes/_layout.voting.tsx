@@ -4,6 +4,8 @@ import { Await, useLoaderData } from 'react-router'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import type { VotingApiResponse } from '~/lib/voting-api-types'
+import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import type { TalkPair } from '~/lib/voting.server'
 import { ensureVotesTableExists, getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
@@ -63,17 +65,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 }
 
-interface VotingBatch {
-    batch: {
-        pairs: TalkPair[]
-        currentIndex: number
-        totalPairs: number
-        hasMore: boolean
-    }
-    sessionId: string
-    votingState: string
-}
-
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
 
@@ -127,19 +118,35 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
 
         try {
             const response = await fetch('/api/voting/batch')
-            const result: VotingBatch | { error: string; needsSession?: boolean } = await response.json()
 
-            if (!response.ok) {
-                if ('needsSession' in result && result.needsSession) {
-                    // Redirect to create session
-                    window.location.href = '/voting'
-                    return
-                }
-                throw new Error('error' in result ? result.error : 'Failed to fetch voting batch')
+            // Handle 302 redirects (session migration, session reset, etc.)
+            if (response.status === 302) {
+                // The server wants us to redirect - trigger a full page refresh
+                window.location.href = '/voting'
+                return
             }
 
-            const votingBatch = result as VotingBatch
-            setPairs(votingBatch.batch.pairs)
+            const result: VotingApiResponse = await response.json()
+
+            if (!response.ok) {
+                if (isVotingErrorResponse(result)) {
+                    if (result.needsSession) {
+                        // Redirect to create session
+                        window.location.href = '/voting'
+                        return
+                    }
+                    throw new Error(result.error)
+                }
+                throw new Error('Failed to fetch voting batch')
+            }
+
+            // Use type guard to ensure we have the correct response type
+            if (!isVotingBatchResponse(result)) {
+                console.error('Invalid voting batch response:', result)
+                throw new Error('Invalid voting batch response structure')
+            }
+
+            setPairs(result.batch.pairs)
             setCurrentPairIndex(0)
             nextBatchFetchedRef.current = false
         } catch (err) {
@@ -158,9 +165,17 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
             // Calculate the index of the next pair to fetch based on stable starting index + loaded pairs
             const nextIndex = startingIndexRef.current + pairs.length
             const response = await fetch(`/api/voting/batch?from=${nextIndex}`)
-            const result: VotingBatch | { error: string } = await response.json()
 
-            if (response.ok && 'batch' in result) {
+            // Handle 302 redirects (session migration, session reset, etc.)
+            if (response.status === 302) {
+                // The server wants us to redirect - trigger a full page refresh
+                window.location.href = '/voting'
+                return
+            }
+
+            const result: VotingApiResponse = await response.json()
+
+            if (response.ok && isVotingBatchResponse(result)) {
                 // Deduplicate pairs based on index
                 setPairs((prev) => {
                     const existingIndices = new Set(prev.map((p) => p.index))

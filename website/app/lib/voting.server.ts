@@ -64,6 +64,7 @@ export interface VotingSession {
     inputSessionizeTalkIdsJson: string // JSON string of talk IDs
     currentIndex: VoteIndex
     createdAt: string
+    version?: number
 }
 
 const tableClients = new Map<string, Promise<TableClient>>()
@@ -217,6 +218,7 @@ export async function getVotingSession(
             inputSessionizeTalkIdsJson: entity.inputSessionizeTalkIdsJson,
             currentIndex: entity.currentIndex,
             createdAt: entity.createdAt,
+            version: entity.version ?? 1, // Default to v1 if not specified
         }
     } catch (error: any) {
         if (error.statusCode === 404) {
@@ -260,9 +262,10 @@ export async function createUserVotingSessionAndRedirect(
     const sessionId = crypto.randomUUID()
     const seed = crypto.getRandomValues(new Uint32Array(1))[0]
 
-    // Calculate total pairs
+    // Calculate total pairs using generator
     const totalTalks = currentSessions.length
-    const totalPairs = (totalTalks * (totalTalks - 1)) / 2
+    const tempGenerator = new FairPairingGenerator(totalTalks, 0)
+    const totalPairs = tempGenerator.getTotalPairs()
 
     // Create session in table storage
     const sessionRecord: VotingSession = {
@@ -274,6 +277,7 @@ export async function createUserVotingSessionAndRedirect(
         inputSessionizeTalkIdsJson: JSON.stringify(currentSessionIds),
         currentIndex: 0,
         createdAt: new Date().toISOString(),
+        version: 2, // Use v2 algorithm (no talk repetition) for new sessions
     }
 
     await votesTableClient.upsertEntity(sessionRecord)
@@ -312,9 +316,36 @@ export async function getCurrentVotingBatch(
         })
     }
 
-    // Generate pairs using FairPairingGenerator
+    // Check if this is an old v1 session - if so, reset it to v2
+    if ((votingSession.version ?? 1) === 1) {
+        console.warn('Session uses v1 algorithm, resetting to v2 due to algorithm change')
+        const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+        votingStorageSession.set('sessionId', undefined)
+
+        throw redirect($path('/voting'), {
+            headers: {
+                'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
+            },
+        })
+    }
+
+    // Generate pairs using FairPairingGenerator (no talk repetition within batch)
     const generator = new FairPairingGenerator(currentSessions.length, votingSession.seed)
     const startPosition = fromIndex ?? votingSession.currentIndex
+
+    // Check if session is complete (all pairs have been shown)
+    if (startPosition >= generator.getTotalPairs()) {
+        console.log('All pairs have been shown, resetting session')
+        const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+        votingStorageSession.set('sessionId', undefined)
+
+        throw redirect($path('/voting'), {
+            headers: {
+                'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
+            },
+        })
+    }
+
     const pairIndices = generator.getNextPairs(startPosition, batchSize)
 
     // Convert indices to TalkPair objects
@@ -324,7 +355,9 @@ export async function getCurrentVotingBatch(
         right: currentSessions[rightIndex],
     }))
 
-    const hasMore = startPosition + batchSize < votingSession.totalPairs
+    // Check if there are more pairs available beyond this batch
+    const nextPosition = generator.getCurrentPosition()
+    const hasMore = nextPosition < generator.getTotalPairs()
 
     return {
         pairs,

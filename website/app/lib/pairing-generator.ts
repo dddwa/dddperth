@@ -1,60 +1,89 @@
 export class FairPairingGenerator {
     private totalTalks: number
-    private totalPairs: number
     private seed: number
+    private allPairs: Array<[number, number]>
+    private shuffledPairIndices: number[]
+    private currentPosition = 0
 
     constructor(totalTalks: number, seed: number) {
         this.totalTalks = totalTalks
-        this.totalPairs = (totalTalks * (totalTalks - 1)) / 2
         this.seed = seed
+        this.allPairs = this.generateAllPairs()
+        this.shuffledPairIndices = this.generateShuffledIndices()
     }
 
-    private shuffleIndex(index: number): number {
-        // Use a better mixing function
-        let hash = index
-
-        // Mix with seed
-        hash ^= this.seed
-        hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b)
-        hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35)
-        hash ^= hash >>> 16
-
-        // Ensure positive and in range
-        return Math.abs(hash) % this.totalPairs
-    }
-
-    // Convert index to talk pair
-    private indexToPair(index: number): [number, number] {
-        let i = 0
-        let remaining = index
-
-        while (remaining >= this.totalTalks - i - 1) {
-            remaining -= this.totalTalks - i - 1
-            i++
+    // Seeded random number generator (Linear Congruential Generator)
+    private seededRandom(seed: number): () => number {
+        let state = seed
+        return () => {
+            state = (state * 1664525 + 1013904223) % 4294967296
+            return state / 4294967296
         }
-
-        const j = i + remaining + 1
-        return [i, j]
     }
 
-    getPairAtPosition(position: number): [number, number] | null {
-        if (position >= this.totalPairs) return null
-
-        // Simple approach - just shuffle the index once
-        const shuffled = this.shuffleIndex(position)
-
-        return this.indexToPair(shuffled)
-    }
-
-    // Get next N pairs efficiently
-    getNextPairs(startPosition: number, count: number): Array<[number, number]> {
+    // Generate all possible pairs
+    private generateAllPairs(): Array<[number, number]> {
         const pairs: Array<[number, number]> = []
-
-        for (let i = 0; i < count && startPosition + i < this.totalPairs; i++) {
-            const pair = this.getPairAtPosition(startPosition + i)
-            if (pair) pairs.push(pair)
+        for (let i = 0; i < this.totalTalks; i++) {
+            for (let j = i + 1; j < this.totalTalks; j++) {
+                pairs.push([i, j])
+            }
         }
+        return pairs
+    }
+
+    // Fisher-Yates shuffle of pair indices
+    private generateShuffledIndices(): number[] {
+        const indices = Array.from({ length: this.allPairs.length }, (_, i) => i)
+        const random = this.seededRandom(this.seed)
+
+        // Fisher-Yates shuffle
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(random() * (i + 1))
+            ;[indices[i], indices[j]] = [indices[j], indices[i]]
+        }
+
+        return indices
+    }
+
+    // Get next batch of pairs ensuring no talk appears twice in the batch
+    getNextPairs(startPosition: number, requestedCount: number): Array<[number, number]> {
+        const pairs: Array<[number, number]> = []
+        const usedTalks = new Set<number>()
+        let position = startPosition
+
+        while (pairs.length < requestedCount && position < this.shuffledPairIndices.length) {
+            const pairIndex = this.shuffledPairIndices[position]
+            const [talk1, talk2] = this.allPairs[pairIndex]
+
+            // Only add this pair if neither talk has been used in this batch
+            if (!usedTalks.has(talk1) && !usedTalks.has(talk2)) {
+                pairs.push([talk1, talk2])
+                usedTalks.add(talk1)
+                usedTalks.add(talk2)
+            }
+
+            position++
+        }
+
+        // Update position for tracking
+        this.currentPosition = position
 
         return pairs
+    }
+
+    // Get total number of possible pairs
+    getTotalPairs(): number {
+        return this.allPairs.length
+    }
+
+    // Check if we've exhausted all pairs
+    isComplete(): boolean {
+        return this.currentPosition >= this.allPairs.length
+    }
+
+    // Get current position in the shuffle
+    getCurrentPosition(): number {
+        return this.currentPosition
     }
 }
