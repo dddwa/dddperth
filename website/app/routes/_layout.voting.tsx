@@ -55,7 +55,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return {
         talkVoting: context.conferenceState.talkVoting,
-        votingSession: votingSession.then((session) => ({
+        votingSession: await votingSession.then((session) => ({
             sessionId: session.sessionId,
             startingIndex: session.currentIndex,
         })),

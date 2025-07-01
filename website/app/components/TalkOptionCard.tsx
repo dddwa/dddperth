@@ -10,6 +10,9 @@ interface TalkOptionCardProps {
 }
 
 export function TalkOptionCard({ title, description, tags, onClick, highlight }: TalkOptionCardProps) {
+    // Create a unique prefix for this card to avoid key conflicts
+    const cardId = title.replace(/\s+/g, '-').toLowerCase()
+
     return (
         <Box
             flex={1}
@@ -55,9 +58,9 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                 )}
 
                 <HStack gap={2} flexWrap="wrap" mt={2}>
-                    {tags.map((tag) => (
+                    {tags.map((tag, index) => (
                         <Box
-                            key={tag}
+                            key={`${cardId}-tag-${index}-${tag}`}
                             className={css({
                                 px: 3,
                                 py: 1,
