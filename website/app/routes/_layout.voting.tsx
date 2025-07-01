@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
-import { useEffect, useRef, useState } from 'react'
-import { useLoaderData } from 'react-router'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { Await, useLoaderData } from 'react-router'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -16,11 +16,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })
     }
 
-    if (context.conferenceState.talkVoting.state === 'not-open-yet') {
+    if (
+        context.conferenceState.talkVoting.state === 'not-open-yet' ||
+        context.conferenceState.talkVoting.state === 'closed'
+    ) {
         return {
             talkVoting: context.conferenceState.talkVoting,
-            sessionId: null,
-            startingIndex: 0,
+            votingSession: {
+                sessionId: null,
+                startingIndex: 0,
+            },
             hasSession: false,
         }
     }
@@ -29,9 +34,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
         return {
             talkVoting: context.conferenceState.talkVoting,
-            sessionId: null,
+            votingSession: {
+                sessionId: null,
+                startingIndex: 0,
+            },
             hasSession: false,
-            startingIndex: 0,
             error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
         }
     }
@@ -44,12 +51,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     )
 
     // This will create a session and redirect
-    const votingSession = await getVotingSession(request, tableClient, sessions)
+    const votingSession = getVotingSession(request, tableClient, sessions)
 
     return {
         talkVoting: context.conferenceState.talkVoting,
-        sessionId: votingSession.sessionId,
-        startingIndex: votingSession.currentIndex,
+        votingSession: votingSession.then((session) => ({
+            sessionId: session.sessionId,
+            startingIndex: session.currentIndex,
+        })),
         hasSession: true,
     }
 }
@@ -67,27 +76,44 @@ interface VotingBatch {
 
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
+
+    return (
+        <Suspense fallback={<VotingMessage message="Setting up your voting session..." />}>
+            <Await resolve={data.votingSession}>
+                {(votingSession) => (
+                    <VotingPageWithSession
+                        sessionId={votingSession.sessionId}
+                        startingIndex={votingSession.startingIndex}
+                    />
+                )}
+            </Await>
+        </Suspense>
+    )
+}
+
+function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string | null; startingIndex: number }) {
+    const data = useLoaderData<typeof loader>()
     const [currentPairIndex, setCurrentPairIndex] = useState(0)
-    const [overallIndex, setOverallIndex] = useState(data.startingIndex)
+    const [overallIndex, setOverallIndex] = useState(startingIndex)
     const [pairs, setPairs] = useState<TalkPair[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const fetchingRef = useRef(false)
     const nextBatchFetchedRef = useRef(false)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
-    const startingIndexRef = useRef(data.startingIndex)
+    const startingIndexRef = useRef(startingIndex)
 
     // Fetch initial batch on mount
     useEffect(() => {
-        if (data.hasSession && data.sessionId) {
+        if (sessionId && data.talkVoting.state === 'open') {
             void fetchBatch()
         }
-    }, [data.hasSession, data.sessionId])
+    }, [sessionId])
 
     // Check if we need to fetch next batch
     useEffect(() => {
         const remainingInBatch = pairs.length - currentPairIndex
-        if (remainingInBatch <= 10 && remainingInBatch > 0 && !nextBatchFetchedRef.current && !fetchingRef.current) {
+        if (remainingInBatch <= 10 && remainingInBatch >= 0 && !nextBatchFetchedRef.current && !fetchingRef.current) {
             nextBatchFetchedRef.current = true
             void fetchNextBatch()
         }
@@ -178,87 +204,51 @@ export default function VotingPage() {
 
     if (data.talkVoting.state === 'not-open-yet') {
         return (
-            <Container py={12}>
-                <VStack gap={6}>
-                    <styled.h2 fontSize="2xl" color="white">
-                        Talk Voting
-                    </styled.h2>
-                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
-                        {data.talkVoting.opens
-                            ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens).toLocaleString(
-                                  DateTime.DATETIME_SHORT,
-                                  {
-                                      locale: 'en-AU',
-                                  },
-                              )} and closes ${DateTime.fromISO(data.talkVoting.closes).toLocaleString(
-                                  DateTime.DATETIME_SHORT,
-                                  {
-                                      locale: 'en-AU',
-                                  },
-                              )}`
-                            : 'Voting is not available for this conference'}
-                    </styled.p>
-                </VStack>
-            </Container>
+            <VotingMessage
+                message="Talk Voting"
+                error={
+                    data.talkVoting.opens
+                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens).toLocaleString(
+                              DateTime.DATETIME_SHORT,
+                              {
+                                  locale: 'en-AU',
+                              },
+                          )} and closes ${DateTime.fromISO(data.talkVoting.closes).toLocaleString(
+                              DateTime.DATETIME_SHORT,
+                              {
+                                  locale: 'en-AU',
+                              },
+                          )}`
+                        : 'Voting is not available for this conference'
+                }
+            />
         )
+    }
+
+    if (data.talkVoting.state === 'closed') {
+        return <VotingMessage message="Talk Voting" details="Voting has closed. Thank you for participating!" />
     }
 
     if ('error' in data && data.error) {
-        return (
-            <Container py={12}>
-                <VStack gap={6}>
-                    <styled.h2 fontSize="2xl" color="white">
-                        Talk Voting
-                    </styled.h2>
-                    <styled.p fontSize="lg" color="red.500">
-                        {data.error}
-                    </styled.p>
-                </VStack>
-            </Container>
-        )
+        return <VotingMessage message="Talk voting" error={data.error} />
     }
 
     if (isLoading && pairs.length === 0) {
-        return (
-            <Container py={12}>
-                <VStack gap={6}>
-                    <styled.h2 fontSize="2xl" color="white">
-                        Loading talks...
-                    </styled.h2>
-                </VStack>
-            </Container>
-        )
+        return <VotingMessage message="Loading talks..." />
     }
 
     if (error) {
         return (
-            <Container py={12}>
-                <VStack gap={6}>
-                    <styled.h2 fontSize="2xl" color="white">
-                        Talk Voting
-                    </styled.h2>
-                    <styled.p fontSize="lg" color="red.500">
-                        {error}
-                    </styled.p>
-                    <Button onClick={() => void fetchBatch()}>Try Again</Button>
-                </VStack>
-            </Container>
+            <VotingMessage
+                message="Talk Voting"
+                error={error}
+                cta={<Button onClick={() => void fetchBatch()}>Try Again</Button>}
+            />
         )
     }
 
     if (currentPairIndex >= pairs.length) {
-        return (
-            <Container py={12}>
-                <VStack gap={6}>
-                    <styled.h2 fontSize="2xl" color="white">
-                        Grabbing more talks!
-                    </styled.h2>
-                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
-                        We're loading more talks to vote on...
-                    </styled.p>
-                </VStack>
-            </Container>
-        )
+        return <VotingMessage message="Grabbing more talks!" />
     }
 
     const currentPair = pairs[currentPairIndex]
@@ -273,7 +263,7 @@ export default function VotingPage() {
                     <styled.h2 fontSize="2xl" color="white">
                         Which talk would you prefer to see?
                     </styled.h2>
-                    <styled.p fontSize="sm" color="fg.muted">
+                    <styled.p fontSize="sm" color="lightgrey">
                         Pair {overallIndex + 1} of many
                     </styled.p>
                 </VStack>
@@ -364,6 +354,39 @@ export default function VotingPage() {
                         OPTION 2
                     </Button>
                 </HStack>
+            </VStack>
+        </Container>
+    )
+}
+
+function VotingMessage({
+    message,
+    details,
+    error,
+    cta,
+}: {
+    message: string
+    details?: string
+    error?: string
+    cta?: React.ReactNode
+}) {
+    return (
+        <Container py={12}>
+            <VStack gap={6}>
+                <styled.h2 fontSize="2xl" color="white">
+                    {message}
+                </styled.h2>
+                {error && (
+                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
+                        {error}
+                    </styled.p>
+                )}
+                {details && (
+                    <styled.p fontSize="lg" color="lightgrey" textAlign="center">
+                        {details}
+                    </styled.p>
+                )}
+                {cta}
             </VStack>
         </Container>
     )

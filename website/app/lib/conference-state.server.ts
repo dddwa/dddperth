@@ -235,9 +235,17 @@ function getTalkVotingForBeforeConference(
     currentDate: DateTime<true>,
     talkVotingDates: DateTimeRange | undefined,
 ): TalkVotingOpen | TalkVotingClosed | TalkVotingNotOpenYet {
-    return talkVotingDates && currentDate < talkVotingDates.opens
-        ? { state: 'not-open-yet', opens: talkVotingDates.opens.toISO(), closes: talkVotingDates.closes.toISO() }
-        : talkVotingDates && currentDate < talkVotingDates.closes
-          ? { state: 'open', closes: talkVotingDates.closes.toISO() }
-          : { state: 'closed' }
+    if (!talkVotingDates) {
+        return { state: 'closed' }
+    }
+    
+    if (currentDate < talkVotingDates.opens) {
+        return { state: 'not-open-yet', opens: talkVotingDates.opens.toISO(), closes: talkVotingDates.closes.toISO() }
+    }
+    
+    if (currentDate < talkVotingDates.closes) {
+        return { state: 'open', closes: talkVotingDates.closes.toISO() }
+    }
+    
+    return { state: 'closed' }
 }

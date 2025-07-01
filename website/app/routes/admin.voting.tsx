@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
 import { useLoaderData } from 'react-router'
+import { AdminCard } from '~/components/admin-card'
+import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { requireAdmin } from '~/lib/auth.server'
 import { getVotesTableName } from '~/lib/voting.server'
@@ -38,12 +40,8 @@ export default function AdminVoting() {
     const { votingState, conferenceState, sessionCount } = useLoaderData<typeof loader>()
 
     return (
-        <Box p="8" maxW="7xl" mx="auto">
-            <styled.h1 fontSize="3xl" fontWeight="bold" mb="8">
-                Voting Administration
-            </styled.h1>
-
-            <Box bg="white" p="6" borderRadius="lg" boxShadow="sm" border="1px solid" borderColor="gray.200" mb="6">
+        <AdminLayout heading="Voting Administration">
+            <AdminCard mb="6">
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
                     Voting Status
                 </styled.h2>
@@ -114,9 +112,9 @@ export default function AdminVoting() {
                         </>
                     )}
                 </Flex>
-            </Box>
+            </AdminCard>
 
-            <Box bg="white" p="6" borderRadius="lg" boxShadow="sm" border="1px solid" borderColor="gray.200">
+            <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
                     Admin Actions
                 </styled.h2>
@@ -170,7 +168,7 @@ export default function AdminVoting() {
                         </Flex>
                     </Box>
                 )}
-            </Box>
-        </Box>
+            </AdminCard>
+        </AdminLayout>
     )
 }
