@@ -117,7 +117,7 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
         setError(null)
 
         try {
-            const response = await fetch('/api/voting/batch')
+            const response = await fetch('/api/voting/batch', { redirect: 'manual' })
 
             // Handle 302 redirects (session migration, session reset, etc.)
             if (response.status === 302) {
@@ -164,7 +164,7 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
         try {
             // Calculate the index of the next pair to fetch based on stable starting index + loaded pairs
             const nextIndex = startingIndexRef.current + pairs.length
-            const response = await fetch(`/api/voting/batch?from=${nextIndex}`)
+            const response = await fetch(`/api/voting/batch?from=${nextIndex}`, { redirect: 'manual' })
 
             // Handle 302 redirects (session migration, session reset, etc.)
             if (response.status === 302) {
@@ -203,6 +203,7 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
         formData.append('voteIndex', currentPair.index.toString())
 
         void fetch('/api/voting/vote', {
+            redirect: 'manual',
             method: 'POST',
             body: formData,
         }).catch((err) => {
