@@ -91,6 +91,11 @@ export async function ensureVotesTableExists(
     const createClientPromise = createTablePromise.then(() => createTableClient(tableName))
 
     tableClients.set(year, createClientPromise)
+    createClientPromise.catch((error) => {
+        recordException(error)
+        tableClients.delete(year) // Remove stale entry on rejection
+        throw error // Rethrow the error to propagate it
+    })
     return createClientPromise
 }
 
