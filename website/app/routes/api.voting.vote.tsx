@@ -1,12 +1,14 @@
 import { data } from 'react-router'
 import { votingStorage } from '~/lib/session.server'
 import { ensureVotesTableExists, recordVoteInTable } from '~/lib/voting.server'
+import type { VoteSuccessResponse, VoteErrorResponse } from '~/lib/voting-api-types'
 import type { Route } from './+types/api.voting.vote'
 
 export async function action({ request, context }: Route.ActionArgs) {
     try {
         if (context.conferenceState.talkVoting.state !== 'open') {
-            return data({ error: 'Voting is not open' }, { status: 403 })
+            const errorResponse: VoteErrorResponse = { error: 'Voting is not open' }
+            return data(errorResponse, { status: 403 })
         }
 
         const formData = await request.formData()
@@ -15,14 +17,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         const voteIndex = parseInt(voteIndexStr, 10)
 
         if (!vote || isNaN(voteIndex)) {
-            return data({ error: 'Invalid vote data' }, { status: 400 })
+            const errorResponse: VoteErrorResponse = { error: 'Invalid vote data' }
+            return data(errorResponse, { status: 400 })
         }
 
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         const sessionId = votingStorageSession.get('sessionId')
         
         if (!sessionId) {
-            return data({ error: 'No voting session' }, { status: 401 })
+            const errorResponse: VoteErrorResponse = { error: 'No voting session' }
+            return data(errorResponse, { status: 401 })
         }
 
         const tableClient = await ensureVotesTableExists(
@@ -33,15 +37,18 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         await recordVoteInTable(tableClient, sessionId, voteIndex, vote)
         
-        return data({ success: true, voteIndex })
+        const successResponse: VoteSuccessResponse = { success: true, voteIndex }
+        return data(successResponse)
     } catch (error: any) {
         console.error('Failed to record vote:', error)
         
         // Check if it's a duplicate vote (already voted on this index)
         if (error.statusCode === 409) {
-            return data({ error: 'Already voted on this pair', duplicate: true }, { status: 409 })
+            const errorResponse: VoteErrorResponse = { error: 'Already voted on this pair', duplicate: true }
+            return data(errorResponse, { status: 409 })
         }
         
-        return data({ error: 'Failed to record vote' }, { status: 500 })
+        const errorResponse: VoteErrorResponse = { error: 'Failed to record vote' }
+        return data(errorResponse, { status: 500 })
     }
 }

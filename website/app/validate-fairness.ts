@@ -1,5 +1,68 @@
 import { FairPairingGenerator } from './lib/pairing-generator'
 
+export function hasDuplicateTalks(pairs: Array<[number, number]>): boolean {
+    const seenTalks = new Set<number>()
+    
+    for (const [talk1, talk2] of pairs) {
+        if (seenTalks.has(talk1) || seenTalks.has(talk2)) {
+            return true
+        }
+        seenTalks.add(talk1)
+        seenTalks.add(talk2)
+    }
+    
+    return false
+}
+
+export function findDuplicateTalks(pairs: Array<[number, number]>): number[] {
+    const seenTalks = new Set<number>()
+    const duplicates = new Set<number>()
+    
+    for (const [talk1, talk2] of pairs) {
+        if (seenTalks.has(talk1)) {
+            duplicates.add(talk1)
+        }
+        if (seenTalks.has(talk2)) {
+            duplicates.add(talk2)
+        }
+        seenTalks.add(talk1)
+        seenTalks.add(talk2)
+    }
+    
+    return Array.from(duplicates)
+}
+
+// Keep the old functions for backward compatibility
+export function hasDuplicatePairs(pairs: Array<[number, number]>): boolean {
+    const seen = new Set<string>()
+    
+    for (const [talk1, talk2] of pairs) {
+        const pairKey = `${Math.min(talk1, talk2)}-${Math.max(talk1, talk2)}`
+        if (seen.has(pairKey)) {
+            return true
+        }
+        seen.add(pairKey)
+    }
+    
+    return false
+}
+
+export function findDuplicatePairs(pairs: Array<[number, number]>): string[] {
+    const seen = new Set<string>()
+    const duplicates: string[] = []
+    
+    for (const [talk1, talk2] of pairs) {
+        const pairKey = `${Math.min(talk1, talk2)}-${Math.max(talk1, talk2)}`
+        if (seen.has(pairKey)) {
+            duplicates.push(pairKey)
+        } else {
+            seen.add(pairKey)
+        }
+    }
+    
+    return duplicates
+}
+
 interface FairnessReport {
     talksCount: number
     sessionsCount: number
@@ -15,18 +78,30 @@ interface FairnessReport {
         uniquePairsShown: number
         pairCoveragePercent: number
     }
+    duplicateAnalysis: {
+        hasDuplicates: boolean
+        duplicateCount: number
+        duplicateTalks: string[]
+        duplicatesBySession: Map<number, string[]>
+    }
 }
 
 export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPerSession = 50): FairnessReport {
     const talkAppearances = new Array(talksCount).fill(0)
     const pairsSeen = new Map<string, number>() // "talk1-talk2" -> count
-    const totalPossiblePairs = (talksCount * (talksCount - 1)) / 2
+    const totalPossiblePairs = (talksCount * (talksCount - 1)) / 2 // All possible unique pairs
+    const maxPairsPerSession = Math.floor(talksCount / 2)
+    const actualPairsPerSession = Math.min(pairsPerSession, maxPairsPerSession)
+    
+    // Track talk usage within sessions (should never have duplicates with new algorithm)
+    const duplicatesBySession = new Map<number, string[]>()
+    let totalDuplicateCount = 0
 
     console.log(`\nValidating fairness for:`)
     console.log(`- ${talksCount} talks`)
     console.log(`- ${sessionsCount} sessions`)
-    console.log(`- ${pairsPerSession} pairs per session`)
-    console.log(`- ${totalPossiblePairs} total possible pairs`)
+    console.log(`- ${actualPairsPerSession} pairs per session (max: ${maxPairsPerSession})`)
+    console.log(`- Each talk appears at most once per session`)
     console.log(`\nSimulating...\n`)
 
     // Simulate multiple sessions
@@ -35,20 +110,36 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
         const seed = Math.floor(Math.random() * 2147483647)
         const generator = new FairPairingGenerator(talksCount, seed)
 
-        // Get pairs for this session
-        for (let i = 0; i < pairsPerSession && i < totalPossiblePairs; i++) {
-            const pair = generator.getPairAtPosition(i)
-            if (!pair) continue
+        // Track talks within this session to verify no duplicates within batches
+        const sessionTalks = new Set<number>()
+        const sessionDuplicates: string[] = []
 
-            const [talk1, talk2] = pair
+        // Get pairs for this session
+        const pairs = generator.getNextPairs(0, actualPairsPerSession)
+        
+        for (const [talk1, talk2] of pairs) {
+            // Check for duplicate talks within this batch (should never happen)
+            if (sessionTalks.has(talk1) || sessionTalks.has(talk2)) {
+                const dupTalk = sessionTalks.has(talk1) ? talk1 : talk2
+                sessionDuplicates.push(`talk-${dupTalk}`)
+                totalDuplicateCount++
+            }
+            
+            sessionTalks.add(talk1)
+            sessionTalks.add(talk2)
 
             // Track appearances
             talkAppearances[talk1]++
             talkAppearances[talk2]++
 
-            // Track unique pairs
+            // Track unique pairs across all sessions
             const pairKey = `${Math.min(talk1, talk2)}-${Math.max(talk1, talk2)}`
             pairsSeen.set(pairKey, (pairsSeen.get(pairKey) || 0) + 1)
+        }
+
+        // Record session duplicates if any (should be none)
+        if (sessionDuplicates.length > 0) {
+            duplicatesBySession.set(session, sessionDuplicates)
         }
 
         if ((session + 1) % 100 === 0) {
@@ -60,6 +151,14 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
     const avgAppearances = talkAppearances.reduce((a, b) => a + b) / talksCount
     const variance = talkAppearances.reduce((sum, count) => sum + Math.pow(count - avgAppearances, 2), 0) / talksCount
     const stdDeviation = Math.sqrt(variance)
+
+    // Gather all duplicate pairs
+    const allDuplicatePairs = new Set<string>()
+    for (const duplicates of duplicatesBySession.values()) {
+        for (const pair of duplicates) {
+            allDuplicatePairs.add(pair)
+        }
+    }
 
     const report: FairnessReport = {
         talksCount,
@@ -75,6 +174,12 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
             coefficientOfVariation: (stdDeviation / avgAppearances) * 100,
             uniquePairsShown: pairsSeen.size,
             pairCoveragePercent: (pairsSeen.size / totalPossiblePairs) * 100,
+        },
+        duplicateAnalysis: {
+            hasDuplicates: totalDuplicateCount > 0,
+            duplicateCount: totalDuplicateCount,
+            duplicateTalks: Array.from(allDuplicatePairs),
+            duplicatesBySession,
         },
     }
 
@@ -137,6 +242,24 @@ export function printFairnessReport(report: FairnessReport): void {
     pairCounts.slice(0, 5).forEach(([pair, count]) => {
         console.log(`  ${pair}: ${count} times`)
     })
+
+    // Duplicate analysis
+    console.log(`\nTalk Repetition Analysis:`)
+    if (report.duplicateAnalysis.hasDuplicates) {
+        console.log(`- ⚠️  TALK REPETITION DETECTED: ${report.duplicateAnalysis.duplicateCount} duplicate talks found`)
+        console.log(`- Sessions with duplicates: ${report.duplicateAnalysis.duplicatesBySession.size}`)
+        console.log(`- This should never happen with the new algorithm!`)
+        
+        if (report.duplicateAnalysis.duplicatesBySession.size > 0) {
+            console.log(`\nFirst 5 sessions with duplicates:`)
+            const sessionEntries = Array.from(report.duplicateAnalysis.duplicatesBySession.entries()).slice(0, 5)
+            sessionEntries.forEach(([sessionId, duplicates]) => {
+                console.log(`  Session ${sessionId}: ${duplicates.join(', ')}`)
+            })
+        }
+    } else {
+        console.log(`- ✅ No talk repetition - each talk appears at most once per session`)
+    }
 
     console.log(`\n${'='.repeat(60)}\n`)
 }

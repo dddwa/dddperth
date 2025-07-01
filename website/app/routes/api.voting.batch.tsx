@@ -1,4 +1,4 @@
-import { data } from 'react-router'
+import { data, isRouteErrorResponse } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { votingStorage } from '~/lib/session.server'
 import {
@@ -7,6 +7,7 @@ import {
     getSessionsForVoting,
     getVotingSession,
 } from '~/lib/voting.server'
+import type { VotingBatchResponse, VotingErrorResponse } from '~/lib/voting-api-types'
 import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -14,20 +15,24 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const yearConfig = getYearConfig(context.conferenceState.conference.year)
 
         if (yearConfig.kind === 'cancelled') {
-            return data({ error: 'Conference cancelled this year' }, { status: 404 })
+            const errorResponse: VotingErrorResponse = { error: 'Conference cancelled this year' }
+            return data(errorResponse, { status: 404 })
         }
 
         if (context.conferenceState.talkVoting.state === 'not-open-yet') {
-            return data({ error: 'Voting not open yet', state: 'not-open-yet' }, { status: 403 })
+            const errorResponse: VotingErrorResponse = { error: 'Voting not open yet', state: 'not-open-yet' }
+            return data(errorResponse, { status: 403 })
         }
 
         if (context.conferenceState.talkVoting.state === 'closed') {
-            return data({ error: 'Voting has closed', state: 'closed' }, { status: 403 })
+            const errorResponse: VotingErrorResponse = { error: 'Voting has closed', state: 'closed' }
+            return data(errorResponse, { status: 403 })
         }
 
         // Check if Sessionize endpoint is configured
         if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
-            return data({ error: 'Sessionize endpoint not configured' }, { status: 500 })
+            const errorResponse: VotingErrorResponse = { error: 'Sessionize endpoint not configured' }
+            return data(errorResponse, { status: 500 })
         }
 
         // Get session ID from cookie
@@ -35,7 +40,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const sessionId = votingStorageSession.get('sessionId')
 
         if (!sessionId) {
-            return data({ error: 'No voting session', needsSession: true }, { status: 401 })
+            const errorResponse: VotingErrorResponse = { error: 'No voting session', needsSession: true }
+            return data(errorResponse, { status: 401 })
         }
 
         const sessions = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
@@ -54,13 +60,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
         const batch = await getCurrentVotingBatch(request, sessions, userSession, batchSize, fromIndex)
 
-        return data({
+        const successResponse: VotingBatchResponse = {
             batch,
             sessionId,
             votingState: context.conferenceState.talkVoting.state,
-        })
+        }
+        return data(successResponse)
     } catch (error) {
+        // If this is a Response object (from redirect()), let it pass through
+        if (error instanceof Response) {
+            throw error
+        }
+        
+        // If this is a route error response (from redirect), let it pass through
+        if (isRouteErrorResponse(error) && error.status >= 300 && error.status < 400) {
+            throw error
+        }
+        
         console.error('Error fetching voting batch:', error)
-        return data({ error: 'Failed to fetch voting batch' }, { status: 500 })
+        const errorResponse: VotingErrorResponse = { error: 'Failed to fetch voting batch' }
+        return data(errorResponse, { status: 500 })
     }
 }
