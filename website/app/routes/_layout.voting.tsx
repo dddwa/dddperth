@@ -74,6 +74,7 @@ export default function VotingPage() {
     const [error, setError] = useState<string | null>(null)
     const fetchingRef = useRef(false)
     const nextBatchFetchedRef = useRef(false)
+    const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
 
     // Fetch initial batch on mount
     useEffect(() => {
@@ -127,13 +128,16 @@ export default function VotingPage() {
         fetchingRef.current = true
 
         try {
-            const nextIndex = overallIndex + pairs.length
-            const response = await fetch(`/api/voting/batch?from=${nextIndex}`)
+            const response = await fetch(`/api/voting/batch?from=${overallIndex}`)
             const result: VotingBatch | { error: string } = await response.json()
 
             if (response.ok && 'batch' in result) {
-                // Append new pairs to existing ones
-                setPairs((prev) => [...prev, ...result.batch.pairs])
+                // Deduplicate pairs based on index
+                setPairs((prev) => {
+                    const existingIndices = new Set(prev.map((p) => p.index))
+                    const newPairs = result.batch.pairs.filter((pair) => !existingIndices.has(pair.index))
+                    return [...prev, ...newPairs]
+                })
             }
         } catch (err) {
             console.error('Failed to fetch next batch:', err)
@@ -145,6 +149,9 @@ export default function VotingPage() {
     async function handleVote(vote: 'A' | 'B' | 'skip') {
         const currentPair = pairs[currentPairIndex]
         if (!currentPair) return
+
+        // Show vote feedback and start transition
+        setVoteSubmitted(vote)
 
         // Fire and forget vote submission
         const formData = new FormData()
@@ -158,9 +165,12 @@ export default function VotingPage() {
             console.error('Failed to submit vote:', err)
         })
 
-        // Move to next pair
-        setCurrentPairIndex((prev) => prev + 1)
-        setOverallIndex((prev) => prev + 1)
+        // Wait for animation, then move to next pair
+        setTimeout(() => {
+            setCurrentPairIndex((prev) => prev + 1)
+            setOverallIndex((prev) => prev + 1)
+            setVoteSubmitted(null)
+        }, 300)
     }
 
     if (data.talkVoting.state === 'not-open-yet') {
@@ -260,16 +270,37 @@ export default function VotingPage() {
                     <styled.h2 fontSize="2xl" color="white">
                         Which talk would you prefer to see?
                     </styled.h2>
+                    <styled.p fontSize="sm" color="fg.muted">
+                        Pair {overallIndex + 1} of many
+                    </styled.p>
                 </VStack>
 
-                <Flex gap={6} direction={{ base: 'column', lg: 'row' }} w="full">
+                <HStack justify="center" gap={4}>
+                    <Button size="lg" colorPalette="green" onClick={() => void handleVote('A')}>
+                        OPTION 1
+                    </Button>
+                    <Button size="lg" colorPalette="blue" variant="solid" onClick={() => void handleVote('skip')}>
+                        SKIP
+                    </Button>
+                    <Button size="lg" colorPalette="pink" onClick={() => void handleVote('B')}>
+                        OPTION 2
+                    </Button>
+                </HStack>
+
+                <Flex
+                    gap={6}
+                    direction={{ base: 'column', lg: 'row' }}
+                    w="full"
+                    position="relative"
+                    transition="opacity 0.3s ease-out"
+                >
                     {/* Left Session Card */}
                     <TalkOptionCard
                         title={currentPair.left.title}
                         description={currentPair.left.description}
                         tags={currentPair.left.tags}
                         onClick={() => void handleVote('A')}
-                        highlight={false}
+                        highlight={voteSubmitted === 'A'}
                     />
 
                     {/* VS Divider */}
@@ -290,18 +321,43 @@ export default function VotingPage() {
                         description={currentPair.right.description}
                         tags={currentPair.right.tags}
                         onClick={() => void handleVote('B')}
-                        highlight={false}
+                        highlight={voteSubmitted === 'B'}
                     />
                 </Flex>
 
                 <HStack justify="center" gap={4}>
-                    <Button size="lg" colorPalette="green" onClick={() => void handleVote('A')}>
+                    <Button
+                        size="lg"
+                        colorPalette="green"
+                        onClick={(e) => {
+                            e.currentTarget.blur()
+                            window.scrollTo(0, 100)
+                            void handleVote('A')
+                        }}
+                    >
                         OPTION 1
                     </Button>
-                    <Button size="lg" colorPalette="blue" variant="solid" onClick={() => void handleVote('skip')}>
+                    <Button
+                        size="lg"
+                        colorPalette="blue"
+                        variant="solid"
+                        onClick={(e) => {
+                            e.currentTarget.blur()
+                            window.scrollTo(0, 100)
+                            void handleVote('skip')
+                        }}
+                    >
                         SKIP
                     </Button>
-                    <Button size="lg" colorPalette="pink" onClick={() => void handleVote('B')}>
+                    <Button
+                        size="lg"
+                        colorPalette="pink"
+                        onClick={(e) => {
+                            e.currentTarget.blur()
+                            window.scrollTo(0, 100)
+                            void handleVote('B')
+                        }}
+                    >
                         OPTION 2
                     </Button>
                 </HStack>

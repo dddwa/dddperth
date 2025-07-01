@@ -16,15 +16,15 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
             className={css({
                 borderRadius: 'xl',
                 border: '2px solid',
-                borderColor: highlight ? 'blue.400' : 'gray.300',
-                bg: 'white',
+                borderColor: 'gray.30',
+                bg: highlight ? 'lightgray' : 'white',
                 p: 7,
                 cursor: onClick ? 'pointer' : 'default',
                 transition: 'all 0.2s',
                 boxShadow: highlight ? '2xl' : 'md',
                 _hover: onClick
                     ? {
-                          borderColor: highlight ? 'blue.500' : 'gray.400',
+                          borderColor: 'gray.40',
                           transform: 'translateY(-3px) scale(1.02)',
                           boxShadow: 'xl',
                       }
@@ -33,13 +33,13 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
             onClick={onClick}
         >
             <VStack gap={4}>
-                <styled.h3 fontSize="xl" color="gray.900" fontWeight="bold" textAlign="center">
+                <styled.h3 fontSize="xl" color="gray.90" fontWeight="bold" textAlign="center">
                     {title}
                 </styled.h3>
 
                 {description && (
                     <Box
-                        color="gray.700"
+                        color="gray.70"
                         fontSize="md"
                         lineHeight="relaxed"
                         fontWeight="medium"
@@ -61,11 +61,11 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                             className={css({
                                 px: 3,
                                 py: 1,
-                                bg: 'gray.100',
-                                color: 'gray.800',
+                                bg: 'blue.10',
+                                color: 'blue.80',
                                 borderRadius: 'full',
                                 border: '1px solid',
-                                borderColor: 'gray.300',
+                                borderColor: 'blue.30',
                                 fontSize: 'sm',
                                 fontWeight: 'semibold',
                                 boxShadow: 'sm',

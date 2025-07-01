@@ -99,7 +99,12 @@ export default function Index() {
                     timezone={adminData.timezone}
                 />
             )}
-            <Header />
+            <Header
+                cfpOpen={conferenceState.callForPapers.state === 'open'}
+                votingOpen={conferenceState.talkVoting.state === 'open'}
+                ticketSalesOpen={conferenceState.ticketSales.state === 'open'}
+            />
+
             {venue && (
                 <script
                     type="application/ld+json"
@@ -146,7 +151,8 @@ export default function Index() {
 export function ErrorBoundary() {
     return (
         <div>
-            <Header />
+            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} />
+
             <Flex
                 position="relative"
                 bgGradient="to-b"
