@@ -16,20 +16,20 @@ export function hasDuplicateTalks(pairs: Array<[number, number]>): boolean {
 
 export function findDuplicateTalks(pairs: Array<[number, number]>): number[] {
     const seenTalks = new Set<number>()
-    const duplicates: number[] = []
+    const duplicates = new Set<number>()
     
     for (const [talk1, talk2] of pairs) {
         if (seenTalks.has(talk1)) {
-            duplicates.push(talk1)
+            duplicates.add(talk1)
         }
         if (seenTalks.has(talk2)) {
-            duplicates.push(talk2)
+            duplicates.add(talk2)
         }
         seenTalks.add(talk1)
         seenTalks.add(talk2)
     }
     
-    return duplicates
+    return Array.from(duplicates)
 }
 
 // Keep the old functions for backward compatibility

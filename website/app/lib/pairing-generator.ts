@@ -1,15 +1,16 @@
 export class FairPairingGenerator {
     private totalTalks: number
     private seed: number
-    private allPairs: Array<[number, number]>
-    private shuffledPairIndices: number[]
+    private totalPairsCount: number
+    private random: () => number
+    private shuffledPairIndices: number[] | null = null
     private currentPosition = 0
 
     constructor(totalTalks: number, seed: number) {
         this.totalTalks = totalTalks
         this.seed = seed
-        this.allPairs = this.generateAllPairs()
-        this.shuffledPairIndices = this.generateShuffledIndices()
+        this.totalPairsCount = (totalTalks * (totalTalks - 1)) / 2
+        this.random = this.seededRandom(seed)
     }
 
     // Seeded random number generator (Linear Congruential Generator)
@@ -21,29 +22,37 @@ export class FairPairingGenerator {
         }
     }
 
-    // Generate all possible pairs
-    private generateAllPairs(): Array<[number, number]> {
-        const pairs: Array<[number, number]> = []
-        for (let i = 0; i < this.totalTalks; i++) {
-            for (let j = i + 1; j < this.totalTalks; j++) {
-                pairs.push([i, j])
-            }
+    // Convert pair index to actual pair coordinates
+    private indexToPair(index: number): [number, number] {
+        // Convert linear index to (i, j) pair coordinates
+        // For pairs (0,1), (0,2), ..., (0,n-1), (1,2), (1,3), ..., (n-2,n-1)
+        let i = 0
+        let remaining = index
+        
+        while (remaining >= this.totalTalks - i - 1) {
+            remaining -= this.totalTalks - i - 1
+            i++
         }
-        return pairs
+        
+        const j = i + remaining + 1
+        return [i, j]
     }
 
-    // Fisher-Yates shuffle of pair indices
-    private generateShuffledIndices(): number[] {
-        const indices = Array.from({ length: this.allPairs.length }, (_, i) => i)
-        const random = this.seededRandom(this.seed)
-
-        // Fisher-Yates shuffle
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = Math.floor(random() * (i + 1))
-            ;[indices[i], indices[j]] = [indices[j], indices[i]]
+    // Lazy generation of shuffled indices (only when needed)
+    private getShuffledIndices(): number[] {
+        if (this.shuffledPairIndices === null) {
+            const indices = Array.from({ length: this.totalPairsCount }, (_, i) => i)
+            
+            // Fisher-Yates shuffle
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(this.random() * (i + 1))
+                ;[indices[i], indices[j]] = [indices[j], indices[i]]
+            }
+            
+            this.shuffledPairIndices = indices
         }
-
-        return indices
+        
+        return this.shuffledPairIndices
     }
 
     // Get next batch of pairs ensuring no talk appears twice in the batch
@@ -52,9 +61,11 @@ export class FairPairingGenerator {
         const usedTalks = new Set<number>()
         let position = startPosition
 
-        while (pairs.length < requestedCount && position < this.shuffledPairIndices.length) {
-            const pairIndex = this.shuffledPairIndices[position]
-            const [talk1, talk2] = this.allPairs[pairIndex]
+        const shuffledIndices = this.getShuffledIndices()
+
+        while (pairs.length < requestedCount && position < shuffledIndices.length) {
+            const pairIndex = shuffledIndices[position]
+            const [talk1, talk2] = this.indexToPair(pairIndex)
 
             // Only add this pair if neither talk has been used in this batch
             if (!usedTalks.has(talk1) && !usedTalks.has(talk2)) {
@@ -74,12 +85,12 @@ export class FairPairingGenerator {
 
     // Get total number of possible pairs
     getTotalPairs(): number {
-        return this.allPairs.length
+        return this.totalPairsCount
     }
 
     // Check if we've exhausted all pairs
     isComplete(): boolean {
-        return this.currentPosition >= this.allPairs.length
+        return this.currentPosition >= this.totalPairsCount
     }
 
     // Get current position in the shuffle
