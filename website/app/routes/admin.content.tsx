@@ -1,6 +1,8 @@
 import { AppLink } from '~/components/app-link'
 import { requireAdmin } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { AdminLayout } from '~/components/admin-layout'
+import { AdminCard } from '~/components/admin-card'
 import type { Route } from './+types/admin.content'
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -9,20 +11,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function AdminContent() {
     return (
-        <Box p="8" maxW="7xl" mx="auto">
-            <styled.h1 fontSize="3xl" fontWeight="bold" mb="8" color="white">
-                Content Management
-            </styled.h1>
+        <AdminLayout heading="Content Management">
+            <AdminCard textAlign="center" p="12">
 
-            <Box
-                bg="white"
-                p="12"
-                borderRadius="lg"
-                boxShadow="sm"
-                border="1px solid"
-                borderColor="gray.200"
-                textAlign="center"
-            >
                 <styled.div fontSize="6xl" mb="6">
                     🚧
                 </styled.div>
@@ -48,7 +39,7 @@ export default function AdminContent() {
                         ← Back to Dashboard
                     </AppLink>
                 </Flex>
-            </Box>
-        </Box>
+            </AdminCard>
+        </AdminLayout>
     )
 }

@@ -18,7 +18,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 
     return data(
         {
-            currentDate: context.dateTimeProvider.nowDate().toISODate(),
+            currentDate: context.dateTimeProvider.nowDate().toISO(),
             conferenceDate: context.conferenceState.conference.date,
             importantDates,
         },

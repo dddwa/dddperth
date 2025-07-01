@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData } from 'react-router'
+import { AdminCard } from '~/components/admin-card'
+import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/button'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { requireAdmin } from '~/lib/auth.server'
@@ -87,12 +89,8 @@ export default function AdminSettings() {
     const currentDateTime = DateTime.fromISO(currentDate)
 
     return (
-        <Box p="8" maxW="7xl" mx="auto">
-            <styled.h1 fontSize="3xl" fontWeight="bold" mb="8" color="white">
-                Admin Settings
-            </styled.h1>
-
-            <Box bg="white" p="6" borderRadius="lg" boxShadow="sm" border="1px solid" borderColor="gray.200">
+        <AdminLayout heading="Admin Settings">
+            <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                     Date Override
                 </styled.h2>
@@ -198,47 +196,38 @@ export default function AdminSettings() {
                             />
                         </Box>
 
-                        <styled.button
-                            name="_action"
-                            value="setDate"
-                            type="submit"
-                            bg="accent.7"
-                            color="white"
-                            py="2"
-                            px="4"
-                            borderRadius="md"
-                            fontSize="sm"
-                            fontWeight="medium"
-                            cursor="pointer"
-                            _hover={{ bg: 'accent.8' }}
-                        >
+                        <Button name="_action" value="setDate" type="submit">
                             Set Override
-                        </styled.button>
+                        </Button>
                     </Flex>
                 </Form>
 
                 {overrideDateTime && (
-                    <Form method="post">
-                        <styled.button
-                            name="_action"
-                            value="clearDate"
-                            type="submit"
-                            bg="red.600"
-                            color="white"
-                            py="2"
-                            px="4"
-                            borderRadius="md"
-                            fontSize="sm"
-                            fontWeight="medium"
-                            cursor="pointer"
-                            _hover={{ bg: 'red.700' }}
-                        >
-                            Clear Override
-                        </styled.button>
-                    </Form>
+                    <Flex mt="4" align="center">
+                        <Form method="post">
+                            <styled.button
+                                name="_action"
+                                value="clearDate"
+                                type="submit"
+                                bg="red"
+                                color="white"
+                                py="2"
+                                px="6"
+                                borderRadius="md"
+                                fontSize="sm"
+                                fontWeight="bold"
+                                cursor="pointer"
+                                boxShadow="sm"
+                                _hover={{ bg: 'red.10' }}
+                                title="Clear the current date/time override"
+                            >
+                                Clear Override
+                            </styled.button>
+                        </Form>
+                    </Flex>
                 )}
 
-                <Box mt="6" p="4" bg="gray.50" borderRadius="md" fontSize="sm" color="gray.600">
+                <Box mt="6" p="4" bg="gray.2" borderRadius="md" fontSize="sm">
                     <styled.p fontWeight="medium" mb="2">
                         Note:
                     </styled.p>
@@ -249,19 +238,17 @@ export default function AdminSettings() {
                         <li>The override persists across page refreshes until cleared</li>
                     </styled.ul>
                 </Box>
-            </Box>
+            </AdminCard>
 
             {/* Quick Jump to Important Dates */}
             {importantDates.length > 0 && (
-                <Box bg="white" p="6" borderRadius="lg" boxShadow="sm" border="1px solid" borderColor="gray.200" mt="6">
+                <AdminCard>
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                         Quick Jump to Important Dates ({year})
                     </styled.h2>
-
                     <styled.p fontSize="sm" color="gray.600" mb="4">
                         Click any button below to instantly jump to that date/time for testing purposes:
                     </styled.p>
-
                     <VStack gap="3" alignItems="stretch">
                         {importantDates.map((dateInfo, index) => (
                             <QuickJumpButton
@@ -272,9 +259,9 @@ export default function AdminSettings() {
                             />
                         ))}
                     </VStack>
-                </Box>
+                </AdminCard>
             )}
-        </Box>
+        </AdminLayout>
     )
 }
 
