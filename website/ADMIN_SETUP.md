@@ -39,11 +39,6 @@ export const ADMIN_HANDLES = [
 - Verify the callback URL in your GitHub OAuth app matches your `WEB_URL`
 - Check that `WEBSITE_GITHUB_APP_CLIENT_ID` and `WEBSITE_GITHUB_APP_CLIENT_SECRET` are correctly set
 
-### Session issues
-
-- Ensure `SESSION_SECRET` is set and consistent across deployments
-- Check that cookies are enabled in your browser
-
 ### Build errors
 
 - Run `pnpm install` to ensure all dependencies are installed

@@ -102,7 +102,7 @@ resource storageAccountContributorRole 'Microsoft.Authorization/roleAssignments@
 }
 
 @secure()
-param sessionSecret string = uniqueString(newGuid())
+param sessionSecret string
 
 module fetchLatestImage '../modules/fetch-container-image.bicep' = {
   name: '${name}-fetch-image'

@@ -106,7 +106,6 @@ This starts a web server at `http://localhost:3333` with a user-friendly interfa
 - `GITHUB_ORGANIZATION` - Set to your username for local fork development
 - `USE_GITHUB_CONTENT` - Set to `true` to load content from GitHub (defaults to `false`)
 - `WEB_URL` - Your website URL
-- `SESSION_SECRET` - Generated session secret
 
 #### Production (GitHub Secrets)
 
