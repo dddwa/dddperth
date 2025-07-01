@@ -66,6 +66,8 @@ export interface VotingSession {
     createdAt: string
 }
 
+const tableClients = new Map<string, Promise<TableClient>>()
+
 // Helper function to ensure year-specific votes table exists
 export async function ensureVotesTableExists(
     tableServiceClient: TableServiceClient,
@@ -73,8 +75,12 @@ export async function ensureVotesTableExists(
     year: string,
 ) {
     const tableName = getVotesTableName(year)
+    const tableClient = tableClients.get(year)
+    if (tableClient) {
+        return tableClient
+    }
 
-    await tableServiceClient.createTable(tableName, {
+    const createTablePromise = tableServiceClient.createTable(tableName, {
         onResponse: (response) => {
             if (response.status === 409) {
                 console.log(`Table ${tableName} already exists`)
@@ -82,7 +88,15 @@ export async function ensureVotesTableExists(
         },
     })
 
-    return createTableClient(tableName)
+    const createClientPromise = createTablePromise.then(() => createTableClient(tableName))
+
+    tableClients.set(year, createClientPromise)
+    createClientPromise.catch((error) => {
+        recordException(error)
+        tableClients.delete(year) // Remove stale entry on rejection
+        throw error // Rethrow the error to propagate it
+    })
+    return createClientPromise
 }
 
 // Function to get next session number and increment counter
