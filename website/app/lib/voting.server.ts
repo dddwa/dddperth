@@ -361,7 +361,7 @@ export async function getCurrentVotingBatch(
 
     return {
         pairs,
-        currentIndex: votingSession.currentIndex,
+        currentIndex: nextPosition,
         hasMore,
     }
 }

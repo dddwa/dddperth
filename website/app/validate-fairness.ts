@@ -81,7 +81,7 @@ interface FairnessReport {
     duplicateAnalysis: {
         hasDuplicates: boolean
         duplicateCount: number
-        duplicatePairs: string[]
+        duplicateTalks: string[]
         duplicatesBySession: Map<number, string[]>
     }
 }
@@ -178,7 +178,7 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
         duplicateAnalysis: {
             hasDuplicates: totalDuplicateCount > 0,
             duplicateCount: totalDuplicateCount,
-            duplicatePairs: Array.from(allDuplicatePairs),
+            duplicateTalks: Array.from(allDuplicatePairs),
             duplicatesBySession,
         },
     }
