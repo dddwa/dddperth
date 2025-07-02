@@ -1,15 +1,22 @@
 import { DateTime } from 'luxon'
-import { Suspense, useEffect, useRef, useState } from 'react'
-import { Await, useLoaderData } from 'react-router'
+import { Suspense, useEffect, useState } from 'react'
+import { Await, redirect, useLoaderData } from 'react-router'
+import { $path } from 'safe-routes'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import type { VotingApiResponse } from '~/lib/voting-api-types'
+import { votingStorage } from '~/lib/session.server'
+import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import type { TalkPair } from '~/lib/voting.server'
 import { ensureVotesTableExists, getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
+
+// Constants
+const FETCH_TIMEOUT = 10000 // 10 seconds
+const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
+const CLIENT_VERSION = 'v3'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
@@ -26,7 +33,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             talkVoting: context.conferenceState.talkVoting,
             votingSession: {
                 sessionId: null,
-                startingIndex: 0,
+                votingProgress: 0,
+                currentRound: 0,
+                currentIndex: 0,
             },
             hasSession: false,
         }
@@ -38,30 +47,49 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             talkVoting: context.conferenceState.talkVoting,
             votingSession: {
                 sessionId: null,
-                startingIndex: 0,
+                votingProgress: 0,
+                currentRound: 0,
+                currentIndex: 0,
             },
             hasSession: false,
             error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
         }
     }
 
-    const sessions = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
     const tableClient = await ensureVotesTableExists(
         context.tableServiceClient,
         context.getTableClient,
         context.conferenceState.conference.year,
     )
 
+    const allSessionsEndpoint = yearConfig.sessions.allSessionsEndpoint
     // This will create a session and redirect
-    const votingSession = getVotingSession(request, tableClient, sessions)
+    const votingSession = await getVotingSession(request, tableClient, () => getSessionsForVoting(allSessionsEndpoint))
+
+    // Check if this is a V3 session, if not clear and redirect
+    if (votingSession.version !== 3) {
+        console.warn('Session uses old algorithm, resetting to V3 due to algorithm change')
+        const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+        votingStorageSession.set('sessionId', undefined)
+
+        throw redirect($path('/voting'), {
+            headers: {
+                'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
+            },
+        })
+    }
+
+    // Calculate actual voting progress based on session state
+    const votingProgress = votingSession.roundNumber * votingSession.maxPairsPerRound + votingSession.currentIndex
 
     return {
         talkVoting: context.conferenceState.talkVoting,
-        votingSession: await votingSession.then((session) => ({
-            sessionId: session.sessionId,
-            startingIndex: session.currentIndex,
-        })),
-        hasSession: true,
+        votingSession: {
+            sessionId: votingSession.sessionId,
+            currentRound: votingSession.roundNumber,
+            currentIndex: votingSession.currentIndex,
+            votingProgress,
+        },
     }
 }
 
@@ -74,7 +102,9 @@ export default function VotingPage() {
                 {(votingSession) => (
                     <VotingPageWithSession
                         sessionId={votingSession.sessionId}
-                        startingIndex={votingSession.startingIndex}
+                        currentRound={votingSession.currentRound}
+                        currentIndex={votingSession.currentIndex}
+                        votingProgress={votingSession.votingProgress}
                     />
                 )}
             </Await>
@@ -82,142 +112,70 @@ export default function VotingPage() {
     )
 }
 
-function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string | null; startingIndex: number }) {
+function VotingPageWithSession({
+    sessionId,
+    currentRound,
+    currentIndex,
+    votingProgress,
+}: {
+    sessionId: string | null
+    currentRound: number
+    currentIndex: number
+    votingProgress: number
+}) {
     const data = useLoaderData<typeof loader>()
-    const [currentPairIndex, setCurrentPairIndex] = useState(0)
-    const [overallIndex, setOverallIndex] = useState(startingIndex)
-    const [pairs, setPairs] = useState<TalkPair[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const fetchingRef = useRef(false)
-    const nextBatchFetchedRef = useRef(false)
-    const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
-    const startingIndexRef = useRef(startingIndex)
 
-    // Fetch initial batch on mount
+    const [pairs, setPairs] = useState<TalkPair[]>([])
+    const [localIndex, setLocalIndex] = useState(0) // Index within pairs array
+    const [error, setError] = useState<string | null>(null)
+    const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
+    const [isFetching, setIsFetching] = useState(false)
+
+    // Load initial batch
     useEffect(() => {
         if (sessionId && data.talkVoting.state === 'open') {
-            void fetchBatch()
+            void loadInitialBatch(currentRound, currentIndex, isFetching, setIsFetching, setError, setPairs)
         }
-    }, [sessionId])
+    }, [sessionId, data.talkVoting.state, isFetching, currentRound, currentIndex])
 
-    // Check if we need to fetch next batch
+    // Prefetch next batch when needed
     useEffect(() => {
-        const remainingInBatch = pairs.length - currentPairIndex
-        if (remainingInBatch <= 10 && remainingInBatch >= 0 && !nextBatchFetchedRef.current && !fetchingRef.current) {
-            nextBatchFetchedRef.current = true
-            void fetchNextBatch()
+        // Don't prefetch if we haven't loaded any pairs yet
+        if (pairs.length === 0) return
+
+        const remainingPairs = pairs.length - localIndex
+        if (remainingPairs <= PREFETCH_THRESHOLD) {
+            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs)
         }
-    }, [currentPairIndex, pairs.length])
-
-    async function fetchBatch() {
-        if (fetchingRef.current) return
-        fetchingRef.current = true
-        setIsLoading(true)
-        setError(null)
-
-        try {
-            const response = await fetch('/api/voting/batch', { redirect: 'manual' })
-
-            // Handle 302 redirects (session migration, session reset, etc.)
-            if (response.status === 302) {
-                // The server wants us to redirect - trigger a full page refresh
-                window.location.href = '/voting'
-                return
-            }
-
-            const result: VotingApiResponse = await response.json()
-
-            if (!response.ok) {
-                if (isVotingErrorResponse(result)) {
-                    if (result.needsSession) {
-                        // Redirect to create session
-                        window.location.href = '/voting'
-                        return
-                    }
-                    throw new Error(result.error)
-                }
-                throw new Error('Failed to fetch voting batch')
-            }
-
-            // Use type guard to ensure we have the correct response type
-            if (!isVotingBatchResponse(result)) {
-                console.error('Invalid voting batch response:', result)
-                throw new Error('Invalid voting batch response structure')
-            }
-
-            setPairs(result.batch.pairs)
-            setCurrentPairIndex(0)
-            nextBatchFetchedRef.current = false
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load voting data')
-        } finally {
-            setIsLoading(false)
-            fetchingRef.current = false
-        }
-    }
-
-    async function fetchNextBatch() {
-        if (fetchingRef.current) return
-        fetchingRef.current = true
-
-        try {
-            // Calculate the index of the next pair to fetch based on stable starting index + loaded pairs
-            const nextIndex = startingIndexRef.current + pairs.length
-            const response = await fetch(`/api/voting/batch?from=${nextIndex}`, { redirect: 'manual' })
-
-            // Handle 302 redirects (session migration, session reset, etc.)
-            if (response.status === 302) {
-                // The server wants us to redirect - trigger a full page refresh
-                window.location.href = '/voting'
-                return
-            }
-
-            const result: VotingApiResponse = await response.json()
-
-            if (response.ok && isVotingBatchResponse(result)) {
-                // Deduplicate pairs based on index
-                setPairs((prev) => {
-                    const existingIndices = new Set(prev.map((p) => p.index))
-                    const newPairs = result.batch.pairs.filter((pair) => !existingIndices.has(pair.index))
-                    return [...prev, ...newPairs]
-                })
-            }
-        } catch (err) {
-            console.error('Failed to fetch next batch:', err)
-        } finally {
-            fetchingRef.current = false
-        }
-    }
+    }, [localIndex, isFetching, pairs])
 
     async function handleVote(vote: 'A' | 'B' | 'skip') {
-        const currentPair = pairs[currentPairIndex]
+        const currentPair = pairs[localIndex]
         if (!currentPair) return
 
-        // Show vote feedback and start transition
+        // Show vote feedback
         setVoteSubmitted(vote)
 
-        // Fire and forget vote submission
-        const formData = new FormData()
-        formData.append('vote', vote)
-        formData.append('voteIndex', currentPair.index.toString())
+        // Submit vote (fire and forget)
+        void submitVote(currentPair, vote)
 
-        void fetch('/api/voting/vote', {
-            redirect: 'manual',
-            method: 'POST',
-            body: formData,
-        }).catch((err) => {
-            console.error('Failed to submit vote:', err)
-        })
-
-        // Wait for animation, then move to next pair
+        // Move to next pair after animation
         setTimeout(() => {
-            setCurrentPairIndex((prev) => prev + 1)
-            setOverallIndex((prev) => prev + 1)
+            setLocalIndex((prev) => prev + 1)
             setVoteSubmitted(null)
         }, 300)
     }
 
+    function handleRetry() {
+        setError(null)
+        if (pairs.length === 0) {
+            void loadInitialBatch(currentRound, currentIndex, isFetching, setIsFetching, setError, setPairs)
+        } else {
+            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs)
+        }
+    }
+
+    // Render different states
     if (data.talkVoting.state === 'not-open-yet') {
         return (
             <VotingMessage
@@ -226,14 +184,10 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
                     data.talkVoting.opens
                         ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens).toLocaleString(
                               DateTime.DATETIME_SHORT,
-                              {
-                                  locale: 'en-AU',
-                              },
+                              { locale: 'en-AU' },
                           )} and closes ${DateTime.fromISO(data.talkVoting.closes).toLocaleString(
                               DateTime.DATETIME_SHORT,
-                              {
-                                  locale: 'en-AU',
-                              },
+                              { locale: 'en-AU' },
                           )}`
                         : 'Voting is not available for this conference'
                 }
@@ -249,27 +203,37 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
         return <VotingMessage message="Talk voting" error={data.error} />
     }
 
-    if (isLoading && pairs.length === 0) {
+    if (isFetching && pairs.length === 0) {
         return <VotingMessage message="Loading talks..." />
     }
 
     if (error) {
         return (
-            <VotingMessage
-                message="Talk Voting"
-                error={error}
-                cta={<Button onClick={() => void fetchBatch()}>Try Again</Button>}
-            />
+            <VotingMessage message="Talk Voting" error={error} cta={<Button onClick={handleRetry}>Try Again</Button>} />
         )
     }
 
-    if (currentPairIndex >= pairs.length) {
-        return <VotingMessage message="Grabbing more talks!" />
+    if (localIndex >= pairs.length) {
+        // If we've run out of pairs and not currently fetching, show loading or error
+        if (error && !isFetching) {
+            return (
+                <VotingMessage
+                    message="Failed to load more talks"
+                    error={error}
+                    cta={<Button onClick={handleRetry}>Retry</Button>}
+                />
+            )
+        }
+
+        // Otherwise, show loading
+        return (
+            <VotingMessage message="Whoa! You're outpacing our background talk pair loading. Hang tight while we catch up…" />
+        )
     }
 
-    const currentPair = pairs[currentPairIndex]
+    const currentPair = pairs[localIndex]
     if (!currentPair) {
-        return null
+        return <VotingMessage message="Loading..." />
     }
 
     return (
@@ -280,7 +244,7 @@ function VotingPageWithSession({ sessionId, startingIndex }: { sessionId: string
                         Which talk would you prefer to see?
                     </styled.h2>
                     <styled.p fontSize="sm" color="lightgrey">
-                        Pair {overallIndex + 1} of many
+                        Pair {votingProgress + localIndex + 1} of many
                     </styled.p>
                 </VStack>
 
@@ -406,4 +370,143 @@ function VotingMessage({
             </VStack>
         </Container>
     )
+}
+
+// Helper function: Fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        return response
+    } catch (error) {
+        clearTimeout(timeoutId)
+        throw error
+    }
+}
+
+// Helper function: Handle redirects from server
+function handleServerRedirect(response: Response): boolean {
+    if (response.status === 302) {
+        window.location.href = '/voting'
+        return true
+    }
+    return false
+}
+
+// Helper function: Fetch voting batch
+async function fetchVotingBatch(fromRoundNumber: number, fromIndexInRound: number): Promise<VotingBatchData> {
+    const url = new URL('/api/voting/batch', window.location.origin)
+    url.searchParams.set('clientVersion', CLIENT_VERSION)
+    url.searchParams.set('fromRound', fromRoundNumber.toString())
+    url.searchParams.set('fromIndex', fromIndexInRound.toString())
+
+    const response = await fetchWithTimeout(url.toString(), {
+        redirect: 'manual',
+    })
+
+    if (handleServerRedirect(response)) {
+        throw new Error('Redirecting...')
+    }
+
+    const result: VotingApiResponse = await response.json()
+
+    if (!response.ok) {
+        if (isVotingErrorResponse(result)) {
+            if (result.needsSession) {
+                window.location.href = '/voting'
+                throw new Error('Redirecting...')
+            }
+            throw new Error(result.error)
+        }
+        throw new Error('Failed to fetch voting batch')
+    }
+
+    if (!isVotingBatchResponse(result)) {
+        throw new Error('Invalid voting batch response structure')
+    }
+
+    return result.batch
+}
+
+async function submitVote(pair: TalkPair, vote: 'A' | 'B' | 'skip'): Promise<void> {
+    const formData = new FormData()
+    formData.append('vote', vote)
+    formData.append('roundNumber', pair.roundNumber.toString())
+    formData.append('indexInRound', pair.index.toString())
+    formData.append('clientVersion', CLIENT_VERSION)
+
+    try {
+        await fetchWithTimeout('/api/voting/vote', {
+            method: 'POST',
+            body: formData,
+            redirect: 'manual',
+        })
+    } catch (error) {
+        console.error('Failed to submit vote:', error)
+        // Don't throw - vote submission is fire-and-forget
+    }
+}
+
+async function loadInitialBatch(
+    currentRound: number,
+    currentIndex: number,
+    isFetching: boolean,
+    setIsFetching: (value: boolean) => void,
+    setError: (error: string | null) => void,
+    setPairs: (pairs: TalkPair[]) => void,
+): Promise<void> {
+    if (isFetching) return
+    setIsFetching(true)
+    setError(null)
+
+    try {
+        // For initial load, use the session state from loader
+        const result = await fetchVotingBatch(currentRound, currentIndex)
+        setPairs(result.pairs)
+    } catch (err) {
+        if (err instanceof Error && err.message !== 'Redirecting...') {
+            setError(err.message)
+        }
+    } finally {
+        setIsFetching(false)
+    }
+}
+
+async function loadMorePairs(
+    pairs: TalkPair[],
+    isFetching: boolean,
+    setIsFetching: (value: boolean) => void,
+    setError: (error: string | null) => void,
+    setPairs: (updater: (prev: TalkPair[]) => TalkPair[]) => void,
+): Promise<void> {
+    if (isFetching) return
+    setIsFetching(true)
+    setError(null)
+
+    try {
+        // Get the last pair to determine where to fetch from next
+        const lastPair = pairs[pairs.length - 1]
+        const fromRoundNumber = lastPair.roundNumber
+        const fromIndexInRound = lastPair.index + 1 // Next pair after the last one
+
+        const result = await fetchVotingBatch(fromRoundNumber, fromIndexInRound)
+
+        if (result.pairs.length > 0) {
+            // Simple append - no deduplication needed since we're loading from the end
+            setPairs((prev) => [...prev, ...result.pairs])
+        } else {
+            setError('No talks available to vote on right now. Please try again.')
+        }
+    } catch (err) {
+        console.error('Failed to load more pairs:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load more pairs')
+    } finally {
+        setIsFetching(false)
+    }
 }

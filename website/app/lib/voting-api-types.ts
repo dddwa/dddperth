@@ -6,7 +6,7 @@ import type { TalkPair } from './voting.server'
 export interface VotingBatchData {
     pairs: TalkPair[]
     currentIndex: number
-    hasMore: boolean
+    newRound: boolean // Indicate round transition (informational)
 }
 
 // Success response from /api/voting/batch
@@ -38,12 +38,13 @@ export function isVotingErrorResponse(response: VotingApiResponse): response is 
 // Vote API types
 export interface VoteRequest {
     vote: 'A' | 'B' | 'skip'
-    voteIndex: number
+    roundNumber: number // Round number from the pair being voted on
+    indexInRound: number
 }
 
 export interface VoteSuccessResponse {
     success: true
-    voteIndex: number
+    indexInRound: number
 }
 
 export interface VoteErrorResponse {

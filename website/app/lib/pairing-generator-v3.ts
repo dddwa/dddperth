@@ -1,15 +1,26 @@
-export class FairPairingGenerator {
+/**
+ * FairPairingGeneratorV3 - Round-based pairing generator
+ * 
+ * This generator creates manageable rounds of pairs instead of exhaustive combinations.
+ * Each round contains at most floor(totalTalks/2) pairs, ensuring no talk appears twice
+ * in the same round.
+ * 
+ * Key differences from V2:
+ * - Limited to maxPairsPerRound instead of all possible pairs
+ * - Designed for multiple rounds with different seeds
+ * - Better suited for user-friendly voting sessions
+ */
+export class FairPairingGeneratorV3 {
     private totalTalks: number
     private seed: number
-    private totalPairsCount: number
+    private maxPairsPerRound: number
     private random: () => number
     private shuffledPairIndices: number[] | null = null
-    private currentPosition = 0
 
     constructor(totalTalks: number, seed: number) {
         this.totalTalks = totalTalks
         this.seed = seed
-        this.totalPairsCount = (totalTalks * (totalTalks - 1)) / 2
+        this.maxPairsPerRound = Math.floor(totalTalks / 2)
         this.random = this.seededRandom(seed)
     }
 
@@ -41,22 +52,26 @@ export class FairPairingGenerator {
     // Lazy generation of shuffled indices (only when needed)
     private getShuffledIndices(): number[] {
         if (this.shuffledPairIndices === null) {
-            const indices = Array.from({ length: this.totalPairsCount }, (_, i) => i)
-            
-            // Fisher-Yates shuffle
+            // For round-based system, generate only maxPairsPerRound indices
+            // This represents random pairs from all possible combinations
+            const totalPossiblePairs = (this.totalTalks * (this.totalTalks - 1)) / 2
+            const indices = Array.from({ length: totalPossiblePairs }, (_, i) => i)
+
+            // Fisher-Yates shuffle to randomize pair selection
             for (let i = indices.length - 1; i > 0; i--) {
                 const j = Math.floor(this.random() * (i + 1))
                 ;[indices[i], indices[j]] = [indices[j], indices[i]]
             }
-            
-            this.shuffledPairIndices = indices
+
+            // Take only the first maxPairsPerRound for this round
+            this.shuffledPairIndices = indices.slice(0, this.maxPairsPerRound)
         }
-        
+
         return this.shuffledPairIndices
     }
 
-    // Get next batch of pairs ensuring no talk appears twice in the batch
-    getNextPairs(startPosition: number, requestedCount: number): Array<[number, number]> {
+    // Get batch of pairs ensuring no talk appears twice in the batch
+    getPairs(startPosition: number, requestedCount: number): Array<[number, number]> {
         const pairs: Array<[number, number]> = []
         const usedTalks = new Set<number>()
         let position = startPosition
@@ -77,24 +92,29 @@ export class FairPairingGenerator {
             position++
         }
 
-        // Update position for tracking
-        this.currentPosition = position
 
         return pairs
     }
 
-    // Get total number of possible pairs
+    // Get total number of pairs for this round (not all possible pairs)
     getTotalPairs(): number {
-        return this.totalPairsCount
+        return this.maxPairsPerRound
     }
 
-    // Check if we've exhausted all pairs
-    isComplete(): boolean {
-        return this.currentPosition >= this.totalPairsCount
+    // Check if a specific index represents a complete round
+    isRoundComplete(indexInRound: number): boolean {
+        return indexInRound >= this.maxPairsPerRound
     }
 
-    // Get current position in the shuffle
-    getCurrentPosition(): number {
-        return this.currentPosition
+    // Get maximum pairs per round
+    getMaxPairsPerRound(): number {
+        return this.maxPairsPerRound
     }
+
+    // Generate deterministic round seed
+    generateRoundSeed(originalSeed: number, roundNumber: number): number {
+        // Simple hash function - deterministic but unpredictable
+        return ((originalSeed + roundNumber) * 1664525 + 1013904223) % 4294967296
+    }
+
 }
