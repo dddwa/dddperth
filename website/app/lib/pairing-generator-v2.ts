@@ -1,4 +1,4 @@
-export class FairPairingGenerator {
+export class FairPairingGeneratorV2 {
     private totalTalks: number
     private seed: number
     private totalPairsCount: number
@@ -28,12 +28,12 @@ export class FairPairingGenerator {
         // For pairs (0,1), (0,2), ..., (0,n-1), (1,2), (1,3), ..., (n-2,n-1)
         let i = 0
         let remaining = index
-        
+
         while (remaining >= this.totalTalks - i - 1) {
             remaining -= this.totalTalks - i - 1
             i++
         }
-        
+
         const j = i + remaining + 1
         return [i, j]
     }
