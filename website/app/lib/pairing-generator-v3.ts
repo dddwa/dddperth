@@ -52,19 +52,16 @@ export class FairPairingGeneratorV3 {
     // Lazy generation of shuffled indices (only when needed)
     private getShuffledIndices(): number[] {
         if (this.shuffledPairIndices === null) {
-            // For round-based system, generate only maxPairsPerRound indices
-            // This represents random pairs from all possible combinations
+            // For round-based system, generate only maxPairsPerRound unique indices
             const totalPossiblePairs = (this.totalTalks * (this.totalTalks - 1)) / 2
-            const indices = Array.from({ length: totalPossiblePairs }, (_, i) => i)
+            const selectedIndices = new Set<number>()
 
-            // Fisher-Yates shuffle to randomize pair selection
-            for (let i = indices.length - 1; i > 0; i--) {
-                const j = Math.floor(this.random() * (i + 1))
-                ;[indices[i], indices[j]] = [indices[j], indices[i]]
+            while (selectedIndices.size < this.maxPairsPerRound) {
+                const randomIndex = Math.floor(this.random() * totalPossiblePairs)
+                selectedIndices.add(randomIndex)
             }
 
-            // Take only the first maxPairsPerRound for this round
-            this.shuffledPairIndices = indices.slice(0, this.maxPairsPerRound)
+            this.shuffledPairIndices = Array.from(selectedIndices)
         }
 
         return this.shuffledPairIndices

@@ -133,10 +133,10 @@ function VotingPageWithSession({
 
     // Load initial batch
     useEffect(() => {
-        if (sessionId && data.talkVoting.state === 'open') {
+        if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0) {
             void loadInitialBatch(currentRound, currentIndex, isFetching, setIsFetching, setError, setPairs)
         }
-    }, [sessionId, data.talkVoting.state, isFetching, currentRound, currentIndex])
+    }, [sessionId, data.talkVoting.state, isFetching, currentRound, currentIndex, pairs.length])
 
     // Prefetch next batch when needed
     useEffect(() => {
@@ -147,11 +147,11 @@ function VotingPageWithSession({
         if (remainingPairs <= PREFETCH_THRESHOLD) {
             void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs)
         }
-    }, [localIndex, isFetching, pairs])
+    }, [localIndex, pairs, isFetching])
 
     async function handleVote(vote: 'A' | 'B' | 'skip') {
         const currentPair = pairs[localIndex]
-        if (!currentPair) return
+        if (!currentPair || voteSubmitted) return
 
         // Show vote feedback
         setVoteSubmitted(vote)
@@ -249,13 +249,29 @@ function VotingPageWithSession({
                 </VStack>
 
                 <HStack justify="center" gap={4}>
-                    <Button size="lg" colorPalette="green" onClick={() => void handleVote('A')}>
+                    <Button
+                        size="lg"
+                        colorPalette="green"
+                        onClick={() => void handleVote('A')}
+                        disabled={!!voteSubmitted}
+                    >
                         OPTION 1
                     </Button>
-                    <Button size="lg" colorPalette="blue" variant="solid" onClick={() => void handleVote('skip')}>
+                    <Button
+                        size="lg"
+                        colorPalette="blue"
+                        variant="solid"
+                        onClick={() => void handleVote('skip')}
+                        disabled={!!voteSubmitted}
+                    >
                         SKIP
                     </Button>
-                    <Button size="lg" colorPalette="pink" onClick={() => void handleVote('B')}>
+                    <Button
+                        size="lg"
+                        colorPalette="pink"
+                        onClick={() => void handleVote('B')}
+                        disabled={!!voteSubmitted}
+                    >
                         OPTION 2
                     </Button>
                 </HStack>
@@ -272,7 +288,7 @@ function VotingPageWithSession({
                         title={currentPair.left.title}
                         description={currentPair.left.description}
                         tags={currentPair.left.tags}
-                        onClick={() => void handleVote('A')}
+                        onClick={voteSubmitted ? undefined : () => void handleVote('A')}
                         highlight={voteSubmitted === 'A'}
                     />
 
@@ -293,7 +309,7 @@ function VotingPageWithSession({
                         title={currentPair.right.title}
                         description={currentPair.right.description}
                         tags={currentPair.right.tags}
-                        onClick={() => void handleVote('B')}
+                        onClick={voteSubmitted ? undefined : () => void handleVote('B')}
                         highlight={voteSubmitted === 'B'}
                     />
                 </Flex>
@@ -302,6 +318,7 @@ function VotingPageWithSession({
                     <Button
                         size="lg"
                         colorPalette="green"
+                        disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
                             window.scrollTo(0, 100)
@@ -314,6 +331,7 @@ function VotingPageWithSession({
                         size="lg"
                         colorPalette="blue"
                         variant="solid"
+                        disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
                             window.scrollTo(0, 100)
@@ -325,6 +343,7 @@ function VotingPageWithSession({
                     <Button
                         size="lg"
                         colorPalette="pink"
+                        disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
                             window.scrollTo(0, 100)
