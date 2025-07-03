@@ -49,10 +49,12 @@ const sessionSchema = z.object({
         z.object({
             id: z.number(),
             name: z.string(),
-            categoryItems: z.array(z.object({ 
-                id: z.number(), 
-                name: z.string() 
-            })),
+            categoryItems: z.array(
+                z.object({
+                    id: z.number(),
+                    name: z.string(),
+                }),
+            ),
             sort: z.nullable(z.number()),
         }),
     ),
@@ -63,7 +65,7 @@ const sessionSchema = z.object({
     status: z.nullable(z.string()),
     isInformed: z.boolean(),
     isConfirmed: z.boolean(),
-    questionAnswers: z.array(z.any()),
+    questionAnswers: z.array(z.any()).optional(),
 })
 
 export const roomSchema = z.object({
@@ -123,7 +125,7 @@ export const speakersSchema = z.array(
                 linkType: z.string(),
             }),
         ),
-        questionAnswers: z.array(z.any()),
+        questionAnswers: z.array(z.any()).optional().default([]),
         categories: z.array(z.any()),
     }),
 )
