@@ -20,6 +20,7 @@ export class FairPairingGeneratorV4 {
     private maxPairsPerRound: number
     private random: () => number
     private shuffledPairIndices: number[] | null = null
+    private cachedConflictFreePairs: Array<[number, number]> | null = null
 
     constructor(totalTalks: number, seed: number) {
         this.totalTalks = totalTalks
@@ -73,33 +74,38 @@ export class FairPairingGeneratorV4 {
 
     // Internal method to generate conflict-free pairs in order
     private generateConflictFreePairs(): Array<[number, number]> {
-        const validPairs: Array<[number, number]> = []
-        const usedTalks = new Set<number>()
-        const shuffledIndices = this.getShuffledIndices()
+        // Cache the result to avoid recomputing on each getPairs call
+        if (this.cachedConflictFreePairs === null) {
+            const validPairs: Array<[number, number]> = []
+            const usedTalks = new Set<number>()
+            const shuffledIndices = this.getShuffledIndices()
 
-        for (const pairIndex of shuffledIndices) {
-            const [talk1, talk2] = this.indexToPair(pairIndex)
-            
-            // Only add this pair if neither talk has been used yet
-            if (!usedTalks.has(talk1) && !usedTalks.has(talk2)) {
-                validPairs.push([talk1, talk2])
-                usedTalks.add(talk1)
-                usedTalks.add(talk2)
+            for (const pairIndex of shuffledIndices) {
+                const [talk1, talk2] = this.indexToPair(pairIndex)
                 
-                // Stop when we have enough valid pairs for the round
-                if (validPairs.length >= this.maxPairsPerRound) {
-                    break
+                // Only add this pair if neither talk has been used yet
+                if (!usedTalks.has(talk1) && !usedTalks.has(talk2)) {
+                    validPairs.push([talk1, talk2])
+                    usedTalks.add(talk1)
+                    usedTalks.add(talk2)
+                    
+                    // Stop when we have enough valid pairs for the round
+                    if (validPairs.length >= this.maxPairsPerRound) {
+                        break
+                    }
                 }
             }
+
+            this.cachedConflictFreePairs = validPairs
         }
 
-        return validPairs
+        return this.cachedConflictFreePairs
     }
 
     // Get batch of pairs starting from a logical position
     // Position N always returns the Nth valid conflict-free pair
     getPairs(startPosition: number, requestedCount: number): Array<{pair: [number, number], position: number}> {
-        const allValidPairs = this.generateConflictFreePairs()
+        const allValidPairs = this.generateConflictFreePairs() // Now cached, only computed once
         const pairs: Array<{pair: [number, number], position: number}> = []
 
         for (let i = 0; i < requestedCount; i++) {

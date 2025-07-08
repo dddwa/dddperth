@@ -535,13 +535,15 @@ export async function runVotingValidation(
                     processedVotes += sessionStats.processedVotes
 
                     // Update progress every 10 sessions
-                    await updateValidationRunProgress(
-                        votesTableClient,
-                        runId,
-                        processedSessions,
-                        processedRounds,
-                        processedVotes,
-                    )
+                    if (processedSessions % 10 === 0) {
+                        await updateValidationRunProgress(
+                            votesTableClient,
+                            runId,
+                            processedSessions,
+                            processedRounds,
+                            processedVotes,
+                        )
+                    }
 
                     // Small delay to reduce load on server/table
                     await new Promise((resolve) => setTimeout(resolve, 100))
