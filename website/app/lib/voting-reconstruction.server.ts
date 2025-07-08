@@ -273,21 +273,22 @@ function processVoteGroup(
  * NOTE: algorithmVersion should come from the session, not individual votes
  */
 export function groupVotesByAlgorithmAndRound(votes: VoteRecord[], session: VotingSession) {
-    const groups: GroupedVoteRecords[] = []
+    const groupsMap = new Map<string, GroupedVoteRecords>()
     const algorithmVersion = getAlgorithmVersionFromSession(session)
 
     for (const vote of votes) {
         // Use voteVersion discriminator to determine round number
         const roundNumber = vote.voteVersion === undefined ? 0 : vote.roundNumber
+        const key = `${algorithmVersion}_${roundNumber}`
 
-        if (!groups.some((g) => g.algorithmVersion === algorithmVersion && g.roundNumber === roundNumber)) {
-            groups.push({ algorithmVersion, roundNumber, votes: [] })
+        if (!groupsMap.has(key)) {
+            groupsMap.set(key, { algorithmVersion, roundNumber, votes: [] })
         }
 
-        groups.find((g) => g.algorithmVersion === algorithmVersion && g.roundNumber === roundNumber)?.votes.push(vote)
+        groupsMap.get(key)?.votes.push(vote)
     }
 
-    return groups
+    return Array.from(groupsMap.values())
 }
 
 /**
