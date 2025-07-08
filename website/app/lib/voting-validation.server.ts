@@ -297,6 +297,36 @@ export function calculateFairnessMetrics(appearances: number[]): FairnessMetrics
     }
 }
 
+// Helper function to update vote counts based on vote type
+function applyVoteUpdate(
+    leftStats: TalkStatsAccumulator,
+    rightStats: TalkStatsAccumulator,
+    vote: 'A' | 'B' | 'S',
+    versionKey: 'Aggregated' | 'V1' | 'V2' | 'V3' | 'V4',
+): void {
+    // Type-safe property access using bracket notation
+    const seenKey = `timesSeen${versionKey}` as keyof TalkStatsAccumulator
+    const votedForKey = `timesVotedFor${versionKey}` as keyof TalkStatsAccumulator
+    const votedAgainstKey = `timesVotedAgainst${versionKey}` as keyof TalkStatsAccumulator
+    const skippedKey = `timesSkipped${versionKey}` as keyof TalkStatsAccumulator
+
+    // Update times seen
+    leftStats[seenKey]++
+    rightStats[seenKey]++
+
+    // Update vote counts based on vote type
+    if (vote === 'A') {
+        leftStats[votedForKey]++
+        rightStats[votedAgainstKey]++
+    } else if (vote === 'B') {
+        leftStats[votedAgainstKey]++
+        rightStats[votedForKey]++
+    } else {
+        leftStats[skippedKey]++
+        rightStats[skippedKey]++
+    }
+}
+
 // Update talk statistics based on vote
 function updateTalkStats(
     stats: Map<string, TalkStatsAccumulator>,
@@ -311,78 +341,11 @@ function updateTalkStats(
     if (!leftStats || !rightStats) return
 
     // Update AGGREGATED stats (all versions combined)
-    leftStats.timesSeenAggregated++
-    rightStats.timesSeenAggregated++
-
-    if (vote === 'A') {
-        leftStats.timesVotedForAggregated++
-        rightStats.timesVotedAgainstAggregated++
-    } else if (vote === 'B') {
-        leftStats.timesVotedAgainstAggregated++
-        rightStats.timesVotedForAggregated++
-    } else {
-        leftStats.timesSkippedAggregated++
-        rightStats.timesSkippedAggregated++
-    }
+    applyVoteUpdate(leftStats, rightStats, vote, 'Aggregated')
 
     // Update specific version stats
-    if (sessionVersion === 1) {
-        leftStats.timesSeenV1++
-        rightStats.timesSeenV1++
-
-        if (vote === 'A') {
-            leftStats.timesVotedForV1++
-            rightStats.timesVotedAgainstV1++
-        } else if (vote === 'B') {
-            leftStats.timesVotedAgainstV1++
-            rightStats.timesVotedForV1++
-        } else {
-            leftStats.timesSkippedV1++
-            rightStats.timesSkippedV1++
-        }
-    } else if (sessionVersion === 2) {
-        leftStats.timesSeenV2++
-        rightStats.timesSeenV2++
-
-        if (vote === 'A') {
-            leftStats.timesVotedForV2++
-            rightStats.timesVotedAgainstV2++
-        } else if (vote === 'B') {
-            leftStats.timesVotedAgainstV2++
-            rightStats.timesVotedForV2++
-        } else {
-            leftStats.timesSkippedV2++
-            rightStats.timesSkippedV2++
-        }
-    } else if (sessionVersion === 3) {
-        leftStats.timesSeenV3++
-        rightStats.timesSeenV3++
-
-        if (vote === 'A') {
-            leftStats.timesVotedForV3++
-            rightStats.timesVotedAgainstV3++
-        } else if (vote === 'B') {
-            leftStats.timesVotedAgainstV3++
-            rightStats.timesVotedForV3++
-        } else {
-            leftStats.timesSkippedV3++
-            rightStats.timesSkippedV3++
-        }
-    } else if (sessionVersion === 4) {
-        leftStats.timesSeenV4++
-        rightStats.timesSeenV4++
-
-        if (vote === 'A') {
-            leftStats.timesVotedForV4++
-            rightStats.timesVotedAgainstV4++
-        } else if (vote === 'B') {
-            leftStats.timesVotedAgainstV4++
-            rightStats.timesVotedForV4++
-        } else {
-            leftStats.timesSkippedV4++
-            rightStats.timesSkippedV4++
-        }
-    }
+    const versionKey = `V${sessionVersion}` as const
+    applyVoteUpdate(leftStats, rightStats, vote, versionKey)
 }
 
 // Save accumulated talk statistics
