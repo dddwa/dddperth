@@ -96,10 +96,9 @@ describe('FairPairingGeneratorV3', () => {
 
     describe('Round seed generation', () => {
         it('should generate different seeds for different rounds', () => {
-            const generator = new FairPairingGeneratorV3(10, 12345)
-            const seed1 = generator.generateRoundSeed(12345, 0)
-            const seed2 = generator.generateRoundSeed(12345, 1)
-            const seed3 = generator.generateRoundSeed(12345, 2)
+            const seed1 = FairPairingGeneratorV3.generateRoundSeed(12345, 0)
+            const seed2 = FairPairingGeneratorV3.generateRoundSeed(12345, 1)
+            const seed3 = FairPairingGeneratorV3.generateRoundSeed(12345, 2)
             
             expect(seed1).not.toBe(seed2)
             expect(seed2).not.toBe(seed3)
@@ -107,11 +106,8 @@ describe('FairPairingGeneratorV3', () => {
         })
 
         it('should generate consistent seeds for same round', () => {
-            const generator1 = new FairPairingGeneratorV3(10, 12345)
-            const generator2 = new FairPairingGeneratorV3(10, 12345)
-            
-            const seed1 = generator1.generateRoundSeed(12345, 5)
-            const seed2 = generator2.generateRoundSeed(12345, 5)
+            const seed1 = FairPairingGeneratorV3.generateRoundSeed(12345, 5)
+            const seed2 = FairPairingGeneratorV3.generateRoundSeed(12345, 5)
             
             expect(seed1).toBe(seed2)
         })
@@ -119,15 +115,13 @@ describe('FairPairingGeneratorV3', () => {
 
     describe('round-specific pairs generation', () => {
         it('should generate different pairs for different rounds', () => {
-            const generator = new FairPairingGeneratorV3(10, 12345)
-            
             // Generate pairs for round 0
-            const round1Seed = generator.generateRoundSeed(12345, 0)
+            const round1Seed = FairPairingGeneratorV3.generateRoundSeed(12345, 0)
             const round1Generator = new FairPairingGeneratorV3(10, round1Seed)
             const round1Pairs = round1Generator.getPairs(0, 3)
             
             // Generate pairs for round 1
-            const round2Seed = generator.generateRoundSeed(12345, 1)
+            const round2Seed = FairPairingGeneratorV3.generateRoundSeed(12345, 1)
             const round2Generator = new FairPairingGeneratorV3(10, round2Seed)
             const round2Pairs = round2Generator.getPairs(0, 3)
             

@@ -10,6 +10,7 @@ import {
     getVotingSession,
     hasSessionsChanged,
 } from '~/lib/voting.server'
+import { CURRENT_CLIENT_VERSION, CURRENT_SESSION_VERSION } from '~/lib/voting-version-constants'
 import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -61,16 +62,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         // Check for client version compatibility
         const url = new URL(request.url)
         const clientVersion = url.searchParams.get('clientVersion')
-        const expectedClientVersion = 'v3'
+        const expectedClientVersion = CURRENT_CLIENT_VERSION
 
         if (clientVersion !== expectedClientVersion) {
             // Old client detected - redirect to reload page
             throw redirect('/voting')
         }
 
-        // Check if this is an old v1 or v2 session - if so, reset it to v3
-        if (userSession.version !== 3) {
-            console.warn('Session uses old algorithm, resetting to v3 due to algorithm change')
+        // Check if this is an old session - if so, reset it to current version
+        if (userSession.version !== CURRENT_SESSION_VERSION) {
+            console.warn(`Session uses old algorithm, resetting to V${CURRENT_SESSION_VERSION} due to algorithm change`)
             const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
             votingStorageSession.set('sessionId', undefined)
 

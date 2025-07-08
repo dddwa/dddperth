@@ -1,16 +1,20 @@
 /**
- * FairPairingGeneratorV3 - Round-based pairing generator
- *
+ * FairPairingGeneratorV4 - Fixed round-based pairing generator
+ * 
  * This generator creates manageable rounds of pairs instead of exhaustive combinations.
  * Each round contains at most floor(totalTalks/2) pairs, ensuring no talk appears twice
  * in the same round.
- *
- * Key differences from V2:
- * - Limited to maxPairsPerRound instead of all possible pairs
- * - Designed for multiple rounds with different seeds
- * - Better suited for user-friendly voting sessions
+ * 
+ * Key differences from V3:
+ * - FIXED: Correct index assignment that matches actual position in generator sequence
+ * - Returns pairs with their actual positions to prevent indexing bugs
+ * - Maintains same algorithmic fairness as V3 but with correct reconstruction
+ * 
+ * V3 Bug Fix:
+ * V3 had a critical bug where vote indices didn't match actual pair positions due to
+ * conflict avoidance logic. V4 fixes this by always returning actual positions.
  */
-export class FairPairingGeneratorV3 {
+export class FairPairingGeneratorV4 {
     private totalTalks: number
     private seed: number
     private maxPairsPerRound: number
@@ -39,12 +43,12 @@ export class FairPairingGeneratorV3 {
         // For pairs (0,1), (0,2), ..., (0,n-1), (1,2), (1,3), ..., (n-2,n-1)
         let i = 0
         let remaining = index
-
+        
         while (remaining >= this.totalTalks - i - 1) {
             remaining -= this.totalTalks - i - 1
             i++
         }
-
+        
         const j = i + remaining + 1
         return [i, j]
     }
@@ -67,39 +71,58 @@ export class FairPairingGeneratorV3 {
         return this.shuffledPairIndices
     }
 
-    // Get batch of pairs ensuring no talk appears twice in the batch
-    getPairs(startPosition: number, requestedCount: number): Array<[number, number]> {
-        const pairs: Array<[number, number]> = []
+    // Internal method to generate conflict-free pairs in order
+    private generateConflictFreePairs(): Array<[number, number]> {
+        const validPairs: Array<[number, number]> = []
         const usedTalks = new Set<number>()
-        let position = startPosition
-
         const shuffledIndices = this.getShuffledIndices()
 
-        while (pairs.length < requestedCount && position < shuffledIndices.length) {
-            const pairIndex = shuffledIndices[position]
+        for (const pairIndex of shuffledIndices) {
             const [talk1, talk2] = this.indexToPair(pairIndex)
-
-            // Only add this pair if neither talk has been used in this batch
+            
+            // Only add this pair if neither talk has been used yet
             if (!usedTalks.has(talk1) && !usedTalks.has(talk2)) {
-                pairs.push([talk1, talk2])
+                validPairs.push([talk1, talk2])
                 usedTalks.add(talk1)
                 usedTalks.add(talk2)
+                
+                // Stop when we have enough valid pairs for the round
+                if (validPairs.length >= this.maxPairsPerRound) {
+                    break
+                }
             }
+        }
 
-            position++
+        return validPairs
+    }
+
+    // Get batch of pairs starting from a logical position
+    // Position N always returns the Nth valid conflict-free pair
+    getPairs(startPosition: number, requestedCount: number): Array<{pair: [number, number], position: number}> {
+        const allValidPairs = this.generateConflictFreePairs()
+        const pairs: Array<{pair: [number, number], position: number}> = []
+
+        for (let i = 0; i < requestedCount; i++) {
+            const position = startPosition + i
+            if (position < allValidPairs.length) {
+                pairs.push({
+                    pair: allValidPairs[position],
+                    position: position
+                })
+            }
         }
 
         return pairs
     }
 
-    // Get total number of pairs for this round (not all possible pairs)
+    // Get total number of valid pairs available for this round
     getTotalPairs(): number {
-        return this.maxPairsPerRound
+        return this.generateConflictFreePairs().length
     }
 
     // Check if a specific index represents a complete round
     isRoundComplete(indexInRound: number): boolean {
-        return indexInRound >= this.maxPairsPerRound
+        return indexInRound >= this.getTotalPairs()
     }
 
     // Get maximum pairs per round

@@ -3,6 +3,7 @@ import { data, redirect } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { votingStorage } from '~/lib/session.server'
 import type { VoteErrorResponse, VoteSuccessResponse } from '~/lib/voting-api-types'
+import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import { ensureVotesTableExists, recordVoteInTable } from '~/lib/voting.server'
 import type { Route } from './+types/api.voting.vote'
 
@@ -22,7 +23,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         const indexInRoundRaw = formData.get('indexInRound')
 
         // Check for client version first - missing version indicates old client
-        const expectedClientVersion = 'v3'
+        const expectedClientVersion = CURRENT_CLIENT_VERSION
         if (!clientVersionRaw || clientVersionRaw !== expectedClientVersion) {
             // Old client detected (no version field) - redirect to reload page
             throw redirect('/voting')
@@ -101,6 +102,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         const successResponse: VoteSuccessResponse = { success: true, indexInRound }
         return data(successResponse)
     } catch (error: any) {
+        if (error instanceof Response) {
+            throw error
+        }
         console.error('Failed to record vote:', error)
 
         // Check if it's a duplicate vote (already voted on this index)

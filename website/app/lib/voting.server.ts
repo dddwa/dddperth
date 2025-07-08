@@ -2,12 +2,13 @@ import type { GetTableEntityResponse, TableClient, TableServiceClient } from '@a
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
-import { FairPairingGeneratorV3 } from './pairing-generator-v3'
+import { FairPairingGeneratorV4 } from './pairing-generator-v4'
 import { recordException } from './record-exception'
 import type { SessionId } from './session.server'
 import { votingStorage } from './session.server'
 import { getConfSessions } from './sessionize.server'
 import type { VotingBatchData } from './voting-api-types'
+import { CURRENT_SESSION_VERSION, CURRENT_VOTE_VERSION, type CurrentSessionVersion, type CurrentVoteVersion } from './voting-version-constants'
 
 export interface TalkPair {
     index: number
@@ -68,6 +69,15 @@ export interface VoteRecordV2 extends BaseVoteRecord {
 // Union type for all vote records
 export type VoteRecord = VoteRecordLegacy | VoteRecordV2
 
+// Compile-time assertions to ensure constants match types
+type _AssertCurrentVoteVersion = CurrentVoteVersion extends VoteRecordV2['voteVersion'] ? true : never
+type _AssertCurrentSessionVersion = CurrentSessionVersion extends VotingSessionV4['version'] ? true : never
+const _voteVersionAssertion: _AssertCurrentVoteVersion = true
+const _sessionVersionAssertion: _AssertCurrentSessionVersion = true
+// Prevent unused variable warnings
+void _voteVersionAssertion
+void _sessionVersionAssertion
+
 // Base interface for all voting sessions
 export interface BaseVotingSession {
     partitionKey: 'session'
@@ -90,15 +100,22 @@ export interface VotingSessionV2 extends BaseVotingSession {
     version: 2
 }
 
-// V3 voting sessions - round-based pairing (current)
+// V3 voting sessions - round-based pairing (has indexing bug)
 export interface VotingSessionV3 extends BaseVotingSession {
     version: 3
     roundNumber: number // Current round (starts at 0)
     maxPairsPerRound: number // Calculated from talk count
 }
 
+// V4 voting sessions - round-based pairing with fixed indexing (current)
+export interface VotingSessionV4 extends BaseVotingSession {
+    version: 4
+    roundNumber: number // Current round (starts at 0)
+    maxPairsPerRound: number // Calculated from talk count
+}
+
 // Union type for all voting sessions
-export type VotingSession = VotingSessionV1 | VotingSessionV2 | VotingSessionV3
+export type VotingSession = VotingSessionV1 | VotingSessionV2 | VotingSessionV3 | VotingSessionV4
 
 const tableClients = new Map<string, Promise<TableClient>>()
 
@@ -211,7 +228,7 @@ export async function recordVoteInTable(
     const voteChar = vote === 'skip' ? 'S' : vote
 
     const voteRecord: VoteRecordV2 = {
-        voteVersion: 2,
+        voteVersion: CURRENT_VOTE_VERSION,
         partitionKey: `session_${sessionId}`,
         rowKey: `vote_${roundNumber}_${indexInRound}`,
         roundNumber,
@@ -244,15 +261,15 @@ async function updateSessionIndexSafely(
     while (attempt < maxRetries) {
         try {
             // Fetch current session state with ETag for optimistic concurrency
-            const partitionKey: VotingSessionV3['partitionKey'] = 'session'
-            const rowKey: VotingSessionV3['rowKey'] = `session_${sessionId}`
+            const partitionKey: VotingSessionV4['partitionKey'] = 'session'
+            const rowKey: VotingSessionV4['rowKey'] = `session_${sessionId}`
             const sessionEntity = (await votesTableClient.getEntity(
                 partitionKey,
                 rowKey,
             )) as GetTableEntityResponse<VotingSession>
 
-            if (sessionEntity.version !== 3) {
-                throw new Error('Cannot update session index for V3 session')
+            if (sessionEntity.version !== CURRENT_SESSION_VERSION) {
+                throw new Error(`Cannot update session index for non-V${CURRENT_SESSION_VERSION} session`)
             }
 
             // Parse current session state
@@ -376,6 +393,17 @@ export async function getVotingSession(
             return v3Session
         }
 
+        if (entity.version === CURRENT_SESSION_VERSION) {
+            const v4Session: VotingSessionV4 = {
+                ...baseSession,
+                version: entity.version,
+                roundNumber: entity.roundNumber,
+                maxPairsPerRound: entity.maxPairsPerRound,
+            }
+
+            return v4Session
+        }
+
         // @ts-expect-error exhaustive check
         throw new Error(`Unknown session version: ${entity.version}`)
     } catch (error: any) {
@@ -422,12 +450,12 @@ export async function createUserVotingSessionAndRedirect(
 
     // Calculate total pairs using generator
     const totalTalks = currentSessions.length
-    const tempGenerator = new FairPairingGeneratorV3(totalTalks, 0)
+    const tempGenerator = new FairPairingGeneratorV4(totalTalks, 0)
     const totalPairs = tempGenerator.getTotalPairs()
     const maxPairsPerRound = tempGenerator.getMaxPairsPerRound()
 
     // Create session in table storage
-    const sessionRecord: VotingSessionV3 = {
+    const sessionRecord: VotingSessionV4 = {
         partitionKey: 'session',
         rowKey: `session_${sessionId}`,
         sessionId,
@@ -436,7 +464,7 @@ export async function createUserVotingSessionAndRedirect(
         inputSessionizeTalkIdsJson: JSON.stringify(currentSessionIds),
         currentIndex: 0,
         createdAt: new Date().toISOString(),
-        version: 3,
+        version: CURRENT_SESSION_VERSION,
         roundNumber: 0,
         maxPairsPerRound,
     }
@@ -462,12 +490,11 @@ export async function getVotingBatchExplicit(
     requestedIndexInRound: number,
     batchSize = 50,
 ): Promise<VotingBatchData> {
-    // Only works with V3 sessions
-    if (votingSession.version !== 3) {
-        throw new Error('Explicit batch fetching only supports V3 sessions')
+    // Only works with current version sessions
+    if (votingSession.version !== CURRENT_SESSION_VERSION) {
+        throw new Error(`Explicit batch fetching only supports V${CURRENT_SESSION_VERSION} sessions`)
     }
 
-    const generator = new FairPairingGeneratorV3(currentSessions.length, votingSession.seed)
     const maxPairsPerRound = votingSession.maxPairsPerRound
 
     let pairs: TalkPair[] = []
@@ -480,9 +507,9 @@ export async function getVotingBatchExplicit(
         // If we've exceeded the total number of rounds (all pairs done), break
         if (roundNumber < 0 || maxPairsPerRound <= 0) break
 
-        // Generate the round seed for the current round
-        const roundSeed = generator.generateRoundSeed(votingSession.seed, roundNumber)
-        const roundGenerator = new FairPairingGeneratorV3(currentSessions.length, roundSeed)
+        // V4: Use fixed generator with correct position tracking
+        const roundSeed = FairPairingGeneratorV4.generateRoundSeed(votingSession.seed, roundNumber)
+        const roundGenerator = new FairPairingGeneratorV4(currentSessions.length, roundSeed)
 
         // Check if this round is complete
         if (roundGenerator.isRoundComplete(indexInRound)) {
@@ -495,19 +522,24 @@ export async function getVotingBatchExplicit(
 
         const remainingInRound = maxPairsPerRound - indexInRound
         const pairsToFetch = Math.min(pairsNeeded, remainingInRound)
-        const pairIndices = roundGenerator.getPairs(indexInRound, pairsToFetch)
+        const pairsWithPositions = roundGenerator.getPairs(indexInRound, pairsToFetch)
 
-        // Convert indices to TalkPair objects
-        const newPairs: TalkPair[] = pairIndices.map(([leftIndex, rightIndex], idx) => ({
-            index: indexInRound + idx, // Index within round
+        // Convert indices to TalkPair objects using actual positions
+        const newPairs = pairsWithPositions.map(({ pair: [leftIndex, rightIndex], position }) => ({
+            index: position, // Use actual position in generator sequence
             roundNumber: roundNumber, // Round these pairs belong to
             left: currentSessions[leftIndex],
             right: currentSessions[rightIndex],
         }))
 
+        // Update indexInRound to continue from the last position used + 1
+        if (pairsWithPositions.length > 0) {
+            const lastPosition = Math.max(...pairsWithPositions.map((p) => p.position))
+            indexInRound = lastPosition + 1
+        }
+
         pairs = pairs.concat(newPairs)
         pairsNeeded -= newPairs.length
-        indexInRound += newPairs.length
 
         // If we filled the batch, break
         if (pairsNeeded <= 0) break
@@ -523,7 +555,6 @@ export async function getVotingBatchExplicit(
         newRound: startedNewRound,
     }
 }
-
 
 export async function getSessionsForVoting(allSessionsEndpoint: string) {
     const sessionGroups = await getConfSessions({
