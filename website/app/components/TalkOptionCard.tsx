@@ -23,7 +23,7 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                 bg: highlight ? 'lightgray' : 'white',
                 p: 7,
                 cursor: onClick ? 'pointer' : 'default',
-                transition: 'all 0.2s',
+                transition: 'all 0.1s',
                 boxShadow: highlight ? '2xl' : 'md',
                 _hover: onClick
                     ? {

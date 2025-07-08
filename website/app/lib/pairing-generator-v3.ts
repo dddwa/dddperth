@@ -1,10 +1,10 @@
 /**
  * FairPairingGeneratorV3 - Round-based pairing generator
- * 
+ *
  * This generator creates manageable rounds of pairs instead of exhaustive combinations.
  * Each round contains at most floor(totalTalks/2) pairs, ensuring no talk appears twice
  * in the same round.
- * 
+ *
  * Key differences from V2:
  * - Limited to maxPairsPerRound instead of all possible pairs
  * - Designed for multiple rounds with different seeds
@@ -39,12 +39,12 @@ export class FairPairingGeneratorV3 {
         // For pairs (0,1), (0,2), ..., (0,n-1), (1,2), (1,3), ..., (n-2,n-1)
         let i = 0
         let remaining = index
-        
+
         while (remaining >= this.totalTalks - i - 1) {
             remaining -= this.totalTalks - i - 1
             i++
         }
-        
+
         const j = i + remaining + 1
         return [i, j]
     }
@@ -89,7 +89,6 @@ export class FairPairingGeneratorV3 {
             position++
         }
 
-
         return pairs
     }
 
@@ -109,9 +108,8 @@ export class FairPairingGeneratorV3 {
     }
 
     // Generate deterministic round seed
-    generateRoundSeed(originalSeed: number, roundNumber: number): number {
+    static generateRoundSeed(originalSeed: number, roundNumber: number): number {
         // Simple hash function - deterministic but unpredictable
         return ((originalSeed + roundNumber) * 1664525 + 1013904223) % 4294967296
     }
-
 }

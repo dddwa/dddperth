@@ -122,7 +122,7 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
         
         while (pairsCollected < actualPairsPerSession) {
             // Generate round seed for this round
-            const roundSeed = generator.generateRoundSeed(seed, currentRound)
+            const roundSeed = FairPairingGeneratorV3.generateRoundSeed(seed, currentRound)
             const roundGenerator = new FairPairingGeneratorV3(talksCount, roundSeed)
             
             // Get pairs for this round (up to maxPairsPerRound)

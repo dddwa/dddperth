@@ -8,6 +8,7 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { votingStorage } from '~/lib/session.server'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
+import { CURRENT_CLIENT_VERSION, CURRENT_SESSION_VERSION } from '~/lib/voting-version-constants'
 import type { TalkPair } from '~/lib/voting.server'
 import { ensureVotesTableExists, getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
@@ -16,7 +17,7 @@ import type { Route } from './+types/_layout.voting'
 // Constants
 const FETCH_TIMEOUT = 10000 // 10 seconds
 const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
-const CLIENT_VERSION = 'v3'
+const CLIENT_VERSION = CURRENT_CLIENT_VERSION
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
@@ -66,9 +67,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // This will create a session and redirect
     const votingSession = await getVotingSession(request, tableClient, () => getSessionsForVoting(allSessionsEndpoint))
 
-    // Check if this is a V3 session, if not clear and redirect
-    if (votingSession.version !== 3) {
-        console.warn('Session uses old algorithm, resetting to V3 due to algorithm change')
+    // Check if this is a current version session, if not clear and redirect
+    if (votingSession.version !== CURRENT_SESSION_VERSION) {
+        console.warn(`Session uses old algorithm, resetting to V${CURRENT_SESSION_VERSION} due to algorithm change`)
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         votingStorageSession.set('sessionId', undefined)
 
@@ -127,6 +128,7 @@ function VotingPageWithSession({
 
     const [pairs, setPairs] = useState<TalkPair[]>([])
     const [localIndex, setLocalIndex] = useState(0) // Index within pairs array
+
     const [error, setError] = useState<string | null>(null)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
     const [isFetching, setIsFetching] = useState(false)
@@ -163,7 +165,7 @@ function VotingPageWithSession({
         setTimeout(() => {
             setLocalIndex((prev) => prev + 1)
             setVoteSubmitted(null)
-        }, 300)
+        }, 200)
     }
 
     function handleRetry() {
@@ -213,7 +215,7 @@ function VotingPageWithSession({
         )
     }
 
-    if (localIndex >= pairs.length) {
+    if (localIndex >= pairs.length && pairs.length > 0) {
         // If we've run out of pairs and not currently fetching, show loading or error
         if (error && !isFetching) {
             return (
@@ -411,10 +413,11 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
 
 // Helper function: Handle redirects from server
 function handleServerRedirect(response: Response): boolean {
-    if (response.status === 302) {
+    if (response.status === 302 || response.type === 'opaqueredirect') {
         window.location.href = '/voting'
         return true
     }
+
     return false
 }
 
@@ -465,6 +468,8 @@ async function submitVote(pair: TalkPair, vote: 'A' | 'B' | 'skip'): Promise<voi
             method: 'POST',
             body: formData,
             redirect: 'manual',
+        }).then((response) => {
+            handleServerRedirect(response)
         })
     } catch (error) {
         console.error('Failed to submit vote:', error)

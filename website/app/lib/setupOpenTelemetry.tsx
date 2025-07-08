@@ -17,8 +17,13 @@ import { BatchLogRecordProcessor, ConsoleLogRecordExporter, LoggerProvider } fro
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node'
-import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
+import {
+    ATTR_HTTP_ROUTE,
+    SEMRESATTRS_SERVICE_NAME,
+    SEMRESATTRS_SERVICE_VERSION,
+} from '@opentelemetry/semantic-conventions'
 import fs, { existsSync } from 'node:fs'
+import { IncomingMessage } from 'node:http'
 import { RemixInstrumentation } from 'opentelemetry-instrumentation-remix'
 import {
     APPLICATIONINSIGHTS_CONNECTION_STRING,
@@ -84,6 +89,15 @@ export function configureOpenTelemetry() {
             instrumentations: [
                 // Express instrumentation expects HTTP layer to be instrumented
                 new HttpInstrumentation({
+                    // Use full URL path in span names
+                    applyCustomAttributesOnSpan: (span, request) => {
+                        // Remix has a default route of * which handles pretty much everything.
+                        // Override that route attribute with the request url which is the relative path of the route
+                        if (request instanceof IncomingMessage && request.url) {
+                            span.setAttribute(ATTR_HTTP_ROUTE, request.url)
+                            span.updateName(`${request.method} ${request.url}`)
+                        }
+                    },
                     // Ignore specific endpoints
                     ignoreIncomingRequestHook: (request) => {
                         const ignorePaths = [
@@ -94,8 +108,10 @@ export function configureOpenTelemetry() {
                             '/@id',
                             '/@vite',
                             '/app/',
+                            '.vite',
+                            '__manifest',
                         ]
-                        const shouldIgnore = ignorePaths.some((path) => request.url?.startsWith(path))
+                        const shouldIgnore = ignorePaths.some((path) => request.url?.includes(path))
 
                         return shouldIgnore
                     },
