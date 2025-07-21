@@ -1,8 +1,13 @@
 ---
 title: Chairperson Report for 2022
-date: 2023-02-14
+date: '2023-02-14'
 authors:
     - Rebecca Waters
+summary: ''
+image: /blog-images/2023-02-14-chairperson-report-for-2022-1.jpeg
+ogImage: /blog-images/2023-02-14-chairperson-report-for-2022-1.jpeg
+imageAlt: Medium-Image
+imageDisableOverlay: true
 ---
 
 Hello! I’m Rebecca Waters, the chairperson of DDD Perth in 2022. As part of our annual general meeting, I’m required to give a Chairperson Report. Traditionally I present this for the first time at the AGM, but there are no rules against making it a blog post, and it’s an excellent reflection on the year that was.
@@ -11,7 +16,7 @@ Oh, and for extra points, I ended up putting the key information into ChatGPT an
 
 Enjoy!
 
-![Raise your hand if you snagged a ticket to DDD Perth 2022.](https://cdn-images-1.medium.com/max/2000/1*4Y3bsYcU5V4RG18JlHYLlQ.jpeg)_Raise your hand if you snagged a ticket to DDD Perth 2022._
+![Medium-Image](/blog-images/2023-02-14-chairperson-report-for-2022-1.jpeg)
 
 ## DDD WA Inc. Annual Report
 
@@ -31,15 +36,15 @@ In addition to the conference, we also organised and facilitated three Call for 
 
 **CFP Workshops:** Our three CFP workshops helped to encourage and support more individuals to become speakers and contribute to the conference. The workshops provided practical tips and advice on writing and submitting proposals.
 
-**Speaker Mentoring Courses: **Our two speaker mentoring courses provided additional support and guidance for the speakers. The courses covered topics such as preparing and delivering presentations, as well as how to handle Q&A sessions.
+**Speaker Mentoring Courses:** Our two speaker mentoring courses provided additional support and guidance for the speakers. The courses covered topics such as preparing and delivering presentations, as well as how to handle Q&amp;A sessions.
 
-**Low-Cost Conference: **The conference was made accessible to as many people as possible, by keeping the cost as low as possible. This reflects our commitment to affordability and accessibility, which are core values of our organisation.
+**Low-Cost Conference:** The conference was made accessible to as many people as possible, by keeping the cost as low as possible. This reflects our commitment to affordability and accessibility, which are core values of our organisation.
 
-**Streamed Content: **The entire conference was streamed live to Youtube for attendees that couldn’t make it to the venue on the day. The recordings were available the following day, allowing people to review the sessions immediately following the conference.
+**Streamed Content:** The entire conference was streamed live to Youtube for attendees that couldn’t make it to the venue on the day. The recordings were available the following day, allowing people to review the sessions immediately following the conference.
 
 ### Challenges and Opportunities:
 
-**Waitlisted Participants: **While we were pleased with the high level of interest in the conference, we were unable to accommodate all the attendees due to space constraints. This highlights the need for us to explore alternative venues or expand the conference in other ways, including our online offering.
+**Waitlisted Participants:** While we were pleased with the high level of interest in the conference, we were unable to accommodate all the attendees due to space constraints. This highlights the need for us to explore alternative venues or expand the conference in other ways, including our online offering.
 
 **Online Speakers Mentoring Course:** Despite the success of our in-person speaker mentoring course in the past, we received feedback that not everyone was able to attend in person, and just as 2020 has seen the rise of more flexible working, this was a trend we saw continuing. As such, we plan to continue offering an online speaker mentoring course in the future to make the support and guidance more accessible.
 
