@@ -218,7 +218,7 @@ const StandaloneEventImportantDateBox: FC<{
 }
 
 function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
-    return Math.floor(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
+    return Math.ceil(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
 }
 
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
