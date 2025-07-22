@@ -13,7 +13,8 @@ const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
 })
-const sessionsCache = new LRUCache<string, z.infer<typeof sessionsSchema>>({
+
+const sessionsCache = new LRUCache<string, SessionsList>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
     ttl: 1000 * 5, // 5 mins
@@ -32,7 +33,6 @@ const speakersCache = new LRUCache<string, z.infer<typeof speakersSchema>>({
 
 interface Options {
     sessionizeEndpoint: string
-    confTimeZone: string
     noCache?: boolean
 }
 
@@ -102,6 +102,8 @@ export const sessionsSchema = z.array(
     }),
 )
 
+export type SessionsList = z.infer<typeof sessionsSchema>[number]['sessions']
+
 export const speakersSchema = z.array(
     z.object({
         id: z.string().uuid(),
@@ -163,7 +165,7 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
     return schedule
 }
 
-export async function getConfSessions(opts: Options): Promise<z.infer<typeof sessionsSchema>> {
+export async function getConfSessions(opts: Options): Promise<SessionsList> {
     const { noCache = NO_CACHE ?? false } = opts
     if (!noCache) {
         const cached = sessionsCache.get(opts.sessionizeEndpoint)
@@ -189,12 +191,19 @@ export async function getConfSessions(opts: Options): Promise<z.infer<typeof ses
     }
 
     const sessions = sessionsSchema.parse(json)
+    const allSessionsGroup = sessions.find((s) => s.groupName === 'All')
 
-    if (!noCache) {
-        sessionsCache.set(opts.sessionizeEndpoint, sessions)
+    if (!allSessionsGroup) {
+        throw new Error(
+            'Error fetching sessions. Expected a group named "All", received:\n\n' + JSON.stringify(json, null, 2),
+        )
     }
 
-    return sessions
+    if (!noCache) {
+        sessionsCache.set(opts.sessionizeEndpoint, allSessionsGroup.sessions)
+    }
+
+    return allSessionsGroup.sessions
 }
 
 export async function getConfSpeakers(opts: Options): Promise<z.infer<typeof speakersSchema>> {
@@ -229,6 +238,38 @@ export async function getConfSpeakers(opts: Options): Promise<z.infer<typeof spe
     }
 
     return speakers
+}
+
+export async function getUnderrepresentedGroups(
+    opts: Options & { underrepresentedGroupsQuestionId: number },
+): Promise<string[]> {
+    const speakers = await getConfSpeakers(opts)
+
+    const groups = new Set<string>()
+
+    for (const speaker of speakers) {
+        const group = getSpeakerUnderrepresentedGroup(speaker, opts.underrepresentedGroupsQuestionId)
+        if (group) {
+            groups.add(group)
+        }
+    }
+
+    return Array.from(groups).sort()
+}
+
+export function getSpeakerUnderrepresentedGroup(
+    speaker: z.infer<typeof speakersSchema>[number],
+    underrepresentedGroupsQuestionId: number,
+): string | undefined {
+    const questionAnswer = speaker.questionAnswers?.find((qa) => qa.id === underrepresentedGroupsQuestionId)
+    if (questionAnswer?.answer && typeof questionAnswer.answer === 'string') {
+        const answer = questionAnswer.answer.trim()
+        if (answer.length > 0) {
+            return answer
+        }
+    }
+
+    return undefined
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {

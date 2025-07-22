@@ -15,6 +15,7 @@ export interface ValidationRunIndex {
 
 export interface TalkStatistics {
     partitionKey: 'talk_stats'
+    // TODO Move the runId into the partitionKey after 2025
     rowKey: `${string}_talk_${string}` // {runId}_talk_{talkId}
     runId: string
     talkId: string
@@ -96,12 +97,17 @@ export interface TalkStatsAccumulator {
 }
 
 // Response types for API endpoints
-export interface StartValidationResponse {
-    success: boolean
-    runId?: string
-    error?: string
+export interface StartValidationResponseSuccess {
+    success: true
+    runId: string
+    message?: string
+}
+export interface StartValidationResponseError {
+    success: false
+    error: string
     alreadyRunning?: boolean
 }
+export type StartValidationResponse = StartValidationResponseSuccess | StartValidationResponseError
 
 export interface ValidationRunProgress {
     runId: string
@@ -185,4 +191,45 @@ export interface TalkStatisticsWithDetailsResponse extends TalkStatisticsRespons
         v3?: FairnessMetrics
         v4?: FairnessMetrics
     }
+}
+
+export interface VoteResult {
+    partitionKey: `vote_result_${string}` // vote_result_{runId}
+    rowKey: `${string}_${string}` // `${session.sessionId}_${vote.originalVoteRecord.rowKey}`
+    a: string // sessionize ID of talk A
+    b: string // sessionize ID of talk B
+    vote: 'a' | 'b' | 'skip'
+    timestamp: string
+}
+
+export interface TalkResult {
+    partitionKey: `talk_result_${string}` // talk_result_{runId}
+    rowKey: string // rank index padded to 4 digits for sorting, e.g., "0001", "0002"
+    runId: string
+    talkId: string // sessionize ID
+    rank: number
+    wins: number
+    totalVotes: number
+    losses: number
+    winPct: number
+    lossPct: number
+    uploadedAt: string
+}
+
+export interface EloResultImport {
+    id: string
+    rank: number
+    wins: number
+    totalVotes: number
+    losses: number
+    winPct: number
+    lossPct: number
+}
+
+export interface UnderrepresentedGroupsConfig {
+    partitionKey: 'ddd'
+    rowKey: 'underrepresented_groups'
+    selectedGroupsJson: string // JSON array of selected group names
+    lastUpdatedAt: string
+    lastUpdatedYear: string // Track which year made the last update
 }

@@ -13,6 +13,7 @@ export const conference2022: ConferenceYear = {
         kind: 'sessionize',
         sessionizeEndpoint: 'https://sessionize.com/api/v2/2uxzbaxa',
         allSessionsEndpoint: undefined,
+        underrepresentedGroupsQuestionId: undefined,
     },
 
     agendaPublishedDateTime: undefined,

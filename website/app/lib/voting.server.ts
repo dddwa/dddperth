@@ -1,14 +1,18 @@
 import type { GetTableEntityResponse, TableClient, TableServiceClient } from '@azure/data-tables'
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { FairPairingGeneratorV4 } from './pairing-generator-v4'
 import { recordException } from './record-exception'
 import type { SessionId } from './session.server'
 import { votingStorage } from './session.server'
 import { getConfSessions } from './sessionize.server'
 import type { VotingBatchData } from './voting-api-types'
-import { CURRENT_SESSION_VERSION, CURRENT_VOTE_VERSION, type CurrentSessionVersion, type CurrentVoteVersion } from './voting-version-constants'
+import {
+    CURRENT_SESSION_VERSION,
+    CURRENT_VOTE_VERSION,
+    type CurrentSessionVersion,
+    type CurrentVoteVersion,
+} from './voting-version-constants'
 
 export interface TalkPair {
     index: number
@@ -557,29 +561,26 @@ export async function getVotingBatchExplicit(
 }
 
 export async function getSessionsForVoting(allSessionsEndpoint: string) {
-    const sessionGroups = await getConfSessions({
+    const sessions = await getConfSessions({
         sessionizeEndpoint: allSessionsEndpoint,
-        confTimeZone: conferenceConfigPublic.timezone,
     })
 
     // Filter out service sessions and extract regular sessions
     const regularSessions: TalkVotingData[] = []
-    for (const group of sessionGroups) {
-        for (const session of group.sessions) {
-            if (!session.isServiceSession && !session.isPlenumSession) {
-                regularSessions.push({
-                    id: session.id,
-                    title: session.title,
-                    description: session.description,
-                    tags: session.categories.reduce((tags, category) => {
-                        if (category.name === 'General Topic Category' || category.name === 'Talk Topics') {
-                            return tags.concat(category.categoryItems.map((item) => item.name))
-                        }
+    for (const session of sessions) {
+        if (!session.isServiceSession && !session.isPlenumSession) {
+            regularSessions.push({
+                id: session.id,
+                title: session.title,
+                description: session.description,
+                tags: session.categories.reduce((tags, category) => {
+                    if (category.name === 'General Topic Category' || category.name === 'Talk Topics') {
+                        return tags.concat(category.categoryItems.map((item) => item.name))
+                    }
 
-                        return tags
-                    }, [] as string[]),
-                })
-            }
+                    return tags
+                }, [] as string[]),
+            })
         }
     }
 

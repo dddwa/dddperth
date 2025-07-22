@@ -3,11 +3,15 @@ import { trace } from '@opentelemetry/api'
 import { recordException } from './record-exception'
 import { batchReconstructVoteContexts, removeVotesOnDuplicatedTalksInRound } from './voting-reconstruction.server'
 import type {
+    EloResultImport,
     FairnessMetrics,
     FairnessMetricsRecord,
+    TalkResult,
     TalkStatistics,
     TalkStatsAccumulator,
+    UnderrepresentedGroupsConfig,
     ValidationRunIndex,
+    VoteResult,
     VotingValidationGlobal,
 } from './voting-validation-types'
 import type { TalkVotingData, VoteRecord, VotingSession } from './voting.server'
@@ -213,6 +217,9 @@ export async function processVotingSession(
                 const mappedVotes = batchReconstructVoteContexts(allVotes, session, sessionTalks)
                 const cleanedVotes = removeVotesOnDuplicatedTalksInRound(mappedVotes)
 
+                // Collect vote results to save later
+                const voteResults: VoteResult[] = []
+
                 // Process each vote using pre-computed contexts
                 for (const vote of cleanedVotes) {
                     const leftTalk = vote.pair.left
@@ -224,7 +231,21 @@ export async function processVotingSession(
                     if (vote.roundNumber >= totalRounds) {
                         totalRounds = vote.roundNumber + 1
                     }
+
+                    // Create vote result for storage
+                    const voteResult: VoteResult = {
+                        partitionKey: `vote_result_${runId}`,
+                        rowKey: `${session.sessionId}_${vote.originalVoteRecord.rowKey}`,
+                        a: leftTalk.id,
+                        b: rightTalk.id,
+                        vote: vote.vote === 'A' ? 'a' : vote.vote === 'B' ? 'b' : 'skip',
+                        timestamp: vote.timestamp,
+                    }
+                    voteResults.push(voteResult)
                 }
+
+                // Save vote results in batches
+                await saveVoteResults(votesTableClient, voteResults)
             } catch (error: any) {
                 // If no votes exist for this session, that's okay, just continue
                 if (error.statusCode !== 404) {
@@ -346,6 +367,23 @@ function updateTalkStats(
     // Update specific version stats
     const versionKey = `V${sessionVersion}` as const
     applyVoteUpdate(leftStats, rightStats, vote, versionKey)
+}
+
+// Save vote results in batches
+async function saveVoteResults(votesTableClient: TableClient, voteResults: VoteResult[]): Promise<void> {
+    return trace.getTracer('default').startActiveSpan('saveVoteResults', async (span) => {
+        try {
+            // Save in batches of 20
+            const batchSize = 20
+            for (let i = 0; i < voteResults.length; i += batchSize) {
+                const batch = voteResults.slice(i, i + batchSize)
+                const promises = batch.map((voteResult) => votesTableClient.createEntity(voteResult))
+                await Promise.all(promises)
+            }
+        } finally {
+            span.end()
+        }
+    })
 }
 
 // Save accumulated talk statistics
@@ -695,6 +733,135 @@ export async function getTalkStatistics(votesTableClient: TableClient, runId: st
         if (error.statusCode === 404) {
             return []
         }
+        throw error
+    }
+}
+
+export async function getVoteResults(votesTableClient: TableClient, runId: string): Promise<VoteResult[]> {
+    try {
+        const votesQuery = votesTableClient.listEntities<VoteResult>({
+            queryOptions: {
+                filter: `PartitionKey eq 'vote_result_${runId}'`,
+            },
+        })
+
+        const votes: VoteResult[] = []
+        for await (const vote of votesQuery) {
+            votes.push(vote)
+        }
+
+        return votes
+    } catch (error: any) {
+        // If table doesn't exist or no votes exist for this run, return empty array
+        if (error.statusCode === 404) {
+            return []
+        }
+        throw error
+    }
+}
+
+export async function saveTalkResults(
+    votesTableClient: TableClient,
+    runId: string,
+    results: EloResultImport[],
+): Promise<void> {
+    return trace.getTracer('default').startActiveSpan('saveTalkResults', async (span) => {
+        try {
+            const timestamp = new Date().toISOString()
+
+            // Ensure results are sorted by rank
+            results.sort((a, b) => a.rank - b.rank)
+
+            // Save new results
+            const talkResults: TalkResult[] = results.map((result, index) => ({
+                partitionKey: `talk_result_${runId}`,
+                rowKey: index.toString().padStart(4, '0'),
+                runId,
+                talkId: result.id,
+                rank: result.rank,
+                wins: result.wins,
+                totalVotes: result.totalVotes,
+                losses: result.losses,
+                winPct: result.winPct,
+                lossPct: result.lossPct,
+                uploadedAt: timestamp,
+            }))
+
+            // Save in batches
+            const batchSize = 20
+            for (let i = 0; i < talkResults.length; i += batchSize) {
+                const batch = talkResults.slice(i, i + batchSize)
+                const promises = batch.map((result) => votesTableClient.createEntity(result))
+                await Promise.all(promises)
+            }
+        } finally {
+            span.end()
+        }
+    })
+}
+
+export async function getTalkResults(votesTableClient: TableClient, runId: string): Promise<TalkResult[]> {
+    try {
+        const resultsQuery = votesTableClient.listEntities<TalkResult>({
+            queryOptions: {
+                filter: `PartitionKey eq 'talk_result_${runId}'`,
+            },
+        })
+
+        const results: TalkResult[] = []
+        for await (const result of resultsQuery) {
+            results.push(result)
+        }
+
+        // Sort by rank (rowKey is already padded for sorting)
+        results.sort((a, b) => a.rank - b.rank)
+
+        return results
+    } catch (error: any) {
+        // If table doesn't exist or no results exist for this run, return empty array
+        if (error.statusCode === 404) {
+            return []
+        }
+        throw error
+    }
+}
+
+export async function getUnderrepresentedGroupsConfig(votesTableClient: TableClient): Promise<string[]> {
+    try {
+        const partitionKey: UnderrepresentedGroupsConfig['partitionKey'] = 'ddd'
+        const rowKey: UnderrepresentedGroupsConfig['rowKey'] = 'underrepresented_groups'
+        const entity: UnderrepresentedGroupsConfig = await votesTableClient.getEntity(partitionKey, rowKey)
+
+        return JSON.parse(entity.selectedGroupsJson)
+    } catch (error: any) {
+        if (error.statusCode === 404) {
+            return []
+        }
+        recordException(error)
+        throw error
+    }
+}
+
+export async function saveUnderrepresentedGroupsConfig(
+    votesTableClient: TableClient,
+    year: string,
+    selectedGroups: string[],
+): Promise<void> {
+    try {
+        const partitionKey: UnderrepresentedGroupsConfig['partitionKey'] = 'ddd'
+        const rowKey: UnderrepresentedGroupsConfig['rowKey'] = 'underrepresented_groups'
+
+        const entity: UnderrepresentedGroupsConfig = {
+            partitionKey,
+            rowKey,
+            selectedGroupsJson: JSON.stringify(selectedGroups.sort()),
+            lastUpdatedAt: new Date().toISOString(),
+            lastUpdatedYear: year,
+        }
+
+        await votesTableClient.upsertEntity(entity, 'Replace')
+    } catch (error: any) {
+        recordException(error)
         throw error
     }
 }

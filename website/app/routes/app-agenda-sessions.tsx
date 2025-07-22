@@ -1,9 +1,6 @@
 import { data } from 'react-router'
-import type { TypeOf } from 'zod'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { sessionsSchema } from '~/lib/sessionize.server'
 import { getConfSessions } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-sessions'
 
@@ -18,25 +15,20 @@ export async function loader({ context }: Route.LoaderArgs) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
-    const sessions: TypeOf<typeof sessionsSchema> =
+    const sessions =
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
 
     const patchedSessions = sessions.map((session) => {
-        const groupSessions = session.sessions.map((inner) => {
-            if (inner.isServiceSession) {
-                // We need to override the room for service sessions
-                inner.room = 'Level 3'
-            }
+        if (session.isServiceSession) {
+            // We need to override the room for service sessions
+            session.room = 'Level 3'
+        }
 
-            return inner
-        })
-
-        return { ...session, sessions: groupSessions }
+        return session
     })
 
     return data(patchedSessions, {

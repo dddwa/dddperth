@@ -15,6 +15,7 @@ export const conference2025: ConferenceYear = {
         kind: 'sessionize',
         allSessionsEndpoint: SESSIONIZE_2025_ALL_SESSIONS,
         sessionizeEndpoint: 'https://sessionize.com/api/v2/vhwwzm15',
+        underrepresentedGroupsQuestionId: 102438,
     },
 
     conferenceDate: DateTime.fromISO('2025-09-20T09:00:00', {

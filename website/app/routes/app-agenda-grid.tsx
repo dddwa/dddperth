@@ -1,6 +1,5 @@
 import { data } from 'react-router'
 import type { TypeOf } from 'zod'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridSmartSchema } from '~/lib/sessionize.server'
@@ -22,7 +21,6 @@ export async function loader({ context }: Route.LoaderArgs) {
         yearConfig.sessions?.kind === 'sessionize'
             ? await getScheduleGrid({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : // TODO Deal with data type
               []

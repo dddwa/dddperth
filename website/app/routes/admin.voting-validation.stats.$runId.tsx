@@ -1,13 +1,20 @@
 import { DateTime } from 'luxon'
 import { useState } from 'react'
-import { useLoaderData } from 'react-router'
+import { useFetcher, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
-import type { TalkStatisticsWithDetailsResponse, ValidationRunIndex } from '~/lib/voting-validation-types'
-import { getFairnessMetrics, getTalkStatistics } from '~/lib/voting-validation.server'
+import { getYearConfig } from '~/lib/get-year-config.server'
+import { getConfSessions } from '~/lib/sessionize.server'
+import type {
+    EloResultImport,
+    TalkResult,
+    TalkStatisticsWithDetailsResponse,
+    ValidationRunIndex,
+} from '~/lib/voting-validation-types'
+import { getFairnessMetrics, getTalkResults, getTalkStatistics, saveTalkResults } from '~/lib/voting-validation.server'
 import { ensureVotesTableExists } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting-validation.stats.$runId'
@@ -18,6 +25,17 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     const { runId } = params
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
+
+    const yearConfig = getYearConfig(year)
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+    const sessionizeConfig = yearConfig.sessions
 
     // Ensure the votes table exists
     const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
@@ -119,14 +137,110 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     // Sort by aggregated win rate descending
     talks.sort((a, b) => b.stats.aggregated.winRate - a.stats.aggregated.winRate)
 
-    const response: TalkStatisticsWithDetailsResponse = {
+    // Get talk results if available
+    const talkResults = await getTalkResults(tableClient, runId)
+
+    type SessionizeTalks = Array<{
+        id: string
+        title: string
+        speakers: {
+            id: string
+            name: string
+        }[]
+    }>
+
+    // Get sessionize data if we have results
+    let sessionizeTalks: SessionizeTalks | null = null
+
+    if (talkResults.length > 0) {
+        const sessions = await getConfSessions({
+            sessionizeEndpoint: sessionizeConfig.sessionizeEndpoint,
+        })
+
+        sessionizeTalks = sessions.map((session) => ({
+            id: session.id,
+            title: session.title,
+            speakers: session.speakers,
+        }))
+    }
+
+    const response: TalkStatisticsWithDetailsResponse & {
+        talkResults: TalkResult[]
+        sessionizeTalks: SessionizeTalks | null
+    } = {
         runId,
         talks,
         runDetails,
         fairnessMetrics,
+        talkResults,
+        sessionizeTalks,
     }
 
     return response
+}
+
+export async function action({ request, params, context }: Route.ActionArgs) {
+    await requireAdmin(request)
+
+    const { runId } = params
+    const conferenceState = context.conferenceState
+    const year = conferenceState.conference.year
+
+    const yearConfig = getYearConfig(year)
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+    const sessionizeConfig = yearConfig.sessions
+
+    // Ensure the votes table exists
+    const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+
+    const formData = await request.formData()
+    const intent = formData.get('intent')
+
+    if (intent === 'upload') {
+        const file = formData.get('file') as File
+        if (!file || file.size === 0) {
+            throw new Error('No file uploaded')
+        }
+
+        const content = await file.text()
+        const results: EloResultImport[] = JSON.parse(content)
+
+        // Validate the format
+        if (!Array.isArray(results) || results.length === 0) {
+            throw new Error('Invalid file format: expected an array of results')
+        }
+
+        // Validate each result has required fields
+        for (const result of results) {
+            if (
+                typeof result.id !== 'string' ||
+                typeof result.rank !== 'number' ||
+                typeof result.wins !== 'number' ||
+                typeof result.totalVotes !== 'number' ||
+                typeof result.losses !== 'number' ||
+                typeof result.winPct !== 'number' ||
+                typeof result.lossPct !== 'number'
+            ) {
+                throw new Error(
+                    'Invalid result format: missing required fields (id, rank, wins, totalVotes, losses, winPct, lossPct)',
+                )
+            }
+        }
+
+        // Save the results
+        await saveTalkResults(tableClient, runId, results)
+
+        return { success: true }
+    }
+
+    throw new Error('Invalid intent')
 }
 
 type SortField = 'title' | 'seen' | 'win'
@@ -134,10 +248,11 @@ type SortDirection = 'asc' | 'desc'
 type VersionFilter = 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'
 
 export default function VotingValidationStats() {
-    const { runId, talks, runDetails, fairnessMetrics } = useLoaderData<typeof loader>()
+    const { runId, talks, runDetails, fairnessMetrics, talkResults, sessionizeTalks } = useLoaderData<typeof loader>()
     const [sortField, setSortField] = useState<SortField>('win')
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
     const [versionFilter, setVersionFilter] = useState<VersionFilter>('aggregated')
+    const uploadFetcher = useFetcher()
 
     // Get stats for the selected version
     const getStatsForVersion = (talk: (typeof talks)[0]) => {
@@ -194,15 +309,18 @@ export default function VotingValidationStats() {
     }
 
     // Calculate overall statistics for the selected version
-    const versionStats = talks.map(t => getStatsForVersion(t))
-    const totalVotesForVersion = versionStats.reduce((sum, stats) => sum + stats.votedFor + stats.votedAgainst + stats.skipped, 0)
-    const talksWithVotes = versionStats.filter(stats => stats.timesSeen > 0).length
-    
+    const versionStats = talks.map((t) => getStatsForVersion(t))
+    const totalVotesForVersion = versionStats.reduce(
+        (sum, stats) => sum + stats.votedFor + stats.votedAgainst + stats.skipped,
+        0,
+    )
+    const talksWithVotes = versionStats.filter((stats) => stats.timesSeen > 0).length
+
     const overallStats = {
         totalSeen: versionStats.reduce((sum, stats) => sum + stats.timesSeen, 0),
         avgSeen: talks.length > 0 ? versionStats.reduce((sum, stats) => sum + stats.timesSeen, 0) / talks.length : 0,
-        minSeen: talks.length > 0 ? Math.min(...versionStats.map(stats => stats.timesSeen)) : 0,
-        maxSeen: talks.length > 0 ? Math.max(...versionStats.map(stats => stats.timesSeen)) : 0,
+        minSeen: talks.length > 0 ? Math.min(...versionStats.map((stats) => stats.timesSeen)) : 0,
+        maxSeen: talks.length > 0 ? Math.max(...versionStats.map((stats) => stats.timesSeen)) : 0,
         totalVotesForVersion,
         talksWithVotes,
     }
@@ -269,7 +387,7 @@ export default function VotingValidationStats() {
                                         {runDetails.status}
                                     </styled.span>
                                 </styled.p>
-                                
+
                                 <Flex gap="6" direction={{ base: 'column', md: 'row' }} mt="3">
                                     <Box flex="1">
                                         <styled.p fontSize="sm" color="gray.600" mb="1">
@@ -279,7 +397,7 @@ export default function VotingValidationStats() {
                                             {runDetails.processedSessions}/{runDetails.totalSessions}
                                         </styled.p>
                                     </Box>
-                                    
+
                                     <Box flex="1">
                                         <styled.p fontSize="sm" color="gray.600" mb="1">
                                             Total Rounds
@@ -288,7 +406,7 @@ export default function VotingValidationStats() {
                                             {runDetails.totalRounds}
                                         </styled.p>
                                     </Box>
-                                    
+
                                     <Box flex="1">
                                         <styled.p fontSize="sm" color="gray.600" mb="1">
                                             Total Votes
@@ -301,23 +419,215 @@ export default function VotingValidationStats() {
                             </>
                         )}
                     </Box>
-                    <AppLink
-                        to="/admin/voting"
-                        display="inline-block"
-                        bg="gray.600"
-                        color="white"
-                        py="2"
-                        px="4"
-                        borderRadius="md"
-                        textDecoration="none"
-                        fontSize="sm"
-                        fontWeight="medium"
-                        _hover={{ bg: 'gray.700' }}
-                    >
-                        ← Back to Voting Admin
-                    </AppLink>
+                    <Flex gap="3" alignItems="center" flexWrap="wrap">
+                        <AppLink
+                            to={`/admin/voting-validation/stats/${runId}/download`}
+                            display="inline-block"
+                            py="2"
+                            px="4"
+                            color="prose.link"
+                            textDecoration="underline"
+                        >
+                            Export Votes JSON
+                        </AppLink>
+
+                        <uploadFetcher.Form method="post" encType="multipart/form-data">
+                            <input type="hidden" name="intent" value="upload" />
+                            <Flex gap="2" alignItems="center">
+                                <styled.input
+                                    type="file"
+                                    name="file"
+                                    accept=".json"
+                                    required
+                                    fontSize="sm"
+                                    p="1"
+                                    border="1px solid"
+                                    borderColor="gray.300"
+                                    borderRadius="md"
+                                />
+                                <Button
+                                    type="submit"
+                                    bg="green"
+                                    color="white"
+                                    _hover={{ bg: 'green.700' }}
+                                    disabled={uploadFetcher.state !== 'idle'}
+                                    size="sm"
+                                >
+                                    {uploadFetcher.state !== 'idle' ? 'Uploading...' : 'Import Results'}
+                                </Button>
+                            </Flex>
+                        </uploadFetcher.Form>
+
+                        <AppLink
+                            to="/admin/voting"
+                            display="inline-block"
+                            color="prose.link"
+                            textDecoration="underline"
+                            py="2"
+                            px="4"
+                            borderRadius="md"
+                            fontSize="sm"
+                            fontWeight="medium"
+                            _hover={{ bg: 'gray.700' }}
+                        >
+                            ← Back to Voting Admin
+                        </AppLink>
+                    </Flex>
                 </Flex>
             </AdminCard>
+
+            {talkResults.length > 0 && (
+                <AdminCard mb="6">
+                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                        ELO Ranking Results
+                    </styled.h2>
+
+                    <Box overflowX="auto">
+                        <styled.table width="100%" fontSize="sm">
+                            <thead>
+                                <tr>
+                                    <styled.th
+                                        textAlign="center"
+                                        p="2"
+                                        borderBottom="2px solid"
+                                        borderColor="gray.200"
+                                        width="60px"
+                                    >
+                                        Rank
+                                    </styled.th>
+                                    <styled.th textAlign="left" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                        Talk Title
+                                    </styled.th>
+                                    <styled.th textAlign="left" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                        Speaker(s)
+                                    </styled.th>
+                                    <styled.th
+                                        textAlign="center"
+                                        p="2"
+                                        borderBottom="2px solid"
+                                        borderColor="gray.200"
+                                        width="80px"
+                                    >
+                                        Wins
+                                    </styled.th>
+                                    <styled.th
+                                        textAlign="center"
+                                        p="2"
+                                        borderBottom="2px solid"
+                                        borderColor="gray.200"
+                                        width="80px"
+                                    >
+                                        Losses
+                                    </styled.th>
+                                    <styled.th
+                                        textAlign="center"
+                                        p="2"
+                                        borderBottom="2px solid"
+                                        borderColor="gray.200"
+                                        width="80px"
+                                    >
+                                        Total
+                                    </styled.th>
+                                    <styled.th
+                                        textAlign="center"
+                                        p="2"
+                                        borderBottom="2px solid"
+                                        borderColor="gray.200"
+                                        width="80px"
+                                    >
+                                        Win %
+                                    </styled.th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {talkResults.map((result) => {
+                                    const sessionizeTalk = sessionizeTalks?.find((talk) => talk.id === result.talkId)
+                                    return (
+                                        <tr key={result.talkId}>
+                                            <styled.td
+                                                textAlign="center"
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                fontWeight="semibold"
+                                                bg={result.rank <= 3 ? 'yellow.50' : 'transparent'}
+                                            >
+                                                #{result.rank}
+                                            </styled.td>
+                                            <styled.td
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                maxW="400px"
+                                            >
+                                                <styled.div
+                                                    overflow="hidden"
+                                                    textOverflow="ellipsis"
+                                                    whiteSpace="nowrap"
+                                                    title={sessionizeTalk?.title || result.talkId}
+                                                    fontWeight="medium"
+                                                >
+                                                    {sessionizeTalk?.title || `Talk ${result.talkId}`}
+                                                </styled.div>
+                                            </styled.td>
+                                            <styled.td
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                fontSize="xs"
+                                                color="gray.600"
+                                            >
+                                                {sessionizeTalk?.speakers.map((speaker) => speaker.name).join(', ') ||
+                                                    'Unknown Speaker'}
+                                            </styled.td>
+                                            <styled.td
+                                                textAlign="center"
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                color="green.700"
+                                            >
+                                                {result.wins}
+                                            </styled.td>
+                                            <styled.td
+                                                textAlign="center"
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                color="red.700"
+                                            >
+                                                {result.losses}
+                                            </styled.td>
+                                            <styled.td
+                                                textAlign="center"
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                            >
+                                                {result.totalVotes}
+                                            </styled.td>
+                                            <styled.td
+                                                textAlign="center"
+                                                p="2"
+                                                borderBottom="1px solid"
+                                                borderColor="gray.100"
+                                                fontWeight="semibold"
+                                                color={result.winPct > 50 ? 'green.700' : 'inherit'}
+                                            >
+                                                {(result.winPct * 100).toFixed(1)}%
+                                            </styled.td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </styled.table>
+                    </Box>
+
+                    <styled.p fontSize="sm" color="gray.600" mt="4">
+                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted.
+                    </styled.p>
+                </AdminCard>
+            )}
 
             <AdminCard>
                 <Flex justifyContent="space-between" alignItems="center" mb="4">
@@ -352,7 +662,8 @@ export default function VotingValidationStats() {
                 {fairnessMetrics[versionFilter] && (
                     <>
                         <styled.h3 fontSize="lg" fontWeight="semibold" mb="3" mt="6">
-                            Distribution Metrics ({versionFilter === 'aggregated' ? 'All Versions' : versionFilter.toUpperCase()})
+                            Distribution Metrics (
+                            {versionFilter === 'aggregated' ? 'All Versions' : versionFilter.toUpperCase()})
                         </styled.h3>
 
                         <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="4">
@@ -408,7 +719,9 @@ export default function VotingValidationStats() {
                                 <styled.p
                                     fontSize="lg"
                                     fontWeight="medium"
-                                    color={fairnessMetrics[versionFilter].isDistributionUniform ? 'green.700' : 'red.700'}
+                                    color={
+                                        fairnessMetrics[versionFilter].isDistributionUniform ? 'green.700' : 'red.700'
+                                    }
                                 >
                                     {fairnessMetrics[versionFilter].isDistributionUniform ? 'Uniform' : 'Non-uniform'}
                                 </styled.p>
@@ -416,8 +729,8 @@ export default function VotingValidationStats() {
                         </Flex>
 
                         <styled.p fontSize="sm" color="gray.600" mb="6">
-                            <strong>Interpretation:</strong> Lower Gini coefficient and CV indicate fairer distribution. A
-                            Gini coefficient below 0.2 suggests good fairness, while above 0.4 indicates significant
+                            <strong>Interpretation:</strong> Lower Gini coefficient and CV indicate fairer distribution.
+                            A Gini coefficient below 0.2 suggests good fairness, while above 0.4 indicates significant
                             inequality.
                         </styled.p>
                     </>
