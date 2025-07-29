@@ -232,7 +232,12 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         }
 
         const content = await file.text()
-        const results: EloResultImport[] = JSON.parse(content)
+        let results: EloResultImport[]
+        try {
+            results = JSON.parse(content)
+        } catch (error) {
+            throw new Error('Invalid JSON format in the uploaded file')
+        }
 
         // Validate the format
         if (!Array.isArray(results) || results.length === 0) {
