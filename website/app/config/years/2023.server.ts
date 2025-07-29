@@ -14,6 +14,7 @@ export const conference2023: ConferenceYear = {
         kind: 'sessionize',
         sessionizeEndpoint: 'https://sessionize.com/api/v2/54hwhbiw',
         allSessionsEndpoint: undefined,
+        underrepresentedGroupsQuestionId: undefined,
     },
 
     agendaPublishedDateTime: undefined,

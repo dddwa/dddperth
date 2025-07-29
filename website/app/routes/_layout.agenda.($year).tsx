@@ -35,7 +35,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         conferenceYearConfig?.sessions?.kind === 'sessionize'
             ? await getScheduleGrid({
                   sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : // TODO Deal with data type
               []

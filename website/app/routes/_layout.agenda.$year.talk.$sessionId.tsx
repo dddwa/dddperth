@@ -4,12 +4,11 @@ import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { conferenceConfig } from '~/config/conference-config.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { sessionsSchema, speakersSchema } from '~/lib/sessionize.server'
+import type { speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
@@ -25,16 +24,14 @@ export async function loader({ params: { year, sessionId } }: Route.LoaderArgs) 
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
-    const sessions: TypeOf<typeof sessionsSchema> =
+    const sessions =
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
 
-    const allGroup = sessions[0]
-    const session = allGroup?.sessions.find((session) => session.id === sessionId)
+    const session = sessions.find((session) => session.id === sessionId)
     if (!session) {
         throw new Response(JSON.stringify({ message: 'No session found' }), { status: 404 })
     }
@@ -43,7 +40,6 @@ export async function loader({ params: { year, sessionId } }: Route.LoaderArgs) 
         yearConfig.sessions?.kind === 'sessionize'
             ? await getConfSpeakers({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-                  confTimeZone: conferenceConfigPublic.timezone,
               })
             : []
     const talkSpeakers = session.speakers

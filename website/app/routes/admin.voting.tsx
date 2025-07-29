@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { useEffect } from 'react'
-import { data, Form, useActionData, useLoaderData, useNavigation, useRevalidator } from 'react-router'
+import { Form, useActionData, useLoaderData, useNavigation, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
@@ -8,15 +8,18 @@ import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
+import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
 import type { StartValidationResponse, VotingValidationGlobal } from '~/lib/voting-validation-types'
 import {
     canStartValidation,
+    getUnderrepresentedGroupsConfig,
     getValidationRuns,
     markValidationStarted,
     runVotingValidation,
+    saveUnderrepresentedGroupsConfig,
 } from '~/lib/voting-validation.server'
 import type { VotingGlobal } from '~/lib/voting.server'
-import { ensureVotesTableExists, getSessionsForVoting } from '~/lib/voting.server'
+import { ensureVotesTableExists, getSessionsForVoting, getVotesTableName } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
@@ -102,22 +105,94 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         recordException(error)
     }
 
+    // Get underrepresented groups data
+    let underrepresentedGroups: {
+        availableGroups: string[]
+        selectedGroups: string[]
+        error?: string
+    } = {
+        availableGroups: [],
+        selectedGroups: [],
+    }
+
+    try {
+        const yearConfig = getYearConfig(year)
+        if (
+            yearConfig.kind === 'conference' &&
+            yearConfig.sessions?.kind === 'sessionize' &&
+            yearConfig.sessions.underrepresentedGroupsQuestionId &&
+            yearConfig.sessions.allSessionsEndpoint
+        ) {
+            // Get groups from current year's Sessionize speakers
+            const currentYearGroups = await getUnderrepresentedGroups({
+                sessionizeEndpoint: yearConfig.sessions.allSessionsEndpoint,
+                underrepresentedGroupsQuestionId: yearConfig.sessions.underrepresentedGroupsQuestionId,
+            })
+
+            // Get currently selected groups from table storage (accumulated from all years)
+            const tableName = getVotesTableName(year)
+            const selectedGroups = await getUnderrepresentedGroupsConfig(context.getTableClient(tableName))
+
+            // Combine all groups (existing config + current year) and remove duplicates
+            const allAvailableGroups = Array.from(new Set([...selectedGroups, ...currentYearGroups])).sort()
+
+            underrepresentedGroups = {
+                availableGroups: allAvailableGroups,
+                selectedGroups: selectedGroups,
+            }
+        }
+    } catch (error: any) {
+        console.error('Error fetching underrepresented groups:', error)
+        underrepresentedGroups.error = 'Failed to load underrepresented groups data'
+        recordException(error)
+    }
+
     return {
         votingState: conferenceState.talkVoting.state,
         conferenceState,
         sessionCount,
         validationRuns,
+        underrepresentedGroups,
     }
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
+export async function action({
+    request,
+    context,
+}: Route.ActionArgs): Promise<
+    { success: true; message: string } | { success: false; error: string } | StartValidationResponse
+> {
     await requireAdmin(request)
+
+    const formData = await request.formData()
+    const intent = formData.get('intent')
 
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
     // Ensure the votes table exists
     const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+
+    // Handle underrepresented groups update
+    if (intent === 'update_underrepresented_groups') {
+        try {
+            const selectedGroups: string[] = []
+            for (const [key, value] of formData.entries()) {
+                if (key.startsWith('group_') && value === 'on') {
+                    const groupName = key.slice(6) // Remove 'group_' prefix
+                    selectedGroups.push(decodeURIComponent(groupName))
+                }
+            }
+
+            await saveUnderrepresentedGroupsConfig(tableClient, year, selectedGroups)
+
+            return { success: true, message: 'Underrepresented groups updated successfully' }
+        } catch (error: any) {
+            console.error('Error updating underrepresented groups:', error)
+            recordException(error)
+            return { success: false, error: 'Failed to update underrepresented groups' }
+        }
+    }
 
     try {
         // Check if validation can be started
@@ -129,42 +204,33 @@ export async function action({ request, context }: Route.ActionArgs) {
                 error: canStart.reason || 'Cannot start validation',
                 alreadyRunning: true,
             }
-            return data(response, { status: 409 })
+            return response
         }
 
         // Get current talks
         const yearConfig = getYearConfig(context.conferenceState.conference.year)
 
         if (yearConfig.kind === 'cancelled') {
-            return data<StartValidationResponse>(
-                {
-                    success: false,
-                    error: 'Conference cancelled this year',
-                },
-                { status: 404 },
-            )
+            return {
+                success: false,
+                error: 'Conference cancelled this year',
+            }
         }
 
         if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
-            return data<StartValidationResponse>(
-                {
-                    success: false,
-                    error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
-                },
-                { status: 404 },
-            )
+            return {
+                success: false,
+                error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
+            }
         }
 
         const talks = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
 
         if (talks.length === 0) {
-            return data<StartValidationResponse>(
-                {
-                    success: false,
-                    error: 'No talks available for validation',
-                },
-                { status: 400 },
-            )
+            return {
+                success: false,
+                error: 'No talks available for validation',
+            }
         }
 
         // Generate run ID
@@ -189,18 +255,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     } catch (error) {
         console.error('Error starting validation:', error)
 
-        return data<StartValidationResponse>(
-            {
-                success: false,
-                error: 'Failed to start validation process',
-            },
-            { status: 500 },
-        )
+        return {
+            success: false,
+            error: 'Failed to start validation process',
+        }
     }
 }
 
 export default function AdminVoting() {
-    const { votingState, conferenceState, sessionCount, validationRuns } = useLoaderData<typeof loader>()
+    const { votingState, conferenceState, sessionCount, validationRuns, underrepresentedGroups } =
+        useLoaderData<typeof loader>()
     const revalidator = useRevalidator()
     const navigation = useNavigation()
     const actionData = useActionData<typeof action>()
@@ -347,6 +411,86 @@ export default function AdminVoting() {
                 )}
             </AdminCard>
 
+            {underrepresentedGroups.availableGroups.length > 0 && (
+                <AdminCard mb="6">
+                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                        Underrepresented Groups Configuration
+                    </styled.h2>
+
+                    {underrepresentedGroups.error && (
+                        <styled.p color="red.600" mb="4">
+                            Error: {underrepresentedGroups.error}
+                        </styled.p>
+                    )}
+
+                    {actionData?.success && actionData?.message && (
+                        <styled.p color="green.600" mb="4">
+                            {actionData.message}
+                        </styled.p>
+                    )}
+
+                    {actionData?.success === false && actionData?.error && (
+                        <styled.p color="red.600" mb="4">
+                            Error: {actionData.error}
+                        </styled.p>
+                    )}
+
+                    <Form method="post">
+                        <input type="hidden" name="intent" value="update_underrepresented_groups" />
+
+                        <Box mb="4">
+                            <styled.p fontSize="sm" fontWeight="medium" mb="3">
+                                Available Groups ({underrepresentedGroups.availableGroups.length} found):
+                            </styled.p>
+
+                            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap="2">
+                                {underrepresentedGroups.availableGroups.map((group) => {
+                                    const isSelected = underrepresentedGroups.selectedGroups.includes(group)
+                                    const fieldName = `group_${encodeURIComponent(group)}`
+
+                                    return (
+                                        <Flex
+                                            key={group}
+                                            alignItems="center"
+                                            gap="2"
+                                            p="2"
+                                            borderRadius="md"
+                                            _hover={{ bg: 'gray.50' }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                id={fieldName}
+                                                name={fieldName}
+                                                defaultChecked={isSelected}
+                                            />
+                                            <styled.label htmlFor={fieldName} fontSize="sm" cursor="pointer" flex="1">
+                                                {group}
+                                            </styled.label>
+                                        </Flex>
+                                    )
+                                })}
+                            </Box>
+                        </Box>
+
+                        <Flex gap="4" alignItems="center">
+                            <Button
+                                type="submit"
+                                disabled={navigation.state === 'submitting'}
+                                variant="solid"
+                                size="sm"
+                            >
+                                {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
+                            </Button>
+
+                            <styled.span fontSize="sm" color="gray.600">
+                                {underrepresentedGroups.selectedGroups.length} of{' '}
+                                {underrepresentedGroups.availableGroups.length} groups selected
+                            </styled.span>
+                        </Flex>
+                    </Form>
+                </AdminCard>
+            )}
+
             <AdminCard mb="6">
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
                     Voting Validation
@@ -377,11 +521,11 @@ export default function AdminVoting() {
                     )}
                 </Flex>
 
-                {actionData?.error && (
+                {!actionData?.success && actionData?.error ? (
                     <styled.p color="red.600" mb="4">
                         Error: {actionData.error}
                     </styled.p>
-                )}
+                ) : null}
 
                 {validationRuns.runs.length > 0 && (
                     <Box>

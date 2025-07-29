@@ -4,6 +4,8 @@ export interface SessionizeConferenceSessions {
     sessionizeEndpoint: string
 
     allSessionsEndpoint: string | undefined
+
+    underrepresentedGroupsQuestionId: number | undefined
 }
 
 export interface SessionData {
