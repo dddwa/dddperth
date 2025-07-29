@@ -7,14 +7,14 @@ import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { getConfSessions } from '~/lib/sessionize.server'
+import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
 import type {
     EloResultImport,
     TalkResult,
     TalkStatisticsWithDetailsResponse,
     ValidationRunIndex,
 } from '~/lib/voting-validation-types'
-import { getFairnessMetrics, getTalkResults, getTalkStatistics, saveTalkResults } from '~/lib/voting-validation.server'
+import { getFairnessMetrics, getTalkResults, getTalkStatistics, saveTalkResults, getUnderrepresentedGroupsConfig } from '~/lib/voting-validation.server'
 import { ensureVotesTableExists } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting-validation.stats.$runId'
@@ -151,6 +151,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
     // Get sessionize data if we have results
     let sessionizeTalks: SessionizeTalks | null = null
+    let talkToSpeakerIds: Map<string, string[]> = new Map()
+    let speakerToUnderrepresented: Map<string, boolean> = new Map()
 
     if (talkResults.length > 0) {
         const sessions = await getConfSessions({
@@ -162,11 +164,40 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             title: session.title,
             speakers: session.speakers,
         }))
+
+        // Get speakers data for underrepresented group checking
+        const speakers = await getConfSpeakers({
+            sessionizeEndpoint: sessionizeConfig.sessionizeEndpoint,
+        })
+
+        // Get underrepresented groups configuration
+        const underrepresentedGroups = await getUnderrepresentedGroupsConfig(tableClient)
+
+        // Create a map of talk ID to speaker IDs
+        sessions.forEach((session) => {
+            talkToSpeakerIds.set(
+                session.id,
+                session.speakers.map((s) => s.id),
+            )
+        })
+
+        // Create a map of speaker ID to underrepresented status
+        const underrepresentedGroupQuestionId = sessionizeConfig.underrepresentedGroupsQuestionId
+
+        if (underrepresentedGroupQuestionId) {
+            speakers.forEach((speaker) => {
+                const group = getSpeakerUnderrepresentedGroup(speaker, underrepresentedGroupQuestionId)
+                const isUnderrepresented = group ? underrepresentedGroups.includes(group) : false
+                speakerToUnderrepresented.set(speaker.id, isUnderrepresented)
+            })
+        }
     }
 
     const response: TalkStatisticsWithDetailsResponse & {
         talkResults: TalkResult[]
         sessionizeTalks: SessionizeTalks | null
+        talkToSpeakerIds: Record<string, string[]>
+        speakerToUnderrepresented: Record<string, boolean>
     } = {
         runId,
         talks,
@@ -174,6 +205,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         fairnessMetrics,
         talkResults,
         sessionizeTalks,
+        talkToSpeakerIds: Object.fromEntries(talkToSpeakerIds),
+        speakerToUnderrepresented: Object.fromEntries(speakerToUnderrepresented),
     }
 
     return response
@@ -185,17 +218,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     const { runId } = params
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
-
-    const yearConfig = getYearConfig(year)
-
-    if (yearConfig.kind === 'cancelled') {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-
-    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-    const sessionizeConfig = yearConfig.sessions
 
     // Ensure the votes table exists
     const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
@@ -248,11 +270,19 @@ type SortDirection = 'asc' | 'desc'
 type VersionFilter = 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'
 
 export default function VotingValidationStats() {
-    const { runId, talks, runDetails, fairnessMetrics, talkResults, sessionizeTalks } = useLoaderData<typeof loader>()
+    const { runId, talks, runDetails, fairnessMetrics, talkResults, sessionizeTalks, talkToSpeakerIds, speakerToUnderrepresented } = useLoaderData<typeof loader>()
     const [sortField, setSortField] = useState<SortField>('win')
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
     const [versionFilter, setVersionFilter] = useState<VersionFilter>('aggregated')
     const uploadFetcher = useFetcher()
+
+    // Helper function to check if a talk has speakers from underrepresented groups
+    const hasSpeakerFromUnderrepresentedGroup = (talkId: string): boolean => {
+        const speakerIds = talkToSpeakerIds[talkId]
+        if (!speakerIds) return false
+        
+        return speakerIds.some(speakerId => speakerToUnderrepresented[speakerId] === true)
+    }
 
     // Get stats for the selected version
     const getStatsForVersion = (talk: (typeof talks)[0]) => {
@@ -420,8 +450,8 @@ export default function VotingValidationStats() {
                         )}
                     </Box>
                     <Flex gap="3" alignItems="center" flexWrap="wrap">
-                        <AppLink
-                            to={`/admin/voting-validation/stats/${runId}/download`}
+                        <styled.a
+                            href={`/admin/voting-validation/stats/${runId}/download`}
                             display="inline-block"
                             py="2"
                             px="4"
@@ -429,7 +459,7 @@ export default function VotingValidationStats() {
                             textDecoration="underline"
                         >
                             Export Votes JSON
-                        </AppLink>
+                        </styled.a>
 
                         <uploadFetcher.Form method="post" encType="multipart/form-data">
                             <input type="hidden" name="intent" value="upload" />
@@ -540,8 +570,26 @@ export default function VotingValidationStats() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {talkResults.map((result) => {
+                                {talkResults
+                                    .sort((a, b) => {
+                                        // Primary sort: by rank (ascending)
+                                        if (a.rank !== b.rank) {
+                                            return a.rank - b.rank
+                                        }
+                                        
+                                        // Secondary sort (tie-breaker): underrepresented group status (true first)
+                                        const aHasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(a.talkId)
+                                        const bHasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(b.talkId)
+                                        
+                                        if (aHasUnderrepresented && !bHasUnderrepresented) return -1
+                                        if (!aHasUnderrepresented && bHasUnderrepresented) return 1
+                                        
+                                        // Tertiary sort: by talkId for consistent ordering
+                                        return a.talkId.localeCompare(b.talkId)
+                                    })
+                                    .map((result) => {
                                     const sessionizeTalk = sessionizeTalks?.find((talk) => talk.id === result.talkId)
+                                    const hasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(result.talkId)
                                     return (
                                         <tr key={result.talkId}>
                                             <styled.td
@@ -579,6 +627,21 @@ export default function VotingValidationStats() {
                                             >
                                                 {sessionizeTalk?.speakers.map((speaker) => speaker.name).join(', ') ||
                                                     'Unknown Speaker'}
+                                                {hasUnderrepresented && (
+                                                    <styled.span 
+                                                        ml="2" 
+                                                        px="2" 
+                                                        py="1" 
+                                                        bg="blue.100" 
+                                                        color="blue.800" 
+                                                        borderRadius="sm" 
+                                                        fontSize="xs"
+                                                        fontWeight="medium"
+                                                        title="Speaker from underrepresented group"
+                                                    >
+                                                        URG
+                                                    </styled.span>
+                                                )}
                                             </styled.td>
                                             <styled.td
                                                 textAlign="center"
@@ -624,7 +687,8 @@ export default function VotingValidationStats() {
                     </Box>
 
                     <styled.p fontSize="sm" color="gray.600" mt="4">
-                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted.
+                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted. 
+                        For talks with the same rank, speakers from underrepresented groups (URG) are prioritized.
                     </styled.p>
                 </AdminCard>
             )}

@@ -120,11 +120,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
-            yearConfig.sessions.underrepresentedGroupsQuestionId
+            yearConfig.sessions.underrepresentedGroupsQuestionId &&
+            yearConfig.sessions.allSessionsEndpoint
         ) {
             // Get groups from current year's Sessionize speakers
             const currentYearGroups = await getUnderrepresentedGroups({
-                sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
+                sessionizeEndpoint: yearConfig.sessions.allSessionsEndpoint,
                 underrepresentedGroupsQuestionId: yearConfig.sessions.underrepresentedGroupsQuestionId,
             })
 
@@ -415,13 +416,6 @@ export default function AdminVoting() {
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
                         Underrepresented Groups Configuration
                     </styled.h2>
-
-                    <styled.p color="gray.600" mb="4">
-                        Select which speaker groups should be considered underrepresented. This configuration
-                        accumulates over years - you'll see previously selected groups plus any new ones from this
-                        year's speakers. This helps filter out joke responses like "Old white dude" while preserving
-                        legitimate group identifications.
-                    </styled.p>
 
                     {underrepresentedGroups.error && (
                         <styled.p color="red.600" mb="4">
