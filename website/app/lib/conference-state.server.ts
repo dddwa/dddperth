@@ -238,14 +238,14 @@ function getTalkVotingForBeforeConference(
     if (!talkVotingDates) {
         return { state: 'closed' }
     }
-    
+
     if (currentDate < talkVotingDates.opens) {
         return { state: 'not-open-yet', opens: talkVotingDates.opens.toISO(), closes: talkVotingDates.closes.toISO() }
     }
-    
+
     if (currentDate < talkVotingDates.closes) {
         return { state: 'open', closes: talkVotingDates.closes.toISO() }
     }
-    
+
     return { state: 'closed' }
 }

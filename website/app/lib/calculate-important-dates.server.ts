@@ -59,6 +59,7 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
             },
         ]
     })
+
     const ticketReleasesFlat = ticketReleases.flat()
     importantDates.push(...ticketReleasesFlat)
 

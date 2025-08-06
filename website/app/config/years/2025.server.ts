@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '~/lib/config-types.server'
 
-import { SESSIONIZE_2025_ALL_SESSIONS } from '~/lib/config.server'
+import { SESSIONIZE_2025_ALL_SESSIONS, SESSIONIZE_2025_SESSIONS } from '~/lib/config.server'
 import { optusStadiumVenue } from '../venues/optus-stadium'
 
 export const conference2025: ConferenceYear = {
@@ -14,7 +14,7 @@ export const conference2025: ConferenceYear = {
     sessions: {
         kind: 'sessionize',
         allSessionsEndpoint: SESSIONIZE_2025_ALL_SESSIONS,
-        sessionizeEndpoint: 'https://sessionize.com/api/v2/vhwwzm15',
+        sessionizeEndpoint: SESSIONIZE_2025_SESSIONS,
         underrepresentedGroupsQuestionId: 102438,
     },
 
@@ -61,7 +61,7 @@ export const conference2025: ConferenceYear = {
                 opens: DateTime.fromISO('2025-05-01T00:00:00', {
                     zone: 'Australia/Perth',
                 }),
-                closes: DateTime.fromISO('2025-07-31T23:59:59', {
+                closes: DateTime.fromISO('2025-09-30T23:59:59', {
                     zone: 'Australia/Perth',
                 }),
             },

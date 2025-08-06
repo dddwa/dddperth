@@ -54,6 +54,8 @@ param titoSecurityToken string
 @secure()
 param sessionize2025AllSessions string
 @secure()
+param sessionize2025Sessions string
+@secure()
 param sessionSecret string
 
 
@@ -170,6 +172,7 @@ module ddd './app/ddd.bicep' = {
     eventsAirEventId: eventsAirEventId
     titoSecurityToken: titoSecurityToken
     sessionize2025AllSessions: sessionize2025AllSessions
+    sessionize2025Sessions: sessionize2025Sessions
     sessionSecret: sessionSecret
     storageAccountName: storageAccount.outputs.name
     storageAccountResourceId: storageAccount.outputs.resourceId
