@@ -32,6 +32,7 @@ param eventsAirEventId string
 param titoSecurityToken string
 @secure()
 param sessionize2025AllSessions string
+param sessionize2025Sessions string
 param storageAccountName string
 param storageAccountResourceId string
 
@@ -175,6 +176,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             name: 'sessionize-2025-all-sessions'
             value: sessionize2025AllSessions
         }
+        {
+            name: 'sessionize-2025-sessions'
+            value: sessionize2025Sessions
+        }
       ]
     }
     template: {
@@ -258,6 +263,10 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
                 name: 'SESSIONIZE_2025_ALL_SESSIONS'
                 secretRef: 'sessionize-2025-all-sessions'
+            }
+            {
+                name: 'SESSIONIZE_2025_SESSIONS'
+                secretRef: 'sessionize-2025-sessions'
             }
             {
                 name: 'AZURE_STORAGE_ACCOUNT_NAME'

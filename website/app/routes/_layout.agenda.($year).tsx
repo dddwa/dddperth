@@ -32,7 +32,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
 
     const schedules: TypeOf<typeof gridSmartSchema> =
-        conferenceYearConfig?.sessions?.kind === 'sessionize'
+        conferenceYearConfig?.sessions?.kind === 'sessionize' && context.conferenceState.agenda === 'published'
             ? await getScheduleGrid({
                   sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
               })

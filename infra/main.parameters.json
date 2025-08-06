@@ -84,6 +84,9 @@
         "sessionize2025AllSessions": {
             "value": "${SESSIONIZE_2025_ALL_SESSIONS}"
         },
+        "sessionize2025Sessions": {
+            "value": "${SESSIONIZE_2025_SESSIONS}"
+        },
         "sessionSecret": {
             "value": "${SESSION_SECRET}"
         }
