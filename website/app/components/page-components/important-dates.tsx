@@ -184,7 +184,10 @@ const StandaloneEventImportantDateBox: FC<{
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
 
                 {daysLeft === 0 ? (
-                    <EventLink smallSidebar={smallSidebar} message="Today!" />
+                    <EventLink
+                        smallSidebar={smallSidebar}
+                        message={currentDate.hasSame(eventDateTime, 'day') ? 'Today!' : 'Tomorrow!'}
+                    />
                 ) : (
                     <EventCountdown smallSidebar={smallSidebar} daysLeft={daysLeft} />
                 )}
