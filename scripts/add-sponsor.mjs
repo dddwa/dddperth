@@ -707,7 +707,7 @@ function getHTML() {
             <div id="logo-variants-grid" class="logo-variants-grid"></div>
             <div class="modal-actions">
                 <button class="btn" onclick="useExistingLogos()">✅ Use Existing Logos</button>
-                <button class="btn" onclick="needNewLogos()" style="background: #orange;">🔄 Need New Logos</button>
+                <button class="btn" onclick="needNewLogos()" style="background: orange;">🔄 Need New Logos</button>
                 <button onclick="closeLogoModal()" style="background: #666;">❌ Cancel</button>
             </div>
         </div>
