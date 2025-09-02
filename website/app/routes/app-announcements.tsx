@@ -1,4 +1,3 @@
-import { data } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 
 export interface GoogleFormUpdates {
@@ -50,15 +49,16 @@ export async function loader() {
     //     })
     // }
 
-    return data(
-        [
+    return new Response(
+        JSON.stringify([
             {
                 createdTime: new Date().toISOString(),
                 update: 'Get your 2024 Yearbook from the Info Desk!',
             },
-        ],
+        ]),
         {
             headers: {
+                'Content-Type': 'application/json',
                 'Cache-Control': CACHE_CONTROL.announce,
                 'Access-Control-Allow-Origin': '*',
             },

@@ -5,11 +5,11 @@ import { AdminOverlay } from '~/components/admin-overlay'
 import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
+import { ContentPageLayout } from '~/components/page-layout'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getUser, isAdmin } from '~/lib/auth.server'
 import { WEB_URL } from '~/lib/config.server' // Ensure this path is correct
 import { adminDateTimeSessionStorage } from '~/lib/session.server'
-import { Box, Flex } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout'
 
 export async function loader({ context, request }: Route.LoaderArgs) {
@@ -153,19 +153,9 @@ export function ErrorBoundary() {
         <div>
             <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} />
 
-            <Flex
-                position="relative"
-                bgGradient="to-b"
-                gradientFrom="#070727"
-                gradientToPosition="99%"
-                gradientTo="#0E0E43"
-                w="100%"
-                color="white"
-            >
-                <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
-                    <ErrorPage />
-                </Box>
-            </Flex>
+            <ContentPageLayout>
+                <ErrorPage />
+            </ContentPageLayout>
             <Footer />
             <Acknowledgement />
         </div>

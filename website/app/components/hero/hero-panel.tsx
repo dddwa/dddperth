@@ -4,6 +4,7 @@ import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { HeaderContainer } from '../page-layout'
 
 export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
     const { scrollY } = useScroll()
@@ -29,7 +30,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                 gap: '24',
             }}
         >
-            <Box maxW="1200px" ml={{ base: 6, md: 12, lg: 24 }}>
+            <HeaderContainer>
                 {conferenceDate ? (
                     <styled.h2
                         color="#8282FB"
@@ -64,7 +65,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                 >
                     A one day, fully inclusive, approachable and affordable tech conference for everyone.
                 </styled.h1>
-            </Box>
+            </HeaderContainer>
             <Box
                 width="full"
                 position="relative"

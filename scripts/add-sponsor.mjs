@@ -30,7 +30,7 @@ const print = {
 }
 
 const config = {
-    port: 3801,
+    port: 3802,
     appName: 'DDD Perth Sponsor Management',
 }
 
@@ -144,7 +144,7 @@ async function getSponsorsByYear(year) {
                                 const quoteInit = quoteProperty.getInitializer()
                                 if (quoteInit && quoteInit.getText) {
                                     const quoteText = quoteInit.getText().replace(/['"]/g, '')
-                                    sponsor.quote = (quoteText && quoteText !== 'undefined') ? quoteText : ''
+                                    sponsor.quote = quoteText && quoteText !== 'undefined' ? quoteText : ''
                                 }
                             }
 
@@ -439,30 +439,7 @@ async function addSponsorToConfig(year, tier, sponsorObj) {
         try {
             await fs.access(configPath)
         } catch {
-            // Create basic config file if it doesn't exist
-            const basicConfig = `import { DateTime } from 'luxon'
-import type { ConferenceYear } from '~/lib/config-types.server'
-
-export const conference${year}: ConferenceYear = {
-    kind: 'conference',
-    year: '${year}',
-    venue: null, // TODO: Set venue
-
-    conferenceDate: DateTime.fromISO('${year}-11-16'), // TODO: Set actual date
-
-    sponsors: {
-        platinum: [],
-        gold: [],
-        silver: [],
-        digital: [],
-        bronze: [],
-        community: [],
-        room: [],
-    },
-}
-`
-            await fs.writeFile(configPath, basicConfig)
-            print.info(`Created new config file: ${configPath}`)
+            throw new Error('Config file does not exist: ' + configPath)
         }
 
         const sourceFile = project.addSourceFileAtPath(configPath)
@@ -503,13 +480,27 @@ export const conference${year}: ConferenceYear = {
 
         // Find the tier array
         let tierProperty = sponsorsInitializer.getProperty(tier)
+        let tierInitializer = null
+        
         if (!tierProperty) {
-            print.error(`Could not find ${tier} tier in sponsors config`)
-            return false
+            // Tier doesn't exist, create it
+            print.info(`Tier ${tier} doesn't exist, creating it...`)
+            
+            // Add the new tier property with an empty array
+            const currentText = sponsorsInitializer.getText()
+            const newText = currentText.replace(/\{/, `{\n        ${tier}: [],`)
+            sponsorsInitializer.replaceWithText(newText)
+            
+            // Re-fetch the property after adding it
+            tierProperty = sponsorsInitializer.getProperty(tier)
+            if (!tierProperty) {
+                print.error(`Failed to create ${tier} tier in sponsors config`)
+                return false
+            }
         }
 
         // Get the array initializer
-        const tierInitializer = tierProperty
+        tierInitializer = tierProperty
             .getChildren()
             .find((child) => child.getKindName() === 'ArrayLiteralExpression')
 
@@ -521,10 +512,10 @@ export const conference${year}: ConferenceYear = {
         // Create the sponsor object string with proper escaping
         const escapedName = sponsorObj.name.replace(/'/g, "\\'")
         const escapedWebsite = sponsorObj.website.replace(/'/g, "\\'")
-        const escapedQuote = sponsorObj.quote 
+        const escapedQuote = sponsorObj.quote
             ? sponsorObj.quote.replace(/'/g, "\\'").replace(/\r?\n/g, '\\n').replace(/\t/g, '\\t')
             : ''
-        
+
         const sponsorString = `{
                 name: '${escapedName}',
                 website: '${escapedWebsite}',
@@ -544,6 +535,152 @@ export const conference${year}: ConferenceYear = {
         return true
     } catch (error) {
         print.error(`Error adding sponsor to config: ${error.message}`)
+        return false
+    }
+}
+
+// Function to update sponsor logo URLs in TypeScript config file
+async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, logoUrlLightMode) {
+    try {
+        const { Project } = await import('ts-morph')
+        const project = new Project()
+
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+
+        // Check if config file exists
+        try {
+            await fs.access(configPath)
+        } catch {
+            throw new Error('Config file does not exist: ' + configPath)
+        }
+
+        const sourceFile = project.addSourceFileAtPath(configPath)
+
+        // Find the conference object
+        const conferenceVar = sourceFile.getVariableDeclaration(`conference${year}`)
+        if (!conferenceVar) {
+            print.error(`Could not find conference${year} variable in config`)
+            return false
+        }
+
+        const initializer = conferenceVar.getInitializer()
+        if (!initializer || !initializer.getKind) {
+            print.error('Could not find conference initializer')
+            return false
+        }
+
+        // Find the sponsors property
+        let sponsorsProperty = null
+        if (initializer.getKindName() === 'ObjectLiteralExpression') {
+            sponsorsProperty = initializer.getProperty('sponsors')
+        }
+
+        if (!sponsorsProperty) {
+            print.error('Could not find sponsors property in config')
+            return false
+        }
+
+        // Get the sponsors object
+        const sponsorsInitializer = sponsorsProperty
+            .getChildren()
+            .find((child) => child.getKindName() === 'ObjectLiteralExpression')
+
+        if (!sponsorsInitializer) {
+            print.error('Could not find sponsors object initializer')
+            return false
+        }
+
+        // Search through all tier arrays to find the sponsor
+        const tiers = [
+            'platinum',
+            'gold',
+            'silver',
+            'standard',
+            'bronze',
+            'community',
+            'coffee',
+            'keynote',
+            'afterparty',
+            'service',
+        ]
+        let sponsorFound = false
+        let sponsorTier = null
+
+        for (const tier of tiers) {
+            const tierProperty = sponsorsInitializer.getProperty(tier)
+            if (!tierProperty) continue
+
+            const tierInitializer = tierProperty
+                .getChildren()
+                .find((child) => child.getKindName() === 'ArrayLiteralExpression')
+
+            if (!tierInitializer) continue
+
+            // Get the current text and check if sponsor exists in this tier
+            const tierText = tierInitializer.getText()
+            const escapedName = sponsorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const sponsorRegex = new RegExp(`{[^}]*name:\\s*['"\`]${escapedName}['"\`][^}]*}`, 's')
+
+            if (sponsorRegex.test(tierText)) {
+                sponsorFound = true
+                sponsorTier = tier
+
+                // Update the sponsor's logo URLs
+                const updatedText = tierText.replace(sponsorRegex, (match) => {
+                    // Update logoUrlDarkMode
+                    let updated = match.replace(
+                        /logoUrlDarkMode:\s*['"`][^'"`]*['"`]/,
+                        `logoUrlDarkMode: '${logoUrlDarkMode}'`,
+                    )
+                    // Update logoUrlLightMode
+                    updated = updated.replace(
+                        /logoUrlLightMode:\s*['"`][^'"`]*['"`]/,
+                        `logoUrlLightMode: '${logoUrlLightMode}'`,
+                    )
+                    return updated
+                })
+
+                tierInitializer.replaceWithText(updatedText)
+                break
+            }
+        }
+
+        if (!sponsorFound) {
+            // Try to provide more helpful information about what sponsors exist
+            const foundSponsors = []
+            for (const tier of tiers) {
+                const tierProperty = sponsorsInitializer.getProperty(tier)
+                if (tierProperty) {
+                    const tierInitializer = tierProperty
+                        .getChildren()
+                        .find((child) => child.getKindName() === 'ArrayLiteralExpression')
+                    if (tierInitializer) {
+                        const tierText = tierInitializer.getText()
+                        // Extract sponsor names from this tier
+                        const nameMatches = tierText.matchAll(/name:\s*['"`]([^'"`]+)['"`]/g)
+                        for (const match of nameMatches) {
+                            foundSponsors.push(`${match[1]} (${tier})`)
+                        }
+                    }
+                }
+            }
+            
+            print.error(`Could not find sponsor "${sponsorName}" in any tier for year ${year}`)
+            if (foundSponsors.length > 0) {
+                print.info(`Found sponsors in ${year} config:`)
+                foundSponsors.forEach(s => print.info(`  - ${s}`))
+                print.info(`Note: sponsor names are case-sensitive`)
+            }
+            return false
+        }
+
+        // Save the file
+        await sourceFile.save()
+
+        print.info(`Successfully updated logo URLs for ${sponsorName} in ${sponsorTier} sponsors (${year})`)
+        return true
+    } catch (error) {
+        print.error(`Error updating sponsor logo in config: ${error.message}`)
         return false
     }
 }
@@ -587,6 +724,11 @@ function getHTML() {
         .sponsor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; background: #f9f9f9; padding: 20px; border-radius: 0 0 4px 4px; }
         .sponsor-card { background: white; padding: 15px; border-radius: 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .sponsor-logo { max-width: 100%; max-height: 60px; object-fit: contain; }
+        .update-logo-btn {
+            margin-top: 10px; padding: 6px 12px; background: #007cba; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
+        .update-logo-btn:hover { background: #005a87; }
         .tabs { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
         .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
         .tab.active { border-bottom-color: #007cba; color: #007cba; font-weight: 500; }
@@ -864,6 +1006,7 @@ function getHTML() {
                                     '<img src="' + logoUrl + '" alt="' + sponsor.name + '" class="sponsor-logo" onerror="this.style.display=\\\'none\\\'">' +
                                     '<h4>' + sponsor.name + '</h4>' +
                                     (sponsor.website ? '<a href="' + sponsor.website + '" target="_blank" style="font-size: 12px;">Visit Website</a>' : '') +
+                                    '<button class="update-logo-btn" onclick="updateSponsorLogo(\\\'' + sponsor.name + '\\\', \\\'' + year + '\\\')">🔄 Update Logo</button>' +
                                 '</div>';
                         }
 
@@ -921,7 +1064,7 @@ function getHTML() {
                             year: sponsor.year || '',
                             tier: sponsor.tier || ''
                         };
-                        
+
                         const logoUrl = cleanSponsor.logoUrlLightMode || cleanSponsor.logoUrlDarkMode || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjEwIiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCI+Tm8gTG9nbzwvdGV4dD48L3N2Zz4=';
                         html +=
                             '<div class="search-result" onclick="previewSponsorLogos(' + JSON.stringify(cleanSponsor).replace(/"/g, '&quot;') + ')">' +
@@ -1081,6 +1224,121 @@ function getHTML() {
                 document.getElementById('sponsor-results').innerHTML = '';
             }
         });
+
+        // Function to update sponsor logo
+        async function updateSponsorLogo(sponsorName, year) {
+            console.log('updateSponsorLogo called:', sponsorName, year);
+
+            // Check if sponsor has existing logo files
+            try {
+                const response = await fetch('/api/check-logo/' + year + '/' + encodeURIComponent(sponsorName));
+
+                if (!response.ok) {
+                    throw new Error('Failed to check logos: ' + response.status);
+                }
+
+                const result = await response.json();
+                console.log('Logo check result:', result);
+
+                if (result.existingLogos && result.existingLogos.length > 0) {
+                    // Show existing logo options with choice to reprocess or upload new
+                    const choice = confirm(
+                        'Found ' + result.existingLogos.length + ' existing logo files for ' + sponsorName + ' (' + year + ')\\n\\n' +
+                        'Click OK to reprocess existing logo with new approach\\n' +
+                        'Click Cancel to upload a completely new logo'
+                    );
+
+                    if (choice) {
+                        // Reprocess existing logo
+                        await reprocessExistingLogo(sponsorName, year, result.existingLogos[0]);
+                    } else {
+                        // Allow uploading new logo - prefill form and switch to Add tab
+                        prefillSponsorForm(sponsorName, year);
+                        showTab('add');
+                        showNotification('Switched to Add Sponsor tab. Form pre-filled for ' + sponsorName + ' (' + year + ')', 'info');
+                    }
+                } else {
+                    // No existing logo, switch to Add tab and prefill
+                    showNotification('No existing logos found for ' + sponsorName + ' (' + year + '). Opening Add Sponsor tab.', 'info');
+                    prefillSponsorForm(sponsorName, year);
+                    showTab('add');
+                }
+            } catch (error) {
+                console.error('Error checking logos:', error);
+                showNotification('Error checking existing logos: ' + error.message + '. Opening Add Sponsor tab.', 'error');
+                // Fallback to prefill form
+                prefillSponsorForm(sponsorName, year);
+                showTab('add');
+            }
+        }
+
+        // Helper function to show notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007cba';
+            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: ' + bgColor + '; color: white; padding: 15px; border-radius: 5px; z-index: 9999; max-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 4000);
+        }
+
+        // Function to reprocess existing logo
+        async function reprocessExistingLogo(sponsorName, year, existingLogo) {
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #007cba; color: white; padding: 15px; border-radius: 5px; z-index: 9999;';
+            statusDiv.textContent = 'Reprocessing ' + sponsorName + ' logo...';
+            document.body.appendChild(statusDiv);
+
+            try {
+                const response = await fetch('/api/reprocess-logo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sponsorName: sponsorName,
+                        year: year,
+                        existingLogo: existingLogo
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusDiv.style.background = '#28a745';
+                    statusDiv.textContent = '✅ Logo reprocessed successfully!';
+                    setTimeout(() => {
+                        document.body.removeChild(statusDiv);
+                        loadSponsors(); // Refresh the view
+                    }, 2000);
+                } else {
+                    statusDiv.style.background = '#dc3545';
+                    statusDiv.textContent = '❌ Error: ' + (result.error || 'Unknown error');
+                    setTimeout(() => document.body.removeChild(statusDiv), 4000);
+                }
+            } catch (error) {
+                statusDiv.style.background = '#dc3545';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                setTimeout(() => document.body.removeChild(statusDiv), 4000);
+            }
+        }
+
+        // Function to prefill sponsor form
+        function prefillSponsorForm(sponsorName, year) {
+            document.getElementById('name').value = sponsorName;
+            document.getElementById('year').value = year;
+
+            // Clear any existing search results
+            document.getElementById('sponsor-results').innerHTML = '';
+            document.getElementById('sponsor-search').value = '';
+        }
 
         // Load sponsors on page load
         window.addEventListener('load', () => {
@@ -1321,13 +1579,13 @@ const server = http.createServer(async (req, res) => {
 
                     // Generate sponsor object
                     const sponsorNameSlug = name.toLowerCase().replace(/\s+/g, '-')
-                    
+
                     // Determine correct file extension
                     let ext = 'svg' // default
                     if (logos && files.logo) {
                         ext = files.logo.filename.endsWith('.svg') ? 'svg' : 'png'
                     }
-                    
+
                     const sponsorObj = {
                         name: name,
                         website: website || '',
@@ -1375,6 +1633,171 @@ const server = http.createServer(async (req, res) => {
                             config: sponsorObj,
                         }),
                     )
+                } catch (error) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify({ success: false, error: error.message }))
+                }
+            })
+        } else if (pathname.startsWith('/api/check-logo/') && method === 'GET') {
+            // Check for existing logos: /api/check-logo/2025/MakerX
+            const pathParts = pathname.split('/')
+            const year = pathParts[3]
+            const sponsorName = decodeURIComponent(pathParts[4])
+
+            const sponsorNameSlug = sponsorName.toLowerCase().replace(/\s+/g, '-')
+            const variants = ['light', 'dark']
+            const extensions = ['svg', 'png']
+            const existing = []
+
+            for (const ext of extensions) {
+                const filename = `${year}-${sponsorNameSlug}.${ext}`
+                const filepath = path.join(SPONSORS_DIR, filename)
+                try {
+                    await fs.access(filepath)
+                    existing.push({ extension: ext, filename, filepath })
+                } catch {
+                    console.log(`No file: ${filepath}`)
+                    // File doesn't exist
+                }
+            }
+
+            for (const variant of variants) {
+                for (const ext of extensions) {
+                    const filename = `${year}-${sponsorNameSlug}-${variant}.${ext}`
+                    const filepath = path.join(SPONSORS_DIR, filename)
+                    try {
+                        await fs.access(filepath)
+                        existing.push({ variant, extension: ext, filename, filepath })
+                    } catch {
+                        console.log(`No file: ${filepath}`)
+                        // File doesn't exist
+                    }
+                }
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ existingLogos: existing }))
+        } else if (pathname === '/api/update-logo-config' && method === 'POST') {
+            // Update sponsor logo URLs in config file
+            let body = ''
+            req.on('data', (chunk) => {
+                body += chunk.toString()
+            })
+
+            req.on('end', async () => {
+                try {
+                    const { sponsorName, year, logoUrlDarkMode, logoUrlLightMode } = JSON.parse(body)
+
+                    if (!sponsorName || !year || !logoUrlDarkMode || !logoUrlLightMode) {
+                        throw new Error('Missing required fields: sponsorName, year, logoUrlDarkMode, logoUrlLightMode')
+                    }
+
+                    const updated = await updateSponsorLogoInConfig(
+                        year,
+                        sponsorName,
+                        logoUrlDarkMode,
+                        logoUrlLightMode,
+                    )
+
+                    if (updated) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' })
+                        res.end(
+                            JSON.stringify({
+                                success: true,
+                                message: `Successfully updated logo URLs for ${sponsorName} in ${year} config`,
+                            }),
+                        )
+                    } else {
+                        res.writeHead(400, { 'Content-Type': 'application/json' })
+                        res.end(
+                            JSON.stringify({
+                                success: false,
+                                error: `Failed to update config for ${sponsorName} in ${year}`,
+                            }),
+                        )
+                    }
+                } catch (error) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify({ success: false, error: error.message }))
+                }
+            })
+        } else if (pathname === '/api/reprocess-logo' && method === 'POST') {
+            // Reprocess existing logo
+            let body = ''
+            req.on('data', (chunk) => {
+                body += chunk.toString()
+            })
+
+            req.on('end', async () => {
+                try {
+                    const { sponsorName, year, existingLogo } = JSON.parse(body)
+
+                    // Read the existing logo file
+                    const logoBuffer = await fs.readFile(existingLogo.filepath)
+
+                    // Process it with the new two-step approach
+                    const result = await processLogo(logoBuffer, existingLogo.filename)
+                    console.log('Reprocess result:', result)
+                    if (result.success) {
+                        // Save the processed logos
+                        const sponsorNameSlug = sponsorName.toLowerCase().replace(/\s+/g, '-')
+                        const ext = existingLogo.extension
+
+                        const lightPath = path.join(SPONSORS_DIR, `${year}-${sponsorNameSlug}-light.${ext}`)
+                        const darkPath = path.join(SPONSORS_DIR, `${year}-${sponsorNameSlug}-dark.${ext}`)
+
+                        // Convert base64 back to buffer and save
+                        let lightBuffer, darkBuffer
+
+                        if (result.light && typeof result.light === 'string') {
+                            const lightBase64 = result.light.replace(/^data:image\/[^;]+;base64,/, '')
+                            lightBuffer = Buffer.from(lightBase64, 'base64')
+                        } else {
+                            throw new Error('Invalid light data received')
+                        }
+
+                        if (result.dark && typeof result.dark === 'string') {
+                            const darkBase64 = result.dark.replace(/^data:image\/[^;]+;base64,/, '')
+                            darkBuffer = Buffer.from(darkBase64, 'base64')
+                        } else {
+                            throw new Error('Invalid dark data received')
+                        }
+
+                        await fs.writeFile(lightPath, lightBuffer)
+                        await fs.writeFile(darkPath, darkBuffer)
+
+                        print.success(`Reprocessed logos for ${sponsorName} (${year})`)
+                        print.info(`Light mode: ${lightPath}`)
+                        print.info(`Dark mode: ${darkPath}`)
+
+                        // Update the config file with new logo URLs
+                        const logoUrlLightMode = `/images/sponsors/${year}-${sponsorNameSlug}-light.${ext}`
+                        const logoUrlDarkMode = `/images/sponsors/${year}-${sponsorNameSlug}-dark.${ext}`
+
+                        const configUpdated = await updateSponsorLogoInConfig(
+                            year,
+                            sponsorName,
+                            logoUrlDarkMode,
+                            logoUrlLightMode,
+                        )
+
+                        if (configUpdated) {
+                            print.success(`Updated config for ${sponsorName} with new logo URLs`)
+                        } else {
+                            print.warning(`Logo files saved but config update failed for ${sponsorName}`)
+                        }
+
+                        res.writeHead(200, { 'Content-Type': 'application/json' })
+                        res.end(
+                            JSON.stringify({
+                                success: true,
+                                message: 'Logo reprocessed successfully',
+                                configUpdated: configUpdated,
+                            }),
+                        )
+                    } else {
+                        throw new Error(result.error || 'Processing failed')
+                    }
                 } catch (error) {
                     res.writeHead(500, { 'Content-Type': 'application/json' })
                     res.end(JSON.stringify({ success: false, error: error.message }))

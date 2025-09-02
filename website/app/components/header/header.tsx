@@ -3,6 +3,7 @@ import { conferenceConfigPublic } from '~/config/conference-config-public'
 import Logo from '~/images/svg/logo.svg?react'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
+import { HeaderContainer } from '../page-layout'
 
 export function Header({
     cfpOpen,
@@ -15,71 +16,76 @@ export function Header({
 }) {
     return (
         <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" py={4}>
-            <Box w="100%" position="relative" maxW="1200px" m="0 auto">
-                <Box w="100%" position="relative">
-                    <Flex flexDir="row" justifyContent="space-between" alignItems="center">
-                        <Flex flexDir="row" justifyContent="flex-start" alignItems="flex-start" p={{ base: 4, md: 0 }}>
-                            <AppLink
-                                aria-label={`Visit the ${conferenceConfigPublic.name} homepage`}
-                                to={`/`}
-                                display="flex"
-                                justifyContent="flex-start"
-                                alignItems="center"
-                                ml={{ base: 4, md: 0 }}
-                                width={{ base: 110, md: 180 }}
-                            >
-                                <Logo />
-                            </AppLink>
-                        </Flex>
-                        <Flex
-                            flexDir="row"
+            <HeaderContainer>
+                <Grid
+                    gridTemplateAreas={{
+                        base: '"logo cta" "nav nav"',
+                        md: '"logo nav cta"',
+                    }}
+                    gridTemplateColumns={{
+                        base: '1fr auto',
+                        md: 'auto 1fr auto',
+                    }}
+                    gridTemplateRows={{
+                        base: 'auto auto',
+                        md: 'auto',
+                    }}
+                    gap={{ base: 4, md: 4 }}
+                    alignItems="center"
+                >
+                    {/* Logo */}
+                    <Box gridArea="logo">
+                        <AppLink
+                            aria-label={`Visit the ${conferenceConfigPublic.name} homepage`}
+                            to={`/`}
+                            display="flex"
+                            justifyContent="flex-start"
                             alignItems="center"
-                            fontSize={{ base: 'sm', md: 'md' }}
-                            gap={{ base: 4, md: 12 }}
-                            fontWeight={600}
+                            width={{ base: 110, md: 180 }}
                         >
-                            <Grid
-                                fontSize={{ base: 'sm', md: 'md' }}
-                                gap={{ base: 4, md: 12 }}
-                                fontWeight={600}
-                                gridTemplateRows={{
-                                    base: 'repeat(2, 1fr)',
-                                    md: 'repeat(1, 1fr)',
-                                }}
-                                gridTemplateColumns={{
-                                    base: 'repeat(2, 1fr)',
-                                    md: 'repeat(4, 1fr)',
-                                }}
-                            >
-                                <AppLink to="/sponsorship" variant="primary">
-                                    Sponsorship
-                                </AppLink>
-                                <AppLink to="/agenda" variant="primary">
-                                    Agenda
-                                </AppLink>
-                                <AppLink to="/about" variant="primary">
-                                    About
-                                </AppLink>
-                                <AppLink to="/team" variant="primary">
-                                    Team
-                                </AppLink>
-                            </Grid>
-                            {/* <AppLink href="/blog" color="white" _hover={{ color: '#8282FB' }}>
-                                Blog
-                            </AppLink> */}
-                            <styled.div gap={2} display="grid">
-                                {votingOpen ? (
-                                    <CtaLink to={$path('/voting')} label="Vote!" />
-                                ) : cfpOpen ? (
-                                    <CtaLink to={'/call-for-presentations'} label="Propose a Talk" />
-                                ) : ticketSalesOpen ? (
-                                    <CtaLink to={'/tickets'} label="Buy Tickets" />
-                                ) : null}
-                            </styled.div>
-                        </Flex>
+                            <Logo />
+                        </AppLink>
+                    </Box>
+
+                    {/* Navigation */}
+                    <Flex
+                        gridArea="nav"
+                        alignItems="center"
+                        justifyContent={{ base: 'center', md: 'center' }}
+                        flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                        gap={{ base: 4, md: 12 }}
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        fontWeight={600}
+                    >
+                        <AppLink to="/sponsorship" variant="primary">
+                            Sponsorship
+                        </AppLink>
+                        <AppLink to="/sponsors" variant="primary">
+                            Sponsors
+                        </AppLink>
+                        <AppLink to="/agenda" variant="primary">
+                            Agenda
+                        </AppLink>
+                        <AppLink to="/about" variant="primary">
+                            About
+                        </AppLink>
+                        <AppLink to="/team" variant="primary">
+                            Team
+                        </AppLink>
                     </Flex>
-                </Box>
-            </Box>
+
+                    {/* CTA */}
+                    <Box gridArea="cta" display="flex" justifyContent="flex-end">
+                        {votingOpen ? (
+                            <CtaLink to={$path('/voting')} label="Vote!" />
+                        ) : cfpOpen ? (
+                            <CtaLink to={'/call-for-presentations'} label="Propose a Talk" />
+                        ) : ticketSalesOpen ? (
+                            <CtaLink to={'/tickets'} label="Buy Tickets" />
+                        ) : null}
+                    </Box>
+                </Grid>
+            </HeaderContainer>
         </styled.header>
     )
 }
@@ -101,7 +107,7 @@ function CtaLink({ to, label, isExternal }: { to: string; label: string; isExter
             gap={2}
             px={{ base: 2, md: 4 }}
             py={2}
-            mr={4}
+            mr={{ base: 2, sm: 4 }}
             xl={{
                 mr: 0,
             }}

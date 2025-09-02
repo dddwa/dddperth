@@ -27,34 +27,34 @@ export const conference2018: ConferenceYear = {
         platinum: [
             {
                 name: 'Virtual Gaming Worlds',
-                logoUrlDarkMode: '/images/sponsors/vgw-2018.png',
-                logoUrlLightMode: '/images/sponsors/vgw-2018.png',
+                logoUrlDarkMode: '/images/sponsors/2018-virtual-gaming-worlds-dark.png',
+                logoUrlLightMode: '/images/sponsors/2018-virtual-gaming-worlds-light.png',
                 website: 'https://www.vgw.co/',
                 quote: undefined,
             },
         ],
         gold: [
-            {
-                name: 'Amazon Web Services',
-                logoUrlDarkMode: '/images/sponsors/2018-aws.png',
-                logoUrlLightMode: '/images/sponsors/2018-aws.png',
-                website: 'https://aws.amazon.com/',
-                quote: undefined,
-            },
-            {
-                name: 'Livehire',
-                logoUrlDarkMode: '/images/sponsors/2018-livehire.png',
-                logoUrlLightMode: '/images/sponsors/2018-livehire.png',
-                website: 'https://www.livehire.com/',
-                quote: undefined,
-            },
-            {
-                name: 'Microsoft',
-                logoUrlDarkMode: '/images/sponsors/2018-microsoft.png',
-                logoUrlLightMode: '/images/sponsors/2018-microsoft.png',
-                website: 'https://www.microsoft.com/',
-                quote: undefined,
-            },
-        ],
+                    {
+                        name: 'Amazon Web Services',
+                        logoUrlDarkMode: '/images/sponsors/2018-amazon-web-services-dark.svg',
+                        logoUrlLightMode: '/images/sponsors/2018-amazon-web-services-light.svg',
+                        website: 'https://aws.amazon.com/',
+                        quote: undefined,
+                    },
+                    {
+                        name: 'Livehire',
+                        logoUrlDarkMode: '/images/sponsors/2018-livehire-dark.png',
+                        logoUrlLightMode: '/images/sponsors/2018-livehire-light.png',
+                        website: 'https://www.livehire.com/',
+                        quote: undefined,
+                    },
+                    {
+                        name: 'Microsoft',
+                        logoUrlDarkMode: '/images/sponsors/2018-microsoft-dark.png',
+                        logoUrlLightMode: '/images/sponsors/2018-microsoft-light.png',
+                        website: 'https://www.microsoft.com/',
+                        quote: undefined,
+                    },
+                ],
     },
 }

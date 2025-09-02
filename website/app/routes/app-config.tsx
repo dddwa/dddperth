@@ -1,4 +1,3 @@
-import { data } from 'react-router'
 import type { YearSponsors } from '~/lib/conference-state-client-safe'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/app-config'
@@ -32,8 +31,9 @@ export function loader({ context }: Route.LoaderArgs) {
         },
     }
 
-    return data(appConfig, {
+    return new Response(JSON.stringify(appConfig), {
         headers: {
+            'Content-Type': 'application/json',
             'Cache-Control': CACHE_CONTROL.doc,
             'Access-Control-Allow-Origin': '*',
         },

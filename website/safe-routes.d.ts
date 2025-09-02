@@ -118,6 +118,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml]').SearchParams>,
     },
+    "/sponsors/:year?": {
+      params: {'year'?: string | number},
+      query: ExportedQuery<import('app/routes/_layout.sponsors.($year)').SearchParams>,
+    },
     "/tito-webhook": {
       params: never,
       query: ExportedQuery<import('app/routes/tito-webhook').SearchParams>,
@@ -154,6 +158,7 @@ declare module "safe-routes" {
             | 'routes/auth.login'
             | 'routes/_layout'
             | 'routes/_layout.agenda.$year.talk.$sessionId'
+            | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
