@@ -58,6 +58,7 @@ export async function loader() {
         ]),
         {
             headers: {
+                'Content-Type': 'application/json',
                 'Cache-Control': CACHE_CONTROL.announce,
                 'Access-Control-Allow-Origin': '*',
             },
