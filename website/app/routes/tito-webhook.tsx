@@ -1,5 +1,4 @@
 import { trace } from '@opentelemetry/api'
-import { data } from 'react-router'
 import { conferenceConfig } from '~/config/conference-config.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import type { ConferenceYear } from '~/lib/config-types.server'
@@ -32,7 +31,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         trace.getActiveSpan()?.addEvent('Failed to parse Tito payload', {
             error: JSON.stringify(parsedPayload.error),
         })
-        return data({ success: false, error: 'Invalid Tito payload' }, { status: 400 })
+        return new Response(JSON.stringify({ success: false, error: 'Invalid Tito payload' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+        })
     }
 
     const { slug, release_slug, email, first_name, last_name, responses, upgrade_ids } = parsedPayload.data
@@ -44,12 +46,12 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (!isGeneralTicket && !isAfterPartyTicket) {
         trace.getActiveSpan()?.addEvent('Unknown ticket type', { release_slug })
         // Not a ticket we care about
-        return data({ success: true })
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
     }
 
     if (!EVENTS_AIR_EVENT_ID) {
         trace.getActiveSpan()?.recordException(new Error('EVENTS_AIR_EVENT_ID is not set'))
-        return data({ success: true })
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
     }
 
     const accessToken = await getAccessToken()
@@ -74,7 +76,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             }
         }
 
-        return data({ success: true })
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
     }
 
     const lunch = configForYear?.foodInfo?.lunch.find(
@@ -161,11 +163,14 @@ export async function action({ request, context }: Route.ActionArgs) {
         } catch (error) {
             console.error('Error processing Tito webhook:', error)
             trace.getActiveSpan()?.recordException(resolveError(error))
-            return data({ success: false, error: error instanceof Error ? error.message : 'Unknown error' })
+            return new Response(
+                JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+                { headers: { 'Content-Type': 'application/json' } },
+            )
         } finally {
             span.end()
         }
     })
 
-    return data({ success: true })
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
 }

@@ -26,30 +26,33 @@ export function PageLayout({
     bgColor,
     minHeight,
 }: PropsWithChildren<PageLayoutProps>) {
-    const containerProps = {
-        w: '100%',
-        maxW: '1200px',
-        mx: 'auto',
-        px: { base: 4, md: 4 }, // Consistent responsive padding
-        ...(innerPadding && { py: { base: 4, md: 6 } }),
-    }
-
-    const wrapperProps = {
-        w: '100%',
-        color: 'white',
-        ...(minHeight && { minHeight }),
-        ...(withGradient && {
-            bgGradient: 'to-b',
-            gradientFrom: '#070727',
-            gradientToPosition: '99%',
-            gradientTo: '#0E0E43',
-        }),
-        ...(bgColor && { bgColor }),
-    }
-
     return (
-        <Flex flexDirection="column" {...wrapperProps}>
-            <Box {...containerProps}>{children}</Box>
+        <Flex
+            flexDirection="column"
+            w="100%"
+            color="white"
+            {...{
+                ...(minHeight && { minHeight }),
+                ...(withGradient && {
+                    bgGradient: 'to-b',
+                    gradientFrom: '#070727',
+                    gradientToPosition: '99%',
+                    gradientTo: '#0E0E43',
+                }),
+                ...(bgColor && { bgColor }),
+            }}
+        >
+            <Box
+                w="100%"
+                maxW="1200px"
+                mx="auto"
+                px={{ base: 4, md: 4 }} // Consistent responsive padding
+                {...{
+                    ...(innerPadding && { py: { base: 4, md: 6 } }),
+                }}
+            >
+                {children}
+            </Box>
         </Flex>
     )
 }
