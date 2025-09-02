@@ -577,7 +577,18 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         }
 
         // Search through all tier arrays to find the sponsor
-        const tiers = ['platinum', 'gold', 'silver', 'standard', 'bronze', 'community', 'coffee', 'keynote', 'afterparty', 'service']
+        const tiers = [
+            'platinum',
+            'gold',
+            'silver',
+            'standard',
+            'bronze',
+            'community',
+            'coffee',
+            'keynote',
+            'afterparty',
+            'service',
+        ]
         let sponsorFound = false
         let sponsorTier = null
 
@@ -595,7 +606,7 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
             const tierText = tierInitializer.getText()
             const escapedName = sponsorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
             const sponsorRegex = new RegExp(`{[^}]*name:\\s*['"\`]${escapedName}['"\`][^}]*}`, 's')
-            
+
             if (sponsorRegex.test(tierText)) {
                 sponsorFound = true
                 sponsorTier = tier
@@ -605,12 +616,12 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
                     // Update logoUrlDarkMode
                     let updated = match.replace(
                         /logoUrlDarkMode:\s*['"`][^'"`]*['"`]/,
-                        `logoUrlDarkMode: '${logoUrlDarkMode}'`
+                        `logoUrlDarkMode: '${logoUrlDarkMode}'`,
                     )
                     // Update logoUrlLightMode
                     updated = updated.replace(
                         /logoUrlLightMode:\s*['"`][^'"`]*['"`]/,
-                        `logoUrlLightMode: '${logoUrlLightMode}'`
+                        `logoUrlLightMode: '${logoUrlLightMode}'`,
                     )
                     return updated
                 })
@@ -1607,6 +1618,7 @@ const server = http.createServer(async (req, res) => {
                     await fs.access(filepath)
                     existing.push({ extension: ext, filename, filepath })
                 } catch {
+                    console.log(`No file: ${filepath}`)
                     // File doesn't exist
                 }
             }
@@ -1619,6 +1631,7 @@ const server = http.createServer(async (req, res) => {
                         await fs.access(filepath)
                         existing.push({ variant, extension: ext, filename, filepath })
                     } catch {
+                        console.log(`No file: ${filepath}`)
                         // File doesn't exist
                     }
                 }
@@ -1641,20 +1654,29 @@ const server = http.createServer(async (req, res) => {
                         throw new Error('Missing required fields: sponsorName, year, logoUrlDarkMode, logoUrlLightMode')
                     }
 
-                    const updated = await updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, logoUrlLightMode)
+                    const updated = await updateSponsorLogoInConfig(
+                        year,
+                        sponsorName,
+                        logoUrlDarkMode,
+                        logoUrlLightMode,
+                    )
 
                     if (updated) {
                         res.writeHead(200, { 'Content-Type': 'application/json' })
-                        res.end(JSON.stringify({ 
-                            success: true, 
-                            message: `Successfully updated logo URLs for ${sponsorName} in ${year} config` 
-                        }))
+                        res.end(
+                            JSON.stringify({
+                                success: true,
+                                message: `Successfully updated logo URLs for ${sponsorName} in ${year} config`,
+                            }),
+                        )
                     } else {
                         res.writeHead(400, { 'Content-Type': 'application/json' })
-                        res.end(JSON.stringify({ 
-                            success: false, 
-                            error: `Failed to update config for ${sponsorName} in ${year}` 
-                        }))
+                        res.end(
+                            JSON.stringify({
+                                success: false,
+                                error: `Failed to update config for ${sponsorName} in ${year}`,
+                            }),
+                        )
                     }
                 } catch (error) {
                     res.writeHead(500, { 'Content-Type': 'application/json' })
@@ -1713,9 +1735,14 @@ const server = http.createServer(async (req, res) => {
                         // Update the config file with new logo URLs
                         const logoUrlLightMode = `/images/sponsors/${year}-${sponsorNameSlug}-light.${ext}`
                         const logoUrlDarkMode = `/images/sponsors/${year}-${sponsorNameSlug}-dark.${ext}`
-                        
-                        const configUpdated = await updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, logoUrlLightMode)
-                        
+
+                        const configUpdated = await updateSponsorLogoInConfig(
+                            year,
+                            sponsorName,
+                            logoUrlDarkMode,
+                            logoUrlLightMode,
+                        )
+
                         if (configUpdated) {
                             print.success(`Updated config for ${sponsorName} with new logo URLs`)
                         } else {
@@ -1723,11 +1750,13 @@ const server = http.createServer(async (req, res) => {
                         }
 
                         res.writeHead(200, { 'Content-Type': 'application/json' })
-                        res.end(JSON.stringify({ 
-                            success: true, 
-                            message: 'Logo reprocessed successfully',
-                            configUpdated: configUpdated 
-                        }))
+                        res.end(
+                            JSON.stringify({
+                                success: true,
+                                message: 'Logo reprocessed successfully',
+                                configUpdated: configUpdated,
+                            }),
+                        )
                     } else {
                         throw new Error(result.error || 'Processing failed')
                     }
