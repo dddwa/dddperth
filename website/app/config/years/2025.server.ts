@@ -118,6 +118,11 @@ export const conference2025: ConferenceYear = {
                 website: 'https://www.skao.int/en',
                 logoUrlDarkMode: '/images/sponsors/2025-skao-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2025-skao-light.svg',
+                quote: `The SKA Observatory is excited to be returning to DDD as a Gold Sponsor, supporting the Perth-based software and tech community.
+The SKAO is building two of the most advanced radio telescopes on Earth - one here in outback Western Australia, on Wajarri Yamaji Country, and another in South Africa.
+Together these telescopes will revolutionise our understanding of the Universe and the laws of fundamental physics.
+Computing, software, and big data are critical to the success of this mega science project.
+If you'd like to learn more about the work our computing and software teams are doing, or about the project more generally, please come and say hello to us in our booth!`,
             },
             {
                 name: 'Virtual Gaming Worlds',
@@ -151,10 +156,97 @@ export const conference2025: ConferenceYear = {
                 website: 'https://aws.amazon.com/',
                 logoUrlDarkMode: '/images/sponsors/2025-aws-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2025-aws-light.svg',
+                quote: 'AWS is thrilled to support the amazing developer community event DDD Perth again this year. At AWS we believe in meeting developers were they are,  and in the beautiful city of Perth, we know DDD is where ALL the developers are ! . The AWS team are so looking forward to some great conversations and fun times at another DDD Perth event in 2025',
             },
         ],
-        room: [],
-        community: [],
+        room: [
+            {
+                name: 'SoftwareOne',
+                website: 'https://www.softwareone.com/',
+                logoUrlDarkMode: '/images/sponsors/2025-softwareone-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-softwareone-light.svg',
+                roomName: '',
+            },
+            {
+                name: 'Interfuze',
+                website: 'https://interfuze.com/',
+                logoUrlDarkMode: '/images/sponsors/2025-interfuze-dark.png',
+                logoUrlLightMode: '/images/sponsors/2025-interfuze-light.png',
+                quote: 'What makes DDD Perth special is its inclusive and grassroots nature, it gives voice to underrepresented groups and emerging talent and creates opportunities for connection that donât always happen in traditional settings. We love being part of that.',
+                roomName: '',
+            },
+        ],
+        digital: [
+            {
+                name: 'WADSIH',
+                website: 'https://wadsih.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-wadsih-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-wadsih-light.svg',
+            },
+            {
+                name: 'UWA Data Institute',
+                website: 'https://uwadatainstitute.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-uwa-data-institute-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-uwa-data-institute-light.svg',
+            },
+            {
+                name: 'Keystart',
+                website: 'https://www.keystart.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-keystart-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-keystart-light.svg',
+            },
+            {
+                name: 'Insight',
+                website: 'https://au.insight.com/',
+                logoUrlDarkMode: '/images/sponsors/2025-insight-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-insight-light.svg',
+            },
+            {
+                name: 'Akkodis',
+                website: 'https://akkodis.com/',
+                logoUrlDarkMode: '/images/sponsors/2025-akkodis-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-akkodis-light.svg',
+            },
+            {
+                name: 'AFG',
+                website: 'https://www.afgonline.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-afg-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-afg-light.svg',
+            },
+        ],
+        community: [
+            {
+                name: 'WAITTA',
+                website: 'https://www.waitta.asn.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-waitta-dark.png',
+                logoUrlLightMode: '/images/sponsors/2025-waitta-light.png',
+                quote: 'At WAITTA, we believe in the power of grassroots communities like DDD Perth to shape the future of technology. Weâre proud to partner with DDD Perth and support a platform that empowers local developers, fosters inclusive innovation, and strengthens WAâs reputation as a leader in digital transformation and connectivity.',
+            },
+            {
+                name: 'Build Club',
+                website: 'https://www.buildclub.ai/',
+                logoUrlDarkMode: '/images/sponsors/2025-build-club-dark.png',
+                logoUrlLightMode: '/images/sponsors/2025-build-club-light.png',
+            },
+            {
+                name: 'She Codes',
+                website: 'https://shecodes.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-she-codes-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-she-codes-light.svg',
+            },
+            {
+                name: 'Breast Cancer Partners',
+                website: 'https://breastcancerpartners.org/',
+                logoUrlDarkMode: '/images/sponsors/2025-breast-cancer-partners-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-breast-cancer-partners-light.svg',
+            },
+            {
+                name: 'Bloom',
+                website: 'https://bloom.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-bloom-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-bloom-light.svg',
+            },
+        ],
     },
 
     foodInfo: {

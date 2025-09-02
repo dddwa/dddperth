@@ -480,13 +480,27 @@ async function addSponsorToConfig(year, tier, sponsorObj) {
 
         // Find the tier array
         let tierProperty = sponsorsInitializer.getProperty(tier)
+        let tierInitializer = null
+        
         if (!tierProperty) {
-            print.error(`Could not find ${tier} tier in sponsors config`)
-            return false
+            // Tier doesn't exist, create it
+            print.info(`Tier ${tier} doesn't exist, creating it...`)
+            
+            // Add the new tier property with an empty array
+            const currentText = sponsorsInitializer.getText()
+            const newText = currentText.replace(/\{/, `{\n        ${tier}: [],`)
+            sponsorsInitializer.replaceWithText(newText)
+            
+            // Re-fetch the property after adding it
+            tierProperty = sponsorsInitializer.getProperty(tier)
+            if (!tierProperty) {
+                print.error(`Failed to create ${tier} tier in sponsors config`)
+                return false
+            }
         }
 
         // Get the array initializer
-        const tierInitializer = tierProperty
+        tierInitializer = tierProperty
             .getChildren()
             .find((child) => child.getKindName() === 'ArrayLiteralExpression')
 
@@ -632,7 +646,31 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         }
 
         if (!sponsorFound) {
+            // Try to provide more helpful information about what sponsors exist
+            const foundSponsors = []
+            for (const tier of tiers) {
+                const tierProperty = sponsorsInitializer.getProperty(tier)
+                if (tierProperty) {
+                    const tierInitializer = tierProperty
+                        .getChildren()
+                        .find((child) => child.getKindName() === 'ArrayLiteralExpression')
+                    if (tierInitializer) {
+                        const tierText = tierInitializer.getText()
+                        // Extract sponsor names from this tier
+                        const nameMatches = tierText.matchAll(/name:\s*['"`]([^'"`]+)['"`]/g)
+                        for (const match of nameMatches) {
+                            foundSponsors.push(`${match[1]} (${tier})`)
+                        }
+                    }
+                }
+            }
+            
             print.error(`Could not find sponsor "${sponsorName}" in any tier for year ${year}`)
+            if (foundSponsors.length > 0) {
+                print.info(`Found sponsors in ${year} config:`)
+                foundSponsors.forEach(s => print.info(`  - ${s}`))
+                print.info(`Note: sponsor names are case-sensitive`)
+            }
             return false
         }
 
