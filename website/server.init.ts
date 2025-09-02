@@ -137,6 +137,7 @@ export function init() {
                     getLoadContext: (req, res) => {
                         return initialBuild.entry.module.getLoadContext({
                             request: req,
+                            response: res,
                             blobServiceClient,
                             tableServiceClient,
                             getTableClient,
