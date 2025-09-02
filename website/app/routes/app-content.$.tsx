@@ -1,5 +1,4 @@
 import { trace } from '@opentelemetry/api'
-import { data } from 'react-router'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '../lib/mdx.server'
 import type { Route } from './+types/app-content.$'
@@ -27,12 +26,12 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    return data(
-        {
+    return new Response(
+        JSON.stringify({
             frontmatter: post.frontmatter,
             post: post.code,
             conferenceState: context.conferenceState,
-        },
+        }),
         {
             headers: {
                 'Cache-Control': CACHE_CONTROL.doc,

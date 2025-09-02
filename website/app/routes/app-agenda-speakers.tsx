@@ -1,4 +1,3 @@
-import { data } from 'react-router'
 import type { TypeOf } from 'zod'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -20,8 +19,9 @@ export async function loader({ context }: Route.LoaderArgs) {
               })
             : []
 
-    return data(speakers, {
+    return new Response(JSON.stringify(speakers), {
         headers: {
+            'Content-Type': 'application/json',
             'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',
         },

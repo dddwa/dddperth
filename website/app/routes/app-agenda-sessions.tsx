@@ -1,4 +1,3 @@
-import { data } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getConfSessions } from '~/lib/sessionize.server'
@@ -31,8 +30,9 @@ export async function loader({ context }: Route.LoaderArgs) {
         return session
     })
 
-    return data(patchedSessions, {
+    return new Response(JSON.stringify(patchedSessions), {
         headers: {
+            'Content-Type': 'application/json',
             'Cache-Control': CACHE_CONTROL.schedule,
             'Access-Control-Allow-Origin': '*',
         },
