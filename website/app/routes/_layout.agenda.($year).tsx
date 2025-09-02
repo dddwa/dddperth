@@ -14,6 +14,7 @@ import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from
 import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.agenda.($year)'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
@@ -105,17 +106,8 @@ export default function Agenda() {
             <ConferenceBrowser conferences={conferences} />
         </Box>
     ) : (
-        <Flex
-            flexDirection="column"
-            alignContent="center"
-            bgGradient="to-b"
-            gradientFrom="#070727"
-            gradientToPosition="99%"
-            gradientTo="#0E0E43"
-            mx="auto"
-            p="4"
-        >
-            <Box maxWidth="1200px" mx="auto">
+        <PageLayout>
+            <Box width="100%" overflowX={{ base: 'auto', xl: 'visible' }}>
                 <Box
                     color="#C2C2FF"
                     p={1}
@@ -154,6 +146,7 @@ export default function Agenda() {
                         gridTemplateColumns: 'var(--room-columns)',
                         gridGap: '1',
                     }}
+                    minWidth={{ base: 'auto', xl: '100%' }}
                 >
                     {schedule.rooms.map((room) => {
                         return <RoomTitle key={room.id} room={room} sponsors={sponsors} />
@@ -172,10 +165,15 @@ export default function Agenda() {
                                     style={{ gridRow: `time-${timeSlotSimple}` }}
                                     mt="2"
                                     xl={{ mt: 0 }}
+                                    fontSize={{ base: 'sm', md: 'md' }}
+                                    fontWeight="semibold"
+                                    color="#C2C2FF"
+                                    role="rowheader"
+                                    aria-label={`Time slot starting at ${startTime12}`}
                                 >
                                     {startTime12}
                                     {nextTimeSlot?.slotStart ? (
-                                        <styled.span display={{}} xl={{ display: 'none' }}>
+                                        <styled.span display={{ base: 'inline', xl: 'none' }}>
                                             {' '}
                                             -{' '}
                                             {DateTime.fromISO(nextTimeSlot.slotStart).toFormat('h:mm a').toLowerCase()}
@@ -206,7 +204,7 @@ export default function Agenda() {
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
-        </Flex>
+        </PageLayout>
     )
 }
 
@@ -217,7 +215,8 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
         <Flex
             key={room.id}
             style={{ '--room-column': `room-${room.id}` } as React.CSSProperties}
-            aria-hidden="true"
+            role="columnheader"
+            aria-label={`${room.name}${roomSponsor ? `, sponsored by ${roomSponsor.name}` : ''}`}
             justifyContent="center"
             alignItems="center"
             textAlign="center"
@@ -241,7 +240,7 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
             {roomSponsor ? (
                 <>
                     <br />
-                    Sponsored by{' '}
+                    <styled.span fontSize="xs">Sponsored by{' '}</styled.span>
                     <styled.img
                         src={roomSponsor.logoUrlLightMode}
                         alt={roomSponsor.name}
@@ -297,8 +296,8 @@ function RoomTimeSlot({
     // If this slot overlaps with another slot, we need to likely adjust the grid-column
     const conflictingEarlierTimeslots =
         timeSlot.rooms.length === 1 &&
-        earlierTimeSlots.filter((ts) => {
-            const slotEndTimes = ts.rooms.map((r) => r.session.endsAt?.replace(/\d{4}-\d{2}-\d{2}T/, ''))
+        earlierTimeSlots.filter((_ts) => {
+            const slotEndTimes = _ts.rooms.map((r) => r.session.endsAt?.replace(/\d{4}-\d{2}-\d{2}T/, ''))
             const maxEndTime = slotEndTimes.sort().at(-1)
             if (maxEndTime && maxEndTime > timeSlot.slotStart) {
                 return true
@@ -378,20 +377,20 @@ function RoomTimeSlot({
                     )}
                 </styled.h3>
                 <styled.span
-                    display="none"
-                    xl={{
-                        display: 'flex',
-                    }}
+                    display="flex"
                     alignItems="center"
                     gap={2}
                     color="#C2C2FF"
                     textWrap="nowrap"
+                    fontSize={{ base: 'xs', xl: 'sm' }}
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 16 16"
                         fill="currentColor"
                         style={{ width: '16px', height: '16px' }}
+                        aria-label="Time"
+                        role="img"
                     >
                         <path
                             fillRule="evenodd"
@@ -402,12 +401,14 @@ function RoomTimeSlot({
                     {startTime12} - {endTime12}
                 </styled.span>
                 {fullSession?.isServiceSession ? null : (
-                    <Flex alignItems="center" gap={2} color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap">
+                    <Flex alignItems="center" gap={2} color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap" fontSize={{ base: 'xs', xl: 'sm' }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 16 16"
                             fill="currentColor"
                             style={{ width: '16px', height: '16px' }}
+                            aria-label="Location"
+                            role="img"
                         >
                             <path
                                 fillRule="evenodd"
@@ -415,16 +416,18 @@ function RoomTimeSlot({
                                 clipRule="evenodd"
                             />
                         </svg>
-                        {room.name}
+                        <styled.span display={{ base: 'inline', sm: 'inline' }}>{room.name}</styled.span>
                     </Flex>
                 )}
                 {fullSession?.speakers?.length ? (
-                    <Flex alignItems="center" gap={2} color="#C2C2FF">
+                    <Flex alignItems="center" gap={2} color="#C2C2FF" fontSize={{ base: 'xs', xl: 'sm' }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 16 16"
                             fill="currentColor"
                             style={{ width: '16px', height: '16px' }}
+                            aria-label="Speaker"
+                            role="img"
                         >
                             <path
                                 fillRule="evenodd"
@@ -432,7 +435,7 @@ function RoomTimeSlot({
                                 clipRule="evenodd"
                             />
                         </svg>
-                        {fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}
+                        <styled.span>{fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}</styled.span>
                     </Flex>
                 ) : null}
             </Box>

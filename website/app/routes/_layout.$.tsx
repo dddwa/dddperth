@@ -15,8 +15,9 @@ import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
 import { getPage } from '~/lib/mdx.server'
 import { css } from '~/styled-system/css'
-import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
+import { Box, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
+import { ContentPageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.$'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -27,10 +28,12 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const requestUrl = new URL(request.url)
     if (contentSlug.startsWith('/static')) {
+        console.log('Attempt to access static asset through content route:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
     if (contentSlug.includes('.well-known')) {
+        console.log('Attempt to access .well-known through content route:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
@@ -38,12 +41,15 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const post = await getPage(contentSlug, 'page')
     if (!post) {
+        console.log('Content not found for slug:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (post.frontmatter.draft) {
+        console.log('Attempt to access draft content through content route:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (!post.frontmatter.title) {
+        console.log('Content missing title for slug:', contentSlug)
         trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
@@ -138,29 +144,17 @@ export default function WebsiteContentPage() {
             {frontmatter.draft ? (
                 <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
             ) : null}
-            <div>
-                <Flex
-                    position="relative"
-                    bgGradient="to-b"
-                    gradientFrom="#070727"
-                    gradientToPosition="99%"
-                    gradientTo="#0E0E43"
-                    w="100%"
-                    color="white"
+            <ContentPageLayout>
+                <ContentPageWithSidebar
+                    currentPath={currentPath}
+                    frontmatter={frontmatter}
+                    conferenceState={conferenceState}
+                    currentDate={DateTime.fromISO(currentDate)}
+                    importantDates={importantDates}
                 >
-                    <Box w="100%" position="relative" maxW="1200px" m="0 auto" md={{ p: '4' }}>
-                        <ContentPageWithSidebar
-                            currentPath={currentPath}
-                            frontmatter={frontmatter}
-                            conferenceState={conferenceState}
-                            currentDate={DateTime.fromISO(currentDate)}
-                            importantDates={importantDates}
-                        >
-                            <Component />
-                        </ContentPageWithSidebar>
-                    </Box>
-                </Flex>
-            </div>
+                    <Component />
+                </ContentPageWithSidebar>
+            </ContentPageLayout>
         </>
     )
 }

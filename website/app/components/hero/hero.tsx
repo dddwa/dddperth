@@ -2,6 +2,7 @@ import type { DateTime } from 'luxon'
 import type { ImportantDate } from '~/lib/important-dates'
 import { Box, Flex } from '~/styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
+import { HeaderContainer } from '../page-layout'
 import { HomepageHeroPanel } from './hero-panel'
 
 export function Hero({
@@ -16,16 +17,18 @@ export function Hero({
     return (
         <Box overflowX="hidden">
             <HomepageHeroPanel conferenceDate={conferenceDate} />
-            <Flex flexDirection="column" width="fit" mx="auto" maxWidth={800} gap={12}>
-                <Flex
-                    className={`paragraph-wrapper`}
-                    direction="column"
-                    fontSize={{ base: 'lg', md: '2xl' }}
-                    fontWeight="medium"
-                    color="white"
-                    gap={6}
-                    mx={{ base: 8, md: 6, lg: 'auto' }}
-                >
+            <HeaderContainer>
+                <Flex flexDirection="column" gap={12}>
+                    <Flex
+                        className={`paragraph-wrapper`}
+                        direction="column"
+                        fontSize={{ base: 'lg', md: '2xl' }}
+                        fontWeight="medium"
+                        color="white"
+                        gap={6}
+                        maxWidth={800}
+                        mx="auto"
+                    >
                     <p>
                         DDD Perth is Perth’s largest community run conference for the tech community. Our goal is to
                         create an approachable event that appeals to the whole community, especially people that don’t
@@ -43,11 +46,12 @@ export function Hero({
                         Check out the agenda and talks from previous years , or hear more about how we do what we do on
                         our blog.
                     </p>
-                </Flex>
+                    </Flex>
 
-                <ImportantDates currentDate={currentDate} importantDates={importantDates} />
-                <Workshops currentDate={currentDate} />
-            </Flex>
+                    <ImportantDates currentDate={currentDate} importantDates={importantDates} />
+                    <Workshops currentDate={currentDate} />
+                </Flex>
+            </HeaderContainer>
         </Box>
     )
 }
