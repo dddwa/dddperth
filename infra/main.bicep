@@ -48,7 +48,7 @@ param eventsAirClientId string
 @secure()
 param eventsAirClientSecret string
 param eventsAirTenantId string
-param eventsAirEventId string
+param eventsAirEventId string = ''
 @secure()
 param titoSecurityToken string
 @secure()

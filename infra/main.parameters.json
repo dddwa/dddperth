@@ -61,7 +61,7 @@
             "value": "${EVENTS_AIR_TENANT_ID}"
         },
         "eventsAirEventId": {
-            "value": "${EVENTS_AIR_EVENT_ID}"
+            "value": "${EVENTS_AIR_EVENT_ID=}"
         },
         "titoSecurityToken": {
             "value": "${TITO_SECURITY_TOKEN}"

@@ -91,21 +91,21 @@ export const conference2025: ConferenceYear = {
 
     sponsors: {
         platinum: [
-                    {
-                        name: 'Patient Zero',
-                        website: 'https://www.pz.com.au/',
-                        logoUrlDarkMode: '/images/sponsors/2025-patient-zero-dark.svg',
-                        logoUrlLightMode: '/images/sponsors/2025-patient-zero-light.svg',
-                        quote: "At first, when we heard that DDD Perth was held in a stadium, we thought there was no way that could be true. Turns out it is. Well done, Perth! Once we learned the truth of the matter, we just had to come and check it out ourselves and share our zombie sock love. Yeah, we love zombies if the name didn't give it away. And we love our zombie sock merch. That, plus, our co-CEO Paul loves to hear himself talk and our other one, Demelza, loves a stage.",
-                    },
-                    {
-                        name: 'MakerX',
-                        website: 'https://makerx.com.au/',
-                        logoUrlDarkMode: '/images/sponsors/2025-makerx-dark.svg',
-                        logoUrlLightMode: '/images/sponsors/2025-makerx-light.svg',
-                        quote: "DDD Perth embodies everything we believe in at MakerX - making technology accessible, fostering diversity, and building high-performing teams. These aren't just ideals we talk about; they're the proven foundation of successful technology companies.The conference itself is a masterclass in bringing people together. With 1,600 passionate technologists gathering in one place, we're witnessing real-time ecosystem building - where today's attendees become tomorrow's co-founders, where nervous first-time speakers evolve into industry leaders, and where casual conversations spark the collaborations that define our tech future. At MakerX, we know that helping our partners succeed requires more than writing code. It's about weaving together culture, connections, and capabilities - transforming research breakthroughs and bold ideas into sustainable businesses that create real impact. That's exactly what DDD Perth facilitates at scale and we're proud to be onboard to support the event for another year.",
-                    },
-                ],
+            {
+                name: 'Patient Zero',
+                website: 'https://www.pz.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-patient-zero-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-patient-zero-light.svg',
+                quote: "At first, when we heard that DDD Perth was held in a stadium, we thought there was no way that could be true. Turns out it is. Well done, Perth! Once we learned the truth of the matter, we just had to come and check it out ourselves and share our zombie sock love. Yeah, we love zombies if the name didn't give it away. And we love our zombie sock merch. That, plus, our co-CEO Paul loves to hear himself talk and our other one, Demelza, loves a stage.",
+            },
+            {
+                name: 'MakerX',
+                website: 'https://makerx.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-makerx-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2025-makerx-light.svg',
+                quote: "DDD Perth embodies everything we believe in at MakerX - making technology accessible, fostering diversity, and building high-performing teams. These aren't just ideals we talk about; they're the proven foundation of successful technology companies.The conference itself is a masterclass in bringing people together. With 1,600 passionate technologists gathering in one place, we're witnessing real-time ecosystem building - where today's attendees become tomorrow's co-founders, where nervous first-time speakers evolve into industry leaders, and where casual conversations spark the collaborations that define our tech future. At MakerX, we know that helping our partners succeed requires more than writing code. It's about weaving together culture, connections, and capabilities - transforming research breakthroughs and bold ideas into sustainable businesses that create real impact. That's exactly what DDD Perth facilitates at scale and we're proud to be onboard to support the event for another year.",
+            },
+        ],
         gold: [
             {
                 name: 'Versent',
@@ -215,6 +215,12 @@ If you'd like to learn more about the work our computing and software teams are 
             },
         ],
         community: [
+            {
+                name: 'Hello Initative',
+                website: 'https://www.helloinitiative.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2025-hello-initative-dark.png',
+                logoUrlLightMode: '/images/sponsors/2025-hello-initative-light.png',
+            },
             {
                 name: 'WAITTA',
                 website: 'https://www.waitta.asn.au/',

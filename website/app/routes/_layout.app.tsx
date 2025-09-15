@@ -90,7 +90,17 @@ export default function AppDownloadPage() {
                         </styled.a>
                     </styled.div>
 
-                    <Box mt={8} p={6} bgColor="blue.50" borderRadius="lg" textAlign="center" maxW="2xl">
+                    <styled.a
+                        href="/agenda"
+                        display="inline-flex"
+                        transition="transform 0.2s"
+                        _hover={{ transform: 'scale(1.05)' }}
+                        textDecoration="underline"
+                    >
+                        View Agenda on Website
+                    </styled.a>
+
+                    <Box p={6} bgColor="blue.50" borderRadius="lg" textAlign="center" maxW="2xl">
                         <styled.h3 fontSize="lg" fontWeight="semibold" mb={2} color="blue.900">
                             Pro Tip
                         </styled.h3>
