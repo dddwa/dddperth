@@ -8,6 +8,7 @@ import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { adminDateTimeSessionStorage } from '~/lib/session.server'
+import { clearAnnouncement, createOrUpdateAnnouncement, getCurrentAnnouncement } from '~/lib/announcements.server'
 import { Box, Flex, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.settings'
 
@@ -18,26 +19,41 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const overrideDate = session.get('adminDateOverride')
 
     const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const year = context.conferenceState.conference.year
 
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
+    
+    const currentAnnouncement = await getCurrentAnnouncement(context, year)
 
     return data({
         overrideDate,
         currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),
         timezone: conferenceConfigPublic.timezone,
         importantDates,
-        year: context.conferenceState.conference.year,
+        year,
+        announcement: currentAnnouncement,
     })
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
     await requireAdmin(request)
 
     const formData = await request.formData()
     const action = formData.get('_action')
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
+    const year = context.conferenceState.conference.year
 
-    if (action === 'setDate') {
+    if (action === 'updateAnnouncement') {
+        const message = formData.get('announcement') as string
+        if (!message || message.trim() === '') {
+            return data({ error: 'Announcement message is required' }, { status: 400 })
+        }
+        await createOrUpdateAnnouncement(context, year, message.trim())
+        return redirect('/admin/settings')
+    } else if (action === 'clearAnnouncement') {
+        await clearAnnouncement(context, year)
+        return redirect('/admin/settings')
+    } else if (action === 'setDate') {
         const dateStr = formData.get('date') as string
         const timeStr = formData.get('time') as string
 
@@ -82,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function AdminSettings() {
-    const { overrideDate, currentDate, timezone, importantDates, year } = useLoaderData<typeof loader>()
+    const { overrideDate, currentDate, timezone, importantDates, year, announcement } = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
 
     const overrideDateTime = overrideDate ? DateTime.fromISO(overrideDate) : null
@@ -236,6 +252,111 @@ export default function AdminSettings() {
                         <li>This allows you to test time-sensitive features like voting</li>
                         <li>Regular users will see the actual current date/time</li>
                         <li>The override persists across page refreshes until cleared</li>
+                    </styled.ul>
+                </Box>
+            </AdminCard>
+
+            {/* Announcements Management */}
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
+                    App Announcements
+                </styled.h2>
+
+                {announcement && announcement.isActive && (
+                    <Box mb="6" p="4" bg="green.50" borderRadius="md" fontSize="sm">
+                        <styled.p fontWeight="medium" color="green.900" mb="2">
+                            Current Announcement
+                        </styled.p>
+                        <styled.p color="green.700" mb="2">
+                            {announcement.message}
+                        </styled.p>
+                        <styled.p color="green.600" fontSize="xs">
+                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                        </styled.p>
+                    </Box>
+                )}
+
+                {(!announcement || !announcement.isActive) && (
+                    <Box mb="6" p="4" bg="gray.50" borderRadius="md" fontSize="sm">
+                        <styled.p color="gray.600">
+                            No active announcement
+                        </styled.p>
+                    </Box>
+                )}
+
+                <Form method="post">
+                    <styled.h3 fontSize="lg" fontWeight="medium" mb="4">
+                        Update Announcement
+                    </styled.h3>
+                    
+                    <Box mb="4">
+                        <styled.label
+                            htmlFor="announcement"
+                            display="block"
+                            fontSize="sm"
+                            fontWeight="medium"
+                            color="gray.700"
+                            mb="1"
+                        >
+                            Message
+                        </styled.label>
+                        <styled.textarea
+                            id="announcement"
+                            name="announcement"
+                            defaultValue={announcement?.isActive ? announcement.message : ''}
+                            rows={3}
+                            px="3"
+                            py="2"
+                            width="100%"
+                            border="1px solid"
+                            borderColor="gray.300"
+                            borderRadius="md"
+                            fontSize="sm"
+                            _focus={{
+                                outline: 'none',
+                                borderColor: 'accent.7',
+                                boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
+                            }}
+                            placeholder="Enter the announcement message that will be shown in the app"
+                        />
+                    </Box>
+
+                    <Flex gap="4">
+                        <Button name="_action" value="updateAnnouncement" type="submit">
+                            Update Announcement
+                        </Button>
+                        {announcement && announcement.isActive && (
+                            <styled.button
+                                name="_action"
+                                value="clearAnnouncement"
+                                type="submit"
+                                bg="red"
+                                color="white"
+                                py="2"
+                                px="6"
+                                borderRadius="md"
+                                fontSize="sm"
+                                fontWeight="bold"
+                                cursor="pointer"
+                                boxShadow="sm"
+                                _hover={{ bg: 'red.10' }}
+                                title="Clear the current announcement"
+                            >
+                                Clear Announcement
+                            </styled.button>
+                        )}
+                    </Flex>
+                </Form>
+
+                <Box mt="6" p="4" bg="gray.2" borderRadius="md" fontSize="sm">
+                    <styled.p fontWeight="medium" mb="2">
+                        Note:
+                    </styled.p>
+                    <styled.ul pl="5" listStyleType="disc">
+                        <li>Announcements are displayed in the mobile app on the day of the conference</li>
+                        <li>The message will be shown to all app users</li>
+                        <li>Updates are reflected immediately in the app</li>
+                        <li>Clear the announcement when it's no longer needed</li>
                     </styled.ul>
                 </Box>
             </AdminCard>

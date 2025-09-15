@@ -103,6 +103,7 @@ export default function Index() {
                 cfpOpen={conferenceState.callForPapers.state === 'open'}
                 votingOpen={conferenceState.talkVoting.state === 'open'}
                 ticketSalesOpen={conferenceState.ticketSales.state === 'open'}
+                venue={conferenceState.conference.venue}
             />
 
             {venue && (
@@ -151,7 +152,7 @@ export default function Index() {
 export function ErrorBoundary() {
     return (
         <div>
-            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} />
+            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venue={undefined} />
 
             <ContentPageLayout>
                 <ErrorPage />
