@@ -1,6 +1,7 @@
 import { $path } from 'safe-routes'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import Logo from '~/images/svg/logo.svg?react'
+import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
@@ -9,10 +10,12 @@ export function Header({
     cfpOpen,
     votingOpen,
     ticketSalesOpen,
+    venue,
 }: {
     cfpOpen: boolean
     votingOpen: boolean
     ticketSalesOpen: boolean
+    venue: ConferenceVenue | undefined
 }) {
     return (
         <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" py={4}>
@@ -66,11 +69,13 @@ export function Header({
                         <AppLink to="/agenda" variant="primary">
                             Agenda
                         </AppLink>
+                        {venue ? (
+                            <AppLink to="/venue" variant="primary">
+                                Venue
+                            </AppLink>
+                        ) : null}
                         <AppLink to="/about" variant="primary">
                             About
-                        </AppLink>
-                        <AppLink to="/team" variant="primary">
-                            Team
                         </AppLink>
                     </Flex>
 

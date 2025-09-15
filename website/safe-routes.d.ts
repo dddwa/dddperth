@@ -62,6 +62,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/api.voting.vote').SearchParams>,
     },
+    "/app": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.app').SearchParams>,
+    },
     "/app-agenda-grid": {
       params: never,
       query: ExportedQuery<import('app/routes/app-agenda-grid').SearchParams>,
@@ -164,6 +168,7 @@ declare module "safe-routes" {
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
+            | 'routes/_layout.app'
             | 'routes/_layout.$'
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
