@@ -147,7 +147,7 @@ export interface AfterConferenceState {
     ticketSales: TicketSalesClosed
     talkVoting: TalkVotingClosed
     feedback: FeedbackState
-    agenda: NotReleased
+    agenda: Published
 
     volunteering: {
         needsVolunteers: false

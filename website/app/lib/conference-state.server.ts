@@ -119,7 +119,7 @@ export function getCurrentConferenceState(
             },
             callForPapers: { state: 'closed' },
             ticketSales: { state: 'closed' },
-            agenda: 'not-released',
+            agenda: 'published',
             talkVoting: {
                 state: 'closed',
             },
