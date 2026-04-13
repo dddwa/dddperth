@@ -2,6 +2,7 @@ import type { LinksFunction } from 'react-router'
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 import { Settings } from 'luxon'
+import { token } from '~/styled-system/tokens'
 import './index.css'
 
 Settings.throwOnInvalid = true
@@ -37,7 +38,7 @@ export default function App() {
                 <Links />
                 <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
             </head>
-            <body style={{ backgroundColor: '#0E0E43' }}>
+            <body style={{ backgroundColor: token('colors.surface.body') }}>
                 <Outlet />
                 <ScrollRestoration />
                 <Scripts />

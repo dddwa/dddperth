@@ -3,6 +3,9 @@ import { createPreset } from '@park-ui/panda-preset'
 import indigo from '@park-ui/panda-preset/colors/indigo'
 import slate from '@park-ui/panda-preset/colors/slate'
 import typographyPreset from 'pandacss-preset-typography'
+import { currentTheme } from './app/theme.config'
+import { createSemanticTokens, createThemeTokens } from './themes/theme-builder'
+
 export default defineConfig({
     // Whether to use css reset
     preflight: true,
@@ -24,6 +27,9 @@ export default defineConfig({
     // Files to exclude
     exclude: [],
 
+    // Enable strict tokens mode - forces usage of design tokens instead of arbitrary values
+    strictTokens: true,
+
     // Useful for theme customization
     theme: {
         breakpoints: {
@@ -43,8 +49,9 @@ export default defineConfig({
         extend: {
             semanticTokens: {
                 colors: {
-                    // Or whatever name you've set as the semantic tokens
-                    // prefix or recipe name
+                    // Conference theme tokens - generated from active theme
+                    ...createSemanticTokens(currentTheme).colors,
+
                     surface: {
                         'card-alt': {
                             value: { base: '#f8f8ff', _dark: '#151544' },
@@ -73,6 +80,7 @@ export default defineConfig({
                             value: { base: '#10b981', _dark: '#059669' },
                         },
                     },
+                    // Typography semantic tokens (prose)
                     prose: {
                         body: {
                             value: '{colors.gray.dark.7}',
@@ -133,7 +141,13 @@ export default defineConfig({
                 },
             },
             tokens: {
+                // Conference theme tokens - generated from active theme
+                ...createThemeTokens(currentTheme),
+
+                // Legacy 2023 tokens - DEPRECATED, will be removed after migration
+                // TODO: Remove these once all components use semantic tokens
                 colors: {
+                    ...createThemeTokens(currentTheme).colors,
                     '2023-green': { value: '#008554' },
                     '2023-orange': { value: '#F89A1C' },
                     '2023-pink': { value: '#DA459C' },
@@ -150,20 +164,6 @@ export default defineConfig({
                     display: { value: 'Ubuntu, sans-serif' },
                     body: { value: 'Ubuntu, sans-serif' },
                 },
-                // sizes: {
-                //   /** xs: 4 */
-                //   xs: { value: '4' },
-                //   /** sm: 8 */
-                //   sm: { value: '8' },
-                //   /** md: 16 */
-                //   md: { value: '16' },
-                //   /** lg: 24 */
-                //   lg: { value: '24' },
-                //   /** xl: 32 */
-                //   xl: { value: '32' },
-                //   /** xxl: 40 */
-                //   xxl: { value: '40' },
-                // },
                 zIndex: {
                     '9999': { value: 9999 },
                 },
