@@ -6,6 +6,7 @@ import { conference2022 } from './years/2022.server'
 import { conference2023 } from './years/2023.server'
 import { conference2024 } from './years/2024.server'
 import { conference2025 } from './years/2025.server'
+import { conference2026 } from './years/2026.server'
 
 //
 // If you update this, could you also update website-content/README.md
@@ -28,11 +29,12 @@ export const conferenceConfig = {
         '2023': conference2023,
         '2024': conference2024,
         '2025': conference2025,
+        '2026': conference2026,
     },
 
     volunteerForm: {
         type: 'tito',
-        ticketUrl: 'https://ti.to/dddperth/2025/with/volunteer',
+        ticketUrl: 'https://ti.to/dddperth/2026/with/volunteer',
     },
 } satisfies ConferenceConfig
 

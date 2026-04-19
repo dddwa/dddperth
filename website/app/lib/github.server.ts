@@ -7,6 +7,7 @@ import {
     GITHUB_ORGANIZATION,
     GITHUB_REF,
     GITHUB_REPO,
+    isGitHubAppConfigured,
     WEBSITE_GITHUB_APP_ID,
     WEBSITE_GITHUB_APP_INSTALLATION_ID,
 } from './config.server'
@@ -25,6 +26,12 @@ const MyOctokit = Octokit.plugin(restEndpointMethods)
 async function createGitHubClient() {
     return await tracer.startActiveSpan('createGitHubClient', async (span) => {
         try {
+            if (!isGitHubAppConfigured || !WEBSITE_GITHUB_APP_ID || !WEBSITE_GITHUB_APP_INSTALLATION_ID) {
+                throw new Error(
+                    'GitHub App credentials are not configured. Set WEBSITE_GITHUB_APP_ID, WEBSITE_GITHUB_APP_PRIVATE_KEY, and WEBSITE_GITHUB_APP_INSTALLATION_ID to enable GitHub-backed content.',
+                )
+            }
+
             console.log('Using GitHub App authentication')
             const privateKey = getGitHubPrivateKey()
             const app = new App({
@@ -34,7 +41,10 @@ async function createGitHubClient() {
             })
 
             console.log(`Using stored installation ID: ${WEBSITE_GITHUB_APP_INSTALLATION_ID}`)
-            const installationId = parseInt(WEBSITE_GITHUB_APP_INSTALLATION_ID)
+            const installationId = Number.parseInt(WEBSITE_GITHUB_APP_INSTALLATION_ID, 10)
+            if (Number.isNaN(installationId)) {
+                throw new Error('WEBSITE_GITHUB_APP_INSTALLATION_ID must be a valid integer.')
+            }
 
             const installationOctokit = await app.getInstallationOctokit(installationId)
             return installationOctokit

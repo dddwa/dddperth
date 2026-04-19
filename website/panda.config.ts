@@ -47,59 +47,59 @@ export default defineConfig({
                     // prefix or recipe name
                     prose: {
                         body: {
-                            value: '{colors.slate.dark.7}',
+                            value: '{colors.gray.dark.7}',
                         },
                         heading: {
-                            value: '{colors.slate.dark.9}',
+                            value: '{colors.gray.dark.9}',
                         },
                         lead: {
-                            value: '{colors.slate.dark.6}',
+                            value: '{colors.gray.dark.6}',
                         },
                         link: {
-                            value: '{colors.slate.dark.2}',
+                            value: '{colors.gray.dark.2}',
                         },
                         bold: {
-                            value: '{colors.slate.dark.9}',
+                            value: '{colors.gray.dark.9}',
                         },
                         counter: {
-                            value: '{colors.slate.dark.5}',
+                            value: '{colors.gray.dark.5}',
                         },
                         bullet: {
-                            value: '{colors.slate.dark.3}',
+                            value: '{colors.gray.dark.3}',
                         },
                         hrBorder: {
-                            value: '{colors.slate.dark.2}',
+                            value: '{colors.gray.dark.2}',
                         },
                         quote: {
-                            value: '{colors.slate.dark.9}',
+                            value: '{colors.gray.dark.9}',
                         },
                         quoteBorder: {
-                            value: '{colors.slate.dark.2}',
+                            value: '{colors.gray.dark.2}',
                         },
                         caption: {
-                            value: '{colors.slate.dark.5}',
+                            value: '{colors.gray.dark.5}',
                         },
                         kbd: {
-                            value: '{colors.slate.dark.9}',
+                            value: '{colors.gray.dark.9}',
                         },
                         kbdShadow: {
                             // Expects an RGB value
                             value: '0 0 0',
                         },
                         code: {
-                            value: '{colors.slate.dark.9}',
+                            value: '{colors.gray.dark.9}',
                         },
                         preCode: {
-                            value: '{colors.slate.dark.2}',
+                            value: '{colors.gray.dark.2}',
                         },
                         preBg: {
-                            value: '{colors.slate.dark.8}',
+                            value: '{colors.gray.dark.8}',
                         },
                         thBorder: {
-                            value: '{colors.slate.dark.3}',
+                            value: '{colors.gray.dark.3}',
                         },
                         tdBorder: {
-                            value: '{colors.slate.dark.2}',
+                            value: '{colors.gray.dark.2}',
                         },
                     },
                 },
