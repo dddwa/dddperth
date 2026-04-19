@@ -1,57 +1,75 @@
 import { redirect } from 'react-router'
 import { Authenticator } from 'remix-auth'
 import { GitHubStrategy } from 'remix-auth-github'
-import { WEBSITE_GITHUB_APP_CLIENT_ID, WEBSITE_GITHUB_APP_CLIENT_SECRET, WEB_URL, isAdminHandle } from './config.server'
+import {
+    WEBSITE_GITHUB_APP_CLIENT_ID,
+    WEBSITE_GITHUB_APP_CLIENT_SECRET,
+    WEB_URL,
+    isAdminHandle,
+    isGitHubAuthConfigured,
+} from './config.server'
 import type { User } from './session.server'
 import { authSessionStorage } from './session.server'
 
 // Create an instance of the authenticator
 export const authenticator = new Authenticator<User>()
 
-// GitHub OAuth configuration (works with GitHub Apps too)
-const gitHubStrategy = new GitHubStrategy(
-    {
-        clientId: WEBSITE_GITHUB_APP_CLIENT_ID,
-        clientSecret: WEBSITE_GITHUB_APP_CLIENT_SECRET,
-        redirectURI: `${WEB_URL}/auth/github/callback`,
-        scopes: ['user:email'],
-    },
-    async ({ tokens, request }) => {
-        // Get user profile from GitHub API
-        const profileResponse = await fetch('https://api.github.com/user', {
-            headers: {
-                Accept: 'application/vnd.github+json',
-                Authorization: `Bearer ${tokens.accessToken()}`,
-                'X-GitHub-Api-Version': '2022-11-28',
-            },
-        })
+if (isGitHubAuthConfigured) {
+    const gitHubClientId = WEBSITE_GITHUB_APP_CLIENT_ID
+    const gitHubClientSecret = WEBSITE_GITHUB_APP_CLIENT_SECRET
+    if (!gitHubClientId || !gitHubClientSecret) {
+        throw new Error(
+            'GitHub authentication was marked configured but WEBSITE_GITHUB_APP_CLIENT_ID/SECRET are missing.',
+        )
+    }
 
-        const profile = await profileResponse.json()
+    // GitHub OAuth configuration (works with GitHub Apps too)
+    const gitHubStrategy = new GitHubStrategy(
+        {
+            clientId: gitHubClientId,
+            clientSecret: gitHubClientSecret,
+            redirectURI: `${WEB_URL}/auth/github/callback`,
+            scopes: ['user:email'],
+        },
+        async ({ tokens }) => {
+            // Get user profile from GitHub API
+            const profileResponse = await fetch('https://api.github.com/user', {
+                headers: {
+                    Accept: 'application/vnd.github+json',
+                    Authorization: `Bearer ${tokens.accessToken()}`,
+                    'X-GitHub-Api-Version': '2022-11-28',
+                },
+            })
 
-        // Get user email from GitHub API
-        const emailResponse = await fetch('https://api.github.com/user/emails', {
-            headers: {
-                Accept: 'application/vnd.github+json',
-                Authorization: `Bearer ${tokens.accessToken()}`,
-                'X-GitHub-Api-Version': '2022-11-28',
-            },
-        })
+            const profile = await profileResponse.json()
 
-        const emails: Array<{ email: string; primary: boolean }> = await emailResponse.json()
-        const primaryEmail = emails.find((email) => email.primary)?.email || null
+            // Get user email from GitHub API
+            const emailResponse = await fetch('https://api.github.com/user/emails', {
+                headers: {
+                    Accept: 'application/vnd.github+json',
+                    Authorization: `Bearer ${tokens.accessToken()}`,
+                    'X-GitHub-Api-Version': '2022-11-28',
+                },
+            })
 
-        // Return user data
-        return {
-            id: profile.id.toString(),
-            login: profile.login,
-            avatarUrl: profile.avatar_url,
-            name: profile.name,
-            email: primaryEmail,
-        }
-    },
-)
+            const emails: Array<{ email: string; primary: boolean }> = await emailResponse.json()
+            const primaryEmail = emails.find((email) => email.primary)?.email || null
 
-authenticator.use(gitHubStrategy)
+            // Return user data
+            return {
+                id: profile.id.toString(),
+                login: profile.login,
+                avatarUrl: profile.avatar_url,
+                name: profile.name,
+                email: primaryEmail,
+            }
+        },
+    )
+
+    authenticator.use(gitHubStrategy)
+} else {
+    console.warn('GitHub authentication is disabled: WEBSITE_GITHUB_APP_CLIENT_ID/SECRET are not configured.')
+}
 
 export function isAdmin(user: User | null): boolean {
     if (!user) return false
