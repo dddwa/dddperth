@@ -18,12 +18,12 @@ export const navLink = cva({
         variant: {
             // Main site navigation (header/footer)
             primary: {
-                color: 'white',
+                color: 'text.on-brand',
                 _hover: {
-                    color: '#8282FB',
+                    color: 'text.highlight',
                 },
                 _active: {
-                    color: '#8282FB',
+                    color: 'text.highlight',
                 },
             },
             // Admin navigation with active states
@@ -33,8 +33,8 @@ export const navLink = cva({
                 borderRadius: 'md',
                 border: '1px solid transparent',
                 _hover: {
-                    bg: 'rgba(255, 245, 157, 0.05)',
-                    borderColor: 'rgba(255, 245, 157, 0.2)',
+                    bg: 'overlay.subtle',
+                    borderColor: 'border.subtle',
                 },
             },
             // Simple text links
@@ -82,16 +82,16 @@ export const navLink = cva({
             variant: 'admin',
             active: true,
             css: {
-                color: 'rgb(255, 245, 157)',
-                bg: 'rgba(255, 245, 157, 0.1)',
-                borderColor: 'rgba(255, 245, 157, 0.3)',
+                color: 'interactive.active',
+                bg: 'overlay.moderate',
+                borderColor: 'border.subtle',
             },
         },
         {
             variant: 'admin',
             active: false,
             css: {
-                color: 'white',
+                color: 'text.on-brand',
             },
         },
     ],

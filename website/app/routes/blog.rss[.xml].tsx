@@ -2,10 +2,11 @@ import { Feed } from 'feed'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPagesList } from '~/lib/mdx.server'
+import type { Route } from './+types/blog.rss[.xml]'
 
-export async function loader() {
+export async function loader({ context }: Route.LoaderArgs) {
     const blogUrl = `https://dddperth.com/blog`
-    const posts = await getPagesList('blog')
+    const posts = await getPagesList(context.cloudflare.env, 'blog')
 
     const feed = new Feed({
         id: blogUrl,

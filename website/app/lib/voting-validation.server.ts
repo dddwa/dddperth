@@ -1,55 +1,62 @@
-import type { TableClient } from '@azure/data-tables'
-import { trace } from '@opentelemetry/api'
 import { recordException } from './record-exception'
+
 import { batchReconstructVoteContexts, removeVotesOnDuplicatedTalksInRound } from './voting-reconstruction.server'
 import type {
     EloResultImport,
     FairnessMetrics,
-    FairnessMetricsRecord,
     TalkResult,
     TalkStatistics,
     TalkStatsAccumulator,
-    UnderrepresentedGroupsConfig,
     ValidationRunIndex,
     VoteResult,
-    VotingValidationGlobal,
 } from './voting-validation-types'
+import { getVotesForSession, listVotingSessions } from './d1.server'
 import type { TalkVotingData, VoteRecord, VotingSession } from './voting.server'
+import { rowToVoteRecord, rowToVotingSession } from './voting.server'
 
-// Check if validation can be started
-export async function canStartValidation(votesTableClient: TableClient): Promise<{
+// ============================================================================
+// VALIDATION GLOBAL STATE
+// ============================================================================
+
+export async function canStartValidation(db: D1Database): Promise<{
     canStart: boolean
     reason?: string
     currentRunId?: string
 }> {
     try {
-        const partitionKey: VotingValidationGlobal['partitionKey'] = 'ddd'
-        const rowKey: VotingValidationGlobal['rowKey'] = 'voting_validation'
-        const globalEntity: VotingValidationGlobal = await votesTableClient.getEntity(partitionKey, rowKey)
+        const row = await db
+            .prepare(`SELECT * FROM voting_validation_globals WHERE id = 'global'`)
+            .first<{ is_running: number; current_run_id: string | null; last_started_at: string | null }>()
 
-        if (!globalEntity.isRunning) {
+        if (!row || !row.is_running) {
             return { canStart: true }
         }
 
         // Check if the current run is stale (hasn't been updated in 30 minutes)
-        if (globalEntity.currentRunId && globalEntity.lastStartedAt) {
-            const lastUpdate = new Date(globalEntity.lastStartedAt)
+        if (row.current_run_id && row.last_started_at) {
+            const lastUpdate = new Date(row.last_started_at)
             const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
 
             if (lastUpdate < thirtyMinutesAgo) {
                 // Check the actual run status
                 try {
-                    const partitionKey: ValidationRunIndex['partitionKey'] = 'validation'
-                    const rowKey: ValidationRunIndex['rowKey'] = `run_${globalEntity.currentRunId}`
-                    const runIndex = (await votesTableClient.getEntity(partitionKey, rowKey)) as ValidationRunIndex
+                    const runRow = await db
+                        .prepare(
+                            `SELECT last_updated_at, status FROM voting_validation_runs WHERE run_id = ?`,
+                        )
+                        .bind(row.current_run_id)
+                        .first<{ last_updated_at: string; status: string }>()
 
-                    const runLastUpdate = new Date(runIndex.lastUpdatedAt)
-                    if (runLastUpdate < thirtyMinutesAgo && runIndex.status === 'running') {
+                    if (!runRow) {
+                        return { canStart: true, reason: 'Previous run index not found' }
+                    }
+
+                    const runLastUpdate = new Date(runRow.last_updated_at)
+                    if (runLastUpdate < thirtyMinutesAgo && runRow.status === 'running') {
                         return { canStart: true, reason: 'Previous run appears to be stale' }
                     }
                 } catch (error: any) {
                     recordException(error)
-                    // Run index not found, can start
                     return { canStart: true, reason: 'Previous run index not found' }
                 }
             }
@@ -58,100 +65,116 @@ export async function canStartValidation(votesTableClient: TableClient): Promise
         return {
             canStart: false,
             reason: 'Validation is already running',
-            currentRunId: globalEntity.currentRunId,
+            currentRunId: row.current_run_id ?? undefined,
         }
     } catch (error: any) {
-        if (error.statusCode === 404) {
-            // Global entity doesn't exist, can start
-            return { canStart: true }
-        }
-
         recordException(error)
         throw error
     }
 }
 
-// Mark validation as started
-export async function markValidationStarted(votesTableClient: TableClient, runId: string): Promise<void> {
-    const global: VotingValidationGlobal = {
-        partitionKey: 'ddd',
-        rowKey: 'voting_validation',
-        isRunning: true,
-        currentRunId: runId,
-        lastStartedAt: new Date().toISOString(),
-    }
-
-    await votesTableClient.upsertEntity(global, 'Replace')
+export async function markValidationStarted(db: D1Database, runId: string): Promise<void> {
+    const now = new Date().toISOString()
+    await db
+        .prepare(
+            `INSERT INTO voting_validation_globals (id, is_running, current_run_id, last_started_at)
+             VALUES ('global', 1, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+                 is_running = 1,
+                 current_run_id = excluded.current_run_id,
+                 last_started_at = excluded.last_started_at`,
+        )
+        .bind(runId, now)
+        .run()
 }
 
-// Mark validation as completed
-export async function markValidationCompleted(votesTableClient: TableClient, runId: string): Promise<void> {
-    const global: VotingValidationGlobal = {
-        partitionKey: 'ddd',
-        rowKey: 'voting_validation',
-        isRunning: false,
-        lastRunId: runId,
-        lastStartedAt: new Date().toISOString(),
-    }
-
-    await votesTableClient.upsertEntity(global, 'Replace')
+export async function markValidationCompleted(db: D1Database, runId: string): Promise<void> {
+    const now = new Date().toISOString()
+    await db
+        .prepare(
+            `INSERT INTO voting_validation_globals (id, is_running, last_run_id, last_started_at)
+             VALUES ('global', 0, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+                 is_running = 0,
+                 last_run_id = excluded.last_run_id,
+                 current_run_id = NULL,
+                 last_started_at = excluded.last_started_at`,
+        )
+        .bind(runId, now)
+        .run()
 }
 
-// Create validation run index
+// ============================================================================
+// VALIDATION RUN MANAGEMENT
+// ============================================================================
+
 export async function createValidationRunIndex(
-    votesTableClient: TableClient,
+    db: D1Database,
     runId: string,
     year: string,
     totalSessions: number,
 ): Promise<void> {
-    const runIndex: ValidationRunIndex = {
-        partitionKey: 'validation',
-        rowKey: `run_${runId}`,
-        runId,
-        startedAt: new Date().toISOString(),
-        lastUpdatedAt: new Date().toISOString(),
-        status: 'running',
-        totalSessions,
-        processedSessions: 0,
-        processedRounds: 0,
-        processedVotes: 0,
-        year,
-    }
-
-    await votesTableClient.createEntity(runIndex)
+    const now = new Date().toISOString()
+    const id = `run_${runId}`
+    await db
+        .prepare(
+            `INSERT INTO voting_validation_runs
+                 (id, run_id, year, status, started_at, last_updated_at, total_sessions, processed_sessions, processed_rounds, processed_votes)
+             VALUES (?, ?, ?, 'running', ?, ?, ?, 0, 0, 0)`,
+        )
+        .bind(id, runId, year, now, now, totalSessions)
+        .run()
 }
 
-// Update validation run progress
 export async function updateValidationRunProgress(
-    votesTableClient: TableClient,
+    db: D1Database,
     runId: string,
     processedSessions: number,
     processedRounds: number,
     processedVotes: number,
     status?: 'running' | 'completed' | 'incomplete',
 ): Promise<void> {
-    const updates: Pick<ValidationRunIndex, 'partitionKey' | 'rowKey'> & Partial<ValidationRunIndex> = {
-        partitionKey: 'validation',
-        rowKey: `run_${runId}`,
-        lastUpdatedAt: new Date().toISOString(),
-        processedSessions,
-        processedRounds,
-        processedVotes,
-    }
+    const now = new Date().toISOString()
 
     if (status === 'completed') {
-        updates.completedAt = new Date().toISOString()
-        updates.status = status
-    } else if (status) {
-        updates.status = status
+        await db
+            .prepare(
+                `UPDATE voting_validation_runs
+                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                     last_updated_at = ?, status = 'completed', completed_at = ?
+                 WHERE run_id = ?`,
+            )
+            .bind(processedSessions, processedRounds, processedVotes, now, now, runId)
+            .run()
+    } else if (status === 'incomplete') {
+        await db
+            .prepare(
+                `UPDATE voting_validation_runs
+                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                     last_updated_at = ?, status = 'incomplete'
+                 WHERE run_id = ?`,
+            )
+            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .run()
+    } else {
+        await db
+            .prepare(
+                `UPDATE voting_validation_runs
+                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                     last_updated_at = ?
+                 WHERE run_id = ?`,
+            )
+            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .run()
     }
-
-    await votesTableClient.updateEntity(updates, 'Merge')
 }
 
-// Process a single voting session
+// ============================================================================
+// SESSION PROCESSING
+// ============================================================================
+
 export async function processVotingSession(
-    votesTableClient: TableClient,
+    db: D1Database,
     runId: string,
     session: VotingSession,
     talks: TalkVotingData[],
@@ -160,112 +183,104 @@ export async function processVotingSession(
     processedRounds: number
     processedVotes: number
 }> {
-    return trace.getTracer('default').startActiveSpan('processVotingSession', async (span) => {
-        try {
-            const stats = new Map<string, TalkStatsAccumulator>()
+    const stats = new Map<string, TalkStatsAccumulator>()
 
-            // Initialize stats for all talks
-            talks.forEach((talk) => {
-                stats.set(talk.id, {
-                    talkId: talk.id,
-                    title: talk.title,
-                    timesSeenAggregated: 0,
-                    timesVotedForAggregated: 0,
-                    timesVotedAgainstAggregated: 0,
-                    timesSkippedAggregated: 0,
-                    timesSeenV1: 0,
-                    timesVotedForV1: 0,
-                    timesVotedAgainstV1: 0,
-                    timesSkippedV1: 0,
-                    timesSeenV2: 0,
-                    timesVotedForV2: 0,
-                    timesVotedAgainstV2: 0,
-                    timesSkippedV2: 0,
-                    timesSeenV3: 0,
-                    timesVotedForV3: 0,
-                    timesVotedAgainstV3: 0,
-                    timesSkippedV3: 0,
-                    timesSeenV4: 0,
-                    timesVotedForV4: 0,
-                    timesVotedAgainstV4: 0,
-                    timesSkippedV4: 0,
-                })
-            })
-
-            // Get all votes for this session
-            const votesQuery = votesTableClient.listEntities<VoteRecord>({
-                queryOptions: {
-                    filter: `PartitionKey eq 'session_${session.sessionId}'`,
-                },
-            })
-
-            const sessionTalkIds = JSON.parse(session.inputSessionizeTalkIdsJson) as string[]
-            const sessionTalks = talks.filter((t) => sessionTalkIds.includes(t.id))
-
-            let votesProcessed = 0
-            let totalRounds = 1
-
-            // Process votes based on session version using efficient batch reconstruction
-            try {
-                // Collect all votes first for batch processing
-                const allVotes: VoteRecord[] = []
-                for await (const vote of votesQuery) {
-                    allVotes.push(vote)
-                }
-
-                // Use efficient batch reconstruction
-                const mappedVotes = batchReconstructVoteContexts(allVotes, session, sessionTalks)
-                const cleanedVotes = removeVotesOnDuplicatedTalksInRound(mappedVotes)
-
-                // Collect vote results to save later
-                const voteResults: VoteResult[] = []
-
-                // Process each vote using pre-computed contexts
-                for (const vote of cleanedVotes) {
-                    const leftTalk = vote.pair.left
-                    const rightTalk = vote.pair.right
-
-                    const sessionVersion = session.version || 1
-                    updateTalkStats(stats, leftTalk.id, rightTalk.id, vote.vote, sessionVersion)
-                    votesProcessed++
-                    if (vote.roundNumber >= totalRounds) {
-                        totalRounds = vote.roundNumber + 1
-                    }
-
-                    // Create vote result for storage
-                    const voteResult: VoteResult = {
-                        partitionKey: `vote_result_${runId}`,
-                        rowKey: `${session.sessionId}_${vote.originalVoteRecord.rowKey}`,
-                        a: leftTalk.id,
-                        b: rightTalk.id,
-                        vote: vote.vote === 'A' ? 'a' : vote.vote === 'B' ? 'b' : 'skip',
-                        timestamp: vote.timestamp,
-                    }
-                    voteResults.push(voteResult)
-                }
-
-                // Save vote results in batches
-                await saveVoteResults(votesTableClient, voteResults)
-            } catch (error: any) {
-                // If no votes exist for this session, that's okay, just continue
-                if (error.statusCode !== 404) {
-                    console.error(`Error processing votes for session ${session.sessionId}:`, error)
-                    recordException(error)
-                }
-            }
-
-            return {
-                talkStats: stats,
-                processedRounds: totalRounds,
-                processedVotes: votesProcessed,
-            }
-        } finally {
-            span.end()
-        }
+    // Initialize stats for all talks
+    talks.forEach((talk) => {
+        stats.set(talk.id, {
+            talkId: talk.id,
+            title: talk.title,
+            timesSeenAggregated: 0,
+            timesVotedForAggregated: 0,
+            timesVotedAgainstAggregated: 0,
+            timesSkippedAggregated: 0,
+            timesSeenV1: 0,
+            timesVotedForV1: 0,
+            timesVotedAgainstV1: 0,
+            timesSkippedV1: 0,
+            timesSeenV2: 0,
+            timesVotedForV2: 0,
+            timesVotedAgainstV2: 0,
+            timesSkippedV2: 0,
+            timesSeenV3: 0,
+            timesVotedForV3: 0,
+            timesVotedAgainstV3: 0,
+            timesSkippedV3: 0,
+            timesSeenV4: 0,
+            timesVotedForV4: 0,
+            timesVotedAgainstV4: 0,
+            timesSkippedV4: 0,
+        })
     })
+
+    const sessionTalkIds = JSON.parse(session.inputSessionizeTalkIdsJson) as string[]
+    const sessionTalks = talks.filter((t) => sessionTalkIds.includes(t.id))
+
+    let votesProcessed = 0
+    let totalRounds = 1
+
+    try {
+        // Get all votes for this session from D1
+        const voteRows = await getVotesForSession(db, session.sessionId)
+        const allVotes: VoteRecord[] = voteRows.map(rowToVoteRecord)
+
+        // Use efficient batch reconstruction
+        const mappedVotes = batchReconstructVoteContexts(allVotes, session, sessionTalks)
+        const cleanedVotes = removeVotesOnDuplicatedTalksInRound(mappedVotes)
+
+        // Collect vote results to save later
+        const voteResults: Array<{
+            runId: string
+            sessionId: string
+            originalRowKey: string
+            talkA: string
+            talkB: string
+            vote: 'a' | 'b' | 'skip'
+            timestamp: string
+        }> = []
+
+        // Process each vote using pre-computed contexts
+        for (const vote of cleanedVotes) {
+            const leftTalk = vote.pair.left
+            const rightTalk = vote.pair.right
+
+            const sessionVersion = session.version || 1
+            updateTalkStats(stats, leftTalk.id, rightTalk.id, vote.vote, sessionVersion)
+            votesProcessed++
+            if (vote.roundNumber >= totalRounds) {
+                totalRounds = vote.roundNumber + 1
+            }
+
+            // Create vote result for storage — use round/index as the row key equivalent
+            const originalRowKey = `r${vote.originalVoteRecord.roundNumber}_i${vote.originalVoteRecord.indexInRound}`
+            voteResults.push({
+                runId,
+                sessionId: session.sessionId,
+                originalRowKey,
+                talkA: leftTalk.id,
+                talkB: rightTalk.id,
+                vote: vote.vote === 'A' ? 'a' : vote.vote === 'B' ? 'b' : 'skip',
+                timestamp: vote.timestamp,
+            })
+        }
+
+        // Save vote results in batches
+        await saveVoteResults(db, voteResults)
+    } catch (error: any) {
+        console.error(`Error processing votes for session ${session.sessionId}:`, error)
+        recordException(error)
+    }
+
+    return {
+        talkStats: stats,
+        processedRounds: totalRounds,
+        processedVotes: votesProcessed,
+    }
 }
 
-// Statistical analysis functions for fairness assessment
+// ============================================================================
+// STATISTICAL ANALYSIS
+// ============================================================================
 
 export function calculateFairnessMetrics(appearances: number[]): FairnessMetrics {
     const n = appearances.length
@@ -369,241 +384,291 @@ function updateTalkStats(
     applyVoteUpdate(leftStats, rightStats, vote, versionKey)
 }
 
-// Save vote results in batches
-async function saveVoteResults(votesTableClient: TableClient, voteResults: VoteResult[]): Promise<void> {
-    return trace.getTracer('default').startActiveSpan('saveVoteResults', async (span) => {
-        try {
-            // Save in batches of 20
-            const batchSize = 20
-            for (let i = 0; i < voteResults.length; i += batchSize) {
-                const batch = voteResults.slice(i, i + batchSize)
-                const promises = batch.map((voteResult) => votesTableClient.createEntity(voteResult))
-                await Promise.all(promises)
-            }
-        } finally {
-            span.end()
-        }
-    })
+// ============================================================================
+// VOTE RESULTS
+// ============================================================================
+
+async function saveVoteResults(
+    db: D1Database,
+    voteResults: Array<{
+        runId: string
+        sessionId: string
+        originalRowKey: string
+        talkA: string
+        talkB: string
+        vote: 'a' | 'b' | 'skip'
+        timestamp: string
+    }>,
+): Promise<void> {
+    // Save in batches of 20
+    const batchSize = 20
+    for (let i = 0; i < voteResults.length; i += batchSize) {
+        const batch = voteResults.slice(i, i + batchSize)
+        const statements = batch.map((r) =>
+            db
+                .prepare(
+                    `INSERT INTO vote_results (run_id, session_id, original_row_key, talk_a, talk_b, vote, timestamp)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT(run_id, session_id, original_row_key) DO NOTHING`,
+                )
+                .bind(r.runId, r.sessionId, r.originalRowKey, r.talkA, r.talkB, r.vote, r.timestamp),
+        )
+        await db.batch(statements)
+    }
 }
 
-// Save accumulated talk statistics
+export async function getVoteResults(db: D1Database, runId: string): Promise<VoteResult[]> {
+    const result = await db
+        .prepare(`SELECT * FROM vote_results WHERE run_id = ? ORDER BY id`)
+        .bind(runId)
+        .all<{
+            id: number
+            run_id: string
+            session_id: string
+            original_row_key: string
+            talk_a: string
+            talk_b: string
+            vote: 'a' | 'b' | 'skip'
+            timestamp: string
+        }>()
+
+    return (result.results ?? []).map((row) => ({
+        partitionKey: `vote_result_${row.run_id}` as const,
+        rowKey: `${row.session_id}_${row.original_row_key}`,
+        a: row.talk_a,
+        b: row.talk_b,
+        vote: row.vote,
+        timestamp: row.timestamp,
+    }))
+}
+
+// ============================================================================
+// TALK STATISTICS
+// ============================================================================
+
 export async function saveTalkStatistics(
-    votesTableClient: TableClient,
+    db: D1Database,
     runId: string,
     stats: Map<string, TalkStatsAccumulator>,
 ): Promise<void> {
-    return trace.getTracer('default').startActiveSpan('saveTalkStatistics', async (span) => {
-        try {
-            const timestamp = new Date().toISOString()
+    const timestamp = new Date().toISOString()
+    const entries = Array.from(stats.entries())
 
-            for (const [talkId, accumulator] of stats) {
-                const talkStats: TalkStatistics = {
-                    partitionKey: 'talk_stats',
-                    rowKey: `${runId}_talk_${talkId}`,
+    // Save in batches of 20
+    const batchSize = 20
+    for (let i = 0; i < entries.length; i += batchSize) {
+        const batch = entries.slice(i, i + batchSize)
+        const statements = batch.map(([, acc]) =>
+            db
+                .prepare(
+                    `INSERT INTO talk_statistics (
+                         run_id, talk_id, title,
+                         times_seen_aggregated, times_voted_for_aggregated, times_voted_against_aggregated, times_skipped_aggregated,
+                         times_seen_v1, times_voted_for_v1, times_voted_against_v1, times_skipped_v1,
+                         times_seen_v2, times_voted_for_v2, times_voted_against_v2, times_skipped_v2,
+                         times_seen_v3, times_voted_for_v3, times_voted_against_v3, times_skipped_v3,
+                         times_seen_v4, times_voted_for_v4, times_voted_against_v4, times_skipped_v4,
+                         last_updated_at
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT(run_id, talk_id) DO UPDATE SET
+                         times_seen_aggregated = excluded.times_seen_aggregated,
+                         times_voted_for_aggregated = excluded.times_voted_for_aggregated,
+                         times_voted_against_aggregated = excluded.times_voted_against_aggregated,
+                         times_skipped_aggregated = excluded.times_skipped_aggregated,
+                         times_seen_v1 = excluded.times_seen_v1,
+                         times_voted_for_v1 = excluded.times_voted_for_v1,
+                         times_voted_against_v1 = excluded.times_voted_against_v1,
+                         times_skipped_v1 = excluded.times_skipped_v1,
+                         times_seen_v2 = excluded.times_seen_v2,
+                         times_voted_for_v2 = excluded.times_voted_for_v2,
+                         times_voted_against_v2 = excluded.times_voted_against_v2,
+                         times_skipped_v2 = excluded.times_skipped_v2,
+                         times_seen_v3 = excluded.times_seen_v3,
+                         times_voted_for_v3 = excluded.times_voted_for_v3,
+                         times_voted_against_v3 = excluded.times_voted_against_v3,
+                         times_skipped_v3 = excluded.times_skipped_v3,
+                         times_seen_v4 = excluded.times_seen_v4,
+                         times_voted_for_v4 = excluded.times_voted_for_v4,
+                         times_voted_against_v4 = excluded.times_voted_against_v4,
+                         times_skipped_v4 = excluded.times_skipped_v4,
+                         last_updated_at = excluded.last_updated_at`,
+                )
+                .bind(
                     runId,
-                    talkId,
-                    title: accumulator.title,
-                    timesSeenAggregated: accumulator.timesSeenAggregated,
-                    timesVotedForAggregated: accumulator.timesVotedForAggregated,
-                    timesVotedAgainstAggregated: accumulator.timesVotedAgainstAggregated,
-                    timesSkippedAggregated: accumulator.timesSkippedAggregated,
-                    timesSeenV1: accumulator.timesSeenV1,
-                    timesVotedForV1: accumulator.timesVotedForV1,
-                    timesVotedAgainstV1: accumulator.timesVotedAgainstV1,
-                    timesSkippedV1: accumulator.timesSkippedV1,
-                    timesSeenV2: accumulator.timesSeenV2,
-                    timesVotedForV2: accumulator.timesVotedForV2,
-                    timesVotedAgainstV2: accumulator.timesVotedAgainstV2,
-                    timesSkippedV2: accumulator.timesSkippedV2,
-                    timesSeenV3: accumulator.timesSeenV3,
-                    timesVotedForV3: accumulator.timesVotedForV3,
-                    timesVotedAgainstV3: accumulator.timesVotedAgainstV3,
-                    timesSkippedV3: accumulator.timesSkippedV3,
-                    timesSeenV4: accumulator.timesSeenV4,
-                    timesVotedForV4: accumulator.timesVotedForV4,
-                    timesVotedAgainstV4: accumulator.timesVotedAgainstV4,
-                    timesSkippedV4: accumulator.timesSkippedV4,
-                    lastUpdatedAt: timestamp,
-                }
-
-                await votesTableClient.createEntity(talkStats)
-            }
-        } finally {
-            span.end()
-        }
-    })
+                    acc.talkId,
+                    acc.title,
+                    acc.timesSeenAggregated,
+                    acc.timesVotedForAggregated,
+                    acc.timesVotedAgainstAggregated,
+                    acc.timesSkippedAggregated,
+                    acc.timesSeenV1,
+                    acc.timesVotedForV1,
+                    acc.timesVotedAgainstV1,
+                    acc.timesSkippedV1,
+                    acc.timesSeenV2,
+                    acc.timesVotedForV2,
+                    acc.timesVotedAgainstV2,
+                    acc.timesSkippedV2,
+                    acc.timesSeenV3,
+                    acc.timesVotedForV3,
+                    acc.timesVotedAgainstV3,
+                    acc.timesSkippedV3,
+                    acc.timesSeenV4,
+                    acc.timesVotedForV4,
+                    acc.timesVotedAgainstV4,
+                    acc.timesSkippedV4,
+                    timestamp,
+                ),
+        )
+        await db.batch(statements)
+    }
 }
 
-// Main validation process
-export async function runVotingValidation(
-    votesTableClient: TableClient,
-    year: string,
-    talks: TalkVotingData[],
-): Promise<string> {
-    return trace.getTracer('default').startActiveSpan('runVotingValidation', { root: true }, async (span) => {
-        const runId = crypto.randomUUID()
-        let processedSessions = 0
-        let processedRounds = 0
-        let processedVotes = 0
+export async function getTalkStatistics(db: D1Database, runId: string): Promise<TalkStatistics[]> {
+    const result = await db
+        .prepare(
+            `SELECT * FROM talk_statistics WHERE run_id = ? ORDER BY talk_id`,
+        )
+        .bind(runId)
+        .all<{
+            run_id: string
+            talk_id: string
+            title: string
+            times_seen_aggregated: number
+            times_voted_for_aggregated: number
+            times_voted_against_aggregated: number
+            times_skipped_aggregated: number
+            times_seen_v1: number
+            times_voted_for_v1: number
+            times_voted_against_v1: number
+            times_skipped_v1: number
+            times_seen_v2: number
+            times_voted_for_v2: number
+            times_voted_against_v2: number
+            times_skipped_v2: number
+            times_seen_v3: number
+            times_voted_for_v3: number
+            times_voted_against_v3: number
+            times_skipped_v3: number
+            times_seen_v4: number
+            times_voted_for_v4: number
+            times_voted_against_v4: number
+            times_skipped_v4: number
+            last_updated_at: string
+        }>()
 
-        try {
-            // Get all voting sessions
-            const sessionsQuery = votesTableClient.listEntities<VotingSession>({
-                queryOptions: {
-                    filter: `PartitionKey eq 'session'`,
-                },
-            })
-
-            const sessions: VotingSession[] = []
-            try {
-                for await (const session of sessionsQuery) {
-                    sessions.push(session)
-                }
-            } catch (error: any) {
-                // If no sessions exist yet, continue with empty array
-                if (error.statusCode !== 404) {
-                    throw error
-                }
-            }
-
-            // Create run index
-            await createValidationRunIndex(votesTableClient, runId, year, sessions.length)
-
-            // Process sessions
-            const globalStats = new Map<string, TalkStatsAccumulator>()
-
-            // Initialize global stats
-            talks.forEach((talk) => {
-                globalStats.set(talk.id, {
-                    talkId: talk.id,
-                    title: talk.title,
-                    timesSeenAggregated: 0,
-                    timesVotedForAggregated: 0,
-                    timesVotedAgainstAggregated: 0,
-                    timesSkippedAggregated: 0,
-                    timesSeenV1: 0,
-                    timesVotedForV1: 0,
-                    timesVotedAgainstV1: 0,
-                    timesSkippedV1: 0,
-                    timesSeenV2: 0,
-                    timesVotedForV2: 0,
-                    timesVotedAgainstV2: 0,
-                    timesSkippedV2: 0,
-                    timesSeenV3: 0,
-                    timesVotedForV3: 0,
-                    timesVotedAgainstV3: 0,
-                    timesSkippedV3: 0,
-                    timesSeenV4: 0,
-                    timesVotedForV4: 0,
-                    timesVotedAgainstV4: 0,
-                    timesSkippedV4: 0,
-                })
-            })
-
-            try {
-                for (const session of sessions) {
-                    const sessionStats = await processVotingSession(votesTableClient, runId, session, talks)
-
-                    // Merge session stats into global stats
-                    for (const [talkId, sessionStat] of sessionStats.talkStats) {
-                        const globalStat = globalStats.get(talkId)
-                        if (globalStat) {
-                            globalStat.timesSeenAggregated += sessionStat.timesSeenAggregated
-                            globalStat.timesVotedForAggregated += sessionStat.timesVotedForAggregated
-                            globalStat.timesVotedAgainstAggregated += sessionStat.timesVotedAgainstAggregated
-                            globalStat.timesSkippedAggregated += sessionStat.timesSkippedAggregated
-                            globalStat.timesSeenV1 += sessionStat.timesSeenV1
-                            globalStat.timesVotedForV1 += sessionStat.timesVotedForV1
-                            globalStat.timesVotedAgainstV1 += sessionStat.timesVotedAgainstV1
-                            globalStat.timesSkippedV1 += sessionStat.timesSkippedV1
-                            globalStat.timesSeenV2 += sessionStat.timesSeenV2
-                            globalStat.timesVotedForV2 += sessionStat.timesVotedForV2
-                            globalStat.timesVotedAgainstV2 += sessionStat.timesVotedAgainstV2
-                            globalStat.timesSkippedV2 += sessionStat.timesSkippedV2
-                            globalStat.timesSeenV3 += sessionStat.timesSeenV3
-                            globalStat.timesVotedForV3 += sessionStat.timesVotedForV3
-                            globalStat.timesVotedAgainstV3 += sessionStat.timesVotedAgainstV3
-                            globalStat.timesSkippedV3 += sessionStat.timesSkippedV3
-                            globalStat.timesSeenV4 += sessionStat.timesSeenV4
-                            globalStat.timesVotedForV4 += sessionStat.timesVotedForV4
-                            globalStat.timesVotedAgainstV4 += sessionStat.timesVotedAgainstV4
-                            globalStat.timesSkippedV4 += sessionStat.timesSkippedV4
-                        }
-                    }
-
-                    processedSessions++
-                    processedRounds += sessionStats.processedRounds
-                    processedVotes += sessionStats.processedVotes
-
-                    // Update progress every 10 sessions
-                    if (processedSessions % 10 === 0) {
-                        await updateValidationRunProgress(
-                            votesTableClient,
-                            runId,
-                            processedSessions,
-                            processedRounds,
-                            processedVotes,
-                        )
-                    }
-
-                    // Small delay to reduce load on server/table
-                    await new Promise((resolve) => setTimeout(resolve, 100))
-                }
-
-                // Save final statistics
-                await saveTalkStatistics(votesTableClient, runId, globalStats)
-
-                // Calculate and save fairness metrics
-                await calculateAndSaveFairnessMetrics(votesTableClient, runId, globalStats)
-
-                // Mark as completed
-                await updateValidationRunProgress(
-                    votesTableClient,
-                    runId,
-                    processedSessions,
-                    processedRounds,
-                    processedVotes,
-                    'completed',
-                )
-                await markValidationCompleted(votesTableClient, runId)
-
-                return runId
-            } catch (error) {
-                // Mark as incomplete on error
-                await updateValidationRunProgress(
-                    votesTableClient,
-                    runId,
-                    processedSessions,
-                    processedRounds,
-                    processedVotes,
-                    'incomplete',
-                )
-                await markValidationCompleted(votesTableClient, runId)
-                recordException(error)
-                throw error
-            }
-        } catch (error) {
-            // Mark as incomplete on error for outer try block
-            await updateValidationRunProgress(
-                votesTableClient,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'incomplete',
-            )
-            await markValidationCompleted(votesTableClient, runId)
-            recordException(error)
-            throw error
-        } finally {
-            span.end()
-        }
-    })
+    return (result.results ?? []).map((row) => ({
+        partitionKey: 'talk_stats' as const,
+        rowKey: `${row.run_id}_talk_${row.talk_id}`,
+        runId: row.run_id,
+        talkId: row.talk_id,
+        title: row.title,
+        timesSeenAggregated: row.times_seen_aggregated,
+        timesVotedForAggregated: row.times_voted_for_aggregated,
+        timesVotedAgainstAggregated: row.times_voted_against_aggregated,
+        timesSkippedAggregated: row.times_skipped_aggregated,
+        timesSeenV1: row.times_seen_v1,
+        timesVotedForV1: row.times_voted_for_v1,
+        timesVotedAgainstV1: row.times_voted_against_v1,
+        timesSkippedV1: row.times_skipped_v1,
+        timesSeenV2: row.times_seen_v2,
+        timesVotedForV2: row.times_voted_for_v2,
+        timesVotedAgainstV2: row.times_voted_against_v2,
+        timesSkippedV2: row.times_skipped_v2,
+        timesSeenV3: row.times_seen_v3,
+        timesVotedForV3: row.times_voted_for_v3,
+        timesVotedAgainstV3: row.times_voted_against_v3,
+        timesSkippedV3: row.times_skipped_v3,
+        timesSeenV4: row.times_seen_v4,
+        timesVotedForV4: row.times_voted_for_v4,
+        timesVotedAgainstV4: row.times_voted_against_v4,
+        timesSkippedV4: row.times_skipped_v4,
+        lastUpdatedAt: row.last_updated_at,
+    }))
 }
 
-// Calculate and save fairness metrics for all versions
+// ============================================================================
+// VALIDATION RUNS LIST
+// ============================================================================
+
+export async function getValidationRuns(db: D1Database, limit = 20): Promise<ValidationRunIndex[]> {
+    const result = await db
+        .prepare(
+            `SELECT * FROM voting_validation_runs ORDER BY started_at DESC LIMIT ?`,
+        )
+        .bind(limit)
+        .all<{
+            id: string
+            run_id: string
+            year: string
+            status: 'running' | 'completed' | 'incomplete'
+            started_at: string
+            completed_at: string | null
+            last_updated_at: string
+            total_sessions: number
+            processed_sessions: number
+            processed_rounds: number
+            processed_votes: number
+        }>()
+
+    return (result.results ?? []).map((row) => ({
+        partitionKey: 'validation' as const,
+        rowKey: `run_${row.run_id}`,
+        runId: row.run_id,
+        year: row.year,
+        status: row.status,
+        startedAt: row.started_at,
+        completedAt: row.completed_at ?? undefined,
+        lastUpdatedAt: row.last_updated_at,
+        totalSessions: row.total_sessions,
+        processedSessions: row.processed_sessions,
+        processedRounds: row.processed_rounds,
+        processedVotes: row.processed_votes,
+    }))
+}
+
+export async function getValidationRunById(db: D1Database, runId: string): Promise<ValidationRunIndex | null> {
+    const row = await db
+        .prepare(`SELECT * FROM voting_validation_runs WHERE run_id = ?`)
+        .bind(runId)
+        .first<{
+            id: string
+            run_id: string
+            year: string
+            status: 'running' | 'completed' | 'incomplete'
+            started_at: string
+            completed_at: string | null
+            last_updated_at: string
+            total_sessions: number
+            processed_sessions: number
+            processed_rounds: number
+            processed_votes: number
+        }>()
+
+    if (!row) return null
+
+    return {
+        partitionKey: 'validation' as const,
+        rowKey: `run_${row.run_id}`,
+        runId: row.run_id,
+        year: row.year,
+        status: row.status,
+        startedAt: row.started_at,
+        completedAt: row.completed_at ?? undefined,
+        lastUpdatedAt: row.last_updated_at,
+        totalSessions: row.total_sessions,
+        processedSessions: row.processed_sessions,
+        processedRounds: row.processed_rounds,
+        processedVotes: row.processed_votes,
+    }
+}
+
+// ============================================================================
+// FAIRNESS METRICS
+// ============================================================================
+
 export async function calculateAndSaveFairnessMetrics(
-    votesTableClient: TableClient,
+    db: D1Database,
     runId: string,
     stats: Map<string, TalkStatsAccumulator>,
 ): Promise<void> {
@@ -640,227 +705,302 @@ export async function calculateAndSaveFairnessMetrics(
 
         if (appearances.length > 0) {
             const metrics = calculateFairnessMetrics(appearances)
+            const now = new Date().toISOString()
 
-            const fairnessRecord: FairnessMetricsRecord = {
-                partitionKey: 'fairness_metrics',
-                rowKey: `${runId}_${version}`,
-                runId,
-                version,
-                metricsJson: JSON.stringify(metrics),
-                lastUpdatedAt: new Date().toISOString(),
-            }
-
-            await votesTableClient.createEntity(fairnessRecord)
+            await db
+                .prepare(
+                    `INSERT INTO fairness_metrics (run_id, version, metrics_json, last_updated_at)
+                     VALUES (?, ?, ?, ?)
+                     ON CONFLICT(run_id, version) DO UPDATE SET
+                         metrics_json = excluded.metrics_json,
+                         last_updated_at = excluded.last_updated_at`,
+                )
+                .bind(runId, version, JSON.stringify(metrics), now)
+                .run()
         }
     }
 }
 
-// Get fairness metrics for a run
-export async function getFairnessMetrics(
-    votesTableClient: TableClient,
-    runId: string,
-): Promise<Record<string, FairnessMetrics>> {
-    try {
-        const metricsQuery = votesTableClient.listEntities<FairnessMetricsRecord>({
-            queryOptions: {
-                filter: `PartitionKey eq 'fairness_metrics' and RowKey ge '${runId}_' and RowKey lt '${runId}~'`,
-            },
-        })
+export async function getFairnessMetrics(db: D1Database, runId: string): Promise<Record<string, FairnessMetrics>> {
+    const result = await db
+        .prepare(`SELECT version, metrics_json FROM fairness_metrics WHERE run_id = ?`)
+        .bind(runId)
+        .all<{ version: string; metrics_json: string }>()
 
-        const metrics: Record<string, FairnessMetrics> = {}
-        for await (const metric of metricsQuery) {
-            try {
-                metrics[metric.version] = JSON.parse(metric.metricsJson)
-            } catch (error) {
-                console.error(`Failed to parse metrics for version ${metric.version}:`, error)
-            }
-        }
-
-        return metrics
-    } catch (error: any) {
-        if (error.statusCode === 404) {
-            return {}
-        }
-        throw error
-    }
-}
-
-// Get validation runs list
-export async function getValidationRuns(votesTableClient: TableClient, limit = 20): Promise<ValidationRunIndex[]> {
-    try {
-        const runsQuery = votesTableClient.listEntities<ValidationRunIndex>({
-            queryOptions: {
-                filter: `PartitionKey eq 'validation'`,
-            },
-        })
-
-        const runs: ValidationRunIndex[] = []
-        for await (const run of runsQuery) {
-            runs.push(run)
-        }
-
-        // Sort by startedAt descending (newest first)
-        runs.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
-
-        // Return only the requested limit after sorting
-        return runs.slice(0, limit)
-    } catch (error: any) {
-        // If table doesn't exist or no validation entities exist, return empty array
-        if (error.statusCode === 404) {
-            return []
-        }
-        throw error
-    }
-}
-
-// Get talk statistics for a run
-export async function getTalkStatistics(votesTableClient: TableClient, runId: string): Promise<TalkStatistics[]> {
-    try {
-        const statsQuery = votesTableClient.listEntities<TalkStatistics>({
-            queryOptions: {
-                filter: `PartitionKey eq 'talk_stats' and RowKey ge '${runId}_talk_' and RowKey lt '${runId}_talk~'`,
-            },
-        })
-
-        const stats: TalkStatistics[] = []
-        for await (const stat of statsQuery) {
-            stats.push(stat)
-        }
-
-        return stats
-    } catch (error: any) {
-        // If table doesn't exist or no stats exist for this run, return empty array
-        if (error.statusCode === 404) {
-            return []
-        }
-        throw error
-    }
-}
-
-export async function getVoteResults(votesTableClient: TableClient, runId: string): Promise<VoteResult[]> {
-    try {
-        const votesQuery = votesTableClient.listEntities<VoteResult>({
-            queryOptions: {
-                filter: `PartitionKey eq 'vote_result_${runId}'`,
-            },
-        })
-
-        const votes: VoteResult[] = []
-        for await (const vote of votesQuery) {
-            votes.push(vote)
-        }
-
-        return votes
-    } catch (error: any) {
-        // If table doesn't exist or no votes exist for this run, return empty array
-        if (error.statusCode === 404) {
-            return []
-        }
-        throw error
-    }
-}
-
-export async function saveTalkResults(
-    votesTableClient: TableClient,
-    runId: string,
-    results: EloResultImport[],
-): Promise<void> {
-    return trace.getTracer('default').startActiveSpan('saveTalkResults', async (span) => {
+    const metrics: Record<string, FairnessMetrics> = {}
+    for (const row of result.results ?? []) {
         try {
-            const timestamp = new Date().toISOString()
-
-            // Ensure results are sorted by rank
-            results.sort((a, b) => a.rank - b.rank)
-
-            // Save new results
-            const talkResults: TalkResult[] = results.map((result, index) => ({
-                partitionKey: `talk_result_${runId}`,
-                rowKey: index.toString().padStart(4, '0'),
-                runId,
-                talkId: result.id,
-                rank: result.rank,
-                wins: result.wins,
-                totalVotes: result.totalVotes,
-                losses: result.losses,
-                winPct: result.winPct,
-                lossPct: result.lossPct,
-                uploadedAt: timestamp,
-            }))
-
-            // Save in batches
-            const batchSize = 20
-            for (let i = 0; i < talkResults.length; i += batchSize) {
-                const batch = talkResults.slice(i, i + batchSize)
-                const promises = batch.map((result) => votesTableClient.createEntity(result))
-                await Promise.all(promises)
-            }
-        } finally {
-            span.end()
+            metrics[row.version] = JSON.parse(row.metrics_json)
+        } catch (error) {
+            console.error(`Failed to parse metrics for version ${row.version}:`, error)
         }
-    })
+    }
+
+    return metrics
 }
 
-export async function getTalkResults(votesTableClient: TableClient, runId: string): Promise<TalkResult[]> {
-    try {
-        const resultsQuery = votesTableClient.listEntities<TalkResult>({
-            queryOptions: {
-                filter: `PartitionKey eq 'talk_result_${runId}'`,
-            },
-        })
+// ============================================================================
+// TALK RESULTS (ELO rankings)
+// ============================================================================
 
-        const results: TalkResult[] = []
-        for await (const result of resultsQuery) {
-            results.push(result)
-        }
+export async function saveTalkResults(db: D1Database, runId: string, results: EloResultImport[]): Promise<void> {
+    const timestamp = new Date().toISOString()
 
-        // Sort by rank (rowKey is already padded for sorting)
-        results.sort((a, b) => a.rank - b.rank)
+    // Ensure results are sorted by rank
+    results.sort((a, b) => a.rank - b.rank)
 
-        return results
-    } catch (error: any) {
-        // If table doesn't exist or no results exist for this run, return empty array
-        if (error.statusCode === 404) {
-            return []
-        }
-        throw error
+    const talkResults: TalkResult[] = results.map((result, index) => ({
+        partitionKey: `talk_result_${runId}` as const,
+        rowKey: index.toString().padStart(4, '0'),
+        runId,
+        talkId: result.id,
+        rank: result.rank,
+        wins: result.wins,
+        totalVotes: result.totalVotes,
+        losses: result.losses,
+        winPct: result.winPct,
+        lossPct: result.lossPct,
+        uploadedAt: timestamp,
+    }))
+
+    // Save in batches of 20
+    const batchSize = 20
+    for (let i = 0; i < talkResults.length; i += batchSize) {
+        const batch = talkResults.slice(i, i + batchSize)
+        const statements = batch.map((r) =>
+            db
+                .prepare(
+                    `INSERT INTO talk_results (run_id, talk_id, rank, wins, losses, total_votes, win_pct, loss_pct, uploaded_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT(run_id, talk_id) DO UPDATE SET
+                         rank = excluded.rank,
+                         wins = excluded.wins,
+                         losses = excluded.losses,
+                         total_votes = excluded.total_votes,
+                         win_pct = excluded.win_pct,
+                         loss_pct = excluded.loss_pct,
+                         uploaded_at = excluded.uploaded_at`,
+                )
+                .bind(r.runId, r.talkId, r.rank, r.wins, r.losses, r.totalVotes, r.winPct, r.lossPct, r.uploadedAt),
+        )
+        await db.batch(statements)
     }
 }
 
-export async function getUnderrepresentedGroupsConfig(votesTableClient: TableClient): Promise<string[]> {
-    try {
-        const partitionKey: UnderrepresentedGroupsConfig['partitionKey'] = 'ddd'
-        const rowKey: UnderrepresentedGroupsConfig['rowKey'] = 'underrepresented_groups'
-        const entity: UnderrepresentedGroupsConfig = await votesTableClient.getEntity(partitionKey, rowKey)
+export async function getTalkResults(db: D1Database, runId: string): Promise<TalkResult[]> {
+    const result = await db
+        .prepare(`SELECT * FROM talk_results WHERE run_id = ? ORDER BY rank`)
+        .bind(runId)
+        .all<{
+            id: number
+            run_id: string
+            talk_id: string
+            rank: number
+            wins: number
+            losses: number
+            total_votes: number
+            win_pct: number | null
+            loss_pct: number | null
+            uploaded_at: string
+        }>()
 
-        return JSON.parse(entity.selectedGroupsJson)
+    return (result.results ?? []).map((row) => ({
+        partitionKey: `talk_result_${row.run_id}` as const,
+        rowKey: row.rank.toString().padStart(4, '0'),
+        runId: row.run_id,
+        talkId: row.talk_id,
+        rank: row.rank,
+        wins: row.wins,
+        losses: row.losses,
+        totalVotes: row.total_votes,
+        winPct: row.win_pct ?? 0,
+        lossPct: row.loss_pct ?? 0,
+        uploadedAt: row.uploaded_at,
+    }))
+}
+
+// ============================================================================
+// UNDERREPRESENTED GROUPS CONFIG
+// ============================================================================
+
+export async function getUnderrepresentedGroupsConfig(db: D1Database): Promise<string[]> {
+    try {
+        const row = await db
+            .prepare(`SELECT selected_groups_json FROM underrepresented_groups_config WHERE id = 'config'`)
+            .first<{ selected_groups_json: string }>()
+
+        if (!row) return []
+        return JSON.parse(row.selected_groups_json)
     } catch (error: any) {
-        if (error.statusCode === 404) {
-            return []
-        }
         recordException(error)
         throw error
     }
 }
 
 export async function saveUnderrepresentedGroupsConfig(
-    votesTableClient: TableClient,
+    db: D1Database,
     year: string,
     selectedGroups: string[],
 ): Promise<void> {
     try {
-        const partitionKey: UnderrepresentedGroupsConfig['partitionKey'] = 'ddd'
-        const rowKey: UnderrepresentedGroupsConfig['rowKey'] = 'underrepresented_groups'
-
-        const entity: UnderrepresentedGroupsConfig = {
-            partitionKey,
-            rowKey,
-            selectedGroupsJson: JSON.stringify(selectedGroups.sort()),
-            lastUpdatedAt: new Date().toISOString(),
-            lastUpdatedYear: year,
-        }
-
-        await votesTableClient.upsertEntity(entity, 'Replace')
+        const now = new Date().toISOString()
+        await db
+            .prepare(
+                `INSERT INTO underrepresented_groups_config (id, selected_groups_json, last_updated_at, last_updated_year)
+                 VALUES ('config', ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                     selected_groups_json = excluded.selected_groups_json,
+                     last_updated_at = excluded.last_updated_at,
+                     last_updated_year = excluded.last_updated_year`,
+            )
+            .bind(JSON.stringify(selectedGroups.sort()), now, year)
+            .run()
     } catch (error: any) {
+        recordException(error)
+        throw error
+    }
+}
+
+// ============================================================================
+// MAIN VALIDATION PROCESS
+// ============================================================================
+
+export async function runVotingValidation(db: D1Database, year: string, talks: TalkVotingData[]): Promise<string> {
+    const runId = crypto.randomUUID()
+    let processedSessions = 0
+    let processedRounds = 0
+    let processedVotes = 0
+
+    try {
+        // Get all voting sessions from D1
+        const sessionRows = await listVotingSessions(db)
+        const sessions = sessionRows.map(rowToVotingSession)
+
+        // Create run index
+        await createValidationRunIndex(db, runId, year, sessions.length)
+
+        // Process sessions
+        const globalStats = new Map<string, TalkStatsAccumulator>()
+
+        // Initialize global stats
+        talks.forEach((talk) => {
+            globalStats.set(talk.id, {
+                talkId: talk.id,
+                title: talk.title,
+                timesSeenAggregated: 0,
+                timesVotedForAggregated: 0,
+                timesVotedAgainstAggregated: 0,
+                timesSkippedAggregated: 0,
+                timesSeenV1: 0,
+                timesVotedForV1: 0,
+                timesVotedAgainstV1: 0,
+                timesSkippedV1: 0,
+                timesSeenV2: 0,
+                timesVotedForV2: 0,
+                timesVotedAgainstV2: 0,
+                timesSkippedV2: 0,
+                timesSeenV3: 0,
+                timesVotedForV3: 0,
+                timesVotedAgainstV3: 0,
+                timesSkippedV3: 0,
+                timesSeenV4: 0,
+                timesVotedForV4: 0,
+                timesVotedAgainstV4: 0,
+                timesSkippedV4: 0,
+            })
+        })
+
+        try {
+            for (const session of sessions) {
+                const sessionStats = await processVotingSession(db, runId, session, talks)
+
+                // Merge session stats into global stats
+                for (const [talkId, sessionStat] of sessionStats.talkStats) {
+                    const globalStat = globalStats.get(talkId)
+                    if (globalStat) {
+                        globalStat.timesSeenAggregated += sessionStat.timesSeenAggregated
+                        globalStat.timesVotedForAggregated += sessionStat.timesVotedForAggregated
+                        globalStat.timesVotedAgainstAggregated += sessionStat.timesVotedAgainstAggregated
+                        globalStat.timesSkippedAggregated += sessionStat.timesSkippedAggregated
+                        globalStat.timesSeenV1 += sessionStat.timesSeenV1
+                        globalStat.timesVotedForV1 += sessionStat.timesVotedForV1
+                        globalStat.timesVotedAgainstV1 += sessionStat.timesVotedAgainstV1
+                        globalStat.timesSkippedV1 += sessionStat.timesSkippedV1
+                        globalStat.timesSeenV2 += sessionStat.timesSeenV2
+                        globalStat.timesVotedForV2 += sessionStat.timesVotedForV2
+                        globalStat.timesVotedAgainstV2 += sessionStat.timesVotedAgainstV2
+                        globalStat.timesSkippedV2 += sessionStat.timesSkippedV2
+                        globalStat.timesSeenV3 += sessionStat.timesSeenV3
+                        globalStat.timesVotedForV3 += sessionStat.timesVotedForV3
+                        globalStat.timesVotedAgainstV3 += sessionStat.timesVotedAgainstV3
+                        globalStat.timesSkippedV3 += sessionStat.timesSkippedV3
+                        globalStat.timesSeenV4 += sessionStat.timesSeenV4
+                        globalStat.timesVotedForV4 += sessionStat.timesVotedForV4
+                        globalStat.timesVotedAgainstV4 += sessionStat.timesVotedAgainstV4
+                        globalStat.timesSkippedV4 += sessionStat.timesSkippedV4
+                    }
+                }
+
+                processedSessions++
+                processedRounds += sessionStats.processedRounds
+                processedVotes += sessionStats.processedVotes
+
+                // Update progress every 10 sessions
+                if (processedSessions % 10 === 0) {
+                    await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes)
+                }
+
+                // Small delay to reduce load on server/table
+                await new Promise((resolve) => setTimeout(resolve, 100))
+            }
+
+            // Save final statistics
+            await saveTalkStatistics(db, runId, globalStats)
+
+            // Calculate and save fairness metrics
+            await calculateAndSaveFairnessMetrics(db, runId, globalStats)
+
+            // Mark as completed
+            await updateValidationRunProgress(
+                db,
+                runId,
+                processedSessions,
+                processedRounds,
+                processedVotes,
+                'completed',
+            )
+            await markValidationCompleted(db, runId)
+
+            return runId
+        } catch (error) {
+            // Mark as incomplete on error
+            await updateValidationRunProgress(
+                db,
+                runId,
+                processedSessions,
+                processedRounds,
+                processedVotes,
+                'incomplete',
+            )
+            await markValidationCompleted(db, runId)
+            recordException(error)
+            throw error
+        }
+    } catch (error) {
+        // Mark as incomplete on error for outer try block
+        try {
+            await updateValidationRunProgress(
+                db,
+                runId,
+                processedSessions,
+                processedRounds,
+                processedVotes,
+                'incomplete',
+            )
+            await markValidationCompleted(db, runId)
+        } catch {
+            // Ignore errors in cleanup
+        }
         recordException(error)
         throw error
     }

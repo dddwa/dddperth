@@ -6,10 +6,11 @@ import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
+import { getSessionCounter } from '~/lib/d1.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
 import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
-import type { StartValidationResponse, VotingValidationGlobal } from '~/lib/voting-validation-types'
+import type { StartValidationResponse } from '~/lib/voting-validation-types'
 import {
     canStartValidation,
     getUnderrepresentedGroupsConfig,
@@ -18,8 +19,7 @@ import {
     runVotingValidation,
     saveUnderrepresentedGroupsConfig,
 } from '~/lib/voting-validation.server'
-import type { VotingGlobal } from '~/lib/voting.server'
-import { ensureVotesTableExists, getSessionsForVoting, getVotesTableName } from '~/lib/voting.server'
+import { getSessionsForVoting } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
@@ -28,6 +28,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
+    const db = context.db
 
     // Get the voting session counter
     let sessionCount = 0
@@ -47,38 +48,31 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        // Ensure the votes table exists
-        const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+        sessionCount = await getSessionCounter(db, year)
+    } catch (error: any) {
+        console.error('Error getting session count:', error)
+        recordException(error)
+    }
 
-        try {
-            const partitionKey: VotingGlobal['partitionKey'] = 'ddd'
-            const rowKey: VotingGlobal['rowKey'] = 'voting'
-            const entity: VotingGlobal = await tableClient.getEntity(partitionKey, rowKey)
-            sessionCount = entity.numberSessions || 0
-        } catch (error: any) {
-            if (error.statusCode !== 404) {
-                console.error('Error getting session count:', error)
-            }
-            // If entity doesn't exist, sessionCount remains 0
-        }
-
+    try {
         // Get validation runs
-        const runs = await getValidationRuns(tableClient, 5) // Get last 5 runs
+        const runs = await getValidationRuns(db, 5) // Get last 5 runs
 
         // Get current validation status
         let isRunning = false
         let currentRunId: string | undefined
 
         try {
-            const partitionKey: VotingValidationGlobal['partitionKey'] = 'ddd'
-            const rowKey: VotingValidationGlobal['rowKey'] = 'voting_validation'
-            const globalEntity: VotingValidationGlobal = await tableClient.getEntity(partitionKey, rowKey)
-            isRunning = globalEntity.isRunning
-            currentRunId = globalEntity.currentRunId
-        } catch (error: any) {
-            if (error.statusCode !== 404) {
-                console.error('Error getting validation status:', error)
+            const row = await db
+                .prepare(`SELECT is_running, current_run_id FROM voting_validation_globals WHERE id = 'global'`)
+                .first<{ is_running: number; current_run_id: string | null }>()
+
+            if (row) {
+                isRunning = !!row.is_running
+                currentRunId = row.current_run_id ?? undefined
             }
+        } catch (error: any) {
+            console.error('Error getting validation status:', error)
             recordException(error)
         }
 
@@ -98,10 +92,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             isRunning,
         }
     } catch (error: any) {
-        if (error.statusCode !== 404) {
-            console.error('Error getting session count:', error)
-        }
-        // If entity doesn't exist, sessionCount remains 0
+        console.error('Error getting validation runs:', error)
         recordException(error)
     }
 
@@ -129,9 +120,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 underrepresentedGroupsQuestionId: yearConfig.sessions.underrepresentedGroupsQuestionId,
             })
 
-            // Get currently selected groups from table storage (accumulated from all years)
-            const tableName = getVotesTableName(year)
-            const selectedGroups = await getUnderrepresentedGroupsConfig(context.getTableClient(tableName))
+            // Get currently selected groups from D1
+            const selectedGroups = await getUnderrepresentedGroupsConfig(db)
 
             // Combine all groups (existing config + current year) and remove duplicates
             const allAvailableGroups = Array.from(new Set([...selectedGroups, ...currentYearGroups])).sort()
@@ -169,9 +159,7 @@ export async function action({
 
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
-
-    // Ensure the votes table exists
-    const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+    const db = context.db
 
     // Handle underrepresented groups update
     if (intent === 'update_underrepresented_groups') {
@@ -184,7 +172,7 @@ export async function action({
                 }
             }
 
-            await saveUnderrepresentedGroupsConfig(tableClient, year, selectedGroups)
+            await saveUnderrepresentedGroupsConfig(db, year, selectedGroups)
 
             return { success: true, message: 'Underrepresented groups updated successfully' }
         } catch (error: any) {
@@ -196,7 +184,7 @@ export async function action({
 
     try {
         // Check if validation can be started
-        const canStart = await canStartValidation(tableClient)
+        const canStart = await canStartValidation(db)
 
         if (!canStart.canStart) {
             const response: StartValidationResponse = {
@@ -237,11 +225,10 @@ export async function action({
         const runId = crypto.randomUUID()
 
         // Mark validation as started
-        await markValidationStarted(tableClient, runId)
+        await markValidationStarted(db, runId)
 
         // Start the validation process in the background
-        // Note: In a production environment, this would be better handled by a queue or background job
-        runVotingValidation(tableClient, year, talks).catch((error) => {
+        runVotingValidation(db, year, talks).catch((error) => {
             recordException(error)
             console.error('Validation process error:', error)
         })

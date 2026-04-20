@@ -6,26 +6,26 @@ import { AppLink } from '../app-link'
 
 export const Footer = () => (
     <Box
-        mt={48}
-        gap={6}
+        mt="48"
+        gap="6"
         mx="5"
         xl={{
-            mx: 0,
+            mx: '0',
         }}
     >
-        <Divider color="#8D8DFF33" mb={6} />
+        <Divider color="border.subtle" mb="6" />
         <Grid
             gridTemplateColumns="1fr"
             md={{ gridTemplateColumns: 'repeat(4, 1fr)' }}
             width="full"
-            gap={6}
-            maxW="1200px"
+            gap="6"
+            maxW="breakpoint-2xl"
             mx="auto"
         >
             <Flex flexGrow={2}>
                 <Logo width={153} />
             </Flex>
-            <Flex direction="column" gap={1} fontWeight="medium">
+            <Flex direction="column" gap="1" fontWeight="medium">
                 <AppLink to="/agenda#previous-years" variant="primary">
                     Previous Years Sessions
                 </AppLink>
@@ -51,7 +51,7 @@ export const Footer = () => (
                     Admin
                 </AppLink>
             </Flex>
-            <Flex direction="column" gap={1} fontWeight="medium">
+            <Flex direction="column" gap="1" fontWeight="medium">
                 <AppLink to="/code-of-conduct" variant="primary">
                     Code Of Conduct
                 </AppLink>
@@ -64,11 +64,11 @@ export const Footer = () => (
                 <AppLink to="/volunteer" variant="primary">
                     Work With Us
                 </AppLink>
-                <styled.a href="mailto:info@dddperth.com" color="#8282FB" _hover={{ color: 'white' }}>
+                <styled.a href="mailto:info@dddperth.com" color="text.highlight" _hover={{ color: 'text.on-brand' }}>
                     info@dddperth.com
                 </styled.a>
             </Flex>
-            <Flex direction="column" gap={4}>
+            <Flex direction="column" gap="4">
                 {/* <styled.p color="#C2C2FF" fontSize="2xl" lineHeight={1.2} textWrap="balance">
                     Subscribe for the latest DDD updates
                 </styled.p>
@@ -85,7 +85,7 @@ export const Footer = () => (
                     _placeholder={{ color: '#8282FB' }}
                     mb={4}
                 /> */}
-                <Flex direction="row" gap={1}>
+                <Flex direction="row" gap="1">
                     {socialsData.map((item) => (
                         <styled.a
                             aria-label={`Visit us on ${item.title}`}
@@ -100,9 +100,9 @@ export const Footer = () => (
                             <item.icon
                                 className={css({
                                     w: '8',
-                                    color: '#8282FB',
+                                    color: 'text.highlight',
                                     transition: 'colors',
-                                    _hover: { color: 'white' },
+                                    _hover: { color: 'text.on-brand' },
                                 })}
                             />
                         </styled.a>

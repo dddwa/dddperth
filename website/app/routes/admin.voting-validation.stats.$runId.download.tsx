@@ -1,7 +1,6 @@
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getVoteResults } from '~/lib/voting-validation.server'
-import { ensureVotesTableExists } from '~/lib/voting.server'
 import type { Route } from './+types/admin.voting-validation.stats.$runId.download'
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -21,11 +20,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
-    // Ensure the votes table exists
-    const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+    const db = context.db
 
     // Get all vote results for this run
-    const voteResults = await getVoteResults(tableClient, runId)
+    const voteResults = await getVoteResults(db, runId)
 
     // Transform to the format expected by the ELO tool with underrepresented info
     type VoteEntryForElo = {

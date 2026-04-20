@@ -10,7 +10,7 @@ import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION, CURRENT_SESSION_VERSION } from '~/lib/voting-version-constants'
 import type { TalkPair } from '~/lib/voting.server'
-import { ensureVotesTableExists, getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
+import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
 
@@ -57,15 +57,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     }
 
-    const tableClient = await ensureVotesTableExists(
-        context.tableServiceClient,
-        context.getTableClient,
-        context.conferenceState.conference.year,
-    )
-
     const allSessionsEndpoint = yearConfig.sessions.allSessionsEndpoint
     // This will create a session and redirect
-    const votingSession = await getVotingSession(request, tableClient, () => getSessionsForVoting(allSessionsEndpoint))
+    const votingSession = await getVotingSession(
+        request,
+        context.db,
+        context.conferenceState.conference.year,
+        () => getSessionsForVoting(allSessionsEndpoint),
+    )
 
     // Check if this is a current version session, if not clear and redirect
     if (votingSession.version !== CURRENT_SESSION_VERSION) {

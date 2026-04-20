@@ -55,3 +55,9 @@ infra/modules/fetch-container-image.json
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+docs/prompts
+.playwright-mcp
+
+.claude/worktrees
+.claude/settings.local.json

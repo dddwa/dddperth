@@ -1,10 +1,9 @@
-import { trace } from '@opentelemetry/api'
 import { data, redirect } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { votingStorage } from '~/lib/session.server'
 import type { VoteErrorResponse, VoteSuccessResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
-import { ensureVotesTableExists, recordVoteInTable } from '~/lib/voting.server'
+import { recordVoteInTable } from '~/lib/voting.server'
 import type { Route } from './+types/api.voting.vote'
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -39,12 +38,6 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         // Validate types and values - FormDataEntryValue can be string or File
         if (typeof voteRaw !== 'string' || typeof roundNumberRaw !== 'string' || typeof indexInRoundRaw !== 'string') {
-            trace.getActiveSpan()?.addEvent('Invalid field types', {
-                voteRaw: JSON.stringify(voteRaw),
-                roundNumberRaw: JSON.stringify(roundNumberRaw),
-                indexInRoundRaw: JSON.stringify(indexInRoundRaw),
-            })
-
             const errorResponse: VoteErrorResponse = { error: 'Invalid field types' }
             return data(errorResponse, { status: 400 })
         }
@@ -91,13 +84,14 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 404 })
         }
 
-        const tableClient = await ensureVotesTableExists(
-            context.tableServiceClient,
-            context.getTableClient,
+        await recordVoteInTable(
+            context.db,
+            sessionId,
             context.conferenceState.conference.year,
+            roundNumber,
+            indexInRound,
+            vote,
         )
-
-        await recordVoteInTable(tableClient, sessionId, roundNumber, indexInRound, vote)
 
         const successResponse: VoteSuccessResponse = { success: true, indexInRound }
         return data(successResponse)
@@ -107,8 +101,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
         console.error('Failed to record vote:', error)
 
-        // Check if it's a duplicate vote (already voted on this index)
-        if (error.statusCode === 409) {
+        // Check if it's a duplicate vote (D1 UNIQUE constraint violation)
+        if (error.message?.includes('UNIQUE constraint failed')) {
             const errorResponse: VoteErrorResponse = { error: 'Already voted on this pair', duplicate: true }
             return data(errorResponse, { status: 409 })
         }

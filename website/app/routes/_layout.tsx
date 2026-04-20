@@ -8,7 +8,7 @@ import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getUser, isAdmin } from '~/lib/auth.server'
-import { WEB_URL } from '~/lib/config.server' // Ensure this path is correct
+import { getWebUrl } from '~/lib/config.server'
 import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import type { Route } from './+types/_layout'
 
@@ -34,7 +34,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     return {
         conferenceDescription: conferenceConfigPublic.description,
         conferenceState: context.conferenceState,
-        webUrl: WEB_URL,
+        webUrl: getWebUrl(context.cloudflare.env),
         adminData,
     }
 }
@@ -49,7 +49,7 @@ export function meta({ data, location }: Route.MetaArgs) {
           )}`
         : conferenceConfigPublic.name
 
-    const description = data.conferenceDescription
+    const description = data?.conferenceDescription
     const url = `${data?.webUrl ?? ''}${location.pathname}`
 
     return [

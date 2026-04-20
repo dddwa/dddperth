@@ -230,13 +230,14 @@ function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?
             flexDirection="row"
             justifyContent="space-between"
             rounded="lg"
-            color={'#FFF'}
+            color="text.on-brand"
             shadow="sm"
             bgGradient="to-r"
-            gradientFrom={'#00BA8D4A'}
-            gradientTo={'#FF00E91A'}
-            borderTop={'1px solid #FFFFFF2A'}
-            p={smallSidebar ? 2 : 4}
+            gradientFrom="overlay.subtle"
+            gradientTo="overlay.moderate"
+            borderTop="1px solid"
+            borderTopColor="overlay.strong"
+            p={smallSidebar ? '2' : '4'}
         >
             {children}
         </Flex>
@@ -249,13 +250,13 @@ function ClosedRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?
             flexDirection="row"
             justifyContent="space-between"
             rounded="lg"
-            color={'#C2C2FF'}
+            color="text.secondary"
             shadow="sm"
             bgGradient="to-r"
-            gradientFrom={'#1F1F4E'}
-            gradientTo={'#151544'}
-            borderTop={'none'}
-            p={smallSidebar ? 2 : 4}
+            gradientFrom="surface.card"
+            gradientTo="surface.card-alt"
+            borderTop="none"
+            p={smallSidebar ? '2' : '4'}
         >
             {children}
         </Flex>
@@ -280,18 +281,18 @@ function EventLink({
             flexDirection="column"
             alignItems="center"
             justifyContent="center"
-            borderRightRadius={100}
-            width={smallSidebar ? 100 : 150}
+            borderRightRadius="100px"
+            width={smallSidebar ? '100px' : '150px'}
             fontSize={smallSidebar ? 'xs' : 'md'}
-            paddingY={1}
-            ml={smallSidebar ? 6 : 0}
+            paddingY="1"
+            ml={smallSidebar ? '6' : '0'}
             fontWeight="semibold"
-            color={highlighted ? '#520030' : '#FFF'}
+            color={highlighted ? 'gradient.cta-start' : 'text.on-brand'}
             // cursor="pointer"
-            _hover={{ gradientTo: highlighted ? '#FF52B7' : 'white/10' }}
+            _hover={{ gradientTo: highlighted ? 'gradient.cta-mid' : 'white/10' }}
             bgGradient="to-r"
-            gradientFrom={highlighted ? '#FF52B7' : 'white/10'}
-            gradientTo={highlighted ? '#FF8273' : 'white/5'}
+            gradientFrom={highlighted ? 'gradient.cta-mid' : 'white/10'}
+            gradientTo={highlighted ? 'gradient.cta-end' : 'white/5'}
         >
             {message}
         </styled.a>

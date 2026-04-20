@@ -153,7 +153,7 @@ export async function getScheduleGrid(opts: Options): Promise<z.infer<typeof gri
     }
     const json = await fetched.json()
     if (!json || !Array.isArray(json)) {
-        throw new Error('Error fetching schedule. Expected an array, received:\n\n' + json)
+        throw new Error('Error fetching schedule. Expected an array, received:\n\n' + JSON.stringify(json))
     }
 
     const schedule = gridSmartSchema.parse(json)
@@ -187,7 +187,7 @@ export async function getConfSessions(opts: Options): Promise<SessionsList> {
 
     const json = await fetched.json()
     if (!json || !Array.isArray(json)) {
-        throw new Error('Error fetching sessions. Expected an array, received:\n\n' + json)
+        throw new Error('Error fetching sessions. Expected an array, received:\n\n' + JSON.stringify(json))
     }
 
     const sessions = sessionsSchema.parse(json)
@@ -228,7 +228,7 @@ export async function getConfSpeakers(opts: Options): Promise<z.infer<typeof spe
 
     const json = await fetched.json()
     if (!json || !Array.isArray(json)) {
-        throw new Error('Error fetching speakers. Expected an array, received:\n\n' + json)
+        throw new Error('Error fetching speakers. Expected an array, received:\n\n' + JSON.stringify(json))
     }
 
     const speakers = speakersSchema.parse(json)

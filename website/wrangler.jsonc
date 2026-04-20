@@ -1,0 +1,59 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "dddperth-website",
+    "main": "build/worker/index.js",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    // D1 Database binding for voting
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "dddperth-voting-local",
+            "database_id": "local"
+        }
+    ],
+
+    // Static assets served from Cloudflare
+    "assets": {
+        "directory": "build/remix/client"
+    },
+
+    // Default environment variables
+    "vars": {
+        "WEB_URL": "http://localhost:3800"
+    },
+
+    // Production environment
+    "env": {
+        "production": {
+            "vars": {
+                "WEB_URL": "https://dddperth.com"
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "dddperth-voting-prod",
+                    "database_id": "TO_BE_CREATED"
+                }
+            ]
+        },
+        "staging": {
+            "vars": {
+                "WEB_URL": "https://staging.dddperth.com"
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "dddperth-voting-staging",
+                    "database_id": "TO_BE_CREATED"
+                }
+            ]
+        }
+    },
+
+    // Observability
+    "observability": {
+        "enabled": true
+    }
+}

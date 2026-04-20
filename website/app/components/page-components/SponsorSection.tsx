@@ -1,17 +1,18 @@
 import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
+import { token } from '~/styled-system/tokens'
 
 const sponsorStyles = {
-    platinum: { gradientFrom: '#496F7F', logoSize: 'lg' },
-    gold: { gradientFrom: '#453927', logoSize: 'md' },
-    silver: { gradientFrom: '#2A3251', logoSize: 'sm' },
-    bronze: { gradientFrom: '#452927', logoSize: 'xs' },
-    room: { gradientFrom: '#1F1F4E', logoSize: 'xs' },
-    digital: { gradientFrom: '#371F4E', logoSize: 'xs' },
-    community: { gradientFrom: '#134343', logoSize: 'xs' },
-    coffeeCart: { gradientFrom: '#134343', logoSize: 'xs' },
-    quietRoom: { gradientFrom: '#134343', logoSize: 'xs' },
-    keynotes: { gradientFrom: '#134343', logoSize: 'sm' },
+    platinum: { gradientFrom: 'sponsor.platinum', logoSize: 'lg' },
+    gold: { gradientFrom: 'sponsor.gold', logoSize: 'md' },
+    silver: { gradientFrom: 'sponsor.silver', logoSize: 'sm' },
+    bronze: { gradientFrom: 'sponsor.bronze', logoSize: 'xs' },
+    room: { gradientFrom: 'sponsor.room', logoSize: 'xs' },
+    digital: { gradientFrom: 'sponsor.digital', logoSize: 'xs' },
+    community: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
+    coffeeCart: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
+    quietRoom: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
+    keynotes: { gradientFrom: 'sponsor.community', logoSize: 'sm' },
 } as const
 
 function getSponsorStyle(category: keyof typeof sponsorStyles) {
@@ -59,10 +60,10 @@ function SponsorGroup({
 
     return (
         <Flex flexDirection="column" alignItems="flex-start" marginBottom="4">
-            <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="#C2C2FF">
+            <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="text.secondary">
                 {title}
             </styled.h3>
-            <Flex flexWrap="wrap" alignItems="center" p={6}>
+            <Flex flexWrap="wrap" alignItems="center" p="6">
                 {sponsorGroups.map((group) =>
                     group.sponsors?.map((sponsor) => {
                         const sponsorElement = (
@@ -103,29 +104,30 @@ function SponsorComponent({
             display="flex"
             justifyContent="center"
             alignItems="center"
-            border="6px solid #0D0D3F"
+            border="6px solid"
+            borderColor="border.default"
             style={{
-                background: `linear-gradient(to bottom, ${gradientFrom}, #151544)`,
+                background: `linear-gradient(to bottom, ${token(`colors.${gradientFrom}`)}, ${token('colors.surface.card-alt')})`,
                 zIndex: zIndex,
             }}
-            width={260}
-            height={220}
-            ml={-6}
-            zIndex={1}
+            width="260px"
+            height="220px"
+            ml="-6"
+            zIndex="1"
             boxShadow="inset -1px 1px 0 0 rgba(255,255,255,0.21)"
             borderRightRadius="full"
         >
             <styled.img
                 src={sponsor.logoUrlDarkMode}
                 alt={sponsor.name}
-                maxWidth={150}
+                maxWidth="150px"
                 width="100%"
-                maxHeight={90}
-                ml={-3}
+                maxHeight="90px"
+                ml="-3"
                 display="inline-block"
                 objectFit="contain"
             />
-            <styled.h5 position="absolute" left={3} bottom={3} fontSize="xs" color="white" mixBlendMode="soft-light">
+            <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.on-brand" mixBlendMode="soft-light">
                 {category.charAt(0).toUpperCase() + category.slice(1)} Sponsor
             </styled.h5>
         </styled.a>

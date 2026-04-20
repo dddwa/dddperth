@@ -1,7 +1,10 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '~/lib/config-types.server'
+import type { ConferenceYear } from '../../lib/config-types.server'
 
-import { SESSIONIZE_2025_ALL_SESSIONS, SESSIONIZE_2025_SESSIONS } from '~/lib/config.server'
+// TODO: Update these URLs when the 2025 Sessionize event is set up
+// These are the API endpoints for fetching session data from Sessionize
+const SESSIONIZE_2025_SESSIONS = 'https://sessionize.com/api/v2/PLACEHOLDER_2025'
+const SESSIONIZE_2025_ALL_SESSIONS = 'https://sessionize.com/api/v2/PLACEHOLDER_2025/view/All'
 import { optusStadiumVenue } from '../venues/optus-stadium'
 
 export const conference2025: ConferenceYear = {

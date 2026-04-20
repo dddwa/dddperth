@@ -14,8 +14,7 @@ import type {
     TalkStatisticsWithDetailsResponse,
     ValidationRunIndex,
 } from '~/lib/voting-validation-types'
-import { getFairnessMetrics, getTalkResults, getTalkStatistics, saveTalkResults, getUnderrepresentedGroupsConfig } from '~/lib/voting-validation.server'
-import { ensureVotesTableExists } from '~/lib/voting.server'
+import { getFairnessMetrics, getTalkResults, getTalkStatistics, getValidationRunById, saveTalkResults, getUnderrepresentedGroupsConfig } from '~/lib/voting-validation.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting-validation.stats.$runId'
 
@@ -37,35 +36,32 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     }
     const sessionizeConfig = yearConfig.sessions
 
-    // Ensure the votes table exists
-    const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+    const db = context.db
 
     // Get validation run details
     let runDetails = null
     try {
-        const partitionKey: ValidationRunIndex['partitionKey'] = 'validation'
-        const rowKey: ValidationRunIndex['rowKey'] = `run_${runId}`
-        const runEntity: ValidationRunIndex = await tableClient.getEntity(partitionKey, rowKey)
-        runDetails = {
-            startedAt: runEntity.startedAt,
-            completedAt: runEntity.completedAt,
-            status: runEntity.status,
-            totalSessions: runEntity.totalSessions,
-            processedSessions: runEntity.processedSessions,
-            processedVotes: runEntity.processedVotes,
-            totalRounds: runEntity.processedRounds,
+        const runEntity = await getValidationRunById(db, runId)
+        if (runEntity) {
+            runDetails = {
+                startedAt: runEntity.startedAt,
+                completedAt: runEntity.completedAt,
+                status: runEntity.status,
+                totalSessions: runEntity.totalSessions,
+                processedSessions: runEntity.processedSessions,
+                processedVotes: runEntity.processedVotes,
+                totalRounds: runEntity.processedRounds,
+            }
         }
     } catch (error: any) {
-        if (error.statusCode !== 404) {
-            console.error('Error getting run details:', error)
-        }
+        console.error('Error getting run details:', error)
     }
 
     // Get talk statistics for this run
-    const stats = await getTalkStatistics(tableClient, runId)
+    const stats = await getTalkStatistics(db, runId)
 
     // Get fairness metrics
-    const fairnessMetricsMap = await getFairnessMetrics(tableClient, runId)
+    const fairnessMetricsMap = await getFairnessMetrics(db, runId)
     const fairnessMetrics: TalkStatisticsWithDetailsResponse['fairnessMetrics'] = {
         aggregated: fairnessMetricsMap.aggregated,
         v1: fairnessMetricsMap.v1,
@@ -138,7 +134,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     talks.sort((a, b) => b.stats.aggregated.winRate - a.stats.aggregated.winRate)
 
     // Get talk results if available
-    const talkResults = await getTalkResults(tableClient, runId)
+    const talkResults = await getTalkResults(db, runId)
 
     type SessionizeTalks = Array<{
         id: string
@@ -171,7 +167,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         })
 
         // Get underrepresented groups configuration
-        const underrepresentedGroups = await getUnderrepresentedGroupsConfig(tableClient)
+        const underrepresentedGroups = await getUnderrepresentedGroupsConfig(db)
 
         // Create a map of talk ID to speaker IDs
         sessions.forEach((session) => {
@@ -219,8 +215,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
-    // Ensure the votes table exists
-    const tableClient = await ensureVotesTableExists(context.tableServiceClient, context.getTableClient, year)
+    const db = context.db
 
     const formData = await request.formData()
     const intent = formData.get('intent')
@@ -262,7 +257,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         }
 
         // Save the results
-        await saveTalkResults(tableClient, runId, results)
+        await saveTalkResults(db, runId, results)
 
         return { success: true }
     }

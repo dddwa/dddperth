@@ -56,64 +56,67 @@
             "executor": "nx:noop",
             "dependsOn": ["setup-panda", "setup-react-router"]
         },
-        "serve": {
+        "dev": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": ["node --inspect=127.0.0.1:9600 ./build/server/server.js"],
+                "command": "pnpm vite",
                 "cwd": "website"
-            },
-            "dependsOn": ["build-server"]
-        },
-        "start-prod": {
-            "executor": "nx:run-commands",
-            "options": {
-                "commands": ["node ./server/server.js"],
-                "cwd": "website/build"
             }
         },
-        "build-remix": {
+        "build": {
             "executor": "nx:run-commands",
             "cache": true,
-            "inputs": ["{projectRoot}/app/**/*.*"],
-            "outputs": ["{options.outputPath}/build/remix/*.*"],
+            "inputs": ["{projectRoot}/app/**/*.*", "{projectRoot}/workers/**/*.*"],
+            "outputs": ["{projectRoot}/build/**/*.*"],
             "options": {
                 "command": "react-router build",
                 "cwd": "website"
             }
         },
-        "build-server": {
-            "executor": "@nx/esbuild:esbuild",
-            "cache": true,
-            "inputs": ["{projectRoot}/server.ts", "{projectRoot}/server.init.ts", "{projectRoot}/app/**/*.*"],
-            "outputs": ["{options.outputPath}/**/*.*"],
-            "dependsOn": [],
+        "deploy": {
+            "executor": "nx:run-commands",
             "options": {
-                "platform": "node",
-                "outputPath": "website/build/server",
-                "assets": [],
-                "format": ["esm"],
-                "bundle": true,
-                "skipTypeCheck": true,
-                "declaration": false,
-                "main": "website/server.ts",
-                "additionalEntryPoints": ["website/server.init.ts"],
-                "tsConfig": "website/tsconfig.json",
-                "esbuildOptions": {
-                    "external": ["../remix/server/index.js", "./server.init.js"],
-                    "target": "node20",
-                    "packages": "external",
-                    "sourcemap": true,
-                    "outExtension": {
-                        ".js": ".js"
-                    }
-                },
-                "thirdParty": true
+                "command": "wrangler deploy",
+                "cwd": "website"
+            },
+            "dependsOn": ["build"]
+        },
+        "deploy-staging": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler deploy --env staging",
+                "cwd": "website"
+            },
+            "dependsOn": ["build"]
+        },
+        "deploy-production": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler deploy --env production",
+                "cwd": "website"
+            },
+            "dependsOn": ["build"]
+        },
+        "d1-migrate-local": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler d1 migrations apply dddperth-voting-local --local",
+                "cwd": "website"
             }
         },
-        "build": {
-            "executor": "nx:noop",
-            "options": {},
-            "dependsOn": ["build-remix", "build-server"]
+        "d1-migrate-staging": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler d1 migrations apply dddperth-voting-staging --env staging --remote",
+                "cwd": "website"
+            }
+        },
+        "d1-migrate-production": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler d1 migrations apply dddperth-voting-prod --env production --remote",
+                "cwd": "website"
+            }
         }
     }
 }

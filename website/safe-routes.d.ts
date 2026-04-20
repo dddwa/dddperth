@@ -6,133 +6,129 @@ declare module "safe-routes" {
   type ExportedQuery<T> = IsSearchParams<T> extends true ? T : never;
 
   export interface Routes {
-    "": {
-      params: never,
-      query: ExportedQuery<import('app/routes/_layout._index').SearchParams>,
-    },
     "/": {
       params: never,
-      query: ExportedQuery<import('app/root').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout._index.js').SearchParams>,
     },
     "/*": {
       params: {'*': string | number},
-      query: ExportedQuery<import('app/routes/_layout.$').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.$.js').SearchParams>,
     },
     "/admin": {
       params: never,
-      query: ExportedQuery<import('app/routes/admin._index').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin._index.js').SearchParams>,
     },
     "/admin/content": {
       params: never,
-      query: ExportedQuery<import('app/routes/admin.content').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.content.js').SearchParams>,
     },
     "/admin/dashboard": {
       params: never,
-      query: ExportedQuery<import('app/routes/admin.dashboard').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.dashboard.js').SearchParams>,
     },
     "/admin/settings": {
       params: never,
-      query: ExportedQuery<import('app/routes/admin.settings').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
     "/admin/voting": {
       params: never,
-      query: ExportedQuery<import('app/routes/admin.voting').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
     },
     "/admin/voting-validation/stats/:runId": {
       params: {'runId': string | number},
-      query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId.js').SearchParams>,
     },
     "/admin/voting-validation/stats/:runId/download": {
       params: {'runId': string | number},
-      query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId.download').SearchParams>,
+      query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId.download.js').SearchParams>,
     },
     "/agenda/:year?": {
       params: {'year'?: string | number},
-      query: ExportedQuery<import('app/routes/_layout.agenda.($year)').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.agenda.($year).js').SearchParams>,
     },
     "/agenda/:year/talk/:sessionId": {
       params: {'year': string | number; 'sessionId': string | number},
-      query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
     },
     "/api/voting/batch": {
       params: never,
-      query: ExportedQuery<import('app/routes/api.voting.batch').SearchParams>,
+      query: ExportedQuery<import('app/routes/api.voting.batch.js').SearchParams>,
     },
     "/api/voting/vote": {
       params: never,
-      query: ExportedQuery<import('app/routes/api.voting.vote').SearchParams>,
+      query: ExportedQuery<import('app/routes/api.voting.vote.js').SearchParams>,
     },
     "/app": {
       params: never,
-      query: ExportedQuery<import('app/routes/_layout.app').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.app.js').SearchParams>,
     },
     "/app-agenda-grid": {
       params: never,
-      query: ExportedQuery<import('app/routes/app-agenda-grid').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-agenda-grid.js').SearchParams>,
     },
     "/app-agenda-sessions": {
       params: never,
-      query: ExportedQuery<import('app/routes/app-agenda-sessions').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-agenda-sessions.js').SearchParams>,
     },
     "/app-agenda-speakers": {
       params: never,
-      query: ExportedQuery<import('app/routes/app-agenda-speakers').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-agenda-speakers.js').SearchParams>,
     },
     "/app-announcements": {
       params: never,
-      query: ExportedQuery<import('app/routes/app-announcements').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-announcements.js').SearchParams>,
     },
     "/app-config": {
       params: never,
-      query: ExportedQuery<import('app/routes/app-config').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-config.js').SearchParams>,
     },
     "/app-content/*": {
       params: {'*': string | number},
-      query: ExportedQuery<import('app/routes/app-content.$').SearchParams>,
+      query: ExportedQuery<import('app/routes/app-content.$.js').SearchParams>,
     },
     "/auth/github/callback": {
       params: never,
-      query: ExportedQuery<import('app/routes/auth.github.callback').SearchParams>,
+      query: ExportedQuery<import('app/routes/auth.github.callback.js').SearchParams>,
     },
     "/auth/login": {
       params: never,
-      query: ExportedQuery<import('app/routes/auth.login').SearchParams>,
+      query: ExportedQuery<import('app/routes/auth.login.js').SearchParams>,
     },
     "/auth/logout": {
       params: never,
-      query: ExportedQuery<import('app/routes/auth.logout').SearchParams>,
+      query: ExportedQuery<import('app/routes/auth.logout.js').SearchParams>,
     },
     "/blog": {
       params: never,
-      query: ExportedQuery<import('app/routes/_layout.blog._index').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.blog._index.js').SearchParams>,
     },
     "/blog/:slug": {
       params: {'slug': string | number},
-      query: ExportedQuery<import('app/routes/_layout.blog.$slug').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.blog.$slug.js').SearchParams>,
     },
     "/blog/rss.xml": {
       params: never,
-      query: ExportedQuery<import('app/routes/blog.rss[.xml]').SearchParams>,
+      query: ExportedQuery<import('app/routes/blog.rss[.xml].js').SearchParams>,
     },
     "/robots.txt": {
       params: never,
-      query: ExportedQuery<import('app/routes/[robots.txt]').SearchParams>,
+      query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
     },
     "/sitemap.xml": {
       params: never,
-      query: ExportedQuery<import('app/routes/sitemap[.xml]').SearchParams>,
+      query: ExportedQuery<import('app/routes/sitemap[.xml].js').SearchParams>,
     },
     "/sponsors/:year?": {
       params: {'year'?: string | number},
-      query: ExportedQuery<import('app/routes/_layout.sponsors.($year)').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.sponsors.($year).js').SearchParams>,
     },
     "/tito-webhook": {
       params: never,
-      query: ExportedQuery<import('app/routes/tito-webhook').SearchParams>,
+      query: ExportedQuery<import('app/routes/tito-webhook.js').SearchParams>,
     },
     "/voting": {
       params: never,
-      query: ExportedQuery<import('app/routes/_layout.voting').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.voting.js').SearchParams>,
     }
   }
 

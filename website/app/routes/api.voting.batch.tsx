@@ -3,7 +3,6 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { votingStorage } from '~/lib/session.server'
 import type { VotingBatchResponse, VotingErrorResponse } from '~/lib/voting-api-types'
 import {
-    ensureVotesTableExists,
     extractSessionIds,
     getSessionsForVoting,
     getVotingBatchExplicit,
@@ -51,13 +50,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         // We need the sessions for this route either way, if the session needs to be reset, then we need a new session
         // which needs it, and then we redirect, or we need the sessions to generate the batch
         const sessions = await getSessionsForVoting(allSessionsEndpoint)
-        const tableClient = await ensureVotesTableExists(
-            context.tableServiceClient,
-            context.getTableClient,
-            context.conferenceState.conference.year,
-        )
 
-        const userSession = await getVotingSession(request, tableClient, () => Promise.resolve(sessions))
+        const userSession = await getVotingSession(
+            request,
+            context.db,
+            context.conferenceState.conference.year,
+            () => Promise.resolve(sessions),
+        )
 
         // Check for client version compatibility
         const url = new URL(request.url)

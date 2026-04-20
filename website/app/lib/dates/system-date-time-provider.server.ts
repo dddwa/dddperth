@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '../../config/conference-config-public'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {

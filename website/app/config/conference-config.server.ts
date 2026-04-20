@@ -1,4 +1,4 @@
-import type { ConferenceConfig } from '~/lib/config-types.server'
+import type { ConferenceConfig } from '../lib/config-types.server'
 import { conference2018 } from './years/2018.server'
 import { conference2019 } from './years/2019.server'
 import { conference2021 } from './years/2021.server'

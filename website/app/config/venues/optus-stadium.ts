@@ -1,5 +1,5 @@
 // Optus Stadium venue config
-import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
+import type { ConferenceVenue } from '../../lib/conference-state-client-safe'
 
 export const optusStadiumVenue: ConferenceVenue = {
     name: 'Optus Stadium',

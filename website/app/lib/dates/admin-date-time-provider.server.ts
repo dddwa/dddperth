@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
-import { getUser, isAdmin } from '~/lib/auth.server'
-import { adminDateTimeSessionStorage } from '~/lib/session.server'
+import { conferenceConfigPublic } from '../../config/conference-config-public'
+import { getUser, isAdmin } from '../auth.server'
+import { adminDateTimeSessionStorage } from '../session.server'
 import type { DateTimeProvider } from './date-time-provider.server'
 import { SystemDateTimeProvider } from './system-date-time-provider.server'
 

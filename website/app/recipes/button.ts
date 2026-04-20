@@ -14,61 +14,61 @@ export const ctaButton = cva({
     variants: {
         visual: {
             primary: {
-                bg: '2023-green',
-                color: 'white',
+                bg: 'brand.primary',
+                color: 'text.on-brand',
                 _hover: {
-                    bg: '2023-accessible-orange',
+                    bg: 'brand.accent',
                 },
                 _active: {
-                    bg: '2023-accessible-orange',
+                    bg: 'brand.accent',
                 },
                 _focus: {
-                    ring: '2023-black',
+                    ring: 'border.default',
                 },
             },
             secondary: {
-                bg: '2023-pink',
-                color: 'white',
+                bg: 'brand.secondary',
+                color: 'text.on-brand',
                 _hover: {
-                    bg: '2023-red',
+                    filter: 'brightness(0.85)',
                 },
                 _active: {
-                    bg: '2023-red',
+                    filter: 'brightness(0.85)',
                 },
                 _focus: {
-                    ring: '2023-black',
+                    ring: 'border.default',
                 },
             },
             tertiary: {
-                bg: 'white',
-                color: '2023-pink',
+                bg: 'text.on-brand',
+                color: 'brand.secondary',
                 _hover: {
-                    bg: '2023-pink',
-                    color: 'white',
+                    bg: 'brand.secondary',
+                    color: 'text.on-brand',
                 },
                 _active: {
-                    bg: '2023-pink',
-                    color: 'white',
+                    bg: 'brand.secondary',
+                    color: 'text.on-brand',
                 },
                 _focus: {
-                    ring: '2023-black',
+                    ring: 'border.default',
                 },
             },
             hyperlink: {
                 bg: 'transparent',
-                color: '2023-gray-light',
+                color: 'text.secondary',
                 fontFamily: 'body',
                 fontWeight: 'medium',
                 textAlign: 'left',
                 display: 'block',
                 _hover: {
-                    color: 'white',
+                    color: 'text.on-brand',
                 },
                 _active: {
-                    color: 'white',
+                    color: 'text.on-brand',
                 },
                 _focus: {
-                    ring: '2023-black',
+                    ring: 'border.default',
                 },
             },
         },

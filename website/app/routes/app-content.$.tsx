@@ -1,4 +1,3 @@
-import { trace } from '@opentelemetry/api'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '../lib/mdx.server'
 import type { Route } from './+types/app-content.$'
@@ -14,7 +13,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const post = await getPage(contentSlug, 'page')
+    const post = await getPage(context.cloudflare.env, contentSlug, 'page')
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
@@ -22,7 +21,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (!post.frontmatter.title) {
-        trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
+        console.error(`Missing title in frontmatter for ${contentSlug}`)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 

@@ -3,8 +3,9 @@ import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
+import type { CloudflareEnv } from '../remix-app-load-context'
 import { compileMdx } from './compile-mdx.server'
-import { GITHUB_ORGANIZATION, GITHUB_REF, GITHUB_REPO, USE_GITHUB_CONTENT } from './config.server'
+import { getGitHubConfig, shouldUseGitHubContent } from './config.server'
 import { downloadMdxFileOrDirectory } from './github.server'
 
 const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' : undefined
@@ -92,10 +93,10 @@ const contentListingCache = new LRUCache<string, string[]>({
 //     return post
 // }
 
-export async function getPage(slug: string, type: 'blog' | 'page') {
-    const pageContents = await getContentWithCache(getContentDirectory(type), slug)
+export async function getPage(env: CloudflareEnv, slug: string, type: 'blog' | 'page') {
+    const pageContents = await getContentWithCache(env, getContentDirectory(type), slug)
     if (pageContents.kind === 'found') {
-        const compiledPage = await getMdxPageWithCache(slug, pageContents.content)
+        const compiledPage = await getMdxPageWithCache(env, slug, pageContents.content)
         return compiledPage
     }
 
@@ -103,7 +104,7 @@ export async function getPage(slug: string, type: 'blog' | 'page') {
 }
 
 /** This will have the side effect of priming the page cache */
-export async function getPagesList(type: 'blog' | 'page'): Promise<
+export async function getPagesList(env: CloudflareEnv, type: 'blog' | 'page'): Promise<
     Array<{
         title: string
         summary?: string
@@ -116,7 +117,7 @@ export async function getPagesList(type: 'blog' | 'page'): Promise<
         imageAlt?: string
     }>
 > {
-    const pages = await getDirectorySlugsWithCache(path.join('website-content', type === 'blog' ? 'posts' : 'pages'))
+    const pages = await getDirectorySlugsWithCache(env, path.join('website-content', type === 'blog' ? 'posts' : 'pages'))
     const pagesList: Array<{
         title: string
         linkText: string
@@ -130,7 +131,7 @@ export async function getPagesList(type: 'blog' | 'page'): Promise<
     }> = []
 
     for (const page of pages) {
-        const compiledPage = await getPage(page, type)
+        const compiledPage = await getPage(env, page, type)
         if (compiledPage) {
             pagesList.push({
                 title: compiledPage.frontmatter.title ?? page,
@@ -149,21 +150,21 @@ export async function getPagesList(type: 'blog' | 'page'): Promise<
     return pagesList
 }
 
-export async function getDirectorySlugsWithCache(contentDir: string) {
+export async function getDirectorySlugsWithCache(env: CloudflareEnv, contentDir: string) {
     const cacheKey = contentDir
     const cached = contentListingCache.get(cacheKey)
     if (!NO_CACHE && cached) {
         return cached
     }
 
-    const contents = await getDirectorySlugs(contentDir)
+    const contents = await getDirectorySlugs(env, contentDir)
     contentListingCache.set(cacheKey, contents)
     return contents
 }
 
-export async function getDirectorySlugs(contentDir: string) {
-    if (USE_GITHUB_CONTENT || process.env.NODE_ENV === 'production') {
-        const files = await downloadMdxFileOrDirectory(contentDir)
+export async function getDirectorySlugs(env: CloudflareEnv, contentDir: string) {
+    if (shouldUseGitHubContent(env) || process.env.NODE_ENV === 'production') {
+        const files = await downloadMdxFileOrDirectory(env, contentDir)
         return files.files.map((file) =>
             file.path
                 .replace(/\\/g, '/')
@@ -182,14 +183,14 @@ export async function getDirectorySlugs(contentDir: string) {
     )
 }
 
-async function getContentWithCache(contentDir: string, slug: string) {
+async function getContentWithCache(env: CloudflareEnv, contentDir: string, slug: string) {
     const cacheKey = `${contentDir}/${slug}`
     const cached = contentCache.get(cacheKey)
     if (!NO_CACHE && cached) {
         return cached
     }
 
-    const contents = await getContents(contentDir, slug)
+    const contents = await getContents(env, contentDir, slug)
     contentCache.set(cacheKey, contents)
     return contents
 }
@@ -198,9 +199,9 @@ function hashContent(content: string): string {
     return createHash('sha256').update(content).digest('hex')
 }
 
-async function getContents(contentDir: string, slug: string): Promise<ContentResultValue> {
-    if (USE_GITHUB_CONTENT || process.env.NODE_ENV === 'production') {
-        const file = await downloadMdxFileOrDirectory(`${contentDir}/${slug}`)
+async function getContents(env: CloudflareEnv, contentDir: string, slug: string): Promise<ContentResultValue> {
+    if (shouldUseGitHubContent(env) || process.env.NODE_ENV === 'production') {
+        const file = await downloadMdxFileOrDirectory(env, `${contentDir}/${slug}`)
         if (file.files.length !== 1) {
             return { kind: 'not-found' }
         }
@@ -212,27 +213,28 @@ async function getContents(contentDir: string, slug: string): Promise<ContentRes
     return { kind: 'found', content }
 }
 
-async function getMdxPageWithCache(slug: string, contents: string) {
+async function getMdxPageWithCache(env: CloudflareEnv, slug: string, contents: string) {
     const cacheKey = `mdx-${slug}-${hashContent(contents)}`
     const cached = compilationCache.get(cacheKey)
     if (!NO_CACHE && cached) {
         return JSON.parse(cached) as ReturnType<typeof getMdxPage>
     }
 
-    const compiledPage = await getMdxPage(slug, contents)
+    const compiledPage = await getMdxPage(env, slug, contents)
     compilationCache.set(cacheKey, JSON.stringify(compiledPage))
     return compiledPage
 }
 
-async function getMdxPage(slug: string, contents: string) {
+async function getMdxPage(env: CloudflareEnv, slug: string, contents: string) {
     const compiledPage = await compileMdx<FrontmatterProperties>(slug, contents)
 
     if (compiledPage) {
+        const github = getGitHubConfig(env)
         return {
             dateDisplay: compiledPage.frontmatter.date ? formatDate(compiledPage.frontmatter.date) : undefined,
             ...compiledPage,
             slug,
-            editLink: `https://github.com/${GITHUB_ORGANIZATION}/${GITHUB_REPO}/edit/${GITHUB_REF}/${slug}.mdx`,
+            editLink: `https://github.com/${github.organization}/${github.repo}/edit/${github.ref}/${slug}.mdx`,
         }
     } else {
         return null

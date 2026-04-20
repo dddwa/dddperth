@@ -1,5 +1,5 @@
-import type { TableClient } from '@azure/data-tables'
 import type { AppLoadContext } from 'react-router'
+import { getDb, type AnnouncementRow } from './d1.server'
 
 export interface AnnouncementEntity {
     partitionKey: 'announcement'
@@ -15,31 +15,18 @@ export interface AnnouncementData {
     update: string
 }
 
-export function getAnnouncementsTableName(year: string): string {
-    return `Announcements${year}`
-}
-
 export async function getActiveAnnouncements(context: AppLoadContext, year: string): Promise<AnnouncementData[]> {
     try {
-        const tableName = getAnnouncementsTableName(year)
-        const tableClient = context.getTableClient(tableName)
+        const db = getDb(context)
+        const result = await db
+            .prepare(`SELECT * FROM announcements WHERE year = ? AND is_active = 1 ORDER BY created_time DESC`)
+            .bind(year)
+            .all<AnnouncementRow>()
 
-        const entities = tableClient.listEntities<AnnouncementEntity>({
-            queryOptions: {
-                filter: `PartitionKey eq 'announcement' and isActive eq true`,
-            },
-        })
-
-        const announcements: AnnouncementData[] = []
-        for await (const entity of entities) {
-            announcements.push({
-                createdTime: entity.createdTime,
-                update: entity.message,
-            })
-        }
-        return announcements.sort((a, b) => {
-            return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
-        })
+        return (result.results ?? []).map((row) => ({
+            createdTime: row.created_time,
+            update: row.message,
+        }))
     } catch (error) {
         console.error('Error fetching announcements:', error)
         return []
@@ -51,40 +38,36 @@ export async function createOrUpdateAnnouncement(
     year: string,
     message: string,
 ): Promise<void> {
-    const tableName = getAnnouncementsTableName(year)
-    const tableClient = context.getTableClient(tableName)
-
-    await ensureTableExists(tableClient)
-
+    const db = getDb(context)
     const now = new Date().toISOString()
-    const entity: AnnouncementEntity = {
-        partitionKey: 'announcement',
-        rowKey: 'current',
-        message,
-        createdTime: now,
-        updatedTime: now,
-        isActive: true,
-    }
 
-    await tableClient.upsertEntity(entity, 'Replace')
+    await db
+        .prepare(
+            `INSERT INTO announcements (year, row_key, message, created_time, updated_time, is_active)
+             VALUES (?, 'current', ?, ?, ?, 1)
+             ON CONFLICT(year, row_key) DO UPDATE SET
+                 message = excluded.message,
+                 updated_time = excluded.updated_time,
+                 is_active = 1`,
+        )
+        .bind(year, message, now, now)
+        .run()
 }
 
 export async function clearAnnouncement(context: AppLoadContext, year: string): Promise<void> {
-    const tableName = getAnnouncementsTableName(year)
-    const tableClient = context.getTableClient(tableName)
+    const db = getDb(context)
+    const now = new Date().toISOString()
 
-    await ensureTableExists(tableClient)
-
-    const entity: AnnouncementEntity = {
-        partitionKey: 'announcement',
-        rowKey: 'current',
-        message: '',
-        createdTime: new Date().toISOString(),
-        updatedTime: new Date().toISOString(),
-        isActive: false,
-    }
-
-    await tableClient.upsertEntity(entity, 'Replace')
+    await db
+        .prepare(
+            `INSERT INTO announcements (year, row_key, message, created_time, updated_time, is_active)
+             VALUES (?, 'current', '', ?, ?, 0)
+             ON CONFLICT(year, row_key) DO UPDATE SET
+                 updated_time = excluded.updated_time,
+                 is_active = 0`,
+        )
+        .bind(year, now, now)
+        .run()
 }
 
 export async function getCurrentAnnouncement(
@@ -92,22 +75,23 @@ export async function getCurrentAnnouncement(
     year: string,
 ): Promise<AnnouncementEntity | null> {
     try {
-        const tableName = getAnnouncementsTableName(year)
-        const tableClient = context.getTableClient(tableName)
+        const db = getDb(context)
+        const row = await db
+            .prepare(`SELECT * FROM announcements WHERE year = ? AND row_key = 'current'`)
+            .bind(year)
+            .first<AnnouncementRow>()
 
-        const entity = await tableClient.getEntity<AnnouncementEntity>('announcement', 'current')
-        return entity
+        if (!row) return null
+
+        return {
+            partitionKey: 'announcement',
+            rowKey: row.row_key,
+            message: row.message,
+            createdTime: row.created_time,
+            updatedTime: row.updated_time ?? undefined,
+            isActive: row.is_active === 1,
+        }
     } catch (error) {
         return null
-    }
-}
-
-async function ensureTableExists(tableClient: TableClient): Promise<void> {
-    try {
-        await tableClient.createTable()
-    } catch (error: any) {
-        if (error.statusCode !== 409) {
-            throw error
-        }
     }
 }

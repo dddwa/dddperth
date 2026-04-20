@@ -8,10 +8,11 @@ This is the DDD Perth conference website built with:
 
 - **Nx** monorepo management
 - **React Router v7** (Remix successor) with SSR
+- **Cloudflare Workers** for serverless hosting
+- **Cloudflare D1** (SQLite) for voting database
 - **PandaCSS** + **Park UI** for styling
 - **TypeScript** throughout
 - **Vite** for development server and building
-- **Express** server with OpenTelemetry instrumentation
 
 ## Essential Commands
 
@@ -21,11 +22,13 @@ This is the DDD Perth conference website built with:
 # Install dependencies (uses pnpm)
 pnpm i
 
+# Apply D1 migrations (first time setup)
+pnpm nx d1-migrate-local website
+
 # Start development server (http://localhost:3800)
 pnpm start
-
-# Alternative: start from website directory
-cd website && node --inspect=127.0.0.1:9600 ./build/server/server.js
+# or
+pnpm nx dev website
 ```
 
 ### Build & Test
@@ -52,8 +55,18 @@ nx <target> website
 
 # Examples:
 nx build website
-nx serve website
+nx dev website
 nx lint website
+
+# D1 Database migrations
+nx d1-migrate-local website      # Local development
+nx d1-migrate-staging website    # Staging (remote)
+nx d1-migrate-production website # Production (remote)
+
+# Deploy
+nx deploy website            # Default
+nx deploy-staging website    # Staging
+nx deploy-production website # Production
 
 # Show project graph
 nx graph
@@ -75,12 +88,14 @@ pnpm nx panda website <command>
 
 - **`/website`** - Main React Router application
     - `app/` - Application code (components, routes, config)
+    - `workers/` - Cloudflare Worker entry point (`app.ts`)
+    - `migrations/` - D1 database migrations
     - `styled-system/` - Generated PandaCSS files
-    - `build/` - Build outputs (remix & server)
-    - `server.ts` - Express server with OpenTelemetry
+    - `build/` - Build outputs (remix & worker)
+    - `wrangler.jsonc` - Cloudflare Workers configuration
 - **`/website-content`** - MDX content files for static pages
 - **`/blog`** - Blog posts in markdown
-- **`/infra`** - Azure Bicep infrastructure files
+- **`/infra-archive`** - Archived Azure Bicep infrastructure files (historical reference)
 
 ### Key Application Patterns
 
@@ -115,10 +130,31 @@ pnpm nx panda website <command>
     - GitHub API for content
     - EventsAir API for conference data
 
-6. **Observability**: OpenTelemetry instrumentation
-    - Traces, metrics, and logs
-    - Azure Monitor exporter available
-    - Local Jaeger for development
+6. **Database**: Cloudflare D1 (SQLite)
+    - Voting data stored in D1
+    - Migrations in `website/migrations/`
+    - Helper functions in `website/app/lib/d1.server.ts`
+
+7. **Observability**: Cloudflare native
+    - Enabled via `observability.enabled` in wrangler.jsonc
+    - Logs and metrics in Cloudflare dashboard
+
+### Cloudflare Workers Context
+
+The app receives Cloudflare bindings through the loader/action context:
+
+```typescript
+export async function loader({ context }: Route.LoaderArgs) {
+    // D1 database
+    const db = context.db
+
+    // Environment variables
+    const env = context.cloudflare.env
+
+    // Execution context (for waitUntil, etc.)
+    const ctx = context.cloudflare.ctx
+}
+```
 
 ## Development Notes
 
@@ -127,4 +163,5 @@ pnpm nx panda website <command>
 - pnpm is the package manager (enforced via corepack)
 - Build outputs are in `website/build/` directory
 - Static assets served from `website/public/`
-- Environment variables loaded from `website/.env`
+- Environment variables for local dev go in `website/.dev.vars`
+- Local D1 data stored in `website/.wrangler/state/`

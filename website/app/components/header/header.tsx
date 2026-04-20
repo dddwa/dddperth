@@ -18,7 +18,7 @@ export function Header({
     venue: ConferenceVenue | undefined
 }) {
     return (
-        <styled.header position="relative" bgColor="#070727" w="100%" display="flex" zIndex="10" py={4}>
+        <styled.header position="relative" bgColor="surface.header" w="100%" display="flex" zIndex="10" py="4">
             <HeaderContainer>
                 <Grid
                     gridTemplateAreas={{
@@ -33,7 +33,7 @@ export function Header({
                         base: 'auto auto',
                         md: 'auto',
                     }}
-                    gap={{ base: 4, md: 4 }}
+                    gap={{ base: '4', md: '4' }}
                     alignItems="center"
                 >
                     {/* Logo */}
@@ -44,7 +44,7 @@ export function Header({
                             display="flex"
                             justifyContent="flex-start"
                             alignItems="center"
-                            width={{ base: 110, md: 180 }}
+                            width={{ base: '110px', md: '180px' }}
                         >
                             <Logo />
                         </AppLink>
@@ -56,9 +56,9 @@ export function Header({
                         alignItems="center"
                         justifyContent={{ base: 'center', md: 'center' }}
                         flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                        gap={{ base: 4, md: 12 }}
+                        gap={{ base: '4', md: '12' }}
                         fontSize={{ base: 'sm', md: 'md' }}
-                        fontWeight={600}
+                        fontWeight="600"
                     >
                         <AppLink to="/sponsorship" variant="primary">
                             Sponsorship
@@ -99,22 +99,22 @@ function CtaLink({ to, label, isExternal }: { to: string; label: string; isExter
     return (
         <AppLink
             to={to}
-            color="#520030"
-            _hover={{ gradientTo: '#FF52B7' }}
+            color="text.on-brand"
+            _hover={{ gradientTo: 'gradient.cta-mid' }}
             bgGradient="to-r"
-            gradientFrom="#FF52B7"
-            gradientTo="#FF8273"
-            borderRightRadius={100}
+            gradientFrom="gradient.cta-mid"
+            gradientTo="gradient.cta-end"
+            borderRightRadius="100px"
             display="flex"
             whiteSpace="nowrap"
             flexWrap="nowrap"
-            fontWeight={600}
-            gap={2}
-            px={{ base: 2, md: 4 }}
-            py={2}
-            mr={{ base: 2, sm: 4 }}
+            fontWeight="600"
+            gap="2"
+            px={{ base: '2', md: '4' }}
+            py="2"
+            mr={{ base: '2', sm: '4' }}
             xl={{
-                mr: 0,
+                mr: '0',
             }}
         >
             {label}

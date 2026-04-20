@@ -1,3 +1,4 @@
+import { cloudflareDevProxy } from '@react-router/dev/vite/cloudflare'
 import { reactRouter } from '@react-router/dev/vite'
 import { reactRouterDevTools } from 'react-router-devtools'
 import { safeRoutes } from 'safe-routes/vite'
@@ -7,10 +8,6 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
     root: __dirname,
-    ssr: {
-        // Needed because Open Telemetry doesn't have compliant ESM packages which cause issues
-        noExternal: ['@opentelemetry/api'],
-    },
 
     server: {
         port: 3800,
@@ -19,6 +16,17 @@ export default defineConfig({
         },
     },
     plugins: [
+        cloudflareDevProxy({
+            // Use getLoadContext from load-context.server.ts (avoids ~ alias issues)
+            getLoadContext: async ({ request, context }) => {
+                const loadContext = await import('./app/load-context.server.ts')
+                return loadContext.getLoadContext({
+                    request,
+                    env: context.cloudflare.env,
+                    ctx: context.cloudflare.ctx,
+                })
+            },
+        }),
         reactRouterDevTools(),
         reactRouter(),
         safeRoutes({

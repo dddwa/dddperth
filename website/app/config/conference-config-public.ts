@@ -1,4 +1,4 @@
-import type { ConferenceConfigPublic } from '~/lib/config-types-public'
+import type { ConferenceConfigPublic } from '../lib/config-types-public'
 
 //
 // If you update this, could you also update website-content/README.md

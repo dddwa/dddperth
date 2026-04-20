@@ -1,6 +1,5 @@
 import { data, useLoaderData } from 'react-router'
 
-import { trace } from '@opentelemetry/api'
 import { DateTime } from 'luxon'
 import type { PropsWithChildren } from 'react'
 import { ImportantDates } from '~/components/page-components/important-dates'
@@ -39,7 +38,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getPage(contentSlug, 'page')
+    const post = await getPage(context.cloudflare.env, contentSlug, 'page')
     if (!post) {
         console.log('Content not found for slug:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -49,8 +48,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     if (!post.frontmatter.title) {
-        console.log('Content missing title for slug:', contentSlug)
-        trace.getActiveSpan()?.recordException(new Error(`Missing title in frontmatter for ${contentSlug}`))
+        console.error(`Missing title in frontmatter for ${contentSlug}`)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 

@@ -45,6 +45,34 @@ export default defineConfig({
                 colors: {
                     // Or whatever name you've set as the semantic tokens
                     // prefix or recipe name
+                    surface: {
+                        'card-alt': {
+                            value: { base: '#f8f8ff', _dark: '#151544' },
+                        },
+                    },
+                    sponsor: {
+                        platinum: {
+                            value: { base: '#e8e8e8', _dark: '#c0c0c0' },
+                        },
+                        gold: {
+                            value: { base: '#FFD700', _dark: '#D4AF37' },
+                        },
+                        silver: {
+                            value: { base: '#C0C0C0', _dark: '#A8A8A8' },
+                        },
+                        bronze: {
+                            value: { base: '#CD7F32', _dark: '#B87333' },
+                        },
+                        room: {
+                            value: { base: '#6366f1', _dark: '#4f46e5' },
+                        },
+                        digital: {
+                            value: { base: '#06b6d4', _dark: '#0891b2' },
+                        },
+                        community: {
+                            value: { base: '#10b981', _dark: '#059669' },
+                        },
+                    },
                     prose: {
                         body: {
                             value: '{colors.gray.dark.7}',

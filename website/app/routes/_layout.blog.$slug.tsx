@@ -9,13 +9,13 @@ import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPage } from '~/lib/mdx.server'
 import type { Route } from './+types/_layout.blog.$slug'
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getPage(slug, 'blog')
+    const post = await getPage(context.cloudflare.env, slug, 'blog')
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }

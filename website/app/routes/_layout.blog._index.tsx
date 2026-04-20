@@ -5,12 +5,12 @@ import { CACHE_CONTROL } from '~/lib/http.server'
 import { getPagesList } from '~/lib/mdx.server'
 import type { Route } from './+types/_layout.blog._index'
 
-export async function loader() {
+export async function loader({ context }: Route.LoaderArgs) {
     return data(
         {
             conferenceName: conferenceConfigPublic.name,
             blogDescription: conferenceConfigPublic.blogDescription,
-            posts: await getPagesList('blog'),
+            posts: await getPagesList(context.cloudflare.env, 'blog'),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )

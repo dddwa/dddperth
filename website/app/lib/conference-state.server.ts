@@ -1,5 +1,5 @@
 import type { DateTime } from 'luxon'
-import type { conferenceConfig, ConferenceYears } from '~/config/conference-config.server'
+import type { conferenceConfig, ConferenceYears } from '../config/conference-config.server'
 import type {
     CFPClosed,
     CFPNotOpenYet,
