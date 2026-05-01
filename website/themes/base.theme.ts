@@ -13,6 +13,35 @@ export interface ThemeTokenValue {
   description?: string
 }
 
+/**
+ * A status color group used for alerts, banners, validation messages, etc.
+ * Each status provides a background, foreground (text), border and emphasis (button/accent) tone.
+ */
+export interface StatusColorGroup {
+  bg: ThemeTokenValue
+  fg: ThemeTokenValue
+  border: ThemeTokenValue
+  emphasis: ThemeTokenValue
+}
+
+/**
+ * A neutral scale used for admin/chrome surfaces that need a fuller range than
+ * the brand-coloured scale. Modeled on a 50/100/200/.../900 scale so admin UIs
+ * built against the previous Tailwind/Park UI palette can map cleanly.
+ */
+export interface NeutralScale {
+  '50': ThemeTokenValue
+  '100': ThemeTokenValue
+  '200': ThemeTokenValue
+  '300': ThemeTokenValue
+  '400': ThemeTokenValue
+  '500': ThemeTokenValue
+  '600': ThemeTokenValue
+  '700': ThemeTokenValue
+  '800': ThemeTokenValue
+  '900': ThemeTokenValue
+}
+
 export interface ThemeDefinition {
   colors: {
     // Brand colors - primary identity colors used in CTAs, buttons, and key UI elements
@@ -84,6 +113,31 @@ export interface ThemeDefinition {
       moderate: ThemeTokenValue      // Moderate overlay
       strong: ThemeTokenValue        // Strong overlay (higher opacity)
     }
+
+    // Status colors - for alerts, banners, validation feedback (admin UI)
+    status: {
+      success: StatusColorGroup
+      warning: StatusColorGroup
+      danger: StatusColorGroup
+      info: StatusColorGroup
+    }
+
+    // Admin neutral scale - for admin/chrome surfaces (mostly light backgrounds)
+    admin: NeutralScale
+  }
+
+  // Border style tokens - reusable border declarations
+  borders: {
+    default: ThemeTokenValue        // Default 1px border using border.default colour
+    subtle: ThemeTokenValue         // Subtle 1px border
+    emphasis: ThemeTokenValue       // Emphasised 2px border
+    adminSubtle: ThemeTokenValue    // 1px admin neutral border
+    adminEmphasis: ThemeTokenValue  // 2px admin neutral border
+  }
+
+  // Shadow tokens
+  shadows: {
+    focusRing: ThemeTokenValue      // Focus outline shadow
   }
 }
 

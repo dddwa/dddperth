@@ -59,7 +59,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                     w="full"
                     fontWeight="black"
                     textWrap="balance"
-                    lineHeight={1.2}
+                    lineHeight="[1.2]"
                     fontSize={{ base: '3xl', md: '5xl', lg: '6xl' }}
                     maxWidth={{ base: 'full', md: '3/4', lg: '3/4' }}
                 >
@@ -69,25 +69,25 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
             <Box
                 width="full"
                 position="relative"
-                height="350px"
-                sm={{ height: '400px' }}
-                md={{ height: '600px' }}
-                lg={{ height: '700px' }}
-                xl={{ height: '900px' }}
+                height="[350px]"
+                sm={{ height: '[400px]' }}
+                md={{ height: '[600px]' }}
+                lg={{ height: '[700px]' }}
+                xl={{ height: '[900px]' }}
             >
                 <Box
                     position="absolute"
-                    zIndex="3"
+                    zIndex="base"
                     bottom="0"
                     bgGradient="to-b"
                     gradientFrom="transparent"
                     gradientTo="gradient.hero-end"
                     width="full"
-                    height="200px"
-                    sm={{ height: '300px' }}
-                    md={{ height: '400px' }}
-                    lg={{ height: '500px' }}
-                    xl={{ height: '700px' }}
+                    height="[200px]"
+                    sm={{ height: '[300px]' }}
+                    md={{ height: '[400px]' }}
+                    lg={{ height: '[500px]' }}
+                    xl={{ height: '[700px]' }}
                 ></Box>
                 <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%' }}>
                     <DGreen style={{ width: '100%', height: 'auto' }} />

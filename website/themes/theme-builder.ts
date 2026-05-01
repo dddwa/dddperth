@@ -5,7 +5,7 @@
  * This file is owned by upstream - downstream forks should not modify it.
  */
 
-import type { ThemeDefinition, ThemeTokenValue } from './base.theme'
+import type { StatusColorGroup, ThemeDefinition, ThemeTokenValue } from './base.theme'
 
 /**
  * Helper to create a theme definition with type safety
@@ -19,6 +19,15 @@ export function defineTheme(theme: ThemeDefinition): ThemeDefinition {
  */
 function tokenValue(token: ThemeTokenValue) {
   return { value: token.value }
+}
+
+function statusGroupTokens(prefix: string, group: StatusColorGroup) {
+  return {
+    [`${prefix}.bg`]: tokenValue(group.bg),
+    [`${prefix}.fg`]: tokenValue(group.fg),
+    [`${prefix}.border`]: tokenValue(group.border),
+    [`${prefix}.emphasis`]: tokenValue(group.emphasis),
+  }
 }
 
 /**
@@ -80,6 +89,34 @@ export function createThemeTokens(theme: ThemeDefinition) {
       'overlay.subtle': tokenValue(theme.colors.overlay.subtle),
       'overlay.moderate': tokenValue(theme.colors.overlay.moderate),
       'overlay.strong': tokenValue(theme.colors.overlay.strong),
+
+      // Status colors
+      ...statusGroupTokens('status.success', theme.colors.status.success),
+      ...statusGroupTokens('status.warning', theme.colors.status.warning),
+      ...statusGroupTokens('status.danger', theme.colors.status.danger),
+      ...statusGroupTokens('status.info', theme.colors.status.info),
+
+      // Admin neutral scale
+      'admin.50': tokenValue(theme.colors.admin['50']),
+      'admin.100': tokenValue(theme.colors.admin['100']),
+      'admin.200': tokenValue(theme.colors.admin['200']),
+      'admin.300': tokenValue(theme.colors.admin['300']),
+      'admin.400': tokenValue(theme.colors.admin['400']),
+      'admin.500': tokenValue(theme.colors.admin['500']),
+      'admin.600': tokenValue(theme.colors.admin['600']),
+      'admin.700': tokenValue(theme.colors.admin['700']),
+      'admin.800': tokenValue(theme.colors.admin['800']),
+      'admin.900': tokenValue(theme.colors.admin['900']),
+    },
+    borders: {
+      default: tokenValue(theme.borders.default),
+      subtle: tokenValue(theme.borders.subtle),
+      emphasis: tokenValue(theme.borders.emphasis),
+      'admin-subtle': tokenValue(theme.borders.adminSubtle),
+      'admin-emphasis': tokenValue(theme.borders.adminEmphasis),
+    },
+    shadows: {
+      'focus-ring': tokenValue(theme.shadows.focusRing),
     },
   }
 }

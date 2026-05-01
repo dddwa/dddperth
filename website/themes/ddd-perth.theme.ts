@@ -192,6 +192,63 @@ export const dddPerthTheme = defineTheme({
         description: 'Strong overlay - white with ~16% opacity',
       },
     },
+
+    // Status colors - admin / validation / alert UI
+    status: {
+      success: {
+        bg: { value: '#dcfce7', description: 'Success bg - light green' },
+        fg: { value: '#14532d', description: 'Success fg - dark green' },
+        border: { value: '#bbf7d0', description: 'Success border - light green' },
+        emphasis: { value: '#15803d', description: 'Success emphasis - mid green' },
+      },
+      warning: {
+        bg: { value: '#fff7ed', description: 'Warning bg - light orange' },
+        fg: { value: '#7c2d12', description: 'Warning fg - dark orange' },
+        border: { value: '#fed7aa', description: 'Warning border - light orange' },
+        emphasis: { value: '#c2410c', description: 'Warning emphasis - mid orange' },
+      },
+      danger: {
+        bg: { value: '#fef2f2', description: 'Danger bg - light red' },
+        fg: { value: '#7f1d1d', description: 'Danger fg - dark red' },
+        border: { value: '#fecaca', description: 'Danger border - light red' },
+        emphasis: { value: '#b91c1c', description: 'Danger emphasis - mid red' },
+      },
+      info: {
+        bg: { value: '#eff6ff', description: 'Info bg - light blue' },
+        fg: { value: '#1e3a8a', description: 'Info fg - dark blue' },
+        border: { value: '#bfdbfe', description: 'Info border - light blue' },
+        emphasis: { value: '#1d4ed8', description: 'Info emphasis - mid blue' },
+      },
+    },
+
+    // Admin neutral scale - mirrors a 50-900 grey palette for admin UI chrome
+    admin: {
+      '50': { value: '#f9fafb', description: 'Admin neutral 50' },
+      '100': { value: '#f3f4f6', description: 'Admin neutral 100' },
+      '200': { value: '#e5e7eb', description: 'Admin neutral 200' },
+      '300': { value: '#d1d5db', description: 'Admin neutral 300' },
+      '400': { value: '#9ca3af', description: 'Admin neutral 400' },
+      '500': { value: '#6b7280', description: 'Admin neutral 500' },
+      '600': { value: '#4b5563', description: 'Admin neutral 600' },
+      '700': { value: '#374151', description: 'Admin neutral 700' },
+      '800': { value: '#1f2937', description: 'Admin neutral 800' },
+      '900': { value: '#111827', description: 'Admin neutral 900' },
+    },
+  },
+
+  borders: {
+    default: { value: '1px solid {colors.border.default}', description: '1px default border' },
+    subtle: { value: '1px solid {colors.border.subtle}', description: '1px subtle border' },
+    emphasis: { value: '2px solid {colors.border.emphasis}', description: '2px emphasised border' },
+    adminSubtle: { value: '1px solid {colors.admin.200}', description: '1px admin neutral border' },
+    adminEmphasis: { value: '2px solid {colors.admin.300}', description: '2px admin neutral border' },
+  },
+
+  shadows: {
+    focusRing: {
+      value: '0 0 0 3px {colors.interactive.focus}33',
+      description: 'Focus ring shadow using interactive focus colour at ~20% opacity',
+    },
   },
 })
 

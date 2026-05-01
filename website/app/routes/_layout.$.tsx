@@ -81,8 +81,8 @@ export function meta(args: Route.MetaArgs) {
         throw new Error('Expected contentSlug param')
     }
 
-    const { siteUrl, post, frontmatter } = data || {}
-    if (!post || !frontmatter) {
+    const { siteUrl, frontmatter } = data || {}
+    if (!frontmatter) {
         return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
     }
 
@@ -171,20 +171,20 @@ function ContentPageWithSidebar({
     >
 >) {
     return (
-        <Grid gridTemplateColumns={{ base: '1ft', lg: '1fr auto' }}>
-            <styled.main id="content" marginX={{ base: 6, lg: 0 }}>
+        <Grid gridTemplateColumns={{ base: '1fr', lg: '1fr auto' }}>
+            <styled.main id="content" marginX={{ base: "6", lg: "0" }}>
                 <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
                 <Box className={prose({ size: 'lg' })}>{children}</Box>
             </styled.main>
             <styled.aside
                 display="flex"
                 flexDirection="column"
-                height="fit-content"
+                height="fit"
                 bgGradient="to-r"
-                gradientFrom="#1F1F4E"
-                gradientTo="#151544"
+                gradientFrom="surface.card"
+                gradientTo="surface.card-alt"
                 shadow="md"
-                p={4}
+                p="4"
                 rounded="xl"
             >
                 {/* <EventDetailsSummary conferenceState={conferenceState} currentPath={currentPath} /> */}
@@ -226,13 +226,13 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
             ) : null}
             <ul
                 className={css({
-                    paddingLeft: 'md',
-                    marginBottom: 'lg',
-                    marginLeft: 'lg',
+                    paddingLeft: "5",
+                    marginBottom: "6",
+                    marginLeft: "6",
 
                     '&li': {
-                        paddingLeft: 'xs',
-                        fill: '2023-pink',
+                        paddingLeft: "2",
+                        fill: 'brand.secondary',
                         listStyleImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 0h6v6H0z'/%3E%3C/svg%3E")`,
                         listStyleType: 'none',
                     },
@@ -262,15 +262,15 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                     <Button asChild>
                         <styled.a
                             href={primaryCta.url}
-                            color="#520030"
-                            _hover={{ gradientTo: '#FF52B7' }}
+                            color="gradient.cta-start"
+                            _hover={{ gradientTo: 'brand.secondary' }}
                             bgGradient="to-r"
-                            gradientFrom="#FF52B7"
-                            gradientTo="#FF8273"
-                            fontWeight={600}
-                            borderRightRadius={100}
-                            py={2}
-                            px={4}
+                            gradientFrom="brand.secondary"
+                            gradientTo="gradient.cta-end"
+                            fontWeight="semibold"
+                            borderRightRadius="full"
+                            py="2"
+                            px="4"
                         >
                             {primaryCta.title} ↗
                         </styled.a>

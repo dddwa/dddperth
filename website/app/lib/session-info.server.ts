@@ -1,3 +1,6 @@
+import type { z } from 'zod'
+import type { gridSmartSchema } from './sessionize.server'
+
 export interface SessionizeConferenceSessions {
     kind: 'sessionize'
 
@@ -11,6 +14,5 @@ export interface SessionizeConferenceSessions {
 export interface SessionData {
     kind: 'session-data'
 
-    // TODO
-    sessions: unknown
+    sessions: z.infer<typeof gridSmartSchema>
 }

@@ -19,14 +19,15 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
             top="0"
             left="0"
             right="0"
-            zIndex="50"
-            bg="rgba(0, 0, 0, 0.9)"
             color="white"
             py="2"
             px="4"
             fontSize="sm"
-            borderBottom="2px solid"
-            borderColor={overrideDateTime ? 'orange.500' : 'gray.700'}
+            style={{
+                zIndex: 50,
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                borderBottom: `2px solid ${overrideDateTime ? 'rgb(239, 68, 68)' : 'rgb(107, 114, 128)'}`,
+            }}
         >
             <Flex maxW="7xl" mx="auto" alignItems="center" justifyContent="space-between">
                 <Flex alignItems="center" gap="4">
@@ -36,14 +37,14 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
                     </Flex>
 
                     {overrideDateTime ? (
-                        <Box px="3" py="1" bg="orange.600" borderRadius="md" fontWeight="medium">
+                        <Box px="3" py="1" bg="red.6" borderRadius="md" fontWeight="medium">
                             Date Override Active:{' '}
                             {overrideDateTime.toLocaleString(DateTime.DATETIME_SHORT, {
                                 locale: 'en-AU',
                             })}
                         </Box>
                     ) : (
-                        <Box px="3" py="1" bg="gray.700" borderRadius="md">
+                        <Box px="3" py="1" bg="gray.7" borderRadius="md">
                             System Time:{' '}
                             {currentDateTime.toLocaleString(DateTime.DATETIME_SHORT, {
                                 locale: 'en-AU',
@@ -51,7 +52,7 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
                         </Box>
                     )}
 
-                    <styled.span color="gray.400" fontSize="xs">
+                    <styled.span color="gray.4" fontSize="xs">
                         ({timezone})
                     </styled.span>
                 </Flex>

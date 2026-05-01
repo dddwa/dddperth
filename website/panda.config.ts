@@ -6,6 +6,8 @@ import typographyPreset from 'pandacss-preset-typography'
 import { currentTheme } from './app/theme.config'
 import { createSemanticTokens, createThemeTokens } from './themes/theme-builder'
 
+const themeTokens = createThemeTokens(currentTheme)
+
 export default defineConfig({
     // Whether to use css reset
     preflight: true,
@@ -77,12 +79,12 @@ export default defineConfig({
             },
             tokens: {
                 // Conference theme tokens - generated from active theme
-                ...createThemeTokens(currentTheme),
+                ...themeTokens,
 
                 // Legacy 2023 tokens - DEPRECATED, will be removed after migration
                 // TODO: Remove these once all components use semantic tokens
                 colors: {
-                    ...createThemeTokens(currentTheme).colors,
+                    ...themeTokens.colors,
                     '2023-green': { value: '#008554' },
                     '2023-orange': { value: '#F89A1C' },
                     '2023-pink': { value: '#DA459C' },
@@ -95,15 +97,16 @@ export default defineConfig({
                     '2023-gray-light': { value: '#C8C8C8' },
                     '2023-gray-light-ii': { value: '#EAEAEA' },
                 },
+                borders: {
+                    ...themeTokens.borders,
+                    sponsor: { value: '6px solid {colors.border.sponsor}' },
+                },
                 fonts: {
                     display: { value: 'Ubuntu, sans-serif' },
                     body: { value: 'Ubuntu, sans-serif' },
                 },
                 zIndex: {
                     '9999': { value: 9999 },
-                },
-                borders: {
-                    sponsor: { value: '6px solid {colors.border.sponsor}' },
                 },
             },
             keyframes: {

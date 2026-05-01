@@ -14,8 +14,8 @@ export default function AdminLayout() {
     const { user } = useLoaderData<typeof loader>()
 
     return (
-        <Box minH="100vh" bg="gray.50">
-            <styled.nav bg="accent.7" color="white" py="4" px="8" borderBottom="2px solid accent.6">
+        <Box minH="screen" bg="admin.50">
+            <styled.nav bg="indigo.7" color="white" py="4" px="8" borderBottom="admin-emphasis">
                 <Flex justify="space-between" align="center">
                     <Flex align="center" gap="8">
                         <AppLink to="/" color="white" textDecoration="none">
@@ -46,10 +46,10 @@ export default function AdminLayout() {
                             py="1.5"
                             px="3"
                             borderRadius="md"
-                            border="1px solid white/30"
+                            border="[1px solid rgba(255, 255, 255, 0.3)]"
                             fontSize="sm"
                             transition="colors"
-                            _hover={{ bg: 'white/10' }}
+                            _hover={{ bg: '[rgba(255, 255, 255, 0.1)]' }}
                         >
                             ← Back to Site
                         </AppLink>
@@ -60,13 +60,13 @@ export default function AdminLayout() {
                                 type="submit"
                                 bg="transparent"
                                 color="white"
-                                border="1px solid rgba(255, 255, 255, 0.3)"
+                                border="[1px solid rgba(255, 255, 255, 0.3)]"
                                 py="1.5"
                                 px="3"
                                 borderRadius="md"
                                 cursor="pointer"
                                 fontSize="sm"
-                                _hover={{ bg: 'white/10' }}
+                                _hover={{ bg: '[rgba(255, 255, 255, 0.1)]' }}
                             >
                                 Logout
                             </styled.button>

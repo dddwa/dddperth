@@ -23,20 +23,20 @@ export const ctaButton = cva({
                     bg: 'brand.accent',
                 },
                 _focus: {
-                    ring: 'border.default',
+                    boxShadow: 'focus-ring',
                 },
             },
             secondary: {
                 bg: 'brand.secondary',
                 color: 'text.on-brand',
                 _hover: {
-                    filter: 'brightness(0.85)',
+                    filter: '[brightness(0.85)]',
                 },
                 _active: {
-                    filter: 'brightness(0.85)',
+                    filter: '[brightness(0.85)]',
                 },
                 _focus: {
-                    ring: 'border.default',
+                    boxShadow: 'focus-ring',
                 },
             },
             tertiary: {
@@ -51,7 +51,7 @@ export const ctaButton = cva({
                     color: 'text.on-brand',
                 },
                 _focus: {
-                    ring: 'border.default',
+                    boxShadow: 'focus-ring',
                 },
             },
             hyperlink: {
@@ -68,17 +68,17 @@ export const ctaButton = cva({
                     color: 'text.on-brand',
                 },
                 _focus: {
-                    ring: 'border.default',
+                    boxShadow: 'focus-ring',
                 },
             },
         },
         size: {
-            sm: { px: '6', py: '3', fontSize: '1rem' },
-            lg: { px: '8', py: '4', fontSize: '1.125rem' },
+            sm: { px: '6', py: '3', fontSize: 'md' },
+            lg: { px: '8', py: '4', fontSize: 'lg' },
         },
         width: {
             auto: { w: 'auto' },
-            full: { w: '100%', xs: { w: 'auto' } },
+            full: { w: 'full', xs: { w: 'auto' } },
         },
     },
 })

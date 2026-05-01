@@ -1,4 +1,7 @@
 import type { ConferenceConfig } from '../lib/config-types.server'
+import { conference2015 } from './years/2015.server'
+import { conference2016 } from './years/2016.server'
+import { conference2017 } from './years/2017.server'
 import { conference2018 } from './years/2018.server'
 import { conference2019 } from './years/2019.server'
 import { conference2021 } from './years/2021.server'
@@ -16,6 +19,9 @@ export const conferenceConfig = {
     needVolunteers: true,
 
     conferences: {
+        '2015': conference2015,
+        '2016': conference2016,
+        '2017': conference2017,
         '2018': conference2018,
         '2019': conference2019,
         '2021': conference2021,

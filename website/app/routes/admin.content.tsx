@@ -18,7 +18,7 @@ export default function AdminContent() {
                     🚧
                 </styled.div>
 
-                <styled.h2 fontSize="2xl" fontWeight="semibold" mb="4" color="gray.900">
+                <styled.h2 fontSize="2xl" fontWeight="semibold" mb="4" color="gray.12">
                     Content Management Coming Soon
                 </styled.h2>
 
@@ -26,7 +26,7 @@ export default function AdminContent() {
                     <AppLink
                         to="/admin/dashboard"
                         display="inline-block"
-                        bg="accent.7"
+                        bg="indigo.7"
                         color="white"
                         py="3"
                         px="6"
@@ -34,7 +34,7 @@ export default function AdminContent() {
                         textDecoration="none"
                         fontSize="sm"
                         fontWeight="medium"
-                        _hover={{ bg: 'accent.8' }}
+                        _hover={{ bg: 'indigo.8' }}
                     >
                         ← Back to Dashboard
                     </AppLink>

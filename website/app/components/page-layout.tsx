@@ -29,26 +29,28 @@ export function PageLayout({
     return (
         <Flex
             flexDirection="column"
-            w="100%"
+            w="full"
             color="white"
-            {...{
+            style={{
                 ...(minHeight && { minHeight }),
+                ...(bgColor && { backgroundColor: bgColor }),
+            }}
+            {...{
                 ...(withGradient && {
                     bgGradient: 'to-b',
-                    gradientFrom: '#070727',
+                    gradientFrom: 'surface.hero',
                     gradientToPosition: '99%',
-                    gradientTo: '#0E0E43',
+                    gradientTo: 'surface.body',
                 }),
-                ...(bgColor && { bgColor }),
             }}
         >
             <Box
-                w="100%"
-                maxW="1200px"
+                w="full"
+                maxW="[1200px]"
                 mx="auto"
-                px={{ base: 4, md: 4 }} // Consistent responsive padding
+                px={{ base: '4', md: '4' }} // Consistent responsive padding
                 {...{
-                    ...(innerPadding && { py: { base: 4, md: 6 } }),
+                    ...(innerPadding && { py: { base: '4', md: '6' } }),
                 }}
             >
                 {children}
@@ -63,7 +65,7 @@ export function PageLayout({
 export function ContentPageLayout({ children, ...props }: PropsWithChildren<PageLayoutProps>) {
     return (
         <PageLayout {...props} innerPadding={false}>
-            <Box py={{ base: 4, md: 6 }}>{children}</Box>
+            <Box py={{ base: '4', md: '6' }}>{children}</Box>
         </PageLayout>
     )
 }
@@ -73,7 +75,7 @@ export function ContentPageLayout({ children, ...props }: PropsWithChildren<Page
  */
 export function HeaderContainer({ children }: PropsWithChildren) {
     return (
-        <Box w="100%" maxW="1200px" mx="auto" px={{ base: 4, md: 4 }}>
+        <Box w="full" maxW="[1200px]" mx="auto" px={{ base: '4', md: '4' }}>
             {children}
         </Box>
     )

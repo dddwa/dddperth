@@ -77,17 +77,17 @@ export default function Agenda() {
             flexDirection="column"
             alignContent="center"
             bgGradient="to-b"
-            gradientFrom="#070727"
+            gradientFrom="surface.hero"
             gradientToPosition="99%"
-            gradientTo="#0E0E43"
+            gradientTo="surface.body"
             mx="auto"
             p="4"
         >
-            <Box maxWidth="1200px" color="#C2C2FF" mx="auto" p={1} fontSize="sm">
+            <Box maxWidth="[1200px]" color="text.secondary" mx="auto" p="1" fontSize="sm">
                 <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
                     Back to {year} Agenda
                 </AppLink>
-                <styled.h2 fontSize="lg" pb={3}>
+                <styled.h2 fontSize="lg" pb="3">
                     {session.title}
                 </styled.h2>
                 <styled.span
@@ -95,27 +95,27 @@ export default function Agenda() {
                     md={{
                         display: 'block',
                     }}
-                    color="#C2C2FF"
+                    color="text.secondary"
                     textWrap="nowrap"
-                    pb={3}
+                    pb="3"
                 >
                     🕓 {sessionStart} - {sessionEnd}
                 </styled.span>
-                <styled.span display="block" color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap" pb={3}>
+                <styled.span display="block" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" pb="3">
                     📍 {session.room}
                 </styled.span>
                 <styled.div>{session.description}</styled.div>
                 {session?.speakers?.length ? (
-                    <styled.div display="block" color="#C2C2FF">
+                    <styled.div display="block" color="text.secondary">
                         {talkSpeakers.map((speaker) => (
                             <styled.div key={speaker.id} display="flex" alignItems="center">
                                 {speaker.profilePicture ? (
                                     <styled.img
                                         src={speaker.profilePicture}
                                         alt={speaker.fullName}
-                                        width="120"
-                                        height="120"
-                                        borderRightRadius="50%"
+                                        width="[120px]"
+                                        height="[120px]"
+                                        borderRightRadius="[50%]"
                                         mr="2"
                                     />
                                 ) : null}

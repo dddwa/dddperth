@@ -18,7 +18,7 @@ export function Header({
     venue: ConferenceVenue | undefined
 }) {
     return (
-        <styled.header position="relative" bgColor="surface.header" w="100%" display="flex" zIndex="10" py="4">
+        <styled.header position="relative" bgColor="surface.header" w="full" display="flex" zIndex="banner" py="4">
             <HeaderContainer>
                 <Grid
                     gridTemplateAreas={{
@@ -44,7 +44,7 @@ export function Header({
                             display="flex"
                             justifyContent="flex-start"
                             alignItems="center"
-                            width={{ base: '110px', md: '180px' }}
+                            width={{ base: '[110px]', md: '[180px]' }}
                         >
                             <Logo />
                         </AppLink>
@@ -58,7 +58,7 @@ export function Header({
                         flexWrap={{ base: 'wrap', md: 'nowrap' }}
                         gap={{ base: '4', md: '12' }}
                         fontSize={{ base: 'sm', md: 'md' }}
-                        fontWeight="600"
+                        fontWeight="semibold"
                     >
                         <AppLink to="/sponsorship" variant="primary">
                             Sponsorship
@@ -104,11 +104,11 @@ function CtaLink({ to, label, isExternal }: { to: string; label: string; isExter
             bgGradient="to-r"
             gradientFrom="gradient.cta-mid"
             gradientTo="gradient.cta-end"
-            borderRightRadius="100px"
+            borderRightRadius="full"
             display="flex"
             whiteSpace="nowrap"
             flexWrap="nowrap"
-            fontWeight="600"
+            fontWeight="semibold"
             gap="2"
             px={{ base: '2', md: '4' }}
             py="2"

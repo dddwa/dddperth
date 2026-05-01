@@ -15,34 +15,34 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
 
     return (
         <Box
-            flex={1}
-            className={css({
-                borderRadius: 'xl',
-                border: '2px solid',
-                borderColor: 'gray.30',
-                bg: highlight ? 'lightgray' : 'white',
-                p: 7,
-                cursor: onClick ? 'pointer' : 'default',
-                transition: 'all 0.1s',
-                boxShadow: highlight ? '2xl' : 'md',
-                _hover: onClick
-                    ? {
-                          borderColor: 'gray.40',
-                          transform: 'translateY(-3px) scale(1.02)',
-                          boxShadow: 'xl',
-                      }
-                    : undefined,
-            })}
+            flex="1"
+            borderRadius="xl"
+            borderWidth="2px"
+            borderColor="gray.3"
+            bg={highlight ? 'gray.2' : 'white'}
+            p="7"
+            cursor={onClick ? 'pointer' : 'default'}
+            shadow={highlight ? '2xl' : 'md'}
             onClick={onClick}
+            style={{
+                transition: 'all 0.1s',
+            }}
+            _hover={onClick
+                    ? {
+                          borderColor: 'gray.4',
+                          transform: 'translateY(-3px) scale(1.02)',
+                          shadow: 'xl',
+                      }
+                    : undefined}
         >
-            <VStack gap={4}>
-                <styled.h3 fontSize="xl" color="gray.90" fontWeight="bold" textAlign="center">
+            <VStack gap="4">
+                <styled.h3 fontSize="xl" color="gray.9" fontWeight="bold" textAlign="center">
                     {title}
                 </styled.h3>
 
                 {description && (
                     <Box
-                        color="gray.70"
+                        color="gray.7"
                         fontSize="md"
                         lineHeight="relaxed"
                         fontWeight="medium"
@@ -57,22 +57,20 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                     </Box>
                 )}
 
-                <HStack gap={2} flexWrap="wrap" mt={2}>
+                <HStack gap="2" flexWrap="wrap" mt="2">
                     {tags.map((tag, index) => (
                         <Box
                             key={`${cardId}-tag-${index}-${tag}`}
-                            className={css({
-                                px: 3,
-                                py: 1,
-                                bg: 'blue.10',
-                                color: 'blue.80',
-                                borderRadius: 'full',
-                                border: '1px solid',
-                                borderColor: 'blue.30',
-                                fontSize: 'sm',
-                                fontWeight: 'semibold',
-                                boxShadow: 'sm',
-                            })}
+                            px="3"
+                            py="1"
+                            bg="indigo.1"
+                            color="indigo.8"
+                            borderRadius="full"
+                            borderWidth="1px"
+                            borderColor="indigo.3"
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            shadow="sm"
                         >
                             {tag}
                         </Box>

@@ -10,7 +10,7 @@ export function MenuButton({ onClick, isOpen }: { onClick: () => void; isOpen: b
             fontFamily="display"
             fontWeight="semibold"
             position="relative"
-            zIndex="101"
+            zIndex="banner"
             cursor="pointer"
             md={{ display: 'none' }}
         >

@@ -115,32 +115,31 @@ export default function AdminSettings() {
                     <Box
                         mb="4"
                         p="3"
-                        bg="red.50"
-                        border="1px solid"
-                        borderColor="red.200"
+                        bg="status.danger.bg"
+                        border="admin-subtle"
                         borderRadius="md"
-                        color="red.700"
+                        color="status.danger.fg"
                         fontSize="sm"
                     >
                         {actionData.error}
                     </Box>
                 )}
 
-                <Box mb="6" p="4" bg="blue.50" borderRadius="md" fontSize="sm">
-                    <styled.p fontWeight="medium" color="blue.900" mb="2">
+                <Box mb="6" p="4" bg="status.info.bg" borderRadius="md" fontSize="sm">
+                    <styled.p fontWeight="medium" color="status.info.fg" mb="2">
                         Current System Time ({timezone})
                     </styled.p>
-                    <styled.p color="blue.700">
+                    <styled.p color="status.info.fg">
                         {currentDateTime.toLocaleString(DateTime.DATETIME_FULL, { locale: 'en-AU' })}
                     </styled.p>
                 </Box>
 
                 {overrideDateTime && (
-                    <Box mb="6" p="4" bg="orange.50" borderRadius="md" fontSize="sm">
-                        <styled.p fontWeight="medium" color="orange.900" mb="2">
+                    <Box mb="6" p="4" bg="status.warning.bg" borderRadius="md" fontSize="sm">
+                        <styled.p fontWeight="medium" color="status.warning.fg" mb="2">
                             Override Active
                         </styled.p>
-                        <styled.p color="orange.700">
+                        <styled.p color="status.warning.fg">
                             {overrideDateTime.toLocaleString(DateTime.DATETIME_FULL, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
@@ -158,7 +157,7 @@ export default function AdminSettings() {
                                 display="block"
                                 fontSize="sm"
                                 fontWeight="medium"
-                                color="gray.700"
+                                color="admin.700"
                                 mb="1"
                             >
                                 Date
@@ -170,14 +169,13 @@ export default function AdminSettings() {
                                 defaultValue={overrideDateTime?.toISODate() || ''}
                                 px="3"
                                 py="2"
-                                border="1px solid"
-                                borderColor="gray.300"
+                                border="admin-subtle"
                                 borderRadius="md"
                                 fontSize="sm"
                                 _focus={{
                                     outline: 'none',
-                                    borderColor: 'accent.7',
-                                    boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
+                                    borderColor: 'indigo.7',
+                                    boxShadow: 'focus-ring',
                                 }}
                             />
                         </Box>
@@ -188,7 +186,7 @@ export default function AdminSettings() {
                                 display="block"
                                 fontSize="sm"
                                 fontWeight="medium"
-                                color="gray.700"
+                                color="admin.700"
                                 mb="1"
                             >
                                 Time
@@ -200,14 +198,13 @@ export default function AdminSettings() {
                                 defaultValue={overrideDateTime?.toFormat('HH:mm') || ''}
                                 px="3"
                                 py="2"
-                                border="1px solid"
-                                borderColor="gray.300"
+                                border="admin-subtle"
                                 borderRadius="md"
                                 fontSize="sm"
                                 _focus={{
                                     outline: 'none',
-                                    borderColor: 'accent.7',
-                                    boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
+                                    borderColor: 'indigo.7',
+                                    boxShadow: 'focus-ring',
                                 }}
                             />
                         </Box>
@@ -225,7 +222,7 @@ export default function AdminSettings() {
                                 name="_action"
                                 value="clearDate"
                                 type="submit"
-                                bg="red"
+                                bg="status.danger.fg"
                                 color="white"
                                 py="2"
                                 px="6"
@@ -234,7 +231,7 @@ export default function AdminSettings() {
                                 fontWeight="bold"
                                 cursor="pointer"
                                 boxShadow="sm"
-                                _hover={{ bg: 'red.10' }}
+                                _hover={{ bg: "status.danger.emphasis" }}
                                 title="Clear the current date/time override"
                             >
                                 Clear Override
@@ -263,22 +260,22 @@ export default function AdminSettings() {
                 </styled.h2>
 
                 {announcement && announcement.isActive && (
-                    <Box mb="6" p="4" bg="green.50" borderRadius="md" fontSize="sm">
-                        <styled.p fontWeight="medium" color="green.900" mb="2">
+                    <Box mb="6" p="4" bg="status.success.bg" borderRadius="md" fontSize="sm">
+                        <styled.p fontWeight="medium" color="status.success.fg" mb="2">
                             Current Announcement
                         </styled.p>
-                        <styled.p color="green.700" mb="2">
+                        <styled.p color="status.success.fg" mb="2">
                             {announcement.message}
                         </styled.p>
-                        <styled.p color="green.600" fontSize="xs">
+                        <styled.p color="status.success.emphasis" fontSize="xs">
                             Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
                 )}
 
                 {(!announcement || !announcement.isActive) && (
-                    <Box mb="6" p="4" bg="gray.50" borderRadius="md" fontSize="sm">
-                        <styled.p color="gray.600">
+                    <Box mb="6" p="4" bg="admin.100" borderRadius="md" fontSize="sm">
+                        <styled.p color="text.secondary">
                             No active announcement
                         </styled.p>
                     </Box>
@@ -295,7 +292,7 @@ export default function AdminSettings() {
                             display="block"
                             fontSize="sm"
                             fontWeight="medium"
-                            color="gray.700"
+                            color="admin.700"
                             mb="1"
                         >
                             Message
@@ -307,15 +304,14 @@ export default function AdminSettings() {
                             rows={3}
                             px="3"
                             py="2"
-                            width="100%"
-                            border="1px solid"
-                            borderColor="gray.300"
+                            width="full"
+                            border="admin-subtle"
                             borderRadius="md"
                             fontSize="sm"
                             _focus={{
                                 outline: 'none',
-                                borderColor: 'accent.7',
-                                boxShadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
+                                borderColor: 'indigo.7',
+                                boxShadow: 'focus-ring',
                             }}
                             placeholder="Enter the announcement message that will be shown in the app"
                         />
@@ -330,7 +326,7 @@ export default function AdminSettings() {
                                 name="_action"
                                 value="clearAnnouncement"
                                 type="submit"
-                                bg="red"
+                                bg="status.danger.fg"
                                 color="white"
                                 py="2"
                                 px="6"
@@ -339,7 +335,7 @@ export default function AdminSettings() {
                                 fontWeight="bold"
                                 cursor="pointer"
                                 boxShadow="sm"
-                                _hover={{ bg: 'red.10' }}
+                                _hover={{ bg: "status.danger.emphasis" }}
                                 title="Clear the current announcement"
                             >
                                 Clear Announcement
@@ -367,7 +363,7 @@ export default function AdminSettings() {
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                         Quick Jump to Important Dates ({year})
                     </styled.h2>
-                    <styled.p fontSize="sm" color="gray.600" mb="4">
+                    <styled.p fontSize="sm" color="text.secondary" mb="4">
                         Click any button below to instantly jump to that date/time for testing purposes:
                     </styled.p>
                     <VStack gap="3" alignItems="stretch">

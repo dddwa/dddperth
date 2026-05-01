@@ -34,14 +34,14 @@ export default function AppDownloadPage() {
 
     return (
         <ContentPageLayout>
-            <styled.main id="content" marginX={{ base: 6, lg: 0 }}>
-                <styled.div display="flex" flexDirection="column" alignItems="center" gap={8} py={8}>
-                    <styled.div textAlign="center" maxW="3xl" mb={4}>
-                        <styled.h1 fontSize="3xl" fontWeight="bold" mb={6}>
+            <styled.main id="content" marginX={{ base: "6", lg: "0" }}>
+                <styled.div display="flex" flexDirection="column" alignItems="center" gap="8" py="8">
+                    <styled.div textAlign="center" maxW="3xl" mb="4">
+                        <styled.h1 fontSize="3xl" fontWeight="bold" mb="6">
                             Download the DDD Perth App
                         </styled.h1>
 
-                        <styled.p fontSize="lg" mb={6}>
+                        <styled.p fontSize="lg" mb="6">
                             The official DDD Perth app is your essential companion for the conference. Get instant
                             access to the full agenda, speaker profiles, venue maps, and real-time announcements - all
                             in the palm of your hand.
@@ -51,7 +51,7 @@ export default function AppDownloadPage() {
                     <styled.div
                         display="flex"
                         flexDirection={{ base: 'column', md: 'row' }}
-                        gap={4}
+                        gap="4"
                         alignItems="center"
                         justifyContent="center"
                     >
@@ -60,14 +60,14 @@ export default function AppDownloadPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             display="inline-flex"
-                            transition="transform 0.2s"
+                            transition="transform"
                             _hover={{ transform: 'scale(1.05)' }}
                         >
                             <styled.img
                                 src="/images/get-app-store.svg"
                                 alt="Download on the App Store"
-                                height={{ base: '48px', md: '56px' }}
-                                width="200px"
+                                height={{ base: "[48px]", md: "[56px]" }}
+                                width="[200px]"
                                 objectFit="contain"
                             />
                         </styled.a>
@@ -77,14 +77,14 @@ export default function AppDownloadPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             display="inline-flex"
-                            transition="transform 0.2s"
+                            transition="transform"
                             _hover={{ transform: 'scale(1.05)' }}
                         >
                             <styled.img
                                 src="/images/get-google-play.png"
                                 alt="Get it on Google Play"
-                                height={{ base: '48px', md: '56px' }}
-                                width="200px"
+                                height={{ base: "[48px]", md: "[56px]" }}
+                                width="[200px]"
                                 objectFit="contain"
                             />
                         </styled.a>
@@ -93,18 +93,18 @@ export default function AppDownloadPage() {
                     <styled.a
                         href="/agenda"
                         display="inline-flex"
-                        transition="transform 0.2s"
+                        transition="transform"
                         _hover={{ transform: 'scale(1.05)' }}
                         textDecoration="underline"
                     >
                         View Agenda on Website
                     </styled.a>
 
-                    <Box p={6} bgColor="blue.50" borderRadius="lg" textAlign="center" maxW="2xl">
-                        <styled.h3 fontSize="lg" fontWeight="semibold" mb={2} color="blue.900">
+                    <Box p="6" bgColor="status.info.bg" borderRadius="lg" textAlign="center" maxW="2xl">
+                        <styled.h3 fontSize="lg" fontWeight="semibold" mb="2" color="status.info.fg">
                             Pro Tip
                         </styled.h3>
-                        <styled.p color="blue.800">
+                        <styled.p color="status.info.fg">
                             Download the app before conference day to familiarize yourself with the agenda and plan
                             which sessions you want to attend. Enable notifications to stay updated with any last-minute
                             changes!

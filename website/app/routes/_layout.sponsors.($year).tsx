@@ -70,7 +70,7 @@ export default function Sponsors() {
                 <styled.h1 fontSize="5xl" textAlign="center" color="white" mb="8" mt="8">
                     DDD Perth {year} Sponsors
                 </styled.h1>
-                <styled.p fontSize="lg" textAlign="center" color="#C2C2FF" mb="12" maxWidth="800px" mx="auto">
+                <styled.p fontSize="lg" textAlign="center" color="text.secondary" mb="12" maxWidth="[800px]" mx="auto">
                     We are grateful to all the sponsors who have supported DDD Perth over the years. Their contribution
                     makes it possible for us to run this community-driven conference.
                 </styled.p>
@@ -91,9 +91,9 @@ function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
             <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
                 View Previous Conferences
             </styled.h2>
-            <styled.div display="flex" flexWrap="wrap" gap={4}>
+            <styled.div display="flex" flexWrap="wrap" gap="4">
                 {conferences.map((conf) => (
-                    <styled.a key={conf.year} href={`/sponsors/${conf.year}`} color="#8282FB">
+                    <styled.a key={conf.year} href={`/sponsors/${conf.year}`} color="text.highlight">
                         <styled.span fontSize="lg">{conf.year}</styled.span>
                     </styled.a>
                 ))}

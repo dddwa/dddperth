@@ -5,13 +5,12 @@ export function AdminLayout({ heading, children }: { heading: string; children: 
     return (
         <Box
             bg="white"
-            p={{ base: 6, md: 12 }}
+            p={{ base: '6', md: '12' }}
             maxW="7xl"
             mx="auto"
             borderRadius="2xl"
             boxShadow="lg"
-            border="1px solid"
-            borderColor="gray.3"
+            border="admin-subtle"
         >
             <styled.h1 fontSize="2xl" fontWeight="bold" mb="8" letterSpacing="tight">
                 {heading}

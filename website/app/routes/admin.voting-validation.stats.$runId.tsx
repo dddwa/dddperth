@@ -381,22 +381,22 @@ export default function VotingValidationStats() {
                         <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
                             Validation Run Details
                         </styled.h2>
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Run ID:{' '}
-                            <styled.code fontSize="xs" bg="gray.100" px="1" borderRadius="sm">
+                            <styled.code fontSize="xs" bg="admin.100" px="1" borderRadius="sm">
                                 {runId}
                             </styled.code>
                         </styled.p>
                         {runDetails && (
                             <>
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Started:{' '}
                                     {DateTime.fromISO(runDetails.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
                                 {runDetails.completedAt && (
-                                    <styled.p fontSize="sm" color="gray.600" mb="1">
+                                    <styled.p fontSize="sm" color="text.secondary" mb="1">
                                         Completed:{' '}
                                         {DateTime.fromISO(runDetails.completedAt).toLocaleString(
                                             DateTime.DATETIME_SHORT,
@@ -404,7 +404,7 @@ export default function VotingValidationStats() {
                                         )}
                                     </styled.p>
                                 )}
-                                <styled.p fontSize="sm" color="gray.600">
+                                <styled.p fontSize="sm" color="text.secondary">
                                     Status:{' '}
                                     <styled.span
                                         px="2"
@@ -414,17 +414,17 @@ export default function VotingValidationStats() {
                                         fontWeight="medium"
                                         bg={
                                             runDetails.status === 'completed'
-                                                ? 'green.100'
+                                                ? 'status.success.bg'
                                                 : runDetails.status === 'running'
-                                                  ? 'blue.100'
-                                                  : 'red.100'
+                                                  ? 'status.info.bg'
+                                                  : 'status.danger.bg'
                                         }
                                         color={
                                             runDetails.status === 'completed'
-                                                ? 'green.800'
+                                                ? 'status.success.fg'
                                                 : runDetails.status === 'running'
-                                                  ? 'blue.800'
-                                                  : 'red.800'
+                                                  ? 'status.info.fg'
+                                                  : 'status.danger.fg'
                                         }
                                     >
                                         {runDetails.status}
@@ -433,7 +433,7 @@ export default function VotingValidationStats() {
 
                                 <Flex gap="6" direction={{ base: 'column', md: 'row' }} mt="3">
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                                             Sessions Processed
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -442,7 +442,7 @@ export default function VotingValidationStats() {
                                     </Box>
 
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                                             Total Rounds
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -451,7 +451,7 @@ export default function VotingValidationStats() {
                                     </Box>
 
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                                             Total Votes
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -484,15 +484,14 @@ export default function VotingValidationStats() {
                                     required
                                     fontSize="sm"
                                     p="1"
-                                    border="1px solid"
-                                    borderColor="gray.300"
+                                    border="admin-subtle"
                                     borderRadius="md"
                                 />
                                 <Button
                                     type="submit"
-                                    bg="green"
+                                    bg="status.success.fg"
                                     color="white"
-                                    _hover={{ bg: 'green.700' }}
+                                    _hover={{ bg: 'status.success.fg' }}
                                     disabled={uploadFetcher.state !== 'idle'}
                                     size="sm"
                                 >
@@ -511,7 +510,7 @@ export default function VotingValidationStats() {
                             borderRadius="md"
                             fontSize="sm"
                             fontWeight="medium"
-                            _hover={{ bg: 'gray.700' }}
+                            _hover={{ bg: "admin.800" }}
                         >
                             ← Back to Voting Admin
                         </AppLink>
@@ -526,57 +525,52 @@ export default function VotingValidationStats() {
                     </styled.h2>
 
                     <Box overflowX="auto">
-                        <styled.table width="100%" fontSize="sm">
+                        <styled.table width="full" fontSize="sm">
                             <thead>
                                 <tr>
                                     <styled.th
                                         textAlign="center"
                                         p="2"
-                                        borderBottom="2px solid"
-                                        borderColor="gray.200"
-                                        width="60px"
+                                        border="admin-emphasis"
+                                        width="[60px]"
                                     >
                                         Rank
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                    <styled.th textAlign="left" p="2" border="admin-emphasis">
                                         Talk Title
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                    <styled.th textAlign="left" p="2" border="admin-emphasis">
                                         Speaker(s)
                                     </styled.th>
                                     <styled.th
                                         textAlign="center"
                                         p="2"
-                                        borderBottom="2px solid"
-                                        borderColor="gray.200"
-                                        width="80px"
+                                        border="admin-emphasis"
+                                        width="[80px]"
                                     >
                                         Wins
                                     </styled.th>
                                     <styled.th
                                         textAlign="center"
                                         p="2"
-                                        borderBottom="2px solid"
-                                        borderColor="gray.200"
-                                        width="80px"
+                                        border="admin-emphasis"
+                                        width="[80px]"
                                     >
                                         Losses
                                     </styled.th>
                                     <styled.th
                                         textAlign="center"
                                         p="2"
-                                        borderBottom="2px solid"
-                                        borderColor="gray.200"
-                                        width="80px"
+                                        border="admin-emphasis"
+                                        width="[80px]"
                                     >
                                         Total
                                     </styled.th>
                                     <styled.th
                                         textAlign="center"
                                         p="2"
-                                        borderBottom="2px solid"
-                                        borderColor="gray.200"
-                                        width="80px"
+                                        border="admin-emphasis"
+                                        width="[80px]"
                                     >
                                         Win %
                                     </styled.th>
@@ -608,18 +602,16 @@ export default function VotingValidationStats() {
                                             <styled.td
                                                 textAlign="center"
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
+                                                border="admin-subtle"
                                                 fontWeight="semibold"
-                                                bg={result.rank <= 3 ? 'yellow.50' : 'transparent'}
+                                                bg={result.rank <= 3 ? 'status.warning.bg' : 'transparent'}
                                             >
                                                 #{result.rank}
                                             </styled.td>
                                             <styled.td
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
-                                                maxW="400px"
+                                                border="admin-subtle"
+                                                maxW="[400px]"
                                             >
                                                 <styled.div
                                                     overflow="hidden"
@@ -633,21 +625,20 @@ export default function VotingValidationStats() {
                                             </styled.td>
                                             <styled.td
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
+                                                border="admin-subtle"
                                                 fontSize="xs"
-                                                color="gray.600"
+                                                color="text.secondary"
                                             >
                                                 {sessionizeTalk?.speakers.map((speaker) => speaker.name).join(', ') ||
                                                     'Unknown Speaker'}
                                                 {hasUnderrepresented && (
-                                                    <styled.span 
-                                                        ml="2" 
-                                                        px="2" 
-                                                        py="1" 
-                                                        bg="blue.100" 
-                                                        color="blue.800" 
-                                                        borderRadius="sm" 
+                                                    <styled.span
+                                                        ml="2"
+                                                        px="2"
+                                                        py="1"
+                                                        bg="status.info.bg"
+                                                        color="status.info.fg"
+                                                        borderRadius="sm"
                                                         fontSize="xs"
                                                         fontWeight="medium"
                                                         title="Speaker from underrepresented group"
@@ -659,36 +650,32 @@ export default function VotingValidationStats() {
                                             <styled.td
                                                 textAlign="center"
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
-                                                color="green.700"
+                                                border="admin-subtle"
+                                                color="status.success.fg"
                                             >
                                                 {result.wins}
                                             </styled.td>
                                             <styled.td
                                                 textAlign="center"
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
-                                                color="red.700"
+                                                border="admin-subtle"
+                                                color="status.danger.fg"
                                             >
                                                 {result.losses}
                                             </styled.td>
                                             <styled.td
                                                 textAlign="center"
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
+                                                border="admin-subtle"
                                             >
                                                 {result.totalVotes}
                                             </styled.td>
                                             <styled.td
                                                 textAlign="center"
                                                 p="2"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.100"
+                                                border="admin-subtle"
                                                 fontWeight="semibold"
-                                                color={result.winPct > 50 ? 'green.700' : 'inherit'}
+                                                color={result.winPct > 50 ? 'status.success.fg' : 'text.primary'}
                                             >
                                                 {(result.winPct * 100).toFixed(1)}%
                                             </styled.td>
@@ -699,8 +686,8 @@ export default function VotingValidationStats() {
                         </styled.table>
                     </Box>
 
-                    <styled.p fontSize="sm" color="gray.600" mt="4">
-                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted. 
+                    <styled.p fontSize="sm" color="text.secondary" mt="4">
+                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted.
                         For talks with the same rank, speakers from underrepresented groups (URG) are prioritized.
                     </styled.p>
                 </AdminCard>
@@ -713,15 +700,14 @@ export default function VotingValidationStats() {
                     </styled.h2>
 
                     <Box>
-                        <styled.label fontSize="sm" color="gray.600" mb="1" display="block">
+                        <styled.label fontSize="sm" color="text.secondary" mb="1" display="block">
                             Version Filter
                         </styled.label>
                         <styled.select
                             value={versionFilter}
                             onChange={(e) => setVersionFilter(e.target.value as VersionFilter)}
                             bg="white"
-                            border="1px solid"
-                            borderColor="gray.300"
+                            border="admin-subtle"
                             borderRadius="md"
                             px="3"
                             py="2"
@@ -745,8 +731,8 @@ export default function VotingValidationStats() {
                         </styled.h3>
 
                         <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="4">
-                            <Box flex="1" minW="150px">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <Box flex="1" minW="[150px]">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Mean Appearances
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -754,8 +740,8 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="150px">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <Box flex="1" minW="[150px]">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Standard Deviation
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -763,13 +749,13 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="150px">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <Box flex="1" minW="[150px]">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Gini Coefficient
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
                                     {fairnessMetrics[versionFilter].giniCoefficient.toFixed(3)}
-                                    <styled.span fontSize="sm" color="gray.600" ml="1">
+                                    <styled.span fontSize="sm" color="text.secondary" ml="1">
                                         (
                                         {fairnessMetrics[versionFilter].giniCoefficient < 0.2
                                             ? 'Fair'
@@ -781,8 +767,8 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="150px">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <Box flex="1" minW="[150px]">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     CV (Variation)
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -790,15 +776,15 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="150px">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <Box flex="1" minW="[150px]">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Distribution
                                 </styled.p>
                                 <styled.p
                                     fontSize="lg"
                                     fontWeight="medium"
                                     color={
-                                        fairnessMetrics[versionFilter].isDistributionUniform ? 'green.700' : 'red.700'
+                                        fairnessMetrics[versionFilter].isDistributionUniform ? 'status.success.fg' : 'status.danger.fg'
                                     }
                                 >
                                     {fairnessMetrics[versionFilter].isDistributionUniform ? 'Uniform' : 'Non-uniform'}
@@ -806,7 +792,7 @@ export default function VotingValidationStats() {
                             </Box>
                         </Flex>
 
-                        <styled.p fontSize="sm" color="gray.600" mb="6">
+                        <styled.p fontSize="sm" color="text.secondary" mb="6">
                             <strong>Interpretation:</strong> Lower Gini coefficient and CV indicate fairer distribution.
                             A Gini coefficient below 0.2 suggests good fairness, while above 0.4 indicates significant
                             inequality.
@@ -815,8 +801,8 @@ export default function VotingValidationStats() {
                 )}
 
                 <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="6">
-                    <Box flex="1" minW="120px">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                    <Box flex="1" minW="[120px]">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Talks with Votes
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -824,8 +810,8 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="120px">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                    <Box flex="1" minW="[120px]">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Total Votes
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -833,8 +819,8 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="120px">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                    <Box flex="1" minW="[120px]">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Times Seen (Avg)
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -842,8 +828,8 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="120px">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                    <Box flex="1" minW="[120px]">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Range (Min - Max)
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -852,16 +838,16 @@ export default function VotingValidationStats() {
                     </Box>
                 </Flex>
 
-                <styled.p fontSize="sm" color="gray.600" mb="2">
+                <styled.p fontSize="sm" color="text.secondary" mb="2">
                     Click on column headers to sort the data. Use the distribution metrics above to assess voting
                     fairness.
                 </styled.p>
 
                 <Box overflowX="auto">
-                    <styled.table width="100%" fontSize="sm">
+                    <styled.table width="full" fontSize="sm">
                         <thead>
                             <tr>
-                                <styled.th textAlign="left" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="left" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('title')}
                                         variant="ghost"
@@ -871,7 +857,7 @@ export default function VotingValidationStats() {
                                         Talk Title {getSortIcon('title')}
                                     </Button>
                                 </styled.th>
-                                <styled.th textAlign="center" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('seen')}
                                         variant="ghost"
@@ -881,16 +867,16 @@ export default function VotingValidationStats() {
                                         Times Seen {getSortIcon('seen')}
                                     </Button>
                                 </styled.th>
-                                <styled.th textAlign="center" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     Won
                                 </styled.th>
-                                <styled.th textAlign="center" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     Lost
                                 </styled.th>
-                                <styled.th textAlign="center" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     Skipped
                                 </styled.th>
-                                <styled.th textAlign="center" p="2" borderBottom="2px solid" borderColor="gray.200">
+                                <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('win')}
                                         variant="ghost"
@@ -907,7 +893,7 @@ export default function VotingValidationStats() {
                                 const stats = getStatsForVersion(talk)
                                 return (
                                     <tr key={talk.talkId}>
-                                        <styled.td p="2" borderBottom="1px solid" borderColor="gray.100" maxW="300px">
+                                        <styled.td p="2" border="admin-subtle" maxW="[300px]">
                                             <styled.div
                                                 overflow="hidden"
                                                 textOverflow="ellipsis"
@@ -921,15 +907,14 @@ export default function VotingValidationStats() {
                                         <styled.td
                                             textAlign="center"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.100"
+                                            border="admin-subtle"
                                             bg={
                                                 runDetails?.totalRounds && stats.timesSeen > runDetails.totalRounds
-                                                    ? 'purple.50'
+                                                    ? 'status.info.bg'
                                                     : stats.timesSeen < overallStats.avgSeen * 0.5
-                                                      ? 'red.50'
+                                                      ? 'status.danger.bg'
                                                       : stats.timesSeen > overallStats.avgSeen * 1.5
-                                                        ? 'yellow.50'
+                                                        ? 'status.warning.bg'
                                                         : 'transparent'
                                             }
                                         >
@@ -938,36 +923,32 @@ export default function VotingValidationStats() {
                                         <styled.td
                                             textAlign="center"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.100"
+                                            border="admin-subtle"
                                         >
                                             {stats.votedFor}
                                         </styled.td>
                                         <styled.td
                                             textAlign="center"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.100"
+                                            border="admin-subtle"
                                         >
                                             {stats.votedAgainst}
                                         </styled.td>
                                         <styled.td
                                             textAlign="center"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.100"
+                                            border="admin-subtle"
                                         >
                                             {stats.skipped}
                                         </styled.td>
                                         <styled.td
                                             textAlign="center"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.100"
+                                            border="admin-subtle"
                                         >
                                             <styled.span
                                                 fontWeight={stats.winRate > 50 ? 'semibold' : 'normal'}
-                                                color={stats.winRate > 50 ? 'green.700' : 'inherit'}
+                                                color={stats.winRate > 50 ? 'status.success.fg' : 'text.primary'}
                                             >
                                                 {stats.winRate.toFixed(1)}%
                                             </styled.span>
@@ -980,7 +961,7 @@ export default function VotingValidationStats() {
                 </Box>
 
                 {talks.length === 0 && (
-                    <styled.p textAlign="center" py="8" color="gray.600">
+                    <styled.p textAlign="center" py="8" color="text.secondary">
                         No statistics available for this validation run.
                     </styled.p>
                 )}

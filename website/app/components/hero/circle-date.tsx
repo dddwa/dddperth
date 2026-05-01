@@ -1,4 +1,4 @@
-import { css } from '~/styled-system/css'
+import { css, cx } from '~/styled-system/css'
 import { Box, styled } from '~/styled-system/jsx'
 
 export default function CircleDateModule() {
@@ -11,26 +11,25 @@ export default function CircleDateModule() {
     const angle = 180 / numChars
 
     return (
-        <Box className={`circle-date-module`} w="100%" h="100%" position="absolute">
-            <Box className={`top`} w="100%" h="75%" position="absolute" top="0" overflow="hidden">
-                <Box
-                    className={`animation-wrapper`}
+        <Box className={`circle-date-module`} w="full" h="full" position="absolute">
+            <Box className={`top`} w="full" h="[75%]" position="absolute" top="0" overflow="hidden">
+                <styled.div
                     position="absolute"
                     w="32"
                     h="32"
                     top="0"
                     transformOrigin="center"
                     transition="transform"
-                    zIndex="3"
-                    animation="rotateText 20s linear infinite"
+                    zIndex="base"
+                    style={{ animation: 'rotateText 20s linear infinite' }}
                     xs={{ w: '40', h: '40', top: '0' }}
                     sm={{ w: '40', h: '40', top: '0' }}
                     lg={{ w: '64', h: '64', top: '0' }}
                 >
                     <Box
                         className={`text-adjustment-white`}
-                        w="100%"
-                        h="100%"
+                        w="full"
+                        h="full"
                         position="absolute"
                         top="-16"
                         xs={{ top: '-20' }}
@@ -41,7 +40,7 @@ export default function CircleDateModule() {
                                 style={{ transform: `translate(-4px,0) rotate(${index * angle * 2}deg)` }}
                                 className={`letter`}
                                 fontSize="lg"
-                                lineHeight="1.6rem"
+                                lineHeight="[1.6rem]"
                                 color="white"
                                 fontFamily="display"
                                 display="inline-block"
@@ -53,35 +52,33 @@ export default function CircleDateModule() {
                                 left="16"
                                 top="16"
                                 transformOrigin="bottom center"
-                                xs={{ h: '20', left: '20', top: '20', fontSize: 'xl', lineHeight: '2rem' }}
-                                lg={{ fontSize: '3xl', h: '32', left: '32', top: '32', lineHeight: '2.4rem' }}
+                                xs={{ h: '20', left: '20', top: '20', fontSize: 'xl', lineHeight: '[2rem]' }}
+                                lg={{ fontSize: '3xl', h: '32', left: '32', top: '32', lineHeight: '[2.4rem]' }}
                                 key={index}
                             >
                                 {char}
                             </styled.span>
                         ))}
                     </Box>
-                </Box>
+                </styled.div>
             </Box>
-            <Box className={`bottom`} w="100%" h="25%" position="absolute" bottom="0" overflow="hidden">
-                <Box
-                    className={css({
-                        xs: { w: '40', h: '40', top: '-7.5rem' },
-                        sm: { w: '40', h: '40', top: '-7.5rem' },
-                        lg: { w: '64', h: '64', top: '-48' },
-                    })}
+            <Box className={`bottom`} w="full" h="[25%]" position="absolute" bottom="0" overflow="hidden">
+                <styled.div
                     position="absolute"
                     w="32"
                     h="32"
                     top="-24"
                     transformOrigin="center"
                     transition="transform"
-                    zIndex="3"
-                    animation="rotateText 20s linear infinite"
+                    zIndex="base"
+                    style={{ animation: 'rotateText 20s linear infinite' }}
+                    xs={{ w: '40', h: '40', top: '[-7.5rem]' }}
+                    sm={{ w: '40', h: '40', top: '[-7.5rem]' }}
+                    lg={{ w: '64', h: '64', top: '-48' }}
                 >
                     <Box
-                        w="100%"
-                        h="100%"
+                        w="full"
+                        h="full"
                         position="absolute"
                         bottom="16"
                         className={css({ xs: { bottom: '20' }, lg: { bottom: '32' } })}
@@ -90,7 +87,7 @@ export default function CircleDateModule() {
                             <styled.span
                                 style={{ transform: `translate(-4px,0) rotate(${index * angle * 2}deg)` }}
                                 fontSize="lg"
-                                lineHeight="1.6rem"
+                                lineHeight="[1.6rem]"
                                 color="black"
                                 fontFamily="display"
                                 display="inline-block"
@@ -102,20 +99,20 @@ export default function CircleDateModule() {
                                 left="16"
                                 top="16"
                                 transformOrigin="bottom center"
-                                xs={{ h: '20', left: '20', top: '20', fontSize: 'xl', lineHeight: '2rem' }}
-                                lg={{ fontSize: '3xl', h: '32', left: '32', top: '32', lineHeight: '2.4rem' }}
+                                xs={{ h: '20', left: '20', top: '20', fontSize: 'xl', lineHeight: '[2rem]' }}
+                                lg={{ fontSize: '3xl', h: '32', left: '32', top: '32', lineHeight: '[2.4rem]' }}
                                 key={index}
                             >
                                 {char}
                             </styled.span>
                         ))}
                     </Box>
-                </Box>
+                </styled.div>
             </Box>
             <Box
                 position="absolute"
-                w="100%"
-                h="100%"
+                w="full"
+                h="full"
                 display="flex"
                 justifyContent="center"
                 alignItems="center"

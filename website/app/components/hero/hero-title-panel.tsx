@@ -3,11 +3,11 @@ import { ctaButton } from '../../recipes/button'
 
 export function HeroTitlePanel() {
     return (
-        <Box className={`homepage-title-panel`} w="100%" position="relative" color="white" zIndex="2">
-            <Box className={`container-wrapper`} w="100%" maxW="1200px" mx="auto">
+        <Box className={`homepage-title-panel`} w="full" position="relative" color="white" zIndex="docked">
+            <Box className={`container-wrapper`} w="full" maxW="[1200px]" mx="auto">
                 <Box
                     className={`padding-wrapper`}
-                    w="100%"
+                    w="full"
                     px="6"
                     py="8"
                     sm={{ px: '8', py: '10' }}
@@ -16,7 +16,7 @@ export function HeroTitlePanel() {
                 >
                     <Box
                         className={`content-wrapper`}
-                        w="100%"
+                        w="full"
                         display="flex"
                         flexDir="column"
                         justifyContent="flex-start"
@@ -25,12 +25,12 @@ export function HeroTitlePanel() {
                     >
                         <Flex
                             className={`paragraph-wrapper`}
-                            w="100%"
+                            w="full"
                             maxWidth="3/5"
                             direction="column"
                             fontSize="2xl"
                             fontWeight="medium"
-                            gap={6}
+                            gap="6"
                         >
                             <p>
                                 DDD Perth is Perth's largest community run conference for the tech community. Our goal
@@ -53,7 +53,7 @@ export function HeroTitlePanel() {
                         </Flex>
                         <Box
                             className={`buttons-wrapper`}
-                            w="100%"
+                            w="full"
                             display="flex"
                             flexDir="column"
                             justifyContent="flex-start"

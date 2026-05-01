@@ -2,15 +2,7 @@ import AboriginalLogo from '~/images/svg/aboriginal_ddd.svg?react'
 import { Box, Divider, Flex, styled } from '~/styled-system/jsx'
 
 export const Acknowledgement = () => (
-    <Box
-        pt="12"
-        pb={{ base: '12', md: '24' }}
-        bgGradient="to-b"
-        mx="5"
-        xl={{
-            mx: '0',
-        }}
-    >
+    <Box pt="12" pb={{ base: '12', md: '24' }} bgGradient="to-b" mx="5">
         <Flex direction="column" gap="6" maxW="breakpoint-2xl" mx="auto">
             <Divider color="border.subtle" mb="6" />
             <AboriginalLogo width={58} />

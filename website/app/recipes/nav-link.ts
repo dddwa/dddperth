@@ -9,9 +9,8 @@ export const navLink = cva({
         textDecoration: 'none',
         transition: 'colors',
         _focus: {
-            outline: '2px solid',
-            outlineColor: 'accent.7',
-            outlineOffset: '2px',
+            outline: '[2px solid token(colors.indigo.7)]',
+            outlineOffset: '[2px]',
         },
     },
     variants: {
@@ -31,7 +30,7 @@ export const navLink = cva({
                 px: '4',
                 py: '2',
                 borderRadius: 'md',
-                border: '1px solid transparent',
+                border: '[1px solid transparent]',
                 _hover: {
                     bg: 'overlay.subtle',
                     borderColor: 'border.subtle',
@@ -39,22 +38,22 @@ export const navLink = cva({
             },
             // Simple text links
             ghost: {
-                color: 'slate.7',
+                color: 'gray.7',
                 _hover: {
-                    color: 'slate.9',
+                    color: 'gray.9',
                 },
                 _active: {
-                    color: 'slate.9',
+                    color: 'gray.9',
                 },
             },
             // Accent colored links
             accent: {
-                color: 'accent.7',
+                color: 'indigo.7',
                 _hover: {
-                    color: 'accent.8',
+                    color: 'indigo.8',
                 },
                 _active: {
-                    color: 'accent.8',
+                    color: 'indigo.8',
                 },
             },
         },

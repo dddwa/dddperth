@@ -235,8 +235,7 @@ function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?
             bgGradient="to-r"
             gradientFrom="overlay.subtle"
             gradientTo="overlay.moderate"
-            borderTop="1px solid"
-            borderTopColor="overlay.strong"
+            borderTop="emphasis"
             p={smallSidebar ? '2' : '4'}
         >
             {children}
@@ -281,8 +280,8 @@ function EventLink({
             flexDirection="column"
             alignItems="center"
             justifyContent="center"
-            borderRightRadius="100px"
-            width={smallSidebar ? '100px' : '150px'}
+            borderRightRadius="[100px]"
+            width={smallSidebar ? '[100px]' : '[150px]'}
             fontSize={smallSidebar ? 'xs' : 'md'}
             paddingY="1"
             ml={smallSidebar ? '6' : '0'}
@@ -313,13 +312,13 @@ function EventCountdown({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRightRadius: 100,
-        width: smallSidebar ? 100 : 150,
+        borderRightRadius: '[100px]',
+        width: smallSidebar ? '[100px]' : '[150px]',
         fontSize: smallSidebar ? 'xs' : 'md',
-        paddingY: 1,
-        ml: smallSidebar ? 6 : 0,
+        paddingY: '1',
+        ml: smallSidebar ? '6' : '0',
         fontWeight: 'semibold',
-        color: '#FFF',
+        color: 'white',
         _hover: { gradientTo: 'white/10' },
         bgGradient: 'to-r',
         gradientFrom: 'white/10',
@@ -352,9 +351,9 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
             alignItems="center"
             justifyContent="center"
             rounded="lg"
-            width={smallSidebar ? 100 : 150}
-            paddingY={1}
-            color="#9c9cd7"
+            width={smallSidebar ? '[100px]' : '[150px]'}
+            paddingY="1"
+            color="text.muted"
             bgGradient="to-r"
             gradientFrom="white/5"
             gradientTo="transparent"
@@ -370,7 +369,7 @@ function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallS
     return (
         <Flex flexDirection="column">
             <time dateTime={dateInfo.dateTime} />
-            <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="#C2C2FF">
+            <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="text.secondary">
                 {eventDateTime.weekdayLong} {eventDateTime.toFormat('LLL dd')},{' '}
                 {eventDateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}
             </styled.p>
@@ -391,12 +390,12 @@ export const ImportantDates: React.FC<{
     importantDates: ImportantDate[]
 }> = ({ smallSidebar, showOnlyLive, currentDate, importantDates }) => {
     return (
-        <Flex flexDirection="column" gap={2} mx={smallSidebar ? 0 : 4}>
+        <Flex flexDirection="column" gap="2" mx={smallSidebar ? '0' : '4'}>
             <styled.h2
                 fontSize={{ base: smallSidebar ? 'lg' : 'lg', md: smallSidebar ? 'lg' : '3xl' }}
                 color="white"
                 fontWeight="semibold"
-                width="fit-content"
+                width="fit"
             >
                 Important Dates
             </styled.h2>
@@ -417,16 +416,16 @@ export const ImportantDates: React.FC<{
 
 export function Workshops({ currentDate }: { currentDate: DateTime }) {
     return (
-        <Flex flexDirection="column" gap={2} mx={4}>
-            <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="white" fontWeight="semibold" width="fit-content">
+        <Flex flexDirection="column" gap="2" mx="4">
+            <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="white" fontWeight="semibold" width="fit">
                 Workshops
             </styled.h2>
-            <styled.p fontSize="md" color="#C2C2FF" mb={4}>
+            <styled.p fontSize="md" color="text.secondary" mb="4">
                 DDD runs a bunch of workshops to help you come up with some amazing talks to submit to our CFP and a
                 great Bio to go with it.
             </styled.p>
 
-            <styled.p fontSize="xl" color="#C2C2FF">
+            <styled.p fontSize="xl" color="text.secondary">
                 Coming soon!
             </styled.p>
 

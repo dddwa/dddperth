@@ -46,9 +46,9 @@ export function ErrorPage() {
                     heading="Something went wrong"
                     description={
                         <>
-                            <styled.p textStyle="h4" color="white">
+                            <styled.p fontSize="xl" fontWeight="semibold" color="text.primary">
                                 Oops, we have encountered an unexpected error and our team has been alerted. Please{' '}
-                                <styled.a color="#8282FB" textDecoration="underline" href={`mailto:info@dddperth.com`}>
+                                <styled.a color="text.highlight" textDecoration="underline" href={`mailto:info@dddperth.com`}>
                                     email us
                                 </styled.a>{' '}
                                 if this error persists.
@@ -86,11 +86,11 @@ export function ErrorView({ heading, description }: ErrorViewProps) {
                 gap={{ base: '3', md: '8' }}
                 py={{ base: '20', md: '36' }}
             >
-                <styled.h1 textStyle="h1" fontSize="2xl" color="white">
+                <styled.h1 fontSize="2xl" fontWeight="bold" color="text.primary">
                     {heading}
                 </styled.h1>
                 {typeof description === 'string' ? (
-                    <styled.p textStyle="h4" color="white">
+                    <styled.p fontSize="xl" fontWeight="semibold" color="text.primary">
                         {description}
                     </styled.p>
                 ) : (

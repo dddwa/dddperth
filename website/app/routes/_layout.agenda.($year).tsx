@@ -28,19 +28,20 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year, context.cloudflare.env)
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
-    if (conferenceYearConfig?.sessions?.kind === 'sessionize' && !conferenceYearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
+    const now = context.dateTimeProvider.nowDate()
+    const agendaPublished =
+        !!conferenceYearConfig?.agendaPublishedDateTime && now >= conferenceYearConfig.agendaPublishedDateTime
 
     const schedules: TypeOf<typeof gridSmartSchema> =
         conferenceYearConfig?.sessions?.kind === 'sessionize' &&
         conferenceYearConfig.sessions.sessionizeEndpoint &&
-        context.conferenceState.agenda === 'published'
+        agendaPublished
             ? await getScheduleGrid({
                   sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
               })
-            : // TODO Deal with data type
-              []
+            : conferenceYearConfig?.sessions?.kind === 'session-data'
+              ? conferenceYearConfig.sessions.sessions
+              : []
 
     const schedule = schedules[0]
 
@@ -85,34 +86,38 @@ export default function Agenda() {
     const isLatestConference = conferences.every((c) => c.year <= year)
 
     return cancelledMessage ? (
-        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
-            <p>
-                {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
-            </p>
-            <Box color="white" textAlign="center" fontSize="lg" mt="10">
-                <p>{cancelledMessage}</p>
+        <PageLayout>
+            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+                <p>
+                    {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+                </p>
+                <Box color="white" textAlign="center" fontSize="lg" mt="10">
+                    <p>{cancelledMessage}</p>
+                </Box>
+                {/* Should sponsors be displayed for a cancelled conference? */}
+                <SponsorSection sponsors={sponsors} year={year} />
+                <ConferenceBrowser conferences={conferences} />
             </Box>
-            {/* Should sponsors be displayed for a cancelled conference? */}
-            <SponsorSection sponsors={sponsors} year={year} />
-            <ConferenceBrowser conferences={conferences} />
-        </Box>
+        </PageLayout>
     ) : !schedule ? (
-        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
-            <p>
-                {conferenceConfigPublic.name} {year} agenda has not been{' '}
-                {isLatestConference
-                    ? 'announced yet.'
-                    : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
-            </p>
-            <SponsorSection sponsors={sponsors} year={year} />
-            <ConferenceBrowser conferences={conferences} />
-        </Box>
+        <PageLayout>
+            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+                <p>
+                    {conferenceConfigPublic.name} {year} agenda has not been{' '}
+                    {isLatestConference
+                        ? 'announced yet.'
+                        : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
+                </p>
+                <SponsorSection sponsors={sponsors} year={year} />
+                <ConferenceBrowser conferences={conferences} />
+            </Box>
+        </PageLayout>
     ) : (
         <PageLayout>
-            <Box width="100%" overflowX={{ base: 'auto', xl: 'visible' }}>
+            <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 <Box
-                    color="#C2C2FF"
-                    p={1}
+                    color="text.secondary"
+                    p="1"
                     fontSize="sm"
                     style={
                         {
@@ -148,7 +153,7 @@ export default function Agenda() {
                         gridTemplateColumns: 'var(--room-columns)',
                         gridGap: '1',
                     }}
-                    minWidth={{ base: 'auto', xl: '100%' }}
+                    minWidth={{ base: 'auto', xl: 'full' }}
                 >
                     {schedule.rooms.map((room) => {
                         return <RoomTitle key={room.id} room={room} sponsors={sponsors} />
@@ -166,10 +171,10 @@ export default function Agenda() {
                                     gridColumn="times"
                                     style={{ gridRow: `time-${timeSlotSimple}` }}
                                     mt="2"
-                                    xl={{ mt: 0 }}
+                                    xl={{ mt: "0" }}
                                     fontSize={{ base: 'sm', md: 'md' }}
                                     fontWeight="semibold"
-                                    color="#C2C2FF"
+                                    color="text.secondary"
                                     role="rowheader"
                                     aria-label={`Time slot starting at ${startTime12}`}
                                 >
@@ -226,16 +231,16 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
             gridRow="rooms"
             display="none"
             rounded="sm"
-            bgColor="#8D8DFF"
-            color="#070727"
+            bgColor="border.emphasis"
+            color="surface.hero"
             fontWeight="semibold"
             fontSize="sm"
-            padding={2}
+            padding="2"
             xl={{
                 display: 'block',
                 position: 'sticky',
-                top: 4,
-                zIndex: 1000,
+                top: "4",
+                zIndex: "modal",
             }}
         >
             {room.name}
@@ -246,9 +251,9 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                     <styled.img
                         src={roomSponsor.logoUrlLightMode}
                         alt={roomSponsor.name}
-                        maxWidth={100}
-                        width="100%"
-                        maxHeight={50}
+                        maxWidth="[100px]"
+                        width="full"
+                        maxHeight="[50px]"
                         display="inline-block"
                         objectFit="contain"
                     />
@@ -340,7 +345,7 @@ function RoomTimeSlot({
         <styled.div
             key={room.id}
             marginBottom="0"
-            xl={{ marginBottom: 1 }}
+            xl={{ marginBottom: "1" }}
             style={{
                 gridRow: `time-${timeSlotSimple} / time-${earliestEnd}`,
                 gridColumn: gridColumn,
@@ -348,13 +353,13 @@ function RoomTimeSlot({
         >
             <Box
                 rounded="sm"
-                bgColor="#1F1F4E"
+                bgColor="surface.card"
                 fontSize="sm"
                 height="full"
-                padding={2}
+                padding="2"
                 mt="2"
                 xl={{
-                    mt: 0,
+                    mt: "0",
                 }}
             >
                 <styled.h3
@@ -363,7 +368,7 @@ function RoomTimeSlot({
                     fontSize="md"
                     fontWeight="semibold"
                     lineHeight="tight"
-                    mb={2}
+                    mb="2"
                 >
                     {fullSession?.isServiceSession ? (
                         fullSession?.title
@@ -381,8 +386,8 @@ function RoomTimeSlot({
                 <styled.span
                     display="flex"
                     alignItems="center"
-                    gap={2}
-                    color="#C2C2FF"
+                    gap="2"
+                    color="text.secondary"
                     textWrap="nowrap"
                     fontSize={{ base: 'xs', xl: 'sm' }}
                 >
@@ -403,7 +408,7 @@ function RoomTimeSlot({
                     {startTime12} - {endTime12}
                 </styled.span>
                 {fullSession?.isServiceSession ? null : (
-                    <Flex alignItems="center" gap={2} color="#C2C2FF" textOverflow="ellipsis" textWrap="nowrap" fontSize={{ base: 'xs', xl: 'sm' }}>
+                    <Flex alignItems="center" gap="2" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" fontSize={{ base: 'xs', xl: 'sm' }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 16 16"
@@ -422,7 +427,7 @@ function RoomTimeSlot({
                     </Flex>
                 )}
                 {fullSession?.speakers?.length ? (
-                    <Flex alignItems="center" gap={2} color="#C2C2FF" fontSize={{ base: 'xs', xl: 'sm' }}>
+                    <Flex alignItems="center" gap="2" color="text.secondary" fontSize={{ base: 'xs', xl: 'sm' }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 16 16"
@@ -447,13 +452,13 @@ function RoomTimeSlot({
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     return (
-        <styled.div padding="4" color="white">
+        <styled.div padding="4" color="white" textAlign="center">
             <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
                 View Previous Conferences
             </styled.h2>
-            <styled.div display="flex" flexWrap="wrap" gap={4}>
+            <styled.div display="flex" flexWrap="wrap" gap="4" justifyContent="center">
                 {conferences.map((conf) => (
-                    <styled.a key={conf.year} href={`/agenda/${conf.year}`} color="#8282FB">
+                    <styled.a key={conf.year} href={`/agenda/${conf.year}`} color="text.highlight">
                         <styled.span fontSize="lg">{conf.year}</styled.span>
                     </styled.a>
                 ))}

@@ -23,7 +23,7 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
     if (!sponsors) return null
 
     return (
-        <Flex flexDirection="column" alignItems="flex-start" marginY={16}>
+        <Flex flexDirection="column" alignItems="flex-start" marginY="16">
             <styled.h2 fontSize="4xl" textAlign="center" color="white">
                 {year} Sponsors
             </styled.h2>
@@ -108,20 +108,19 @@ function SponsorComponent({
             style={{
                 background: `linear-gradient(to bottom, ${token(`colors.${gradientFrom}`)}, ${token('colors.surface.card-alt')})`,
                 zIndex: zIndex,
+                boxShadow: 'inset -1px 1px 0 0 rgba(255,255,255,0.21)',
             }}
-            width="260px"
-            height="220px"
+            width="[260px]"
+            height="[220px]"
             ml="-6"
-            zIndex="1"
-            boxShadow="inset -1px 1px 0 0 rgba(255,255,255,0.21)"
             borderRightRadius="full"
         >
             <styled.img
                 src={sponsor.logoUrlDarkMode}
                 alt={sponsor.name}
-                maxWidth="150px"
-                width="100%"
-                maxHeight="90px"
+                maxWidth="[150px]"
+                width="full"
+                maxHeight="[90px]"
                 ml="-3"
                 display="inline-block"
                 objectFit="contain"

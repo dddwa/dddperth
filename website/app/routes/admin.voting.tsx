@@ -276,7 +276,7 @@ export default function AdminVoting() {
 
                 <Flex gap="6" direction={{ base: 'column', md: 'row' }}>
                     <Box flex="1">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Status
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium" textTransform="capitalize">
@@ -285,7 +285,7 @@ export default function AdminVoting() {
                     </Box>
 
                     <Box flex="1">
-                        <styled.p fontSize="sm" color="gray.600" mb="1">
+                        <styled.p fontSize="sm" color="text.secondary" mb="1">
                             Total Voting Sessions
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -295,7 +295,7 @@ export default function AdminVoting() {
 
                     {conferenceState.talkVoting.state === 'open' && (
                         <Box flex="1">
-                            <styled.p fontSize="sm" color="gray.600" mb="1">
+                            <styled.p fontSize="sm" color="text.secondary" mb="1">
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
@@ -312,7 +312,7 @@ export default function AdminVoting() {
                     {conferenceState.talkVoting.state === 'not-open-yet' && conferenceState.talkVoting.opens && (
                         <>
                             <Box flex="1">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -325,7 +325,7 @@ export default function AdminVoting() {
                                 </styled.p>
                             </Box>
                             <Box flex="1">
-                                <styled.p fontSize="sm" color="gray.600" mb="1">
+                                <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -348,17 +348,17 @@ export default function AdminVoting() {
                 </styled.h2>
 
                 {votingState === 'closed' ? (
-                    <styled.p color="gray.600">Voting has closed for this conference.</styled.p>
+                    <styled.p color="text.secondary">Voting has closed for this conference.</styled.p>
                 ) : votingState === 'not-open-yet' ? (
                     <Box>
-                        <styled.p color="gray.600" mb="4">
+                        <styled.p color="text.secondary" mb="4">
                             Voting hasn't opened yet, but as an admin you can jump forward in time to start voting.
                         </styled.p>
                         <Flex gap="4">
                             <AppLink
                                 to="/admin/settings"
                                 display="inline-block"
-                                bg="gray.600"
+                                bg="admin.600"
                                 color="white"
                                 py="2"
                                 px="4"
@@ -366,7 +366,7 @@ export default function AdminVoting() {
                                 textDecoration="none"
                                 fontSize="sm"
                                 fontWeight="medium"
-                                _hover={{ bg: 'gray.700' }}
+                                _hover={{ bg: 'admin.700' }}
                             >
                                 Configure Date Override
                             </AppLink>
@@ -374,14 +374,14 @@ export default function AdminVoting() {
                     </Box>
                 ) : (
                     <Box>
-                        <styled.p color="gray.600" mb="4">
+                        <styled.p color="text.secondary" mb="4">
                             Voting is currently open.
                         </styled.p>
                         <Flex gap="4" alignItems="flex-start">
                             <AppLink
                                 to="/voting"
                                 display="inline-block"
-                                bg="accent.7"
+                                bg="indigo.7"
                                 color="white"
                                 py="2"
                                 px="4"
@@ -389,7 +389,7 @@ export default function AdminVoting() {
                                 textDecoration="none"
                                 fontSize="sm"
                                 fontWeight="medium"
-                                _hover={{ bg: 'accent.8' }}
+                                _hover={{ bg: 'indigo.8' }}
                             >
                                 Go to Voting
                             </AppLink>
@@ -405,19 +405,19 @@ export default function AdminVoting() {
                     </styled.h2>
 
                     {underrepresentedGroups.error && (
-                        <styled.p color="red.600" mb="4">
+                        <styled.p color="status.danger.fg" mb="4">
                             Error: {underrepresentedGroups.error}
                         </styled.p>
                     )}
 
                     {actionData?.success && actionData?.message && (
-                        <styled.p color="green.600" mb="4">
+                        <styled.p color="status.success.fg" mb="4">
                             {actionData.message}
                         </styled.p>
                     )}
 
                     {actionData?.success === false && actionData?.error && (
-                        <styled.p color="red.600" mb="4">
+                        <styled.p color="status.danger.fg" mb="4">
                             Error: {actionData.error}
                         </styled.p>
                     )}
@@ -442,7 +442,7 @@ export default function AdminVoting() {
                                             gap="2"
                                             p="2"
                                             borderRadius="md"
-                                            _hover={{ bg: 'gray.50' }}
+                                            _hover={{ bg: 'admin.100' }}
                                         >
                                             <input
                                                 type="checkbox"
@@ -469,7 +469,7 @@ export default function AdminVoting() {
                                 {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
                             </Button>
 
-                            <styled.span fontSize="sm" color="gray.600">
+                            <styled.span fontSize="sm" color="text.secondary">
                                 {underrepresentedGroups.selectedGroups.length} of{' '}
                                 {underrepresentedGroups.availableGroups.length} groups selected
                             </styled.span>
@@ -483,7 +483,7 @@ export default function AdminVoting() {
                     Voting Validation
                 </styled.h2>
 
-                <styled.p color="gray.600" mb="4">
+                <styled.p color="text.secondary" mb="4">
                     Run validation to calculate statistics for all talks based on voting data. This process analyzes how
                     many times each talk has been seen and voted for.
                 </styled.p>
@@ -501,7 +501,7 @@ export default function AdminVoting() {
                     </Form>
 
                     {validationRuns.isRunning && validationRuns.runs[0]?.status === 'running' && (
-                        <styled.span color="gray.600" alignSelf="center">
+                        <styled.span color="text.secondary" alignSelf="center">
                             Progress: {validationRuns.runs[0].percentComplete}% (
                             {validationRuns.runs[0].processedSessions}/{validationRuns.runs[0].totalSessions} sessions)
                         </styled.span>
@@ -509,7 +509,7 @@ export default function AdminVoting() {
                 </Flex>
 
                 {!actionData?.success && actionData?.error ? (
-                    <styled.p color="red.600" mb="4">
+                    <styled.p color="status.danger.fg" mb="4">
                         Error: {actionData.error}
                     </styled.p>
                 ) : null}
@@ -521,38 +521,34 @@ export default function AdminVoting() {
                         </styled.h3>
 
                         <Box overflowX="auto">
-                            <styled.table width="100%" fontSize="sm">
+                            <styled.table width="full" fontSize="sm">
                                 <thead>
                                     <tr>
                                         <styled.th
                                             textAlign="left"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.200"
+                                            border="admin-subtle"
                                         >
                                             Started
                                         </styled.th>
                                         <styled.th
                                             textAlign="left"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.200"
+                                            border="admin-subtle"
                                         >
                                             Status
                                         </styled.th>
                                         <styled.th
                                             textAlign="left"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.200"
+                                            border="admin-subtle"
                                         >
                                             Progress
                                         </styled.th>
                                         <styled.th
                                             textAlign="left"
                                             p="2"
-                                            borderBottom="1px solid"
-                                            borderColor="gray.200"
+                                            border="admin-subtle"
                                         >
                                             Actions
                                         </styled.th>
@@ -561,7 +557,7 @@ export default function AdminVoting() {
                                 <tbody>
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
-                                            <styled.td p="2" borderBottom="1px solid" borderColor="gray.100">
+                                            <styled.td p="2" border="admin-subtle">
                                                 {DateTime.fromISO(run.startedAt).toLocaleString(
                                                     DateTime.DATETIME_SHORT,
                                                     {
@@ -569,7 +565,7 @@ export default function AdminVoting() {
                                                     },
                                                 )}
                                             </styled.td>
-                                            <styled.td p="2" borderBottom="1px solid" borderColor="gray.100">
+                                            <styled.td p="2" border="admin-subtle">
                                                 <styled.span
                                                     px="2"
                                                     py="1"
@@ -578,30 +574,30 @@ export default function AdminVoting() {
                                                     fontWeight="medium"
                                                     bg={
                                                         run.status === 'completed'
-                                                            ? 'green.100'
+                                                            ? 'status.success.bg'
                                                             : run.status === 'running'
-                                                              ? 'blue.100'
-                                                              : 'red.100'
+                                                              ? 'status.info.bg'
+                                                              : 'status.danger.bg'
                                                     }
                                                     color={
                                                         run.status === 'completed'
-                                                            ? 'green.800'
+                                                            ? 'status.success.fg'
                                                             : run.status === 'running'
-                                                              ? 'blue.800'
-                                                              : 'red.800'
+                                                              ? 'status.info.fg'
+                                                              : 'status.danger.fg'
                                                     }
                                                 >
                                                     {run.status}
                                                 </styled.span>
                                             </styled.td>
-                                            <styled.td p="2" borderBottom="1px solid" borderColor="gray.100">
+                                            <styled.td p="2" border="admin-subtle">
                                                 {run.processedSessions}/{run.totalSessions} ({run.percentComplete}%)
                                             </styled.td>
-                                            <styled.td p="2" borderBottom="1px solid" borderColor="gray.100">
+                                            <styled.td p="2" border="admin-subtle">
                                                 <AppLink
                                                     to={`/admin/voting-validation/stats/${run.runId}`}
                                                     fontSize="sm"
-                                                    color="accent.7"
+                                                    color="indigo.7"
                                                     _hover={{ textDecoration: 'underline' }}
                                                 >
                                                     View Stats

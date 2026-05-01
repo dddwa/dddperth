@@ -18,15 +18,15 @@ export function Hero({
         <Box overflowX="hidden">
             <HomepageHeroPanel conferenceDate={conferenceDate} />
             <HeaderContainer>
-                <Flex flexDirection="column" gap={12}>
+                <Flex flexDirection="column" gap="12">
                     <Flex
                         className={`paragraph-wrapper`}
                         direction="column"
                         fontSize={{ base: 'lg', md: '2xl' }}
                         fontWeight="medium"
                         color="white"
-                        gap={6}
-                        maxWidth={800}
+                        gap="6"
+                        maxWidth="[800px]"
                         mx="auto"
                     >
                     <p>

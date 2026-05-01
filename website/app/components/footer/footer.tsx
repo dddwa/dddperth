@@ -5,14 +5,7 @@ import { socialsData } from '../../config/socials-data'
 import { AppLink } from '../app-link'
 
 export const Footer = () => (
-    <Box
-        mt="48"
-        gap="6"
-        mx="5"
-        xl={{
-            mx: '0',
-        }}
-    >
+    <Box mt="48" gap="6" mx="5">
         <Divider color="border.subtle" mb="6" />
         <Grid
             gridTemplateColumns="1fr"

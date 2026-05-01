@@ -254,21 +254,21 @@ function VotingPageWithSession({
     }
 
     return (
-        <Container py={12} maxW="6xl">
-            <VStack gap={8}>
-                <VStack gap={4}>
+        <Container py="12" maxW="6xl">
+            <VStack gap="8">
+                <VStack gap="4">
                     <styled.h2 fontSize="2xl" color="white">
                         Which talk would you prefer to see?
                     </styled.h2>
-                    <styled.p fontSize="sm" color="lightgrey">
+                    <styled.p fontSize="sm" color="text.muted">
                         Round {currentPair.roundNumber + 1} · Pair {currentPair.index + 1} of {totalPairs}
                     </styled.p>
                 </VStack>
 
-                <HStack justify="center" gap={4}>
+                <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="green"
+                        colorPalette="brand.primary"
                         onClick={() => void handleVote('A')}
                         disabled={!!voteSubmitted}
                     >
@@ -276,7 +276,7 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="blue"
+                        colorPalette="indigo"
                         variant="solid"
                         onClick={() => void handleVote('skip')}
                         disabled={!!voteSubmitted}
@@ -285,7 +285,7 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="pink"
+                        colorPalette="brand.secondary"
                         onClick={() => void handleVote('B')}
                         disabled={!!voteSubmitted}
                     >
@@ -294,11 +294,11 @@ function VotingPageWithSession({
                 </HStack>
 
                 <Flex
-                    gap={6}
+                    gap="6"
                     direction={{ base: 'column', lg: 'row' }}
                     w="full"
                     position="relative"
-                    transition="opacity 0.3s ease-out"
+                    transition="opacity"
                 >
                     {/* Left Session Card */}
                     <TalkOptionCard
@@ -310,7 +310,7 @@ function VotingPageWithSession({
                     />
 
                     {/* VS Divider */}
-                    <Flex justify="center" align="center" px={4}>
+                    <Flex justify="center" align="center" px="4">
                         <styled.p
                             fontSize="2xl"
                             fontWeight="bold"
@@ -331,10 +331,10 @@ function VotingPageWithSession({
                     />
                 </Flex>
 
-                <HStack justify="center" gap={4}>
+                <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="green"
+                        colorPalette="brand.primary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
@@ -346,7 +346,7 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="blue"
+                        colorPalette="indigo"
                         variant="solid"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
@@ -359,7 +359,7 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="pink"
+                        colorPalette="brand.secondary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
@@ -387,8 +387,8 @@ function VotingMessage({
     cta?: React.ReactNode
 }) {
     return (
-        <Container py={12}>
-            <VStack gap={6}>
+        <Container py="12">
+            <VStack gap="6">
                 <styled.h2 fontSize="2xl" color="white">
                     {message}
                 </styled.h2>
@@ -398,7 +398,7 @@ function VotingMessage({
                     </styled.p>
                 )}
                 {details && (
-                    <styled.p fontSize="lg" color="lightgrey" textAlign="center">
+                    <styled.p fontSize="lg" color="text.muted" textAlign="center">
                         {details}
                     </styled.p>
                 )}

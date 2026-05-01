@@ -181,13 +181,13 @@ export async function getVotingSession(
     const sessionId = votingStorageSession.get('sessionId')
 
     if (!sessionId) {
-        await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
+        return await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
     }
 
     const row = await getVotingSessionById(db, sessionId)
 
     if (!row || row.version !== CURRENT_SESSION_VERSION) {
-        await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
+        return await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
     }
 
     return rowToVotingSession(row)
