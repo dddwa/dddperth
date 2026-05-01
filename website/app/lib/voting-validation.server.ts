@@ -211,6 +211,10 @@ export async function processVotingSession(
             timesVotedForV4: 0,
             timesVotedAgainstV4: 0,
             timesSkippedV4: 0,
+            timesSeenV5: 0,
+            timesVotedForV5: 0,
+            timesVotedAgainstV5: 0,
+            timesSkippedV5: 0,
         })
     })
 
@@ -338,7 +342,7 @@ function applyVoteUpdate(
     leftStats: TalkStatsAccumulator,
     rightStats: TalkStatsAccumulator,
     vote: 'A' | 'B' | 'S',
-    versionKey: 'Aggregated' | 'V1' | 'V2' | 'V3' | 'V4',
+    versionKey: 'Aggregated' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5',
 ): void {
     // Type-safe property access using bracket notation
     const seenKey = `timesSeen${versionKey}` as keyof TalkStatsAccumulator
@@ -468,8 +472,9 @@ export async function saveTalkStatistics(
                          times_seen_v2, times_voted_for_v2, times_voted_against_v2, times_skipped_v2,
                          times_seen_v3, times_voted_for_v3, times_voted_against_v3, times_skipped_v3,
                          times_seen_v4, times_voted_for_v4, times_voted_against_v4, times_skipped_v4,
+                         times_seen_v5, times_voted_for_v5, times_voted_against_v5, times_skipped_v5,
                          last_updated_at
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      ON CONFLICT(run_id, talk_id) DO UPDATE SET
                          times_seen_aggregated = excluded.times_seen_aggregated,
                          times_voted_for_aggregated = excluded.times_voted_for_aggregated,
@@ -491,6 +496,10 @@ export async function saveTalkStatistics(
                          times_voted_for_v4 = excluded.times_voted_for_v4,
                          times_voted_against_v4 = excluded.times_voted_against_v4,
                          times_skipped_v4 = excluded.times_skipped_v4,
+                         times_seen_v5 = excluded.times_seen_v5,
+                         times_voted_for_v5 = excluded.times_voted_for_v5,
+                         times_voted_against_v5 = excluded.times_voted_against_v5,
+                         times_skipped_v5 = excluded.times_skipped_v5,
                          last_updated_at = excluded.last_updated_at`,
                 )
                 .bind(
@@ -517,6 +526,10 @@ export async function saveTalkStatistics(
                     acc.timesVotedForV4,
                     acc.timesVotedAgainstV4,
                     acc.timesSkippedV4,
+                    acc.timesSeenV5,
+                    acc.timesVotedForV5,
+                    acc.timesVotedAgainstV5,
+                    acc.timesSkippedV5,
                     timestamp,
                 ),
         )
@@ -554,6 +567,10 @@ export async function getTalkStatistics(db: D1Database, runId: string): Promise<
             times_voted_for_v4: number
             times_voted_against_v4: number
             times_skipped_v4: number
+            times_seen_v5: number
+            times_voted_for_v5: number
+            times_voted_against_v5: number
+            times_skipped_v5: number
             last_updated_at: string
         }>()
 
@@ -583,6 +600,10 @@ export async function getTalkStatistics(db: D1Database, runId: string): Promise<
         timesVotedForV4: row.times_voted_for_v4,
         timesVotedAgainstV4: row.times_voted_against_v4,
         timesSkippedV4: row.times_skipped_v4,
+        timesSeenV5: row.times_seen_v5,
+        timesVotedForV5: row.times_voted_for_v5,
+        timesVotedAgainstV5: row.times_voted_against_v5,
+        timesSkippedV5: row.times_skipped_v5,
         lastUpdatedAt: row.last_updated_at,
     }))
 }
@@ -672,7 +693,14 @@ export async function calculateAndSaveFairnessMetrics(
     runId: string,
     stats: Map<string, TalkStatsAccumulator>,
 ): Promise<void> {
-    const versions: Array<'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'> = ['aggregated', 'v1', 'v2', 'v3', 'v4']
+    const versions: Array<'aggregated' | 'v1' | 'v2' | 'v3' | 'v4' | 'v5'> = [
+        'aggregated',
+        'v1',
+        'v2',
+        'v3',
+        'v4',
+        'v5',
+    ]
 
     for (const version of versions) {
         const appearances: number[] = []
@@ -695,6 +723,9 @@ export async function calculateAndSaveFairnessMetrics(
                     break
                 case 'v4':
                     timesSeen = talkStats.timesSeenV4
+                    break
+                case 'v5':
+                    timesSeen = talkStats.timesSeenV5
                     break
             }
 
@@ -873,7 +904,7 @@ export async function runVotingValidation(db: D1Database, year: string, talks: T
 
     try {
         // Get all voting sessions from D1
-        const sessionRows = await listVotingSessions(db)
+        const sessionRows = await listVotingSessions(db, year, CURRENT_SESSION_VERSION)
         const sessions = sessionRows.map(rowToVotingSession)
 
         // Create run index
@@ -907,6 +938,10 @@ export async function runVotingValidation(db: D1Database, year: string, talks: T
                 timesVotedForV4: 0,
                 timesVotedAgainstV4: 0,
                 timesSkippedV4: 0,
+                timesSeenV5: 0,
+                timesVotedForV5: 0,
+                timesVotedAgainstV5: 0,
+                timesSkippedV5: 0,
             })
         })
 
@@ -938,6 +973,10 @@ export async function runVotingValidation(db: D1Database, year: string, talks: T
                         globalStat.timesVotedForV4 += sessionStat.timesVotedForV4
                         globalStat.timesVotedAgainstV4 += sessionStat.timesVotedAgainstV4
                         globalStat.timesSkippedV4 += sessionStat.timesSkippedV4
+                        globalStat.timesSeenV5 += sessionStat.timesSeenV5
+                        globalStat.timesVotedForV5 += sessionStat.timesVotedForV5
+                        globalStat.timesVotedAgainstV5 += sessionStat.timesVotedAgainstV5
+                        globalStat.timesSkippedV5 += sessionStat.timesSkippedV5
                     }
                 }
 

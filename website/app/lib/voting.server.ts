@@ -10,7 +10,7 @@ import {
     type VoteRow,
     type VotingSessionRow,
 } from './d1.server'
-import { FairPairingGeneratorV4 } from './pairing-generator-v4'
+import { FairPairingGeneratorV5 } from './pairing-generator-v5'
 import type { SessionId } from './session.server'
 import { votingStorage } from './session.server'
 import { getConfSessions } from './sessionize.server'
@@ -112,6 +112,15 @@ export async function recordVoteInTable(
     vote: 'A' | 'B' | 'skip',
 ): Promise<void> {
     const voteChar = vote === 'skip' ? 'S' : vote
+    const session = await getVotingSessionById(db, sessionId)
+
+    if (!session || session.version !== CURRENT_SESSION_VERSION) {
+        throw new Error(`Cannot record vote for unknown or non-V${CURRENT_SESSION_VERSION} session`)
+    }
+
+    if (roundNumber < 0 || indexInRound < 0 || indexInRound >= session.max_pairs_per_round) {
+        throw new Error(`Invalid V${CURRENT_SESSION_VERSION} vote position: round ${roundNumber}, index ${indexInRound}`)
+    }
 
     // Record the vote
     await recordVote(db, sessionId, year, roundNumber, indexInRound, voteChar)
@@ -122,8 +131,7 @@ export async function recordVoteInTable(
 
 /**
  * Safely updates the session's currentIndex
- * Only updates if the new index is higher and we're still in the same round
- * Advances to next round if the current round is completed
+ * Only updates if the new index is higher and we're still in the no-repeat session pass.
  */
 async function updateSessionIndexSafely(
     db: D1Database,
@@ -153,7 +161,7 @@ async function updateSessionIndexSafely(
                 await updateVotingSessionIndex(db, sessionId, newCurrentIndex)
             }
         } else if (voteRoundNumber > currentRoundNumber) {
-            // Vote is for a future round - advance session to that round
+            // Vote is for a later no-repeat round - advance session to that round.
             await updateVotingSessionIndex(db, sessionId, newCurrentIndex, voteRoundNumber)
         }
         // If voteRoundNumber < currentRoundNumber, this is a stale vote, skip
@@ -176,13 +184,13 @@ export async function getVotingSession(
         await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
     }
 
-    const row = await getVotingSessionById(db, sessionId!)
+    const row = await getVotingSessionById(db, sessionId)
 
     if (!row || row.version !== CURRENT_SESSION_VERSION) {
         await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
     }
 
-    return rowToVotingSession(row!)
+    return rowToVotingSession(row)
 }
 
 // Function to check if input sessions have changed
@@ -216,13 +224,14 @@ export async function createUserVotingSessionAndRedirect(
         throw new Error('No sessions available for voting')
     }
 
-    // Generate new session ID and seed
+    // Generate new session ID and use the global session number as the seed.
+    // V5 relies on sequential seeds to rotate matchings and early pair order.
     const sessionId = crypto.randomUUID()
-    const seed = crypto.getRandomValues(new Uint32Array(1))[0]
+    const seed = await incrementSessionCounter(db, year)
 
     // Calculate total pairs using generator
     const totalTalks = currentSessions.length
-    const tempGenerator = new FairPairingGeneratorV4(totalTalks, 0)
+    const tempGenerator = new FairPairingGeneratorV5(totalTalks, seed)
     const totalPairs = tempGenerator.getTotalPairs()
     const maxPairsPerRound = tempGenerator.getMaxPairsPerRound()
 
@@ -243,8 +252,6 @@ export async function createUserVotingSessionAndRedirect(
         updated_at: now,
     })
 
-    await incrementSessionCounter(db, year)
-
     const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
     votingStorageSession.set('sessionId', sessionId)
 
@@ -263,7 +270,14 @@ export async function getVotingBatchExplicit(
     requestedIndexInRound: number,
     batchSize = 50,
 ): Promise<VotingBatchData> {
-    const maxPairsPerRound = votingSession.maxPairsPerRound
+    if (votingSession.maxPairsPerRound <= 0) {
+        return {
+            pairs: [],
+            currentIndex: requestedIndexInRound,
+            newRound: false,
+            exhausted: true,
+        }
+    }
 
     let pairs: TalkPair[] = []
     let roundNumber = requestedRoundNumber
@@ -272,46 +286,36 @@ export async function getVotingBatchExplicit(
     let startedNewRound = roundNumber > votingSession.roundNumber
 
     while (pairsNeeded > 0) {
-        // If we've exceeded the total number of rounds (all pairs done), break
-        if (roundNumber < 0 || maxPairsPerRound <= 0) break
+        const generator = new FairPairingGeneratorV5(currentSessions.length, votingSession.seed, roundNumber)
 
-        // V4: Use fixed generator with correct position tracking
-        const roundSeed = FairPairingGeneratorV4.generateRoundSeed(votingSession.seed, roundNumber)
-        const roundGenerator = new FairPairingGeneratorV4(currentSessions.length, roundSeed)
-
-        // Check if this round is complete
-        if (roundGenerator.isRoundComplete(indexInRound)) {
-            // Advance to next round
+        if (generator.isRoundComplete(indexInRound)) {
             roundNumber++
             indexInRound = 0
             startedNewRound = true
             continue
         }
 
-        const remainingInRound = maxPairsPerRound - indexInRound
+        const remainingInRound = votingSession.maxPairsPerRound - indexInRound
         const pairsToFetch = Math.min(pairsNeeded, remainingInRound)
-        const pairsWithPositions = roundGenerator.getPairs(indexInRound, pairsToFetch)
-
-        // Convert indices to TalkPair objects using actual positions
+        const pairsWithPositions = generator.getPairs(indexInRound, pairsToFetch)
         const newPairs = pairsWithPositions.map(({ pair: [leftIndex, rightIndex], position }) => ({
-            index: position, // Use actual position in generator sequence
-            roundNumber: roundNumber, // Round these pairs belong to
+            index: position,
+            roundNumber,
             left: currentSessions[leftIndex],
             right: currentSessions[rightIndex],
         }))
 
-        // Update indexInRound to continue from the last position used + 1
         if (pairsWithPositions.length > 0) {
-            const lastPosition = Math.max(...pairsWithPositions.map((p) => p.position))
-            indexInRound = lastPosition + 1
+            indexInRound = Math.max(...pairsWithPositions.map((pair) => pair.position)) + 1
         }
 
         pairs = pairs.concat(newPairs)
         pairsNeeded -= newPairs.length
 
-        // If we filled the batch, break
-        if (pairsNeeded <= 0) break
-        // Otherwise, advance to next round
+        if (pairsNeeded <= 0) {
+            break
+        }
+
         roundNumber++
         indexInRound = 0
         startedNewRound = true
@@ -321,6 +325,7 @@ export async function getVotingBatchExplicit(
         pairs,
         currentIndex: indexInRound,
         newRound: startedNewRound,
+        exhausted: false,
     }
 }
 

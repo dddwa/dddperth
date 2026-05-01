@@ -16,35 +16,35 @@ The voting system presents pairs of talk proposals to voters, who choose which t
     - Click on the talk you prefer
     - Or click "Skip" if you can't decide or aren't familiar with the topics
 4. **Continue Voting**: The system automatically loads the next pair
-5. **Round-Based Progression**: After viewing all possible pairs in a round, you'll automatically start a new round with different pairings
+5. **Fresh Rounds**: After a no-repeat round finishes, voting continues with a fresh shuffle and different pairings
 
 ### Talk Pair Generation
 
-The system uses a simple algorithm to ensure fair comparison:
+The system uses a round-robin matching algorithm to ensure fair comparison:
 
 ```mermaid
 flowchart TD
-    A[Voter starts session] --> B[Generate unique session seed]
-    B --> C[Calculate max pairs per round<br/>floor(total_talks / 2)]
-    C --> D[Generate round pairs using seed]
+    A[Voter starts session] --> B[Increment global session counter]
+    B --> C[Choose round-robin matching and pair-order offset]
+    C --> D[Generate no-repeat round pairs<br/>floor(total_talks / 2)]
     D --> E[Present pairs to voter]
     E --> F{Round complete?}
     F -->|No| E
-    F -->|Yes| G[Generate new round seed]
-    G --> H[Start new round]
-    H --> E
+    F -->|Yes| G[Advance round number]
+    G --> H[Choose next matching and shuffle]
+    H --> D
 ```
 
 #### Key Principles
 
-- **No talk repetition within a round**: Each talk appears at most once per round
+- **No talk repetition within a round**: Each talk appears at most once before the next fresh shuffle
 - **Deterministic generation**: Same seed produces same pairs for consistency
-- **Fair distribution**: All talks get equal opportunity for comparison over time
+- **Fair distribution**: Sequential session seeds and round numbers rotate through matchings and pair order
 - **Stateless storage**: Only the session seed is stored, pairs are generated on-demand
 
 ## Algorithm Versions
 
-The voting system has evolved through three versions:
+The voting system has evolved through five versions:
 
 ### V1 (Legacy)
 
@@ -59,12 +59,25 @@ The voting system has evolved through three versions:
 - Still used `voteIndex` for vote tracking
 - Generated permutations of pairs, ensuring pairs were not duplicated
 
-### V3 (Current)
+### V3 (Legacy)
 
 - **Round-based approach**: Limits pairs per round to `floor(total_talks / 2)`
 - **Seed-based generation**: Deterministic round seeds using Linear Congruential Generator
 - **Seamless round transitions**: Automatic progression without page refreshes
 - **Vote tracking**: Uses `roundNumber` + `indexInRound` for precise vote reconstruction
+
+### V4 (Legacy)
+
+- Fixed V3 position tracking so stored vote positions match reconstructed pair positions
+- Kept the same round-based shape and vote storage contract
+
+### V5 (Current)
+
+- **Round-robin matching**: Each voting round receives one matching where every talk appears at most once
+- **Continuous voting**: After a round completes, the next round uses a different matching and deterministic shuffle
+- **Balanced global coverage**: Sequential session seeds and round numbers cycle through all matchings, covering every possible pair evenly over time
+- **Balanced early exposure**: Pair order is deterministically shuffled so talks are not consistently hidden late in rounds
+- **Vote tracking**: Reuses `roundNumber` + `indexInRound` for precise vote reconstruction
 
 ## ELO Rating System
 
@@ -140,9 +153,15 @@ Due to the evolution of the voting algorithm, legacy data requires careful handl
 - **Solution**: Filter out votes for duplicate pairs, keep unique votes
 - **Rationale**: Duplicate votes skew talk popularity unfairly
 
-#### V3 Algorithm (Current)
+#### V3/V4 Algorithm Issues
 
-- **Quality**: High-quality, round-based generation with no duplicates
+- **Problem**: Random round generation can still produce uneven pair coverage over time
+- **Solution**: V5 uses round-robin matchings so each round has no repeated talks and later rounds use different pairings
+- **Rationale**: Voters can keep voting while each round remains internally fair
+
+#### V5 Algorithm (Current)
+
+- **Quality**: No repeated talks per round, balanced pair coverage across sessions and rounds
 - **Processing**: Use votes as-is without filtering
 
 ### Data Processing Pipeline
@@ -209,9 +228,9 @@ This approach scales efficiently even with hundreds of talks and thousands of vo
 The system ensures fairness through:
 
 1. **Equal Opportunity**: Each talk appears in similar numbers of comparisons over time
-2. **No Repetition**: Within a round, no talk appears more than once
-3. **Random Distribution**: Seed-based generation provides pseudo-random but fair pairing
-4. **Cross-Round Variety**: Different rounds show different pairings for the same talks
+2. **No Repetition Per Round**: Within a fresh shuffle round, no talk appears more than once
+3. **Balanced Pair Coverage**: Round-robin matchings cover all possible pairs evenly across sessions and rounds
+4. **Balanced Early Exposure**: Pair order is shuffled so short voting sessions do not always favor the same talks
 
 ## API Endpoints
 

@@ -68,6 +68,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         v2: fairnessMetricsMap.v2,
         v3: fairnessMetricsMap.v3,
         v4: fairnessMetricsMap.v4,
+        v5: fairnessMetricsMap.v5,
     }
 
     // Convert to response format
@@ -125,6 +126,16 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
                 winRate:
                     stat.timesVotedForV4 + stat.timesVotedAgainstV4 > 0
                         ? (stat.timesVotedForV4 / (stat.timesVotedForV4 + stat.timesVotedAgainstV4)) * 100
+                        : 0,
+            },
+            v5: {
+                timesSeen: stat.timesSeenV5,
+                votedFor: stat.timesVotedForV5,
+                votedAgainst: stat.timesVotedAgainstV5,
+                skipped: stat.timesSkippedV5,
+                winRate:
+                    stat.timesVotedForV5 + stat.timesVotedAgainstV5 > 0
+                        ? (stat.timesVotedForV5 / (stat.timesVotedForV5 + stat.timesVotedAgainstV5)) * 100
                         : 0,
             },
         },
@@ -267,7 +278,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 type SortField = 'title' | 'seen' | 'win'
 type SortDirection = 'asc' | 'desc'
-type VersionFilter = 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'
+type VersionFilter = 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4' | 'v5'
 
 export default function VotingValidationStats() {
     const { runId, talks, runDetails, fairnessMetrics, talkResults, sessionizeTalks, talkToSpeakerIds, speakerToUnderrepresented } = useLoaderData<typeof loader>()
@@ -297,6 +308,8 @@ export default function VotingValidationStats() {
                 return talk.stats.v3
             case 'v4':
                 return talk.stats.v4
+            case 'v5':
+                return talk.stats.v5
         }
     }
 
@@ -718,7 +731,8 @@ export default function VotingValidationStats() {
                             <option value="v1">V1 Only</option>
                             <option value="v2">V2 Only</option>
                             <option value="v3">V3 Only</option>
-                            <option value="v4">V4 Only (Current Algorithm)</option>
+                            <option value="v4">V4 Only</option>
+                            <option value="v5">V5 Only (Current Algorithm)</option>
                         </styled.select>
                     </Box>
                 </Flex>

@@ -35,6 +35,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 votingProgress: 0,
                 currentRound: 0,
                 currentIndex: 0,
+                totalPairs: 0,
             },
             hasSession: false,
         }
@@ -49,6 +50,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 votingProgress: 0,
                 currentRound: 0,
                 currentIndex: 0,
+                totalPairs: 0,
             },
             hasSession: false,
             error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
@@ -74,6 +76,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             currentRound: votingSession.roundNumber,
             currentIndex: votingSession.currentIndex,
             votingProgress,
+            totalPairs: votingSession.totalPairs,
         },
     }
 }
@@ -90,6 +93,7 @@ export default function VotingPage() {
                         currentRound={votingSession.currentRound}
                         currentIndex={votingSession.currentIndex}
                         votingProgress={votingSession.votingProgress}
+                        totalPairs={votingSession.totalPairs}
                     />
                 )}
             </Await>
@@ -102,11 +106,13 @@ function VotingPageWithSession({
     currentRound,
     currentIndex,
     votingProgress,
+    totalPairs,
 }: {
     sessionId: string | null
     currentRound: number
     currentIndex: number
     votingProgress: number
+    totalPairs: number
 }) {
     const data = useLoaderData<typeof loader>()
 
@@ -116,11 +122,20 @@ function VotingPageWithSession({
     const [error, setError] = useState<string | null>(null)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
     const [isFetching, setIsFetching] = useState(false)
+    const [isExhausted, setIsExhausted] = useState(false)
 
     // Load initial batch
     useEffect(() => {
         if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0) {
-            void loadInitialBatch(currentRound, currentIndex, isFetching, setIsFetching, setError, setPairs)
+            void loadInitialBatch(
+                currentRound,
+                currentIndex,
+                isFetching,
+                setIsFetching,
+                setError,
+                setPairs,
+                setIsExhausted,
+            )
         }
     }, [sessionId, data.talkVoting.state, isFetching, currentRound, currentIndex, pairs.length])
 
@@ -131,7 +146,7 @@ function VotingPageWithSession({
 
         const remainingPairs = pairs.length - localIndex
         if (remainingPairs <= PREFETCH_THRESHOLD) {
-            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs)
+            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs, setIsExhausted)
         }
     }, [localIndex, pairs, isFetching])
 
@@ -155,9 +170,17 @@ function VotingPageWithSession({
     function handleRetry() {
         setError(null)
         if (pairs.length === 0) {
-            void loadInitialBatch(currentRound, currentIndex, isFetching, setIsFetching, setError, setPairs)
+            void loadInitialBatch(
+                currentRound,
+                currentIndex,
+                isFetching,
+                setIsFetching,
+                setError,
+                setPairs,
+                setIsExhausted,
+            )
         } else {
-            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs)
+            void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs, setIsExhausted)
         }
     }
 
@@ -193,6 +216,10 @@ function VotingPageWithSession({
         return <VotingMessage message="Loading talks..." />
     }
 
+    if (isExhausted && pairs.length === 0) {
+        return <VotingMessage message="Talk Voting" details="No talk comparisons are available right now." />
+    }
+
     if (error) {
         return (
             <VotingMessage message="Talk Voting" error={error} cta={<Button onClick={handleRetry}>Try Again</Button>} />
@@ -200,6 +227,10 @@ function VotingPageWithSession({
     }
 
     if (localIndex >= pairs.length && pairs.length > 0) {
+        if (isExhausted) {
+            return <VotingMessage message="Talk Voting" details="No more talk comparisons are available right now." />
+        }
+
         // If we've run out of pairs and not currently fetching, show loading or error
         if (error && !isFetching) {
             return (
@@ -230,7 +261,7 @@ function VotingPageWithSession({
                         Which talk would you prefer to see?
                     </styled.h2>
                     <styled.p fontSize="sm" color="lightgrey">
-                        Pair {votingProgress + localIndex + 1} of many
+                        Round {currentPair.roundNumber + 1} · Pair {currentPair.index + 1} of {totalPairs}
                     </styled.p>
                 </VStack>
 
@@ -468,6 +499,7 @@ async function loadInitialBatch(
     setIsFetching: (value: boolean) => void,
     setError: (error: string | null) => void,
     setPairs: (pairs: TalkPair[]) => void,
+    setIsExhausted: (value: boolean) => void,
 ): Promise<void> {
     if (isFetching) return
     setIsFetching(true)
@@ -477,6 +509,7 @@ async function loadInitialBatch(
         // For initial load, use the session state from loader
         const result = await fetchVotingBatch(currentRound, currentIndex)
         setPairs(result.pairs)
+        setIsExhausted(result.exhausted)
     } catch (err) {
         if (err instanceof Error && err.message !== 'Redirecting...') {
             setError(err.message)
@@ -492,6 +525,7 @@ async function loadMorePairs(
     setIsFetching: (value: boolean) => void,
     setError: (error: string | null) => void,
     setPairs: (updater: (prev: TalkPair[]) => TalkPair[]) => void,
+    setIsExhausted: (value: boolean) => void,
 ): Promise<void> {
     if (isFetching) return
     setIsFetching(true)
@@ -506,8 +540,10 @@ async function loadMorePairs(
         const result = await fetchVotingBatch(fromRoundNumber, fromIndexInRound)
 
         if (result.pairs.length > 0) {
-            // Simple append - no deduplication needed since we're loading from the end
             setPairs((prev) => [...prev, ...result.pairs])
+            setIsExhausted(false)
+        } else if (result.exhausted) {
+            setIsExhausted(true)
         } else {
             setError('No talks available to vote on right now. Please try again.')
         }

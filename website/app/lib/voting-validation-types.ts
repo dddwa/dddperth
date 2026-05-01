@@ -51,12 +51,19 @@ export interface TalkStatistics {
     timesVotedAgainstV4: number
     timesSkippedV4: number
 
+    // V5 only stats
+    timesSeenV5: number
+    timesVotedForV5: number
+    timesVotedAgainstV5: number
+    timesSkippedV5: number
+
     // ELO ratings (placeholder for future implementation)
     eloRatingAggregated?: number
     eloRatingV1?: number
     eloRatingV2?: number
     eloRatingV3?: number
     eloRatingV4?: number
+    eloRatingV5?: number
 
     lastUpdatedAt: string
 }
@@ -94,6 +101,10 @@ export interface TalkStatsAccumulator {
     timesVotedForV4: number
     timesVotedAgainstV4: number
     timesSkippedV4: number
+    timesSeenV5: number
+    timesVotedForV5: number
+    timesVotedAgainstV5: number
+    timesSkippedV5: number
 }
 
 // Response types for API endpoints
@@ -145,6 +156,7 @@ export interface TalkStatisticsResponse {
             v2: TalkStatisticsResponseVersionStats
             v3: TalkStatisticsResponseVersionStats
             v4: TalkStatisticsResponseVersionStats
+            v5: TalkStatisticsResponseVersionStats
         }
     }>
 }
@@ -167,7 +179,7 @@ export interface FairnessMetricsRecord {
     partitionKey: 'fairness_metrics'
     rowKey: `${string}_${string}` // {runId}_{version}
     runId: string
-    version: 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'
+    version: 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4' | 'v5'
     metricsJson: string // JSON stringified FairnessMetrics
     lastUpdatedAt: string
 }
@@ -190,6 +202,7 @@ export interface TalkStatisticsWithDetailsResponse extends TalkStatisticsRespons
         v2?: FairnessMetrics
         v3?: FairnessMetrics
         v4?: FairnessMetrics
+        v5?: FairnessMetrics
     }
 }
 

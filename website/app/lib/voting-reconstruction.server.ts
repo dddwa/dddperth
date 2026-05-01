@@ -1,4 +1,4 @@
-import { FairPairingGeneratorV4 } from './pairing-generator-v4'
+import { FairPairingGeneratorV5 } from './pairing-generator-v5'
 import type { TalkPair, TalkVotingData, VoteRecord, VotingSession } from './voting.server'
 
 export interface MappedVoteRecord {
@@ -39,8 +39,7 @@ function processVoteGroup(
         return
     }
 
-    const roundSeed = FairPairingGeneratorV4.generateRoundSeed(session.seed, group.roundNumber)
-    const roundGenerator = new FairPairingGeneratorV4(talks.length, roundSeed)
+    const roundGenerator = new FairPairingGeneratorV5(talks.length, session.seed, group.roundNumber)
     const maxPosition = Math.max(...group.votes.map((vote) => vote.indexInRound))
     const pairIndices = roundGenerator.getPairs(0, maxPosition + 1)
 
@@ -50,7 +49,7 @@ function processVoteGroup(
             const availablePositions = pairIndices.map((pair) => pair.position).sort((a, b) => a - b)
             const allVotePositions = group.votes.map((currentVote) => currentVote.indexInRound).sort((a, b) => a - b)
             throw new Error(
-                `V4 vote mapping failed: cannot find pair at position ${vote.indexInRound} in round ${group.roundNumber}. ` +
+                `V5 vote mapping failed: cannot find pair at position ${vote.indexInRound} in round ${group.roundNumber}. ` +
                     `Generator produced ${pairIndices.length} pairs at positions [${availablePositions.join(', ')}]. ` +
                     `All votes in this round are at positions [${allVotePositions.join(', ')}]. ` +
                     `Session: ${session.sessionId}, Seed: ${session.seed}, Talks: ${talks.length}`,
@@ -60,7 +59,7 @@ function processVoteGroup(
         const [leftIndex, rightIndex] = pairData.pair
         if (leftIndex >= talks.length || rightIndex >= talks.length) {
             throw new Error(
-                `V4 vote mapping failed: talk index out of bounds (${leftIndex}, ${rightIndex}) for ${talks.length} talks, session=${session.sessionId}`,
+                `V5 vote mapping failed: talk index out of bounds (${leftIndex}, ${rightIndex}) for ${talks.length} talks, session=${session.sessionId}`,
             )
         }
 
@@ -114,7 +113,10 @@ export function removeVotesOnDuplicatedTalksInRound(mappedVotes: MappedVoteRecor
             seenPairs.set(roundNumber, new Set())
         }
 
-        const roundSet = seenPairs.get(roundNumber)!
+        const roundSet = seenPairs.get(roundNumber)
+        if (!roundSet) {
+            throw new Error(`Failed to initialize seen-pair tracking for round ${roundNumber}`)
+        }
 
         if (!roundSet.has(vote.pair.left.id) && !roundSet.has(vote.pair.right.id)) {
             roundSet.add(vote.pair.left.id)

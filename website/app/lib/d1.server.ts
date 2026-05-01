@@ -89,6 +89,10 @@ export interface TalkStatisticsRow {
     times_voted_for_v4: number
     times_voted_against_v4: number
     times_skipped_v4: number
+    times_seen_v5: number
+    times_voted_for_v5: number
+    times_voted_against_v5: number
+    times_skipped_v5: number
     last_updated_at: string
 }
 
@@ -119,7 +123,7 @@ export interface TalkResultRow {
 export interface FairnessMetricsRow {
     id: number
     run_id: string
-    version: 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4'
+    version: 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4' | 'v5'
     metrics_json: string
     last_updated_at: string
 }
@@ -145,13 +149,13 @@ export interface AnnouncementRow {
 // HELPER FUNCTIONS
 // ============================================================================
 
-// Atomic increment for session counter
-export async function incrementSessionCounter(db: D1Database, year: string): Promise<void> {
+// Atomic increment for session counter. Returns the post-increment value so it
+// can be used as a deterministic schedule seed for balanced voting sessions.
+export async function incrementSessionCounter(db: D1Database, year: string): Promise<number> {
     const id = `global_${year}`
     const now = new Date().toISOString()
 
-    // Upsert pattern for D1
-    await db
+    const row = await db
         .prepare(
             `
         INSERT INTO voting_globals (id, year, number_sessions, updated_at)
@@ -159,10 +163,13 @@ export async function incrementSessionCounter(db: D1Database, year: string): Pro
         ON CONFLICT(year) DO UPDATE SET
             number_sessions = number_sessions + 1,
             updated_at = ?
+        RETURNING number_sessions
     `,
         )
         .bind(id, year, now, now)
-        .run()
+        .first<{ number_sessions: number }>()
+
+    return row?.number_sessions ?? (await getSessionCounter(db, year))
 }
 
 // Get session counter
@@ -300,14 +307,30 @@ export async function getVotesForSession(db: D1Database, sessionId: string): Pro
 }
 
 // List all voting sessions (for validation)
-export async function listVotingSessions(db: D1Database): Promise<VotingSessionRow[]> {
-    const result = await db
-        .prepare(
-            `
-        SELECT * FROM voting_sessions ORDER BY created_at
+export async function listVotingSessions(db: D1Database, year?: string, version?: number): Promise<VotingSessionRow[]> {
+    const whereClauses: string[] = []
+    const bindings: Array<string | number> = []
+
+    if (year !== undefined) {
+        whereClauses.push('year = ?')
+        bindings.push(year)
+    }
+
+    if (version !== undefined) {
+        whereClauses.push('version = ?')
+        bindings.push(version)
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
+    const statement = db.prepare(
+        `
+        SELECT * FROM voting_sessions ${whereSql} ORDER BY created_at
     `,
-        )
-        .all<VotingSessionRow>()
+    )
+    const result =
+        bindings.length > 0
+            ? await statement.bind(...bindings).all<VotingSessionRow>()
+            : await statement.all<VotingSessionRow>()
 
     return result.results ?? []
 }

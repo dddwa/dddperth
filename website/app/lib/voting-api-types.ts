@@ -7,6 +7,7 @@ export interface VotingBatchData {
     pairs: TalkPair[]
     currentIndex: number
     newRound: boolean // Indicate round transition (informational)
+    exhausted: boolean // True when no talk comparisons are currently available
 }
 
 // Success response from /api/voting/batch
