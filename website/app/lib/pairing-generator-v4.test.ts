@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { FairPairingGeneratorV3 } from './pairing-generator-v3'
 import { FairPairingGeneratorV4 } from './pairing-generator-v4'
 
 describe('FairPairingGeneratorV4', () => {
@@ -119,23 +118,15 @@ describe('FairPairingGeneratorV4', () => {
             expect(call1[0].pair).toEqual(call2[0].pair)
         })
 
-        it('should differ from V3 behavior due to accumulator approach', () => {
-            const seed = 12345
-            const talksCount = 10
+        it('should return requested pairs sequentially from the same round', () => {
+            const generator = new FairPairingGeneratorV4(10, 12345)
+            const firstBatch = generator.getPairs(0, 3)
+            const secondBatch = generator.getPairs(3, 2)
 
-            const v3Generator = new FairPairingGeneratorV3(talksCount, seed)
-            const v4Generator = new FairPairingGeneratorV4(talksCount, seed)
-
-            // Get pairs from both generators
-            const v3Pairs = v3Generator.getPairs(0, 3)
-            const v4PairsWithPos = v4Generator.getPairs(0, 3)
-
-            // V4 should have perfect position tracking (accumulator style)
-            const v4Positions = v4PairsWithPos.map((p) => p.position)
-            expect(v4Positions).toEqual([0, 1, 2])
-
-            // V3 might have gaps due to conflict skipping, V4 should not
-            expect(v4PairsWithPos.length).toBe(3) // Requested exactly 3, should get 3
+            expect(firstBatch).toHaveLength(3)
+            expect(secondBatch).toHaveLength(2)
+            expect(firstBatch.map((pair) => pair.position)).toEqual([0, 1, 2])
+            expect(secondBatch.map((pair) => pair.position)).toEqual([3, 4])
         })
 
         it('should not skip positions when conflicts occur - accumulator guarantees', () => {
@@ -331,38 +322,19 @@ describe('FairPairingGeneratorV4', () => {
         })
     })
 
-    describe('Backward compatibility with V3 interface', () => {
-        it('should maintain same total pairs calculation as V3', () => {
-            const talksCount = 12
-            const seed = 12345
+    describe('Determinism', () => {
+        it('should generate the same round for the same seed', () => {
+            const generator1 = new FairPairingGeneratorV4(12, 12345)
+            const generator2 = new FairPairingGeneratorV4(12, 12345)
 
-            const v3Generator = new FairPairingGeneratorV3(talksCount, seed)
-            const v4Generator = new FairPairingGeneratorV4(talksCount, seed)
-
-            expect(v4Generator.getTotalPairs()).toBe(v3Generator.getTotalPairs())
-            expect(v4Generator.getMaxPairsPerRound()).toBe(v3Generator.getMaxPairsPerRound())
+            expect(generator1.getPairs(0, 6)).toEqual(generator2.getPairs(0, 6))
         })
 
-        it('should have same round completion logic as V3', () => {
-            const talksCount = 8
-            const seed = 12345
+        it('should generate different rounds for different seeds', () => {
+            const generator1 = new FairPairingGeneratorV4(12, 12345)
+            const generator2 = new FairPairingGeneratorV4(12, 54321)
 
-            const v3Generator = new FairPairingGeneratorV3(talksCount, seed)
-            const v4Generator = new FairPairingGeneratorV4(talksCount, seed)
-
-            for (let i = 0; i <= talksCount; i++) {
-                expect(v4Generator.isRoundComplete(i)).toBe(v3Generator.isRoundComplete(i))
-            }
-        })
-
-        it('should generate same round seeds as V3', () => {
-            const originalSeed = 12345
-
-            for (let round = 0; round < 5; round++) {
-                const v3Seed = FairPairingGeneratorV3.generateRoundSeed(originalSeed, round)
-                const v4Seed = FairPairingGeneratorV4.generateRoundSeed(originalSeed, round)
-                expect(v4Seed).toBe(v3Seed)
-            }
+            expect(generator1.getPairs(0, 6)).not.toEqual(generator2.getPairs(0, 6))
         })
     })
 })

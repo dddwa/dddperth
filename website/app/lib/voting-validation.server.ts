@@ -1,6 +1,7 @@
 import { recordException } from './record-exception'
 
 import { batchReconstructVoteContexts, removeVotesOnDuplicatedTalksInRound } from './voting-reconstruction.server'
+import { CURRENT_SESSION_VERSION } from './voting-version-constants'
 import type {
     EloResultImport,
     FairnessMetrics,
@@ -244,8 +245,7 @@ export async function processVotingSession(
             const leftTalk = vote.pair.left
             const rightTalk = vote.pair.right
 
-            const sessionVersion = session.version || 1
-            updateTalkStats(stats, leftTalk.id, rightTalk.id, vote.vote, sessionVersion)
+            updateTalkStats(stats, leftTalk.id, rightTalk.id, vote.vote, CURRENT_SESSION_VERSION)
             votesProcessed++
             if (vote.roundNumber >= totalRounds) {
                 totalRounds = vote.roundNumber + 1
@@ -369,7 +369,7 @@ function updateTalkStats(
     leftTalkId: string,
     rightTalkId: string,
     vote: 'A' | 'B' | 'S',
-    sessionVersion: 1 | 2 | 3 | 4,
+    sessionVersion: typeof CURRENT_SESSION_VERSION,
 ): void {
     const leftStats = stats.get(leftTalkId)
     const rightStats = stats.get(rightTalkId)

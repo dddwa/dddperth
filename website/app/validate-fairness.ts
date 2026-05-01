@@ -1,4 +1,4 @@
-import { FairPairingGeneratorV3 } from './lib/pairing-generator-v3'
+import { FairPairingGeneratorV4 } from './lib/pairing-generator-v4'
 
 export function hasDuplicateTalks(pairs: Array<[number, number]>): boolean {
     const seenTalks = new Set<number>()
@@ -90,14 +90,14 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
     const talkAppearances = new Array(talksCount).fill(0)
     const pairsSeen = new Map<string, number>() // "talk1-talk2" -> count
     const totalPossiblePairs = (talksCount * (talksCount - 1)) / 2 // All possible unique pairs
-    const maxPairsPerRound = Math.floor(talksCount / 2) // V3 limit: pairs per round
+    const maxPairsPerRound = Math.floor(talksCount / 2) // V4 limit: pairs per round
     const actualPairsPerSession = Math.min(pairsPerSession, maxPairsPerRound)
 
     // Track talk usage within sessions (should never have duplicates with new algorithm)
     const duplicatesBySession = new Map<number, string[]>()
     let totalDuplicateCount = 0
 
-    console.log(`\nValidating fairness for (V3 Algorithm):`)
+    console.log(`\nValidating fairness for (V4 Algorithm):`)
     console.log(`- ${talksCount} talks`)
     console.log(`- ${sessionsCount} sessions`)
     console.log(`- ${actualPairsPerSession} pairs per session (max per round: ${maxPairsPerRound})`)
@@ -109,31 +109,28 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
     for (let session = 0; session < sessionsCount; session++) {
         // Random seed for this session
         const seed = Math.floor(Math.random() * 2147483647)
-        const generator = new FairPairingGeneratorV3(talksCount, seed)
-
         // Track talks within this session to verify no duplicates within rounds
-        const sessionTalks = new Set<number>()
         const sessionDuplicates: string[] = []
         let sessionPairs: Array<[number, number]> = []
 
-        // V3 simulates round-based voting - user might go through multiple rounds
+        // V4 simulates round-based voting - user might go through multiple rounds
         let pairsCollected = 0
         let currentRound = 0
         
         while (pairsCollected < actualPairsPerSession) {
             // Generate round seed for this round
-            const roundSeed = FairPairingGeneratorV3.generateRoundSeed(seed, currentRound)
-            const roundGenerator = new FairPairingGeneratorV3(talksCount, roundSeed)
+            const roundSeed = FairPairingGeneratorV4.generateRoundSeed(seed, currentRound)
+            const roundGenerator = new FairPairingGeneratorV4(talksCount, roundSeed)
             
             // Get pairs for this round (up to maxPairsPerRound)
             const pairsNeeded = Math.min(actualPairsPerSession - pairsCollected, maxPairsPerRound)
-            const roundPairs = roundGenerator.getPairs(0, pairsNeeded)
+            const roundPairs = roundGenerator.getPairs(0, pairsNeeded).map((pairWithPosition) => pairWithPosition.pair)
             
             // Track talks within this round (no duplicates allowed within round)
             const roundTalks = new Set<number>()
             
             for (const [talk1, talk2] of roundPairs) {
-                // Check for duplicate talks within this round (should never happen in V3)
+                // Check for duplicate talks within this round (should never happen in V4)
                 if (roundTalks.has(talk1) || roundTalks.has(talk2)) {
                     const dupTalk = roundTalks.has(talk1) ? talk1 : talk2
                     sessionDuplicates.push(`talk-${dupTalk}-round-${currentRound}`)
@@ -142,8 +139,6 @@ export function validateFairness(talksCount = 250, sessionsCount = 1000, pairsPe
                 
                 roundTalks.add(talk1)
                 roundTalks.add(talk2)
-                sessionTalks.add(talk1)
-                sessionTalks.add(talk2)
                 
                 sessionPairs.push([talk1, talk2])
                 pairsCollected++

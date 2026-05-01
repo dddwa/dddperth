@@ -61,3 +61,7 @@ docs/prompts
 
 .claude/worktrees
 .claude/settings.local.json
+
+website/.wrangler/state/
+
+.nx/polygraph

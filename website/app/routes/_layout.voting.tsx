@@ -1,14 +1,12 @@
 import { DateTime } from 'luxon'
 import { Suspense, useEffect, useState } from 'react'
-import { Await, redirect, useLoaderData } from 'react-router'
-import { $path } from 'safe-routes'
+import { Await, useLoaderData } from 'react-router'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { votingStorage } from '~/lib/session.server'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
-import { CURRENT_CLIENT_VERSION, CURRENT_SESSION_VERSION } from '~/lib/voting-version-constants'
+import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import type { TalkPair } from '~/lib/voting.server'
 import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
@@ -65,19 +63,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         context.conferenceState.conference.year,
         () => getSessionsForVoting(allSessionsEndpoint),
     )
-
-    // Check if this is a current version session, if not clear and redirect
-    if (votingSession.version !== CURRENT_SESSION_VERSION) {
-        console.warn(`Session uses old algorithm, resetting to V${CURRENT_SESSION_VERSION} due to algorithm change`)
-        const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
-        votingStorageSession.set('sessionId', undefined)
-
-        throw redirect($path('/voting'), {
-            headers: {
-                'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
-            },
-        })
-    }
 
     // Calculate actual voting progress based on session state
     const votingProgress = votingSession.roundNumber * votingSession.maxPairsPerRound + votingSession.currentIndex

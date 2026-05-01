@@ -1,7 +1,4 @@
-import { FairPairingGeneratorV2 } from './pairing-generator-v2'
-import { FairPairingGeneratorV3 } from './pairing-generator-v3'
 import { FairPairingGeneratorV4 } from './pairing-generator-v4'
-import { FairPairingGeneratorV1 } from './pairing.generator-v1'
 import type { TalkPair, TalkVotingData, VoteRecord, VotingSession } from './voting.server'
 
 export interface MappedVoteRecord {
@@ -12,30 +9,9 @@ export interface MappedVoteRecord {
     roundNumber: number
 }
 
-// Explicit mapping between session version and algorithm version
-export function getAlgorithmVersionFromSession(session: VotingSession): number {
-    if (session.version === undefined) {
-        return 1 // V1 sessions had no version field
-    }
-    if (session.version === 2) {
-        return 2 // V2 sessions used algorithm v2
-    }
-    if (session.version === 3) {
-        return 3 // V3 sessions used algorithm v3
-    }
-    if (session.version === 4) {
-        return 4 // V4 sessions used algorithm v4
-    }
-
-    // @ts-expect-error exhaustive check
-    throw new Error(`Unknown session version: ${session.version}`)
-}
-
 export function batchReconstructVoteContexts(votes: VoteRecord[], session: VotingSession, talks: TalkVotingData[]) {
     const mappedVotes: MappedVoteRecord[] = []
-
-    // Group votes by algorithm version and round
-    const voteGroups = groupVotesByAlgorithmAndRound(votes, session)
+    const voteGroups = groupVotesByRound(votes)
 
     for (const group of voteGroups) {
         processVoteGroup(group, talks, session, mappedVotes)
@@ -45,7 +21,6 @@ export function batchReconstructVoteContexts(votes: VoteRecord[], session: Votin
 }
 
 interface GroupedVoteRecords {
-    algorithmVersion: number
     roundNumber: number
     votes: VoteRecord[]
 }
@@ -56,189 +31,97 @@ function processVoteGroup(
     session: VotingSession,
     mappedVotes: MappedVoteRecord[],
 ) {
-    // Early validation
     if (talks.length === 0) {
-        throw new Error(
-            `Cannot process vote group: no talks available for algorithm V${group.algorithmVersion} round ${group.roundNumber}`,
-        )
+        throw new Error(`Cannot process vote group: no talks available for round ${group.roundNumber}`)
     }
+
     if (group.votes.length === 0) {
-        return // Nothing to process, but not an error
+        return
     }
 
-    if (group.algorithmVersion === 1) {
-        // V1: Legacy sessions — no longer exist in D1, skip gracefully
-        // D1 only stores V2 votes (voteVersion = 2)
-        return
-    } else if (group.algorithmVersion === 2) {
-        // V2: Legacy sessions — no longer exist in D1, skip gracefully
-        return
-    } else if (group.algorithmVersion === 3) {
-        // V3: Round-based with indexing bug - must generate pairs individually due to conflict skipping
-        const roundSeed = FairPairingGeneratorV3.generateRoundSeed(session.seed, group.roundNumber)
-        const roundGenerator = new FairPairingGeneratorV3(talks.length, roundSeed)
+    const roundSeed = FairPairingGeneratorV4.generateRoundSeed(session.seed, group.roundNumber)
+    const roundGenerator = new FairPairingGeneratorV4(talks.length, roundSeed)
+    const maxPosition = Math.max(...group.votes.map((vote) => vote.indexInRound))
+    const pairIndices = roundGenerator.getPairs(0, maxPosition + 1)
 
-        const v2Votes = group.votes.filter((v) => v.voteVersion !== undefined)
-
-        if (v2Votes.length === 0) {
-            if (group.votes.length !== 0) {
-                throw new Error(`V3 vote mapping failed: votes wrong version for session ${session.sessionId}`)
-            }
-
-            return
+    for (const vote of group.votes) {
+        const pairData = pairIndices.find((pair) => pair.position === vote.indexInRound)
+        if (!pairData) {
+            const availablePositions = pairIndices.map((pair) => pair.position).sort((a, b) => a - b)
+            const allVotePositions = group.votes.map((currentVote) => currentVote.indexInRound).sort((a, b) => a - b)
+            throw new Error(
+                `V4 vote mapping failed: cannot find pair at position ${vote.indexInRound} in round ${group.roundNumber}. ` +
+                    `Generator produced ${pairIndices.length} pairs at positions [${availablePositions.join(', ')}]. ` +
+                    `All votes in this round are at positions [${allVotePositions.join(', ')}]. ` +
+                    `Session: ${session.sessionId}, Seed: ${session.seed}, Talks: ${talks.length}`,
+            )
         }
 
-        // V3 BUG: getPairs() skips positions due to conflict avoidance, so we must reconstruct
-        // the exact sequence that was generated during live voting by calling getPairs() for each position
-        for (const vote of v2Votes) {
-            const voteIndex = vote.indexInRound
+        const [leftIndex, rightIndex] = pairData.pair
+        if (leftIndex >= talks.length || rightIndex >= talks.length) {
+            throw new Error(
+                `V4 vote mapping failed: talk index out of bounds (${leftIndex}, ${rightIndex}) for ${talks.length} talks, session=${session.sessionId}`,
+            )
+        }
 
-            // Generate pairs from 0 to voteIndex+1 to get the pair that was actually at this position
-            const pairsGenerated = roundGenerator.getPairs(0, voteIndex + 1)
-
-            if (voteIndex >= pairsGenerated.length) {
-                throw new Error(
-                    `V3 vote mapping failed: vote index ${voteIndex} exceeds generated pairs (${pairsGenerated.length}) for vote session=${session.sessionId} round=${group.roundNumber} index=${voteIndex}. ` +
-                        `V3 has conflict avoidance that skips positions.`,
-                )
-            }
-
-            const [leftIndex, rightIndex] = pairsGenerated[voteIndex]
-            if (leftIndex >= talks.length || rightIndex >= talks.length) {
-                throw new Error(
-                    `V3 vote mapping failed: talk index out of bounds (${leftIndex}, ${rightIndex}) for ${talks.length} talks, session=${session.sessionId}`,
-                )
-            }
-            mappedVotes.push({
-                originalVoteRecord: vote,
-                pair: {
-                    index: voteIndex,
-                    roundNumber: group.roundNumber,
-                    left: talks[leftIndex],
-                    right: talks[rightIndex],
-                },
-                vote: vote.vote,
-                timestamp: vote.timestamp,
+        mappedVotes.push({
+            originalVoteRecord: vote,
+            pair: {
+                index: vote.indexInRound,
                 roundNumber: group.roundNumber,
-            })
-        }
-    } else if (group.algorithmVersion === 4) {
-        // V4: Round-based with fixed indexing - batch generate pairs for this round
-        const roundSeed = FairPairingGeneratorV4.generateRoundSeed(session.seed, group.roundNumber)
-        const roundGenerator = new FairPairingGeneratorV4(talks.length, roundSeed)
-        const v2Votes = group.votes.filter((v) => v.voteVersion !== undefined)
-
-        // Find max position needed for this round
-        if (v2Votes.length === 0) {
-            if (group.votes.length !== 0) {
-                throw new Error(`V4 vote mapping failed: votes wrong version for session ${session.sessionId}`)
-            }
-
-            return
-        }
-        const maxPosition = Math.max(...v2Votes.map((v) => v.indexInRound))
-
-        const pairIndices = roundGenerator.getPairs(0, maxPosition + 1)
-
-        // Map each vote to its corresponding pair
-        for (const vote of v2Votes) {
-            const voteIndex = vote.indexInRound
-            const pairData = pairIndices.find((p) => p.position === voteIndex)
-            if (!pairData) {
-                // Enhanced error with debugging info
-                const availablePositions = pairIndices.map((p) => p.position).sort((a, b) => a - b)
-                const allVotePositions = v2Votes.map((v) => v.indexInRound).sort((a, b) => a - b)
-                throw new Error(
-                    `V4 vote mapping failed: cannot find pair at position ${voteIndex} in round ${group.roundNumber}. ` +
-                        `Generator produced ${pairIndices.length} pairs at positions [${availablePositions.join(', ')}]. ` +
-                        `All votes in this round are at positions [${allVotePositions.join(', ')}]. ` +
-                        `Session: ${session.sessionId}, Seed: ${session.seed}, Talks: ${talks.length}`,
-                )
-            }
-            const [leftIndex, rightIndex] = pairData.pair
-            if (leftIndex >= talks.length || rightIndex >= talks.length) {
-                throw new Error(
-                    `V4 vote mapping failed: talk index out of bounds (${leftIndex}, ${rightIndex}) for ${talks.length} talks, session=${session.sessionId}`,
-                )
-            }
-            mappedVotes.push({
-                originalVoteRecord: vote,
-                pair: {
-                    index: voteIndex,
-                    roundNumber: group.roundNumber,
-                    left: talks[leftIndex],
-                    right: talks[rightIndex],
-                },
-                vote: vote.vote,
-                timestamp: vote.timestamp,
-                roundNumber: group.roundNumber,
-            })
-        }
+                left: talks[leftIndex],
+                right: talks[rightIndex],
+            },
+            vote: vote.vote,
+            timestamp: vote.timestamp,
+            roundNumber: group.roundNumber,
+        })
     }
 }
 
-/**
- * Groups votes by algorithm version and round for efficient ELO calculation
- * NOTE: algorithmVersion should come from the session, not individual votes
- */
-export function groupVotesByAlgorithmAndRound(votes: VoteRecord[], session: VotingSession) {
-    const groupsMap = new Map<string, GroupedVoteRecords>()
-    const algorithmVersion = getAlgorithmVersionFromSession(session)
+export function groupVotesByRound(votes: VoteRecord[]) {
+    const groupsMap = new Map<number, GroupedVoteRecords>()
 
     for (const vote of votes) {
-        // Use voteVersion discriminator to determine round number
-        const roundNumber = vote.voteVersion === undefined ? 0 : vote.roundNumber
-        const key = `${algorithmVersion}_${roundNumber}`
-
-        if (!groupsMap.has(key)) {
-            groupsMap.set(key, { algorithmVersion, roundNumber, votes: [] })
+        if (!groupsMap.has(vote.roundNumber)) {
+            groupsMap.set(vote.roundNumber, { roundNumber: vote.roundNumber, votes: [] })
         }
 
-        groupsMap.get(key)?.votes.push(vote)
+        groupsMap.get(vote.roundNumber)?.votes.push(vote)
     }
 
     return Array.from(groupsMap.values())
 }
 
-/**
- * Sorts votes within a group chronologically for accurate ELO progression
- */
 export function sortVotesChronologically(votes: MappedVoteRecord[]): MappedVoteRecord[] {
     return votes.sort((a, b) => {
-        if (a.originalVoteRecord.voteVersion === 2 && b.originalVoteRecord.voteVersion === 2) {
-            // V2 votes: sort by indexInRound
-            return a.originalVoteRecord.indexInRound - b.originalVoteRecord.indexInRound
+        if (a.roundNumber !== b.roundNumber) {
+            return a.roundNumber - b.roundNumber
         }
 
-        // Fall back to timestamp comparison
-        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        return a.originalVoteRecord.indexInRound - b.originalVoteRecord.indexInRound
     })
 }
 
 export function removeVotesOnDuplicatedTalksInRound(mappedVotes: MappedVoteRecord[]): MappedVoteRecord[] {
-    // Sort V2 votes chronologically to ensure we keep the first occurrence
-    const sortedV2Votes = sortVotesChronologically(mappedVotes)
-
-    // Lookup to round and seen talk ids in that round
+    const sortedVotes = sortVotesChronologically(mappedVotes)
     const seenPairs = new Map<number, Set<string>>()
-    const cleanedV2Votes: MappedVoteRecord[] = []
+    const cleanedVotes: MappedVoteRecord[] = []
 
-    for (const vote of sortedV2Votes) {
+    for (const vote of sortedVotes) {
         const roundNumber = vote.pair.roundNumber
         if (!seenPairs.has(roundNumber)) {
             seenPairs.set(roundNumber, new Set())
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const roundSet = seenPairs.get(roundNumber)!
 
         if (!roundSet.has(vote.pair.left.id) && !roundSet.has(vote.pair.right.id)) {
             roundSet.add(vote.pair.left.id)
             roundSet.add(vote.pair.right.id)
-            cleanedV2Votes.push(vote)
-        } else {
-            // Skip duplicate vote
+            cleanedVotes.push(vote)
         }
     }
 
-    return cleanedV2Votes
+    return cleanedVotes
 }

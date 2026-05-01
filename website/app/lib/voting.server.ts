@@ -52,89 +52,41 @@ export interface BaseVoteRecord {
     timestamp: string
 }
 
-// V2 vote records - round-based with indexInRound
-export interface VoteRecordV2 extends BaseVoteRecord {
-    voteVersion: 2
+// Current vote record format - round-based with indexInRound
+export interface VoteRecord extends BaseVoteRecord {
+    voteVersion: typeof CURRENT_VOTE_VERSION
     roundNumber: number
     indexInRound: number
 }
 
-// Union type for all vote records
-export type VoteRecord = VoteRecordV2
-
-// Base interface for all voting sessions
-export interface BaseVotingSession {
+export interface VotingSession {
     sessionId: SessionId
     seed: number
     totalPairs: number
     inputSessionizeTalkIdsJson: string // JSON string of talk IDs
     currentIndex: VoteIndex
     createdAt: string
-    version?: number
-}
-
-export interface VotingSessionV1 extends BaseVotingSession {
-    version: undefined
-}
-
-export interface VotingSessionV2 extends BaseVotingSession {
-    version: 2
-}
-
-export interface VotingSessionV3 extends BaseVotingSession {
-    version: 3
+    version: typeof CURRENT_SESSION_VERSION
     roundNumber: number
     maxPairsPerRound: number
 }
-
-export interface VotingSessionV4 extends BaseVotingSession {
-    version: 4
-    roundNumber: number
-    maxPairsPerRound: number
-}
-
-// Union type for all voting sessions
-export type VotingSession = VotingSessionV1 | VotingSessionV2 | VotingSessionV3 | VotingSessionV4
 
 // Convert D1 row to VotingSession
 function rowToVotingSession(row: VotingSessionRow): VotingSession {
-    const base: BaseVotingSession = {
+    if (row.version !== CURRENT_SESSION_VERSION) {
+        throw new Error(`Unsupported voting session version: ${row.version}`)
+    }
+
+    return {
         sessionId: row.session_id,
         seed: row.seed,
         totalPairs: row.total_pairs,
         inputSessionizeTalkIdsJson: row.input_sessionize_talk_ids_json,
         currentIndex: row.current_index,
         createdAt: row.created_at,
-    }
-
-    if (row.version === 4) {
-        return {
-            ...base,
-            version: 4,
-            roundNumber: row.round_number,
-            maxPairsPerRound: row.max_pairs_per_round,
-        }
-    }
-
-    if (row.version === 3) {
-        return {
-            ...base,
-            version: 3,
-            roundNumber: row.round_number,
-            maxPairsPerRound: row.max_pairs_per_round,
-        }
-    }
-
-    if (row.version === 2) {
-        return {
-            ...base,
-            version: 2,
-        }
-    }
-
-    return {
-        ...base,
-        version: undefined,
+        version: CURRENT_SESSION_VERSION,
+        roundNumber: row.round_number,
+        maxPairsPerRound: row.max_pairs_per_round,
     }
 }
 
@@ -226,7 +178,7 @@ export async function getVotingSession(
 
     const row = await getVotingSessionById(db, sessionId!)
 
-    if (!row) {
+    if (!row || row.version !== CURRENT_SESSION_VERSION) {
         await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
     }
 
@@ -311,11 +263,6 @@ export async function getVotingBatchExplicit(
     requestedIndexInRound: number,
     batchSize = 50,
 ): Promise<VotingBatchData> {
-    // Only works with current version sessions
-    if (votingSession.version !== CURRENT_SESSION_VERSION) {
-        throw new Error(`Explicit batch fetching only supports V${CURRENT_SESSION_VERSION} sessions`)
-    }
-
     const maxPairsPerRound = votingSession.maxPairsPerRound
 
     let pairs: TalkPair[] = []

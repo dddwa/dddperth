@@ -9,7 +9,7 @@ import {
     getVotingSession,
     hasSessionsChanged,
 } from '~/lib/voting.server'
-import { CURRENT_CLIENT_VERSION, CURRENT_SESSION_VERSION } from '~/lib/voting-version-constants'
+import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -66,19 +66,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         if (clientVersion !== expectedClientVersion) {
             // Old client detected - redirect to reload page
             throw redirect('/voting')
-        }
-
-        // Check if this is an old session - if so, reset it to current version
-        if (userSession.version !== CURRENT_SESSION_VERSION) {
-            console.warn(`Session uses old algorithm, resetting to V${CURRENT_SESSION_VERSION} due to algorithm change`)
-            const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
-            votingStorageSession.set('sessionId', undefined)
-
-            throw redirect('/voting', {
-                headers: {
-                    'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
-                },
-            })
         }
 
         // Get batch size and starting position from query params

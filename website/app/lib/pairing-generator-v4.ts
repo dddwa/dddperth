@@ -1,18 +1,14 @@
 /**
- * FairPairingGeneratorV4 - Fixed round-based pairing generator
+ * FairPairingGeneratorV4 - Deterministic round-based pairing generator
  * 
  * This generator creates manageable rounds of pairs instead of exhaustive combinations.
  * Each round contains at most floor(totalTalks/2) pairs, ensuring no talk appears twice
  * in the same round.
  * 
- * Key differences from V3:
- * - FIXED: Correct index assignment that matches actual position in generator sequence
+ * Key properties:
+ * - Correct index assignment that matches actual position in generator sequence
  * - Returns pairs with their actual positions to prevent indexing bugs
- * - Maintains same algorithmic fairness as V3 but with correct reconstruction
- * 
- * V3 Bug Fix:
- * V3 had a critical bug where vote indices didn't match actual pair positions due to
- * conflict avoidance logic. V4 fixes this by always returning actual positions.
+ * - Deterministic round generation from a session seed plus round number
  */
 export class FairPairingGeneratorV4 {
     private totalTalks: number
