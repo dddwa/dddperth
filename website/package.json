@@ -35,7 +35,7 @@
         "remark-gfm": "^4.0.1",
         "remix-auth": "^4.2.0",
         "remix-auth-github": "^3.0.2",
-        "safe-routes": "^1.0.18",
+        "safe-routes": "^2.0.1",
         "serialize-error": "^13.0.1",
         "tiny-invariant": "^1.3.3",
         "unified": "^11.0.5",
@@ -44,9 +44,10 @@
         "zod": "^3.24.2"
     },
     "devDependencies": {
-        "@cloudflare/workers-types": "^4.20260418.1",
-        "vite": "7.3.2",
-        "wrangler": "^3.99.0"
+        "@cloudflare/vite-plugin": "^1.32.3",
+        "@cloudflare/workers-types": "^4.20260420.1",
+        "vite": "^8.0.0",
+        "wrangler": "^4.0.0"
     },
     "engines": {
         "node": ">=22.0.0"

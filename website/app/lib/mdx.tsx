@@ -1,37 +1,26 @@
-import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
-import * as mdxBundler from 'mdx-bundler/client/index.js'
 import type { MDXComponents } from 'mdx/types'
-import { useMemo } from 'react'
+import type { ComponentType } from 'react'
+import { use } from 'react'
+import bundles from 'virtual:mdx-bundles'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
 
-const mdxComponentCache = new LRUCache<string, ReturnType<typeof getMdxComponent>>({
-    max: 1000,
-})
+type ContentType = 'page' | 'blog'
 
-export function useMdxPage(code: string, conferenceState: ConferenceState) {
-    return useMemo(() => {
-        if (mdxComponentCache.has(code)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return mdxComponentCache.get(code)!
-        }
-        const component = getMdxComponent(code, conferenceState)
-        mdxComponentCache.set(code, component)
-        return component
-    }, [code, conferenceState])
+// Each entry's `.load()` call is memoized because ES module imports are
+// singletons — calling it repeatedly returns the same promise.
+export function useMdxPage(slug: string, type: ContentType, conferenceState: ConferenceState) {
+    const entry = bundles[type][slug]
+    if (!entry) throw new Error(`[mdx] Unknown ${type}: ${slug}`)
+    const mod = use(entry.load())
+    return wrapMdxComponent(mod.default as ComponentType<Record<string, unknown>>, conferenceState)
 }
 
-/**
- * This should be rendered within a useMemo
- * @param code the code to get the component from
- * @returns the component
- */
-function getMdxComponent(code: string, conferenceState: ConferenceState) {
-    const Component = mdxBundler.getMDXComponent(code)
+function wrapMdxComponent(Component: ComponentType<Record<string, unknown>>, conferenceState: ConferenceState) {
     const mdxComponents: MDXComponents = {
         a: ({ ref, ...props }) => <styled.a {...props} />,
         h1: ({ ref, ...props }) => <styled.h1 fontSize="3xl" {...props} />,
@@ -116,11 +105,12 @@ function getMdxComponent(code: string, conferenceState: ConferenceState) {
             }
         },
     }
-    function MdxComponent({ components, ...rest }: Parameters<typeof Component>['0']) {
+    function MdxComponent(props: { components?: MDXComponents } & Record<string, unknown>) {
+        const { components, ...rest } = props
         return (
             <Component
                 conference={conferenceState.conference}
-                components={{ ...mdxComponents, ...components }}
+                components={{ ...mdxComponents, ...(components ?? {}) }}
                 {...rest}
             />
         )

@@ -53,6 +53,7 @@ export function createThemeTokens(theme: ThemeDefinition) {
       'border.default': tokenValue(theme.colors.border.default),
       'border.subtle': tokenValue(theme.colors.border.subtle),
       'border.emphasis': tokenValue(theme.colors.border.emphasis),
+      'border.sponsor': tokenValue(theme.colors.border.sponsor),
 
       // Gradient colors (individual stops)
       'gradient.hero-start': tokenValue(theme.colors.gradient.heroStart),

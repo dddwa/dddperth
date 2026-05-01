@@ -24,6 +24,14 @@ describe('FairPairingGeneratorV4', () => {
             expect(generator.getPairs(3, 5)).toHaveLength(0)
         })
 
+        it('should return empty array for negative start positions or counts', () => {
+            const generator = new FairPairingGeneratorV4(6, 12345)
+
+            expect(generator.getPairs(-1, 2)).toEqual([])
+            expect(generator.getPairs(0, -1)).toEqual([])
+            expect(generator.getPairs(0, 0)).toEqual([])
+        })
+
         it('should return valid pairs within round', () => {
             const generator = new FairPairingGeneratorV4(8, 12345)
             const pairsWithPositions = generator.getPairs(0, 3)
@@ -199,7 +207,7 @@ describe('FairPairingGeneratorV4', () => {
 
             // Simulate the pattern used in vote reconstruction:
             // Generate pairs for positions 0 through maxIndex
-            const maxVoteIndex = 15
+            const maxVoteIndex = generator.getMaxPairsPerRound() - 1
             const allPairsForReconstruction = generator.getPairs(0, maxVoteIndex + 1)
 
             // Should generate exactly the requested number without gaps

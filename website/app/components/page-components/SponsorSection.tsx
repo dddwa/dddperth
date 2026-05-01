@@ -104,8 +104,7 @@ function SponsorComponent({
             display="flex"
             justifyContent="center"
             alignItems="center"
-            border="6px solid"
-            borderColor="border.default"
+            border="sponsor"
             style={{
                 background: `linear-gradient(to bottom, ${token(`colors.${gradientFrom}`)}, ${token('colors.surface.card-alt')})`,
                 zIndex: zIndex,

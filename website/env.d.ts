@@ -7,3 +7,21 @@ declare module '*.mdx' {
     export const frontmatter: any
     export default MDXComponent
 }
+
+declare module 'virtual:mdx-bundles' {
+    import type { ComponentType } from 'react'
+    export interface MdxBundleModule {
+        default: ComponentType<any>
+        frontmatter: Record<string, unknown>
+    }
+    export interface MdxBundleEntry {
+        frontmatter: Record<string, unknown>
+        load: () => Promise<MdxBundleModule>
+        code: () => Promise<string>
+    }
+    const bundles: {
+        page: Record<string, MdxBundleEntry>
+        blog: Record<string, MdxBundleEntry>
+    }
+    export default bundles
+}

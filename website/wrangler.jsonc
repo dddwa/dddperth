@@ -1,7 +1,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "dddperth-website",
-    "main": "build/worker/index.js",
+    "main": "workers/app.ts",
     "compatibility_date": "2024-12-30",
     "compatibility_flags": ["nodejs_compat"],
 
@@ -16,7 +16,7 @@
 
     // Static assets served from Cloudflare
     "assets": {
-        "directory": "build/remix/client"
+        "directory": "build/client"
     },
 
     // Default environment variables
@@ -34,7 +34,7 @@
                 {
                     "binding": "DB",
                     "database_name": "dddperth-voting-prod",
-                    "database_id": "TO_BE_CREATED"
+                    "database_id": "cdca3dcc-d6e6-4588-86d0-da6b0579a10b"
                 }
             ]
         },
@@ -46,7 +46,7 @@
                 {
                     "binding": "DB",
                     "database_name": "dddperth-voting-staging",
-                    "database_id": "TO_BE_CREATED"
+                    "database_id": "6740aedd-b54f-4562-bf01-2cc1184ddcc7"
                 }
             ]
         }

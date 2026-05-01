@@ -61,7 +61,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
-            post: post.code,
+            slug: post.slug,
             conferenceState: context.conferenceState,
             importantDates,
         },
@@ -133,9 +133,9 @@ export function meta(args: Route.MetaArgs) {
 }
 
 export default function WebsiteContentPage() {
-    const { post, frontmatter, currentPath, conferenceState, currentDate, importantDates } =
+    const { slug, frontmatter, currentPath, conferenceState, currentDate, importantDates } =
         useLoaderData<typeof loader>()
-    const Component = useMdxPage(post, conferenceState)
+    const Component = useMdxPage(slug, 'page', conferenceState)
 
     return (
         <>

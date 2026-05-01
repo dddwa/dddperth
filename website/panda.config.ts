@@ -52,91 +52,26 @@ export default defineConfig({
                     // Conference theme tokens - generated from active theme
                     ...createSemanticTokens(currentTheme).colors,
 
-                    surface: {
-                        'card-alt': {
-                            value: { base: '#f8f8ff', _dark: '#151544' },
-                        },
-                    },
-                    sponsor: {
-                        platinum: {
-                            value: { base: '#e8e8e8', _dark: '#c0c0c0' },
-                        },
-                        gold: {
-                            value: { base: '#FFD700', _dark: '#D4AF37' },
-                        },
-                        silver: {
-                            value: { base: '#C0C0C0', _dark: '#A8A8A8' },
-                        },
-                        bronze: {
-                            value: { base: '#CD7F32', _dark: '#B87333' },
-                        },
-                        room: {
-                            value: { base: '#6366f1', _dark: '#4f46e5' },
-                        },
-                        digital: {
-                            value: { base: '#06b6d4', _dark: '#0891b2' },
-                        },
-                        community: {
-                            value: { base: '#10b981', _dark: '#059669' },
-                        },
-                    },
-                    // Typography semantic tokens (prose)
+                    // Typography semantic tokens (prose) - mapped to theme text tokens for dark backgrounds
                     prose: {
-                        body: {
-                            value: '{colors.gray.dark.7}',
-                        },
-                        heading: {
-                            value: '{colors.gray.dark.9}',
-                        },
-                        lead: {
-                            value: '{colors.gray.dark.6}',
-                        },
-                        link: {
-                            value: '{colors.gray.dark.2}',
-                        },
-                        bold: {
-                            value: '{colors.gray.dark.9}',
-                        },
-                        counter: {
-                            value: '{colors.gray.dark.5}',
-                        },
-                        bullet: {
-                            value: '{colors.gray.dark.3}',
-                        },
-                        hrBorder: {
-                            value: '{colors.gray.dark.2}',
-                        },
-                        quote: {
-                            value: '{colors.gray.dark.9}',
-                        },
-                        quoteBorder: {
-                            value: '{colors.gray.dark.2}',
-                        },
-                        caption: {
-                            value: '{colors.gray.dark.5}',
-                        },
-                        kbd: {
-                            value: '{colors.gray.dark.9}',
-                        },
-                        kbdShadow: {
-                            // Expects an RGB value
-                            value: '0 0 0',
-                        },
-                        code: {
-                            value: '{colors.gray.dark.9}',
-                        },
-                        preCode: {
-                            value: '{colors.gray.dark.2}',
-                        },
-                        preBg: {
-                            value: '{colors.gray.dark.8}',
-                        },
-                        thBorder: {
-                            value: '{colors.gray.dark.3}',
-                        },
-                        tdBorder: {
-                            value: '{colors.gray.dark.2}',
-                        },
+                        body: { value: '{colors.text.primary}' },
+                        heading: { value: '{colors.text.primary}' },
+                        lead: { value: '{colors.text.secondary}' },
+                        link: { value: '{colors.text.highlight}' },
+                        bold: { value: '{colors.text.primary}' },
+                        counter: { value: '{colors.text.muted}' },
+                        bullet: { value: '{colors.text.secondary}' },
+                        hrBorder: { value: '{colors.border.subtle}' },
+                        quote: { value: '{colors.text.primary}' },
+                        quoteBorder: { value: '{colors.border.emphasis}' },
+                        caption: { value: '{colors.text.muted}' },
+                        kbd: { value: '{colors.text.primary}' },
+                        kbdShadow: { value: '0 0 0' },
+                        code: { value: '{colors.text.primary}' },
+                        preCode: { value: '{colors.text.secondary}' },
+                        preBg: { value: '{colors.surface.card}' },
+                        thBorder: { value: '{colors.border.emphasis}' },
+                        tdBorder: { value: '{colors.border.subtle}' },
                     },
                 },
             },
@@ -166,6 +101,9 @@ export default defineConfig({
                 },
                 zIndex: {
                     '9999': { value: 9999 },
+                },
+                borders: {
+                    sponsor: { value: '6px solid {colors.border.sponsor}' },
                 },
             },
             keyframes: {

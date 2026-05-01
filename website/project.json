@@ -73,6 +73,25 @@
                 "cwd": "website"
             }
         },
+        "test": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["vitest"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{workspaceRoot}/coverage/website"],
+            "options": {
+                "command": "vitest run",
+                "cwd": "website"
+            }
+        },
         "deploy": {
             "executor": "nx:run-commands",
             "options": {

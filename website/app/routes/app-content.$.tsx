@@ -13,7 +13,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const post = await getPage(context.cloudflare.env, contentSlug, 'page')
+    const post = await getPage(context.cloudflare.env, contentSlug, 'page', { includeCode: true })
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }

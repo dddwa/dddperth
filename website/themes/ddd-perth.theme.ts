@@ -99,6 +99,10 @@ export const dddPerthTheme = defineTheme({
         value: '#8D8DFF',
         description: 'Emphasized border - light purple',
       },
+      sponsor: {
+        value: '#0D0D3F',
+        description: 'Sponsor tile border - very dark blue',
+      },
     },
 
     // Gradient colors

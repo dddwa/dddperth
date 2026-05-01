@@ -48,6 +48,7 @@ export interface ThemeDefinition {
       default: ThemeTokenValue       // Default border color
       subtle: ThemeTokenValue        // Subtle border for light separation
       emphasis: ThemeTokenValue      // Emphasized border for focus/attention
+      sponsor: ThemeTokenValue       // Sponsor tile border
     }
 
     // Gradient colors - for gradient backgrounds and effects

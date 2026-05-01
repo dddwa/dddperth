@@ -16,7 +16,6 @@
  */
 export class FairPairingGeneratorV4 {
     private totalTalks: number
-    private seed: number
     private maxPairsPerRound: number
     private random: () => number
     private shuffledPairIndices: number[] | null = null
@@ -24,7 +23,6 @@ export class FairPairingGeneratorV4 {
 
     constructor(totalTalks: number, seed: number) {
         this.totalTalks = totalTalks
-        this.seed = seed
         this.maxPairsPerRound = Math.floor(totalTalks / 2)
         this.random = this.seededRandom(seed)
     }
@@ -57,16 +55,17 @@ export class FairPairingGeneratorV4 {
     // Lazy generation of shuffled indices (only when needed)
     private getShuffledIndices(): number[] {
         if (this.shuffledPairIndices === null) {
-            // For round-based system, generate only maxPairsPerRound unique indices
             const totalPossiblePairs = (this.totalTalks * (this.totalTalks - 1)) / 2
-            const selectedIndices = new Set<number>()
+            const indices = Array.from({ length: totalPossiblePairs }, (_, index) => index)
 
-            while (selectedIndices.size < this.maxPairsPerRound) {
-                const randomIndex = Math.floor(this.random() * totalPossiblePairs)
-                selectedIndices.add(randomIndex)
+            // Deterministically shuffle the full pair space so we can always
+            // fill the round while keeping position-to-pair mapping stable.
+            for (let i = indices.length - 1; i > 0; i--) {
+                const swapIndex = Math.floor(this.random() * (i + 1))
+                ;[indices[i], indices[swapIndex]] = [indices[swapIndex], indices[i]]
             }
 
-            this.shuffledPairIndices = Array.from(selectedIndices)
+            this.shuffledPairIndices = indices
         }
 
         return this.shuffledPairIndices
@@ -105,6 +104,10 @@ export class FairPairingGeneratorV4 {
     // Get batch of pairs starting from a logical position
     // Position N always returns the Nth valid conflict-free pair
     getPairs(startPosition: number, requestedCount: number): Array<{pair: [number, number], position: number}> {
+        if (startPosition < 0 || requestedCount <= 0) {
+            return []
+        }
+
         const allValidPairs = this.generateConflictFreePairs() // Now cached, only computed once
         const pairs: Array<{pair: [number, number], position: number}> = []
 
@@ -121,9 +124,9 @@ export class FairPairingGeneratorV4 {
         return pairs
     }
 
-    // Get total number of valid pairs available for this round
+    // V4 keeps V3's round size contract while fixing position tracking.
     getTotalPairs(): number {
-        return this.generateConflictFreePairs().length
+        return this.maxPairsPerRound
     }
 
     // Check if a specific index represents a complete round

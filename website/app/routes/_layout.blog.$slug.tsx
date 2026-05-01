@@ -6,6 +6,7 @@ import { socials } from '~/config/socials'
 import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { useMdxPage } from '~/lib/mdx'
 import { getPage } from '~/lib/mdx.server'
 import type { Route } from './+types/_layout.blog.$slug'
 
@@ -24,7 +25,8 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         {
             siteUrl,
             frontmatter: post.frontmatter,
-            post: post.code,
+            slug: post.slug,
+            conferenceState: context.conferenceState,
             blogAuthors: getValidAuthorNames(post.frontmatter.authors ?? [])
                 .map(getAuthor)
                 .filter((a): a is BlogAuthor => !!a),
@@ -89,8 +91,9 @@ export function meta(args: Route.MetaArgs) {
 }
 
 export default function BlogPost() {
-    const { post, frontmatter, blogAuthors } = useLoaderData<typeof loader>()
+    const { slug, frontmatter, blogAuthors, conferenceState } = useLoaderData<typeof loader>()
     const mdRef = useRef<HTMLDivElement>(null)
+    const Component = useMdxPage(slug, 'blog', conferenceState)
 
     return (
         <>
@@ -125,13 +128,9 @@ export default function BlogPost() {
                             </div>
                         </div>
                         <div>
-                            <div
-                                // The markdown comes in via the parser wrapped in `div.md-prose`
-                                // so we don't need to do that here
-                                ref={mdRef}
-                                className="md-prose"
-                                dangerouslySetInnerHTML={{ __html: post }}
-                            />
+                            <div ref={mdRef} className="md-prose">
+                                <Component />
+                            </div>
                             <hr />
                         </div>
                     </div>

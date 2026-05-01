@@ -32,6 +32,49 @@ After it runs, commit the updated `website/wrangler.jsonc` (the database IDs are
 
 The script also creates the `staging` and `production` GitHub Environments. They start with no required reviewers — anyone who passes the comment-author gate can deploy. Add required reviewers via the repo settings if you want extra friction on staging deploys.
 
+### Worker runtime secrets
+
+The provisioning script only writes the Cloudflare credentials into GitHub. The app's own runtime secrets (read at request time from `context.cloudflare.env`) need to be set on each Worker separately. The full list lives in the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`.
+
+Set each one for both environments:
+
+```bash
+cd website
+
+# Required
+pnpm wrangler secret put SESSION_SECRET --env staging
+pnpm wrangler secret put SESSION_SECRET --env production
+
+# GitHub App (required for admin auth + GitHub-backed content)
+pnpm wrangler secret put WEBSITE_GITHUB_APP_ID --env <env>
+pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_ID --env <env>
+pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_SECRET --env <env>
+pnpm wrangler secret put WEBSITE_GITHUB_APP_PRIVATE_KEY --env <env>
+pnpm wrangler secret put WEBSITE_GITHUB_APP_INSTALLATION_ID --env <env>
+pnpm wrangler secret put GITHUB_ORGANIZATION --env <env>
+pnpm wrangler secret put GITHUB_REPO --env <env>
+
+# Sessionize (required — agenda/speakers data)
+pnpm wrangler secret put SESSIONIZE_2025_SESSIONS --env <env>
+
+# Optional integrations
+pnpm wrangler secret put TITO_SECURITY_TOKEN --env <env>
+pnpm wrangler secret put EVENTS_AIR_CLIENT_ID --env <env>
+pnpm wrangler secret put EVENTS_AIR_CLIENT_SECRET --env <env>
+pnpm wrangler secret put EVENTS_AIR_TENANT_ID --env <env>
+pnpm wrangler secret put EVENTS_AIR_EVENT_ID --env <env>
+pnpm wrangler secret put SESSIONIZE_2025_ALL_SESSIONS --env <env>
+pnpm wrangler secret put GITHUB_REF --env <env>
+pnpm wrangler secret put USE_GITHUB_CONTENT --env <env>
+```
+
+Notes:
+
+- The Worker has to exist before secrets can be set, so run an initial `wrangler deploy --env <env>` first (or trigger the workflow once — it will deploy successfully but the app will fail at runtime until secrets are populated).
+- Non-secret values like `WEB_URL` are already set via `vars` in `wrangler.jsonc` and do not need `wrangler secret put`.
+- Local development reads the same names from `website/.dev.vars` instead.
+- To rotate, run `wrangler secret put` again — it overwrites.
+
 ## Production deploys
 
 `.github/workflows/deploy-cloudflare.yml` runs on every push to `main` (excluding content-only changes). It type checks, lints, builds, applies pending D1 migrations to `dddperth-voting-prod`, and runs `wrangler deploy --env production`.
