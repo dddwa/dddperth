@@ -14,7 +14,7 @@ import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(year)
+    const yearConfig = getYearConfig(year, context.cloudflare.env)
 
     if (yearConfig.kind === 'cancelled') {
         return redirect($path('/agenda/:year?', { year: undefined }))
@@ -25,7 +25,9 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
     }
 
     const sessions =
-        yearConfig.sessions?.kind === 'sessionize' && context.conferenceState.agenda === 'published'
+        yearConfig.sessions?.kind === 'sessionize' &&
+        yearConfig.sessions.sessionizeEndpoint &&
+        context.conferenceState.agenda === 'published'
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })
@@ -37,7 +39,7 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
     }
 
     const speakers: TypeOf<typeof speakersSchema> =
-        yearConfig.sessions?.kind === 'sessionize'
+        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
             ? await getConfSpeakers({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })

@@ -8,10 +8,16 @@ export const conference2026: ConferenceYear = {
     year: '2026',
     venue: optusStadiumVenue,
 
-    sessionizeUrl: undefined,
+    sessionizeUrl: 'https://sessionize.com/ddd-perth-2026',
 
-    // Configure sessionize endpoints once the event API keys are available.
-    sessions: undefined,
+    // Endpoints are injected from env (SESSIONIZE_2026_SESSIONS / SESSIONIZE_2026_ALL_SESSIONS)
+    // by getYearConfig. Kept private because the unpublished agenda would otherwise leak.
+    sessions: {
+        kind: 'sessionize',
+        sessionizeEndpoint: undefined,
+        allSessionsEndpoint: undefined,
+        underrepresentedGroupsQuestionId: undefined,
+    },
 
     conferenceDate: DateTime.fromISO('2026-10-03T09:00:00', {
         zone: 'Australia/Perth',

@@ -6,14 +6,14 @@ import { getConfSpeakers } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-speakers'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
     const speakers: TypeOf<typeof speakersSchema> =
-        yearConfig.sessions?.kind === 'sessionize'
+        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
             ? await getConfSpeakers({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })

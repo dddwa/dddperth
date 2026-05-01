@@ -4,7 +4,7 @@ import { getConfSessions } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-sessions'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -15,7 +15,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     }
 
     const sessions =
-        yearConfig.sessions?.kind === 'sessionize'
+        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })

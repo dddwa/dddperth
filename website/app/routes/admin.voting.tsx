@@ -107,7 +107,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const yearConfig = getYearConfig(year)
+        const yearConfig = getYearConfig(year, context.cloudflare.env)
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
@@ -196,7 +196,7 @@ export async function action({
         }
 
         // Get current talks
-        const yearConfig = getYearConfig(context.conferenceState.conference.year)
+        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
 
         if (yearConfig.kind === 'cancelled') {
             return {

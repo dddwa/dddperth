@@ -10,7 +10,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year)
+    const yearConfig = getYearConfig(year, context.cloudflare.env)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })

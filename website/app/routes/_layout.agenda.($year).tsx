@@ -25,7 +25,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year)
+    const yearConfig = getYearConfig(year, context.cloudflare.env)
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
     if (conferenceYearConfig?.sessions?.kind === 'sessionize' && !conferenceYearConfig.sessions.sessionizeEndpoint) {
@@ -33,7 +33,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
 
     const schedules: TypeOf<typeof gridSmartSchema> =
-        conferenceYearConfig?.sessions?.kind === 'sessionize' && context.conferenceState.agenda === 'published'
+        conferenceYearConfig?.sessions?.kind === 'sessionize' &&
+        conferenceYearConfig.sessions.sessionizeEndpoint &&
+        context.conferenceState.agenda === 'published'
             ? await getScheduleGrid({
                   sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
               })

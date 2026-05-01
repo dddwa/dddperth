@@ -25,7 +25,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year)
+    const yearConfig = getYearConfig(year, context.cloudflare.env)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -34,7 +34,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
-    const sessionizeConfig = yearConfig.sessions
+    const sessionizeEndpoint = yearConfig.sessions.sessionizeEndpoint
 
     const db = context.db
 
@@ -163,7 +163,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
     if (talkResults.length > 0) {
         const sessions = await getConfSessions({
-            sessionizeEndpoint: sessionizeConfig.sessionizeEndpoint,
+            sessionizeEndpoint,
         })
 
         sessionizeTalks = sessions.map((session) => ({
@@ -174,7 +174,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
         // Get speakers data for underrepresented group checking
         const speakers = await getConfSpeakers({
-            sessionizeEndpoint: sessionizeConfig.sessionizeEndpoint,
+            sessionizeEndpoint,
         })
 
         // Get underrepresented groups configuration
@@ -189,7 +189,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         })
 
         // Create a map of speaker ID to underrepresented status
-        const underrepresentedGroupQuestionId = sessionizeConfig.underrepresentedGroupsQuestionId
+        const underrepresentedGroupQuestionId = yearConfig.sessions.underrepresentedGroupsQuestionId
 
         if (underrepresentedGroupQuestionId) {
             speakers.forEach((speaker) => {

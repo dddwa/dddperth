@@ -52,7 +52,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const yearConfig = getYearConfig(context.conferenceState.conference.year)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(

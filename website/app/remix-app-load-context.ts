@@ -10,16 +10,14 @@ export interface CloudflareEnv {
     SESSION_SECRET: string
     WEB_URL: string
 
-    // GitHub App configuration
-    WEBSITE_GITHUB_APP_ID: string
+    // GitHub OAuth (admin login flow in app/lib/auth.server.ts)
     WEBSITE_GITHUB_APP_CLIENT_ID: string
     WEBSITE_GITHUB_APP_CLIENT_SECRET: string
-    WEBSITE_GITHUB_APP_PRIVATE_KEY: string
-    WEBSITE_GITHUB_APP_INSTALLATION_ID: string
+
+    // GitHub repo pointers — used to build "Edit on GitHub" links for MDX pages
     GITHUB_ORGANIZATION: string
     GITHUB_REPO: string
     GITHUB_REF?: string
-    USE_GITHUB_CONTENT?: string
 
     // External API keys
     TITO_SECURITY_TOKEN?: string
@@ -29,8 +27,8 @@ export interface CloudflareEnv {
     EVENTS_AIR_EVENT_ID?: string
 
     // Sessionize endpoints
-    SESSIONIZE_2025_SESSIONS: string
-    SESSIONIZE_2025_ALL_SESSIONS?: string
+    SESSIONIZE_2026_SESSIONS: string
+    SESSIONIZE_2026_ALL_SESSIONS?: string
 }
 
 declare module 'react-router' {

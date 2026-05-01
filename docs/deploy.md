@@ -45,17 +45,16 @@ cd website
 pnpm wrangler secret put SESSION_SECRET --env staging
 pnpm wrangler secret put SESSION_SECRET --env production
 
-# GitHub App (required for admin auth + GitHub-backed content)
-pnpm wrangler secret put WEBSITE_GITHUB_APP_ID --env <env>
+# GitHub OAuth (required — admin login flow in app/lib/auth.server.ts)
 pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_ID --env <env>
 pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_SECRET --env <env>
-pnpm wrangler secret put WEBSITE_GITHUB_APP_PRIVATE_KEY --env <env>
-pnpm wrangler secret put WEBSITE_GITHUB_APP_INSTALLATION_ID --env <env>
+
+# GitHub repo pointers (required — used to build "Edit on GitHub" links for MDX pages)
 pnpm wrangler secret put GITHUB_ORGANIZATION --env <env>
 pnpm wrangler secret put GITHUB_REPO --env <env>
 
-# Sessionize (required — agenda/speakers data)
-pnpm wrangler secret put SESSIONIZE_2025_SESSIONS --env <env>
+# Sessionize (required — agenda/speakers for the current year)
+pnpm wrangler secret put SESSIONIZE_2026_SESSIONS --env <env>
 
 # Optional integrations
 pnpm wrangler secret put TITO_SECURITY_TOKEN --env <env>
@@ -63,9 +62,8 @@ pnpm wrangler secret put EVENTS_AIR_CLIENT_ID --env <env>
 pnpm wrangler secret put EVENTS_AIR_CLIENT_SECRET --env <env>
 pnpm wrangler secret put EVENTS_AIR_TENANT_ID --env <env>
 pnpm wrangler secret put EVENTS_AIR_EVENT_ID --env <env>
-pnpm wrangler secret put SESSIONIZE_2025_ALL_SESSIONS --env <env>
-pnpm wrangler secret put GITHUB_REF --env <env>
-pnpm wrangler secret put USE_GITHUB_CONTENT --env <env>
+pnpm wrangler secret put SESSIONIZE_2026_ALL_SESSIONS --env <env>
+pnpm wrangler secret put GITHUB_REF --env <env>  # branch for edit links; defaults to "main"
 ```
 
 Notes:

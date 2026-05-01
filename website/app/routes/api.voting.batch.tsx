@@ -14,7 +14,7 @@ import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     try {
-        const yearConfig = getYearConfig(context.conferenceState.conference.year)
+        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
 
         if (yearConfig.kind === 'cancelled') {
             const errorResponse: VotingErrorResponse = { error: 'Conference cancelled this year' }

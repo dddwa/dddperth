@@ -32,19 +32,21 @@ URL: http://localhost:3800
 
 ### Environment Variables
 
-Create `website/.dev.vars` for local development:
+Create `website/.dev.vars` for local development. The minimum to boot the dev server is:
 
 ```ini
 SESSION_SECRET=local-dev-secret
-WEBSITE_GITHUB_APP_ID=your-app-id
+WEB_URL=http://localhost:3800
+```
+
+Admin login (optional locally) needs a GitHub OAuth app — set:
+
+```ini
 WEBSITE_GITHUB_APP_CLIENT_ID=your-client-id
 WEBSITE_GITHUB_APP_CLIENT_SECRET=your-secret
-WEBSITE_GITHUB_APP_PRIVATE_KEY=base64-encoded-key
-WEBSITE_GITHUB_APP_INSTALLATION_ID=your-installation-id
-GITHUB_ORGANIZATION=dddwa
-GITHUB_REPO=dddperth
-USE_GITHUB_CONTENT=true
 ```
+
+The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`docs/deploy.md`](./docs/deploy.md) for what each one does and which are needed in production.
 
 ### Nx Commands
 

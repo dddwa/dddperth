@@ -1,7 +1,7 @@
 export interface SessionizeConferenceSessions {
     kind: 'sessionize'
 
-    sessionizeEndpoint: string
+    sessionizeEndpoint: string | undefined
 
     allSessionsEndpoint: string | undefined
 
