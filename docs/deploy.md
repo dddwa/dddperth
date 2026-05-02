@@ -34,44 +34,62 @@ The script also creates the `staging` and `production` GitHub Environments. They
 
 ### Worker runtime secrets
 
-The provisioning script only writes the Cloudflare credentials into GitHub. The app's own runtime secrets (read at request time from `context.cloudflare.env`) need to be set on each Worker separately. The full list lives in the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`.
+The provisioning script only writes the Cloudflare credentials into GitHub. The app's own runtime secrets (read at request time from `context.cloudflare.env`) are set on each Worker separately. The full list lives in the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`.
 
-Set each one for both environments:
+The Worker has to exist before secrets can be set, so run an initial `pnpm wrangler deploy --env <env>` first (or trigger the workflow once — it will deploy successfully but the app will fail at runtime until secrets are populated). Non-secret values like `WEB_URL` are already set via `vars` in `wrangler.jsonc`. Local development reads these names from `website/.dev.vars` instead.
+
+#### `SESSION_SECRET`
+
+Used to sign the session cookie. Pick a long random value — anything ≥ 32 bytes is fine. Use a fresh one per environment, and don't reuse the local one in production.
 
 ```bash
-cd website
+# Generate a value
+openssl rand -base64 32
 
-# Required
+# Set it
+cd website
 pnpm wrangler secret put SESSION_SECRET --env staging
 pnpm wrangler secret put SESSION_SECRET --env production
-
-# GitHub OAuth (required — admin login flow in app/lib/auth.server.ts)
-pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_ID --env <env>
-pnpm wrangler secret put WEBSITE_GITHUB_APP_CLIENT_SECRET --env <env>
-
-# GitHub repo pointers (required — used to build "Edit on GitHub" links for MDX pages)
-pnpm wrangler secret put GITHUB_ORGANIZATION --env <env>
-pnpm wrangler secret put GITHUB_REPO --env <env>
-
-# Sessionize (required — agenda/speakers for the current year)
-pnpm wrangler secret put SESSIONIZE_2026_SESSIONS --env <env>
-
-# Optional integrations
-pnpm wrangler secret put TITO_SECURITY_TOKEN --env <env>
-pnpm wrangler secret put EVENTS_AIR_CLIENT_ID --env <env>
-pnpm wrangler secret put EVENTS_AIR_CLIENT_SECRET --env <env>
-pnpm wrangler secret put EVENTS_AIR_TENANT_ID --env <env>
-pnpm wrangler secret put EVENTS_AIR_EVENT_ID --env <env>
-pnpm wrangler secret put SESSIONIZE_2026_ALL_SESSIONS --env <env>
-pnpm wrangler secret put GITHUB_REF --env <env>  # branch for edit links; defaults to "main"
 ```
 
-Notes:
+#### GitHub OAuth (admin login)
 
-- The Worker has to exist before secrets can be set, so run an initial `wrangler deploy --env <env>` first (or trigger the workflow once — it will deploy successfully but the app will fail at runtime until secrets are populated).
-- Non-secret values like `WEB_URL` are already set via `vars` in `wrangler.jsonc` and do not need `wrangler secret put`.
-- Local development reads the same names from `website/.dev.vars` instead.
-- To rotate, run `wrangler secret put` again — it overwrites.
+`WEBSITE_GITHUB_APP_CLIENT_ID` and `WEBSITE_GITHUB_APP_CLIENT_SECRET` drive the admin login flow in `app/lib/auth.server.ts`. Use the setup tool — it walks GitHub's manifest flow and writes the credentials straight into the right place:
+
+```bash
+pnpm setup:github-app
+```
+
+Pick the environment in the browser (local / staging / production). Local writes to `website/.dev.vars`; staging/production run `wrangler secret put` against the matching Worker. Run it once per environment. Each environment needs its own GitHub App because the OAuth callback URL is fixed per app — staging callbacks must hit staging.
+
+If you'd rather do it manually: create a GitHub App at https://github.com/settings/apps/new (or the org equivalent), set the user authorisation callback URL to `<WEB_URL>/auth/github/callback`, and `wrangler secret put` both values yourself.
+
+Add admin GitHub handles to `ADMIN_HANDLES` in `website/app/lib/config.server.ts`.
+
+#### GitHub repo pointers ("Edit on GitHub" links)
+
+```bash
+pnpm wrangler secret put GITHUB_ORGANIZATION --env <env>   # e.g. dddwa
+pnpm wrangler secret put GITHUB_REPO --env <env>           # e.g. dddperth
+pnpm wrangler secret put GITHUB_REF --env <env>            # optional, defaults to "main"
+```
+
+#### Sessionize (current year)
+
+The bare API URL exposes unpublished sessions, so it lives as a secret. Get the value from the Sessionize event admin page.
+
+```bash
+pnpm wrangler secret put SESSIONIZE_2026_SESSIONS --env <env>
+pnpm wrangler secret put SESSIONIZE_2026_ALL_SESSIONS --env <env>   # optional
+```
+
+#### Optional
+
+```bash
+pnpm wrangler secret put TITO_SECURITY_TOKEN --env <env>   # tito webhook signature
+```
+
+To rotate any secret, run `wrangler secret put` again — it overwrites.
 
 ## Production deploys
 

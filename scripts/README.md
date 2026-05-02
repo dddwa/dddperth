@@ -16,6 +16,29 @@ pnpm provision:cloudflare
 
 See [`docs/deploy.md`](../docs/deploy.md) for the rest of the deploy setup, including the worker runtime secrets.
 
+## `setup-github-app/`
+
+Creates a GitHub App via the [manifest flow](https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest) and saves the resulting OAuth credentials for one environment. The Worker only needs `WEBSITE_GITHUB_APP_CLIENT_ID` and `WEBSITE_GITHUB_APP_CLIENT_SECRET` — see `website/app/lib/auth.server.ts`.
+
+```bash
+pnpm setup:github-app             # listens on http://localhost:3333
+pnpm setup:github-app --port 4444
+```
+
+In the browser, pick an environment:
+
+- **Local** — writes both vars into `website/.dev.vars`.
+- **Staging** / **Production** — runs `wrangler secret put WEBSITE_GITHUB_APP_CLIENT_ID --env <env>` and again for the secret, piping the value on stdin. The Worker must already exist; your shell needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (the same ones the deploy workflow uses).
+
+Layout:
+
+- `index.mjs` — CLI entry, arg parsing, server startup
+- `lib/server.mjs` — HTTP routes
+- `lib/manifest.mjs` — exchanges the manifest code with GitHub
+- `lib/storage.mjs` — chooses local vs. wrangler based on environment
+- `lib/dev-vars.mjs`, `lib/wrangler-secrets.mjs`, `lib/http.mjs`, `lib/cli.mjs` — supporting helpers
+- `templates/` — HTML/CSS/JS served to the browser
+
 ## `add-sponsor.mjs`
 
 Adds a new sponsor to a year's config: downloads/optimises the logo into `website/public/images/sponsors/`, then patches the matching `website/app/config/years/<year>.server.ts` via ts-morph.
