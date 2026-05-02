@@ -4,12 +4,12 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
  * Set or update a key=value entry in a .dev.vars / .env style file.
  * Preserves existing entries and comments. Creates the file if missing.
  */
-export function upsertDevVar(filePath, key, value) {
+export function upsertDevVar(filePath: string, key: string, value: string): void {
     const line = `${key}=${value}`
     const existing = existsSync(filePath) ? readFileSync(filePath, 'utf8') : ''
     const pattern = new RegExp(`^${escapeRegex(key)}=.*$`, 'm')
 
-    let next
+    let next: string
     if (pattern.test(existing)) {
         next = existing.replace(pattern, line)
     } else {
@@ -20,6 +20,6 @@ export function upsertDevVar(filePath, key, value) {
     writeFileSync(filePath, next)
 }
 
-function escapeRegex(s) {
+function escapeRegex(s: string): string {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

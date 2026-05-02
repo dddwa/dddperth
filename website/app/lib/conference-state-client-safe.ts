@@ -185,10 +185,6 @@ export interface TitoTicketInfo {
     type: 'tito'
     accountId: string
     eventId: string
-
-    generalTicketSlugs?: string[]
-    afterPartyTicketSlugs?: string[]
-    afterPartyUpgradeActivityId?: string
 }
 
 export type TicketInfo = TitoTicketInfo

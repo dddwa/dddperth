@@ -21,8 +21,8 @@ See [`docs/deploy.md`](../docs/deploy.md) for the rest of the deploy setup, incl
 Creates a GitHub App via the [manifest flow](https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest) and saves the resulting OAuth credentials for one environment. The Worker only needs `WEBSITE_GITHUB_APP_CLIENT_ID` and `WEBSITE_GITHUB_APP_CLIENT_SECRET` — see `website/app/lib/auth.server.ts`.
 
 ```bash
-pnpm setup:github-app             # listens on http://localhost:3333
-pnpm setup:github-app --port 4444
+pnpm setup:github-app                    # listens on http://localhost:3333
+pnpm setup:github-app -- --port 4444     # forward args via pnpm
 ```
 
 In the browser, pick an environment:
@@ -30,13 +30,15 @@ In the browser, pick an environment:
 - **Local** — writes both vars into `website/.dev.vars`.
 - **Staging** / **Production** — runs `wrangler secret put WEBSITE_GITHUB_APP_CLIENT_ID --env <env>` and again for the secret, piping the value on stdin. The Worker must already exist; your shell needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (the same ones the deploy workflow uses).
 
+The helpers are TypeScript and run directly under Node's native type-stripping (no build step). Requires Node ≥ 22.18 or 23.6+ (the project's CI uses Node 22.x).
+
 Layout:
 
-- `index.mjs` — CLI entry, arg parsing, server startup
-- `lib/server.mjs` — HTTP routes
-- `lib/manifest.mjs` — exchanges the manifest code with GitHub
-- `lib/storage.mjs` — chooses local vs. wrangler based on environment
-- `lib/dev-vars.mjs`, `lib/wrangler-secrets.mjs`, `lib/http.mjs`, `lib/cli.mjs` — supporting helpers
+- `index.ts` — CLI entry, arg parsing, server startup
+- `lib/server.ts` — HTTP routes
+- `lib/manifest.ts` — exchanges the manifest code with GitHub
+- `lib/storage.ts` — chooses local vs. wrangler based on environment
+- `lib/dev-vars.ts`, `lib/wrangler-secrets.ts`, `lib/http.ts`, `lib/cli.ts` — supporting helpers
 - `templates/` — HTML/CSS/JS served to the browser
 
 ## `add-sponsor.mjs`

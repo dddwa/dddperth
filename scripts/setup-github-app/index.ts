@@ -17,8 +17,8 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { colors, print } from './lib/cli.mjs'
-import { createServer } from './lib/server.mjs'
+import { colors, print } from './lib/cli.ts'
+import { createServer } from './lib/server.ts'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -26,14 +26,20 @@ const repoRoot = join(__dirname, '..', '..')
 
 const DEFAULT_PORT = 3333
 
-function showHelp() {
+interface ParsedArgs {
+    port: number
+    help?: boolean
+}
+
+function showHelp(): void {
     console.log('GitHub App Setup')
     console.log('================')
     console.log('')
     console.log('Starts a local server that helps you create a GitHub App via the manifest flow')
     console.log('and saves the resulting OAuth credentials for the chosen environment.')
     console.log('')
-    console.log('Usage: node scripts/setup-github-app [options]')
+    console.log('Usage: node scripts/setup-github-app/index.ts [options]')
+    console.log('   or: pnpm setup:github-app [-- options]')
     console.log('')
     console.log('Options:')
     console.log(`  --port <number>   Port to listen on (default: ${DEFAULT_PORT})`)
@@ -44,8 +50,8 @@ function showHelp() {
     console.log('(CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID) and the worker must already exist.')
 }
 
-function parseArgs(argv) {
-    const args = { port: DEFAULT_PORT }
+function parseArgs(argv: string[]): ParsedArgs {
+    const args: ParsedArgs = { port: DEFAULT_PORT }
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i]
         switch (arg) {
@@ -66,7 +72,7 @@ function parseArgs(argv) {
             default:
                 if (arg.startsWith('-')) {
                     print.error(`Unknown option: ${arg}`)
-                    print.info("Run 'node scripts/setup-github-app --help' for usage")
+                    print.info("Run 'pnpm setup:github-app -- --help' for usage")
                     process.exit(1)
                 }
         }
@@ -74,7 +80,7 @@ function parseArgs(argv) {
     return args
 }
 
-function main() {
+function main(): void {
     const args = parseArgs(process.argv.slice(2))
 
     if (args.help) {

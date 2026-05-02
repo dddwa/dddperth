@@ -2,6 +2,7 @@
     "name": "@ddd/source",
     "version": "0.0.0",
     "license": "MIT",
+    "type": "module",
     "scripts": {
         "clean": "git clean -dfx -e website/.env",
         "build-tsc": "tsc -b",
@@ -16,7 +17,7 @@
         "sponsor:add": "node scripts/add-sponsor.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",
         "provision:cloudflare": "node scripts/provision-cloudflare.mjs",
-        "setup:github-app": "node scripts/setup-github-app"
+        "setup:github-app": "node scripts/setup-github-app/index.ts"
     },
     "private": true,
     "devDependencies": {

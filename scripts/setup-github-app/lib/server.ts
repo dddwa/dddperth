@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs'
 import http from 'node:http'
+import type { IncomingMessage, Server, ServerResponse } from 'node:http'
 import { dirname, join } from 'node:path'
-import url, { fileURLToPath } from 'node:url'
+import { fileURLToPath } from 'node:url'
 
-import { print } from './cli.mjs'
-import { readBody, sendHTML, sendJSON, sendStatic } from './http.mjs'
-import { exchangeManifestCode } from './manifest.mjs'
-import { persistCredentials } from './storage.mjs'
+import { print } from './cli.ts'
+import { readBody, sendHTML, sendJSON, sendStatic } from './http.ts'
+import { exchangeManifestCode } from './manifest.ts'
+import type { Environment } from './storage.ts'
+import { persistCredentials } from './storage.ts'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -17,19 +19,19 @@ const successTemplate = readFileSync(join(templatesDir, 'success.html'), 'utf8')
 const stylesCSS = readFileSync(join(templatesDir, 'styles.css'), 'utf8')
 const clientJS = readFileSync(join(templatesDir, 'client.js'), 'utf8')
 
+export interface CreateServerArgs {
+    repoRoot: string
+}
+
 /**
  * Build the local HTTP server. The server hosts a small UI that drives the
  * GitHub App manifest flow and persists the resulting OAuth credentials.
- *
- * @param {object} options
- * @param {string} options.repoRoot - absolute path to the repo root
- * @returns {http.Server}
  */
-export function createServer({ repoRoot }) {
+export function createServer({ repoRoot }: CreateServerArgs): Server {
     return http.createServer(async (req, res) => {
-        const parsedUrl = url.parse(req.url, true)
-        const pathname = parsedUrl.pathname
-        const method = req.method.toLowerCase()
+        const parsed = new URL(req.url ?? '/', 'http://localhost')
+        const pathname = parsed.pathname
+        const method = req.method?.toLowerCase()
 
         try {
             if (pathname === '/' && method === 'get') {
@@ -48,7 +50,7 @@ export function createServer({ repoRoot }) {
             }
 
             if (pathname === '/callback' && method === 'get') {
-                await handleCallback(req, res, parsedUrl, repoRoot)
+                await handleCallback(res, parsed)
                 return
             }
 
@@ -59,14 +61,14 @@ export function createServer({ repoRoot }) {
 
             sendHTML(res, '<h1>404 Not Found</h1>', 404)
         } catch (error) {
-            print.error(`Server error: ${error.message}`)
+            print.error(`Server error: ${(error as Error).message}`)
             sendJSON(res, { error: 'Internal server error' }, 500)
         }
     })
 }
 
-async function handleCallback(_req, res, parsedUrl, repoRoot) {
-    const { code } = parsedUrl.query
+async function handleCallback(res: ServerResponse, parsedUrl: URL): Promise<void> {
+    const code = parsedUrl.searchParams.get('code')
 
     if (!code) {
         sendHTML(res, '<h2>Missing code parameter</h2>', 400)
@@ -77,29 +79,37 @@ async function handleCallback(_req, res, parsedUrl, repoRoot) {
         const app = await exchangeManifestCode(code)
 
         const html = successTemplate
-            .replace(/{{appName}}/g, escapeHtml(app.name ?? 'GitHub App'))
-            .replace(/{{appSlug}}/g, escapeHtml(app.slug ?? ''))
-            .replace(/{{clientId}}/g, escapeHtml(app.client_id ?? ''))
-            .replace(/{{appDataJson}}/g, JSON.stringify({ client_id: app.client_id, client_secret: app.client_secret, slug: app.slug, name: app.name }))
+            .replace(/{{appName}}/g, escapeHtml(app.name))
+            .replace(/{{appSlug}}/g, escapeHtml(app.slug))
+            .replace(/{{clientId}}/g, escapeHtml(app.client_id))
+            .replace(
+                /{{appDataJson}}/g,
+                JSON.stringify({
+                    client_id: app.client_id,
+                    client_secret: app.client_secret,
+                    slug: app.slug,
+                    name: app.name,
+                }),
+            )
 
         sendHTML(res, html)
-
-        // Persist as a side-effect via the client; we just hand back the data here.
-        // (Persistence happens in /persist so the user sees the success page first.)
-        // Avoid logging the secret.
         print.success(`GitHub App "${app.name}" created (slug: ${app.slug})`)
-
-        // Suppress unused-var warning when repoRoot is only consumed by /persist.
-        void repoRoot
     } catch (error) {
-        print.error(`Failed to exchange manifest code: ${error.message}`)
-        sendHTML(res, `<h2>Error</h2><p>${escapeHtml(error.message)}</p>`, 500)
+        const message = (error as Error).message
+        print.error(`Failed to exchange manifest code: ${message}`)
+        sendHTML(res, `<h2>Error</h2><p>${escapeHtml(message)}</p>`, 500)
     }
 }
 
-async function handlePersist(req, res, repoRoot) {
-    const body = await readBody(req)
-    const { environment, app } = body
+interface PersistRequestBody {
+    environment?: Environment
+    app?: { client_id?: string; client_secret?: string }
+}
+
+async function handlePersist(req: IncomingMessage, res: ServerResponse, repoRoot: string): Promise<void> {
+    const body = (await readBody(req)) as PersistRequestBody
+    const environment = body.environment
+    const app = body.app
 
     if (!environment || !app?.client_id || !app?.client_secret) {
         sendJSON(res, { success: false, message: 'environment, client_id and client_secret are required' }, 400)
@@ -107,16 +117,21 @@ async function handlePersist(req, res, repoRoot) {
     }
 
     try {
-        const result = await persistCredentials({ environment, app, repoRoot })
+        const result = await persistCredentials({
+            environment,
+            app: { client_id: app.client_id, client_secret: app.client_secret },
+            repoRoot,
+        })
         print.success(`Credentials written to ${result.target}`)
         sendJSON(res, { success: true, target: result.target })
     } catch (error) {
-        print.error(`Failed to persist credentials: ${error.message}`)
-        sendJSON(res, { success: false, message: error.message }, 500)
+        const message = (error as Error).message
+        print.error(`Failed to persist credentials: ${message}`)
+        sendJSON(res, { success: false, message }, 500)
     }
 }
 
-function escapeHtml(value) {
+function escapeHtml(value: string): string {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')

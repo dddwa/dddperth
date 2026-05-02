@@ -122,10 +122,6 @@ declare module "safe-routes" {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.sponsors.($year).js').SearchParams>,
     },
-    "/tito-webhook": {
-      params: never,
-      query: ExportedQuery<import('app/routes/tito-webhook.js').SearchParams>,
-    },
     "/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.voting.js').SearchParams>,
@@ -152,7 +148,6 @@ declare module "safe-routes" {
             | 'routes/app-content.$'
             | 'routes/sitemap[.xml]'
             | 'routes/[robots.txt]'
-            | 'routes/tito-webhook'
             | 'routes/auth.logout'
             | 'routes/app-config'
             | 'routes/auth.login'

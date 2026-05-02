@@ -123,7 +123,6 @@ pnpm nx panda website <command>
     - Sessionize API for agenda/speakers
     - Tito API for ticketing
     - GitHub API for content
-    - EventsAir API for conference data
 
 6. **Database**: Cloudflare D1 (SQLite)
     - Voting data stored in D1

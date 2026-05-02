@@ -1,16 +1,29 @@
 import { join } from 'node:path'
 
-import { upsertDevVar } from './dev-vars.mjs'
-import { putWorkerSecret } from './wrangler-secrets.mjs'
+import { upsertDevVar } from './dev-vars.ts'
+import type { GitHubAppFromManifest } from './manifest.ts'
+import { putWorkerSecret } from './wrangler-secrets.ts'
+
+export type Environment = 'local' | 'staging' | 'production'
+
+export interface PersistArgs {
+    environment: Environment
+    app: Pick<GitHubAppFromManifest, 'client_id' | 'client_secret'>
+    repoRoot: string
+}
+
+export interface PersistResult {
+    target: string
+}
 
 /**
  * Persist the OAuth credentials returned by the manifest exchange.
  *
- * - environment === 'local'   → writes WEBSITE_GITHUB_APP_CLIENT_ID + _SECRET into website/.dev.vars
- * - environment === 'staging' → wrangler secret put ... --env staging
- * - environment === 'production' → wrangler secret put ... --env production
+ * - `local`      → writes WEBSITE_GITHUB_APP_CLIENT_ID + _SECRET into website/.dev.vars
+ * - `staging`    → wrangler secret put ... --env staging
+ * - `production` → wrangler secret put ... --env production
  */
-export async function persistCredentials({ environment, app, repoRoot }) {
+export async function persistCredentials({ environment, app, repoRoot }: PersistArgs): Promise<PersistResult> {
     const websiteDir = join(repoRoot, 'website')
 
     if (environment === 'local') {
@@ -18,10 +31,6 @@ export async function persistCredentials({ environment, app, repoRoot }) {
         upsertDevVar(devVarsPath, 'WEBSITE_GITHUB_APP_CLIENT_ID', app.client_id)
         upsertDevVar(devVarsPath, 'WEBSITE_GITHUB_APP_CLIENT_SECRET', app.client_secret)
         return { target: 'website/.dev.vars' }
-    }
-
-    if (environment !== 'staging' && environment !== 'production') {
-        throw new Error(`Unknown environment: ${environment}`)
     }
 
     await putWorkerSecret({

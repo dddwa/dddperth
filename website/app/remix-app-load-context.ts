@@ -21,10 +21,6 @@ export interface CloudflareEnv {
 
     // External API keys
     TITO_SECURITY_TOKEN?: string
-    EVENTS_AIR_CLIENT_ID?: string
-    EVENTS_AIR_CLIENT_SECRET?: string
-    EVENTS_AIR_TENANT_ID?: string
-    EVENTS_AIR_EVENT_ID?: string
 
     // Sessionize endpoints
     SESSIONIZE_2026_SESSIONS: string

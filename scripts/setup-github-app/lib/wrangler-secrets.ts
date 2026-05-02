@@ -1,12 +1,19 @@
 import { spawn } from 'node:child_process'
 
+export interface PutWorkerSecretArgs {
+    cwd: string
+    env: 'staging' | 'production'
+    key: string
+    value: string
+}
+
 /**
  * Set a Cloudflare Worker secret via `pnpm wrangler secret put`, piping the
  * value on stdin so it never appears in argv or shell history.
  *
  * `cwd` should be the website/ directory (where wrangler.jsonc lives).
  */
-export function putWorkerSecret({ cwd, env, key, value }) {
+export function putWorkerSecret({ cwd, env, key, value }: PutWorkerSecretArgs): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn('pnpm', ['wrangler', 'secret', 'put', key, '--env', env], {
             cwd,
@@ -14,8 +21,8 @@ export function putWorkerSecret({ cwd, env, key, value }) {
         })
 
         let stderr = ''
-        child.stdout.on('data', () => {})
-        child.stderr.on('data', (chunk) => {
+        child.stdout?.on('data', () => {})
+        child.stderr?.on('data', (chunk: Buffer) => {
             stderr += chunk.toString()
         })
 
@@ -28,7 +35,7 @@ export function putWorkerSecret({ cwd, env, key, value }) {
             }
         })
 
-        child.stdin.write(value)
-        child.stdin.end()
+        child.stdin?.write(value)
+        child.stdin?.end()
     })
 }

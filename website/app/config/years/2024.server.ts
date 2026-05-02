@@ -59,20 +59,6 @@ export const conference2024: ConferenceYear = {
         type: 'tito',
         accountId: 'dddperth',
         eventId: '2024',
-
-        /** Early bird, regular and final releases also go in here */
-        generalTicketSlugs: [
-            'general-attendee',
-            'dqvd7i58iig',
-            'general-attendee-company',
-            'general-attendee-free',
-            'lyfer',
-            'volunteer',
-            'speaker',
-            'sponsor',
-        ],
-        afterPartyTicketSlugs: ['after-party', 'el5pexoj6m8'],
-        afterPartyUpgradeActivityId: '1071952',
     },
 
     sponsors: {
