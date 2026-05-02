@@ -92,7 +92,6 @@ export default function VotingPage() {
                         sessionId={votingSession.sessionId}
                         currentRound={votingSession.currentRound}
                         currentIndex={votingSession.currentIndex}
-                        votingProgress={votingSession.votingProgress}
                         totalPairs={votingSession.totalPairs}
                     />
                 )}
@@ -105,13 +104,11 @@ function VotingPageWithSession({
     sessionId,
     currentRound,
     currentIndex,
-    votingProgress,
     totalPairs,
 }: {
     sessionId: string | null
     currentRound: number
     currentIndex: number
-    votingProgress: number
     totalPairs: number
 }) {
     const data = useLoaderData<typeof loader>()

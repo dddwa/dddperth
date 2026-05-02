@@ -1,4 +1,4 @@
-import { css, cx } from '~/styled-system/css'
+import { css } from '~/styled-system/css'
 import { Box, styled } from '~/styled-system/jsx'
 
 export default function CircleDateModule() {

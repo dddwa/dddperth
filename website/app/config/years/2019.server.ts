@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '../../lib/config-types.server'
+import agenda2019 from './2019-agenda-data.json'
 
 export const conference2019: ConferenceYear = {
     kind: 'conference',
@@ -10,10 +11,8 @@ export const conference2019: ConferenceYear = {
     venue: undefined,
 
     sessions: {
-        kind: 'sessionize',
-        sessionizeEndpoint: 'https://sessionize.com/api/v2/9onvkr8n',
-        allSessionsEndpoint: undefined,
-        underrepresentedGroupsQuestionId: undefined,
+        kind: 'session-data',
+        sessions: agenda2019,
     },
 
     agendaPublishedDateTime: undefined,

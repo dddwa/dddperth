@@ -414,7 +414,7 @@ export const ImportantDates: React.FC<{
     )
 }
 
-export function Workshops({ currentDate }: { currentDate: DateTime }) {
+export function Workshops() {
     return (
         <Flex flexDirection="column" gap="2" mx="4">
             <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="white" fontWeight="semibold" width="fit">

@@ -1,19 +1,18 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '../../lib/config-types.server'
+import agenda2018 from './2018-agenda-data.json'
 
 export const conference2018: ConferenceYear = {
     kind: 'conference',
     year: '2018',
-    conferenceDate: DateTime.fromISO('2022-08-04'),
+    conferenceDate: DateTime.fromISO('2018-08-04'),
     sessionizeUrl: 'https://sessionize.com/dddperth2018',
 
     venue: undefined,
 
     sessions: {
-        kind: 'sessionize',
-        sessionizeEndpoint: 'https://sessionize.com/api/v2/fx26jbjt',
-        allSessionsEndpoint: undefined,
-        underrepresentedGroupsQuestionId: undefined,
+        kind: 'session-data',
+        sessions: agenda2018,
     },
 
     agendaPublishedDateTime: undefined,

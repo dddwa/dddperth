@@ -49,7 +49,7 @@ export function Hero({
                     </Flex>
 
                     <ImportantDates currentDate={currentDate} importantDates={importantDates} />
-                    <Workshops currentDate={currentDate} />
+                    <Workshops />
                 </Flex>
             </HeaderContainer>
         </Box>

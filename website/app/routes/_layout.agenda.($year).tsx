@@ -29,8 +29,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
     const now = context.dateTimeProvider.nowDate()
-    const agendaPublished =
-        !!conferenceYearConfig?.agendaPublishedDateTime && now >= conferenceYearConfig.agendaPublishedDateTime
+    const agendaPublished = conferenceYearConfig
+        ? (conferenceYearConfig.agendaPublishedDateTime
+              ? now >= conferenceYearConfig.agendaPublishedDateTime
+              : false) || (!!conferenceYearConfig.conferenceDate && now >= conferenceYearConfig.conferenceDate)
+        : false
 
     const schedules: TypeOf<typeof gridSmartSchema> =
         conferenceYearConfig?.sessions?.kind === 'sessionize' &&
@@ -196,6 +199,7 @@ export default function Agenda() {
                                             room={room}
                                             availableTimeSlots={availableTimeSlots}
                                             nextTimeSlotStart={nextTimeSlotStart}
+                                            nextTimeSlotIso={nextTimeSlot?.slotStart}
                                             timeSlotSimple={timeSlotSimple}
                                             timeSlot={timeSlot}
                                             year={year}
@@ -268,6 +272,7 @@ function RoomTimeSlot({
     room,
     availableTimeSlots,
     nextTimeSlotStart,
+    nextTimeSlotIso,
     timeSlotSimple,
     timeSlot,
     year,
@@ -278,6 +283,7 @@ function RoomTimeSlot({
     room: z.infer<typeof roomSchema>
     availableTimeSlots: string[] | undefined
     nextTimeSlotStart: string
+    nextTimeSlotIso: string | undefined
     timeSlotSimple: string
     timeSlot: z.infer<typeof timeSlotSchema>
     year: string
@@ -290,15 +296,17 @@ function RoomTimeSlot({
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
         ? DateTime.fromISO(fullSession.endsAt).toFormat('h:mm a').toLowerCase()
-        : undefined
+        : nextTimeSlotIso
+          ? DateTime.fromISO(nextTimeSlotIso).toFormat('h:mm a').toLowerCase()
+          : undefined
 
     const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''
     const earliestEnd = !availableTimeSlots?.includes(timeSlotEnd)
         ? nextTimeSlotStart
         : (timeSlotEnd ?? nextTimeSlotStart)
 
-    const earlierTimeSlots = schedule.timeSlots.filter((ts, index) => index < timeSlotIndex)
-    const laterTimeSlots = schedule.timeSlots.filter((ts, index) => index > timeSlotIndex)
+    const earlierTimeSlots = schedule.timeSlots.filter((_ts, index) => index < timeSlotIndex)
+    const laterTimeSlots = schedule.timeSlots.filter((_ts, index) => index > timeSlotIndex)
 
     // If this slot overlaps with another slot, we need to likely adjust the grid-column
     const conflictingEarlierTimeslots =

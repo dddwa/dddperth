@@ -8,7 +8,7 @@ import { conferenceConfig } from '~/config/conference-config.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { speakersSchema } from '~/lib/sessionize.server'
+import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
@@ -20,26 +20,29 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
         return redirect($path('/agenda/:year?', { year: undefined }))
     }
 
-    if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    const now = context.dateTimeProvider.nowDate()
+    const agendaPublished =
+        (yearConfig.agendaPublishedDateTime ? now >= yearConfig.agendaPublishedDateTime : false) ||
+        (!!yearConfig.conferenceDate && now >= yearConfig.conferenceDate)
+
+    let session: TypeOf<typeof gridRoomSchema>['sessions'][number] | undefined
+
+    if (yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint && agendaPublished) {
+        const sessions = await getConfSessions({
+            sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
+        })
+        session = sessions.find((s) => s.id === sessionId)
+    } else if (yearConfig.sessions?.kind === 'session-data') {
+        const day = yearConfig.sessions.sessions[0]
+        session = day?.rooms.flatMap((room) => room.sessions).find((s) => s.id === sessionId)
     }
 
-    const sessions =
-        yearConfig.sessions?.kind === 'sessionize' &&
-        yearConfig.sessions.sessionizeEndpoint &&
-        context.conferenceState.agenda === 'published'
-            ? await getConfSessions({
-                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-              })
-            : []
-
-    const session = sessions.find((session) => session.id === sessionId)
     if (!session) {
         throw new Response(JSON.stringify({ message: 'No session found' }), { status: 404 })
     }
 
     const speakers: TypeOf<typeof speakersSchema> =
-        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
+        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint && agendaPublished
             ? await getConfSpeakers({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })

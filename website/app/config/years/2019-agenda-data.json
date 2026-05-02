@@ -1,0 +1,2644 @@
+[
+  {
+    "date": "2019-08-03T00:00:00",
+    "isDefault": true,
+    "rooms": [
+      {
+        "id": 0,
+        "name": "Theatre",
+        "sessions": [
+          {
+            "id": "service-0800-registration",
+            "title": "Registration",
+            "description": null,
+            "startsAt": "2019-08-03T08:00:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0845-welcome-and-housekeeping",
+            "title": "Welcome and housekeeping",
+            "description": null,
+            "startsAt": "2019-08-03T08:45:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0900-welcome-to-country",
+            "title": "Welcome to country",
+            "description": null,
+            "startsAt": "2019-08-03T09:00:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "112b54cc-df00-40fd-ad5e-4b0714329821",
+            "title": "Keynote: AI for Earth: Using machine learning to monitor, model, and manage natural resources",
+            "description": "The AI for Earth program applies machine learning and data science to hard challenges in agriculture, water, climate, and biodiversity.  In this talk, we will discuss how the AI for Earth team, Microsoft Research, and AI for Earth grant recipients are using machine learning to enable precision agriculture, to predict outbreaks of disease, to detect poachers in real time, and to classify animals for conservation.  Finally, we will briefly provide details on the AI for Earth grant program to obtain resources for everyone to work on these challenges.  \r\n",
+            "startsAt": "2019-08-03T09:10:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": true,
+            "speakers": [
+              {
+                "id": "cbd64302-96fa-44ed-8113-f933ce3ebc84",
+                "name": "Jennifer Marsman"
+              }
+            ],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0955-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2019-08-03T09:55:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "ae58057e-2cea-4300-bdb7-f51d57476179",
+            "title": "Fun with Sensors and APIs for the web!",
+            "description": "Developments in Sensor & Browser Apis has opened up many opportunities for your website to react and respond based on the users device, environment or input. As of right now there are many great Sensor & Browser APIs that you can take advantage of including Light Sensors, Gyroscopes and Audio and because these APIs are all available in more devices than you would think they are more accessible than ever.\r\n\r\nIn this presentation we’ll talk through the possibilities, tools and resources as well as exploring some of my favourite features so you can get started creating engaging and creative effects, visualisations and experiences in your projects tomorrow.",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "ba836d06-2b0c-4b28-a020-72e837ea4854",
+                "name": "Mandy Michael"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1025-morning-tea",
+            "title": "Morning tea",
+            "description": null,
+            "startsAt": "2019-08-03T10:25:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "f8967843-c437-4a90-9242-fac45c4ea1a6",
+            "title": "GraphQL, gRPC or REST? Resolving the API Developer's Dilemma",
+            "description": "GraphQL, gRPC, REST and WebHooks are among a bewildering array of technologies and architectural styles that are available to API developers today. Presented with such myriad options, how can we be confident of making an appropriate decision for the problem at hand? In search of guidance, developers often turn to online communities. This can exacerbate the problem as discussions about API styles often descend into statements about the superiority of one approach over another being presented as universal truths. Such comments invariably earn emotive rebuttals that also lack sufficient nuance. The result of such exchanges is increased confusion and uncertainty. Join me on a tour of these API styles where we will cut through this noise, demonstrate where each style shines (plus where they don't!) and ultimately resolve this dilemma of choice.\r\n\r\nIn this session we'll take an in-depth look at API design; the best practices that have evolved; the game changing supporting technologies that are now available including HTTP/2; and most importantly what you need to do to deliver a world class developer experience:\r\n\r\n- How to determine the suitability of an API style for your application context. Don't be a victim of technology hype!\r\n- What is required to support graceful evolution of the API contract including the potential implications of both Hyrum's Law and the Law of Implicit Interfaces\r\n- Understand the supporting toolchains and technologies that dovetail with each API style.\r\n- The importance of treating your API as a product with an unwavering focus on improving the ease of consumption for your clients.\r\n\r\nBy the end of the session, you will not only understand the concepts underpinning these various API styles but also have the knowledge to put them into practice. If you want to take to your API design expertise to the next level, then this is the session for you. See you there!",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "9b917d43-896c-4b21-a5c9-5da683c7a60b",
+                "name": "Rob Crowley"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1140-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2019-08-03T11:40:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "7bb9859c-ed23-4569-b863-7b4c440b2b88",
+            "title": "Creative Coding and the JavaScript Canvas",
+            "description": "Software development is often thought of as a hard science, rather than a creative pursuit.\r\n \r\nIn this talk, I'm planning to challenge that assumption. I'll be giving a practical demonstration of how to use the JavaScript canvas to create artistic visualizations on the fly, using real time data - including human brain activity. I'll also be discussing the creative process behind making art using unconventional tools, and how we can use some of these concepts to our advantage when working with technology. \r\n \r\nNo artistic (or technical) talent is required to enjoy! ",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "33e81ddd-1212-4ecc-91d8-47d9faf2e253",
+                "name": "Alice McCullagh"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1210-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2019-08-03T12:10:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "9b7efb7a-64e0-41ac-9439-f65a662147da",
+            "title": "Building Great Teams",
+            "description": "How do you build your dream team and ensure it continues to thrive? \r\n\r\nIn this talk I will run through the life cycle of growing, developing and retaining a great team. Starting with strategies to create a great culture within your existing team, tips for interviewing to ensure you hire the right people and lastly practical ways to manage or influence behaviour and have \"difficult\" conversations to ensure you keep a great team!\r\n\r\nThis talk is aimed at team leads / tech leads / senior developers / and anyone who is going to be involved in this life cycle. ",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "0901be27-7de0-43f2-92f0-7c5691a3b9f8",
+                "name": "Donna Edwards"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1305-lunch",
+            "title": "Lunch",
+            "description": null,
+            "startsAt": "2019-08-03T13:05:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "a6eb8bb3-6086-4cb3-b024-d0a6c4dd3de3",
+            "title": "Every good outage starts with a queue",
+            "description": "Queues are bad, but software developers love them. The problem with queues is they are binary, either they're full or empty. You'd think they would magically fix any overload or failure problem. But they don't, and bring with them a bunch of their own problems.\r\n\r\nHear a war-story about how naive assumptions and over-optimism caused a near week-long ongoing outage.\r\n\r\nLearn about some of the reasons why queues are not a one-size fits all solution, and how there is no such thing as a good queue, only one that is absolutely necessary. Queues are in more places than you think, and they can bite you in ways that you wont expect.\r\n\r\nAre you building event sourced systems with process managers and read model populators? Are you working with serverless? This session is for you.",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "097cbfd1-1926-4953-a56a-79e3d8aeebf3",
+                "name": "Macklin Hartley"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1425-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2019-08-03T14:25:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "b2795175-d14d-4090-a62e-153d4534b916",
+            "title": "Quantum Computing 101: A gentle introduction to the world of quantum computing!",
+            "description": "What is all this talk about quantum computers and quantum computing?  Will I have to learn a new programming language?  What does it mean for our enterprise apps?  Our startup?  My games?  My job?\r\n\r\nQuantum computing is a fascinating topic that will change the world of computing and, probably, even our world.  It can be technical but don’t worry, we will make it easy to understand what you need to know.  \r\n\r\nThis talk will give a clear and simple introduction to quantum computing and explain the current state of play, services that are currently available, and what we can expect in the future, e.g. how it will affect IT jobs.\r\n\r\nIt’s all from a developer’s perspective and for developers but it will be understandable by anyone interested.  \r\n\r\nWith an Honours Degree in Theoretical Physics, a PhD in Computer Science and Software Engineering, and many years experience in IS an IT, I have the knowledge to be able to bridge the gap between the physics, computing, and software to help you understand Quantum Computing. ",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c6f0950f-dbf2-4a9c-a667-c78f9cd99f26",
+                "name": "Ashley Aitken"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "Theatre",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1520-afternoon-tea",
+            "title": "Afternoon tea",
+            "description": null,
+            "startsAt": "2019-08-03T15:20:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1550-prize-draw",
+            "title": "Prize Draw",
+            "description": null,
+            "startsAt": "2019-08-03T15:50:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "4c019f6f-c312-4bb9-8024-3352f6034d6e",
+            "title": "Locknote: You. Are. Awesome.",
+            "description": "You may not realize it, but you are awesome. You have the power to change the world. Regardless of your job title or amount of experience, I firmly believe you have amazing potential to impact the people around you in powerful and meaningful ways. My goal is to help you realize the awesomeness you already possess and be encouraged to unleash it!",
+            "startsAt": "2019-08-03T16:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": true,
+            "speakers": [
+              {
+                "id": "aa61fde1-dee9-45d4-b812-5110ba3b1cb9",
+                "name": "David Neal"
+              }
+            ],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1705-thank-yous-and-wrap-up",
+            "title": "Thank yous and wrap up",
+            "description": null,
+            "startsAt": "2019-08-03T17:05:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1710-afterparty",
+            "title": "Afterparty",
+            "description": null,
+            "startsAt": "2019-08-03T17:10:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 1,
+        "name": "RR5",
+        "sessions": [
+          {
+            "id": "8cd14aaa-89cb-4886-9649-ceb0cd4b27d1",
+            "title": "Machine Learning with .NET (for Non-Data-Scientists)",
+            "description": "Machine Learning has for many years has lived in two extremes: Calling APIs to see if the cloud can recognise your dog pictures, or hiring lots of Data Scientists to crunch maths that you thought you'd put away for good a long time ago! What if I told you there was a middle ground?\r\n\r\nIn this demo-heavy session I'll talk about ML.NET and show you how you can apply your own engineering and coding expertise to to build interesting ML solutions - without bribing a data scientist to do all the work for you.",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "1a9fa16a-866a-45b4-85e6-a4ac7c655268",
+                "name": "Ryan Preece"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "cea40511-0eeb-4ac8-8c1e-098a966f7314",
+            "title": "NLP for fun & business - AI at your fingertips",
+            "description": "Do you want to know what is the connection between customer service, Game of Thrones and AI so powerful that it was forbidden from being released to the public?\r\n\r\nNatural Language Processing (NLP) is the art of extracting information from unstructured text and it’s one of the most exciting branches of AI. Written data is ubiquitous  and making sense of it has become a superpower. We want to invite you to join in the fun.\r\n \r\nIn this talk we’ll explore the main building blocks of natural language processing algorithms, and show a practical example of how topic modelling can be used to better understand your customers, and the benefits of its use. \r\n\r\nYou will walk out with the main ingredients to dive into the NLP world and a clear business use, you can put into action. \r\n",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "d43e32ce-eefb-40a6-a635-15a227104f71",
+                "name": "Diana MozoAnderson"
+              },
+              {
+                "id": "dcbe0bfe-d22c-4427-b43b-a2d13d2f2adc",
+                "name": "Denis Lapchev"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "9c81bbdb-8898-4259-afac-0dc73ff363b5",
+            "title": "100% Remote Working - Better than you Dared to Dream",
+            "description": "You've seen seen people talking about it, even had friends doing it, but is remote working really as good as they say it is?\r\n\r\nIn August 2018 I took the plunge and discovered developer nirvana, a re-invigorated soul, and a desire to never work in open-plan offices ever again.\r\n\r\nIn this talk I'll share my experiences working 100% remotely for a company in a different time zone.  I'll cover the techniques and the tech I use (both hardware and software), the challenges I face, and the peace I have found.\r\n\r\nThis talk is for introverts who struggle in their current work situation, for developers desperate to get work done, and for people wanting to level-up at communicating.",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "0f36aee9-e973-44cc-848f-142b395c0744",
+                "name": "Carl Scarlett"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "6d6553c0-b678-434d-b94e-c46fe77c86eb",
+            "title": "Forget your passwords with the Web Authentication API",
+            "description": "Passwords are hard. Data breaches frequently expose poor security practices, proving that, as an industry, we're not very good at this. As developers have become more aware of these challenges, we've tried to offload password management to \"the big guns\", making our lives easier, but what about our users? From confusing or ineffective password complexity restrictions to password fields you can't paste into, it's no wonder so many people find one password and stick with it.\r\n\r\nThe Web Authentication API (WebAuthn) allows you to build passwordless authentication or two factor authentication into your web applications seamlessly in the browser. Using an asymmetric key pair where the public key is sent to a server, and the private key stored securely on your device, your secrets are never sent over the internet, greatly reducing the risk of phishing attempts.\r\n\r\nThis talk will provide an introduction to WebAuthn, outlining the benefits, tradeoffs, and future of this new authentication protocol. Through a code demonstration, you will see how to build an experience that puts control over their credentials (literally) back into the hands of your users.",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "88a6e76d-7051-4f1c-a057-71fd76edf249",
+                "name": "Ben Lowry"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "a577e148-b1d7-42e1-a424-5d0db3107ae2",
+            "title": "The Dark Side of Agile: Burnout and You",
+            "description": "Have you ever experienced a time where overwhelming expectations have led to extreme stress that has  impacted your health and well-being? Burnout and work-related stress is becoming all too prevalent in our industry. This, coupled with an unfortunate stigma around the topic, is having a detrimental impact on our overall well-being. The complexities of people and technology are making it increasingly difficult to estimate and frame projects in a true agile sense, consequently contributing to the increase of burnout in our industry.\r\n \r\nThis presentation will focus purely on solutions that are specific to burnout. Key solutions being; managing work-life balance, coupled with the ability to identify early indicators for yourself and those around you.  If we equip ourselves with knowledge of burnout, can we remove the stigma around it so that people can call it out early and feel safe to do so?",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c605cad0-1711-4efc-9979-3151ef8873c9",
+                "name": "Siobhan Avenell"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "80721e7b-b082-4b50-9a9d-136d3054b7b0",
+            "title": "Is it done yet?  (How about now?)",
+            "description": "No matter how utopian your agile working environment, if you're building a commercial product, at some stage you will be asked the inevitable question - When will it be done? This talk will provide you with tools and techniques to use when you hear your manager say \"We just need to get better at estimating\".  (Spoiler alert: that's not the answer)  If you have ever wished for a crystal ball to help you predict the team's future, this talk is for you!",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "43b68922-273f-4643-88bc-12492716d494",
+                "name": "Michele Playfair"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "RR5",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 2,
+        "name": "M6",
+        "sessions": [
+          {
+            "id": "385e78cf-b12a-466c-9fb8-e29c7fd627fb",
+            "title": "Anyone can Animate, even if they Can’t Draw",
+            "description": "Can you sing? Even if you sound like a gargling crow, I bet you can still tap out some kind of rhythm. \r\nThat's the difference between animation, especially in UX, and drawing. UI Animation is all about the timing, plus understanding a few basic principles. \r\n\r\nIn the last year, the toolscape of UI development has bloomed with new animation tools that vastly simplify development.\r\n\r\nUntil recently, delivering animation in a user interface was the most painful kind of designer-developer handoff. An expert user of a major design tool crafted an animation. Then one of two things happened. Either that animation was plonked on a screen as an isolated movie or gif, or a developer was tasked with manually converting it into low-level drawing calls. \r\n\r\nThis talk includes a brief overview of animation but focuses on practical ways to simply animate elements of your UI to add more fun and user hinting.\r\n\r\nTools covered are mainly code-generation tools which go straight  from visual animation design to usable code. This closes the gap between designer intention and delivery. Even better, they make animation in UX feasible for developers lacking the luxury of design experts.",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "dfb253cd-f22e-4503-9a76-fc42d99f133a",
+                "name": "Andy Dent"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "643434fc-64d5-49ba-a1d8-848a7570b6fa",
+            "title": "Coding in Interviews",
+            "description": "Have you ever had to write code in an interview? Did you @#$* your pants? Is it even a good idea to make people code in such a high pressure environment? In this session I’ll aim to address these questions and provide a basic methodology to help guarantee success in your next coding interview!",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "30e2d7c2-bdfd-4d08-8c7d-4596d25d5bec",
+                "name": "James Miles"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "24ad37da-2c0b-4f5c-afde-3266217e6d80",
+            "title": "Lost in Space: Risk, Reward and Women-in-Tech",
+            "description": "Launching sideways from Animation into the rapidly expanding Tech Cosmos has been the best adventure of my life. I’ve found my people, my niche and I’ve never felt more connected.\r\n\r\nBut looking all around, this little rocket ship is not yet convinced it will be an entirely smooth-sailing journey...\r\n\r\nWhether you’re a Femme, Fabio or Face-Hugger brace yourself for a light-speed journey through the ins and outs of deciding to become a 'Woman in Tech'.\r\n\r\nIncluding learning to:\r\n-\tBurn the right Brain Fuel\r\n-\tDodge the ‘Black Hole of Burnout’\r\n-\tIdentify Aliens and Imposters\r\n-\tBuild a strong Ship Maintenance Crew\r\n-\tAnd convince the Mother Ship to keep course… no matter what it takes.\r\n\r\nI don’t have all the answers for creating a toolkit to increase diversity in tech. But I sure do have a damn good metaphor, decision-making trees, risk-calculating kittens, and plenty of space cake.\r\n\r\nSo, sit back, relax and discover why I choose to #BeHer, even if I can’t always #SeeHer.\r\n\r\n",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "b4ffd60a-0ea8-4e85-810e-4d5aec66d1b3",
+                "name": "Caitlin Bathgate"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "0bcae524-eb87-4080-b189-ab5c7d5ad5fa",
+            "title": "Design: 25 lessons from 25 years",
+            "description": "What's this about?\r\n \r\nFrom industrial Northern 90's England to sunny 21st Century Perth - starting, growing and steering design teams through thick, thin and just plain weird - there's 25 years of Nick’s experiences to be shared! Tales of woe, some unlikely successes, many leaps of faith and a few poignant reflections might just strike a note with and inspire those leading or aspiring to become a design, UX or software team leader.\r\n \r\nHow will this session run?\r\n \r\nThis won't be a presentation! We'll host a lively interview to surface and share tangible take outs, relayed through stories of starting out, succeeding, failing and leading.\r\n \r\nWhat will I get out of it?\r\n \r\nBeyond your sublime technical skills, learning how to work with people is foundational to your career. More than ever we're carving our own destiny, so through a series of reflections, anecdotes, projects and people experiences, you'll (hopefully!) come away armed with some new tools to help you navigate your career path.\r\n \r\nBetween them Nick and Jonathon have years of industry experience across many sectors. The deck will be shared for all, and Nick will be happy to elaborate, coach or otherwise share more throughout the event and beyond.\r\n",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "bbb3e32d-94f5-450c-8f32-6ee7a6cd1258",
+                "name": "Nick Leigh"
+              },
+              {
+                "id": "02477e75-f69d-4942-a71c-2ec85fa8e3e8",
+                "name": "Jonathan Steingiesser"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "2fcea05c-96dc-4802-b8a9-14bcfee01a64",
+            "title": "Putting the fast in Fast.Ai - Machine Learning models in 15 mins",
+            "description": "Machine learning is enabling computers to learn things which are not explicitly programmable. It’s complex – involving equivalent amounts of maths and computer science. It’s daunting and often hard to figure out where to start. Fast.Ai was created with the aim of helping developers and non-technical SME’s build their own machine learning models. It provides a top-down approach which abstracts away the need for elaborate coding and complex theoretical concepts. Join me in an end to end demonstration of how to create a 95% accurate image classification model from scratch, using the Fast.Ai library. An ideal introduction to testing the waters in machine learning. ",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c22be45b-8310-438f-8def-944b7230b403",
+                "name": "Akanksha Malik"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "94a2f4b3-bd6e-4eb6-9917-baa3bcb3d41f",
+            "title": "How to Raise a Robot Army over #100DaysofCode",
+            "description": "A pythonic introduction to building bots when you are starting from *scratch*.  In this talk we'll look at how they work, what they can be used for, and see some demo's to play with.\r\n\r\nImagine you have a 100 days and your only directive is that you **must** spend at least an hour a day in the code. Could you build an army of bots and take over the world?\r\n \r\nRecently I've taken part in the #100DaysOfCode Challenge, which is designed to help beginners get started with meaningful and fun activities, even when they have no previous knowledge.\r\n \r\nTogether we'll cover the basics of bot building and go under the hood to look at the code and the basic architecture that holds it together. We'll examine some of the bots you can build and by the end of the session you'll be able to start building your own robot minions.\r\n",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "f74543ea-f9c1-445e-b504-0f5ee5ec07a6",
+                "name": "Michelle @ Microsoft"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M6",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 3,
+        "name": "M7",
+        "sessions": [
+          {
+            "id": "c044309e-e859-4b5c-adad-7534a36284e0",
+            "title": "Is VR going to be a “Thing” for UX Design?",
+            "description": "\r\n\"This talk is about the lessons that UX and UI designers can learn from the long and troubled history of Virtual and Augmented Reality. It discusses the current hype vs reality of the VR/AR market, and considers the social, technological and economic factors that will make VR/AR implementations a part of a mainstream UX/UI designer's daily work within 10 years. Will you be ready?\"",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "759dde03-1a80-494f-b52a-1197b5d16c0b",
+                "name": "Andrew Hutchison"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "df03352d-b177-420d-b66a-b1c174e3e0a3",
+            "title": "CSS Grid - What is this Magic?!",
+            "description": "We’ve all heard a lot in the last year about a new advancement in the world of CSS, called CSS Grid. Starting off at whispers, we’re now starting to hear it as a deafening roar as more and more developers write about it, talk about it, share it and start using it. In the world of front end, I see it everywhere I turn and am excited as I start to use it in my own projects.\r\n\r\nBut what does this new CSS specification mean for software developers, and why should you care about it? In the world of tech today, we can do so many amazing things and use whatever language we choose across a wide range of devices and platforms. Whether it’s the advent of React and React Native, or frameworks like Electron, it’s easier than ever to build one app that works on multiple platforms with the language we know and work with best. The ability to do this also expands to styling apps on any platform using CSS, and therefore being able to utilise the magical thing that is\r\nCSS Grid.\r\n\r\nThe reason CSS Grid is gaining so much attention, is because it’s a game changer for front end and layouts. With a few simple lines of code, we can now create imaginative, dynamic, responsive layouts (yep, I know that’s a lot of buzz words). While a lot of people are calling this the new ‘table layout’, grid gives us so much more, with the ability to spread cells across columns and rows to whatever size you choose, dictate which direction new items flow, allow cells to move around to fit in place and even tell certain cells exactly where they need to sit.\r\n\r\nWhile there is so much to worry about when developing an app, CSS Grid means that you can worry less about building the layout on the front end, and more about making sure the back end works well. Let me show you how the magic works.",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "a8d5d307-54a8-4ef6-a5de-d4cce2a950e8",
+                "name": "Amy Kapernick"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "3c2badde-1534-494b-a084-8ca5857d648d",
+            "title": "Cryptography: so much to learn! (If history is anything to go by.)",
+            "description": "Cryptography is all the rage, and not without reason. It's an important part of the security of all our communication. You hope your passwords are handled securely, and you assume anything you send to your bank in your online banking session is protected by encryption. \r\n\r\nGetting your head around cryptography can be daunting. There's a lot to learn. It's a fast-evolving field within science and software engineering, and encryption protocols sometimes don't even last a decade before they become obsolete (read: unsafe). But it doesn't mean you shouldn't try to learn as much as you can. \r\n\r\nIn my session, I'd like to show you what I learned about cryptography by looking at an \"ancient\" encryption/decryption tool: the German Enigma. The Germans assumed the Enigma was uncrackable, but due to problems inherent in the design and fundamental cryptographic problems, the allied forces were able to crack it. Some of the lessons learnt can (and should!) be applied to modern cryptography. \r\n\r\nYou don't need any experience or extensive knowledge around the topic of encryption to enjoy my session. ",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "960c7a10-1f78-474d-971f-dd1dd0bcfd98",
+                "name": "Sander Huijsen"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "5aba6e83-cfd9-4114-af80-f28de931d8c2",
+            "title": "Finding a Needle in a Call Stack - Intro to Distributed Tracing",
+            "description": "Microservices have transformed the way we think about software architecture and design. They enable developers to rapidly extend application functionality in the form of additional services, each of which can be scaled and deployed independently. Many highly successful software companies such as Netflix, Amazon, and Airbnb, have thousands of interconnected services which form the foundation of their products. These services often communicate over HTTP - passing messages between each other, synchronously and asynchronously, sometimes via message queues or brokers. \r\n\r\nOf course, none of the benefits of microservices come without a cost. Networks are unreliable, and correlating thousands or millions of log entries between services can quickly become unmanageable. Therefore, understanding the source of an issue can be like finding a needle in a haystack. This is where distributed tracing comes in! Distributed tracing is the process of tracking requests through their lifetime within a complex distributed system, and has become a critical tool for debugging and understanding microservices.\r\n\r\nIn this session we will explore the basics of distributed tracing. We'll then take a look at the OpenTelemetry (formally OpenTracing) standard - a vendor neutral framework for distributed tracing instrumentation. Finally, we'll take a hands-on look at distributed tracing in action using Jaeger, a popular open source distributed tracing tool which is part of the Cloud Native Computing Foundation. By the end of this session I hope you will not only have a good understanding of distributed tracing, but will be equipped with the knowledge and inspiration to introduce it within your own applications.",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "786c1488-5184-4e18-be44-87bf2ab9ba60",
+                "name": "Josh Michielsen"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "97792db7-0c73-4fee-91c3-00d7fe002540",
+            "title": "Mobile App Development - Crossing the platforms, dotting the notation",
+            "description": "Mobile app development has come a long way since it first burst onto the scene. In this talk we’ll look at the lay of the land, focussing largely on the current landscape and the tools which are available to the modern mobile developer.\r\n\r\nAs developers we currently have many different routes to realise our applications on mobile devices. From native languages, cross platform development tools such as React Native and the new “app like”, Progressive Web Apps.  We’ll delve into exactly what these differing platforms are, their strengths and weaknesses and in which circumstances each may be appropriate to use.",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "3b4ab42e-02f9-4c74-9729-47ed14422e48",
+                "name": "Dave Cumming"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "f548e402-d04d-4318-a8c6-d879b3f11d37",
+            "title": "Hypothesis-Driven Development: Why you need online controlled experiments to scale",
+            "description": "Simply put, hypothesis-driven development (HDD) is the process of stating the desired impact of a new product feature, and then measuring the actual impact of that feature on real users, often using online controlled experiments, commonly called A/B tests.  \r\n\r\nIn a world where the opinions of even expert product and UX people is wrong as often as it is right, the HDD approach to product development is important for consumer-facing businesses of any size. \r\n\r\nBut we'll make the case that as a consumer-facing online business scales to thousands of daily-active-users, HDD combined with extensive A/B testing becomes absolutely crucial in growing a business to the next level.",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "b77495c6-85ab-4543-b3c0-39f0d3a2037c",
+                "name": "Tommy O'Dell"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M7",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 4,
+        "name": "M8",
+        "sessions": [
+          {
+            "id": "b73abc43-7634-40d3-a38b-696bdb844cc0",
+            "title": "Dependency Injection is only 1/5 of the Inversion of Control problem",
+            "description": "What is The OO Matrix?  I can not tell you.  I must show you what it is.  Some may be aware of it's existence, while others have grown up in it knowing no difference.  This talk offers you the red pill to show you whatis The OO Matrix.\r\n\r\nPlus, if you think Spring is great, then this talk shows you how it can be better.  If you think Spring has issues, then this talk gives you the missing pieces.\r\n\r\nDependency Injection is a great concept, but it's actually only 1/5 of the Inversion of Control (IoC) problem.   By introducing further injection techniques (such as Thread Injection and Continuation Injection), we can create a more complete Inversion of Control.\r\n\r\nAlso, Functional Programming is on the rise.  Functional programming claims dependency injection is not necessary, as this is achieved through higher order function composition. Therefore, is there still a place for Dependency Injection in the future of programming?   Yes, we actually need to apply IoC to Functional programming.\r\n\r\nThe result is better cohesion and lower coupling in your code.\r\n\r\nThis talk will take you through the remaining IoC concepts, so that these enable you to build and maintain your systems easier.",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "ea015a3a-8d50-46f8-81a8-2c5ce157a7a1",
+                "name": "Daniel Sagenschneider"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "b446c945-6210-4b56-bc78-772347060a5b",
+            "title": "DesignOps - How to get ideas out faster",
+            "description": "In this talk I will be discussing how Designers and Developers can work together to get ideas into their customer's hands as quickly as possible, so that they can be used, measured and improved. \r\n\r\nProduct testing will let you know if your customers 'can' use your product, but it will not tell you if they 'will' use your product. These two things are very different. We need to get ideas out quickly and start monitoring and measuring the outcomes.\r\n\r\nTechniques like 'Dual Track Delivery' and 'Designing your backlog' can help multi-capability teams get ideas into the live environment quickly and I will be discussing how they work and the risks you need to be aware of.",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "99257575-ddae-425b-bfc5-9f4ca68e0ebb",
+                "name": "Kristy Sachse"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "f3a57e6c-0325-4898-bffd-2d3040f5dee9",
+            "title": "Falling For Flutter: A web developer's journey to the app store, and how you can do the same",
+            "description": "Taking the leap from web to mobile development can be intimidating. There are countless tools and frameworks competing for your attention, it can be hard to know where to begin. You may be familiar with React Native, Cordova or Xamarin - but have you considered Flutter?\r\n\r\nFlutter is a cross-platform UI framework created by Google. With a delightful developer experience and a focus on polished, performant UI, Flutter provides a refreshing alternative for cross-platform app development.\r\n\r\nThis is the story of how I fell in love with Flutter, how it helped me achieve my goals, and how it could help you do the same. We will talk about what makes Flutter different from the alternatives, play with some code, and hopefully inspire you to pursue the idea that you wrote on a napkin that one time.",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "ca6983aa-e2d1-4431-92f6-cca396cbb4ff",
+                "name": "Jacob Impson"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "fd0518e0-a52c-44dd-84fb-61ce59c3cdb5",
+            "title": "Demystifying AWS Security Services",
+            "description": "Are you using AWS? Are you aware of the difference between Trusted Advisor, Config, Macie and Guard Durty? Are you familiar with what each of those services do and how to use them? Worry no-more, this talk will skill you up with major AWS security services and show you how you can apply them to secure your AWS workloads today.",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "27bea4e1-48f7-439f-adbd-babf45209234",
+                "name": "Even Zhang"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "fa861d2a-9597-4a98-8510-fc0dc0b400e6",
+            "title": "Breaking Up With Redux: Client State Management with Apollo and GraphQL",
+            "description": "Do you love React but have been finding yourself spending an excessive amount of time battling Redux? \r\n\r\nIn this talk, I will walk you through how you can manage your state in React using GraphQL with Apollo Client, in a simple and maintainable way. \r\n\r\nI will go over some of the basics of GraphQL and how it can be implemented in a React app using the same syntax we already know and love to use in our GraphQL API.  \r\n\r\nAnd then I will share some of my personal experiences with it.",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "9d711efc-7e0f-497c-b77d-34d89e030126",
+                "name": "Inaie Ignacio"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "00311b92-6c21-47a8-b8d2-af325581d6f9",
+            "title": "JavaScript and AI, no you're not dreaming",
+            "description": "Like fire which was stolen from Mudhens, Artificial Intelligence has been kept away from front end developers for ages.\r\n\r\nHowever, things has changed and doing AI is as easy as installing a npm package. That's why I've decided to open your mind to what's possible today and a few examples which can even be executed in the browser.\r\n\r\nYou don't need to have any background in AI or Maths, just a curious mind and a willingness to try.",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "f6407cdc-f1e5-4543-a212-12cbd5be2885",
+                "name": "Yaser Adel Mehraban"
+              }
+            ],
+            "categories": [],
+            "roomId": 4,
+            "room": "M8",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 5,
+        "name": "M9",
+        "sessions": [
+          {
+            "id": "cc740103-612c-4673-b293-97487787f093",
+            "title": "What Chickens and Submarines Can Teach You About Teams",
+            "description": "Many people believe that having the smartest people makes the best teams. Logically, it makes sense as the best people will enable you to do great things. But what if that wasn't the case? What if there was something else that makes up great teams?\r\n\r\nDuring my career, I have been on projects surrounded by smart people, yet our achievements were mediocre. I have also been on teams with average people and we were a raving success! How could that be? What were we missing that made some teams so wildly successful, yet others were average? It was those questions that made me embark on my leadership journey to try and discover the secret to successful teams.\r\n\r\nIn this talk, we'll discuss what chickens and submarines can teach you about creating great teams. We'll go through some approaches you can take, some hard truths that we learnt along the way and lastly you will get some first-hand experiences from the trenches.",
+            "startsAt": "2019-08-03T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "30620f36-9e7d-45a7-8cc3-236665fb4b77",
+                "name": "Mauro Da Silva"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "2fff2f0e-7f55-4a26-bf15-7537a6c3f700",
+            "title": "How do you apply Agile on a solo project?",
+            "description": "Have you ever been in a situation where you had to develop alone? Have you started a side project and didn't go well? Agile methodologies always talk about teams and how to get the best out of the project based on different ceremonies and the interaction between teams. It rarely mentions what you should do when you are on a solo gig. Could applying agile practices save the project? Could you apply agile while you are working in a solo capacity?\r\n\r\nDuring my journey, I share the pain with you and I have been in the same situation many times. I have started many side-projects and worked on many solo projects. It wasn't easy to apply Agile and focus on delivery. Yet, while focusing on success, I found my way to Agilify my solo gigs and discovered why my side-projects were not successful. Through many gigs and amplifying the feedback, I have managed to \"Agilify\" any one-person show project and it helped me delivering better and faster with great success.\r\n\r\nBy the end of the session, you will have the hard-learned lessons as takeaways which make your solo or side project much easier and more fun from now on. Despite not being an Agile coach, I'm a developer with the right experience who could tell you how to Agilify any solo-project. I will share with you my way of applying Agile on your solo project and backed by some scars from the field.",
+            "startsAt": "2019-08-03T10:55:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c2980278-fb86-4431-b0ee-3adc04a83a6d",
+                "name": "Mo Zaatar"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "adbcf783-1ab2-456b-ba41-1041f139e3f2",
+            "title": "How to define a chatbot personality",
+            "description": "Chatbots have a voice, so they need a personality because even if one isn't defined, users will assume one.  In this talk I will cover some methods to define and build chatbot personalities that are more relatable, believable and relevant to users and represent your brand appropriately.",
+            "startsAt": "2019-08-03T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "f8245dfa-f6d4-4abc-88f2-f7b741a12c15",
+                "name": "Marieke Lunel"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "70537fd7-4e49-4100-97ee-ce79c71545d6",
+            "title": "Building Serverless APIs with Azure Functions and C#",
+            "description": "Azure Functions allow us to run small pieces of code without having to be concerned about the underlying infrastructure.\r\nBy using a serverless model, we only pay for the time that our code runs and Azure takes care of scaling resources when we need it to. This means that as developers, all we need to do is focus on our APIs business logic\r\n\r\nIn this session, I'll talk about how you can use Azure Functions to create endpoints using built-in HTTP triggers and bindings that\r\nthat allow you to connect to a variety of data sources and build APIs that scale. \r\nI'll also demo how you can use Proxies to specify endpoints to other resources, create OpenAPI definitions for your serverless APIs and how you can consumer your APIs\r\n\r\nBy the end of this session, you'll know how to use Azure Functions to develop, test and deploy serverless APIs to Azure.",
+            "startsAt": "2019-08-03T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "873dddaf-e22a-4c5f-8927-91861348733a",
+                "name": "Will Velida"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "83b6a640-935b-4e5e-b251-81c3d69c0129",
+            "title": "How to survive the stakeholder battle for features",
+            "description": "Imagine you're tasked with building a website for a large organisation that has many different products, services and customer types.  Over 100 stakeholders have been identified, many of whom have their own unique KPIs, goals, and personal agendas. How can you prioritise all the required features and content while still gaining acceptance and buy-in from all 100+ stakeholders?  \r\nIn this session, I will share a stakeholder engagement technique and a feature prioritisation tool that we have used successfully on several large projects at various organisations.",
+            "startsAt": "2019-08-03T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "94fa2dce-1143-44b9-bbbf-61bc40d9100c",
+                "name": "Trent Cain"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "35e1174f-8d50-48db-a410-d53c3c8ddf73",
+            "title": "Kubernetes vs. Serverless - The Great Cloud Native Debate",
+            "description": "How do you pick your platform for development in 2019? Using real-world examples taken from projects all over Perth, together we'll build a framework for comparing the merits of a Kubernetes vs. Serverless approach.\r\n\r\nWe'll cover aspects such as:\r\n- Security\r\n- Cost\r\n- Performance\r\n- Learning Curve\r\n- Development Experience\r\n- Operations",
+            "startsAt": "2019-08-03T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "b9641b37-fb0d-4531-abe0-e5a712391824",
+                "name": "Josh Armitage"
+              }
+            ],
+            "categories": [],
+            "roomId": 5,
+            "room": "M9",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      }
+    ],
+    "timeSlots": [
+      {
+        "slotStart": "2019-08-03T08:00:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-0800-registration",
+              "title": "Registration",
+              "description": null,
+              "startsAt": "2019-08-03T08:00:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T08:45:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-0845-welcome-and-housekeeping",
+              "title": "Welcome and housekeeping",
+              "description": null,
+              "startsAt": "2019-08-03T08:45:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T09:00:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-0900-welcome-to-country",
+              "title": "Welcome to country",
+              "description": null,
+              "startsAt": "2019-08-03T09:00:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T09:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "112b54cc-df00-40fd-ad5e-4b0714329821",
+              "title": "Keynote: AI for Earth: Using machine learning to monitor, model, and manage natural resources",
+              "description": "The AI for Earth program applies machine learning and data science to hard challenges in agriculture, water, climate, and biodiversity.  In this talk, we will discuss how the AI for Earth team, Microsoft Research, and AI for Earth grant recipients are using machine learning to enable precision agriculture, to predict outbreaks of disease, to detect poachers in real time, and to classify animals for conservation.  Finally, we will briefly provide details on the AI for Earth grant program to obtain resources for everyone to work on these challenges.  \r\n",
+              "startsAt": "2019-08-03T09:10:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": true,
+              "speakers": [
+                {
+                  "id": "cbd64302-96fa-44ed-8113-f933ce3ebc84",
+                  "name": "Jennifer Marsman"
+                }
+              ],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T09:55:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-0955-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2019-08-03T09:55:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T10:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "ae58057e-2cea-4300-bdb7-f51d57476179",
+              "title": "Fun with Sensors and APIs for the web!",
+              "description": "Developments in Sensor & Browser Apis has opened up many opportunities for your website to react and respond based on the users device, environment or input. As of right now there are many great Sensor & Browser APIs that you can take advantage of including Light Sensors, Gyroscopes and Audio and because these APIs are all available in more devices than you would think they are more accessible than ever.\r\n\r\nIn this presentation we’ll talk through the possibilities, tools and resources as well as exploring some of my favourite features so you can get started creating engaging and creative effects, visualisations and experiences in your projects tomorrow.",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "ba836d06-2b0c-4b28-a020-72e837ea4854",
+                  "name": "Mandy Michael"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "8cd14aaa-89cb-4886-9649-ceb0cd4b27d1",
+              "title": "Machine Learning with .NET (for Non-Data-Scientists)",
+              "description": "Machine Learning has for many years has lived in two extremes: Calling APIs to see if the cloud can recognise your dog pictures, or hiring lots of Data Scientists to crunch maths that you thought you'd put away for good a long time ago! What if I told you there was a middle ground?\r\n\r\nIn this demo-heavy session I'll talk about ML.NET and show you how you can apply your own engineering and coding expertise to to build interesting ML solutions - without bribing a data scientist to do all the work for you.",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "1a9fa16a-866a-45b4-85e6-a4ac7c655268",
+                  "name": "Ryan Preece"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "385e78cf-b12a-466c-9fb8-e29c7fd627fb",
+              "title": "Anyone can Animate, even if they Can’t Draw",
+              "description": "Can you sing? Even if you sound like a gargling crow, I bet you can still tap out some kind of rhythm. \r\nThat's the difference between animation, especially in UX, and drawing. UI Animation is all about the timing, plus understanding a few basic principles. \r\n\r\nIn the last year, the toolscape of UI development has bloomed with new animation tools that vastly simplify development.\r\n\r\nUntil recently, delivering animation in a user interface was the most painful kind of designer-developer handoff. An expert user of a major design tool crafted an animation. Then one of two things happened. Either that animation was plonked on a screen as an isolated movie or gif, or a developer was tasked with manually converting it into low-level drawing calls. \r\n\r\nThis talk includes a brief overview of animation but focuses on practical ways to simply animate elements of your UI to add more fun and user hinting.\r\n\r\nTools covered are mainly code-generation tools which go straight  from visual animation design to usable code. This closes the gap between designer intention and delivery. Even better, they make animation in UX feasible for developers lacking the luxury of design experts.",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "dfb253cd-f22e-4503-9a76-fc42d99f133a",
+                  "name": "Andy Dent"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "c044309e-e859-4b5c-adad-7534a36284e0",
+              "title": "Is VR going to be a “Thing” for UX Design?",
+              "description": "\r\n\"This talk is about the lessons that UX and UI designers can learn from the long and troubled history of Virtual and Augmented Reality. It discusses the current hype vs reality of the VR/AR market, and considers the social, technological and economic factors that will make VR/AR implementations a part of a mainstream UX/UI designer's daily work within 10 years. Will you be ready?\"",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "759dde03-1a80-494f-b52a-1197b5d16c0b",
+                  "name": "Andrew Hutchison"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "b73abc43-7634-40d3-a38b-696bdb844cc0",
+              "title": "Dependency Injection is only 1/5 of the Inversion of Control problem",
+              "description": "What is The OO Matrix?  I can not tell you.  I must show you what it is.  Some may be aware of it's existence, while others have grown up in it knowing no difference.  This talk offers you the red pill to show you whatis The OO Matrix.\r\n\r\nPlus, if you think Spring is great, then this talk shows you how it can be better.  If you think Spring has issues, then this talk gives you the missing pieces.\r\n\r\nDependency Injection is a great concept, but it's actually only 1/5 of the Inversion of Control (IoC) problem.   By introducing further injection techniques (such as Thread Injection and Continuation Injection), we can create a more complete Inversion of Control.\r\n\r\nAlso, Functional Programming is on the rise.  Functional programming claims dependency injection is not necessary, as this is achieved through higher order function composition. Therefore, is there still a place for Dependency Injection in the future of programming?   Yes, we actually need to apply IoC to Functional programming.\r\n\r\nThe result is better cohesion and lower coupling in your code.\r\n\r\nThis talk will take you through the remaining IoC concepts, so that these enable you to build and maintain your systems easier.",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "ea015a3a-8d50-46f8-81a8-2c5ce157a7a1",
+                  "name": "Daniel Sagenschneider"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "cc740103-612c-4673-b293-97487787f093",
+              "title": "What Chickens and Submarines Can Teach You About Teams",
+              "description": "Many people believe that having the smartest people makes the best teams. Logically, it makes sense as the best people will enable you to do great things. But what if that wasn't the case? What if there was something else that makes up great teams?\r\n\r\nDuring my career, I have been on projects surrounded by smart people, yet our achievements were mediocre. I have also been on teams with average people and we were a raving success! How could that be? What were we missing that made some teams so wildly successful, yet others were average? It was those questions that made me embark on my leadership journey to try and discover the secret to successful teams.\r\n\r\nIn this talk, we'll discuss what chickens and submarines can teach you about creating great teams. We'll go through some approaches you can take, some hard truths that we learnt along the way and lastly you will get some first-hand experiences from the trenches.",
+              "startsAt": "2019-08-03T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "30620f36-9e7d-45a7-8cc3-236665fb4b77",
+                  "name": "Mauro Da Silva"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T10:25:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1025-morning-tea",
+              "title": "Morning tea",
+              "description": null,
+              "startsAt": "2019-08-03T10:25:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T10:55:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "f8967843-c437-4a90-9242-fac45c4ea1a6",
+              "title": "GraphQL, gRPC or REST? Resolving the API Developer's Dilemma",
+              "description": "GraphQL, gRPC, REST and WebHooks are among a bewildering array of technologies and architectural styles that are available to API developers today. Presented with such myriad options, how can we be confident of making an appropriate decision for the problem at hand? In search of guidance, developers often turn to online communities. This can exacerbate the problem as discussions about API styles often descend into statements about the superiority of one approach over another being presented as universal truths. Such comments invariably earn emotive rebuttals that also lack sufficient nuance. The result of such exchanges is increased confusion and uncertainty. Join me on a tour of these API styles where we will cut through this noise, demonstrate where each style shines (plus where they don't!) and ultimately resolve this dilemma of choice.\r\n\r\nIn this session we'll take an in-depth look at API design; the best practices that have evolved; the game changing supporting technologies that are now available including HTTP/2; and most importantly what you need to do to deliver a world class developer experience:\r\n\r\n- How to determine the suitability of an API style for your application context. Don't be a victim of technology hype!\r\n- What is required to support graceful evolution of the API contract including the potential implications of both Hyrum's Law and the Law of Implicit Interfaces\r\n- Understand the supporting toolchains and technologies that dovetail with each API style.\r\n- The importance of treating your API as a product with an unwavering focus on improving the ease of consumption for your clients.\r\n\r\nBy the end of the session, you will not only understand the concepts underpinning these various API styles but also have the knowledge to put them into practice. If you want to take to your API design expertise to the next level, then this is the session for you. See you there!",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "9b917d43-896c-4b21-a5c9-5da683c7a60b",
+                  "name": "Rob Crowley"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "cea40511-0eeb-4ac8-8c1e-098a966f7314",
+              "title": "NLP for fun & business - AI at your fingertips",
+              "description": "Do you want to know what is the connection between customer service, Game of Thrones and AI so powerful that it was forbidden from being released to the public?\r\n\r\nNatural Language Processing (NLP) is the art of extracting information from unstructured text and it’s one of the most exciting branches of AI. Written data is ubiquitous  and making sense of it has become a superpower. We want to invite you to join in the fun.\r\n \r\nIn this talk we’ll explore the main building blocks of natural language processing algorithms, and show a practical example of how topic modelling can be used to better understand your customers, and the benefits of its use. \r\n\r\nYou will walk out with the main ingredients to dive into the NLP world and a clear business use, you can put into action. \r\n",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "d43e32ce-eefb-40a6-a635-15a227104f71",
+                  "name": "Diana MozoAnderson"
+                },
+                {
+                  "id": "dcbe0bfe-d22c-4427-b43b-a2d13d2f2adc",
+                  "name": "Denis Lapchev"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "643434fc-64d5-49ba-a1d8-848a7570b6fa",
+              "title": "Coding in Interviews",
+              "description": "Have you ever had to write code in an interview? Did you @#$* your pants? Is it even a good idea to make people code in such a high pressure environment? In this session I’ll aim to address these questions and provide a basic methodology to help guarantee success in your next coding interview!",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "30e2d7c2-bdfd-4d08-8c7d-4596d25d5bec",
+                  "name": "James Miles"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "df03352d-b177-420d-b66a-b1c174e3e0a3",
+              "title": "CSS Grid - What is this Magic?!",
+              "description": "We’ve all heard a lot in the last year about a new advancement in the world of CSS, called CSS Grid. Starting off at whispers, we’re now starting to hear it as a deafening roar as more and more developers write about it, talk about it, share it and start using it. In the world of front end, I see it everywhere I turn and am excited as I start to use it in my own projects.\r\n\r\nBut what does this new CSS specification mean for software developers, and why should you care about it? In the world of tech today, we can do so many amazing things and use whatever language we choose across a wide range of devices and platforms. Whether it’s the advent of React and React Native, or frameworks like Electron, it’s easier than ever to build one app that works on multiple platforms with the language we know and work with best. The ability to do this also expands to styling apps on any platform using CSS, and therefore being able to utilise the magical thing that is\r\nCSS Grid.\r\n\r\nThe reason CSS Grid is gaining so much attention, is because it’s a game changer for front end and layouts. With a few simple lines of code, we can now create imaginative, dynamic, responsive layouts (yep, I know that’s a lot of buzz words). While a lot of people are calling this the new ‘table layout’, grid gives us so much more, with the ability to spread cells across columns and rows to whatever size you choose, dictate which direction new items flow, allow cells to move around to fit in place and even tell certain cells exactly where they need to sit.\r\n\r\nWhile there is so much to worry about when developing an app, CSS Grid means that you can worry less about building the layout on the front end, and more about making sure the back end works well. Let me show you how the magic works.",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "a8d5d307-54a8-4ef6-a5de-d4cce2a950e8",
+                  "name": "Amy Kapernick"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "b446c945-6210-4b56-bc78-772347060a5b",
+              "title": "DesignOps - How to get ideas out faster",
+              "description": "In this talk I will be discussing how Designers and Developers can work together to get ideas into their customer's hands as quickly as possible, so that they can be used, measured and improved. \r\n\r\nProduct testing will let you know if your customers 'can' use your product, but it will not tell you if they 'will' use your product. These two things are very different. We need to get ideas out quickly and start monitoring and measuring the outcomes.\r\n\r\nTechniques like 'Dual Track Delivery' and 'Designing your backlog' can help multi-capability teams get ideas into the live environment quickly and I will be discussing how they work and the risks you need to be aware of.",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "99257575-ddae-425b-bfc5-9f4ca68e0ebb",
+                  "name": "Kristy Sachse"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "2fff2f0e-7f55-4a26-bf15-7537a6c3f700",
+              "title": "How do you apply Agile on a solo project?",
+              "description": "Have you ever been in a situation where you had to develop alone? Have you started a side project and didn't go well? Agile methodologies always talk about teams and how to get the best out of the project based on different ceremonies and the interaction between teams. It rarely mentions what you should do when you are on a solo gig. Could applying agile practices save the project? Could you apply agile while you are working in a solo capacity?\r\n\r\nDuring my journey, I share the pain with you and I have been in the same situation many times. I have started many side-projects and worked on many solo projects. It wasn't easy to apply Agile and focus on delivery. Yet, while focusing on success, I found my way to Agilify my solo gigs and discovered why my side-projects were not successful. Through many gigs and amplifying the feedback, I have managed to \"Agilify\" any one-person show project and it helped me delivering better and faster with great success.\r\n\r\nBy the end of the session, you will have the hard-learned lessons as takeaways which make your solo or side project much easier and more fun from now on. Despite not being an Agile coach, I'm a developer with the right experience who could tell you how to Agilify any solo-project. I will share with you my way of applying Agile on your solo project and backed by some scars from the field.",
+              "startsAt": "2019-08-03T10:55:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c2980278-fb86-4431-b0ee-3adc04a83a6d",
+                  "name": "Mo Zaatar"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T11:40:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1140-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2019-08-03T11:40:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T11:50:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "7bb9859c-ed23-4569-b863-7b4c440b2b88",
+              "title": "Creative Coding and the JavaScript Canvas",
+              "description": "Software development is often thought of as a hard science, rather than a creative pursuit.\r\n \r\nIn this talk, I'm planning to challenge that assumption. I'll be giving a practical demonstration of how to use the JavaScript canvas to create artistic visualizations on the fly, using real time data - including human brain activity. I'll also be discussing the creative process behind making art using unconventional tools, and how we can use some of these concepts to our advantage when working with technology. \r\n \r\nNo artistic (or technical) talent is required to enjoy! ",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "33e81ddd-1212-4ecc-91d8-47d9faf2e253",
+                  "name": "Alice McCullagh"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "9c81bbdb-8898-4259-afac-0dc73ff363b5",
+              "title": "100% Remote Working - Better than you Dared to Dream",
+              "description": "You've seen seen people talking about it, even had friends doing it, but is remote working really as good as they say it is?\r\n\r\nIn August 2018 I took the plunge and discovered developer nirvana, a re-invigorated soul, and a desire to never work in open-plan offices ever again.\r\n\r\nIn this talk I'll share my experiences working 100% remotely for a company in a different time zone.  I'll cover the techniques and the tech I use (both hardware and software), the challenges I face, and the peace I have found.\r\n\r\nThis talk is for introverts who struggle in their current work situation, for developers desperate to get work done, and for people wanting to level-up at communicating.",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "0f36aee9-e973-44cc-848f-142b395c0744",
+                  "name": "Carl Scarlett"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "24ad37da-2c0b-4f5c-afde-3266217e6d80",
+              "title": "Lost in Space: Risk, Reward and Women-in-Tech",
+              "description": "Launching sideways from Animation into the rapidly expanding Tech Cosmos has been the best adventure of my life. I’ve found my people, my niche and I’ve never felt more connected.\r\n\r\nBut looking all around, this little rocket ship is not yet convinced it will be an entirely smooth-sailing journey...\r\n\r\nWhether you’re a Femme, Fabio or Face-Hugger brace yourself for a light-speed journey through the ins and outs of deciding to become a 'Woman in Tech'.\r\n\r\nIncluding learning to:\r\n-\tBurn the right Brain Fuel\r\n-\tDodge the ‘Black Hole of Burnout’\r\n-\tIdentify Aliens and Imposters\r\n-\tBuild a strong Ship Maintenance Crew\r\n-\tAnd convince the Mother Ship to keep course… no matter what it takes.\r\n\r\nI don’t have all the answers for creating a toolkit to increase diversity in tech. But I sure do have a damn good metaphor, decision-making trees, risk-calculating kittens, and plenty of space cake.\r\n\r\nSo, sit back, relax and discover why I choose to #BeHer, even if I can’t always #SeeHer.\r\n\r\n",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "b4ffd60a-0ea8-4e85-810e-4d5aec66d1b3",
+                  "name": "Caitlin Bathgate"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "3c2badde-1534-494b-a084-8ca5857d648d",
+              "title": "Cryptography: so much to learn! (If history is anything to go by.)",
+              "description": "Cryptography is all the rage, and not without reason. It's an important part of the security of all our communication. You hope your passwords are handled securely, and you assume anything you send to your bank in your online banking session is protected by encryption. \r\n\r\nGetting your head around cryptography can be daunting. There's a lot to learn. It's a fast-evolving field within science and software engineering, and encryption protocols sometimes don't even last a decade before they become obsolete (read: unsafe). But it doesn't mean you shouldn't try to learn as much as you can. \r\n\r\nIn my session, I'd like to show you what I learned about cryptography by looking at an \"ancient\" encryption/decryption tool: the German Enigma. The Germans assumed the Enigma was uncrackable, but due to problems inherent in the design and fundamental cryptographic problems, the allied forces were able to crack it. Some of the lessons learnt can (and should!) be applied to modern cryptography. \r\n\r\nYou don't need any experience or extensive knowledge around the topic of encryption to enjoy my session. ",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "960c7a10-1f78-474d-971f-dd1dd0bcfd98",
+                  "name": "Sander Huijsen"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "f3a57e6c-0325-4898-bffd-2d3040f5dee9",
+              "title": "Falling For Flutter: A web developer's journey to the app store, and how you can do the same",
+              "description": "Taking the leap from web to mobile development can be intimidating. There are countless tools and frameworks competing for your attention, it can be hard to know where to begin. You may be familiar with React Native, Cordova or Xamarin - but have you considered Flutter?\r\n\r\nFlutter is a cross-platform UI framework created by Google. With a delightful developer experience and a focus on polished, performant UI, Flutter provides a refreshing alternative for cross-platform app development.\r\n\r\nThis is the story of how I fell in love with Flutter, how it helped me achieve my goals, and how it could help you do the same. We will talk about what makes Flutter different from the alternatives, play with some code, and hopefully inspire you to pursue the idea that you wrote on a napkin that one time.",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "ca6983aa-e2d1-4431-92f6-cca396cbb4ff",
+                  "name": "Jacob Impson"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "adbcf783-1ab2-456b-ba41-1041f139e3f2",
+              "title": "How to define a chatbot personality",
+              "description": "Chatbots have a voice, so they need a personality because even if one isn't defined, users will assume one.  In this talk I will cover some methods to define and build chatbot personalities that are more relatable, believable and relevant to users and represent your brand appropriately.",
+              "startsAt": "2019-08-03T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "f8245dfa-f6d4-4abc-88f2-f7b741a12c15",
+                  "name": "Marieke Lunel"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T12:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1210-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2019-08-03T12:10:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T12:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "9b7efb7a-64e0-41ac-9439-f65a662147da",
+              "title": "Building Great Teams",
+              "description": "How do you build your dream team and ensure it continues to thrive? \r\n\r\nIn this talk I will run through the life cycle of growing, developing and retaining a great team. Starting with strategies to create a great culture within your existing team, tips for interviewing to ensure you hire the right people and lastly practical ways to manage or influence behaviour and have \"difficult\" conversations to ensure you keep a great team!\r\n\r\nThis talk is aimed at team leads / tech leads / senior developers / and anyone who is going to be involved in this life cycle. ",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "0901be27-7de0-43f2-92f0-7c5691a3b9f8",
+                  "name": "Donna Edwards"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "6d6553c0-b678-434d-b94e-c46fe77c86eb",
+              "title": "Forget your passwords with the Web Authentication API",
+              "description": "Passwords are hard. Data breaches frequently expose poor security practices, proving that, as an industry, we're not very good at this. As developers have become more aware of these challenges, we've tried to offload password management to \"the big guns\", making our lives easier, but what about our users? From confusing or ineffective password complexity restrictions to password fields you can't paste into, it's no wonder so many people find one password and stick with it.\r\n\r\nThe Web Authentication API (WebAuthn) allows you to build passwordless authentication or two factor authentication into your web applications seamlessly in the browser. Using an asymmetric key pair where the public key is sent to a server, and the private key stored securely on your device, your secrets are never sent over the internet, greatly reducing the risk of phishing attempts.\r\n\r\nThis talk will provide an introduction to WebAuthn, outlining the benefits, tradeoffs, and future of this new authentication protocol. Through a code demonstration, you will see how to build an experience that puts control over their credentials (literally) back into the hands of your users.",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "88a6e76d-7051-4f1c-a057-71fd76edf249",
+                  "name": "Ben Lowry"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "0bcae524-eb87-4080-b189-ab5c7d5ad5fa",
+              "title": "Design: 25 lessons from 25 years",
+              "description": "What's this about?\r\n \r\nFrom industrial Northern 90's England to sunny 21st Century Perth - starting, growing and steering design teams through thick, thin and just plain weird - there's 25 years of Nick’s experiences to be shared! Tales of woe, some unlikely successes, many leaps of faith and a few poignant reflections might just strike a note with and inspire those leading or aspiring to become a design, UX or software team leader.\r\n \r\nHow will this session run?\r\n \r\nThis won't be a presentation! We'll host a lively interview to surface and share tangible take outs, relayed through stories of starting out, succeeding, failing and leading.\r\n \r\nWhat will I get out of it?\r\n \r\nBeyond your sublime technical skills, learning how to work with people is foundational to your career. More than ever we're carving our own destiny, so through a series of reflections, anecdotes, projects and people experiences, you'll (hopefully!) come away armed with some new tools to help you navigate your career path.\r\n \r\nBetween them Nick and Jonathon have years of industry experience across many sectors. The deck will be shared for all, and Nick will be happy to elaborate, coach or otherwise share more throughout the event and beyond.\r\n",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "bbb3e32d-94f5-450c-8f32-6ee7a6cd1258",
+                  "name": "Nick Leigh"
+                },
+                {
+                  "id": "02477e75-f69d-4942-a71c-2ec85fa8e3e8",
+                  "name": "Jonathan Steingiesser"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "5aba6e83-cfd9-4114-af80-f28de931d8c2",
+              "title": "Finding a Needle in a Call Stack - Intro to Distributed Tracing",
+              "description": "Microservices have transformed the way we think about software architecture and design. They enable developers to rapidly extend application functionality in the form of additional services, each of which can be scaled and deployed independently. Many highly successful software companies such as Netflix, Amazon, and Airbnb, have thousands of interconnected services which form the foundation of their products. These services often communicate over HTTP - passing messages between each other, synchronously and asynchronously, sometimes via message queues or brokers. \r\n\r\nOf course, none of the benefits of microservices come without a cost. Networks are unreliable, and correlating thousands or millions of log entries between services can quickly become unmanageable. Therefore, understanding the source of an issue can be like finding a needle in a haystack. This is where distributed tracing comes in! Distributed tracing is the process of tracking requests through their lifetime within a complex distributed system, and has become a critical tool for debugging and understanding microservices.\r\n\r\nIn this session we will explore the basics of distributed tracing. We'll then take a look at the OpenTelemetry (formally OpenTracing) standard - a vendor neutral framework for distributed tracing instrumentation. Finally, we'll take a hands-on look at distributed tracing in action using Jaeger, a popular open source distributed tracing tool which is part of the Cloud Native Computing Foundation. By the end of this session I hope you will not only have a good understanding of distributed tracing, but will be equipped with the knowledge and inspiration to introduce it within your own applications.",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "786c1488-5184-4e18-be44-87bf2ab9ba60",
+                  "name": "Josh Michielsen"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "fd0518e0-a52c-44dd-84fb-61ce59c3cdb5",
+              "title": "Demystifying AWS Security Services",
+              "description": "Are you using AWS? Are you aware of the difference between Trusted Advisor, Config, Macie and Guard Durty? Are you familiar with what each of those services do and how to use them? Worry no-more, this talk will skill you up with major AWS security services and show you how you can apply them to secure your AWS workloads today.",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "27bea4e1-48f7-439f-adbd-babf45209234",
+                  "name": "Even Zhang"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "70537fd7-4e49-4100-97ee-ce79c71545d6",
+              "title": "Building Serverless APIs with Azure Functions and C#",
+              "description": "Azure Functions allow us to run small pieces of code without having to be concerned about the underlying infrastructure.\r\nBy using a serverless model, we only pay for the time that our code runs and Azure takes care of scaling resources when we need it to. This means that as developers, all we need to do is focus on our APIs business logic\r\n\r\nIn this session, I'll talk about how you can use Azure Functions to create endpoints using built-in HTTP triggers and bindings that\r\nthat allow you to connect to a variety of data sources and build APIs that scale. \r\nI'll also demo how you can use Proxies to specify endpoints to other resources, create OpenAPI definitions for your serverless APIs and how you can consumer your APIs\r\n\r\nBy the end of this session, you'll know how to use Azure Functions to develop, test and deploy serverless APIs to Azure.",
+              "startsAt": "2019-08-03T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "873dddaf-e22a-4c5f-8927-91861348733a",
+                  "name": "Will Velida"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T13:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1305-lunch",
+              "title": "Lunch",
+              "description": null,
+              "startsAt": "2019-08-03T13:05:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T14:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "a6eb8bb3-6086-4cb3-b024-d0a6c4dd3de3",
+              "title": "Every good outage starts with a queue",
+              "description": "Queues are bad, but software developers love them. The problem with queues is they are binary, either they're full or empty. You'd think they would magically fix any overload or failure problem. But they don't, and bring with them a bunch of their own problems.\r\n\r\nHear a war-story about how naive assumptions and over-optimism caused a near week-long ongoing outage.\r\n\r\nLearn about some of the reasons why queues are not a one-size fits all solution, and how there is no such thing as a good queue, only one that is absolutely necessary. Queues are in more places than you think, and they can bite you in ways that you wont expect.\r\n\r\nAre you building event sourced systems with process managers and read model populators? Are you working with serverless? This session is for you.",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "097cbfd1-1926-4953-a56a-79e3d8aeebf3",
+                  "name": "Macklin Hartley"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "a577e148-b1d7-42e1-a424-5d0db3107ae2",
+              "title": "The Dark Side of Agile: Burnout and You",
+              "description": "Have you ever experienced a time where overwhelming expectations have led to extreme stress that has  impacted your health and well-being? Burnout and work-related stress is becoming all too prevalent in our industry. This, coupled with an unfortunate stigma around the topic, is having a detrimental impact on our overall well-being. The complexities of people and technology are making it increasingly difficult to estimate and frame projects in a true agile sense, consequently contributing to the increase of burnout in our industry.\r\n \r\nThis presentation will focus purely on solutions that are specific to burnout. Key solutions being; managing work-life balance, coupled with the ability to identify early indicators for yourself and those around you.  If we equip ourselves with knowledge of burnout, can we remove the stigma around it so that people can call it out early and feel safe to do so?",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c605cad0-1711-4efc-9979-3151ef8873c9",
+                  "name": "Siobhan Avenell"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "2fcea05c-96dc-4802-b8a9-14bcfee01a64",
+              "title": "Putting the fast in Fast.Ai - Machine Learning models in 15 mins",
+              "description": "Machine learning is enabling computers to learn things which are not explicitly programmable. It’s complex – involving equivalent amounts of maths and computer science. It’s daunting and often hard to figure out where to start. Fast.Ai was created with the aim of helping developers and non-technical SME’s build their own machine learning models. It provides a top-down approach which abstracts away the need for elaborate coding and complex theoretical concepts. Join me in an end to end demonstration of how to create a 95% accurate image classification model from scratch, using the Fast.Ai library. An ideal introduction to testing the waters in machine learning. ",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c22be45b-8310-438f-8def-944b7230b403",
+                  "name": "Akanksha Malik"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "97792db7-0c73-4fee-91c3-00d7fe002540",
+              "title": "Mobile App Development - Crossing the platforms, dotting the notation",
+              "description": "Mobile app development has come a long way since it first burst onto the scene. In this talk we’ll look at the lay of the land, focussing largely on the current landscape and the tools which are available to the modern mobile developer.\r\n\r\nAs developers we currently have many different routes to realise our applications on mobile devices. From native languages, cross platform development tools such as React Native and the new “app like”, Progressive Web Apps.  We’ll delve into exactly what these differing platforms are, their strengths and weaknesses and in which circumstances each may be appropriate to use.",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "3b4ab42e-02f9-4c74-9729-47ed14422e48",
+                  "name": "Dave Cumming"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "fa861d2a-9597-4a98-8510-fc0dc0b400e6",
+              "title": "Breaking Up With Redux: Client State Management with Apollo and GraphQL",
+              "description": "Do you love React but have been finding yourself spending an excessive amount of time battling Redux? \r\n\r\nIn this talk, I will walk you through how you can manage your state in React using GraphQL with Apollo Client, in a simple and maintainable way. \r\n\r\nI will go over some of the basics of GraphQL and how it can be implemented in a React app using the same syntax we already know and love to use in our GraphQL API.  \r\n\r\nAnd then I will share some of my personal experiences with it.",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "9d711efc-7e0f-497c-b77d-34d89e030126",
+                  "name": "Inaie Ignacio"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "83b6a640-935b-4e5e-b251-81c3d69c0129",
+              "title": "How to survive the stakeholder battle for features",
+              "description": "Imagine you're tasked with building a website for a large organisation that has many different products, services and customer types.  Over 100 stakeholders have been identified, many of whom have their own unique KPIs, goals, and personal agendas. How can you prioritise all the required features and content while still gaining acceptance and buy-in from all 100+ stakeholders?  \r\nIn this session, I will share a stakeholder engagement technique and a feature prioritisation tool that we have used successfully on several large projects at various organisations.",
+              "startsAt": "2019-08-03T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "94fa2dce-1143-44b9-bbbf-61bc40d9100c",
+                  "name": "Trent Cain"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T14:25:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1425-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2019-08-03T14:25:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T14:35:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "b2795175-d14d-4090-a62e-153d4534b916",
+              "title": "Quantum Computing 101: A gentle introduction to the world of quantum computing!",
+              "description": "What is all this talk about quantum computers and quantum computing?  Will I have to learn a new programming language?  What does it mean for our enterprise apps?  Our startup?  My games?  My job?\r\n\r\nQuantum computing is a fascinating topic that will change the world of computing and, probably, even our world.  It can be technical but don’t worry, we will make it easy to understand what you need to know.  \r\n\r\nThis talk will give a clear and simple introduction to quantum computing and explain the current state of play, services that are currently available, and what we can expect in the future, e.g. how it will affect IT jobs.\r\n\r\nIt’s all from a developer’s perspective and for developers but it will be understandable by anyone interested.  \r\n\r\nWith an Honours Degree in Theoretical Physics, a PhD in Computer Science and Software Engineering, and many years experience in IS an IT, I have the knowledge to be able to bridge the gap between the physics, computing, and software to help you understand Quantum Computing. ",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c6f0950f-dbf2-4a9c-a667-c78f9cd99f26",
+                  "name": "Ashley Aitken"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "Theatre",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "RR5",
+            "index": 1,
+            "session": {
+              "id": "80721e7b-b082-4b50-9a9d-136d3054b7b0",
+              "title": "Is it done yet?  (How about now?)",
+              "description": "No matter how utopian your agile working environment, if you're building a commercial product, at some stage you will be asked the inevitable question - When will it be done? This talk will provide you with tools and techniques to use when you hear your manager say \"We just need to get better at estimating\".  (Spoiler alert: that's not the answer)  If you have ever wished for a crystal ball to help you predict the team's future, this talk is for you!",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "43b68922-273f-4643-88bc-12492716d494",
+                  "name": "Michele Playfair"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "RR5",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M6",
+            "index": 2,
+            "session": {
+              "id": "94a2f4b3-bd6e-4eb6-9917-baa3bcb3d41f",
+              "title": "How to Raise a Robot Army over #100DaysofCode",
+              "description": "A pythonic introduction to building bots when you are starting from *scratch*.  In this talk we'll look at how they work, what they can be used for, and see some demo's to play with.\r\n\r\nImagine you have a 100 days and your only directive is that you **must** spend at least an hour a day in the code. Could you build an army of bots and take over the world?\r\n \r\nRecently I've taken part in the #100DaysOfCode Challenge, which is designed to help beginners get started with meaningful and fun activities, even when they have no previous knowledge.\r\n \r\nTogether we'll cover the basics of bot building and go under the hood to look at the code and the basic architecture that holds it together. We'll examine some of the bots you can build and by the end of the session you'll be able to start building your own robot minions.\r\n",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "f74543ea-f9c1-445e-b504-0f5ee5ec07a6",
+                  "name": "Michelle @ Microsoft"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M6",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M7",
+            "index": 3,
+            "session": {
+              "id": "f548e402-d04d-4318-a8c6-d879b3f11d37",
+              "title": "Hypothesis-Driven Development: Why you need online controlled experiments to scale",
+              "description": "Simply put, hypothesis-driven development (HDD) is the process of stating the desired impact of a new product feature, and then measuring the actual impact of that feature on real users, often using online controlled experiments, commonly called A/B tests.  \r\n\r\nIn a world where the opinions of even expert product and UX people is wrong as often as it is right, the HDD approach to product development is important for consumer-facing businesses of any size. \r\n\r\nBut we'll make the case that as a consumer-facing online business scales to thousands of daily-active-users, HDD combined with extensive A/B testing becomes absolutely crucial in growing a business to the next level.",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "b77495c6-85ab-4543-b3c0-39f0d3a2037c",
+                  "name": "Tommy O'Dell"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M7",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 4,
+            "name": "M8",
+            "index": 4,
+            "session": {
+              "id": "00311b92-6c21-47a8-b8d2-af325581d6f9",
+              "title": "JavaScript and AI, no you're not dreaming",
+              "description": "Like fire which was stolen from Mudhens, Artificial Intelligence has been kept away from front end developers for ages.\r\n\r\nHowever, things has changed and doing AI is as easy as installing a npm package. That's why I've decided to open your mind to what's possible today and a few examples which can even be executed in the browser.\r\n\r\nYou don't need to have any background in AI or Maths, just a curious mind and a willingness to try.",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "f6407cdc-f1e5-4543-a212-12cbd5be2885",
+                  "name": "Yaser Adel Mehraban"
+                }
+              ],
+              "categories": [],
+              "roomId": 4,
+              "room": "M8",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 5,
+            "name": "M9",
+            "index": 5,
+            "session": {
+              "id": "35e1174f-8d50-48db-a410-d53c3c8ddf73",
+              "title": "Kubernetes vs. Serverless - The Great Cloud Native Debate",
+              "description": "How do you pick your platform for development in 2019? Using real-world examples taken from projects all over Perth, together we'll build a framework for comparing the merits of a Kubernetes vs. Serverless approach.\r\n\r\nWe'll cover aspects such as:\r\n- Security\r\n- Cost\r\n- Performance\r\n- Learning Curve\r\n- Development Experience\r\n- Operations",
+              "startsAt": "2019-08-03T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "b9641b37-fb0d-4531-abe0-e5a712391824",
+                  "name": "Josh Armitage"
+                }
+              ],
+              "categories": [],
+              "roomId": 5,
+              "room": "M9",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T15:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1520-afternoon-tea",
+              "title": "Afternoon tea",
+              "description": null,
+              "startsAt": "2019-08-03T15:20:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T15:50:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1550-prize-draw",
+              "title": "Prize Draw",
+              "description": null,
+              "startsAt": "2019-08-03T15:50:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T16:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "4c019f6f-c312-4bb9-8024-3352f6034d6e",
+              "title": "Locknote: You. Are. Awesome.",
+              "description": "You may not realize it, but you are awesome. You have the power to change the world. Regardless of your job title or amount of experience, I firmly believe you have amazing potential to impact the people around you in powerful and meaningful ways. My goal is to help you realize the awesomeness you already possess and be encouraged to unleash it!",
+              "startsAt": "2019-08-03T16:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": true,
+              "speakers": [
+                {
+                  "id": "aa61fde1-dee9-45d4-b812-5110ba3b1cb9",
+                  "name": "David Neal"
+                }
+              ],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T17:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1705-thank-yous-and-wrap-up",
+              "title": "Thank yous and wrap up",
+              "description": null,
+              "startsAt": "2019-08-03T17:05:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2019-08-03T17:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "Theatre",
+            "index": 0,
+            "session": {
+              "id": "service-1710-afterparty",
+              "title": "Afterparty",
+              "description": null,
+              "startsAt": "2019-08-03T17:10:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -26,7 +26,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         .map((conf) => ({
             year: conf.year,
         }))
-        .sort((a, b) => parseInt(b.year) - parseInt(a.year))
+        .sort((a, b) => parseInt(a.year) - parseInt(b.year))
 
     return data(
         {
@@ -87,11 +87,11 @@ export default function Sponsors() {
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     return (
-        <styled.div padding="4" color="white">
+        <styled.div padding="4" color="white" textAlign="center">
             <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
                 View Previous Conferences
             </styled.h2>
-            <styled.div display="flex" flexWrap="wrap" gap="4">
+            <styled.div display="flex" flexWrap="wrap" gap="4" justifyContent="center">
                 {conferences.map((conf) => (
                     <styled.a key={conf.year} href={`/sponsors/${conf.year}`} color="text.highlight">
                         <styled.span fontSize="lg">{conf.year}</styled.span>

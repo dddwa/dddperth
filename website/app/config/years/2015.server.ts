@@ -374,83 +374,6 @@ export const conference2015: ConferenceYear = {
         "name": "Side Room",
         "sessions": [
           {
-            "id": "registration",
-            "title": "Registration",
-            "description": null,
-            "startsAt": "2015-08-29T08:30:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "welcome-and-housekeeping",
-            "title": "Welcome and housekeeping",
-            "description": null,
-            "startsAt": "2015-08-29T09:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "599fc187-2f4a-49d0-8531-2634467fb8f0",
-            "title": "What happens when...?",
-            "description": "Starting from an innocent question - what happens when you type google.com into a browser? - we'll explore how complex our field of computing has become. It'll be a ride through acronym soup and rarely seen debugging experiences, as we peel back layer upon layer of magic. You'll leave this talk with a reinvigorated passion for complexity and problem solving. Or, you'll want to rage quit and take up horticulture.",
-            "startsAt": "2015-08-29T09:15:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Tatham Oddie",
-                "name": "Tatham Oddie"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "morning-tea",
-            "title": "Morning tea",
-            "description": null,
-            "startsAt": "2015-08-29T10:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "799ef773-81c2-4c58-b942-64a1152cbf2e",
             "title": "How Git Corrupts The Mind",
             "description": "Lots of companies are adopting Git, and for many developers they're quite content to just use the basics of Git when they transition away from whatever version control system they used previously. But why stop there?\n\nIn this talk I want to walk through some of the concepts of Git and distributed version control, talk about what' happening under the hood, and show how working with Git can changes your workflow radically - for the better.",
@@ -467,24 +390,6 @@ export const conference2015: ConferenceYear = {
             "categories": [],
             "roomId": 1,
             "room": "Side Room",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2015-08-29T11:05:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -515,24 +420,6 @@ export const conference2015: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "lunch",
-            "title": "Lunch",
-            "description": null,
-            "startsAt": "2015-08-29T11:55:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "5a2911ec-207d-45ca-a6fa-11892bb92bbd",
             "title": "Cordova and Xamarin - Mobile dev from the trenches",
             "description": "We've all heard of the wonders of cross platform mobile development before. Xamarin and Cordova are well known in our industry now, but are they really silver bullets? With so many ways to develop mobile apps out there, how do we make a choice and how to we avoid the common pitfalls of each of those?\n\nIn this talk, Greg James from Readify will run through Xamarin and Cordova to demystify the above statements and show you the ropes. There'll be sharing some war stories, tools, tips and tricks to get the most out of (mostly) painfree mobile development with Xamarin and Cordova.",
@@ -549,24 +436,6 @@ export const conference2015: ConferenceYear = {
             "categories": [],
             "roomId": 1,
             "room": "Side Room",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2015-08-29T13:40:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -597,24 +466,6 @@ export const conference2015: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "afternoon-tea",
-            "title": "Afternoon tea",
-            "description": null,
-            "startsAt": "2015-08-29T14:30:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "2e79c7bf-0a42-4fa2-b9c2-96963648377f",
             "title": "Microtesting: How We Set Fire To The Testing Pyramid While Ensuring Confidence",
             "description": "As seen at Yow! West.\n\nDo you want to write less tests for the same amount of confidence?\n\nDo you want to print out the testing pyramid on a dot matrix printer, take it outside and set fire to it?\n\nHow confident are you that you can survive the refactoring apocalypse without breaking your tests?\n\nAs consultants, my colleagues and I get to see how testing is performed across many different organisations and have a chance to experiment with different testing strategies across multiple projects. Through this experience, we have developed a pragmatic process for setting an initial testing strategy that is as simple as possible and iterating on that strategy over time to evolve it based on how it performs. We have also settled on a style of testing that has proved to be very effective at reducing testing effort while maintaining (or even improving) confidence from our tests.\n\nThis talk will focus on some of our learnings and we will cover the different types of testing and how they interact, breaking apart the usual practice of testing all applications in the same way, the mysterious relationship between speed and confidence, how we were able to throw away the testing pyramid (and watch it burnnnnn!!!) and a number of techniques that have worked well for us when testing our applications.",
@@ -635,83 +486,6 @@ export const conference2015: ConferenceYear = {
             "categories": [],
             "roomId": 1,
             "room": "Side Room",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "sponsor-announcements-and-prize-draw!!!",
-            "title": "Sponsor announcements and PRIZE DRAW!!!",
-            "description": null,
-            "startsAt": "2015-08-29T15:35:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "4ccb057b-c3d1-472a-8ad9-83b9f1e17c14",
-            "title": "Why Pointers Still Matter",
-            "description": "As computers continue to become faster, and programming languages more powerful and abstract, the question arises: is there still a need for the humble pointer? I will demonstrate why the answer is 'yes', and show some practical scenarios in C# where some basic pointer skills pave the way for simpler and more efficient applications on today's desktops and devices.",
-            "startsAt": "2015-08-29T16:15:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Joe Albahari",
-                "name": "Joe Albahari"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "afterparty",
-            "title": "Afterparty",
-            "description": null,
-            "startsAt": "2015-08-29T16:50:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "event-finish",
-            "title": "Event finish",
-            "description": null,
-            "startsAt": "2015-08-29T19:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -748,29 +522,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "registration",
-              "title": "Registration",
-              "description": null,
-              "startsAt": "2015-08-29T08:30:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -781,29 +532,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "welcome-and-housekeeping",
-              "title": "Welcome and housekeeping",
-              "description": null,
-              "startsAt": "2015-08-29T09:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "welcome-and-housekeeping",
               "title": "Welcome and housekeeping",
@@ -855,34 +583,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "599fc187-2f4a-49d0-8531-2634467fb8f0",
-              "title": "What happens when...?",
-              "description": "Starting from an innocent question - what happens when you type google.com into a browser? - we'll explore how complex our field of computing has become. It'll be a ride through acronym soup and rarely seen debugging experiences, as we peel back layer upon layer of magic. You'll leave this talk with a reinvigorated passion for complexity and problem solving. Or, you'll want to rage quit and take up horticulture.",
-              "startsAt": "2015-08-29T09:15:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Tatham Oddie",
-                  "name": "Tatham Oddie"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -893,29 +593,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "morning-tea",
-              "title": "Morning tea",
-              "description": null,
-              "startsAt": "2015-08-29T10:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "morning-tea",
               "title": "Morning tea",
@@ -1027,29 +704,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2015-08-29T11:05:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1121,29 +775,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "lunch",
-              "title": "Lunch",
-              "description": null,
-              "startsAt": "2015-08-29T11:55:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "lunch",
               "title": "Lunch",
@@ -1251,29 +882,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2015-08-29T13:40:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1345,29 +953,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "afternoon-tea",
-              "title": "Afternoon tea",
-              "description": null,
-              "startsAt": "2015-08-29T14:30:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "afternoon-tea",
               "title": "Afternoon tea",
@@ -1479,29 +1064,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "sponsor-announcements-and-prize-draw!!!",
-              "title": "Sponsor announcements and PRIZE DRAW!!!",
-              "description": null,
-              "startsAt": "2015-08-29T15:35:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1512,34 +1074,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "4ccb057b-c3d1-472a-8ad9-83b9f1e17c14",
-              "title": "Why Pointers Still Matter",
-              "description": "As computers continue to become faster, and programming languages more powerful and abstract, the question arises: is there still a need for the humble pointer? I will demonstrate why the answer is 'yes', and show some practical scenarios in C# where some basic pointer skills pave the way for simpler and more efficient applications on today's desktops and devices.",
-              "startsAt": "2015-08-29T16:15:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Joe Albahari",
-                  "name": "Joe Albahari"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "4ccb057b-c3d1-472a-8ad9-83b9f1e17c14",
               "title": "Why Pointers Still Matter",
@@ -1591,29 +1125,6 @@ export const conference2015: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
-            "session": {
-              "id": "afterparty",
-              "title": "Afterparty",
-              "description": null,
-              "startsAt": "2015-08-29T16:50:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1624,29 +1135,6 @@ export const conference2015: ConferenceYear = {
             "id": 0,
             "name": "Main Room",
             "index": 0,
-            "session": {
-              "id": "event-finish",
-              "title": "Event finish",
-              "description": null,
-              "startsAt": "2015-08-29T19:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "Side Room",
-            "index": 1,
             "session": {
               "id": "event-finish",
               "title": "Event finish",
@@ -1684,8 +1172,8 @@ export const conference2015: ConferenceYear = {
         platinum: [
             {
                 name: 'Bankwest',
-                logoUrlDarkMode: '/static/images/sponsors/bankwest.png',
-                logoUrlLightMode: '/static/images/sponsors/bankwest.png',
+                logoUrlDarkMode: '/images/sponsors/2015-bankwest-dark.png',
+                logoUrlLightMode: '/images/sponsors/2015-bankwest-light.png',
                 website: 'https://www.bankwest.com.au/',
                 quote: undefined,
             },
@@ -1693,15 +1181,15 @@ export const conference2015: ConferenceYear = {
         gold: [
             {
                 name: 'Readify',
-                logoUrlDarkMode: '/static/images/sponsors/readify.png',
-                logoUrlLightMode: '/static/images/sponsors/readify.png',
+                logoUrlDarkMode: '/images/sponsors/2015-readify-dark.png',
+                logoUrlLightMode: '/images/sponsors/2015-readify-light.png',
                 website: 'https://readify.net/',
                 quote: undefined,
             },
             {
                 name: 'Gooroo',
-                logoUrlDarkMode: '/static/images/sponsors/gooroo.png',
-                logoUrlLightMode: '/static/images/sponsors/gooroo.png',
+                logoUrlDarkMode: '/images/sponsors/2015-gooroo-dark.png',
+                logoUrlLightMode: '/images/sponsors/2015-gooroo-light.png',
                 website: 'https://gooroo.io/',
                 quote: undefined,
             },

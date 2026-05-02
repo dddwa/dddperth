@@ -1,4 +1,3 @@
-import { css } from '~/styled-system/css'
 import { Box, HStack, styled, VStack } from '~/styled-system/jsx'
 
 interface TalkOptionCardProps {

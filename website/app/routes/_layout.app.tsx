@@ -1,21 +1,10 @@
 import type { HeadersFunction } from 'react-router'
-import { data, useLoaderData } from 'react-router'
 import { ContentPageLayout } from '~/components/page-layout'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/_layout.app'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
-}
-
-export async function loader({ context }: Route.LoaderArgs) {
-    return data(
-        {
-            conferenceState: context.conferenceState,
-        },
-        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
-    )
 }
 
 export function meta() {
@@ -30,8 +19,6 @@ export function meta() {
 }
 
 export default function AppDownloadPage() {
-    const { conferenceState } = useLoaderData<typeof loader>()
-
     return (
         <ContentPageLayout>
             <styled.main id="content" marginX={{ base: "6", lg: "0" }}>

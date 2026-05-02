@@ -75,13 +75,13 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 }
 
 export function meta(args: Route.MetaArgs) {
-    const { data, params } = args
+    const { loaderData, params } = args
     const contentSlug = params['*']
     if (!contentSlug) {
         throw new Error('Expected contentSlug param')
     }
 
-    const { siteUrl, frontmatter } = data || {}
+    const { siteUrl, frontmatter } = loaderData || {}
     if (!frontmatter) {
         return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
     }

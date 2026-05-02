@@ -12,7 +12,6 @@ import type {
     EloResultImport,
     TalkResult,
     TalkStatisticsWithDetailsResponse,
-    ValidationRunIndex,
 } from '~/lib/voting-validation-types'
 import { getFairnessMetrics, getTalkResults, getTalkStatistics, getValidationRunById, saveTalkResults, getUnderrepresentedGroupsConfig } from '~/lib/voting-validation.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -223,9 +222,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     await requireAdmin(request)
 
     const { runId } = params
-    const conferenceState = context.conferenceState
-    const year = conferenceState.conference.year
-
     const db = context.db
 
     const formData = await request.formData()

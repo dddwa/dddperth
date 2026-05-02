@@ -1,6 +1,6 @@
 import { AppLink } from '~/components/app-link'
 import { requireAdmin } from '~/lib/auth.server'
-import { Box, Flex, styled } from '~/styled-system/jsx'
+import { Flex, styled } from '~/styled-system/jsx'
 import { AdminLayout } from '~/components/admin-layout'
 import { AdminCard } from '~/components/admin-card'
 import type { Route } from './+types/admin.content'

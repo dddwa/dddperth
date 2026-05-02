@@ -410,83 +410,6 @@ export const conference2017: ConferenceYear = {
         "name": "M6",
         "sessions": [
           {
-            "id": "registration",
-            "title": "Registration",
-            "description": null,
-            "startsAt": "2017-09-16T08:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "welcome-and-housekeeping",
-            "title": "Welcome and housekeeping",
-            "description": null,
-            "startsAt": "2017-09-16T08:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "44f64f98-53ef-4344-93f6-9d852f845ed2",
-            "title": "Five key challenges for software quality tomorrow",
-            "description": "With the advances in our industry we can build software faster and operate it cheaper while serving more platforms and solving more problems than ever before. This is not without it's complications though, this new landscape requires teams to change their approach to reduce risk and ensure quality in their software.\n\nIn this presentation, Gojko will look at five important software quality challenges facing delivery teams due to these shifting roles. He will also present some emerging ideas that will help address these challenges and inspire you to rethink your approach to testing.",
-            "startsAt": "2017-09-16T09:00:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Gojko Adzic",
-                "name": "Gojko Adzic"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "morning-tea",
-            "title": "Morning tea",
-            "description": null,
-            "startsAt": "2017-09-16T09:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "2be131c5-155d-4207-8e24-910bf50a6894",
             "title": "Modern TypeScript is amazing!",
             "description": "You think you know TypeScript? Unless you have been looking at it recently you likely have missed some of the amazing features shipped in 2.0, 2.1 and 2.2. Some of these language features exist in very few other languages and open up so many doors.\n\nIn this talk we will introduce you to TypeScript and run through a number of the latest language features including spread/rest operators which many Babel users love, Mapped Types, Generics and cover practical examples where he has been using these features to improve the code he is writing day to day.",
@@ -510,24 +433,6 @@ export const conference2017: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T11:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "74ad268f-38ad-4dc5-814a-f7a0437360d6",
             "title": "How feedback helped me get over myself",
             "description": "What happens when your view and opinions of yourself don’t match everyone else’s around you? People can start to think you’re conceited and pretentious. Feedback can help bridge that gap.\n \nThis is the story of a developer that wasn't used to being told the not-so-great things about them, and their journey in struggling and eventually embracing feedback (and getting over themselves).\n \nThis talk will take a look at feedback culture with a tongue-in-cheek storytelling and lessons learned approach. \n \nBy seeing the journey of someone who started with no exposure to feedback culture, you will learn what feedback can do for you and the impact it can have on your personal growth. You will also learn how to empower those around you with tips on how to give effective feedback.\n \nKey takeaways:\nWhat is feedback\nWhat is a feedback culture\nWhat are the benefits of feedback\nHow to ask for feedback\nHow to give effective feedback",
@@ -544,24 +449,6 @@ export const conference2017: ConferenceYear = {
             "categories": [],
             "roomId": 1,
             "room": "M6",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T11:50:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -608,24 +495,6 @@ export const conference2017: ConferenceYear = {
             "categories": [],
             "roomId": 1,
             "room": "M6",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "lunch",
-            "title": "Lunch",
-            "description": null,
-            "startsAt": "2017-09-16T12:40:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -679,24 +548,6 @@ export const conference2017: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T14:25:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "de3f62ca-fd85-43a0-865c-fd17102588bb",
             "title": "What a real sprint looks like",
             "description": "A lot of us have worked in \"agile\" teams that if we're being honest are about as agile as a rock, and a surprisingly high number of people in software really don't know what a successful agile process looks like.\n\nI want to show you a real world sprint from a mature Scrum team, exploring how they actually deliver, and how the Scrum meetings work in practice and why they're important.\n\nIf you've never seen a mature Scrum team in action before you'll get to see what a high performing one looks like, and if you're already agile you can compare and hopefully pick up some tips or share your own.",
@@ -741,83 +592,6 @@ export const conference2017: ConferenceYear = {
             "status": null,
             "isInformed": true,
             "isConfirmed": true
-          },
-          {
-            "id": "sponsor-announcements-and-prize-draw!!!",
-            "title": "Sponsor announcements and PRIZE DRAW!!!",
-            "description": null,
-            "startsAt": "2017-09-16T15:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "d06d45de-de42-44da-83eb-ea1d9d14b6cc",
-            "title": "The Campsite Rule - Leaving the Tech Industry Better than We Found It",
-            "description": "Improving the codebase for the next developer is a great goal, but what about making the industry better for the next generation? In this talk, Kris will debunk some of the damaging myths and ideas we’re all guilty of perpetuating, the ones that lead to stress and burnout. Fortunately there is an antidote - becoming a mentor! You’ll learn how you can change your own behaviour and thinking, be more supportive to those just starting out, and feel more engaged and inspired in your work - all with minimal effort. We all have a responsibility to make things just a little bit better for those who come after us.",
-            "startsAt": "2017-09-16T16:20:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Kris Howard",
-                "name": "Kris Howard"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "thank-yous-and-wrap-up",
-            "title": "Thank yous and wrap up",
-            "description": null,
-            "startsAt": "2017-09-16T17:05:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "afterparty",
-            "title": "Afterparty",
-            "description": null,
-            "startsAt": "2017-09-16T17:10:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
           }
         ],
         "hasOnlyPlenumSessions": false
@@ -826,83 +600,6 @@ export const conference2017: ConferenceYear = {
         "id": 2,
         "name": "RR4",
         "sessions": [
-          {
-            "id": "registration",
-            "title": "Registration",
-            "description": null,
-            "startsAt": "2017-09-16T08:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "welcome-and-housekeeping",
-            "title": "Welcome and housekeeping",
-            "description": null,
-            "startsAt": "2017-09-16T08:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "44f64f98-53ef-4344-93f6-9d852f845ed2",
-            "title": "Five key challenges for software quality tomorrow",
-            "description": "With the advances in our industry we can build software faster and operate it cheaper while serving more platforms and solving more problems than ever before. This is not without it's complications though, this new landscape requires teams to change their approach to reduce risk and ensure quality in their software.\n\nIn this presentation, Gojko will look at five important software quality challenges facing delivery teams due to these shifting roles. He will also present some emerging ideas that will help address these challenges and inspire you to rethink your approach to testing.",
-            "startsAt": "2017-09-16T09:00:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Gojko Adzic",
-                "name": "Gojko Adzic"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "morning-tea",
-            "title": "Morning tea",
-            "description": null,
-            "startsAt": "2017-09-16T09:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
           {
             "id": "c09518f6-58a0-4cbc-84ba-87b862d6f514",
             "title": "Stop Mocking – start testing.",
@@ -927,24 +624,6 @@ export const conference2017: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T11:00:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "d1bb10e3-c2af-4db7-93fc-dcbfe03d9b7b",
             "title": "Flying Solo - lifehack your way to a pants-optional workplace",
             "description": "Many developers harbour the dream of throwing off the shackles of corporate serfdom and experiencing the glorious freedom of self-employment. So is the grass really greener on the other side?\n\nAs a developer who took the plunge a few years ago, I can offer some honest feedback and practical advice on things like:\n* what to consider when assessing whether self-employment is right for you.\n* the different software development business models, the pros & cons of each.\n* setting up a business/company - which structure is best.\n* knowing when to quit your job.\n* pricing yourself correctly.\n* sales & marketing - critical activity or soul destroying waste of effort?\n* why on earth can’t people just pay you on time.\n* what to say to friends and relatives who think you don’t do anything all day.\n* generally everything else that I know now, that I wish I knew then.\n\nAttendees will either walk out with a solid plan of attack for starting their own business, or thankful they have a job and don’t have to deal with that rubbish.",
@@ -961,24 +640,6 @@ export const conference2017: ConferenceYear = {
             "categories": [],
             "roomId": 2,
             "room": "RR4",
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T11:50:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
             "liveUrl": null,
             "recordingUrl": null,
             "status": null,
@@ -1032,24 +693,6 @@ export const conference2017: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "lunch",
-            "title": "Lunch",
-            "description": null,
-            "startsAt": "2017-09-16T12:40:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "83ce0668-9d21-41bb-802a-50a810abfa9a",
             "title": "Attraction and retention strategies for Women in tech",
             "description": "Women make up 31% of the Australian IT workforce with only 14% in leadership roles; this is a statistic we can and should improve. \n\nResearch shows that organisations with equal gender in leadership roles perform better and employee satisfaction of both men and women are higher. Most organisations have goals and are trying to improve these statistics but its proving to be a big challenge.\n\nSo get your notepad ready because I will give you some practical tips on how and where to attract more females to your organisation along with the insider tools to help retain and develop them.\n\nYou don’t need to be a manager to make a difference and help create a successful gender balanced organisation.",
@@ -1096,24 +739,6 @@ export const conference2017: ConferenceYear = {
             "isConfirmed": true
           },
           {
-            "id": "changeover",
-            "title": "Changeover",
-            "description": null,
-            "startsAt": "2017-09-16T14:25:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
             "id": "ff7521d0-7513-404a-a9e8-d506e6547e5d",
             "title": "Atari 2600 for a developer in 2017",
             "description": "Atari, it was out in 1977, it gave to many of us our first glance of home video games. How did they work? I mean, I am pretty sure there was not C# in 1977!\nVote and come to my talk to listen to a short story of hardcore development (no, seriously, hardcore), inspiring engineering tales and a moment to go full geek into the overlooked marriage between software and hardware.\nI promise no assembler knowledge required... Well, mostly.",
@@ -1153,83 +778,6 @@ export const conference2017: ConferenceYear = {
             "status": null,
             "isInformed": true,
             "isConfirmed": true
-          },
-          {
-            "id": "sponsor-announcements-and-prize-draw!!!",
-            "title": "Sponsor announcements and PRIZE DRAW!!!",
-            "description": null,
-            "startsAt": "2017-09-16T15:45:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "d06d45de-de42-44da-83eb-ea1d9d14b6cc",
-            "title": "The Campsite Rule - Leaving the Tech Industry Better than We Found It",
-            "description": "Improving the codebase for the next developer is a great goal, but what about making the industry better for the next generation? In this talk, Kris will debunk some of the damaging myths and ideas we’re all guilty of perpetuating, the ones that lead to stress and burnout. Fortunately there is an antidote - becoming a mentor! You’ll learn how you can change your own behaviour and thinking, be more supportive to those just starting out, and feel more engaged and inspired in your work - all with minimal effort. We all have a responsibility to make things just a little bit better for those who come after us.",
-            "startsAt": "2017-09-16T16:20:00",
-            "endsAt": null,
-            "isServiceSession": false,
-            "isPlenumSession": true,
-            "speakers": [
-              {
-                "id": "Kris Howard",
-                "name": "Kris Howard"
-              }
-            ],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "thank-yous-and-wrap-up",
-            "title": "Thank yous and wrap up",
-            "description": null,
-            "startsAt": "2017-09-16T17:05:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
-          },
-          {
-            "id": "afterparty",
-            "title": "Afterparty",
-            "description": null,
-            "startsAt": "2017-09-16T17:10:00",
-            "endsAt": null,
-            "isServiceSession": true,
-            "isPlenumSession": true,
-            "speakers": [],
-            "categories": [],
-            "roomId": null,
-            "room": null,
-            "liveUrl": null,
-            "recordingUrl": null,
-            "status": null,
-            "isInformed": true,
-            "isConfirmed": true
           }
         ],
         "hasOnlyPlenumSessions": false
@@ -1261,52 +809,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "registration",
-              "title": "Registration",
-              "description": null,
-              "startsAt": "2017-09-16T08:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "registration",
-              "title": "Registration",
-              "description": null,
-              "startsAt": "2017-09-16T08:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1317,52 +819,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "welcome-and-housekeeping",
-              "title": "Welcome and housekeeping",
-              "description": null,
-              "startsAt": "2017-09-16T08:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "welcome-and-housekeeping",
-              "title": "Welcome and housekeeping",
-              "description": null,
-              "startsAt": "2017-09-16T08:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "welcome-and-housekeeping",
               "title": "Welcome and housekeeping",
@@ -1414,62 +870,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "44f64f98-53ef-4344-93f6-9d852f845ed2",
-              "title": "Five key challenges for software quality tomorrow",
-              "description": "With the advances in our industry we can build software faster and operate it cheaper while serving more platforms and solving more problems than ever before. This is not without it's complications though, this new landscape requires teams to change their approach to reduce risk and ensure quality in their software.\n\nIn this presentation, Gojko will look at five important software quality challenges facing delivery teams due to these shifting roles. He will also present some emerging ideas that will help address these challenges and inspire you to rethink your approach to testing.",
-              "startsAt": "2017-09-16T09:00:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Gojko Adzic",
-                  "name": "Gojko Adzic"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "44f64f98-53ef-4344-93f6-9d852f845ed2",
-              "title": "Five key challenges for software quality tomorrow",
-              "description": "With the advances in our industry we can build software faster and operate it cheaper while serving more platforms and solving more problems than ever before. This is not without it's complications though, this new landscape requires teams to change their approach to reduce risk and ensure quality in their software.\n\nIn this presentation, Gojko will look at five important software quality challenges facing delivery teams due to these shifting roles. He will also present some emerging ideas that will help address these challenges and inspire you to rethink your approach to testing.",
-              "startsAt": "2017-09-16T09:00:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Gojko Adzic",
-                  "name": "Gojko Adzic"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1480,52 +880,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "morning-tea",
-              "title": "Morning tea",
-              "description": null,
-              "startsAt": "2017-09-16T09:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "morning-tea",
-              "title": "Morning tea",
-              "description": null,
-              "startsAt": "2017-09-16T09:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "morning-tea",
               "title": "Morning tea",
@@ -1661,52 +1015,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T11:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T11:00:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -1806,52 +1114,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T11:50:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T11:50:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "changeover",
               "title": "Changeover",
@@ -2076,52 +1338,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "lunch",
-              "title": "Lunch",
-              "description": null,
-              "startsAt": "2017-09-16T12:40:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "lunch",
-              "title": "Lunch",
-              "description": null,
-              "startsAt": "2017-09-16T12:40:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -2310,52 +1526,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T14:25:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "changeover",
-              "title": "Changeover",
-              "description": null,
-              "startsAt": "2017-09-16T14:25:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "changeover",
               "title": "Changeover",
@@ -2570,52 +1740,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "sponsor-announcements-and-prize-draw!!!",
-              "title": "Sponsor announcements and PRIZE DRAW!!!",
-              "description": null,
-              "startsAt": "2017-09-16T15:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "sponsor-announcements-and-prize-draw!!!",
-              "title": "Sponsor announcements and PRIZE DRAW!!!",
-              "description": null,
-              "startsAt": "2017-09-16T15:45:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -2626,62 +1750,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "d06d45de-de42-44da-83eb-ea1d9d14b6cc",
-              "title": "The Campsite Rule - Leaving the Tech Industry Better than We Found It",
-              "description": "Improving the codebase for the next developer is a great goal, but what about making the industry better for the next generation? In this talk, Kris will debunk some of the damaging myths and ideas we’re all guilty of perpetuating, the ones that lead to stress and burnout. Fortunately there is an antidote - becoming a mentor! You’ll learn how you can change your own behaviour and thinking, be more supportive to those just starting out, and feel more engaged and inspired in your work - all with minimal effort. We all have a responsibility to make things just a little bit better for those who come after us.",
-              "startsAt": "2017-09-16T16:20:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Kris Howard",
-                  "name": "Kris Howard"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "d06d45de-de42-44da-83eb-ea1d9d14b6cc",
-              "title": "The Campsite Rule - Leaving the Tech Industry Better than We Found It",
-              "description": "Improving the codebase for the next developer is a great goal, but what about making the industry better for the next generation? In this talk, Kris will debunk some of the damaging myths and ideas we’re all guilty of perpetuating, the ones that lead to stress and burnout. Fortunately there is an antidote - becoming a mentor! You’ll learn how you can change your own behaviour and thinking, be more supportive to those just starting out, and feel more engaged and inspired in your work - all with minimal effort. We all have a responsibility to make things just a little bit better for those who come after us.",
-              "startsAt": "2017-09-16T16:20:00",
-              "endsAt": null,
-              "isServiceSession": false,
-              "isPlenumSession": true,
-              "speakers": [
-                {
-                  "id": "Kris Howard",
-                  "name": "Kris Howard"
-                }
-              ],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "d06d45de-de42-44da-83eb-ea1d9d14b6cc",
               "title": "The Campsite Rule - Leaving the Tech Industry Better than We Found It",
@@ -2733,52 +1801,6 @@ export const conference2017: ConferenceYear = {
               "isInformed": true,
               "isConfirmed": true
             }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "thank-yous-and-wrap-up",
-              "title": "Thank yous and wrap up",
-              "description": null,
-              "startsAt": "2017-09-16T17:05:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
-            "session": {
-              "id": "thank-yous-and-wrap-up",
-              "title": "Thank yous and wrap up",
-              "description": null,
-              "startsAt": "2017-09-16T17:05:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
           }
         ]
       },
@@ -2789,52 +1811,6 @@ export const conference2017: ConferenceYear = {
             "id": 0,
             "name": "RR5",
             "index": 0,
-            "session": {
-              "id": "afterparty",
-              "title": "Afterparty",
-              "description": null,
-              "startsAt": "2017-09-16T17:10:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 1,
-            "name": "M6",
-            "index": 1,
-            "session": {
-              "id": "afterparty",
-              "title": "Afterparty",
-              "description": null,
-              "startsAt": "2017-09-16T17:10:00",
-              "endsAt": null,
-              "isServiceSession": true,
-              "isPlenumSession": true,
-              "speakers": [],
-              "categories": [],
-              "roomId": null,
-              "room": null,
-              "liveUrl": null,
-              "recordingUrl": null,
-              "status": null,
-              "isInformed": true,
-              "isConfirmed": true
-            }
-          },
-          {
-            "id": 2,
-            "name": "RR4",
-            "index": 2,
             "session": {
               "id": "afterparty",
               "title": "Afterparty",
@@ -2872,8 +1848,8 @@ export const conference2017: ConferenceYear = {
         platinum: [
             {
                 name: 'Bankwest',
-                logoUrlDarkMode: '/static/images/sponsors/bankwest.png',
-                logoUrlLightMode: '/static/images/sponsors/bankwest.png',
+                logoUrlDarkMode: '/images/sponsors/2017-bankwest-dark.png',
+                logoUrlLightMode: '/images/sponsors/2017-bankwest-light.png',
                 website: 'https://www.bankwest.com.au/',
                 quote: undefined,
             },
@@ -2881,22 +1857,15 @@ export const conference2017: ConferenceYear = {
         gold: [
             {
                 name: 'Readify',
-                logoUrlDarkMode: '/static/images/sponsors/readify.png',
-                logoUrlLightMode: '/static/images/sponsors/readify.png',
+                logoUrlDarkMode: '/images/sponsors/2017-readify-dark.png',
+                logoUrlLightMode: '/images/sponsors/2017-readify-light.png',
                 website: 'https://readify.net/',
                 quote: undefined,
             },
             {
-                name: 'Vocus',
-                logoUrlDarkMode: '/static/images/sponsors/vocus.png',
-                logoUrlLightMode: '/static/images/sponsors/vocus.png',
-                website: 'https://www.vocus.com.au/',
-                quote: undefined,
-            },
-            {
                 name: 'Microsoft',
-                logoUrlDarkMode: '/static/images/sponsors/microsoft.png',
-                logoUrlLightMode: '/static/images/sponsors/microsoft.png',
+                logoUrlDarkMode: '/images/sponsors/2017-microsoft-dark.png',
+                logoUrlLightMode: '/images/sponsors/2017-microsoft-light.png',
                 website: 'https://www.microsoft.com/en-au',
                 quote: undefined,
             },

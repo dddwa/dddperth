@@ -31,3 +31,11 @@ Interactive CLI for browsing and editing existing sponsor entries across years.
 ```bash
 node scripts/sponsor-manager.mjs
 ```
+
+## `process-logo.mjs`
+
+Generates `<year>-<slug>-light.<ext>` and `<year>-<slug>-dark.<ext>` from a single source image. Uses the same image processing as `add-sponsor.mjs` (shared via `scripts/lib/process-logo.mjs`).
+
+```bash
+node scripts/process-logo.mjs <input-file> <year> <slug> [--out-dir <dir>]
+```
