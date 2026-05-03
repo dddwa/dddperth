@@ -20,7 +20,7 @@ export const conference2026: ConferenceYear = {
         zone: 'Australia/Perth',
     }),
     cfpDates: {
-        opens: DateTime.fromISO('2026-05-04T00:00:00', {
+        opens: DateTime.fromISO('2026-05-05T00:00:00', {
             zone: 'Australia/Perth',
         }),
         closes: DateTime.fromISO('2026-06-28T23:59:59', {
