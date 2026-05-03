@@ -22,6 +22,7 @@ export default [
             'safe-routes.d.ts',
             'postcss.config.cjs',
             'app/styled-system',
+            'scripts/**',
         ],
     },
     ...configs['flat/base'],

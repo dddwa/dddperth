@@ -66,7 +66,12 @@
         "build": {
             "executor": "nx:run-commands",
             "cache": true,
-            "inputs": ["{projectRoot}/app/**/*.*", "{projectRoot}/workers/**/*.*"],
+            "inputs": [
+                "{projectRoot}/app/**/*.*",
+                "{projectRoot}/workers/**/*.*",
+                "{projectRoot}/vite-plugins/**/*.*",
+                "{projectRoot}/vite.config.ts"
+            ],
             "outputs": ["{projectRoot}/build/**/*.*"],
             "options": {
                 "command": "react-router build",
@@ -103,7 +108,11 @@
         "deploy-staging": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler deploy --env staging",
+                "commands": [
+                    "node scripts/prepare-deploy-config.mjs staging",
+                    "wrangler deploy"
+                ],
+                "parallel": false,
                 "cwd": "website"
             },
             "dependsOn": ["build"]
@@ -111,7 +120,11 @@
         "deploy-production": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler deploy --env production",
+                "commands": [
+                    "node scripts/prepare-deploy-config.mjs production",
+                    "wrangler deploy"
+                ],
+                "parallel": false,
                 "cwd": "website"
             },
             "dependsOn": ["build"]
@@ -126,14 +139,14 @@
         "d1-migrate-staging": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler d1 migrations apply dddperth-voting-staging --env staging --remote",
+                "command": "wrangler d1 migrations apply dddperth-voting-staging -c wrangler.staging.jsonc --remote",
                 "cwd": "website"
             }
         },
         "d1-migrate-production": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler d1 migrations apply dddperth-voting-prod --env production --remote",
+                "command": "wrangler d1 migrations apply dddperth-voting-prod -c wrangler.production.jsonc --remote",
                 "cwd": "website"
             }
         }

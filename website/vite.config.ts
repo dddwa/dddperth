@@ -12,6 +12,14 @@ export default defineConfig({
     resolve: {
         tsconfigPaths: true,
         dedupe: ['react', 'react-dom', 'react-router', 'react-router/dom'],
+        // remix-auth-github pulls in `debug`, whose entry picks the Node
+        // variant in the Workers runtime. The Node variant calls
+        // tty.isatty(process.stdout.fd) at log-init time, which throws
+        // because `process.stdout` is missing under nodejs_compat.
+        // Force the browser variant — it's noop logging either way.
+        alias: {
+            debug: 'debug/src/browser.js',
+        },
     },
     environments: {
         ssr: {

@@ -7,9 +7,6 @@
     "dependencies": {
         "@ark-ui/react": "^5.36.1",
         "@kentcdodds/md-temp": "^10.0.1",
-        "@octokit/app": "^16.1.2",
-        "@octokit/plugin-rest-endpoint-methods": "^17.0.0",
-        "@octokit/rest": "^22.0.1",
         "@park-ui/panda-preset": "^0.43.1",
         "@react-router/cloudflare": "^7.14.1",
         "@react-router/fs-routes": "^7.14.1",

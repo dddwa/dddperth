@@ -5,7 +5,11 @@
     "compatibility_date": "2024-12-30",
     "compatibility_flags": ["nodejs_compat"],
 
-    // D1 Database binding for voting
+    // D1 Database binding for voting (local dev)
+    // Staging and production use separate config files
+    // (wrangler.staging.jsonc, wrangler.production.jsonc) because
+    // @cloudflare/vite-plugin flattens only the top-level config into
+    // the build output, which dropped env.* overrides at deploy time.
     "d1_databases": [
         {
             "binding": "DB",
@@ -19,37 +23,9 @@
         "directory": "build/client"
     },
 
-    // Default environment variables
+    // Default environment variables (local dev)
     "vars": {
         "WEB_URL": "http://localhost:3800"
-    },
-
-    // Production environment
-    "env": {
-        "production": {
-            "vars": {
-                "WEB_URL": "https://dddperth.com"
-            },
-            "d1_databases": [
-                {
-                    "binding": "DB",
-                    "database_name": "dddperth-voting-prod",
-                    "database_id": "cdca3dcc-d6e6-4588-86d0-da6b0579a10b"
-                }
-            ]
-        },
-        "staging": {
-            "vars": {
-                "WEB_URL": "https://staging.dddperth.com"
-            },
-            "d1_databases": [
-                {
-                    "binding": "DB",
-                    "database_name": "dddperth-voting-staging",
-                    "database_id": "6740aedd-b54f-4562-bf01-2cc1184ddcc7"
-                }
-            ]
-        }
     },
 
     // Observability
