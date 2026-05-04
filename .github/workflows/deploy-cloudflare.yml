@@ -49,6 +49,9 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm run setup
+
             - name: Type check
               run: pnpm tsc -b
 

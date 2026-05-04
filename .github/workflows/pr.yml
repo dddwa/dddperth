@@ -30,6 +30,9 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm run setup
+
             - name: Type Check
               run: pnpm tsc -b
 
