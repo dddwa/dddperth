@@ -2,31 +2,10 @@ import * as isbotModule from 'isbot'
 import { renderToReadableStream } from 'react-dom/server'
 import type { AppLoadContext, EntryContext } from 'react-router'
 import { ServerRouter } from 'react-router'
-import { conferenceConfig } from './config/conference-config.server'
-import { getCurrentConferenceState } from './lib/conference-state.server'
-import { AdminDateTimeProvider } from './lib/dates/admin-date-time-provider.server'
-import type { CloudflareEnv } from './remix-app-load-context'
+
+export { getLoadContext } from './load-context.server'
 
 const ABORT_DELAY = 5_000
-
-export async function getLoadContext({
-    request,
-    env,
-    ctx,
-}: {
-    request: Request
-    env: CloudflareEnv
-    ctx: ExecutionContext
-}): Promise<AppLoadContext> {
-    const dateTimeProvider = await AdminDateTimeProvider.create(request.headers)
-
-    return {
-        cloudflare: { env, ctx },
-        dateTimeProvider,
-        db: env.DB,
-        conferenceState: getCurrentConferenceState(dateTimeProvider, conferenceConfig),
-    }
-}
 
 export default async function handleRequest(
     request: Request,

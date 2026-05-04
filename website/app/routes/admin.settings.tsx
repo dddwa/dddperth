@@ -7,23 +7,22 @@ import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { adminDateTimeSessionStorage } from '~/lib/session.server'
-import { clearAnnouncement, createOrUpdateAnnouncement, getCurrentAnnouncement } from '~/lib/announcements.server'
 import { Box, Flex, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.settings'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
+    const adminDateTimeSessionStorage = context.services.sessions.adminDateTime
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
     const overrideDate = session.get('adminDateOverride')
 
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
     const year = context.conferenceState.conference.year
 
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
-    
-    const currentAnnouncement = await getCurrentAnnouncement(context, year)
+
+    const currentAnnouncement = await context.services.announcements.getCurrent(year)
 
     return data({
         overrideDate,
@@ -36,10 +35,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const formData = await request.formData()
     const action = formData.get('_action')
+    const adminDateTimeSessionStorage = context.services.sessions.adminDateTime
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
     const year = context.conferenceState.conference.year
 
@@ -48,10 +48,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!message || message.trim() === '') {
             return data({ error: 'Announcement message is required' }, { status: 400 })
         }
-        await createOrUpdateAnnouncement(context, year, message.trim())
+        await context.services.announcements.upsert(year, message.trim())
         return redirect('/admin/settings')
     } else if (action === 'clearAnnouncement') {
-        await clearAnnouncement(context, year)
+        await context.services.announcements.clear(year)
         return redirect('/admin/settings')
     } else if (action === 'setDate') {
         const dateStr = formData.get('date') as string

@@ -18,7 +18,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year, context.cloudflare.env)
+    const yearConfig = getYearConfig(year, context.config)
     const sponsors = yearConfig.kind === 'conference' ? yearConfig.sponsors : {}
 
     const conferences = Object.values(conferenceConfig.conferences)

@@ -101,33 +101,26 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "wrangler deploy",
-                "cwd": "website"
+                "cwd": "website",
+                "tty": true
             },
             "dependsOn": ["build"]
         },
         "deploy-staging": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": [
-                    "node scripts/prepare-deploy-config.mjs staging",
-                    "wrangler deploy"
-                ],
-                "parallel": false,
-                "cwd": "website"
-            },
-            "dependsOn": ["build"]
+                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs staging && wrangler deploy",
+                "cwd": "website",
+                "tty": true
+            }
         },
         "deploy-production": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": [
-                    "node scripts/prepare-deploy-config.mjs production",
-                    "wrangler deploy"
-                ],
-                "parallel": false,
-                "cwd": "website"
-            },
-            "dependsOn": ["build"]
+                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs production && wrangler deploy",
+                "cwd": "website",
+                "tty": true
+            }
         },
         "d1-migrate-local": {
             "executor": "nx:run-commands",
@@ -140,14 +133,16 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "wrangler d1 migrations apply dddperth-voting-staging -c wrangler.staging.jsonc --remote",
-                "cwd": "website"
+                "cwd": "website",
+                "tty": true
             }
         },
         "d1-migrate-production": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "wrangler d1 migrations apply dddperth-voting-prod -c wrangler.production.jsonc --remote",
-                "cwd": "website"
+                "cwd": "website",
+                "tty": true
             }
         }
     }

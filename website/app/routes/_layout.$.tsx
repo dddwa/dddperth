@@ -12,7 +12,6 @@ import type { ConferenceState } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
-import { getPage } from '~/lib/mdx.server'
 import { css } from '~/styled-system/css'
 import { Box, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
@@ -38,7 +37,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getPage(context.cloudflare.env, contentSlug, 'page')
+    const post = await context.services.content.getPage(contentSlug, 'page')
     if (!post) {
         console.log('Content not found for slug:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -52,7 +51,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(

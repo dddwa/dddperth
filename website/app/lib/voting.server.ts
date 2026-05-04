@@ -1,110 +1,27 @@
+import type { AppLoadContext } from 'react-router'
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
-import {
-    createVotingSession,
-    getVotesForSession,
-    getVotingSessionById,
-    incrementSessionCounter,
-    recordVote,
-    updateVotingSessionIndex,
-    type VoteRow,
-    type VotingSessionRow,
-} from './d1.server'
 import { FairPairingGeneratorV5 } from './pairing-generator-v5'
-import type { SessionId } from './session.server'
-import { votingStorage } from './session.server'
+import type { AppServices } from './services/app-services'
 import { getConfSessions } from './sessionize.server'
 import type { VotingBatchData } from './voting-api-types'
-import { CURRENT_SESSION_VERSION, CURRENT_VOTE_VERSION } from './voting-version-constants'
+import type { SessionId, TalkPair, TalkVotingData, VotingSession } from './voting-types'
+import { CURRENT_SESSION_VERSION } from './voting-version-constants'
 
-export interface TalkPair {
-    index: number
-    roundNumber: number
-    left: TalkVotingData
-    right: TalkVotingData
-}
+export type {
+    BaseVoteRecord,
+    SessionId,
+    TalkPair,
+    TalkVotingData,
+    VoteIndex,
+    VoteRecord,
+    VotingGlobal,
+    VotingPairs,
+    VotingSession,
+} from './voting-types'
 
-export interface TalkVotingData {
-    id: string
-    title: string
-    description: string | null
-    tags: string[]
-}
-
-export interface VotingPairs {
-    sessionId: string
-    year: string
-    pairs: TalkPair[]
-    createdAt: string
-}
-
-// Global voting counter record (for D1 compatibility)
-export interface VotingGlobal {
-    year: string
-    numberSessions: number
-}
-
-export type VoteIndex = number
-
-export interface BaseVoteRecord {
-    sessionId: SessionId
-    vote: 'A' | 'B' | 'S' // A = talk1, B = talk2, S = skipped
-    timestamp: string
-}
-
-// Current vote record format - round-based with indexInRound
-export interface VoteRecord extends BaseVoteRecord {
-    voteVersion: typeof CURRENT_VOTE_VERSION
-    roundNumber: number
-    indexInRound: number
-}
-
-export interface VotingSession {
-    sessionId: SessionId
-    seed: number
-    totalPairs: number
-    inputSessionizeTalkIdsJson: string // JSON string of talk IDs
-    currentIndex: VoteIndex
-    createdAt: string
-    version: typeof CURRENT_SESSION_VERSION
-    roundNumber: number
-    maxPairsPerRound: number
-}
-
-// Convert D1 row to VotingSession
-function rowToVotingSession(row: VotingSessionRow): VotingSession {
-    if (row.version !== CURRENT_SESSION_VERSION) {
-        throw new Error(`Unsupported voting session version: ${row.version}`)
-    }
-
-    return {
-        sessionId: row.session_id,
-        seed: row.seed,
-        totalPairs: row.total_pairs,
-        inputSessionizeTalkIdsJson: row.input_sessionize_talk_ids_json,
-        currentIndex: row.current_index,
-        createdAt: row.created_at,
-        version: CURRENT_SESSION_VERSION,
-        roundNumber: row.round_number,
-        maxPairsPerRound: row.max_pairs_per_round,
-    }
-}
-
-// Convert D1 vote row to VoteRecord
-function rowToVoteRecord(row: VoteRow): VoteRecord {
-    return {
-        voteVersion: CURRENT_VOTE_VERSION,
-        sessionId: row.session_id,
-        roundNumber: row.round_number,
-        indexInRound: row.index_in_round,
-        vote: row.vote,
-        timestamp: row.created_at,
-    }
-}
-
-// Record vote in D1
 export async function recordVoteInTable(
-    db: D1Database,
+    services: AppServices,
     sessionId: SessionId,
     year: string,
     roundNumber: number,
@@ -112,124 +29,76 @@ export async function recordVoteInTable(
     vote: 'A' | 'B' | 'skip',
 ): Promise<void> {
     const voteChar = vote === 'skip' ? 'S' : vote
-    const session = await getVotingSessionById(db, sessionId)
+    const session = await services.voting.getVotingSession(sessionId)
 
     if (!session || session.version !== CURRENT_SESSION_VERSION) {
         throw new Error(`Cannot record vote for unknown or non-V${CURRENT_SESSION_VERSION} session`)
     }
 
-    if (roundNumber < 0 || indexInRound < 0 || indexInRound >= session.max_pairs_per_round) {
-        throw new Error(`Invalid V${CURRENT_SESSION_VERSION} vote position: round ${roundNumber}, index ${indexInRound}`)
+    if (roundNumber < 0 || indexInRound < 0 || indexInRound >= session.maxPairsPerRound) {
+        throw new Error(
+            `Invalid V${CURRENT_SESSION_VERSION} vote position: round ${roundNumber}, index ${indexInRound}`,
+        )
     }
 
-    // Record the vote
-    await recordVote(db, sessionId, year, roundNumber, indexInRound, voteChar)
-
-    // Update session index safely
-    await updateSessionIndexSafely(db, sessionId, roundNumber, indexInRound + 1)
-}
-
-/**
- * Safely updates the session's currentIndex
- * Only updates if the new index is higher and we're still in the no-repeat session pass.
- */
-async function updateSessionIndexSafely(
-    db: D1Database,
-    sessionId: SessionId,
-    voteRoundNumber: number,
-    newCurrentIndex: number,
-): Promise<void> {
-    try {
-        // Fetch current session state
-        const session = await getVotingSessionById(db, sessionId)
-
-        if (!session) {
-            console.warn(`Session not found: ${sessionId}`)
-            return
-        }
-
-        if (session.version !== CURRENT_SESSION_VERSION) {
-            throw new Error(`Cannot update session index for non-V${CURRENT_SESSION_VERSION} session`)
-        }
-
-        const currentRoundNumber = session.round_number
-        const currentIndex = session.current_index
-
-        if (voteRoundNumber === currentRoundNumber) {
-            // Vote is for current round - normal case
-            if (newCurrentIndex > currentIndex) {
-                await updateVotingSessionIndex(db, sessionId, newCurrentIndex)
-            }
-        } else if (voteRoundNumber > currentRoundNumber) {
-            // Vote is for a later no-repeat round - advance session to that round.
-            await updateVotingSessionIndex(db, sessionId, newCurrentIndex, voteRoundNumber)
-        }
-        // If voteRoundNumber < currentRoundNumber, this is a stale vote, skip
-    } catch (error) {
-        console.error(`Error updating session index for ${sessionId}:`, error)
-        // Don't fail the vote recording over session index update
-    }
+    await services.voting.recordVote({ sessionId, year, roundNumber, indexInRound, vote: voteChar })
 }
 
 export async function getVotingSession(
     request: Request,
-    db: D1Database,
+    context: AppLoadContext,
     year: string,
     getCurrentSessions: () => Promise<TalkVotingData[]>,
 ): Promise<VotingSession> {
-    const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+    const { services } = context
+    const votingStorageSession = await services.sessions.voting.getSession(request.headers.get('Cookie'))
     const sessionId = votingStorageSession.get('sessionId')
 
     if (!sessionId) {
-        return await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
+        return await createUserVotingSessionAndRedirect(request, context, year, await getCurrentSessions())
     }
 
-    const row = await getVotingSessionById(db, sessionId)
+    const session = await services.voting.getVotingSession(sessionId)
 
-    if (!row || row.version !== CURRENT_SESSION_VERSION) {
-        return await createUserVotingSessionAndRedirect(request, db, year, await getCurrentSessions())
+    if (!session || session.version !== CURRENT_SESSION_VERSION) {
+        return await createUserVotingSessionAndRedirect(request, context, year, await getCurrentSessions())
     }
 
-    return rowToVotingSession(row)
+    return session
 }
 
-// Function to check if input sessions have changed
 export function hasSessionsChanged(currentSessionIds: string[], storedSessionIds: string[]): boolean {
     if (currentSessionIds.length !== storedSessionIds.length) {
         return true
     }
 
-    // Sort both arrays to compare regardless of order
     const sortedCurrent = [...currentSessionIds].sort()
     const sortedStored = [...storedSessionIds].sort()
 
     return !sortedCurrent.every((id, index) => id === sortedStored[index])
 }
 
-// Function to get session IDs from SessionData array
 export function extractSessionIds(sessions: TalkVotingData[]): string[] {
     return sessions.map((session) => session.id)
 }
 
-// Create new user voting session and redirect back to voting page
 export async function createUserVotingSessionAndRedirect(
     request: Request,
-    db: D1Database,
+    context: AppLoadContext,
     year: string,
     currentSessions: TalkVotingData[],
 ): Promise<never> {
+    const { services } = context
     const currentSessionIds = extractSessionIds(currentSessions)
 
     if (currentSessions.length === 0) {
         throw new Error('No sessions available for voting')
     }
 
-    // Generate new session ID and use the global session number as the seed.
     // V5 relies on sequential seeds to rotate matchings and early pair order.
     const sessionId = crypto.randomUUID()
-    const seed = await incrementSessionCounter(db, year)
+    const seed = await services.voting.incrementSessionCounter(year)
 
-    // Calculate total pairs using generator
     const totalTalks = currentSessions.length
     const tempGenerator = new FairPairingGeneratorV5(totalTalks, seed)
     const totalPairs = tempGenerator.getTotalPairs()
@@ -237,32 +106,29 @@ export async function createUserVotingSessionAndRedirect(
 
     const now = new Date().toISOString()
 
-    // Create session in D1
-    await createVotingSession(db, {
-        session_id: sessionId,
+    await services.voting.createVotingSession({
+        sessionId,
         year,
         seed,
-        total_pairs: totalPairs,
-        input_sessionize_talk_ids_json: JSON.stringify(currentSessionIds),
-        current_index: 0,
+        totalPairs,
+        inputSessionizeTalkIdsJson: JSON.stringify(currentSessionIds),
+        currentIndex: 0,
         version: CURRENT_SESSION_VERSION,
-        round_number: 0,
-        max_pairs_per_round: maxPairsPerRound,
-        created_at: now,
-        updated_at: now,
+        roundNumber: 0,
+        maxPairsPerRound,
+        createdAt: now,
     })
 
-    const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+    const votingStorageSession = await services.sessions.voting.getSession(request.headers.get('Cookie'))
     votingStorageSession.set('sessionId', sessionId)
 
     throw redirect($path('/voting'), {
         headers: {
-            'Set-Cookie': await votingStorage.commitSession(votingStorageSession),
+            'Set-Cookie': await services.sessions.voting.commitSession(votingStorageSession),
         },
     })
 }
 
-// Get batch of talk pairs for specific round and index
 export async function getVotingBatchExplicit(
     currentSessions: TalkVotingData[],
     votingSession: VotingSession,
@@ -334,7 +200,6 @@ export async function getSessionsForVoting(allSessionsEndpoint: string) {
         sessionizeEndpoint: allSessionsEndpoint,
     })
 
-    // Filter out service sessions and extract regular sessions
     const regularSessions: TalkVotingData[] = []
     for (const session of sessions) {
         if (!session.isServiceSession && !session.isPlenumSession) {
@@ -355,6 +220,3 @@ export async function getSessionsForVoting(allSessionsEndpoint: string) {
 
     return regularSessions.sort((a, b) => a.id.localeCompare(b.id))
 }
-
-// Export helpers for validation to use
-export { getVotesForSession, rowToVoteRecord, rowToVotingSession }

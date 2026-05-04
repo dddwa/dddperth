@@ -14,7 +14,7 @@ import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(year, context.cloudflare.env)
+    const yearConfig = getYearConfig(year, context.config)
 
     if (yearConfig.kind === 'cancelled') {
         return redirect($path('/agenda/:year?', { year: undefined }))

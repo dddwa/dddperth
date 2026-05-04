@@ -8,16 +8,14 @@ import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getUser, isAdmin } from '~/lib/auth.server'
-import { getWebUrl } from '~/lib/config.server'
-import { adminDateTimeSessionStorage } from '~/lib/session.server'
 import type { Route } from './+types/_layout'
 
 export async function loader({ context, request }: Route.LoaderArgs) {
-    const user = await getUser(request.headers)
+    const user = await getUser(request.headers, context.services)
     let adminData = null
 
     if (user && isAdmin(user)) {
-        const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
+        const session = await context.services.sessions.adminDateTime.getSession(request.headers.get('cookie'))
         const overrideDate = session.get('adminDateOverride')
 
         adminData = {
@@ -34,7 +32,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     return {
         conferenceDescription: conferenceConfigPublic.description,
         conferenceState: context.conferenceState,
-        webUrl: getWebUrl(context.cloudflare.env),
+        webUrl: context.config.webUrl,
         adminData,
     }
 }

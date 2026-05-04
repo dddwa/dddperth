@@ -1,5 +1,4 @@
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getPage } from '../lib/mdx.server'
 import type { Route } from './+types/app-content.$'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -13,7 +12,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const post = await getPage(context.cloudflare.env, contentSlug, 'page', { includeCode: true })
+    const post = await context.services.content.getPage(contentSlug, 'page', { includeCode: true })
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }

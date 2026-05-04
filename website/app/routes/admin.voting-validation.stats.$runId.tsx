@@ -13,18 +13,17 @@ import type {
     TalkResult,
     TalkStatisticsWithDetailsResponse,
 } from '~/lib/voting-validation-types'
-import { getFairnessMetrics, getTalkResults, getTalkStatistics, getValidationRunById, saveTalkResults, getUnderrepresentedGroupsConfig } from '~/lib/voting-validation.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting-validation.stats.$runId'
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const { runId } = params
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year, context.cloudflare.env)
+    const yearConfig = getYearConfig(year, context.config)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -35,12 +34,11 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     }
     const sessionizeEndpoint = yearConfig.sessions.sessionizeEndpoint
 
-    const db = context.db
+    const voting = context.services.voting
 
-    // Get validation run details
     let runDetails = null
     try {
-        const runEntity = await getValidationRunById(db, runId)
+        const runEntity = await voting.getValidationRunById(runId)
         if (runEntity) {
             runDetails = {
                 startedAt: runEntity.startedAt,
@@ -56,11 +54,9 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         console.error('Error getting run details:', error)
     }
 
-    // Get talk statistics for this run
-    const stats = await getTalkStatistics(db, runId)
+    const stats = await voting.getTalkStatistics(runId)
 
-    // Get fairness metrics
-    const fairnessMetricsMap = await getFairnessMetrics(db, runId)
+    const fairnessMetricsMap = await voting.getFairnessMetrics(runId)
     const fairnessMetrics: TalkStatisticsWithDetailsResponse['fairnessMetrics'] = {
         aggregated: fairnessMetricsMap.aggregated,
         v1: fairnessMetricsMap.v1,
@@ -143,8 +139,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     // Sort by aggregated win rate descending
     talks.sort((a, b) => b.stats.aggregated.winRate - a.stats.aggregated.winRate)
 
-    // Get talk results if available
-    const talkResults = await getTalkResults(db, runId)
+    const talkResults = await voting.getTalkResults(runId)
 
     type SessionizeTalks = Array<{
         id: string
@@ -176,8 +171,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             sessionizeEndpoint,
         })
 
-        // Get underrepresented groups configuration
-        const underrepresentedGroups = await getUnderrepresentedGroupsConfig(db)
+        const underrepresentedGroups = await voting.getUnderrepresentedGroupsConfig()
 
         // Create a map of talk ID to speaker IDs
         sessions.forEach((session) => {
@@ -219,10 +213,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const { runId } = params
-    const db = context.db
+    const voting = context.services.voting
 
     const formData = await request.formData()
     const intent = formData.get('intent')
@@ -263,8 +257,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
             }
         }
 
-        // Save the results
-        await saveTalkResults(db, runId, results)
+        await voting.saveTalkResults(runId, results)
 
         return { success: true }
     }

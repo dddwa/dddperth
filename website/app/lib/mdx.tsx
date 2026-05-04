@@ -3,6 +3,7 @@ import type { MDXComponents } from 'mdx/types'
 import type { ComponentType } from 'react'
 import { use } from 'react'
 import bundles from 'virtual:mdx-bundles'
+import { MdxLink } from '~/components/mdx-link'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
@@ -22,7 +23,7 @@ export function useMdxPage(slug: string, type: ContentType, conferenceState: Con
 
 function wrapMdxComponent(Component: ComponentType<Record<string, unknown>>, conferenceState: ConferenceState) {
     const mdxComponents: MDXComponents = {
-        a: ({ ref, ...props }) => <styled.a {...props} />,
+        a: ({ ref, ...props }) => <MdxLink {...props} />,
         h1: ({ ref, ...props }) => <styled.h1 fontSize="3xl" {...props} />,
         h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
         h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,

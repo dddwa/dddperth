@@ -5,8 +5,8 @@ import { AdminLayout } from '~/components/admin-layout'
 import { AdminCard } from '~/components/admin-card'
 import type { Route } from './+types/admin.content'
 
-export async function loader({ request }: Route.LoaderArgs) {
-    await requireAdmin(request)
+export async function loader({ request, context }: Route.LoaderArgs) {
+    await requireAdmin(request, context)
 }
 
 export default function AdminContent() {

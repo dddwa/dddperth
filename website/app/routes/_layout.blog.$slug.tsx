@@ -7,7 +7,6 @@ import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
-import { getPage } from '~/lib/mdx.server'
 import type { Route } from './+types/_layout.blog.$slug'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -16,7 +15,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await getPage(context.cloudflare.env, slug, 'blog')
+    const post = await context.services.content.getPage(slug, 'blog')
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }

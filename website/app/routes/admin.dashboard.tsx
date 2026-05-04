@@ -5,8 +5,8 @@ import { requireAdmin } from '~/lib/auth.server'
 import { Grid, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.dashboard'
 
-export async function loader({ request }: Route.LoaderArgs) {
-    await requireAdmin(request)
+export async function loader({ request, context }: Route.LoaderArgs) {
+    await requireAdmin(request, context)
 }
 
 export default function AdminDashboard() {

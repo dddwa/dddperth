@@ -4,18 +4,12 @@ import { getConfSessions } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-sessions'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
-
-    if (yearConfig.kind === 'cancelled') {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-
-    if (yearConfig.sessions?.kind === 'sessionize' && !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
 
     const sessions =
-        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
+        yearConfig.kind !== 'cancelled' &&
+        yearConfig.sessions?.kind === 'sessionize' &&
+        yearConfig.sessions.sessionizeEndpoint
             ? await getConfSessions({
                   sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
               })
@@ -40,6 +34,5 @@ export async function loader({ context }: Route.LoaderArgs) {
 }
 
 export function headers({ loaderHeaders }: Route.HeadersArgs) {
-    // Inherit the caching headers from the loader so we don't cache 404s
     return loaderHeaders
 }

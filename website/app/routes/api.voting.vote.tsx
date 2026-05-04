@@ -1,6 +1,5 @@
 import { data, redirect } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { votingStorage } from '~/lib/session.server'
 import type { VoteErrorResponse, VoteSuccessResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import { recordVoteInTable } from '~/lib/voting.server'
@@ -66,7 +65,9 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 400 })
         }
 
-        const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
+        const votingStorageSession = await context.services.sessions.voting.getSession(
+            request.headers.get('Cookie'),
+        )
         const sessionId = votingStorageSession.get('sessionId')
 
         if (!sessionId) {
@@ -74,7 +75,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 401 })
         }
 
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
         if (
             yearConfig.kind === 'cancelled' ||
             yearConfig.sessions?.kind !== 'sessionize' ||
@@ -85,7 +86,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         await recordVoteInTable(
-            context.db,
+            context.services,
             sessionId,
             context.conferenceState.conference.year,
             roundNumber,

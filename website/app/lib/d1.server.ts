@@ -1,9 +1,7 @@
-import type { AppLoadContext } from 'react-router'
-
-// Helper to get D1 database from context
-export function getDb(context: AppLoadContext): D1Database {
-    return context.db
-}
+// D1 row types and low-level helpers. Application code should consume the
+// platform-agnostic services on `context.services` rather than importing
+// directly from this file — this module is an implementation detail of the
+// Cloudflare service builders.
 
 // ============================================================================
 // TYPE DEFINITIONS (matching D1 schema)

@@ -12,8 +12,8 @@ import type {
     VoteResult,
 } from './voting-validation-types'
 import { getVotesForSession, listVotingSessions } from './d1.server'
-import type { TalkVotingData, VoteRecord, VotingSession } from './voting.server'
-import { rowToVoteRecord, rowToVotingSession } from './voting.server'
+import { rowToVoteRecord, rowToVotingSession } from './services/cloudflare/row-converters.server'
+import type { TalkVotingData, VoteRecord, VotingSession } from './voting-types'
 
 // ============================================================================
 // VALIDATION GLOBAL STATE

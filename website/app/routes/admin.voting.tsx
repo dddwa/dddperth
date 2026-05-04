@@ -6,29 +6,20 @@ import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
-import { getSessionCounter } from '~/lib/d1.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
 import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
 import type { StartValidationResponse } from '~/lib/voting-validation-types'
-import {
-    canStartValidation,
-    getUnderrepresentedGroupsConfig,
-    getValidationRuns,
-    markValidationStarted,
-    runVotingValidation,
-    saveUnderrepresentedGroupsConfig,
-} from '~/lib/voting-validation.server'
 import { getSessionsForVoting } from '~/lib/voting.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
-    const db = context.db
+    const voting = context.services.voting
 
     // Get the voting session counter
     let sessionCount = 0
@@ -48,33 +39,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        sessionCount = await getSessionCounter(db, year)
+        sessionCount = await voting.getSessionCounter(year)
     } catch (error: any) {
         console.error('Error getting session count:', error)
         recordException(error)
     }
 
     try {
-        // Get validation runs
-        const runs = await getValidationRuns(db, 5) // Get last 5 runs
-
-        // Get current validation status
-        let isRunning = false
-        let currentRunId: string | undefined
-
-        try {
-            const row = await db
-                .prepare(`SELECT is_running, current_run_id FROM voting_validation_globals WHERE id = 'global'`)
-                .first<{ is_running: number; current_run_id: string | null }>()
-
-            if (row) {
-                isRunning = !!row.is_running
-                currentRunId = row.current_run_id ?? undefined
-            }
-        } catch (error: any) {
-            console.error('Error getting validation status:', error)
-            recordException(error)
-        }
+        const runs = await voting.getValidationRuns(5)
+        const status = await voting.getValidationRunStatus()
 
         validationRuns = {
             runs: runs.map((run) => ({
@@ -88,8 +61,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 percentComplete:
                     run.totalSessions > 0 ? Math.round((run.processedSessions / run.totalSessions) * 100) : 0,
             })),
-            currentRunId,
-            isRunning,
+            currentRunId: status.currentRunId,
+            isRunning: status.isRunning,
         }
     } catch (error: any) {
         console.error('Error getting validation runs:', error)
@@ -107,21 +80,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const yearConfig = getYearConfig(year, context.cloudflare.env)
+        const yearConfig = getYearConfig(year, context.config)
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
             yearConfig.sessions.underrepresentedGroupsQuestionId &&
             yearConfig.sessions.allSessionsEndpoint
         ) {
-            // Get groups from current year's Sessionize speakers
             const currentYearGroups = await getUnderrepresentedGroups({
                 sessionizeEndpoint: yearConfig.sessions.allSessionsEndpoint,
                 underrepresentedGroupsQuestionId: yearConfig.sessions.underrepresentedGroupsQuestionId,
             })
 
-            // Get currently selected groups from D1
-            const selectedGroups = await getUnderrepresentedGroupsConfig(db)
+            const selectedGroups = await voting.getUnderrepresentedGroupsConfig()
 
             // Combine all groups (existing config + current year) and remove duplicates
             const allAvailableGroups = Array.from(new Set([...selectedGroups, ...currentYearGroups])).sort()
@@ -152,16 +123,15 @@ export async function action({
 }: Route.ActionArgs): Promise<
     { success: true; message: string } | { success: false; error: string } | StartValidationResponse
 > {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const formData = await request.formData()
     const intent = formData.get('intent')
 
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
-    const db = context.db
+    const voting = context.services.voting
 
-    // Handle underrepresented groups update
     if (intent === 'update_underrepresented_groups') {
         try {
             const selectedGroups: string[] = []
@@ -172,7 +142,7 @@ export async function action({
                 }
             }
 
-            await saveUnderrepresentedGroupsConfig(db, year, selectedGroups)
+            await voting.saveUnderrepresentedGroupsConfig(year, selectedGroups)
 
             return { success: true, message: 'Underrepresented groups updated successfully' }
         } catch (error: any) {
@@ -183,8 +153,7 @@ export async function action({
     }
 
     try {
-        // Check if validation can be started
-        const canStart = await canStartValidation(db)
+        const canStart = await voting.canStartValidation()
 
         if (!canStart.canStart) {
             const response: StartValidationResponse = {
@@ -195,8 +164,7 @@ export async function action({
             return response
         }
 
-        // Get current talks
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
 
         if (yearConfig.kind === 'cancelled') {
             return {
@@ -221,14 +189,11 @@ export async function action({
             }
         }
 
-        // Generate run ID
         const runId = crypto.randomUUID()
-
-        // Mark validation as started
-        await markValidationStarted(db, runId)
+        await voting.markValidationStarted(runId)
 
         // Start the validation process in the background
-        runVotingValidation(db, year, talks).catch((error) => {
+        voting.runValidation(year, talks).catch((error) => {
             recordException(error)
             console.error('Validation process error:', error)
         })

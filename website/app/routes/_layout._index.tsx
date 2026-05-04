@@ -13,7 +13,7 @@ export const headers: HeadersFunction = () => {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     return data(

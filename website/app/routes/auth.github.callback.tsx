@@ -1,16 +1,15 @@
 import { redirect } from 'react-router'
-import { createUserSession, getAuthenticator, isAdmin } from '~/lib/auth.server'
-import { isGitHubAuthConfigured } from '~/lib/config.server'
+import { createUserSession, isAdmin } from '~/lib/auth.server'
 import { recordException } from '~/lib/record-exception'
 import type { Route } from './+types/auth.github.callback'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    if (!isGitHubAuthConfigured(context.cloudflare.env)) {
+    if (!context.services.auth.isConfigured()) {
         return redirect('/auth/login?error=auth_unavailable')
     }
 
     try {
-        const authenticator = getAuthenticator(context.cloudflare.env)
+        const authenticator = context.services.auth.getAuthenticator()
         const user = await authenticator.authenticate('github', request)
 
         // Check if user is admin
@@ -19,7 +18,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
 
         // Create user session and redirect to admin
-        return await createUserSession(request.headers, user, '/admin')
+        return await createUserSession(request.headers, context.services, user, '/admin')
     } catch (error) {
         // If authentication fails, redirect to login
         if (error instanceof Response) {

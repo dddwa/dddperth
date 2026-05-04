@@ -2,35 +2,32 @@ import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
 import type { ConferenceYears } from '~/config/conference-config.server'
 import { conferenceConfig } from '~/config/conference-config.server'
-import type { CloudflareEnv } from '~/remix-app-load-context'
+import type { AppConfig } from '~/lib/services/app-config'
 
-export function getYearConfig(year: string, env?: CloudflareEnv) {
+export function getYearConfig(year: string, appConfig?: AppConfig) {
     if (!isConferenceYear(year)) {
         throw redirect($path('/agenda/:year?', { year: undefined }))
     }
 
     const yearConfig = conferenceConfig.conferences[year]
 
-    if (env && yearConfig.kind === 'conference' && yearConfig.sessions?.kind === 'sessionize') {
-        const sessionsEnvKey = `SESSIONIZE_${year}_SESSIONS` as keyof CloudflareEnv
-        const allSessionsEnvKey = `SESSIONIZE_${year}_ALL_SESSIONS` as keyof CloudflareEnv
-
-        const sessionsFromEnv = env[sessionsEnvKey]
-        const allSessionsFromEnv = env[allSessionsEnvKey]
-
-        return {
-            ...yearConfig,
-            sessions: {
-                ...yearConfig.sessions,
-                sessionizeEndpoint:
-                    typeof sessionsFromEnv === 'string' && sessionsFromEnv.length > 0
-                        ? sessionsFromEnv
-                        : yearConfig.sessions.sessionizeEndpoint,
-                allSessionsEndpoint:
-                    typeof allSessionsFromEnv === 'string' && allSessionsFromEnv.length > 0
-                        ? allSessionsFromEnv
-                        : yearConfig.sessions.allSessionsEndpoint,
-            },
+    if (appConfig && yearConfig.kind === 'conference' && yearConfig.sessions?.kind === 'sessionize') {
+        const overrides = appConfig.sessionizeOverrides[year]
+        if (overrides) {
+            return {
+                ...yearConfig,
+                sessions: {
+                    ...yearConfig.sessions,
+                    sessionizeEndpoint:
+                        overrides.sessionsEndpoint && overrides.sessionsEndpoint.length > 0
+                            ? overrides.sessionsEndpoint
+                            : yearConfig.sessions.sessionizeEndpoint,
+                    allSessionsEndpoint:
+                        overrides.allSessionsEndpoint && overrides.allSessionsEndpoint.length > 0
+                            ? overrides.allSessionsEndpoint
+                            : yearConfig.sessions.allSessionsEndpoint,
+                },
+            }
         }
     }
 

@@ -5,8 +5,8 @@ import { requireAdmin } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin'
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = await requireAdmin(request)
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const user = await requireAdmin(request, context)
     return { user }
 }
 

@@ -1,6 +1,5 @@
 import { data, isRouteErrorResponse, redirect } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { votingStorage } from '~/lib/session.server'
 import type { VotingBatchResponse, VotingErrorResponse } from '~/lib/voting-api-types'
 import {
     extractSessionIds,
@@ -14,7 +13,7 @@ import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     try {
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
 
         if (yearConfig.kind === 'cancelled') {
             const errorResponse: VotingErrorResponse = { error: 'Conference cancelled this year' }
@@ -38,6 +37,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
 
         // Get session ID from cookie
+        const votingStorage = context.services.sessions.voting
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         const sessionId = votingStorageSession.get('sessionId')
 
@@ -53,7 +53,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
         const userSession = await getVotingSession(
             request,
-            context.db,
+            context,
             context.conferenceState.conference.year,
             () => Promise.resolve(sessions),
         )

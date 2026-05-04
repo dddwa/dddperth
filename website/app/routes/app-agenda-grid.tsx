@@ -6,7 +6,7 @@ import { getScheduleGrid } from '~/lib/sessionize.server'
 import type { Route } from './+types/app-agenda-grid'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.cloudflare.env)
+    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })

@@ -1,5 +1,5 @@
 import { FairPairingGeneratorV5 } from './pairing-generator-v5'
-import type { TalkPair, TalkVotingData, VoteRecord, VotingSession } from './voting.server'
+import type { TalkPair, TalkVotingData, VoteRecord, VotingSession } from './voting-types'
 
 export interface MappedVoteRecord {
     originalVoteRecord: VoteRecord

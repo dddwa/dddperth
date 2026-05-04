@@ -1,16 +1,15 @@
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { getVoteResults } from '~/lib/voting-validation.server'
 import type { Route } from './+types/admin.voting-validation.stats.$runId.download'
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-    await requireAdmin(request)
+    await requireAdmin(request, context)
 
     const { runId } = params
     const conferenceState = context.conferenceState
     const year = conferenceState.conference.year
 
-    const yearConfig = getYearConfig(year, context.cloudflare.env)
+    const yearConfig = getYearConfig(year, context.config)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -20,10 +19,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
     }
 
-    const db = context.db
-
-    // Get all vote results for this run
-    const voteResults = await getVoteResults(db, runId)
+    const voteResults = await context.services.voting.getVoteResults(runId)
 
     // Transform to the format expected by the ELO tool with underrepresented info
     type VoteEntryForElo = {

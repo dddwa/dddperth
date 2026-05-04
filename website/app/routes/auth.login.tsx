@@ -1,27 +1,26 @@
 import { data, Form, redirect, useActionData, useLoaderData, useSearchParams } from 'react-router'
-import { getAuthenticator, getUser } from '~/lib/auth.server'
-import { isGitHubAuthConfigured } from '~/lib/config.server'
+import { getUser } from '~/lib/auth.server'
 import { recordException } from '~/lib/record-exception'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     // If user is already authenticated, redirect to admin
-    const user = await getUser(request.headers)
+    const user = await getUser(request.headers, context.services)
     if (user) {
         throw redirect('/admin')
     }
-    return data({ isGitHubAuthConfigured: isGitHubAuthConfigured(context.cloudflare.env) })
+    return data({ isGitHubAuthConfigured: context.services.auth.isConfigured() })
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-    if (!isGitHubAuthConfigured(context.cloudflare.env)) {
+    if (!context.services.auth.isConfigured()) {
         return data({ error: 'GitHub authentication is not configured in this environment.' }, { status: 503 })
     }
 
     try {
         // This will redirect to GitHub OAuth
-        const authenticator = getAuthenticator(context.cloudflare.env)
+        const authenticator = context.services.auth.getAuthenticator()
         return await authenticator.authenticate('github', request)
     } catch (error) {
         if (error instanceof Response) {

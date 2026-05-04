@@ -1,18 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
-import type { CloudflareEnv } from '../remix-app-load-context'
-
-export function verifySignature(env: CloudflareEnv, rawBody: string, signature: string): boolean {
-    if (!env.TITO_SECURITY_TOKEN) {
-        return false
-    }
-
-    const hmac = createHmac('sha256', env.TITO_SECURITY_TOKEN)
-    hmac.update(rawBody)
-    const digest = hmac.digest('base64')
-
-    return timingSafeEqual(Buffer.from(digest), Buffer.from(signature))
-}
 
 // Define Zod schema for the Tito payload
 export const TitoPayloadSchema = z.object({
