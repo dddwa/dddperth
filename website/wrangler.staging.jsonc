@@ -21,6 +21,10 @@
         "WEB_URL": "https://staging.dddperth.com"
     },
 
+    "routes": [
+        { "pattern": "staging.dddperth.com", "custom_domain": true }
+    ],
+
     "observability": {
         "enabled": true
     }

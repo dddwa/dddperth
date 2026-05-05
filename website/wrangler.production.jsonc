@@ -21,6 +21,10 @@
         "WEB_URL": "https://dddperth.com"
     },
 
+    "routes": [
+        { "pattern": "dddperth.com", "custom_domain": true }
+    ],
+
     "observability": {
         "enabled": true
     }

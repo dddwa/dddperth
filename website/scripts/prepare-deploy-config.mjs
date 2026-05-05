@@ -28,6 +28,7 @@ builtConfig.name = envConfig.name
 builtConfig.topLevelName = envConfig.name
 builtConfig.vars = { ...builtConfig.vars, ...envConfig.vars }
 builtConfig.d1_databases = envConfig.d1_databases
+if (envConfig.routes) builtConfig.routes = envConfig.routes
 
 writeFileSync(builtConfigPath, JSON.stringify(builtConfig))
 console.log(`Patched build/server/wrangler.json for ${env} (worker: ${envConfig.name})`)
