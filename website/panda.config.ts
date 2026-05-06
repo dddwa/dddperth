@@ -1,10 +1,85 @@
-import { defineConfig } from '@pandacss/dev'
+import { defineConfig, defineRecipe } from '@pandacss/dev'
 import { createPreset } from '@park-ui/panda-preset'
 import indigo from '@park-ui/panda-preset/colors/indigo'
 import slate from '@park-ui/panda-preset/colors/slate'
 import typographyPreset from 'pandacss-preset-typography'
 import { currentTheme } from './app/theme.config'
 import { createSemanticTokens, createThemeTokens } from './themes/theme-builder'
+
+const navLinkRecipe = defineRecipe({
+    className: 'navLink',
+    base: {
+        display: 'flex',
+        alignItems: 'center',
+        fontFamily: 'body',
+        fontWeight: 'medium',
+        textDecoration: 'none',
+        transition: 'colors',
+        _focus: {
+            outline: '[2px solid token(colors.indigo.7)]',
+            outlineOffset: '[2px]',
+        },
+    },
+    variants: {
+        variant: {
+            primary: {
+                color: 'text.on-brand',
+                _hover: { color: 'text.highlight' },
+                _active: { color: 'text.highlight' },
+            },
+            admin: {
+                px: '4',
+                py: '2',
+                borderRadius: 'md',
+                border: '[1px solid transparent]',
+                _hover: {
+                    bg: 'overlay.subtle',
+                    borderColor: 'border.subtle',
+                },
+            },
+            ghost: {
+                color: 'gray.7',
+                _hover: { color: 'gray.9' },
+                _active: { color: 'gray.9' },
+            },
+            accent: {
+                color: 'indigo.7',
+                _hover: { color: 'indigo.8' },
+                _active: { color: 'indigo.8' },
+            },
+        },
+        size: {
+            sm: { fontSize: 'sm', gap: '2' },
+            md: { fontSize: 'md', gap: '2' },
+            lg: { fontSize: 'lg', gap: '3' },
+        },
+        active: {
+            true: {},
+            false: {},
+        },
+    },
+    compoundVariants: [
+        {
+            variant: 'admin',
+            active: true,
+            css: {
+                color: 'interactive.active',
+                bg: 'overlay.moderate',
+                borderColor: 'border.subtle',
+            },
+        },
+        {
+            variant: 'admin',
+            active: false,
+            css: { color: 'text.on-brand' },
+        },
+    ],
+    defaultVariants: {
+        variant: 'primary',
+        size: 'md',
+        active: false,
+    },
+})
 
 const themeTokens = createThemeTokens(currentTheme)
 
@@ -34,6 +109,9 @@ export default defineConfig({
 
     // Useful for theme customization
     theme: {
+        recipes: {
+            navLink: navLinkRecipe,
+        },
         breakpoints: {
             xxs: '340px',
             xs: '400px',

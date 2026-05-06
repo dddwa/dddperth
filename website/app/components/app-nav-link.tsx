@@ -1,5 +1,5 @@
 import { NavLink, type NavLinkProps } from 'react-router'
-import { navLink } from '~/recipes/nav-link'
+import { navLink } from '~/styled-system/recipes'
 import { cx } from '~/styled-system/css'
 import type { NavLinkSize, NavLinkVariant } from './app-link'
 

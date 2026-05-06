@@ -1,5 +1,6 @@
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
+import { useEffect, useState } from 'react'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
@@ -7,26 +8,34 @@ import DPurple from '~/images/hero/d-purple.svg?react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { HeaderContainer } from '../page-layout'
 
+// Reference viewport width that the parallax distances were tuned for.
+// Below this, distances scale down linearly so the Ds don't slide past each other on narrow screens.
+const PARALLAX_REFERENCE_WIDTH = 1280
+
 export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
     const { scrollY } = useScroll()
+    const parallaxScale = useParallaxScale()
 
-    const y2 = useTransform(scrollY, [0, 400], [0, 100], { ease: easeOut })
-    const y3 = useTransform(scrollY, [0, 400], [0, 200], { ease: easeOut })
+    // Extend parallax travel so the Ds keep moving as you scroll past the panel
+    // and slide down behind the intro paragraph. Distances are intentionally subtle
+    // so it reads as a gentle drift rather than a strong parallax.
+    // Floor distances ensure motion stays visible at narrow widths where parallaxScale shrinks.
+    const y2 = useTransform(scrollY, [0, 600], [0, Math.max(140 * parallaxScale, 160)], { ease: easeOut })
+    const y3 = useTransform(scrollY, [0, 600], [0, Math.max(260 * parallaxScale, 260)], { ease: easeOut })
 
     return (
         <Flex
             height="auto"
-            overflow="hidden"
             direction="column"
             alignItems="center"
             width="full"
             gradientFrom="gradient.hero-start"
             gradientTo="gradient.hero-end"
             gap="6"
-            pt={{ base: '6', md: '12', lg: '24' }}
+            pt={{ base: '0', xl: '24' }}
             bgGradient="to-b"
-            md={{ gap: '12' }}
-            lg={{ gap: '20' }}
+            md={{ gap: '8' }}
+            lg={{ gap: '12' }}
             xl={{
                 gap: '24',
             }}
@@ -37,8 +46,11 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                         color="text.highlight"
                         fontSize={{ base: 'md', md: 'xl' }}
                         fontWeight={{ base: 'medium', md: 'semibold' }}
-                        textWrap="nowrap"
-                        maxWidth="3/4"
+                        display="flex"
+                        flexDirection={{ base: 'column', xs: 'row' }}
+                        justifyContent="space-between"
+                        gap={{ base: '1', xs: '4' }}
+                        width="full"
                     >
                         <styled.span>
                             {DateTime.fromISO(conferenceDate, {
@@ -47,13 +59,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                                 locale: 'en-AU',
                             })}
                         </styled.span>
-                        <styled.span display="none" md={{ display: 'inline' }}>
-                            {' '}
-                            •{' '}
-                        </styled.span>
-                        <styled.span display="block" md={{ display: 'inline' }}>
-                            Optus Stadium, Perth
-                        </styled.span>
+                        <styled.span>Optus Stadium, Perth</styled.span>
                     </styled.h2>
                 ) : null}
                 <styled.h1
@@ -63,21 +69,18 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                     fontWeight="black"
                     textWrap="balance"
                     lineHeight="[1.2]"
-                    fontSize={{ base: '3xl', md: '5xl', lg: '6xl' }}
-                    maxWidth={{ base: 'full', md: '3/4', lg: '3/4' }}
+                    fontSize={{ base: '2xl', md: '3xl', xl: '5xl' }}
+                    maxWidth={{ base: 'full', xl: '3/4' }}
                 >
                     A one day, fully inclusive, approachable and affordable tech conference for everyone.
                 </styled.h1>
             </HeaderContainer>
-            <Box
-                width="full"
-                position="relative"
-                height="[350px]"
-                sm={{ height: '[400px]' }}
-                md={{ height: '[600px]' }}
-                lg={{ height: '[700px]' }}
-                xl={{ height: '[900px]' }}
-            >
+            <Box width="full" position="relative" maxHeight={{ base: '[140px]', md: '[200px]', lg: '[260px]', xl: '[420px]' }}>
+                {/* Sizing element: the green D establishes the container height.
+                    Other Ds and the gradient overlay are absolutely positioned over it. */}
+                <Box width="[38%]" ml="[4%]" visibility="hidden" aria-hidden="true">
+                    <DGreen style={{ width: '100%', height: 'auto' }} />
+                </Box>
                 <Box
                     position="absolute"
                     zIndex="base"
@@ -86,11 +89,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                     gradientFrom="transparent"
                     gradientTo="gradient.hero-end"
                     width="full"
-                    height="[200px]"
-                    sm={{ height: '[300px]' }}
-                    md={{ height: '[400px]' }}
-                    lg={{ height: '[500px]' }}
-                    xl={{ height: '[700px]' }}
+                    height="[60%]"
                 ></Box>
                 <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%' }}>
                     <DGreen style={{ width: '100%', height: 'auto' }} />
@@ -124,4 +123,32 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
             </Box>
         </Flex>
     )
+}
+
+function useParallaxScale() {
+    // Start at 1 so SSR + first paint match the desktop look; refine on mount.
+    const [scale, setScale] = useState(1)
+
+    useEffect(() => {
+        const update = () => {
+            const width = window.innerWidth
+            // Linear ramp: <=400px → 0.25, >=1280px → 1, smoothly between.
+            const minWidth = 400
+            const minScale = 0.25
+            if (width >= PARALLAX_REFERENCE_WIDTH) {
+                setScale(1)
+            } else if (width <= minWidth) {
+                setScale(minScale)
+            } else {
+                const t = (width - minWidth) / (PARALLAX_REFERENCE_WIDTH - minWidth)
+                setScale(minScale + t * (1 - minScale))
+            }
+        }
+
+        update()
+        window.addEventListener('resize', update)
+        return () => window.removeEventListener('resize', update)
+    }, [])
+
+    return scale
 }

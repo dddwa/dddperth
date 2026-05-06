@@ -1,5 +1,5 @@
 import { Link, type LinkProps } from 'react-router'
-import { navLink } from '~/recipes/nav-link'
+import { navLink } from '~/styled-system/recipes'
 import { css, cx } from '~/styled-system/css'
 import { styled } from '~/styled-system/jsx'
 import type { JsxStyleProps } from '~/styled-system/types'

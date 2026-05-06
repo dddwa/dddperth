@@ -236,8 +236,10 @@ function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
     return (
         <Flex
-            flexDirection="row"
+            flexDirection={smallSidebar ? 'row' : { base: 'column', sm: 'row' }}
+            alignItems={smallSidebar ? 'stretch' : { base: 'stretch', sm: 'center' }}
             justifyContent="space-between"
+            gap={smallSidebar ? '0' : { base: '3', sm: '0' }}
             rounded="lg"
             color="text.on-brand"
             shadow="sm"
@@ -255,8 +257,10 @@ function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?
 function ClosedRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
     return (
         <Flex
-            flexDirection="row"
+            flexDirection={smallSidebar ? 'row' : { base: 'column', sm: 'row' }}
+            alignItems={smallSidebar ? 'stretch' : { base: 'stretch', sm: 'center' }}
             justifyContent="space-between"
+            gap={smallSidebar ? '0' : { base: '3', sm: '0' }}
             rounded="lg"
             color="text.secondary"
             shadow="sm"
@@ -287,10 +291,11 @@ function EventLink({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRightRadius: '[100px]',
-        width: smallSidebar ? '[100px]' : '[150px]',
+        rounded: smallSidebar ? '[0]' : ({ base: 'lg', sm: '[0]' } as const),
+        borderRightRadius: smallSidebar ? '[100px]' : ({ base: 'lg', sm: '[100px]' } as const),
+        width: smallSidebar ? '[100px]' : ({ base: 'full', sm: '[150px]' } as const),
         fontSize: smallSidebar ? 'xs' : 'md',
-        paddingY: '1',
+        paddingY: smallSidebar ? '1' : ({ base: '2', sm: '1' } as const),
         ml: smallSidebar ? '6' : '0',
         fontWeight: 'semibold',
         color: highlighted ? 'gradient.cta-start' : 'text.on-brand',
@@ -329,10 +334,11 @@ function EventCountdown({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRightRadius: '[100px]',
-        width: smallSidebar ? '[100px]' : '[150px]',
+        rounded: smallSidebar ? '[0]' : { base: 'lg', sm: '[0]' },
+        borderRightRadius: smallSidebar ? '[100px]' : { base: 'lg', sm: '[100px]' },
+        width: smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' },
         fontSize: smallSidebar ? 'xs' : 'md',
-        paddingY: '1',
+        paddingY: smallSidebar ? '1' : { base: '2', sm: '1' },
         ml: smallSidebar ? '6' : '0',
         fontWeight: 'semibold',
         color: 'white',
@@ -376,8 +382,8 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
             alignItems="center"
             justifyContent="center"
             rounded="lg"
-            width={smallSidebar ? '[100px]' : '[150px]'}
-            paddingY="1"
+            width={smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' }}
+            paddingY={smallSidebar ? '1' : { base: '2', sm: '1' }}
             color="text.muted"
             bgGradient="to-r"
             gradientFrom="white/5"
@@ -415,7 +421,7 @@ export const ImportantDates: React.FC<{
     importantDates: ImportantDate[]
 }> = ({ smallSidebar, showOnlyLive, currentDate, importantDates }) => {
     return (
-        <Flex flexDirection="column" gap="2" mx={smallSidebar ? '0' : '4'}>
+        <Flex flexDirection="column" gap="2">
             <styled.h2
                 fontSize={{ base: smallSidebar ? 'lg' : 'lg', md: smallSidebar ? 'lg' : '3xl' }}
                 color="white"
@@ -441,7 +447,7 @@ export const ImportantDates: React.FC<{
 
 export function Workshops() {
     return (
-        <Flex flexDirection="column" gap="2" mx="4">
+        <Flex flexDirection="column" gap="2">
             <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="white" fontWeight="semibold" width="fit">
                 Workshops
             </styled.h2>
