@@ -41,7 +41,7 @@ export default [
         },
     },
     {
-        files: ['*.json', '**/*.js', '**/*.jsx', '**/*.json', 'eslint.config.js'],
+        files: ['**/*.js', '**/*.jsx', 'eslint.config.js'],
         ...ts.configs.disableTypeChecked,
     },
 ]
