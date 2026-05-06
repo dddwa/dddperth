@@ -1,13 +1,11 @@
 export interface User {
-    id: string
-    login: string
-    avatarUrl: string
+    email: string
     name: string | null
-    email: string | null
 }
 
 export interface AuthSessionData {
-    user?: User
+    /** Opaque server-side session id; the row lives in the auth_sessions D1 table. */
+    sessionId?: string
 }
 
 export type SessionId = string

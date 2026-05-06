@@ -56,7 +56,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     return data(
         {
-            currentDate: context.dateTimeProvider.nowDate().toISODate(),
+            currentDate: context.dateTimeProvider.nowDate().toISO(),
             currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
@@ -146,7 +146,7 @@ export default function WebsiteContentPage() {
                     currentPath={currentPath}
                     frontmatter={frontmatter}
                     conferenceState={conferenceState}
-                    currentDate={DateTime.fromISO(currentDate)}
+                    currentDate={DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })}
                     importantDates={importantDates}
                 >
                     <Component />
@@ -220,7 +220,12 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                     <small style={{ display: 'block' }}>
                         {conferenceState.conferenceState === 'before-conference' ? 'Next event' : 'Previous event'}
                     </small>
-                    <time>{new Date(relevantDate).toDateString()}</time>
+                    <time>
+                        {DateTime.fromISO(relevantDate, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                            DateTime.DATE_HUGE,
+                            { locale: 'en-AU' },
+                        )}
+                    </time>
                 </h2>
             ) : null}
             <ul

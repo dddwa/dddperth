@@ -25,7 +25,9 @@
 
     // Default environment variables (local dev)
     "vars": {
-        "WEB_URL": "http://localhost:3800"
+        "WEB_URL": "http://localhost:3800",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
     },
 
     // Observability

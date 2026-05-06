@@ -16,8 +16,7 @@
         "install-browsers": "pnpm playwright install",
         "sponsor:add": "node scripts/add-sponsor.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",
-        "provision:cloudflare": "node scripts/provision-cloudflare.mjs",
-        "setup:github-app": "node scripts/setup-github-app/index.ts"
+        "provision:cloudflare": "node scripts/provision-cloudflare.mjs"
     },
     "private": true,
     "devDependencies": {

@@ -1,64 +1,89 @@
-import { data, Form, redirect, useActionData, useLoaderData, useSearchParams } from 'react-router'
+import { data, Form, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from 'react-router'
 import { getUser } from '~/lib/auth.server'
+import { isValidEmail, sanitiseRedirect } from '~/lib/auth/validation'
 import { recordException } from '~/lib/record-exception'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
 
+const REDIRECT_PARAM = 'redirectTo'
+
 export async function loader({ request, context }: Route.LoaderArgs) {
-    // If user is already authenticated, redirect to admin
     const user = await getUser(request.headers, context.services)
     if (user) {
-        throw redirect('/admin')
+        const url = new URL(request.url)
+        const redirectTo = sanitiseRedirect(url.searchParams.get(REDIRECT_PARAM))
+        throw redirect(redirectTo)
     }
-    return data({ isGitHubAuthConfigured: context.services.auth.isConfigured() })
+    return data({ canSendEmail: context.services.email.canSend() })
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-    if (!context.services.auth.isConfigured()) {
-        return data({ error: 'GitHub authentication is not configured in this environment.' }, { status: 503 })
+    const formData = await request.formData()
+    const emailRaw = formData.get('email')
+    const redirectToRaw = formData.get(REDIRECT_PARAM)
+
+    const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : ''
+    const redirectTo = sanitiseRedirect(typeof redirectToRaw === 'string' ? redirectToRaw : null)
+
+    if (!isValidEmail(email)) {
+        return data({ error: 'Please enter a valid email address.' }, { status: 400 })
     }
 
     try {
-        // This will redirect to GitHub OAuth
-        const authenticator = context.services.auth.getAuthenticator()
-        return await authenticator.authenticate('github', request)
+        // sendMagicLink checks the allowlist itself and is a no-op for
+        // unallowlisted addresses. We always respond with "check your inbox"
+        // either way, so the form can't be used to probe who has access.
+        await context.services.auth.sendMagicLink({
+            email,
+            redirectTo,
+            requestUrl: new URL(request.url).origin,
+        })
     } catch (error) {
-        if (error instanceof Response) {
-            throw error
-        }
-
         recordException(error)
-
-        // If there's an error, return it to display on the form
-        if (error instanceof Error) {
-            return data({ error: error.message }, { status: 400 })
-        }
-
-        throw error
+        // Fall through to the generic success response. The user shouldn't
+        // see provider-side errors (and a real user with an allowlisted
+        // address can simply retry).
     }
+
+    return data({ sent: true as const, email })
 }
 
 export default function Login() {
-    const { isGitHubAuthConfigured: canUseGitHubAuth } = useLoaderData<typeof loader>()
+    const { canSendEmail } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
     const actionData = useActionData<typeof action>()
+    const navigation = useNavigation()
+    const isSubmitting = navigation.state === 'submitting'
+    const redirectTo = sanitiseRedirect(searchParams.get(REDIRECT_PARAM))
 
-    const error =
-        (actionData && 'error' in actionData && actionData.error) ||
-        (searchParams.get('error') === 'auth_unavailable'
-            ? 'GitHub authentication is not configured in this environment.'
-            : null) ||
-        (searchParams.get('error') === 'access_denied'
-            ? 'Access denied. Admin privileges required.'
-            : searchParams.get('error') === 'auth_failed'
-              ? 'Authentication failed. Please try again.'
-              : null)
+    if (actionData && 'sent' in actionData) {
+        return (
+            <Flex minH="screen" align="center" justify="center" bg="surface.body">
+                <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
+                    <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                        Check your inbox
+                    </styled.h1>
+                    <styled.p color="gray.9">
+                        If <styled.strong>{actionData.email}</styled.strong> is on the allowlist, a sign-in link is on
+                        its way. The link expires in 15 minutes.
+                    </styled.p>
+                    {!canSendEmail && (
+                        <Box mt="4" p="3" bg="status.info.bg" border="default" borderColor="status.info.border" borderRadius="md" color="status.info.fg" fontSize="sm">
+                            Email isn't configured in this environment. Check the server console for the magic link.
+                        </Box>
+                    )}
+                </Box>
+            </Flex>
+        )
+    }
+
+    const error = (actionData && 'error' in actionData && actionData.error) || null
 
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
-            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[400px]" w="full">
-                <styled.h1 mb="6" color="surface.body" fontSize="2xl" fontWeight="bold">
-                    Admin Login
+            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" maxW="[440px]" w="full">
+                <styled.h1 mb="6" color="surface.body" fontSize="2xl" fontWeight="bold" textAlign="center">
+                    Sign in
                 </styled.h1>
 
                 {error && (
@@ -76,13 +101,32 @@ export default function Login() {
                     </Box>
                 )}
 
-                <styled.p mb="8" color="gray.9">
-                    Sign in with your GitHub account to access the admin area.
+                <styled.p mb="6" color="gray.9" textAlign="center">
+                    Enter your email and we'll send you a one-time sign-in link.
                 </styled.p>
                 <Form method="post">
+                    <input type="hidden" name={REDIRECT_PARAM} value={redirectTo} />
+                    <styled.label display="block" mb="2" fontSize="sm" fontWeight="medium" color="gray.10">
+                        Email
+                        <styled.input
+                            type="email"
+                            name="email"
+                            required
+                            autoComplete="email"
+                            mt="1"
+                            w="full"
+                            px="3"
+                            py="2"
+                            border="default"
+                            borderColor="gray.6"
+                            borderRadius="md"
+                            fontSize="md"
+                            _focus={{ outline: 'none', borderColor: 'admin.700' }}
+                        />
+                    </styled.label>
                     <styled.button
                         type="submit"
-                        disabled={!canUseGitHubAuth}
+                        disabled={isSubmitting}
                         bg="admin.900"
                         color="white"
                         border="none"
@@ -90,21 +134,18 @@ export default function Login() {
                         px="6"
                         borderRadius="md"
                         fontSize="md"
+                        fontWeight="medium"
                         cursor="pointer"
-                        display="flex"
-                        alignItems="center"
-                        gap="2"
-                        mx="auto"
+                        w="full"
+                        mt="4"
                         _hover={{ bg: 'admin.800' }}
                         _disabled={{ bg: 'gray.8', cursor: 'not-allowed', opacity: 0.7 }}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                        </svg>
-                        Sign in with GitHub
+                        {isSubmitting ? 'Sending sign-in link…' : 'Send sign-in link'}
                     </styled.button>
                 </Form>
             </Box>
         </Flex>
     )
 }
+

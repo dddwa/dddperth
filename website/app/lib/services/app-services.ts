@@ -1,6 +1,7 @@
 import type { AnnouncementsStore } from './announcements-store'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
+import type { EmailService } from './email-service'
 import type { SessionStorages } from './session-storages'
 import type { TicketsService } from './tickets-service'
 import type { VotingStore } from './voting-store'
@@ -18,5 +19,6 @@ export interface AppServices {
     content: ContentService
     tickets: TicketsService
     auth: AuthService
+    email: EmailService
     sessions: SessionStorages
 }

@@ -101,8 +101,10 @@ export default function AdminSettings() {
     const { overrideDate, currentDate, timezone, importantDates, year, announcement } = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
 
-    const overrideDateTime = overrideDate ? DateTime.fromISO(overrideDate) : null
-    const currentDateTime = DateTime.fromISO(currentDate)
+    const overrideDateTime = overrideDate
+        ? DateTime.fromISO(overrideDate, { zone: conferenceConfigPublic.timezone })
+        : null
+    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })
 
     return (
         <AdminLayout heading="Admin Settings">
@@ -268,7 +270,7 @@ export default function AdminSettings() {
                             {announcement.message}
                         </styled.p>
                         <styled.p color="status.success.emphasis" fontSize="xs">
-                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, { zone: conferenceConfigPublic.timezone }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
                 )}
@@ -391,7 +393,9 @@ function QuickJumpButton({
     dateISO: string | undefined
     timezone: string
 }) {
-    const date = dateISO ? DateTime.fromISO(dateISO) : DateTime.now()
+    const date = dateISO
+        ? DateTime.fromISO(dateISO, { zone: timezone })
+        : DateTime.now().setZone(timezone)
 
     return (
         <Form method="post">

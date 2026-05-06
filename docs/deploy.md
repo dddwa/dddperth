@@ -52,27 +52,23 @@ pnpm wrangler secret put SESSION_SECRET --env staging
 pnpm wrangler secret put SESSION_SECRET --env production
 ```
 
-#### GitHub OAuth (admin login)
+#### Magic-link auth (Resend)
 
-`WEBSITE_GITHUB_APP_CLIENT_ID` and `WEBSITE_GITHUB_APP_CLIENT_SECRET` drive the admin login flow in `app/lib/auth.server.ts`. Use the setup tool — it walks GitHub's manifest flow and writes the credentials straight into the right place:
+The admin area (and, in staging, the entire site) is gated by magic-link sign-in. The Worker calls Resend to deliver the link.
 
-```bash
-pnpm setup:github-app
-```
+1. Create a Resend account, verify the sending domain (e.g. `dddperth.com`), and grab an API key.
+2. Set the key per environment:
 
-Pick the environment in the browser (local / staging / production). Local writes to `website/.dev.vars`; staging/production run `wrangler secret put` against the matching Worker. Run it once per environment. Each environment needs its own GitHub App because the OAuth callback URL is fixed per app — staging callbacks must hit staging.
+   ```bash
+   cd website
+   pnpm wrangler secret put RESEND_API_KEY --env staging
+   pnpm wrangler secret put RESEND_API_KEY --env production
+   ```
 
-If you'd rather do it manually: create a GitHub App at https://github.com/settings/apps/new (or the org equivalent), set the user authorisation callback URL to `<WEB_URL>/auth/github/callback`, and `wrangler secret put` both values yourself.
+3. The from-address (`AUTH_EMAIL_FROM`) and the staging-wide gate flag (`WEBSITE_AUTH_REQUIRED`) are non-secret and live in `wrangler.staging.jsonc` / `wrangler.production.jsonc` under `vars`.
+4. Add admins to the `auth_allowlist` D1 table — see [`website/ADMIN_SETUP.md`](../website/ADMIN_SETUP.md) for the SQL.
 
-Add admin GitHub handles to `ADMIN_HANDLES` in `website/app/lib/config.server.ts`.
-
-#### GitHub repo pointers ("Edit on GitHub" links)
-
-```bash
-pnpm wrangler secret put GITHUB_ORGANIZATION --env <env>   # e.g. dddwa
-pnpm wrangler secret put GITHUB_REPO --env <env>           # e.g. dddperth
-pnpm wrangler secret put GITHUB_REF --env <env>            # optional, defaults to "main"
-```
+The same code path runs locally with `RESEND_API_KEY` unset — magic links are printed to the dev-server console instead of emailed.
 
 #### Sessionize (current year)
 

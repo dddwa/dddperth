@@ -15,12 +15,12 @@ export interface CloudflareEnv {
     SESSION_SECRET: string
     WEB_URL: string
 
-    WEBSITE_GITHUB_APP_CLIENT_ID: string
-    WEBSITE_GITHUB_APP_CLIENT_SECRET: string
-
-    GITHUB_ORGANIZATION: string
-    GITHUB_REPO: string
-    GITHUB_REF?: string
+    /** "true" turns on the staging-wide auth gate. Anything else leaves only `/admin` gated. */
+    WEBSITE_AUTH_REQUIRED?: string
+    /** Resend API key. Optional locally — if absent, magic links are logged to the console. */
+    RESEND_API_KEY?: string
+    /** From-address for outgoing magic-link emails. */
+    AUTH_EMAIL_FROM?: string
 
     TITO_SECURITY_TOKEN?: string
 

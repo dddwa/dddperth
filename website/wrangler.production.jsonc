@@ -18,7 +18,9 @@
     },
 
     "vars": {
-        "WEB_URL": "https://dddperth.com"
+        "WEB_URL": "https://dddperth.com",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
     },
 
     "routes": [

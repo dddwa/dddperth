@@ -39,11 +39,11 @@ SESSION_SECRET=local-dev-secret
 WEB_URL=http://localhost:3800
 ```
 
-Admin login (optional locally) needs a GitHub OAuth app — set:
+Admin login uses **magic links**. Locally, leave `RESEND_API_KEY` empty — the dev server prints the magic-link URL to the console instead of sending email. Add yourself to the `auth_allowlist` D1 table to log in (the initial migration seeds `jake@ginnivan.net`):
 
-```ini
-WEBSITE_GITHUB_APP_CLIENT_ID=your-client-id
-WEBSITE_GITHUB_APP_CLIENT_SECRET=your-secret
+```bash
+pnpm wrangler d1 execute dddperth-voting-local --local --command \
+  "INSERT INTO auth_allowlist (email, name, added_at) VALUES ('you@example.com', 'You', unixepoch())"
 ```
 
 The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`docs/deploy.md`](./docs/deploy.md) for what each one does and which are needed in production.

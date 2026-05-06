@@ -1,17 +1,13 @@
 import { DateTime } from 'luxon'
 import bundles from 'virtual:mdx-bundles'
-import type { AppConfig } from '../app-config'
-import type { ContentListItem, ContentPage, ContentService, ContentType } from '../content-service'
+import { conferenceConfigPublic } from '../../../config/conference-config-public'
+import type { ContentListItem, ContentPage, ContentService } from '../content-service'
 import type { FrontmatterProperties } from '../../mdx-types'
 
-function contentSubPath(type: ContentType): string {
-    return type === 'blog' ? 'blog/posts' : 'website-content/pages'
-}
-
 function formatDate(iso: string): string {
-    const dt = DateTime.fromISO(iso)
-    const offset = new Date().getTimezoneOffset()
-    return dt.plus({ minutes: offset }).toLocaleString(DateTime.DATE_FULL, { locale: 'en-AU' })
+    return DateTime.fromISO(iso, { zone: conferenceConfigPublic.timezone }).toLocaleString(DateTime.DATE_FULL, {
+        locale: 'en-AU',
+    })
 }
 
 function coerceFrontmatter(frontmatter: Record<string, unknown>): FrontmatterProperties {
@@ -32,10 +28,9 @@ function coerceFrontmatter(frontmatter: Record<string, unknown>): FrontmatterPro
 
 /**
  * MDX-bundler-backed content service. The `bundles` virtual import is a
- * Vite plugin output so it isn't Cloudflare-specific — but the GitHub edit
- * link is config-driven, which is what makes this implementation portable.
+ * Vite plugin output so it isn't Cloudflare-specific.
  */
-export function createMdxContentService(config: AppConfig): ContentService {
+export function createMdxContentService(): ContentService {
     return {
         async getPage(slug, type, options = {}): Promise<ContentPage | null> {
             const entry = bundles[type][slug]
@@ -50,9 +45,6 @@ export function createMdxContentService(config: AppConfig): ContentService {
                 type,
                 code,
                 dateDisplay: frontmatter.date ? formatDate(frontmatter.date) : undefined,
-                editLink: `https://github.com/${config.github.organization}/${config.github.repo}/edit/${config.github.ref}/${contentSubPath(
-                    type,
-                )}/${slug}.${type === 'blog' ? 'md' : 'mdx'}`,
             }
         },
 

@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
@@ -188,10 +189,10 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens).toLocaleString(
+                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                               DateTime.DATETIME_SHORT,
                               { locale: 'en-AU' },
-                          )} and closes ${DateTime.fromISO(data.talkVoting.closes).toLocaleString(
+                          )} and closes ${DateTime.fromISO(data.talkVoting.closes, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                               DateTime.DATETIME_SHORT,
                               { locale: 'en-AU' },
                           )}`

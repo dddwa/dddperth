@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
+import { Link } from 'react-router'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import type {
     EndEventImportantDate,
     ImportantDate,
@@ -8,6 +10,13 @@ import type {
 } from '~/lib/important-dates'
 import { css } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
+
+const StyledLink = styled(Link)
+
+function isExternalHref(href: string | undefined): boolean {
+    if (!href) return false
+    return /^(https?:)?\/\//.test(href) || href.startsWith('mailto:')
+}
 
 const ImportantDateBox: FC<{
     currentDate: DateTime
@@ -273,26 +282,34 @@ function EventLink({
     highlighted?: boolean
     message: string
 }) {
+    const styleProps = {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRightRadius: '[100px]',
+        width: smallSidebar ? '[100px]' : '[150px]',
+        fontSize: smallSidebar ? 'xs' : 'md',
+        paddingY: '1',
+        ml: smallSidebar ? '6' : '0',
+        fontWeight: 'semibold',
+        color: highlighted ? 'gradient.cta-start' : 'text.on-brand',
+        _hover: { gradientTo: highlighted ? 'gradient.cta-mid' : 'white/10' },
+        bgGradient: 'to-r',
+        gradientFrom: highlighted ? 'gradient.cta-mid' : 'white/10',
+        gradientTo: highlighted ? 'gradient.cta-end' : 'white/5',
+    } as const
+
+    if (eventHref && !isExternalHref(eventHref)) {
+        return (
+            <StyledLink to={eventHref} {...styleProps}>
+                {message}
+            </StyledLink>
+        )
+    }
+
     return (
-        <styled.a
-            href={eventHref}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            borderRightRadius="[100px]"
-            width={smallSidebar ? '[100px]' : '[150px]'}
-            fontSize={smallSidebar ? 'xs' : 'md'}
-            paddingY="1"
-            ml={smallSidebar ? '6' : '0'}
-            fontWeight="semibold"
-            color={highlighted ? 'gradient.cta-start' : 'text.on-brand'}
-            // cursor="pointer"
-            _hover={{ gradientTo: highlighted ? 'gradient.cta-mid' : 'white/10' }}
-            bgGradient="to-r"
-            gradientFrom={highlighted ? 'gradient.cta-mid' : 'white/10'}
-            gradientTo={highlighted ? 'gradient.cta-end' : 'white/5'}
-        >
+        <styled.a href={eventHref} {...styleProps}>
             {message}
         </styled.a>
     )
@@ -331,14 +348,22 @@ function EventCountdown({
         </div>
     )
 
-    if (eventHref) {
+    if (!eventHref) {
         return <styled.button className={styles}>{countdownMessage}</styled.button>
     }
 
+    if (isExternalHref(eventHref)) {
+        return (
+            <styled.a href={eventHref} className={styles} cursor="pointer">
+                {countdownMessage}
+            </styled.a>
+        )
+    }
+
     return (
-        <styled.a href={eventHref} className={styles} cursor="pointer">
+        <StyledLink to={eventHref} className={styles} cursor="pointer">
             {countdownMessage}
-        </styled.a>
+        </StyledLink>
     )
 }
 
@@ -364,7 +389,7 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
 }
 
 function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallSidebar: boolean | undefined }) {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceConfigPublic.timezone })
 
     return (
         <Flex flexDirection="column">

@@ -2,7 +2,9 @@ import type { LinksFunction } from 'react-router'
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 import { Settings } from 'luxon'
+import { requireUser } from '~/lib/auth.server'
 import { token } from '~/styled-system/tokens'
+import type { Route } from './+types/root'
 import './index.css'
 
 Settings.throwOnInvalid = true
@@ -10,6 +12,21 @@ declare module 'luxon' {
     interface TSSettings {
         throwOnInvalid: true
     }
+}
+
+/**
+ * When `WEBSITE_AUTH_REQUIRED` is on (staging) the entire site is gated.
+ * `/auth/*` paths are exempted so the login flow still works. The admin
+ * area has its own gate in `admin.tsx`, which stays in effect in both envs.
+ */
+export async function loader({ request, context }: Route.LoaderArgs) {
+    if (!context.config.websiteAuthRequired) return null
+
+    const url = new URL(request.url)
+    if (url.pathname.startsWith('/auth/')) return null
+
+    await requireUser(request, context)
+    return null
 }
 
 export const links: LinksFunction = () => {

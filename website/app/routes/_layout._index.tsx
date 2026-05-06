@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import type { HeadersFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -33,7 +34,7 @@ export default function Index() {
         <>
             <SkipToContent />
             <Hero
-                currentDate={DateTime.fromISO(currentDate)}
+                currentDate={DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })}
                 conferenceDate={conferenceDate}
                 importantDates={importantDates}
             />

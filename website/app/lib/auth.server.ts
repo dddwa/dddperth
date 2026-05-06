@@ -2,33 +2,50 @@ import type { AppLoadContext } from 'react-router'
 import { redirect } from 'react-router'
 import type { AppServices } from './services/app-services'
 import type { User } from './session-types'
-import { isAdminHandle } from './config.server'
 
 export type { User } from './session-types'
 
-export function isAdmin(user: User | null): boolean {
-    if (!user) return false
-    return isAdminHandle(user.login)
-}
+/**
+ * Resolves the current user from the auth cookie + D1 session lookup.
+ * Returns null when there is no session or the session has expired.
+ */
+export async function getUser(requestHeaders: Headers, services: AppServices): Promise<User | null> {
+    const session = await services.sessions.auth.getSession(requestHeaders.get('cookie'))
+    const sessionId = session.get('sessionId')
+    if (!sessionId) return null
 
-export async function requireAdmin(request: Request, context: AppLoadContext): Promise<User> {
-    const session = await context.services.sessions.auth.getSession(request.headers.get('cookie'))
-    const user = session.get('user')
+    const user = await services.auth.getSessionUser(sessionId)
+    if (!user) return null
 
-    if (!user) {
-        throw redirect('/auth/login')
-    }
-
-    if (!isAdmin(user)) {
-        throw new Response('Forbidden', { status: 403 })
-    }
-
+    // Slide expiry forward; cheap because the helper short-circuits unless
+    // last_seen_at is older than the touch interval.
+    await services.auth.touchSession(sessionId)
     return user
 }
 
-export async function getUser(requestHeaders: Headers, services: AppServices): Promise<User | null> {
-    const session = await services.sessions.auth.getSession(requestHeaders.get('cookie'))
-    return session.get('user') as User | null
+/**
+ * Loader/action helper. Throws a redirect to /auth/login (preserving the
+ * intended destination) when there is no session.
+ *
+ * Anyone with a session is, by definition, allowlisted — the allowlist is
+ * checked at magic-link issue time. There is no separate admin role.
+ */
+export async function requireUser(request: Request, context: AppLoadContext): Promise<User> {
+    const user = await getUser(request.headers, context.services)
+    if (user) return user
+
+    const url = new URL(request.url)
+    const redirectTo = url.pathname + url.search
+    const params = new URLSearchParams({ redirectTo })
+    throw redirect(`/auth/login?${params.toString()}`)
+}
+
+/** Backwards-compatible alias. The "admin" gate is just "logged in" now. */
+export const requireAdmin = requireUser
+
+/** Backwards-compatible alias for the old isAdmin check. */
+export function isAdmin(user: User | null): boolean {
+    return user !== null
 }
 
 export async function createUserSession(
@@ -36,21 +53,35 @@ export async function createUserSession(
     services: AppServices,
     user: User,
     redirectTo: string,
-) {
-    const session = await services.sessions.auth.getSession(requestHeaders.get('cookie'))
-    session.set('user', user)
+): Promise<Response> {
+    const userAgent = requestHeaders.get('user-agent')
+    const created = await services.auth.createSession({ email: user.email, userAgent })
+
+    // Build a *fresh* session (don't read the existing cookie). Prevents
+    // session fixation and stops any stray keys from a pre-login session
+    // payload from carrying over after sign-in.
+    const session = await services.sessions.auth.getSession(null)
+    session.set('sessionId', created.id)
+
     return redirect(redirectTo, {
         headers: {
-            'Set-Cookie': await services.sessions.auth.commitSession(session),
+            'Set-Cookie': await services.sessions.auth.commitSession(session, {
+                expires: new Date(created.expiresAt * 1000),
+            }),
         },
     })
 }
 
-export async function logout(requestHeaders: Headers, services: AppServices, redirectTo = '/') {
+export async function logout(requestHeaders: Headers, services: AppServices, redirectTo = '/'): Promise<Response> {
     const session = await services.sessions.auth.getSession(requestHeaders.get('cookie'))
+    const sessionId = session.get('sessionId')
+    if (sessionId) {
+        await services.auth.destroySession(sessionId)
+    }
+
     return redirect(redirectTo, {
         headers: {
-            'Set-Cookie': await services.sessions.auth.commitSession(session),
+            'Set-Cookie': await services.sessions.auth.destroySession(session),
         },
     })
 }

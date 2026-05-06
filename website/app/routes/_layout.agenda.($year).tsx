@@ -163,7 +163,11 @@ export default function Agenda() {
                     })}
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
-                        const startTime12 = DateTime.fromISO(timeSlot.slotStart).toFormat('h:mm a').toLowerCase()
+                        const startTime12 = DateTime.fromISO(timeSlot.slotStart, {
+                            zone: conferenceConfigPublic.timezone,
+                        })
+                            .toFormat('h:mm a')
+                            .toLowerCase()
                         const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
                         const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
                         const nextTimeSlotStart = nextTimeSlot?.slotStart.replace(/:/g, '')
@@ -186,7 +190,11 @@ export default function Agenda() {
                                         <styled.span display={{ base: 'inline', xl: 'none' }}>
                                             {' '}
                                             -{' '}
-                                            {DateTime.fromISO(nextTimeSlot.slotStart).toFormat('h:mm a').toLowerCase()}
+                                            {DateTime.fromISO(nextTimeSlot.slotStart, {
+                                                zone: conferenceConfigPublic.timezone,
+                                            })
+                                                .toFormat('h:mm a')
+                                                .toLowerCase()}
                                         </styled.span>
                                     ) : null}
                                 </styled.h2>
@@ -295,9 +303,13 @@ function RoomTimeSlot({
         ?.sessions.find((session) => session.id === room.session.id)
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
-        ? DateTime.fromISO(fullSession.endsAt).toFormat('h:mm a').toLowerCase()
+        ? DateTime.fromISO(fullSession.endsAt, { zone: conferenceConfigPublic.timezone })
+              .toFormat('h:mm a')
+              .toLowerCase()
         : nextTimeSlotIso
-          ? DateTime.fromISO(nextTimeSlotIso).toFormat('h:mm a').toLowerCase()
+          ? DateTime.fromISO(nextTimeSlotIso, { zone: conferenceConfigPublic.timezone })
+                .toFormat('h:mm a')
+                .toLowerCase()
           : undefined
 
     const timeSlotEnd = endsAtTime?.replace(/:/g, '') ?? ''

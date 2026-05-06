@@ -20,8 +20,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
         adminData = {
             user: {
-                login: user.login,
-                avatarUrl: user.avatarUrl,
+                email: user.email,
+                name: user.name,
             },
             overrideDate: overrideDate || null,
             currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),
@@ -39,12 +39,11 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
 export function meta({ data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
-        ? `${conferenceConfigPublic.name} | ${DateTime.fromISO(data.conferenceState.conference.date).toLocaleString(
-              DateTime.DATE_HUGE,
-              {
-                  locale: 'en-AU',
-              },
-          )}`
+        ? `${conferenceConfigPublic.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
+              zone: conferenceConfigPublic.timezone,
+          }).toLocaleString(DateTime.DATE_HUGE, {
+              locale: 'en-AU',
+          })}`
         : conferenceConfigPublic.name
 
     const description = data?.conferenceDescription

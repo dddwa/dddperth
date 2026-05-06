@@ -9,14 +9,18 @@ export interface AppConfig {
     webUrl: string
     sessionSecret: string
 
-    github: {
-        organization: string
-        repo: string
-        ref: string
-        oauth?: {
-            clientId: string
-            clientSecret: string
-        }
+    /**
+     * When true, every page outside `/auth/*` requires a logged-in session.
+     * Used to gate the entire staging site; production leaves this off and
+     * only `/admin/*` is gated.
+     */
+    websiteAuthRequired: boolean
+
+    auth: {
+        /** From-address for outgoing magic-link emails, e.g. "DDD Perth <noreply@dddperth.com>". */
+        emailFrom: string
+        /** Resend API key. When absent, magic-link emails are logged to the console (dev fallback). */
+        resendApiKey?: string
     }
 
     /**

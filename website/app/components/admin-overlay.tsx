@@ -1,17 +1,20 @@
 import { DateTime } from 'luxon'
 import { Link } from 'react-router'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 interface AdminOverlayProps {
-    user: { login: string; avatarUrl: string }
+    user: { email: string; name: string | null }
     overrideDate?: string | null
     currentDate: string
     timezone: string
 }
 
 export function AdminOverlay({ user, overrideDate, currentDate, timezone }: AdminOverlayProps) {
-    const overrideDateTime = overrideDate ? DateTime.fromISO(overrideDate) : null
-    const currentDateTime = DateTime.fromISO(currentDate)
+    const overrideDateTime = overrideDate
+        ? DateTime.fromISO(overrideDate, { zone: conferenceConfigPublic.timezone })
+        : null
+    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })
 
     return (
         <Box
@@ -32,8 +35,7 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
             <Flex maxW="7xl" mx="auto" alignItems="center" justifyContent="space-between">
                 <Flex alignItems="center" gap="4">
                     <Flex alignItems="center" gap="2">
-                        <styled.img src={user.avatarUrl} alt={user.login} w="6" h="6" borderRadius="full" />
-                        <styled.span fontWeight="medium">Admin: {user.login}</styled.span>
+                        <styled.span fontWeight="medium">Admin: {user.name || user.email}</styled.span>
                     </Flex>
 
                     {overrideDateTime ? (

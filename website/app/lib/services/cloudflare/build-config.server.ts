@@ -9,17 +9,10 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
     return {
         webUrl: env.WEB_URL,
         sessionSecret: env.SESSION_SECRET,
-        github: {
-            organization: env.GITHUB_ORGANIZATION,
-            repo: env.GITHUB_REPO,
-            ref: env.GITHUB_REF ?? 'main',
-            oauth:
-                env.WEBSITE_GITHUB_APP_CLIENT_ID && env.WEBSITE_GITHUB_APP_CLIENT_SECRET
-                    ? {
-                          clientId: env.WEBSITE_GITHUB_APP_CLIENT_ID,
-                          clientSecret: env.WEBSITE_GITHUB_APP_CLIENT_SECRET,
-                      }
-                    : undefined,
+        websiteAuthRequired: env.WEBSITE_AUTH_REQUIRED === 'true',
+        auth: {
+            emailFrom: env.AUTH_EMAIL_FROM ?? 'DDD Perth <noreply@dddperth.com>',
+            resendApiKey: env.RESEND_API_KEY,
         },
         sessionizeOverrides: collectSessionizeOverrides(env),
         tito: {

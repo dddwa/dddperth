@@ -8,7 +8,6 @@ export interface ContentPage {
     type: ContentType
     code: string | undefined
     dateDisplay: string | undefined
-    editLink: string
 }
 
 export interface ContentListItem {

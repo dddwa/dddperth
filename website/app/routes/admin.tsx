@@ -53,8 +53,7 @@ export default function AdminLayout() {
                         >
                             ← Back to Site
                         </AppLink>
-                        <styled.img src={user.avatarUrl} alt={user.login} w="8" h="8" borderRadius="full" />
-                        <Box fontSize="sm">{user.name || user.login}</Box>
+                        <Box fontSize="sm">{user.name || user.email}</Box>
                         <Form method="post" action="/auth/logout">
                             <styled.button
                                 type="submit"

@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 
 const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' : undefined
 // const SPEAKERS_CACHE_KEY = 'speakers'
@@ -273,9 +274,5 @@ export function getSpeakerUnderrepresentedGroup(
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {
-    return (
-        DateTime.fromISO(date)
-            // .plus({ minutes: new Date().getTimezoneOffset() })
-            .toLocaleString(opts, { locale: 'en-AU' })
-    )
+    return DateTime.fromISO(date, { zone: conferenceConfigPublic.timezone }).toLocaleString(opts, { locale: 'en-AU' })
 }

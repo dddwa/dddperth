@@ -86,10 +86,6 @@ declare module "safe-routes" {
       params: {'*': string | number},
       query: ExportedQuery<import('app/routes/app-content.$.js').SearchParams>,
     },
-    "/auth/github/callback": {
-      params: never,
-      query: ExportedQuery<import('app/routes/auth.github.callback.js').SearchParams>,
-    },
     "/auth/login": {
       params: never,
       query: ExportedQuery<import('app/routes/auth.login.js').SearchParams>,
@@ -97,6 +93,10 @@ declare module "safe-routes" {
     "/auth/logout": {
       params: never,
       query: ExportedQuery<import('app/routes/auth.logout.js').SearchParams>,
+    },
+    "/auth/verify/:token": {
+      params: {'token': string | number},
+      query: ExportedQuery<import('app/routes/auth.verify.$token.js').SearchParams>,
     },
     "/blog": {
       params: never,
@@ -137,9 +137,9 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
-            | 'routes/auth.github.callback'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
+            | 'routes/auth.verify.$token'
             | 'routes/app-announcements'
             | 'routes/api.voting.batch'
             | 'routes/api.voting.vote'

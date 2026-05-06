@@ -4,6 +4,7 @@ import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { conferenceConfig } from '~/config/conference-config.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -61,10 +62,16 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
             session,
             talkSpeakers,
             sessionStart: session.startsAt
-                ? DateTime.fromISO(session.startsAt).toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })
+                ? DateTime.fromISO(session.startsAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                      DateTime.TIME_SIMPLE,
+                      { locale: 'en-AU' },
+                  )
                 : null,
             sessionEnd: session.endsAt
-                ? DateTime.fromISO(session.endsAt).toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })
+                ? DateTime.fromISO(session.endsAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                      DateTime.TIME_SIMPLE,
+                      { locale: 'en-AU' },
+                  )
                 : null,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.schedule } },

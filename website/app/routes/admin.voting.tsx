@@ -5,6 +5,7 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
+import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
@@ -264,7 +265,7 @@ export default function AdminVoting() {
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
-                                {DateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(
+                                {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                                     DateTime.DATETIME_SHORT,
                                     {
                                         locale: 'en-AU',
@@ -281,7 +282,7 @@ export default function AdminVoting() {
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.opens).toLocaleString(
+                                    {DateTime.fromISO(conferenceState.talkVoting.opens, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                                         DateTime.DATETIME_SHORT,
                                         {
                                             locale: 'en-AU',
@@ -294,7 +295,7 @@ export default function AdminVoting() {
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(
+                                    {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                                         DateTime.DATETIME_SHORT,
                                         {
                                             locale: 'en-AU',
@@ -523,7 +524,7 @@ export default function AdminVoting() {
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
                                             <styled.td p="2" border="admin-subtle">
-                                                {DateTime.fromISO(run.startedAt).toLocaleString(
+                                                {DateTime.fromISO(run.startedAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
                                                     DateTime.DATETIME_SHORT,
                                                     {
                                                         locale: 'en-AU',
