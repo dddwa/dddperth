@@ -3,7 +3,8 @@ param location string = resourceGroup().location
 param tags object = {}
 
 param domainName string
-param certificateId string
+// Leave empty for staging environments where no cert is bound yet
+param certificateId string = ''
 param identityName string
 param containerRegistryName string
 param containerAppsEnvironmentName string
@@ -129,7 +130,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         external: true
         targetPort: 80
         transport: 'auto'
-        customDomains: [
+        customDomains: empty(certificateId) ? [] : [
           {
             bindingType: 'SniEnabled'
             certificateId: certificateId

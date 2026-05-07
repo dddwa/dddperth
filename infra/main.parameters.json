@@ -49,7 +49,7 @@
             "value": "dddadelaide.com"
         },
         "certificateId": {
-            "value": "/subscriptions/dd079971-2023-4b56-be3a-85a346d51344/resourceGroups/dddper-rg-prd/providers/Microsoft.App/managedEnvironments/dddper-cae-ivoki745ew4qo/certificates/cloudflare"
+            "value": ""
         },
         "eventsAirClientId": {
             "value": "${EVENTS_AIR_CLIENT_ID}"

@@ -41,8 +41,8 @@ param googleFormsFileId string
 
 @minLength(1)
 param domainName string
-@minLength(1)
-param certificateId string
+// Leave empty for staging environments where no cert is bound yet
+param certificateId string = ''
 
 param eventsAirClientId string
 @secure()
@@ -74,7 +74,7 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
 var prefix = 'dddadl'
 
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-  name: '${prefix}-rg-${environmentName}'
+  name: '${prefix}-${environmentName}'
   location: location
   tags: tags
 }
