@@ -71,7 +71,7 @@ var tags = {
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 // Can only be 6 chars due to keyvault name length limit
-var prefix = 'dddper'
+var prefix = 'dddadl'
 
 resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
   name: '${prefix}-rg-${environmentName}'
