@@ -24,6 +24,8 @@ This repository is a fork of DDD Perth (`dddwa/dddperth`), maintained independen
 - `YearSponsors` shape uses Adelaide tiers: `platinum`, `gold`, `service` (with `serviceProvided` field), `silver`, `saSponsors`. Replaces Perth's `digital`/`room`/`community` tiers. *(Schema change scheduled for Stage 3 PR 3b — not yet applied.)*
 - Only year config is `2026`; Perth's historical year configs (`2018-2025`) will be removed in Stage 3.
 
+**Local dev setup gotcha:** the Express server validates env vars via Zod on boot and crashes if any are missing. Always `cp website/.env.example website/.env` before `pnpm start`. Required keys are documented in [README.md](README.md#required-environment-variables).
+
 ## Essential Commands
 
 ### Development
