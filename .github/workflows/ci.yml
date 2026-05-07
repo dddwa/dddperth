@@ -1,181 +1,32 @@
+name: CI
+
 on:
-    workflow_dispatch:
-    push:
-        branches:
-            - main
-        paths-ignore:
-            - 'website-content/**'
-            - 'blog/**'
-
-concurrency: ${{ github.workflow }}-${{ github.ref }}
-
-# GitHub Actions workflow to deploy to Azure using azd
-# To configure required secrets for connecting to Azure, simply run `azd pipeline config`
-
-# Set up permissions for deploying with secretless Azure federated credentials
-# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
-permissions:
-    id-token: write
-    contents: read
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        timeout-minutes: 15
-        environment: prd
-        services:
-            azurite:
-                image: mcr.microsoft.com/azure-storage/azurite
-                ports:
-                    - 10000:10000
-                    - 10001:10001
-                    - 10002:10002
-        env:
-            AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID}}
-            AZURE_ENV_NAME: prd
-            AZURE_LOCATION: australiaeast
-            AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-            AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-            # GitHub App configuration using WEBSITE_GITHUB_APP_ prefix
-            # Note: GitHub Actions reserves GITHUB_ prefix, so we use WEBSITE_GITHUB_APP_ consistently
-            WEBSITE_GITHUB_APP_ID: ${{ vars.WEBSITE_GITHUB_APP_ID }}
-            WEBSITE_GITHUB_APP_CLIENT_ID: ${{ vars.WEBSITE_GITHUB_APP_CLIENT_ID }}
-            WEBSITE_GITHUB_APP_CLIENT_SECRET: ${{ secrets.WEBSITE_GITHUB_APP_CLIENT_SECRET }}
-            WEBSITE_GITHUB_APP_PRIVATE_KEY: ${{ secrets.WEBSITE_GITHUB_APP_PRIVATE_KEY }}
-            WEBSITE_GITHUB_APP_INSTALLATION_ID: ${{ vars.WEBSITE_GITHUB_APP_INSTALLATION_ID }}
-            GOOGLE_FORMS_API_KEY: ${{ secrets.GOOGLE_FORMS_API_KEY }}
-            GOOGLE_FORMS_FILE_ID: ${{ secrets.GOOGLE_FORMS_FILE_ID }}
-            EVENTS_AIR_CLIENT_ID: ${{ secrets.EVENTS_AIR_CLIENT_ID }}
-            EVENTS_AIR_CLIENT_SECRET: ${{ secrets.EVENTS_AIR_CLIENT_SECRET }}
-            EVENTS_AIR_TENANT_ID: ${{ secrets.EVENTS_AIR_TENANT_ID }}
-            EVENTS_AIR_EVENT_ID: ${{ secrets.EVENTS_AIR_EVENT_ID }}
-            TITO_SECURITY_TOKEN: ${{ secrets.TITO_SECURITY_TOKEN }}
-            SESSIONIZE_2025_ALL_SESSIONS: ${{ secrets.SESSIONIZE_2025_ALL_SESSIONS }}
-            SESSIONIZE_2025_SESSIONS: ${{ secrets.SESSIONIZE_2025_SESSIONS }}
-            SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Validate required environment variables
-              run: |
-                  echo "Validating required environment variables..."
-                  errors=0
-
-                  # Check required GitHub App variables
-                  if [ -z "$WEBSITE_GITHUB_APP_ID" ]; then
-                    echo "❌ WEBSITE_GITHUB_APP_ID repository variable is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$WEBSITE_GITHUB_APP_INSTALLATION_ID" ]; then
-                    echo "❌ WEBSITE_GITHUB_APP_INSTALLATION_ID repository variable is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  # Check required GitHub App secrets
-                  if [ -z "$WEBSITE_GITHUB_APP_CLIENT_ID" ]; then
-                    echo "❌ WEBSITE_GITHUB_APP_CLIENT_ID secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$WEBSITE_GITHUB_APP_CLIENT_SECRET" ]; then
-                    echo "❌ WEBSITE_GITHUB_APP_CLIENT_SECRET secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$WEBSITE_GITHUB_APP_PRIVATE_KEY" ]; then
-                    echo "❌ WEBSITE_GITHUB_APP_PRIVATE_KEY secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  # Check other required secrets
-                  if [ -z "$GOOGLE_FORMS_API_KEY" ]; then
-                    echo "❌ GOOGLE_FORMS_API_KEY secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$GOOGLE_FORMS_FILE_ID" ]; then
-                    echo "❌ GOOGLE_FORMS_FILE_ID secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  # Check Azure variables
-                  if [ -z "$AZURE_SUBSCRIPTION_ID" ]; then
-                    echo "❌ AZURE_SUBSCRIPTION_ID repository variable is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$AZURE_CLIENT_ID" ]; then
-                    echo "❌ AZURE_CLIENT_ID repository variable is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$AZURE_TENANT_ID" ]; then
-                    echo "❌ AZURE_TENANT_ID repository variable is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$SESSIONIZE_2025_SESSIONS" ]; then
-                    echo "❌ SESSIONIZE_2025_SESSIONS secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$SESSIONIZE_2025_ALL_SESSIONS" ]; then
-                    echo "❌ SESSIONIZE_2025_ALL_SESSIONS secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ -z "$SESSION_SECRET" ]; then
-                    echo "❌ SESSION_SECRET secret is not set"
-                    errors=$((errors + 1))
-                  fi
-
-                  if [ $errors -gt 0 ]; then
-                    echo ""
-                    echo "❌ Found $errors missing environment variables/secrets"
-                    echo "Please configure the missing variables in GitHub repository settings:"
-                    echo "- Variables: Settings → Secrets and variables → Actions → Variables"
-                    echo "- Secrets: Settings → Secrets and variables → Actions → Secrets"
-                    exit 1
-                  else
-                    echo "✅ All required environment variables and secrets are configured"
-                  fi
-
-            - name: Install azd
-              uses: Azure/setup-azd@v2
-
-            - uses: pnpm/action-setup@v4
-              name: Install pnpm
-              with:
-                  run_install: false
-
-            - name: Install Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: 'pnpm'
-
-            - name: Install dependencies
-              run: pnpm install
-            - name: Type Check
-              run: pnpm tsc -b
-            - name: Link and Build
-              run: pnpm nx run-many --target=build,lint --all
-
-            - name: Log in with Azure (Federated Credentials)
-              run: |
-                  azd auth login `
-                    --client-id "$Env:AZURE_CLIENT_ID" `
-                    --federated-credential-provider "github" `
-                    --tenant-id "$Env:AZURE_TENANT_ID"
-              shell: pwsh
-
-            - name: Provision Infrastructure
-              run: azd provision --no-prompt
-              env:
-                  AZD_INITIAL_ENVIRONMENT_CONFIG: ${{ secrets.AZD_INITIAL_ENVIRONMENT_CONFIG }}
-
-            - name: Deploy Application
-              run: azd deploy --no-prompt
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enable corepack
+        run: corepack enable pnpm
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
