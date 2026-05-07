@@ -13,6 +13,17 @@ This is the DDD Perth conference website built with:
 - **Vite** for development server and building
 - **Express** server with OpenTelemetry instrumentation
 
+## Adelaide-specific context
+
+This repository is a fork of DDD Perth (`dddwa/dddperth`), maintained independently by the DDD Adelaide team. We may periodically sync upstream changes from Perth, but we do not contribute changes back upstream.
+
+**Upstream baseline SHA:** `324e8c558fe46082f0c68c7568eb1ee4c58cc88d`
+
+**Schema divergences from Perth (do not blindly merge upstream changes that conflict with these):**
+
+- `YearSponsors` shape uses Adelaide tiers: `platinum`, `gold`, `service` (with `serviceProvided` field), `silver`, `saSponsors`. Replaces Perth's `digital`/`room`/`community` tiers. *(Schema change scheduled for Stage 3 PR 3b — not yet applied.)*
+- Only year config is `2026`; Perth's historical year configs (`2018-2025`) will be removed in Stage 3.
+
 ## Essential Commands
 
 ### Development

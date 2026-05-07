@@ -5,11 +5,11 @@ import type { ConferenceConfigPublic } from '~/lib/config-types-public'
 //
 
 export const conferenceConfigPublic = {
-    name: 'DDD Perth',
+    name: 'DDD Adelaide',
 
-    description: 'DDD Perth is an inclusive non-profit conference for the Perth software community.',
+    description: 'DDD Adelaide is an inclusive non-profit conference for the Adelaide software community.',
 
-    blogDescription: 'DDD Perth is an inclusive non-profit conference for the Perth software community.',
+    blogDescription: 'DDD Adelaide is an inclusive non-profit conference for the Adelaide software community.',
 
-    timezone: 'Australia/Perth',
+    timezone: 'Australia/Adelaide',
 } satisfies ConferenceConfigPublic
