@@ -34,10 +34,10 @@
             "value": "${AZURE_PRINCIPAL_ID}"
         },
         "gitHubOrganization": {
-            "value": "dddwa"
+            "value": "dddadelaide"
         },
         "gitHubRepo": {
-            "value": "dddadelaide"
+            "value": "dddadelaide-website-new"
         },
         "googleFormsApiKey": {
             "value": "${GOOGLE_FORMS_API_KEY}"
