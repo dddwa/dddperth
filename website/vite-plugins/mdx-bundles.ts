@@ -116,9 +116,9 @@ function removePreContainerDivs() {
 // Some CJS-published packages get double-wrapped by ESM interop: the real
 // export ends up at `m.default.default`. Probe both levels and pick the
 // function/object that has the properties we expect.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function unwrapDefault<T = any>(mod: unknown): T {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const m = mod as any
     if (m?.default?.default !== undefined) return m.default.default
     if (m?.default !== undefined) return m.default
@@ -166,7 +166,7 @@ async function compileOne(slug: string, source: string): Promise<CompiledMdx> {
         // esbuild wraps the real cause inside errors[].detail.cause — surface it
         // so build failures point at the offending content instead of the generic
         // "Cannot process MDX file with esbuild" message.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const e = err as any
         const inner = e?.errors?.[0]?.detail?.cause
         if (inner) {

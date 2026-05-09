@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { Link } from 'react-router'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 interface AdminOverlayProps {

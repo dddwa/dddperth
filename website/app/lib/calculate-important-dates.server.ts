@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from './config-types.server'
+import type { ConferenceYear } from '@ddd/conference-config'
 import type { ImportantDate } from './important-dates'
 
 export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {

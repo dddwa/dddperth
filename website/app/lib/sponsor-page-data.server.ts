@@ -1,4 +1,4 @@
-import { conferenceConfig } from '~/config/conference-config.server'
+import { conferenceConfig } from '@ddd/conference-config'
 import type { Sponsor, YearSponsors } from './conference-state-client-safe'
 
 export interface PastSponsor {

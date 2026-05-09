@@ -3,7 +3,7 @@ import { data, Form, redirect, useActionData, useLoaderData } from 'react-router
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'

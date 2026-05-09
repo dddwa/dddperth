@@ -1,4 +1,4 @@
-import type { conferenceConfig, ConferenceYears } from '~/config/conference-config.server'
+import type { conferenceConfig, ConferenceYears } from '@ddd/conference-config'
 import type { ConferenceImportantInformation } from './conference-state-client-safe'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
 

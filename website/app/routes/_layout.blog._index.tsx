@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { data, Link, useLoaderData } from 'react-router'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/_layout.blog._index'
 

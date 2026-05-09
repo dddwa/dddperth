@@ -1,7 +1,7 @@
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
-import type { ConferenceYears } from '~/config/conference-config.server'
-import { conferenceConfig } from '~/config/conference-config.server'
+import type { ConferenceYears } from '@ddd/conference-config'
+import { conferenceConfig } from '@ddd/conference-config'
 import type { AppConfig } from '~/lib/services/app-config'
 
 export function getYearConfig(year: string, appConfig?: AppConfig) {

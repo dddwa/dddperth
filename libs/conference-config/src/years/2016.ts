@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types.server'
+import type { ConferenceYear } from '../types'
 import { mercureHotelVenue } from '../venues/mercure-hotel'
 
 export const conference2016: ConferenceYear = {

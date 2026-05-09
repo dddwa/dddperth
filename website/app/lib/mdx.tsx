@@ -19,7 +19,7 @@ import {
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
 

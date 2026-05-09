@@ -1,6 +1,6 @@
 // This file avoids using ~ aliases so it can be imported by vite.config.js
 import type { AppLoadContext } from 'react-router'
-import { conferenceConfig } from './config/conference-config.server'
+import { conferenceConfig } from '@ddd/conference-config'
 import { getCurrentConferenceState } from './lib/conference-state.server'
 import { AdminDateTimeProvider } from './lib/dates/admin-date-time-provider.server'
 import { buildAppConfigFromEnv } from './lib/services/cloudflare/build-config.server'

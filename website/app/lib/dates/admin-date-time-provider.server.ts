@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { conferenceConfigPublic } from '../../config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { getUser, isAdmin } from '../auth.server'
 import type { AppServices } from '../services/app-services'
 import type { DateTimeProvider } from './date-time-provider.server'

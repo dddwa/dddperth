@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import bundles from 'virtual:mdx-bundles'
-import { conferenceConfigPublic } from '../../../config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import type { ContentListItem, ContentPage, ContentService } from '../content-service'
 import type { FrontmatterProperties } from '../../mdx-types'
 

@@ -1,5 +1,5 @@
 import { Feed } from 'feed'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/blog.rss[.xml]'
 

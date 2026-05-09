@@ -1,7 +1,7 @@
 import Logo from '~/images/svg/logo.svg?react'
 import { css } from '~/styled-system/css'
 import { Box, Divider, Flex, Grid, styled } from '~/styled-system/jsx'
-import { socialsData } from '../../config/socials-data'
+import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
 
 export const Footer = () => (

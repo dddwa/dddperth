@@ -1,7 +1,7 @@
 import { Portal } from '@ark-ui/react/portal'
 import { useState } from 'react'
 import { $path } from 'safe-routes'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import Logo from '~/images/svg/logo.svg?react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import { drawer } from '~/styled-system/recipes'

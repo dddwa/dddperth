@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types.server'
+import type { ConferenceYear } from '../types'
 
 const SESSIONIZE_2025_SESSIONS = 'https://sessionize.com/api/v2/vhwwzm15'
 const SESSIONIZE_2025_ALL_SESSIONS = 'https://sessionize.com/api/v2/vhwwzm15/view/All'

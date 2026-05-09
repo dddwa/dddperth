@@ -6,7 +6,7 @@ import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { getUser, isAdmin } from '~/lib/auth.server'
 import type { Route } from './+types/_layout'
 

@@ -1,5 +1,5 @@
 import type { DateTime } from 'luxon'
-import type { conferenceConfig, ConferenceYears } from '../config/conference-config.server'
+import type { conferenceConfig, ConferenceYears } from '@ddd/conference-config'
 import type {
     CFPClosed,
     CFPNotOpenYet,
@@ -12,7 +12,7 @@ import type {
     TicketInfo,
     TicketSalesState,
 } from './conference-state-client-safe'
-import type { ConferenceConfigYear, ConferenceYear, DateTimeRange, TicketRelease } from './config-types.server'
+import type { ConferenceConfigYear, ConferenceYear, DateTimeRange, TicketRelease } from '@ddd/conference-config'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
 
 export function getCurrentConferenceState(

@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
 import { Link } from 'react-router'
-import { conferenceConfigPublic } from '~/config/conference-config-public'
+import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import type {
     EndEventImportantDate,
     ImportantDate,

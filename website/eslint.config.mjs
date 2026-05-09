@@ -94,6 +94,9 @@ export default [
                         'lru-cache',
                         'msw',
                         'vitest',
+                        // Workspace libraries — Vite consumes source directly via pnpm symlinks,
+                        // so they don't need an Nx build target. The rule otherwise flags them as obsolete.
+                        '@ddd/conference-config',
                     ],
                 },
             ],

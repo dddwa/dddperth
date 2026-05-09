@@ -1,40 +1,14 @@
-export type Year = `${number}${number}${number}${number}`
+import type { ConferenceVenue, TicketInfo, VolunteerForm, Year, YearSponsors } from '@ddd/conference-config'
 
-export interface ConferenceVenue {
-    name: string
-    address: {
-        streetAddress: string
-        addressLocality: string
-        addressRegion: string
-        postalCode: string
-        addressCountry: string
-    }
-
-    latitude: number
-    longitude: number
-}
-
-export interface YearSponsors {
-    platinum?: Sponsor[]
-    gold?: Sponsor[]
-    silver?: Sponsor[]
-    digital?: Sponsor[]
-    bronze?: Sponsor[]
-    community?: Sponsor[]
-    coffeeCart?: Sponsor[]
-    quietRoom?: Sponsor[]
-
-    keynotes?: Sponsor[]
-    room?: Array<Sponsor & { roomName: string }>
-}
-
-export interface Sponsor {
-    name: string
-    logoUrlDarkMode: string
-    logoUrlLightMode: string
-    website: string
-    quote?: string
-}
+export type {
+    ConferenceVenue,
+    Sponsor,
+    TicketInfo,
+    TitoTicketInfo,
+    VolunteerForm,
+    Year,
+    YearSponsors,
+} from '@ddd/conference-config'
 
 export interface ConferenceImportantInformation {
     date: string | undefined
@@ -82,18 +56,6 @@ export interface TalkVotingNotOpenYet {
     opens: string
     closes: string
 }
-
-export type VolunteerForm =
-    | {
-          type: 'salesmate'
-          formId: string
-          linkName: string
-      }
-    | {
-          type: 'tito'
-          ticketUrl: string
-      }
-    | undefined
 
 /**
  * It is confirmed there is a new conference coming up, the date may not be announced yet
@@ -180,14 +142,6 @@ export type TicketSalesState =
     | TicketSalesSoldOut
     | TicketSalesWaitListOpen
     | TicketSalesNotOpenYet
-
-export interface TitoTicketInfo {
-    type: 'tito'
-    accountId: string
-    eventId: string
-}
-
-export type TicketInfo = TitoTicketInfo
 
 export interface TicketSalesOpen {
     state: Open

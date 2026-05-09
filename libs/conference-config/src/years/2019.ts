@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import type { ConferenceYear } from '../../lib/config-types.server'
+import type { ConferenceYear } from '../types'
 import agenda2019 from './2019-agenda-data.json'
 
 export const conference2019: ConferenceYear = {
