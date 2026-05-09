@@ -1,23 +1,93 @@
 ---
-title: Sponsorship
+title: Sponsor DDD Perth
+summary: "Partner with Perth's largest community-run software conference — 1,400 developers, 10+ years, all volunteer."
+layout: full-width
 ---
 
-[Explore sponsorship opportunities](mailto:sponsorship@dddperth.com)
+export const sponsorshipEmail = 'sponsorship@dddperth.com'
+export const prospectusHref = `mailto:${sponsorshipEmail}?subject=${encodeURIComponent('DDD Perth sponsorship prospectus request')}&body=${encodeURIComponent("Hi DDD Perth team,\n\nI'd love a copy of the latest sponsorship prospectus.\n\nCompany:\nName:\nTier of interest:\n\nThanks!")}`
 
-DDD Perth is an inclusive non-profit conference for the Perth software community, providing a unique opportunity to sponsors because we attract people that don't normally go to software conferences. This occurs as a natural result of our core principles:
+<Hero
+    eyebrow="Sponsorship"
+    title="Partner with Perth's largest community-run software conference."
+    lede="DDD Perth brings 1,400 developers together every year — a hard-to-reach, diverse audience that doesn't typically attend industry conferences. Sponsor us and reach them where they actually show up."
+    actions={
+        <>
+            <CTA href={prospectusHref}>Get the prospectus →</CTA>
+            <CTA href={`mailto:${sponsorshipEmail}`} variant="secondary">or email {sponsorshipEmail}</CTA>
+        </>
+    }
+/>
 
-- Making the ticket price as low as possible; people don't need to request PD budget from their employer to attend, and it's accessible to most people regardless of financial circumstance.
-- Running the event on a Saturday; people don't have to arrange time off work, and contractors don't have to miss out on billable opportunities.
-- Allowing anyone to submit about any software industry-related topic; gathers wide interest from extended networks within the community.
-- Having a democratically influenced agenda; generates excitement and interest from the wider community.
-- Focusing on creating a safe and inclusive environment where everyone is welcome; encourages a diverse set of attendees and attracts repeat visitors, expanding the event's presence year on year via a growing network.
+<Stats>
+    <Stat value="1,400" label="attendees in 2025" />
+    <Stat value="10+" label="years running" />
+    <Stat value="100%" label="volunteer-run" />
+    <Stat value="Free CFP" label="open to anyone" />
+</Stats>
 
-[Read DDD Perth Code of Conduct](/code-of-conduct)
+<Section title="Why sponsor DDD Perth" lede="Our principles are designed to widen the audience — and that's what makes sponsorship valuable.">
+    <CardGrid columns={2}>
+        <Card title="Reach developers who skip other conferences">
+            Low ticket price, run on a Saturday, and an open CFP means we attract people who don't usually attend software conferences — including students, hobbyists and people early in their careers.
+        </Card>
+        <Card title="Democratically-informed agenda">
+            Attendees vote on talks, and the committee uses that input to shape the final agenda. The result is a program the community is genuinely excited about, which drives engagement with everything around it — including our sponsors.
+        </Card>
+        <Card title="Inclusive by design">
+            A strong code of conduct, captioning, quiet room and accessibility-first thinking creates a welcoming environment that attracts a diverse audience and repeat attendees year on year.
+        </Card>
+        <Card title="Accessible ticket price">
+            Sponsorship subsidises ticket prices well below the per-person cost. Attendees don't need PD budget approval, which removes a major barrier to attendance.
+        </Card>
+        <Card title="Trusted, repeat event">
+            Run by an all-volunteer committee since 2015, with returning sponsors year after year. You are partnering with an established part of the Perth tech community.
+        </Card>
+    </CardGrid>
+</Section>
 
-[Find out more about DDD Perth](/about)
+<Section title="Sponsorship tiers" lede="Five tiers, each with a different level of visibility and engagement. Full benefits and pricing are in the prospectus.">
+    <CardGrid columns={3}>
+        <Card title="Platinum" featured>
+            Headline partner — maximum visibility before, during and after the event.
+            <Bullet>Top-tier logo placement across the website, signage and opening remarks</Bullet>
+            <Bullet>Premium booth location with high foot traffic</Bullet>
+            <Bullet>Featured quote and write-up on the sponsors page</Bullet>
+            <Bullet>Recognition during the keynote and closing ceremony</Bullet>
+        </Card>
+        <Card title="Gold">
+            Strong presence with a dedicated booth and on-site engagement.
+            <Bullet>Logo on the website, signage and program</Bullet>
+            <Bullet>Booth space in the main sponsor area</Bullet>
+            <Bullet>Quote featured on the sponsors page</Bullet>
+            <Bullet>Verbal recognition during the day</Bullet>
+        </Card>
+        <Card title="Room">
+            Sponsor a track and own a room for the day.
+            <Bullet>Your name and logo on the room signage and agenda</Bullet>
+            <Bullet>Recognition before each session in your room</Bullet>
+            <Bullet>Logo on the website and sponsors page</Bullet>
+        </Card>
+        <Card title="Digital">
+            Reach attendees through the website and digital touchpoints.
+            <Bullet>Logo placement on the website and event app</Bullet>
+            <Bullet>Inclusion in event communications</Bullet>
+            <Bullet>Great for remote or distributed teams</Bullet>
+        </Card>
+        <Card title="Community">
+            Support the conference at a level that suits community partners and smaller teams.
+            <Bullet>Logo on the sponsors page</Bullet>
+            <Bullet>Recognition as a community supporter</Bullet>
+            <Bullet>Help us keep tickets affordable for everyone</Bullet>
+        </Card>
+    </CardGrid>
+    <CTA href={prospectusHref}>Get the full prospectus →</CTA>
+</Section>
 
-DDD Perth is a not-for-profit community event with a low ticket price for attendees (much lower than the per-person cost), and the only way we can run it is via generous corporate sponsorship. Thanks to all our sponsors, new and old - we can't do this without you!
+<SponsorQuotes quotes={props.sponsors.featuredQuotes} year={props.sponsors.latestYear} />
 
-We have a sponsorship prospectus that will be provided on request that explains the detailed benefits and impact of sponsorship and the differences between the various levels. If you would like a copy, [please contact us](mailto:sponsorship@dddperth.com)!
+<PastSponsorsGrid sponsors={props.sponsors.pastSponsors} />
 
-[Explore sponsorship opportunities](mailto:sponsorship@dddperth.com)
+<Section title="Ready to talk?" lede="Request the prospectus for full tier details, pricing and audience demographics. We can also tailor a package — just let us know what you're trying to achieve.">
+    <CTA href={prospectusHref}>Get the prospectus →</CTA>
+</Section>

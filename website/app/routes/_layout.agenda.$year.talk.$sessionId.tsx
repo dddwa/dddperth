@@ -6,7 +6,7 @@ import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { conferenceConfigPublic } from '~/config/conference-config-public'
 import { conferenceConfig } from '~/config/conference-config.server'
-import type { Year } from '~/lib/conference-state-client-safe'
+import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
@@ -114,6 +114,7 @@ export default function Agenda() {
                 <styled.span display="block" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" pb="3">
                     📍 {session.room}
                 </styled.span>
+                <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
                 <styled.div>{session.description}</styled.div>
                 {session?.speakers?.length ? (
                     <styled.div display="block" color="text.secondary">
@@ -137,6 +138,32 @@ export default function Agenda() {
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
+        </Flex>
+    )
+}
+
+function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; roomName: string | null }) {
+    const roomSponsor = sponsors.room?.find((r) => r.roomName === roomName)
+    if (!roomSponsor) return null
+
+    return (
+        <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
+            <styled.span>Room sponsored by</styled.span>
+            <styled.a
+                href={roomSponsor.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                display="inline-flex"
+                alignItems="center"
+            >
+                <styled.img
+                    src={roomSponsor.logoUrlDarkMode}
+                    alt={roomSponsor.name}
+                    maxHeight="[40px]"
+                    maxWidth="[140px]"
+                    objectFit="contain"
+                />
+            </styled.a>
         </Flex>
     )
 }

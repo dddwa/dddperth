@@ -46,6 +46,8 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
     )
 }
 
+const tieredCategories = new Set<keyof typeof sponsorStyles>(['platinum', 'gold'])
+
 function SponsorGroup({
     title,
     sponsorGroups,
@@ -53,31 +55,123 @@ function SponsorGroup({
     title: string
     sponsorGroups: { sponsors: Sponsor[] | undefined; category: keyof typeof sponsorStyles }[]
 }) {
-    const allSponsors = sponsorGroups.flatMap((group) => group.sponsors || [])
-    if (allSponsors.length === 0) return null
+    const logoSponsors = sponsorGroups.map((group) => ({
+        ...group,
+        sponsors: tieredCategories.has(group.category) ? [] : (group.sponsors ?? []),
+    }))
 
-    let zIndex = allSponsors.length
+    const cardSponsors = sponsorGroups.flatMap((group) =>
+        tieredCategories.has(group.category)
+            ? (group.sponsors ?? []).map((sponsor) => ({ sponsor, category: group.category }))
+            : [],
+    )
+
+    if (logoSponsors.every((g) => g.sponsors.length === 0) && cardSponsors.length === 0) return null
+
+    let zIndex = logoSponsors.reduce((sum, g) => sum + g.sponsors.length, 0)
 
     return (
-        <Flex flexDirection="column" alignItems="flex-start" marginBottom="4">
+        <Flex width="full" flexDirection="column" alignItems="flex-start" marginBottom="8">
             <styled.h3 marginBottom="3" fontSize="2xl" textAlign="center" color="text.secondary">
                 {title}
             </styled.h3>
-            <Flex flexWrap="wrap" alignItems="center" p="6">
-                {sponsorGroups.map((group) =>
-                    group.sponsors?.map((sponsor) => {
-                        const sponsorElement = (
-                            <SponsorComponent
-                                key={sponsor.name}
-                                sponsor={sponsor}
-                                category={group.category}
-                                zIndex={zIndex}
-                            />
-                        )
-                        zIndex -= 1
-                        return sponsorElement
-                    }),
-                )}
+            {logoSponsors.some((g) => g.sponsors.length > 0) ? (
+                <Flex flexWrap="wrap" alignItems="center" p="6">
+                    {logoSponsors.map((group) =>
+                        group.sponsors.map((sponsor) => {
+                            const sponsorElement = (
+                                <SponsorComponent
+                                    key={sponsor.name}
+                                    sponsor={sponsor}
+                                    category={group.category}
+                                    zIndex={zIndex}
+                                />
+                            )
+                            zIndex -= 1
+                            return sponsorElement
+                        }),
+                    )}
+                </Flex>
+            ) : null}
+            {cardSponsors.length > 0 ? (
+                <Flex width="full" flexDirection="column" gap="4" marginTop="2">
+                    {cardSponsors.map(({ sponsor, category }) => (
+                        <SponsorQuoteCard key={`card-${sponsor.name}`} sponsor={sponsor} category={category} />
+                    ))}
+                </Flex>
+            ) : null}
+        </Flex>
+    )
+}
+
+export function SponsorQuoteCard({
+    sponsor,
+    category,
+}: {
+    sponsor: Sponsor
+    category: keyof typeof sponsorStyles
+}) {
+    const accent = category === 'platinum' ? 'sponsor.platinum' : 'sponsor.gold'
+
+    return (
+        <Flex
+            as="article"
+            flexDirection={{ base: 'column', md: 'row' }}
+            gap={{ base: '4', md: '6' }}
+            alignItems={{ base: 'flex-start', md: 'center' }}
+            bgColor="surface.elevated"
+            borderWidth="1px"
+            borderStyle="solid"
+            borderColor="border.default"
+            borderLeftWidth="4px"
+            borderLeftColor={accent}
+            rounded="md"
+            padding={{ base: '4', md: '6' }}
+            boxShadow="md"
+        >
+            <styled.a
+                href={sponsor.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                flexShrink="0"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                width={{ base: 'full', md: '[180px]' }}
+                height="[120px]"
+                aria-label={`Visit ${sponsor.name}`}
+            >
+                <styled.img
+                    src={sponsor.logoUrlDarkMode}
+                    alt={sponsor.name}
+                    maxWidth="full"
+                    maxHeight="full"
+                    objectFit="contain"
+                />
+            </styled.a>
+            <Flex flexDirection="column" gap="2" flex="1">
+                {sponsor.quote && sponsor.quote.trim().length > 0 ? (
+                    <styled.blockquote
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        color="text.primary"
+                        lineHeight="relaxed"
+                        whiteSpace="pre-line"
+                    >
+                        {sponsor.quote}
+                    </styled.blockquote>
+                ) : null}
+                <styled.a
+                    href={sponsor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="interactive.active"
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    alignSelf="flex-start"
+                    _hover={{ color: 'white', textDecoration: 'underline' }}
+                >
+                    Visit {sponsor.name} →
+                </styled.a>
             </Flex>
         </Flex>
     )
@@ -125,7 +219,7 @@ function SponsorComponent({
                 display="inline-block"
                 objectFit="contain"
             />
-            <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.on-brand" mixBlendMode="soft-light">
+            <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.secondary">
                 {category.charAt(0).toUpperCase() + category.slice(1)} Sponsor
             </styled.h5>
         </styled.a>

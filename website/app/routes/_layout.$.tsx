@@ -12,10 +12,11 @@ import type { ConferenceState } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
+import { getSponsorPageData } from '~/lib/sponsor-page-data.server'
 import { css } from '~/styled-system/css'
 import { Box, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
-import { ContentPageLayout } from '~/components/page-layout'
+import { ContentPageLayout, PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.$'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -54,6 +55,8 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
+    const sponsorPageData = getSponsorPageData()
+
     return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISO(),
@@ -63,6 +66,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             slug: post.slug,
             conferenceState: context.conferenceState,
             importantDates,
+            sponsorPageData,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
     )
@@ -132,15 +136,28 @@ export function meta(args: Route.MetaArgs) {
 }
 
 export default function WebsiteContentPage() {
-    const { slug, frontmatter, currentPath, conferenceState, currentDate, importantDates } =
+    const { slug, frontmatter, currentPath, conferenceState, currentDate, importantDates, sponsorPageData } =
         useLoaderData<typeof loader>()
     const Component = useMdxPage(slug, 'page', conferenceState)
 
+    const draftBanner = frontmatter.draft ? (
+        <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
+    ) : null
+
+    if (frontmatter.layout === 'full-width') {
+        return (
+            <>
+                {draftBanner}
+                <PageLayout minHeight="100vh">
+                    <Component sponsors={sponsorPageData} />
+                </PageLayout>
+            </>
+        )
+    }
+
     return (
         <>
-            {frontmatter.draft ? (
-                <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
-            ) : null}
+            {draftBanner}
             <ContentPageLayout>
                 <ContentPageWithSidebar
                     currentPath={currentPath}
@@ -149,7 +166,7 @@ export default function WebsiteContentPage() {
                     currentDate={DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })}
                     importantDates={importantDates}
                 >
-                    <Component />
+                    <Component sponsors={sponsorPageData} />
                 </ContentPageWithSidebar>
             </ContentPageLayout>
         </>

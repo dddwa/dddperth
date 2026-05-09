@@ -4,6 +4,18 @@ import type { ComponentType } from 'react'
 import { use } from 'react'
 import bundles from 'virtual:mdx-bundles'
 import { MdxLink } from '~/components/mdx-link'
+import {
+    Bullet,
+    Card,
+    CardGrid,
+    CTA,
+    Hero,
+    PastSponsorsGrid,
+    Section,
+    SponsorQuotes,
+    Stat,
+    Stats,
+} from '~/components/mdx-primitives'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
@@ -29,6 +41,16 @@ function wrapMdxComponent(Component: ComponentType<Record<string, unknown>>, con
         h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
         h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
         ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
+        Hero,
+        Stats,
+        Stat,
+        CardGrid,
+        Card,
+        Bullet,
+        CTA,
+        Section,
+        SponsorQuotes,
+        PastSponsorsGrid,
         VolunteerForm: () => <VolunteerForm conferenceState={conferenceState} />,
         SubmitSession: () => {
             if (conferenceState.callForPapers.state === 'open') {

@@ -28,42 +28,54 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         }))
         .sort((a, b) => parseInt(a.year) - parseInt(b.year))
 
+    const stillAcceptingSponsors =
+        year === context.conferenceState.conference.year &&
+        context.conferenceState.conferenceState === 'before-conference'
+
     return data(
         {
             year,
             sponsors,
             conferences,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
+            stillAcceptingSponsors,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
 export default function Sponsors() {
-    const { year, sponsors, conferences, cancelledMessage } = useLoaderData<typeof loader>()
+    const { year, sponsors, conferences, cancelledMessage, stillAcceptingSponsors } =
+        useLoaderData<typeof loader>()
     const isLatestConference = conferences.every((c) => c.year <= year)
 
     return cancelledMessage ? (
-        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
-            <p>
-                {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
-            </p>
-            <Box color="white" textAlign="center" fontSize="lg" mt="10">
-                <p>{cancelledMessage}</p>
+        <PageLayout minHeight="100vh">
+            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+                <p>
+                    {conferenceConfigPublic.name} {year}{' '}
+                    {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+                </p>
+                <Box color="white" textAlign="center" fontSize="lg" mt="10">
+                    <p>{cancelledMessage}</p>
+                </Box>
+                <SponsorSection sponsors={sponsors} year={year} />
+                <ConferenceBrowser conferences={conferences} />
             </Box>
-            <SponsorSection sponsors={sponsors} year={year} />
-            <ConferenceBrowser conferences={conferences} />
-        </Box>
+        </PageLayout>
     ) : !sponsors || Object.keys(sponsors).length === 0 ? (
-        <Box color="white" textAlign="center" fontSize="3xl" mt="10">
-            <p>
-                {conferenceConfigPublic.name} {year} sponsor information has not been{' '}
-                {isLatestConference
-                    ? 'announced yet.'
-                    : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
-            </p>
+        <PageLayout minHeight="100vh">
+            <Box color="white" textAlign="center" mt="10" mb="8">
+                <styled.p fontSize="3xl">
+                    {conferenceConfigPublic.name} {year} sponsor information has not been{' '}
+                    {isLatestConference
+                        ? 'announced yet.'
+                        : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
+                </styled.p>
+            </Box>
+            {stillAcceptingSponsors ? <BecomeSponsorCta year={year} /> : null}
             <ConferenceBrowser conferences={conferences} />
-        </Box>
+        </PageLayout>
     ) : (
         <PageLayout minHeight="100vh">
             <Box width="full">
@@ -82,6 +94,46 @@ export default function Sponsors() {
                 <ConferenceBrowser conferences={conferences} />
             </Box>
         </PageLayout>
+    )
+}
+
+function BecomeSponsorCta({ year }: { year: Year }) {
+    return (
+        <Box
+            mx="auto"
+            maxWidth="[720px]"
+            bgColor="surface.elevated"
+            borderWidth="1px"
+            borderColor="border.default"
+            borderLeftWidth="4px"
+            borderLeftColor="sponsor.platinum"
+            rounded="lg"
+            padding={{ base: '6', md: '8' }}
+            mb="12"
+            textAlign="center"
+        >
+            <styled.h2 fontSize="2xl" color="white" mb="3">
+                We&apos;re still accepting sponsors for {year}
+            </styled.h2>
+            <styled.p color="text.primary" mb="6">
+                Sponsorship makes {conferenceConfigPublic.name} possible — and we&apos;d love to talk
+                about how your organisation can be part of this year&apos;s conference.
+            </styled.p>
+            <styled.a
+                href="/sponsorship"
+                display="inline-flex"
+                alignItems="center"
+                bgColor="brand.primary"
+                color="text.on-brand"
+                fontWeight="semibold"
+                paddingX="6"
+                paddingY="3"
+                rounded="md"
+                _hover={{ bgColor: 'brand.secondary' }}
+            >
+                See sponsorship options →
+            </styled.a>
+        </Box>
     )
 }
 
