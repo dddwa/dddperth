@@ -71,7 +71,7 @@ export default function Verify() {
                         type="submit"
                         disabled={isSubmitting}
                         bg="admin.900"
-                        color="white"
+                        color="text.primary"
                         border="none"
                         py="3"
                         px="6"

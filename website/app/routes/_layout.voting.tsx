@@ -255,7 +255,7 @@ function VotingPageWithSession({
         <Container py="12" maxW="6xl">
             <VStack gap="8">
                 <VStack gap="4">
-                    <styled.h2 fontSize="2xl" color="white">
+                    <styled.h2 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?
                     </styled.h2>
                     <styled.p fontSize="sm" color="text.muted">
@@ -312,7 +312,7 @@ function VotingPageWithSession({
                         <styled.p
                             fontSize="2xl"
                             fontWeight="bold"
-                            color="white"
+                            color="text.primary"
                             display={{ base: 'none', lg: 'block' }}
                         >
                             OR
@@ -387,7 +387,7 @@ function VotingMessage({
     return (
         <Container py="12">
             <VStack gap="6">
-                <styled.h2 fontSize="2xl" color="white">
+                <styled.h2 fontSize="2xl" color="text.primary">
                     {message}
                 </styled.h2>
                 {error && (

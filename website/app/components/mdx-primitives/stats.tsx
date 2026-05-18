@@ -24,7 +24,7 @@ export interface StatProps {
 export function Stat({ value, label }: StatProps) {
     return (
         <Flex flexDirection="column" alignItems="flex-start" gap="1">
-            <styled.span fontSize={{ base: '3xl', md: '4xl' }} color="white" fontWeight="bold">
+            <styled.span fontSize={{ base: '3xl', md: '4xl' }} color="text.primary" fontWeight="bold">
                 {value}
             </styled.span>
             <styled.span fontSize="sm" color="text.secondary">

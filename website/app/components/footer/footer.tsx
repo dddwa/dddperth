@@ -5,7 +5,11 @@ import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
 
 export const Footer = () => (
-    <Box mt="48" gap="6" mx="5">
+    // Footer blends into the body in both themes (header behaves the same).
+    // Nav links use the `chrome` variant so the text adapts via `text.primary`,
+    // and the Logo's `currentColor` inherits the same value, putting the PERTH
+    // wordmark in the body text colour.
+    <Box mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
         <Divider color="border.subtle" mb="6" />
         <Grid
             gridTemplateColumns="1fr"
@@ -19,45 +23,45 @@ export const Footer = () => (
                 <Logo width={153} />
             </Flex>
             <Flex direction="column" gap="1" fontWeight="medium">
-                <AppLink to="/agenda#previous-years" variant="primary">
+                <AppLink to="/agenda#previous-years" variant="chrome">
                     Previous Years Sessions
                 </AppLink>
-                {/* <styled.a href={`/speakers`} color="white" _hover={{ color: '#8282FB' }}>
+                {/* <styled.a href={`/speakers`} color="text.primary" _hover={{ color: '#8282FB' }}>
                     Speakers
                 </styled.a> */}
-                <AppLink to="/agenda" variant="primary">
+                <AppLink to="/agenda" variant="chrome">
                     Agenda
                 </AppLink>
-                {/* <styled.a href={`/sponsorship`} color="white" _hover={{ color: '#8282FB' }}>
+                {/* <styled.a href={`/sponsorship`} color="text.primary" _hover={{ color: '#8282FB' }}>
                     Sponsorship
                 </styled.a> */}
-                <AppLink to="/about" variant="primary">
+                <AppLink to="/about" variant="chrome">
                     About
                 </AppLink>
-                {/* <styled.a href={`/blog`} color="white" _hover={{ color: '#8282FB' }}>
+                {/* <styled.a href={`/blog`} color="text.primary" _hover={{ color: '#8282FB' }}>
                 Blog
                 </styled.a> */}
-                <AppLink to="/faq" variant="primary">
+                <AppLink to="/faq" variant="chrome">
                     FAQ
                 </AppLink>
-                <AppLink to="/admin" variant="primary">
+                <AppLink to="/admin" variant="chrome">
                     Admin
                 </AppLink>
             </Flex>
             <Flex direction="column" gap="1" fontWeight="medium">
-                <AppLink to="/code-of-conduct" variant="primary">
+                <AppLink to="/code-of-conduct" variant="chrome">
                     Code Of Conduct
                 </AppLink>
-                <AppLink to="/venue" variant="primary">
+                <AppLink to="/venue" variant="chrome">
                     Venue
                 </AppLink>
-                <AppLink to="/health-policy" variant="primary">
+                <AppLink to="/health-policy" variant="chrome">
                     Health Policy
                 </AppLink>
-                <AppLink to="/volunteer" variant="primary">
+                <AppLink to="/volunteer" variant="chrome">
                     Work With Us
                 </AppLink>
-                <styled.a href="mailto:info@dddperth.com" color="text.highlight" _hover={{ color: 'text.on-brand' }}>
+                <styled.a href="mailto:info@dddperth.com" color="text.highlight" _hover={{ color: 'interactive.active' }}>
                     info@dddperth.com
                 </styled.a>
             </Flex>
@@ -69,7 +73,7 @@ export const Footer = () => (
                     type="email"
                     placeholder="Email Address"
                     bg="#0E0E43"
-                    color="white"
+                    color="text.primary"
                     borderRightRadius="full"
                     px={4}
                     py={2}
@@ -95,7 +99,7 @@ export const Footer = () => (
                                     w: '8',
                                     color: 'text.highlight',
                                     transition: 'colors',
-                                    _hover: { color: 'text.on-brand' },
+                                    _hover: { color: 'interactive.active' },
                                 })}
                             />
                         </styled.a>

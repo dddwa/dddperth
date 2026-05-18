@@ -1,6 +1,7 @@
 import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
+import { SponsorLogo } from '~/components/sponsor-logo'
 
 const sponsorStyles = {
     platinum: { gradientFrom: 'sponsor.platinum', logoSize: 'lg' },
@@ -24,7 +25,7 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
 
     return (
         <Flex flexDirection="column" alignItems="flex-start" marginY="16">
-            <styled.h2 fontSize="4xl" textAlign="center" color="white">
+            <styled.h2 fontSize="4xl" textAlign="center" color="text.primary">
                 {year} Sponsors
             </styled.h2>
             <SponsorGroup title="Platinum" sponsorGroups={[{ sponsors: sponsors.platinum, category: 'platinum' }]} />
@@ -141,9 +142,10 @@ export function SponsorQuoteCard({
                 height="[120px]"
                 aria-label={`Visit ${sponsor.name}`}
             >
-                <styled.img
-                    src={sponsor.logoUrlDarkMode}
-                    alt={sponsor.name}
+                <SponsorLogo
+                    logoUrlDarkMode={sponsor.logoUrlDarkMode}
+                    logoUrlLightMode={sponsor.logoUrlLightMode}
+                    name={sponsor.name}
                     maxWidth="full"
                     maxHeight="full"
                     objectFit="contain"
@@ -209,14 +211,14 @@ function SponsorComponent({
             ml="-6"
             borderRightRadius="full"
         >
-            <styled.img
-                src={sponsor.logoUrlDarkMode}
-                alt={sponsor.name}
+            <SponsorLogo
+                logoUrlDarkMode={sponsor.logoUrlDarkMode}
+                logoUrlLightMode={sponsor.logoUrlLightMode}
+                name={sponsor.name}
                 maxWidth="[150px]"
                 width="full"
                 maxHeight="[90px]"
                 ml="-3"
-                display="inline-block"
                 objectFit="contain"
             />
             <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.secondary">

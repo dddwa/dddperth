@@ -4,6 +4,7 @@ import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
+import { SponsorLogo } from '~/components/sponsor-logo'
 import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { conferenceConfig } from '@ddd/conference-config'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
@@ -156,9 +157,10 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
                 display="inline-flex"
                 alignItems="center"
             >
-                <styled.img
-                    src={roomSponsor.logoUrlDarkMode}
-                    alt={roomSponsor.name}
+                <SponsorLogo
+                    logoUrlDarkMode={roomSponsor.logoUrlDarkMode}
+                    logoUrlLightMode={roomSponsor.logoUrlLightMode}
+                    name={roomSponsor.name}
                     maxHeight="[40px]"
                     maxWidth="[140px]"
                     objectFit="contain"
@@ -170,7 +172,7 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     return (
-        <styled.div padding="4" color="white">
+        <styled.div padding="4" color="text.primary">
             <styled.h2 fontSize="xl" marginBottom="2">
                 Other Conferences
             </styled.h2>

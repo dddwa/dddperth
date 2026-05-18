@@ -1,9 +1,9 @@
 import type { LinksFunction } from 'react-router'
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router'
 
 import { Settings } from 'luxon'
 import { requireUser } from '~/lib/auth.server'
-import { token } from '~/styled-system/tokens'
+import { readThemeCookie } from '~/lib/theme.server'
 import type { Route } from './+types/root'
 import './index.css'
 
@@ -20,14 +20,37 @@ declare module 'luxon' {
  * area has its own gate in `admin.tsx`, which stays in effect in both envs.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-    if (!context.config.websiteAuthRequired) return null
+    const theme = readThemeCookie(request)
+
+    if (!context.config.websiteAuthRequired) return { theme }
 
     const url = new URL(request.url)
-    if (url.pathname.startsWith('/auth/')) return null
+    if (url.pathname.startsWith('/auth/')) return { theme }
 
     await requireUser(request, context)
-    return null
+    return { theme }
 }
+
+/**
+ * Pre-paint inline script that decides the colour scheme from the `__theme`
+ * cookie before stylesheets apply.
+ *
+ * Why: HTML responses carry `Cache-Control: max-age=300`, so the browser may
+ * serve a stale-themed copy after the user toggles. With this script the SSR
+ * value becomes a hint, not a commitment — whatever the browser cached,
+ * `<html class>` and `data-theme` get rewritten before the first paint.
+ *
+ * Notes:
+ * - Synchronous + first child of <head>: must block before CSS applies.
+ * - Wrapped in try/catch so a denied cookie context can't crash the page.
+ * - Listens for bfcache `pageshow` because Safari's back-forward cache can
+ *   restore a DOM where the script already ran but the cookie has since
+ *   changed (this is the same pattern next-themes uses).
+ * - The matching `suppressHydrationWarning` on <html> is necessary because
+ *   this script can legitimately disagree with the SSR'd attributes.
+ */
+const themeBootstrap = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)__theme=(light|dark)\\b/);var t=m?m[1]:'dark';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;}catch(e){}})();
+window.addEventListener('pageshow',function(e){if(!e.persisted)return;try{var m=document.cookie.match(/(?:^|;\\s*)__theme=(light|dark)\\b/);var t=m?m[1]:'dark';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;}catch(_){}});`
 
 export const links: LinksFunction = () => {
     return [
@@ -45,9 +68,17 @@ export const links: LinksFunction = () => {
 }
 
 export default function App() {
+    const data = useLoaderData<typeof loader>()
+    const theme = data?.theme ?? 'dark'
     return (
-        <html lang="en">
+        // suppressHydrationWarning: the pre-paint script may rewrite
+        // `className`/`data-theme` after a cached HTML response is served with
+        // a stale SSR theme. The warning is scoped to this one element.
+        <html lang="en" className={theme} data-theme={theme} suppressHydrationWarning>
             <head>
+                {/* Must be the FIRST child of <head>: blocks before any
+                    stylesheet applies so the page paints with the right theme. */}
+                <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
                 <meta charSet="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -55,7 +86,7 @@ export default function App() {
                 <Links />
                 <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
             </head>
-            <body style={{ backgroundColor: token('colors.surface.body') }}>
+            <body>
                 <Outlet />
                 <ScrollRestoration />
                 <Scripts />

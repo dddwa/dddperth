@@ -21,7 +21,17 @@ export function Hero({
             <Box
                 position="relative"
                 zIndex="docked"
-                bgImage="[linear-gradient(to bottom, rgba(14, 14, 67, 0) 0, rgba(14, 14, 67, 0.45) 80px, rgba(14, 14, 67, 0.45) 100%)]"
+                /*
+                 * The parallax Ds bleed down behind this section. They self-
+                 * fade via a mask in hero-panel.tsx, so this overlay only
+                 * needs to put a soft body-colour wash behind the intro
+                 * paragraph (so any remaining D tint is subtle), then go
+                 * solid further down where the dates list lives.
+                 */
+                css={{
+                    bgImage:
+                        'linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--colors-surface\\.body) 50%, transparent) 60px, var(--colors-surface\\.body) 260px, var(--colors-surface\\.body) 100%)',
+                }}
             >
                 <HeaderContainer>
                     <Flex flexDirection="column" gap="12">
@@ -30,11 +40,10 @@ export function Hero({
                             direction="column"
                             fontSize={{ base: 'xl', md: '2xl' }}
                             fontWeight="medium"
-                            color="white"
+                            color="text.primary"
                             gap="4"
                             pt="6"
                             maxWidth="3xl"
-                            textShadow="[0 1px 12px rgba(0, 0, 0, 0.85)]"
                         >
                             <p>
                                 Perth’s largest community-run tech conference. Held on a Saturday and built to be
@@ -47,7 +56,7 @@ export function Hero({
                                     color="text.highlight"
                                     textDecoration="underline"
                                     textUnderlineOffset="[6px]"
-                                    _hover={{ color: 'text.on-brand' }}
+                                    _hover={{ color: 'brand.primary' }}
                                 >
                                     Read more about DDD →
                                 </AppLink>

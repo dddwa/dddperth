@@ -1,7 +1,8 @@
+import { SponsorLogo } from '~/components/sponsor-logo'
 import { Box, Grid, styled } from '~/styled-system/jsx'
 
 export interface PastSponsorsGridProps {
-    sponsors: { name: string; logo: string; website: string }[]
+    sponsors: { name: string; logoDarkMode: string; logoLightMode: string; website: string }[]
     title?: string
     lede?: string
 }
@@ -15,7 +16,7 @@ export function PastSponsorsGrid({
 
     return (
         <Box as="section" paddingY={{ base: '12', md: '16' }}>
-            <styled.h2 fontSize={{ base: '3xl', md: '4xl' }} color="white" marginBottom="2">
+            <styled.h2 fontSize={{ base: '3xl', md: '4xl' }} color="text.primary" marginBottom="2">
                 {title}
             </styled.h2>
             {lede ? (
@@ -49,9 +50,10 @@ export function PastSponsorsGrid({
                         _hover={{ borderColor: 'border.emphasis' }}
                         aria-label={`Visit ${s.name}`}
                     >
-                        <styled.img
-                            src={s.logo}
-                            alt={s.name}
+                        <SponsorLogo
+                            logoUrlDarkMode={s.logoDarkMode}
+                            logoUrlLightMode={s.logoLightMode}
+                            name={s.name}
                             maxWidth="full"
                             maxHeight="full"
                             objectFit="contain"

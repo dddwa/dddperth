@@ -3,8 +3,8 @@ import { createPreset } from '@park-ui/panda-preset'
 import indigo from '@park-ui/panda-preset/colors/indigo'
 import slate from '@park-ui/panda-preset/colors/slate'
 import typographyPreset from 'pandacss-preset-typography'
-import { currentTheme } from './app/theme.config'
-import { createSemanticTokens, createThemeTokens } from './themes/theme-builder'
+import { currentLightTheme, currentTheme } from './app/theme.config'
+import { createSemanticTokens, createThemeColorSemanticTokens, createThemeTokens } from './themes/theme-builder'
 
 const navLinkRecipe = defineRecipe({
     className: 'navLink',
@@ -24,6 +24,21 @@ const navLinkRecipe = defineRecipe({
         variant: {
             primary: {
                 color: 'text.on-brand',
+                // Hover tint sits on top of `surface.footer` (dark brand surface in
+                // both themes). `text.highlight` is body-content highlight (purple
+                // in dark, indigo in light) and fights the dark green footer strip.
+                // `brand.accent` (orange/coral) lands clearly on both dark surfaces
+                // and reads as a brand-coherent hover. Used for footer + dark-mode
+                // header. Light-mode header uses `chrome` instead (see below).
+                _hover: { color: 'brand.accent' },
+                _active: { color: 'brand.accent' },
+            },
+            chrome: {
+                // Header in light theme blends into the off-white body, so nav text
+                // can't be locked to white. `text.primary` adapts: cream-white on dark
+                // body, dark indigo on light body. Hover uses `text.highlight` (purple
+                // in dark, vivid indigo in light) for a body-content-style link feel.
+                color: 'text.primary',
                 _hover: { color: 'text.highlight' },
                 _active: { color: 'text.highlight' },
             },
@@ -82,6 +97,7 @@ const navLinkRecipe = defineRecipe({
 })
 
 const themeTokens = createThemeTokens(currentTheme)
+const themeColorSemanticTokens = createThemeColorSemanticTokens(currentTheme, currentLightTheme)
 
 export default defineConfig({
     // Whether to use css reset
@@ -107,6 +123,11 @@ export default defineConfig({
     // Enable strict tokens mode - forces usage of design tokens instead of arbitrary values
     strictTokens: true,
 
+    // Light/dark theme switching: Panda emits semantic-token `_light` values
+    // under `:where(:root, .light)` and `_dark` values under `:where(:root, .dark)`.
+    // The toggle component sets the matching class on <html> at runtime.
+    // (The base value is dark, so unstyled root falls back to dark.)
+
     // Useful for theme customization
     theme: {
         recipes: {
@@ -129,10 +150,15 @@ export default defineConfig({
         extend: {
             semanticTokens: {
                 colors: {
-                    // Conference theme tokens - generated from active theme
+                    // Conference theme color tokens - emit dark + light values per token
+                    // and swap based on the configured `_light` condition.
+                    ...themeColorSemanticTokens,
+
+                    // Convenience aliases (bg.body, button.primary.bg, etc) - inherit the
+                    // dark/light swap automatically through token references.
                     ...createSemanticTokens(currentTheme).colors,
 
-                    // Typography semantic tokens (prose) - mapped to theme text tokens for dark backgrounds
+                    // Typography semantic tokens (prose) - mapped to theme text tokens
                     prose: {
                         body: { value: '{colors.text.primary}' },
                         heading: { value: '{colors.text.primary}' },
@@ -156,25 +182,10 @@ export default defineConfig({
                 },
             },
             tokens: {
-                // Conference theme tokens - generated from active theme
+                // Non-color theme tokens (borders, shadows) - reference colour tokens
+                // via {colors.x} so they pick up the dark/light swap at runtime.
                 ...themeTokens,
 
-                // Legacy 2023 tokens - DEPRECATED, will be removed after migration
-                // TODO: Remove these once all components use semantic tokens
-                colors: {
-                    ...themeTokens.colors,
-                    '2023-green': { value: '#008554' },
-                    '2023-orange': { value: '#F89A1C' },
-                    '2023-pink': { value: '#DA459C' },
-                    '2023-gray': { value: '#58595B' },
-                    '2023-red': { value: '#880007' },
-                    '2023-accessible-orange': { value: '#D97F07' },
-                    '2023-black': { value: '#1d1d1d' },
-                    '2023-white-i': { value: '#FCFCFC' },
-                    '2023-white-ii': { value: '#F5F5F5' },
-                    '2023-gray-light': { value: '#C8C8C8' },
-                    '2023-gray-light-ii': { value: '#EAEAEA' },
-                },
                 borders: {
                     ...themeTokens.borders,
                     sponsor: { value: '6px solid {colors.border.sponsor}' },

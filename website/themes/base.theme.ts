@@ -56,8 +56,9 @@ export interface ThemeDefinition {
       body: ThemeTokenValue          // Main body background color
       hero: ThemeTokenValue          // Hero section background (can be gradient start)
       heroAlt: ThemeTokenValue       // Hero section alternate/gradient end
-      header: ThemeTokenValue        // Header background
-      footer: ThemeTokenValue        // Footer background
+      header: ThemeTokenValue        // Header background (may blend into body)
+      footer: ThemeTokenValue        // Footer background (may blend into body)
+      drawer: ThemeTokenValue        // Mobile drawer panel - always brand-dark
       card: ThemeTokenValue          // Card/panel background
       cardAlt: ThemeTokenValue       // Alternate card background for variety
       elevated: ThemeTokenValue      // Elevated surface (modals, dropdowns)
@@ -112,6 +113,9 @@ export interface ThemeDefinition {
       subtle: ThemeTokenValue        // Subtle overlay (low opacity)
       moderate: ThemeTokenValue      // Moderate overlay
       strong: ThemeTokenValue        // Strong overlay (higher opacity)
+      scrim: ThemeTokenValue         // Modal/drawer backdrop curtain (always darkens, both themes)
+      activeRowStart: ThemeTokenValue // Active/upcoming list row gradient start (brand green tint)
+      activeRowEnd: ThemeTokenValue   // Active/upcoming list row gradient end (brand pink tint)
     }
 
     // Status colors - for alerts, banners, validation feedback (admin UI)

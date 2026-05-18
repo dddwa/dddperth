@@ -1,13 +1,17 @@
 import { Portal } from '@ark-ui/react/portal'
 import { useState } from 'react'
+import { useRouteLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import Logo from '~/images/svg/logo.svg?react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
+import type { Theme } from '~/lib/theme.server'
+import type { loader as rootLoader } from '~/root'
 import { drawer } from '~/styled-system/recipes'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
+import { ThemeToggle } from '../theme-toggle'
 import * as Drawer from '../ui/drawer'
 
 const drawerStyles = drawer({ variant: 'left' })
@@ -29,6 +33,8 @@ export function Header({
     venue: ConferenceVenue | undefined
 }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const rootData = useRouteLoaderData<typeof rootLoader>('root')
+    const theme: Theme = rootData?.theme ?? 'dark'
 
     const navItems: NavItem[] = [
         { to: '/sponsorship', label: 'Sponsorship' },
@@ -78,6 +84,10 @@ export function Header({
                         <AppLink
                             aria-label={`Visit the ${conferenceConfigPublic.name} homepage`}
                             to={`/`}
+                            // PERTH letters inside the logo use `currentColor` so the
+                            // wordmark adapts to the header surface (white on dark
+                            // body, dark indigo on light body).
+                            color="text.primary"
                             display="flex"
                             justifyContent={{ base: 'center', lg: 'flex-start' }}
                             alignItems="center"
@@ -98,7 +108,10 @@ export function Header({
                         fontWeight="semibold"
                     >
                         {navItems.map((item) => (
-                            <AppLink key={item.to} to={item.to} variant="primary">
+                            // `chrome` variant uses `text.primary` so nav adapts to
+                            // the header surface in both themes (header now blends
+                            // into the body in light mode).
+                            <AppLink key={item.to} to={item.to} variant="chrome">
                                 {item.label}
                             </AppLink>
                         ))}
@@ -107,6 +120,7 @@ export function Header({
                     {/* CTAs — rightmost is the primary pill, others are square */}
                     {/* Below 460px, secondaries hide; only the primary pill stays in the header */}
                     <Flex gridArea="cta" justifyContent="flex-end" alignItems="center" gap="2">
+                        <ThemeToggle initialTheme={theme} />
                         {ctas.map((cta, i) => {
                             const isPrimary = i === ctas.length - 1
                             return isPrimary ? (
@@ -128,12 +142,16 @@ export function Header({
             {/* Mobile drawer */}
             <Drawer.Root open={drawerOpen} onOpenChange={(e) => setDrawerOpen(e.open)}>
                 <Portal>
-                    <Drawer.Backdrop className={drawerStyles.backdrop} bgColor="[rgba(0,0,0,0.6)]" />
+                    <Drawer.Backdrop className={drawerStyles.backdrop} bgColor="overlay.scrim" />
                     <Drawer.Positioner className={drawerStyles.positioner} width="[100vw]" maxWidth="[320px]">
                         <Drawer.Content
                             className={drawerStyles.content}
-                            bgColor="surface.header"
-                            color="white"
+                            // Drawer panel keeps a brand-dark surface in both themes
+                            // (header + footer both blend into the body in light mode,
+                            // but a drawer overlay needs to read cleanly against any
+                            // underlying surface, so it uses its own token).
+                            bgColor="surface.drawer"
+                            color="text.on-brand"
                             display="flex"
                             flexDirection="column"
                             gridTemplateRows="initial"
@@ -146,7 +164,7 @@ export function Header({
                                 py="4"
                                 borderBottom="[1px solid token(colors.border.subtle)]"
                             >
-                                <Drawer.Title color="white" fontSize="lg" fontWeight="semibold">
+                                <Drawer.Title color="text.on-brand" fontSize="lg" fontWeight="semibold">
                                     Menu
                                 </Drawer.Title>
                                 <Drawer.CloseTrigger
@@ -234,7 +252,9 @@ function MenuButton({
             h="10"
             ml="-2"
             px="2"
-            color="text.on-brand"
+            // Hamburger sits on the (possibly light) header surface, so it adapts
+            // via `text.primary` (was `text.on-brand` which assumed dark surface).
+            color="text.primary"
             bgColor="transparent"
             border="none"
             cursor="pointer"
@@ -305,7 +325,9 @@ function CtaSquareLink({ to, label, fullWidth, onClick }: CtaProps) {
         <AppLink
             to={to}
             onClick={onClick}
-            color="text.on-brand"
+            // `text.primary` so the outlined CTA adapts to either header surface
+            // (dark indigo body in dark, off-white in light).
+            color="text.primary"
             bgColor="transparent"
             borderWidth="1px"
             borderStyle="solid"

@@ -9,7 +9,7 @@ export const Acknowledgement = () => (
             <styled.p fontSize={{ base: 'md', md: 'xl' }} color="text.secondary">
                 It's such a privilege to be able to run this conference and DDD Perth would love to acknowledge the
                 traditional custodians of the land in which DDD is created, presented, and shared, the{' '}
-                <styled.span color="text.on-brand" fontWeight="semibold">
+                <styled.span color="text.primary" fontWeight="semibold">
                     Whadjuk people of the Noongar Nation
                 </styled.span>{' '}
                 and their connections to land, sea and community. We pay our respect to their Elders past, present and

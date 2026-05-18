@@ -50,6 +50,10 @@ declare module "safe-routes" {
       params: {'year': string | number; 'sessionId': string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
     },
+    "/api/theme": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.theme.js').SearchParams>,
+    },
     "/api/voting/batch": {
       params: never,
       query: ExportedQuery<import('app/routes/api.voting.batch.js').SearchParams>,
@@ -151,6 +155,7 @@ declare module "safe-routes" {
             | 'routes/auth.logout'
             | 'routes/app-config'
             | 'routes/auth.login'
+            | 'routes/api.theme'
             | 'routes/_layout'
             | 'routes/_layout.agenda.$year.talk.$sessionId'
             | 'routes/_layout.sponsors.($year)'

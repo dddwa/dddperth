@@ -12,6 +12,14 @@ import { HeaderContainer } from '../page-layout'
 // Below this, distances scale down linearly so the Ds don't slide past each other on narrow screens.
 const PARALLAX_REFERENCE_WIDTH = 1280
 
+// Vertical fade applied to each parallax D so the bottom of the SVG dissolves
+// into whatever surface sits beneath it. The Ds are taller than the panel and
+// drift further on scroll, so without this they'd hard-edge onto the body.
+const DRIFT_MASK = {
+    maskImage: 'linear-gradient(to bottom, black 0, black 55%, transparent 95%)',
+    WebkitMaskImage: 'linear-gradient(to bottom, black 0, black 55%, transparent 95%)',
+} as const
+
 export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
     const { scrollY } = useScroll()
     const parallaxScale = useParallaxScale()
@@ -64,7 +72,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                 ) : null}
                 <styled.h1
                     fontFamily="display"
-                    color="text.on-brand"
+                    color="text.primary"
                     w="full"
                     fontWeight="black"
                     textWrap="balance"
@@ -91,7 +99,14 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                     width="full"
                     height="[60%]"
                 ></Box>
-                <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%' }}>
+                {/*
+                 * Each parallax D carries a vertical fade mask + opacity so
+                 * its lower edge dissolves into whatever surface sits below.
+                 * The mask + opacity are applied directly to the motion.div
+                 * (framer-motion preserves these style keys) so they travel
+                 * with the SVG as it translates on scroll.
+                 */}
+                <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%', opacity: 0.7, ...DRIFT_MASK }}>
                     <DGreen style={{ width: '100%', height: 'auto' }} />
                 </motion.div>
                 <motion.div
@@ -103,6 +118,8 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                         zIndex: 1,
                         y: y2,
                         width: '38%',
+                        opacity: 0.7,
+                        ...DRIFT_MASK,
                     }}
                 >
                     <DPink style={{ width: '100%', height: 'auto' }} />
@@ -116,6 +133,8 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                         transform: 'translateX(-50%)',
                         y: y3,
                         width: '38%',
+                        opacity: 0.7,
+                        ...DRIFT_MASK,
                     }}
                 >
                     <DPurple style={{ width: '100%', height: 'auto' }} />

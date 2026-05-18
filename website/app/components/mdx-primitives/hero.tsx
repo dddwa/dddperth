@@ -29,7 +29,7 @@ export function Hero({ eyebrow, title, lede, actions, children }: PropsWithChild
             ) : null}
             <styled.h1
                 fontSize={{ base: '4xl', md: '6xl' }}
-                color="white"
+                color="text.primary"
                 lineHeight="tight"
                 fontWeight="bold"
             >

@@ -47,6 +47,11 @@ export const dddPerthTheme = defineTheme({
         value: '#0E0E43',
         description: 'Footer background - dark blue',
       },
+      drawer: {
+        value: '#070727',
+        description:
+          'Mobile drawer panel - very dark blue. Always brand-dark so the overlay reads cleanly against any underlying surface.',
+      },
       card: {
         value: '#1F1F4E',
         description: 'Card/panel background - medium dark blue',
@@ -191,6 +196,18 @@ export const dddPerthTheme = defineTheme({
         value: '#FFFFFF2A',
         description: 'Strong overlay - white with ~16% opacity',
       },
+      scrim: {
+        value: 'rgba(0, 0, 0, 0.6)',
+        description: 'Modal/drawer scrim - darkens content underneath',
+      },
+      activeRowStart: {
+        value: '#00BA8D4A',
+        description: 'Active row gradient start - brand green at ~29% opacity (matches former overlay.subtle)',
+      },
+      activeRowEnd: {
+        value: '#FF00E91A',
+        description: 'Active row gradient end - brand pink at ~10% opacity (matches former overlay.moderate)',
+      },
     },
 
     // Status colors - admin / validation / alert UI
@@ -251,19 +268,3 @@ export const dddPerthTheme = defineTheme({
     },
   },
 })
-
-// Export legacy 2023 token mappings for backward compatibility during migration
-// TODO: Remove these once migration is complete
-export const legacy2023Tokens = {
-  '2023-green': '#008554',
-  '2023-orange': '#F89A1C',
-  '2023-pink': '#DA459C',
-  '2023-gray': '#58595B',
-  '2023-red': '#880007',
-  '2023-accessible-orange': '#D97F07',
-  '2023-black': '#1d1d1d',
-  '2023-white-i': '#FCFCFC',
-  '2023-white-ii': '#F5F5F5',
-  '2023-gray-light': '#C8C8C8',
-  '2023-gray-light-ii': '#EAEAEA',
-}

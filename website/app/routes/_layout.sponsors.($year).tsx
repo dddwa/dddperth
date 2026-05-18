@@ -51,12 +51,12 @@ export default function Sponsors() {
 
     return cancelledMessage ? (
         <PageLayout minHeight="100vh">
-            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+            <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceConfigPublic.name} {year}{' '}
                     {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
                 </p>
-                <Box color="white" textAlign="center" fontSize="lg" mt="10">
+                <Box color="text.primary" textAlign="center" fontSize="lg" mt="10">
                     <p>{cancelledMessage}</p>
                 </Box>
                 <SponsorSection sponsors={sponsors} year={year} />
@@ -65,7 +65,7 @@ export default function Sponsors() {
         </PageLayout>
     ) : !sponsors || Object.keys(sponsors).length === 0 ? (
         <PageLayout minHeight="100vh">
-            <Box color="white" textAlign="center" mt="10" mb="8">
+            <Box color="text.primary" textAlign="center" mt="10" mb="8">
                 <styled.p fontSize="3xl">
                     {conferenceConfigPublic.name} {year} sponsor information has not been{' '}
                     {isLatestConference
@@ -79,7 +79,7 @@ export default function Sponsors() {
     ) : (
         <PageLayout minHeight="100vh">
             <Box width="full">
-                <styled.h1 fontSize="5xl" textAlign="center" color="white" mb="8" mt="8">
+                <styled.h1 fontSize="5xl" textAlign="center" color="text.primary" mb="8" mt="8">
                     DDD Perth {year} Sponsors
                 </styled.h1>
                 <styled.p fontSize="lg" textAlign="center" color="text.secondary" mb="12" maxWidth="[800px]" mx="auto">
@@ -112,7 +112,7 @@ function BecomeSponsorCta({ year }: { year: Year }) {
             mb="12"
             textAlign="center"
         >
-            <styled.h2 fontSize="2xl" color="white" mb="3">
+            <styled.h2 fontSize="2xl" color="text.primary" mb="3">
                 We&apos;re still accepting sponsors for {year}
             </styled.h2>
             <styled.p color="text.primary" mb="6">
@@ -139,7 +139,7 @@ function BecomeSponsorCta({ year }: { year: Year }) {
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     return (
-        <styled.div padding="4" color="white" textAlign="center">
+        <styled.div padding="4" color="text.primary" textAlign="center">
             <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
                 View Previous Conferences
             </styled.h2>

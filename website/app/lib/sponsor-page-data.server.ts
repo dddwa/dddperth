@@ -3,7 +3,11 @@ import type { Sponsor, YearSponsors } from './conference-state-client-safe'
 
 export interface PastSponsor {
     name: string
-    logo: string
+    // Both variants surface to the renderer so light/dark themes show the
+    // appropriate-contrast logo (the field names are inverse-intuitive: the
+    // `*DarkMode` URL is the logo *for use in* dark mode, i.e. light-on-dark).
+    logoDarkMode: string
+    logoLightMode: string
     website: string
 }
 
@@ -106,7 +110,8 @@ export function getSponsorPageData(): SponsorPageData {
                 seenSponsors.add(key)
                 pastSponsors.push({
                     name: sponsor.name,
-                    logo: sponsor.logoUrlDarkMode,
+                    logoDarkMode: sponsor.logoUrlDarkMode,
+                    logoLightMode: sponsor.logoUrlLightMode,
                     website: sponsor.website,
                 })
             }

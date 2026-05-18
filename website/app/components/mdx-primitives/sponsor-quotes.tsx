@@ -13,7 +13,7 @@ export function SponsorQuotes({ quotes, year, title = 'What our sponsors say' }:
 
     return (
         <Box as="section" paddingY={{ base: '12', md: '16' }}>
-            <styled.h2 fontSize={{ base: '3xl', md: '4xl' }} color="white" marginBottom="2">
+            <styled.h2 fontSize={{ base: '3xl', md: '4xl' }} color="text.primary" marginBottom="2">
                 {title}
             </styled.h2>
             <styled.p color="text.secondary" marginBottom="8">

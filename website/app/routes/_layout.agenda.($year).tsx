@@ -90,11 +90,11 @@ export default function Agenda() {
 
     return cancelledMessage ? (
         <PageLayout>
-            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+            <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
                 </p>
-                <Box color="white" textAlign="center" fontSize="lg" mt="10">
+                <Box color="text.primary" textAlign="center" fontSize="lg" mt="10">
                     <p>{cancelledMessage}</p>
                 </Box>
                 {/* Should sponsors be displayed for a cancelled conference? */}
@@ -104,7 +104,7 @@ export default function Agenda() {
         </PageLayout>
     ) : !schedule ? (
         <PageLayout>
-            <Box color="white" textAlign="center" fontSize="3xl" mt="10">
+            <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceConfigPublic.name} {year} agenda has not been{' '}
                     {isLatestConference
@@ -260,8 +260,14 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                 <>
                     <br />
                     <styled.span fontSize="xs">Sponsored by{' '}</styled.span>
+                    {/*
+                     * The room banner sits on `border.emphasis` (saturated
+                     * mid-tone indigo/purple in both themes), so the light-on-dark
+                     * `logoUrlDarkMode` variant reads on the coloured surface
+                     * regardless of theme — no per-theme swap needed here.
+                     */}
                     <styled.img
-                        src={roomSponsor.logoUrlLightMode}
+                        src={roomSponsor.logoUrlDarkMode}
                         alt={roomSponsor.name}
                         maxWidth="[100px]"
                         width="full"
@@ -384,7 +390,7 @@ function RoomTimeSlot({
             >
                 <styled.h3
                     wordWrap="break-word"
-                    color="white"
+                    color="text.primary"
                     fontSize="md"
                     fontWeight="semibold"
                     lineHeight="tight"
@@ -398,6 +404,11 @@ function RoomTimeSlot({
                                 year,
                                 sessionId: fullSession?.id ?? '#',
                             })}
+                            // The default `primary` nav variant paints `text.on-brand` (white),
+                            // which disappears on the card's `surface.card` background in light
+                            // theme. Override to body text so it tracks the surrounding card.
+                            color="text.primary"
+                            _hover={{ color: 'text.highlight' }}
                         >
                             {fullSession?.title}
                         </AppLink>
@@ -472,7 +483,7 @@ function RoomTimeSlot({
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
     return (
-        <styled.div padding="4" color="white" textAlign="center">
+        <styled.div padding="4" color="text.primary" textAlign="center">
             <styled.h2 fontSize="xl" marginBottom="2" id="previous-years">
                 View Previous Conferences
             </styled.h2>

@@ -38,7 +38,7 @@ export function Card({ title, featured, children }: PropsWithChildren<CardProps>
             padding="5"
         >
             {title ? (
-                <styled.h3 fontSize="lg" color="white" fontWeight="semibold">
+                <styled.h3 fontSize="lg" color="text.primary" fontWeight="semibold">
                     {title}
                 </styled.h3>
             ) : null}
@@ -55,7 +55,7 @@ export function Bullet({ children }: PropsWithChildren) {
             <styled.span color="interactive.active" fontWeight="semibold" flexShrink="0" lineHeight="relaxed">
                 →
             </styled.span>
-            <styled.span fontSize="sm" color="white" lineHeight="relaxed">
+            <styled.span fontSize="sm" color="text.primary" lineHeight="relaxed">
                 {children}
             </styled.span>
         </Flex>

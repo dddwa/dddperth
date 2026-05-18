@@ -3,7 +3,7 @@ import { ctaButton } from '../../recipes/button'
 
 export function HeroTitlePanel() {
     return (
-        <Box className={`homepage-title-panel`} w="full" position="relative" color="white" zIndex="docked">
+        <Box className={`homepage-title-panel`} w="full" position="relative" color="text.primary" zIndex="docked">
             <Box className={`container-wrapper`} w="full" maxW="[1200px]" mx="auto">
                 <Box
                     className={`padding-wrapper`}

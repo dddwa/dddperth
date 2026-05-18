@@ -21,6 +21,22 @@ function tokenValue(token: ThemeTokenValue) {
   return { value: token.value }
 }
 
+/**
+ * Builds a semantic-token value object that swaps between light + dark at runtime.
+ * `base` is the light value (Panda's `_light` condition matches `:where(:root, .light)`,
+ * which also matches a bare `:root`, so base values must be the light variant to
+ * win the cascade when no class is set). `_dark` activates when `<html>` has the
+ * `dark` class (set by the toggle / entry script).
+ */
+function semanticTokenValue(dark: ThemeTokenValue, light: ThemeTokenValue) {
+  return {
+    value: {
+      base: light.value,
+      _dark: dark.value,
+    },
+  }
+}
+
 function statusGroupTokens(prefix: string, group: StatusColorGroup) {
   return {
     [`${prefix}.bg`]: tokenValue(group.bg),
@@ -30,84 +46,23 @@ function statusGroupTokens(prefix: string, group: StatusColorGroup) {
   }
 }
 
+function semanticStatusGroupTokens(prefix: string, dark: StatusColorGroup, light: StatusColorGroup) {
+  return {
+    [`${prefix}.bg`]: semanticTokenValue(dark.bg, light.bg),
+    [`${prefix}.fg`]: semanticTokenValue(dark.fg, light.fg),
+    [`${prefix}.border`]: semanticTokenValue(dark.border, light.border),
+    [`${prefix}.emphasis`]: semanticTokenValue(dark.emphasis, light.emphasis),
+  }
+}
+
 /**
- * Creates Panda CSS token configuration from a theme definition
+ * Creates Panda CSS token configuration from a theme definition.
+ *
+ * Used for non-color tokens (borders, shadows). Colors live in semantic tokens
+ * via `createThemeColorSemanticTokens` so they can swap between dark + light.
  */
 export function createThemeTokens(theme: ThemeDefinition) {
   return {
-    colors: {
-      // Brand colors
-      'brand.primary': tokenValue(theme.colors.brand.primary),
-      'brand.secondary': tokenValue(theme.colors.brand.secondary),
-      'brand.accent': tokenValue(theme.colors.brand.accent),
-
-      // Surface colors
-      'surface.body': tokenValue(theme.colors.surface.body),
-      'surface.hero': tokenValue(theme.colors.surface.hero),
-      'surface.hero-alt': tokenValue(theme.colors.surface.heroAlt),
-      'surface.header': tokenValue(theme.colors.surface.header),
-      'surface.footer': tokenValue(theme.colors.surface.footer),
-      'surface.card': tokenValue(theme.colors.surface.card),
-      'surface.card-alt': tokenValue(theme.colors.surface.cardAlt),
-      'surface.elevated': tokenValue(theme.colors.surface.elevated),
-
-      // Text colors
-      'text.primary': tokenValue(theme.colors.text.primary),
-      'text.secondary': tokenValue(theme.colors.text.secondary),
-      'text.on-brand': tokenValue(theme.colors.text.onBrand),
-      'text.highlight': tokenValue(theme.colors.text.highlight),
-      'text.muted': tokenValue(theme.colors.text.muted),
-
-      // Border colors
-      'border.default': tokenValue(theme.colors.border.default),
-      'border.subtle': tokenValue(theme.colors.border.subtle),
-      'border.emphasis': tokenValue(theme.colors.border.emphasis),
-      'border.sponsor': tokenValue(theme.colors.border.sponsor),
-
-      // Gradient colors (individual stops)
-      'gradient.hero-start': tokenValue(theme.colors.gradient.heroStart),
-      'gradient.hero-end': tokenValue(theme.colors.gradient.heroEnd),
-      'gradient.cta-start': tokenValue(theme.colors.gradient.ctaStart),
-      'gradient.cta-mid': tokenValue(theme.colors.gradient.ctaMid),
-      'gradient.cta-end': tokenValue(theme.colors.gradient.ctaEnd),
-
-      // Sponsor tier colors
-      'sponsor.platinum': tokenValue(theme.colors.sponsor.platinum),
-      'sponsor.gold': tokenValue(theme.colors.sponsor.gold),
-      'sponsor.silver': tokenValue(theme.colors.sponsor.silver),
-      'sponsor.bronze': tokenValue(theme.colors.sponsor.bronze),
-      'sponsor.room': tokenValue(theme.colors.sponsor.room),
-      'sponsor.digital': tokenValue(theme.colors.sponsor.digital),
-      'sponsor.community': tokenValue(theme.colors.sponsor.community),
-
-      // Interactive state colors
-      'interactive.highlight': tokenValue(theme.colors.interactive.highlight),
-      'interactive.active': tokenValue(theme.colors.interactive.active),
-      'interactive.focus': tokenValue(theme.colors.interactive.focus),
-
-      // Overlay colors
-      'overlay.subtle': tokenValue(theme.colors.overlay.subtle),
-      'overlay.moderate': tokenValue(theme.colors.overlay.moderate),
-      'overlay.strong': tokenValue(theme.colors.overlay.strong),
-
-      // Status colors
-      ...statusGroupTokens('status.success', theme.colors.status.success),
-      ...statusGroupTokens('status.warning', theme.colors.status.warning),
-      ...statusGroupTokens('status.danger', theme.colors.status.danger),
-      ...statusGroupTokens('status.info', theme.colors.status.info),
-
-      // Admin neutral scale
-      'admin.50': tokenValue(theme.colors.admin['50']),
-      'admin.100': tokenValue(theme.colors.admin['100']),
-      'admin.200': tokenValue(theme.colors.admin['200']),
-      'admin.300': tokenValue(theme.colors.admin['300']),
-      'admin.400': tokenValue(theme.colors.admin['400']),
-      'admin.500': tokenValue(theme.colors.admin['500']),
-      'admin.600': tokenValue(theme.colors.admin['600']),
-      'admin.700': tokenValue(theme.colors.admin['700']),
-      'admin.800': tokenValue(theme.colors.admin['800']),
-      'admin.900': tokenValue(theme.colors.admin['900']),
-    },
     borders: {
       default: tokenValue(theme.borders.default),
       subtle: tokenValue(theme.borders.subtle),
@@ -122,10 +77,102 @@ export function createThemeTokens(theme: ThemeDefinition) {
 }
 
 /**
- * Creates semantic token mappings for easier usage patterns
- * These provide aliases and derived values for common use cases
+ * Creates Panda CSS semantic color tokens that hold both a dark and light
+ * value. The active theme is selected at runtime via the `_light` condition
+ * (configured in panda.config.ts to match `[data-theme=light]` or the
+ * `prefers-color-scheme: light` media query when no explicit override is set).
  */
-export function createSemanticTokens(theme: ThemeDefinition) {
+export function createThemeColorSemanticTokens(darkTheme: ThemeDefinition, lightTheme: ThemeDefinition) {
+  const d = darkTheme.colors
+  const l = lightTheme.colors
+
+  return {
+    // Brand colors
+    'brand.primary': semanticTokenValue(d.brand.primary, l.brand.primary),
+    'brand.secondary': semanticTokenValue(d.brand.secondary, l.brand.secondary),
+    'brand.accent': semanticTokenValue(d.brand.accent, l.brand.accent),
+
+    // Surface colors
+    'surface.body': semanticTokenValue(d.surface.body, l.surface.body),
+    'surface.hero': semanticTokenValue(d.surface.hero, l.surface.hero),
+    'surface.hero-alt': semanticTokenValue(d.surface.heroAlt, l.surface.heroAlt),
+    'surface.header': semanticTokenValue(d.surface.header, l.surface.header),
+    'surface.footer': semanticTokenValue(d.surface.footer, l.surface.footer),
+    'surface.drawer': semanticTokenValue(d.surface.drawer, l.surface.drawer),
+    'surface.card': semanticTokenValue(d.surface.card, l.surface.card),
+    'surface.card-alt': semanticTokenValue(d.surface.cardAlt, l.surface.cardAlt),
+    'surface.elevated': semanticTokenValue(d.surface.elevated, l.surface.elevated),
+
+    // Text colors
+    'text.primary': semanticTokenValue(d.text.primary, l.text.primary),
+    'text.secondary': semanticTokenValue(d.text.secondary, l.text.secondary),
+    'text.on-brand': semanticTokenValue(d.text.onBrand, l.text.onBrand),
+    'text.highlight': semanticTokenValue(d.text.highlight, l.text.highlight),
+    'text.muted': semanticTokenValue(d.text.muted, l.text.muted),
+
+    // Border colors
+    'border.default': semanticTokenValue(d.border.default, l.border.default),
+    'border.subtle': semanticTokenValue(d.border.subtle, l.border.subtle),
+    'border.emphasis': semanticTokenValue(d.border.emphasis, l.border.emphasis),
+    'border.sponsor': semanticTokenValue(d.border.sponsor, l.border.sponsor),
+
+    // Gradient colors (individual stops)
+    'gradient.hero-start': semanticTokenValue(d.gradient.heroStart, l.gradient.heroStart),
+    'gradient.hero-end': semanticTokenValue(d.gradient.heroEnd, l.gradient.heroEnd),
+    'gradient.cta-start': semanticTokenValue(d.gradient.ctaStart, l.gradient.ctaStart),
+    'gradient.cta-mid': semanticTokenValue(d.gradient.ctaMid, l.gradient.ctaMid),
+    'gradient.cta-end': semanticTokenValue(d.gradient.ctaEnd, l.gradient.ctaEnd),
+
+    // Sponsor tier colors
+    'sponsor.platinum': semanticTokenValue(d.sponsor.platinum, l.sponsor.platinum),
+    'sponsor.gold': semanticTokenValue(d.sponsor.gold, l.sponsor.gold),
+    'sponsor.silver': semanticTokenValue(d.sponsor.silver, l.sponsor.silver),
+    'sponsor.bronze': semanticTokenValue(d.sponsor.bronze, l.sponsor.bronze),
+    'sponsor.room': semanticTokenValue(d.sponsor.room, l.sponsor.room),
+    'sponsor.digital': semanticTokenValue(d.sponsor.digital, l.sponsor.digital),
+    'sponsor.community': semanticTokenValue(d.sponsor.community, l.sponsor.community),
+
+    // Interactive state colors
+    'interactive.highlight': semanticTokenValue(d.interactive.highlight, l.interactive.highlight),
+    'interactive.active': semanticTokenValue(d.interactive.active, l.interactive.active),
+    'interactive.focus': semanticTokenValue(d.interactive.focus, l.interactive.focus),
+
+    // Overlay colors
+    'overlay.subtle': semanticTokenValue(d.overlay.subtle, l.overlay.subtle),
+    'overlay.moderate': semanticTokenValue(d.overlay.moderate, l.overlay.moderate),
+    'overlay.strong': semanticTokenValue(d.overlay.strong, l.overlay.strong),
+    'overlay.scrim': semanticTokenValue(d.overlay.scrim, l.overlay.scrim),
+    'overlay.active-row-start': semanticTokenValue(d.overlay.activeRowStart, l.overlay.activeRowStart),
+    'overlay.active-row-end': semanticTokenValue(d.overlay.activeRowEnd, l.overlay.activeRowEnd),
+
+    // Status colors
+    ...semanticStatusGroupTokens('status.success', d.status.success, l.status.success),
+    ...semanticStatusGroupTokens('status.warning', d.status.warning, l.status.warning),
+    ...semanticStatusGroupTokens('status.danger', d.status.danger, l.status.danger),
+    ...semanticStatusGroupTokens('status.info', d.status.info, l.status.info),
+
+    // Admin neutral scale
+    'admin.50': semanticTokenValue(d.admin['50'], l.admin['50']),
+    'admin.100': semanticTokenValue(d.admin['100'], l.admin['100']),
+    'admin.200': semanticTokenValue(d.admin['200'], l.admin['200']),
+    'admin.300': semanticTokenValue(d.admin['300'], l.admin['300']),
+    'admin.400': semanticTokenValue(d.admin['400'], l.admin['400']),
+    'admin.500': semanticTokenValue(d.admin['500'], l.admin['500']),
+    'admin.600': semanticTokenValue(d.admin['600'], l.admin['600']),
+    'admin.700': semanticTokenValue(d.admin['700'], l.admin['700']),
+    'admin.800': semanticTokenValue(d.admin['800'], l.admin['800']),
+    'admin.900': semanticTokenValue(d.admin['900'], l.admin['900']),
+  }
+}
+
+/**
+ * Creates semantic token mappings for easier usage patterns
+ * These provide aliases and derived values for common use cases.
+ *
+ * These are alias-only: each value references another semantic token via
+ * `{colors.x}`, so the alias inherits the dark/light swap automatically.
+ */
+export function createSemanticTokens(_theme: ThemeDefinition) {
   return {
     colors: {
       // Convenience aliases for common patterns

@@ -30,7 +30,7 @@ export function PageLayout({
         <Flex
             flexDirection="column"
             w="full"
-            color="white"
+            color="text.primary"
             style={{
                 ...(minHeight && { minHeight }),
                 ...(bgColor && { backgroundColor: bgColor }),

@@ -241,11 +241,11 @@ function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?
             justifyContent="space-between"
             gap={smallSidebar ? '0' : { base: '3', sm: '0' }}
             rounded="lg"
-            color="text.on-brand"
+            color="text.primary"
             shadow="sm"
             bgGradient="to-r"
-            gradientFrom="overlay.subtle"
-            gradientTo="overlay.moderate"
+            gradientFrom="overlay.active-row-start"
+            gradientTo="overlay.active-row-end"
             borderTop="emphasis"
             p={smallSidebar ? '2' : '4'}
         >
@@ -298,7 +298,12 @@ function EventLink({
         paddingY: smallSidebar ? '1' : ({ base: '2', sm: '1' } as const),
         ml: smallSidebar ? '6' : '0',
         fontWeight: 'semibold',
-        color: highlighted ? 'gradient.cta-start' : 'text.on-brand',
+        // Highlighted CTA: white text on the pink/coral gradient. Was
+        // `gradient.cta-start` (dark magenta) — in dark theme that lands on a
+        // brighter gradient and reads, but in light theme `cta-start` is a
+        // darkened pink that merges with the lighter pink/coral gradient stops
+        // and the contrast collapses. White is high-contrast in both themes.
+        color: highlighted ? 'text.on-brand' : 'text.primary',
         _hover: { gradientTo: highlighted ? 'gradient.cta-mid' : 'white/10' },
         bgGradient: 'to-r',
         gradientFrom: highlighted ? 'gradient.cta-mid' : 'white/10',
@@ -341,11 +346,13 @@ function EventCountdown({
         paddingY: smallSidebar ? '1' : { base: '2', sm: '1' },
         ml: smallSidebar ? '6' : '0',
         fontWeight: 'semibold',
-        color: 'white',
-        _hover: { gradientTo: 'white/10' },
+        // `text.primary` flips to dark indigo in light theme so the countdown
+        // stays legible on the pale ClosedRow gradient (was hard-coded `white`).
+        color: 'text.primary',
+        _hover: { gradientTo: 'overlay.subtle' },
         bgGradient: 'to-r',
-        gradientFrom: 'white/10',
-        gradientTo: 'white/5',
+        gradientFrom: 'overlay.subtle',
+        gradientTo: 'overlay.moderate',
     })
 
     const countdownMessage = (
@@ -424,7 +431,7 @@ export const ImportantDates: React.FC<{
         <Flex flexDirection="column" gap="2">
             <styled.h2
                 fontSize={{ base: smallSidebar ? 'lg' : 'lg', md: smallSidebar ? 'lg' : '3xl' }}
-                color="white"
+                color="text.primary"
                 fontWeight="semibold"
                 width="fit"
             >
@@ -448,7 +455,7 @@ export const ImportantDates: React.FC<{
 export function Workshops() {
     return (
         <Flex flexDirection="column" gap="2">
-            <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="white" fontWeight="semibold" width="fit">
+            <styled.h2 fontSize={{ base: 'lg', md: '3xl' }} color="text.primary" fontWeight="semibold" width="fit">
                 Workshops
             </styled.h2>
             <styled.p fontSize="md" color="text.secondary" mb="4">
