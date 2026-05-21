@@ -1,10 +1,12 @@
 import { DateTime } from 'luxon'
 import { Suspense, useEffect, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
+import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
 import { conferenceConfigPublic } from '@ddd/conference-config/public'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import type { Sponsor } from '~/lib/conference-state-client-safe'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
@@ -25,6 +27,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })
     }
 
+    // Platinum sponsors are surfaced as a single-line acknowledgement on the
+    // active voting view. Top tier only keeps the line short and reserves
+    // this high-engagement surface as a premium perk.
+    const votingSponsors: Sponsor[] = context.conferenceState.conference.sponsors.platinum ?? []
+
     if (
         context.conferenceState.talkVoting.state === 'not-open-yet' ||
         context.conferenceState.talkVoting.state === 'closed'
@@ -39,6 +46,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 totalPairs: 0,
             },
             hasSession: false,
+            votingSponsors,
         }
     }
 
@@ -55,6 +63,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             },
             hasSession: false,
             error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
+            votingSponsors,
         }
     }
 
@@ -79,6 +88,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             votingProgress,
             totalPairs: votingSession.totalPairs,
         },
+        votingSponsors,
     }
 }
 
@@ -254,6 +264,10 @@ function VotingPageWithSession({
     return (
         <Container py="12" maxW="6xl">
             <VStack gap="8">
+                <SponsorAcknowledgement
+                    prefix="Voting brought to you by"
+                    sponsors={data.votingSponsors}
+                />
                 <VStack gap="4">
                     <styled.h2 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?

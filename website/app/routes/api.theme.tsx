@@ -1,5 +1,5 @@
 import { data, type ActionFunctionArgs } from 'react-router'
-import { writeThemeCookie, type Theme } from '~/lib/theme.server'
+import { writeThemeCookie } from '~/lib/theme.server'
 
 /**
  * POST /api/theme  body=`theme=dark|light`
@@ -16,7 +16,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     return data(
-        { ok: true, theme: next as Theme },
+        { ok: true, theme: next },
         { headers: { 'Set-Cookie': writeThemeCookie(next) } },
     )
 }

@@ -66,3 +66,5 @@ website/.wrangler/state
 .nx/polygraph
 
 qa
+
+.nx/self-healing

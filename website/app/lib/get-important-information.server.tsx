@@ -24,7 +24,7 @@ export function getImportantInformation(
 
     return {
         date: yearConfig.conferenceDate?.toISO(),
-        year: yearConfig.year as ConferenceYears,
+        year: yearConfig.year,
         sponsors: yearConfig.sponsors,
         currentTicketSale: currentTicketRelease
             ? { closes: currentTicketRelease.range.closes.toISO(), price: currentTicketRelease.price }

@@ -9,6 +9,11 @@ export const Footer = () => (
     // Nav links use the `chrome` variant so the text adapts via `text.primary`,
     // and the Logo's `currentColor` inherits the same value, putting the PERTH
     // wordmark in the body text colour.
+    //
+    // Sponsor logos are intentionally not shown here: the home-page hero
+    // strip is the single curated sponsor surface, and duplicating it in
+    // the footer competed visually on long pages. The /sponsors and
+    // /sponsorship nav links below give discovery without the noise.
     <Box mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
         <Divider color="border.subtle" mb="6" />
         <Grid
@@ -32,9 +37,12 @@ export const Footer = () => (
                 <AppLink to="/agenda" variant="chrome">
                     Agenda
                 </AppLink>
-                {/* <styled.a href={`/sponsorship`} color="text.primary" _hover={{ color: '#8282FB' }}>
-                    Sponsorship
-                </styled.a> */}
+                <AppLink to="/sponsors" variant="chrome">
+                    Sponsors
+                </AppLink>
+                <AppLink to="/sponsorship" variant="chrome">
+                    Become a sponsor
+                </AppLink>
                 <AppLink to="/about" variant="chrome">
                     About
                 </AppLink>

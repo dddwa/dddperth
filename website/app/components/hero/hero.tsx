@@ -1,19 +1,26 @@
 import type { DateTime } from 'luxon'
 import { AppLink } from '~/components/app-link'
+import type { Year } from '~/lib/conference-state-client-safe'
 import type { ImportantDate } from '~/lib/important-dates'
+import type { ResolvedSponsors } from '~/lib/sponsor-fallback.server'
 import { Box, Flex } from '~/styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
 import { HeaderContainer } from '../page-layout'
 import { HomepageHeroPanel } from './hero-panel'
+import { HeroSponsorStrip } from './hero-sponsor-strip'
 
 export function Hero({
     currentDate,
     conferenceDate,
     importantDates,
+    sponsors,
+    currentYear,
 }: {
     currentDate: DateTime
     conferenceDate: string | undefined
     importantDates: ImportantDate[]
+    sponsors: ResolvedSponsors
+    currentYear: Year
 }) {
     return (
         <Box overflowX="hidden" position="relative">
@@ -65,6 +72,7 @@ export function Hero({
 
                         <ImportantDates currentDate={currentDate} importantDates={importantDates} />
                         <Workshops />
+                        <HeroSponsorStrip sponsors={sponsors} currentYear={currentYear} />
                     </Flex>
                 </HeaderContainer>
             </Box>

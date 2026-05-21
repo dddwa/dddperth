@@ -1,7 +1,10 @@
+import { Link } from 'react-router'
 import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
 import { SponsorLogo } from '~/components/sponsor-logo'
+
+const StyledLink = styled(Link)
 
 const sponsorStyles = {
     platinum: { gradientFrom: 'sponsor.platinum', logoSize: 'lg' },
@@ -23,6 +26,21 @@ function getSponsorStyle(category: keyof typeof sponsorStyles) {
 export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
     if (!sponsors) return null
 
+    // When the heading is shown but every tier is still empty (typical for an
+    // upcoming year before sponsors are announced) the section otherwise renders
+    // an awkward lone H2. Show a CTA pointing at the sponsorship page instead.
+    const hasAnySponsor = (Object.values(sponsors) as (Sponsor[] | undefined)[]).some(
+        (group) => Array.isArray(group) && group.length > 0,
+    )
+
+    if (!hasAnySponsor) {
+        return (
+            <Flex flexDirection="column" alignItems="flex-start" marginY="16">
+                <SponsorCta year={year} />
+            </Flex>
+        )
+    }
+
     return (
         <Flex flexDirection="column" alignItems="flex-start" marginY="16">
             <styled.h2 fontSize="4xl" textAlign="center" color="text.primary">
@@ -43,6 +61,57 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
                     { sponsors: sponsors.keynotes, category: 'keynotes' },
                 ]}
             />
+        </Flex>
+    )
+}
+
+function SponsorCta({ year }: { year: Year }) {
+    return (
+        <Flex
+            width="full"
+            flexDirection="column"
+            alignItems="center"
+            textAlign="center"
+            gap="4"
+            padding={{ base: '5', md: '6' }}
+            bgGradient="to-r"
+            gradientFrom="surface.card"
+            gradientTo="surface.card-alt"
+            borderWidth="1px"
+            borderStyle="solid"
+            borderColor="border.default"
+            borderLeftWidth="4px"
+            borderLeftColor="sponsor.platinum"
+            rounded="md"
+            boxShadow="md"
+        >
+            <Flex flexDirection="column" gap="1" alignItems="center">
+                <styled.p fontSize={{ base: 'lg', md: 'xl' }} fontWeight="semibold" color="text.primary">
+                    {year} sponsors not announced yet
+                </styled.p>
+                <styled.p fontSize={{ base: 'sm', md: 'md' }} color="text.secondary" maxWidth="[60ch]">
+                    Want your logo here? DDD Perth runs on the generosity of our sponsors — partner with us to support
+                    Perth's tech community.
+                </styled.p>
+            </Flex>
+            <StyledLink
+                to="/sponsorship"
+                display="inline-flex"
+                alignItems="center"
+                justifyContent="center"
+                paddingX="5"
+                paddingY="3"
+                rounded="md"
+                fontWeight="semibold"
+                fontSize="sm"
+                color="text.on-brand"
+                bgGradient="to-r"
+                gradientFrom="gradient.cta-mid"
+                gradientTo="gradient.cta-end"
+                _hover={{ gradientTo: 'gradient.cta-mid' }}
+            >
+                Become a sponsor →
+            </StyledLink>
         </Flex>
     )
 }

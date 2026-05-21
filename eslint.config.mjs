@@ -21,6 +21,16 @@ export default [
         ],
     },
     { plugins: { '@nx': nxEslintPlugin } },
+    // Register @typescript-eslint/parser for .ts/.tsx files. Without this,
+    // projects with no local eslint config (e.g. @ddd/conference-config) fall
+    // back to espree and fail to parse type-only syntax. Website's config layers
+    // its own typed-rule setup on top of this.
+    {
+        files: ['**/*.ts', '**/*.tsx'],
+        languageOptions: {
+            parser: ts.parser,
+        },
+    },
     {
         files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
         rules: {

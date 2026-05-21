@@ -259,21 +259,29 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
             {roomSponsor ? (
                 <>
                     <br />
-                    <styled.span fontSize="xs">Sponsored by{' '}</styled.span>
+                    <styled.span fontSize="xs" opacity={0.85}>
+                        Sponsored by{' '}
+                    </styled.span>
                     {/*
                      * The room banner sits on `border.emphasis` (saturated
                      * mid-tone indigo/purple in both themes), so the light-on-dark
                      * `logoUrlDarkMode` variant reads on the coloured surface
                      * regardless of theme — no per-theme swap needed here.
+                     *
+                     * Bounding box is normalised (fixed max h/w, object-fit
+                     * contain) so a wide or tall outlier asset can't unbalance
+                     * the sticky room header.
                      */}
                     <styled.img
                         src={roomSponsor.logoUrlDarkMode}
                         alt={roomSponsor.name}
-                        maxWidth="[100px]"
-                        width="full"
-                        maxHeight="[50px]"
+                        title={roomSponsor.name}
+                        maxWidth="[110px]"
+                        maxHeight="[28px]"
+                        mt="1"
                         display="inline-block"
                         objectFit="contain"
+                        verticalAlign="middle"
                     />
                 </>
             ) : null}

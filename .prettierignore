@@ -8,3 +8,5 @@ styled-system
 
 /.nx/workspace-data
 safe-routes.d.ts
+
+.nx/self-healing

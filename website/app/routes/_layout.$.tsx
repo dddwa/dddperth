@@ -12,6 +12,7 @@ import type { ConferenceState } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
+import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { getSponsorPageData } from '~/lib/sponsor-page-data.server'
 import { css } from '~/styled-system/css'
 import { Box, Grid, styled } from '~/styled-system/jsx'
@@ -57,6 +58,26 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const sponsorPageData = getSponsorPageData()
 
+    // Sponsors shown in the tickets-page acknowledgement. Platinum + Gold
+    // from the current year if available, else the most recent prior year
+    // (in which case the MDX component switches to "past supporters" copy
+    // and adds a "Sponsor [year]" CTA — see lib/mdx.tsx).
+    const ticketSponsorsResolved = resolveSponsorsWithFallback(
+        context.conferenceState.conference.year,
+        context.conferenceState.conference.sponsors,
+    )
+    const ticketSponsors =
+        ticketSponsorsResolved.kind === 'empty'
+            ? undefined
+            : {
+                  currentYear: context.conferenceState.conference.year,
+                  sponsors: [
+                      ...(ticketSponsorsResolved.sponsors.platinum ?? []),
+                      ...(ticketSponsorsResolved.sponsors.gold ?? []),
+                  ],
+                  isFallback: ticketSponsorsResolved.kind === 'fallback',
+              }
+
     return data(
         {
             currentDate: context.dateTimeProvider.nowDate().toISO(),
@@ -67,6 +88,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             conferenceState: context.conferenceState,
             importantDates,
             sponsorPageData,
+            ticketSponsors,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.doc } },
     )
@@ -136,9 +158,17 @@ export function meta(args: Route.MetaArgs) {
 }
 
 export default function WebsiteContentPage() {
-    const { slug, frontmatter, currentPath, conferenceState, currentDate, importantDates, sponsorPageData } =
-        useLoaderData<typeof loader>()
-    const Component = useMdxPage(slug, 'page', conferenceState)
+    const {
+        slug,
+        frontmatter,
+        currentPath,
+        conferenceState,
+        currentDate,
+        importantDates,
+        sponsorPageData,
+        ticketSponsors,
+    } = useLoaderData<typeof loader>()
+    const Component = useMdxPage(slug, 'page', conferenceState, ticketSponsors)
 
     const draftBanner = frontmatter.draft ? (
         <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>

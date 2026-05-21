@@ -3,6 +3,7 @@ import type { MDXComponents } from 'mdx/types'
 import type { ComponentType } from 'react'
 import { use } from 'react'
 import bundles from 'virtual:mdx-bundles'
+import type { Sponsor, Year } from './conference-state-client-safe'
 import { MdxLink } from '~/components/mdx-link'
 import {
     Bullet,
@@ -16,6 +17,7 @@ import {
     Stat,
     Stats,
 } from '~/components/mdx-primitives'
+import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
@@ -25,16 +27,42 @@ import type { ConferenceState } from './conference-state-client-safe'
 
 type ContentType = 'page' | 'blog'
 
+/**
+ * Sponsors surfaced inside MDX components — resolved server-side (so the
+ * fallback helper can read `conferenceConfig`) and passed in by the route.
+ */
+export interface MdxSponsorContext {
+    /** Year used to label CTAs (e.g. "Sponsor 2026"). Always the active year. */
+    currentYear: Year
+    /** Sponsors to credit. Empty when no current sponsors and no fallback. */
+    sponsors: Sponsor[]
+    /** True when `sponsors` came from a prior year, not the current one. */
+    isFallback: boolean
+}
+
 // Each entry's `.load()` call is memoized because ES module imports are
 // singletons — calling it repeatedly returns the same promise.
-export function useMdxPage(slug: string, type: ContentType, conferenceState: ConferenceState) {
+export function useMdxPage(
+    slug: string,
+    type: ContentType,
+    conferenceState: ConferenceState,
+    ticketSponsors?: MdxSponsorContext,
+) {
     const entry = bundles[type][slug]
     if (!entry) throw new Error(`[mdx] Unknown ${type}: ${slug}`)
     const mod = use(entry.load())
-    return wrapMdxComponent(mod.default as ComponentType<Record<string, unknown>>, conferenceState)
+    return wrapMdxComponent(
+        mod.default as ComponentType<Record<string, unknown>>,
+        conferenceState,
+        ticketSponsors,
+    )
 }
 
-function wrapMdxComponent(Component: ComponentType<Record<string, unknown>>, conferenceState: ConferenceState) {
+function wrapMdxComponent(
+    Component: ComponentType<Record<string, unknown>>,
+    conferenceState: ConferenceState,
+    ticketSponsors?: MdxSponsorContext,
+) {
     const mdxComponents: MDXComponents = {
         a: ({ ref, ...props }) => <MdxLink {...props} />,
         h1: ({ ref, ...props }) => <styled.h1 fontSize="3xl" {...props} />,
@@ -51,6 +79,28 @@ function wrapMdxComponent(Component: ComponentType<Record<string, unknown>>, con
         Section,
         SponsorQuotes,
         PastSponsorsGrid,
+        TicketSponsorAcknowledgement: () => {
+            // Uses the resolved sponsor context the route loader passes in
+            // (via `useMdxPage(..., ticketSponsors)`), so this component
+            // doesn't need to know about the fallback resolver itself.
+            if (!ticketSponsors || ticketSponsors.sponsors.length === 0) return null
+            const { sponsors, isFallback, currentYear } = ticketSponsors
+            return (
+                <SponsorAcknowledgement
+                    prefix={
+                        isFallback
+                            ? `Sponsors keep tickets affordable. Recent supporters include`
+                            : 'Tickets stay affordable thanks to'
+                    }
+                    sponsors={sponsors}
+                    cta={
+                        isFallback
+                            ? { href: '/sponsorship', label: `Sponsor ${currentYear}` }
+                            : undefined
+                    }
+                />
+            )
+        },
         VolunteerForm: () => <VolunteerForm conferenceState={conferenceState} />,
         SubmitSession: () => {
             if (conferenceState.callForPapers.state === 'open') {

@@ -233,6 +233,26 @@ function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
     return Math.floor(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
 }
 
+/**
+ * A date is considered "past/done" when it has nothing left to display — i.e.
+ * it would render as a `ClosedRow` or be filtered out by `showOnlyLive`. For
+ * standalone dates with an `eventClosedHref` we keep them visible because they
+ * stay actionable after the date (e.g. "View Agenda").
+ */
+function isPastDate(dateInfo: ImportantDate, currentDate: DateTime): boolean {
+    if (dateInfo.type === 'start-event') {
+        return currentDate >= DateTime.fromISO(dateInfo.endDateTime)
+    }
+    if (dateInfo.type === 'end-event') {
+        return currentDate > DateTime.fromISO(dateInfo.dateTime)
+    }
+    // standalone
+    if (dateInfo.eventClosedHref) {
+        return false
+    }
+    return currentDate > DateTime.fromISO(dateInfo.dateTime)
+}
+
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
     return (
         <Flex
@@ -427,6 +447,11 @@ export const ImportantDates: React.FC<{
     currentDate: DateTime
     importantDates: ImportantDate[]
 }> = ({ smallSidebar, showOnlyLive, currentDate, importantDates }) => {
+    const upcomingDates = importantDates.filter((dateInfo) => !isPastDate(dateInfo, currentDate))
+    // If the source list had dates but they're all in the past, the conference
+    // for this year is done — show a friendly send-off instead of an empty list.
+    const conferenceComplete = importantDates.length > 0 && upcomingDates.length === 0
+
     return (
         <Flex flexDirection="column" gap="2">
             <styled.h2
@@ -437,17 +462,39 @@ export const ImportantDates: React.FC<{
             >
                 Important Dates
             </styled.h2>
-            {importantDates.length
-                ? importantDates.map((dateInfo, index) => (
-                      <ImportantDateBox
-                          key={index}
-                          currentDate={currentDate}
-                          dateInfo={dateInfo}
-                          smallSidebar={smallSidebar}
-                          showOnlyLive={showOnlyLive}
-                      />
-                  ))
-                : null}
+            {conferenceComplete ? (
+                <Flex
+                    flexDirection="column"
+                    rounded="lg"
+                    color="text.primary"
+                    shadow="sm"
+                    bgGradient="to-r"
+                    gradientFrom="overlay.active-row-start"
+                    gradientTo="overlay.active-row-end"
+                    borderTop="emphasis"
+                    p={smallSidebar ? '2' : '4'}
+                >
+                    <styled.p
+                        fontSize={{ base: smallSidebar ? 'sm' : 'md', md: smallSidebar ? 'sm' : 'lg' }}
+                        fontWeight="semibold"
+                    >
+                        That's a wrap!
+                    </styled.p>
+                    <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="text.secondary">
+                        Thanks for being part of DDD Perth this year — hope to see you next year!
+                    </styled.p>
+                </Flex>
+            ) : (
+                upcomingDates.map((dateInfo, index) => (
+                    <ImportantDateBox
+                        key={index}
+                        currentDate={currentDate}
+                        dateInfo={dateInfo}
+                        smallSidebar={smallSidebar}
+                        showOnlyLive={showOnlyLive}
+                    />
+                ))
+            )}
         </Flex>
     )
 }
