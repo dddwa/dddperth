@@ -78,7 +78,7 @@
     },
     "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
     "dependencies": {
-        "@pandacss/preset-base": "^1.11.1",
+        "@pandacss/preset-panda": "^1.11.1",
         "@react-router/dev": "^7.15.1",
         "@react-router/fs-routes": "^7.15.1",
         "@svgr/plugin-jsx": "^8.1.0",
@@ -94,17 +94,9 @@
     "pnpm": {
         "overrides": {
             "@eslint/plugin-kit": ">=0.3.4",
-            "ajv@>=8.0.0 <8.18.0": ">=8.18.0",
-            "brace-expansion@>=5.0.0 <5.0.6": ">=5.0.6",
-            "effect@<3.20.0": ">=3.20.0",
-            "estree-util-value-to-estree@<3.3.3": ">=3.3.3",
-            "fast-uri@<3.1.2": ">=3.1.2",
-            "hono@<4.12.19": ">=4.12.19",
             "ip-address@<10.1.1": ">=10.1.1",
-            "picomatch@<2.3.2": ">=2.3.2",
-            "svgo@<3.3.3": ">=3.3.3",
             "ws@<8.20.1": ">=8.20.1"
         },
-        "_overrides_note": "Pin transitive deps that pnpm audit flags. Most are pulled in via @park-ui/panda-preset's old @pandacss/dev or @ark-ui/anatomy. The Park UI 1.0 migration (separate task) will drop @park-ui/panda-preset entirely and most of these overrides can be removed. @zag-js/core is deliberately NOT overridden because @ark-ui/anatomy@3.5.0 pins exact 0.62.1 across the @zag-js/* tree and forcing core to a non-matching version breaks anatomy extraction; the CVE is build-time-only via static anatomy lookups and not exploitable here."
+        "_overrides_note": "Pin transitive deps that pnpm audit flags but the direct dependents haven't released a fix for yet. ip-address + ws come through @modelcontextprotocol/sdk -> @pandacss/dev's MCP integration; @eslint/plugin-kit is a dev-only ReDoS in eslint 9.22's tooling. All others were resolved by the Park UI 1.0 migration removing @park-ui/panda-preset@0.43.1."
     }
 }

@@ -23,7 +23,7 @@
             "options": {
                 "commands": [
                     {
-                        "command": "pnpx @park-ui/cli",
+                        "command": "pnpm exec park-ui",
                         "forwardAllArgs": true
                     }
                 ],

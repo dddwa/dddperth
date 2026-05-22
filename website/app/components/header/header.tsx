@@ -7,14 +7,11 @@ import Logo from '~/images/svg/logo.svg?react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import type { Theme } from '~/lib/theme.server'
 import type { loader as rootLoader } from '~/root'
-import { drawer } from '~/styled-system/recipes'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
 import { ThemeToggle } from '../theme-toggle'
 import * as Drawer from '../ui/drawer'
-
-const drawerStyles = drawer({ variant: 'left' })
 
 interface NavItem {
     to: string
@@ -142,10 +139,33 @@ export function Header({
             {/* Mobile drawer */}
             <Drawer.Root open={drawerOpen} onOpenChange={(e) => setDrawerOpen(e.open)}>
                 <Portal>
-                    <Drawer.Backdrop className={drawerStyles.backdrop} bgColor="overlay.scrim" />
-                    <Drawer.Positioner className={drawerStyles.positioner} width="[100vw]" maxWidth="[320px]">
+                    {/*
+                     * Drawer surface styles are inlined rather than coming from a
+                     * Panda slot recipe — the project used to consume @park-ui/panda-
+                     * preset's `drawer` recipe, but Park UI 1.0 ships only `dialog`,
+                     * which has a different layout contract. The mobile menu is the
+                     * sole drawer surface, so keeping styles co-located is simpler
+                     * than reintroducing a one-call-site recipe.
+                     */}
+                    <Drawer.Backdrop
+                        bgColor="overlay.scrim"
+                        position="fixed"
+                        inset="0"
+                        height="[100vh]"
+                        width="[100vw]"
+                        zIndex="overlay"
+                        backdropFilter="[blur(4px)]"
+                    />
+                    <Drawer.Positioner
+                        position="fixed"
+                        top="0"
+                        left="0"
+                        height="[100dvh]"
+                        width="[100vw]"
+                        maxWidth="[320px]"
+                        zIndex="modal"
+                    >
                         <Drawer.Content
-                            className={drawerStyles.content}
                             // Drawer panel keeps a brand-dark surface in both themes
                             // (header + footer both blend into the body in light mode,
                             // but a drawer overlay needs to read cleanly against any
@@ -154,8 +174,9 @@ export function Header({
                             color="text.on-brand"
                             display="flex"
                             flexDirection="column"
-                            gridTemplateRows="initial"
-                            gridTemplateAreas="initial"
+                            height="full"
+                            width="full"
+                            boxShadow="lg"
                         >
                             <Flex
                                 alignItems="center"

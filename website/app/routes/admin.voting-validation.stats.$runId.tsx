@@ -840,7 +840,7 @@ export default function VotingValidationStats() {
                                 <styled.th textAlign="left" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('title')}
-                                        variant="ghost"
+                                        variant="plain"
                                         size="sm"
                                         cursor="pointer"
                                     >
@@ -850,7 +850,7 @@ export default function VotingValidationStats() {
                                 <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('seen')}
-                                        variant="ghost"
+                                        variant="plain"
                                         size="xs"
                                         cursor="pointer"
                                     >
@@ -869,7 +869,7 @@ export default function VotingValidationStats() {
                                 <styled.th textAlign="center" p="2" border="admin-emphasis">
                                     <Button
                                         onClick={() => handleSort('win')}
-                                        variant="ghost"
+                                        variant="plain"
                                         size="xs"
                                         cursor="pointer"
                                     >

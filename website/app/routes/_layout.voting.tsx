@@ -405,7 +405,7 @@ function VotingMessage({
                     {message}
                 </styled.h2>
                 {error && (
-                    <styled.p fontSize="lg" color="fg.muted" textAlign="center">
+                    <styled.p fontSize="lg" color="text.muted" textAlign="center">
                         {error}
                     </styled.p>
                 )}

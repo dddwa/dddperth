@@ -39,7 +39,7 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
                     </Flex>
 
                     {overrideDateTime ? (
-                        <Box px="3" py="1" bg="red.6" borderRadius="md" fontWeight="medium">
+                        <Box px="3" py="1" bg="status.warning.bg" borderRadius="md" fontWeight="medium">
                             Date Override Active:{' '}
                             {overrideDateTime.toLocaleString(DateTime.DATETIME_SHORT, {
                                 locale: 'en-AU',
