@@ -15,53 +15,19 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
             eventActiveHref: '/call-for-presentations',
             eventClosedMessage: 'CFP Closed',
         })
-
-        importantDates.push({
-            type: 'end-event',
-            startDateTime: year.cfpDates.opens.toISO(),
-            dateTime: year.cfpDates.closes.toISO(),
-            event: 'Call for presentations close',
-            eventClosedMessage: 'CFP Closed',
-        })
     }
 
-    const ticketReleases = year.ticketReleases.map((ticketSale, index): ImportantDate[] => {
-        if (index === year.ticketReleases.length - 1) {
-            return [
-                {
-                    type: 'start-event',
-                    dateTime: ticketSale.range.opens.toISO(),
-                    endDateTime: ticketSale.range.closes.toISO(),
-                    event: `${ticketSale.releaseName} Tickets Open`,
-                    eventActiveMessage: 'Buy Tickets ↗',
-                    eventActiveHref: '/tickets',
-                    eventClosedMessage: 'Ticket Sales Closed',
-                },
-                {
-                    type: 'end-event',
-                    startDateTime: ticketSale.range.opens.toISO(),
-                    dateTime: ticketSale.range.closes.toISO(),
-                    event: `Ticket Sales Close`,
-                    eventClosedMessage: 'Ticket Sales Closed',
-                },
-            ]
-        }
-
-        return [
-            {
-                type: 'start-event',
-                dateTime: ticketSale.range.opens.toISO(),
-                endDateTime: ticketSale.range.closes.toISO(),
-                event: `${ticketSale.releaseName} Tickets Open`,
-                eventActiveMessage: 'Buy Tickets ↗',
-                eventActiveHref: '/tickets',
-                eventClosedMessage: 'Ticket Sales Closed',
-            },
-        ]
-    })
-
-    const ticketReleasesFlat = ticketReleases.flat()
-    importantDates.push(...ticketReleasesFlat)
+    for (const ticketSale of year.ticketReleases) {
+        importantDates.push({
+            type: 'start-event',
+            dateTime: ticketSale.range.opens.toISO(),
+            endDateTime: ticketSale.range.closes.toISO(),
+            event: `${ticketSale.releaseName} Tickets Open`,
+            eventActiveMessage: 'Buy Tickets ↗',
+            eventActiveHref: '/tickets',
+            eventClosedMessage: 'Ticket Sales Closed',
+        })
+    }
 
     // TODO Drive by config
     // importantDates.push({
@@ -81,13 +47,6 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
             eventClosedMessage: 'Voting Closed',
             eventActiveMessage: 'Vote for Agenda',
             eventActiveHref: '/voting',
-        })
-        importantDates.push({
-            type: 'end-event',
-            startDateTime: year.talkVotingDates.opens.toISO(),
-            dateTime: year.talkVotingDates.closes.toISO(),
-            event: 'Voting Closes',
-            eventClosedMessage: 'Voting Closed',
         })
     }
 

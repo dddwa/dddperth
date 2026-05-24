@@ -2,12 +2,7 @@ import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
 import { Link } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
-import type {
-    EndEventImportantDate,
-    ImportantDate,
-    StandaloneImportantDate,
-    StartEventImportantDate,
-} from '~/lib/important-dates'
+import type { ImportantDate, StandaloneImportantDate, StartEventImportantDate } from '~/lib/important-dates'
 import { css } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
 
@@ -34,17 +29,6 @@ const ImportantDateBox: FC<{
             />
         )
     }
-    if (dateInfo.type === 'end-event') {
-        return (
-            <EndEventImportantDateBox
-                currentDate={currentDate}
-                dateInfo={dateInfo}
-                smallSidebar={smallSidebar}
-                showOnlyLive={showOnlyLive}
-            />
-        )
-    }
-
     return <StandaloneEventImportantDateBox currentDate={currentDate} dateInfo={dateInfo} smallSidebar={smallSidebar} />
 }
 
@@ -70,7 +54,7 @@ const StartEventImportantDateBox: FC<{
 
         return (
             <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
                 {daysLeft === 0 ? (
                     <EventLink
@@ -89,7 +73,7 @@ const StartEventImportantDateBox: FC<{
     if (currentDate < eventEndTime) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
                 <EventLink
                     highlighted
@@ -103,52 +87,7 @@ const StartEventImportantDateBox: FC<{
 
     return (
         <ClosedRow smallSidebar={smallSidebar}>
-            <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
-
-            <DisabledButton dateInfo={dateInfo} smallSidebar={smallSidebar} />
-        </ClosedRow>
-    )
-}
-
-const EndEventImportantDateBox: FC<{
-    currentDate: DateTime
-    smallSidebar?: boolean // New prop for small sidebar
-    showOnlyLive?: boolean // New prop to filter only live events
-    dateInfo: EndEventImportantDate
-}> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
-    const eventStartTime = DateTime.fromISO(dateInfo.startDateTime)
-
-    if (showOnlyLive) {
-        // Don't show when event hasn't started (the start countdown will already be showing)
-        if (currentDate < eventStartTime) {
-            return null
-        }
-
-        // Don't show when event has ended
-        if (currentDate > eventDateTime) {
-            return null
-        }
-    }
-
-    if (currentDate < eventDateTime) {
-        const daysLeft = getDaysLeft(dateInfo, currentDate)
-        return (
-            <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
-
-                {daysLeft === 0 ? (
-                    <EventLink eventHref={dateInfo.eventActiveHref} smallSidebar={smallSidebar} message="Last day!" />
-                ) : (
-                    <EventCountdown smallSidebar={smallSidebar} daysLeft={daysLeft} />
-                )}
-            </ActiveRow>
-        )
-    }
-
-    return (
-        <ClosedRow smallSidebar={smallSidebar}>
-            <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+            <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
             <DisabledButton dateInfo={dateInfo} smallSidebar={smallSidebar} />
         </ClosedRow>
@@ -173,7 +112,7 @@ const StandaloneEventImportantDateBox: FC<{
     if (currentDate.hasSame(eventDateTime, 'day') && dateInfo.onDayMessage) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
                 <EventLink
                     highlighted
@@ -190,7 +129,7 @@ const StandaloneEventImportantDateBox: FC<{
         const daysLeft = getDaysLeft(dateInfo, currentDate)
         return (
             <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
                 {daysLeft === 0 ? (
                     <EventLink
@@ -208,7 +147,7 @@ const StandaloneEventImportantDateBox: FC<{
     if (dateInfo.eventClosedHref) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
-                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+                <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
                 <EventLink
                     eventHref={dateInfo.eventClosedHref}
@@ -222,7 +161,7 @@ const StandaloneEventImportantDateBox: FC<{
 
     return (
         <ClosedRow smallSidebar={smallSidebar}>
-            <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} />
+            <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
             <DisabledButton dateInfo={dateInfo} smallSidebar={smallSidebar} />
         </ClosedRow>
@@ -242,9 +181,6 @@ function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
 function isPastDate(dateInfo: ImportantDate, currentDate: DateTime): boolean {
     if (dateInfo.type === 'start-event') {
         return currentDate >= DateTime.fromISO(dateInfo.endDateTime)
-    }
-    if (dateInfo.type === 'end-event') {
-        return currentDate > DateTime.fromISO(dateInfo.dateTime)
     }
     // standalone
     if (dateInfo.eventClosedHref) {
@@ -421,15 +357,37 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
     )
 }
 
-function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallSidebar: boolean | undefined }) {
+function formatEventDateTime(dateTime: DateTime) {
+    return `${dateTime.weekdayLong} ${dateTime.toFormat('LLL dd')}, ${dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}`
+}
+
+function EventInfo({
+    dateInfo,
+    smallSidebar,
+    currentDate,
+}: {
+    dateInfo: ImportantDate
+    smallSidebar: boolean | undefined
+    currentDate: DateTime
+}) {
     const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceManifest.public.timezone })
+    // For windowed events (CFP / tickets / voting) that are currently open, fold
+    // the close date into the same row instead of rendering a separate "closes"
+    // entry. Before the window opens, keep the open date as the primary line
+    // and tack the close date on as a secondary line.
+    const closeDateTime =
+        dateInfo.type === 'start-event'
+            ? DateTime.fromISO(dateInfo.endDateTime, { zone: conferenceManifest.public.timezone })
+            : null
+    const isOpen = closeDateTime !== null && currentDate >= eventDateTime && currentDate < closeDateTime
 
     return (
         <Flex flexDirection="column">
-            <time dateTime={dateInfo.dateTime} />
+            <time dateTime={isOpen && closeDateTime ? closeDateTime.toISO() ?? undefined : dateInfo.dateTime} />
             <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="text.secondary">
-                {eventDateTime.weekdayLong} {eventDateTime.toFormat('LLL dd')},{' '}
-                {eventDateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}
+                {isOpen && closeDateTime
+                    ? `Closes ${formatEventDateTime(closeDateTime)}`
+                    : formatEventDateTime(eventDateTime)}
             </styled.p>
             <styled.h3
                 fontSize={{ base: smallSidebar ? 'md' : 'md', md: smallSidebar ? 'md' : 'lg' }}
@@ -437,6 +395,11 @@ function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallS
             >
                 {dateInfo.event}
             </styled.h3>
+            {closeDateTime && !isOpen && (
+                <styled.p fontSize="xs" color="text.muted" mt="0.5">
+                    Closes {formatEventDateTime(closeDateTime)}
+                </styled.p>
+            )}
         </Flex>
     )
 }

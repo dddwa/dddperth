@@ -9,17 +9,6 @@ export interface StartEventImportantDate {
     eventClosedMessage: string
 }
 
-export interface EndEventImportantDate {
-    type: 'end-event'
-    startDateTime: string
-    dateTime: string
-    event: string
-
-    /** End events count down while active, so no active message */
-    eventActiveHref?: string
-    eventClosedMessage: string
-}
-
 export interface StandaloneImportantDate {
     type: 'important-date'
 
@@ -36,4 +25,4 @@ export interface StandaloneImportantDate {
     onDayHref?: string
 }
 
-export type ImportantDate = StartEventImportantDate | EndEventImportantDate | StandaloneImportantDate
+export type ImportantDate = StartEventImportantDate | StandaloneImportantDate
