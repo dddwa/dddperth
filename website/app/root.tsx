@@ -2,8 +2,10 @@ import type { LinksFunction } from 'react-router'
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router'
 
 import { Settings } from 'luxon'
+import { useRef } from 'react'
 import { requireUser } from '~/lib/auth.server'
 import { readThemeCookie } from '~/lib/theme.server'
+import type { Theme } from '~/lib/theme.server'
 import type { Route } from './+types/root'
 import './index.css'
 
@@ -69,7 +71,14 @@ export const links: LinksFunction = () => {
 
 export default function App() {
     const data = useLoaderData<typeof loader>()
-    const theme = data?.theme ?? 'dark'
+    // Pin the theme to the value present at first render. After hydration the
+    // bootstrap script + ThemeToggle own <html class>/data-theme via direct DOM
+    // mutation; if we kept binding these attrs to loader data, every client-side
+    // navigation that re-ran the root loader with a stale __theme cookie (the
+    // toggle POSTs it fire-and-forget, so concurrent navigations race the write)
+    // would let React reconcile the user's choice back to the cookie value.
+    const themeRef = useRef<Theme>(data?.theme ?? 'dark')
+    const theme = themeRef.current
     return (
         // suppressHydrationWarning: the pre-paint script may rewrite
         // `className`/`data-theme` after a cached HTML response is served with
