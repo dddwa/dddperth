@@ -1,6 +1,7 @@
 import yaml from 'yaml'
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import authorsYamlFileContents from '../../../blog/authors.yml?raw'
+// Authors file lives in the fork's /conference/content/blog/. Resolved via
+// the @conference path alias so a fork doesn't need to edit core source.
+import authorsYamlFileContents from '@conference/content/blog/authors.yml?raw'
 
 export interface BlogAuthor {
     name: string

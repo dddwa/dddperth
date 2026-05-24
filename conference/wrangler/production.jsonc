@@ -1,0 +1,33 @@
+{
+    "$schema": "../../node_modules/wrangler/config-schema.json",
+    "name": "dddperth-website-production",
+    "main": "../../website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "dddperth-voting-prod",
+            "database_id": "cdca3dcc-d6e6-4588-86d0-da6b0579a10b"
+        }
+    ],
+
+    "assets": {
+        "directory": "../../website/build/client"
+    },
+
+    "vars": {
+        "WEB_URL": "https://dddperth.com",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+    },
+
+    "routes": [
+        { "pattern": "dddperth.com", "custom_domain": true }
+    ],
+
+    "observability": {
+        "enabled": true
+    }
+}

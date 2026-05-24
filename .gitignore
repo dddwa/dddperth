@@ -65,6 +65,11 @@ docs/prompts
 website/.wrangler/state
 .nx/polygraph
 
+# Wrangler local secrets — both legacy path and the new fork-owned path
+# (which conference/wrangler/.dev.vars resolves to via symlink).
+website/.dev.vars
+conference/wrangler/.dev.vars
+
 qa
 
 .nx/self-healing

@@ -3,7 +3,7 @@ import { data, Form, redirect, useActionData, useLoaderData } from 'react-router
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -26,8 +26,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data({
         overrideDate,
-        currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),
-        timezone: conferenceConfigPublic.timezone,
+        currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
+        timezone: conferenceManifest.public.timezone,
         importantDates,
         year,
         announcement: currentAnnouncement,
@@ -62,7 +62,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         const override = DateTime.fromISO(`${dateStr}T${timeStr}`, {
-            zone: conferenceConfigPublic.timezone,
+            zone: conferenceManifest.public.timezone,
         })
 
         if (!override.isValid) {
@@ -80,7 +80,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         const override = DateTime.fromISO(jumpDate, {
-            zone: conferenceConfigPublic.timezone,
+            zone: conferenceManifest.public.timezone,
         })
 
         if (!override.isValid) {
@@ -102,9 +102,9 @@ export default function AdminSettings() {
     const actionData = useActionData<typeof action>()
 
     const overrideDateTime = overrideDate
-        ? DateTime.fromISO(overrideDate, { zone: conferenceConfigPublic.timezone })
+        ? DateTime.fromISO(overrideDate, { zone: conferenceManifest.public.timezone })
         : null
-    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })
+    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })
 
     return (
         <AdminLayout heading="Admin Settings">
@@ -270,7 +270,7 @@ export default function AdminSettings() {
                             {announcement.message}
                         </styled.p>
                         <styled.p color="status.success.emphasis" fontSize="xs">
-                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, { zone: conferenceConfigPublic.timezone }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
                 )}

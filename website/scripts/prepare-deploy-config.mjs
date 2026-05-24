@@ -15,7 +15,9 @@ if (env !== 'staging' && env !== 'production') {
 }
 
 const websiteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const envConfigPath = resolve(websiteRoot, `wrangler.${env}.jsonc`)
+// Wrangler configs live in the fork's /conference/wrangler/ folder
+// (alongside theme/content/config) so the fork owns deployment identity.
+const envConfigPath = resolve(websiteRoot, '..', 'conference', 'wrangler', `${env}.jsonc`)
 const builtConfigPath = resolve(websiteRoot, 'build/server/wrangler.json')
 
 const stripJsonc = (s) =>

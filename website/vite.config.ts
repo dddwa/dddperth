@@ -5,6 +5,12 @@ import { safeRoutes } from 'safe-routes/vite'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig } from 'vite'
 import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
+// Vite's config loader uses native Node ESM — it doesn't honour the
+// @conference/* tsconfig path alias the rest of the app uses. Use a
+// relative import here. Forks repoint this at their own
+// ../../conference/build-manifest during scaffolding.
+// eslint-disable-next-line @nx/enforce-module-boundaries -- relative path required at vite config load time
+import { conferenceBuildManifest } from '../conference/build-manifest'
 
 export default defineConfig({
     root: import.meta.dirname,
@@ -62,13 +68,22 @@ export default defineConfig({
         },
     },
     plugins: [
-        cloudflare({ viteEnvironment: { name: 'ssr' } }),
+        // wrangler config lives in /conference/wrangler/ so the fork owns
+        // deployment identity. Path is fixed at build time; if it ever needs
+        // to vary per env, switch to an env-var-driven path.
+        cloudflare({
+            viteEnvironment: { name: 'ssr' },
+            configPath: path.resolve(import.meta.dirname, '..', 'conference', 'wrangler', 'local.jsonc'),
+        }),
         reactRouter(),
         safeRoutes({
             outDir: '.',
             strict: true,
         }),
-        mdxBundlesPlugin({ workspaceRoot: path.resolve(import.meta.dirname, '..') }),
+        mdxBundlesPlugin({
+            pagesDir: conferenceBuildManifest.content.pagesDir,
+            blogDir: conferenceBuildManifest.content.blogDir,
+        }),
         svgr({
             svgrOptions: {
                 plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],

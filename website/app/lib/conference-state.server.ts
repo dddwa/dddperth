@@ -1,5 +1,12 @@
 import type { DateTime } from 'luxon'
-import type { conferenceConfig, ConferenceYears } from '@ddd/conference-config'
+import type {
+    ConferenceConfig,
+    ConferenceConfigYear,
+    ConferenceYear,
+    DateTimeRange,
+    TicketRelease,
+    Year,
+} from '@ddd/conference-config'
 import type {
     CFPClosed,
     CFPNotOpenYet,
@@ -12,18 +19,17 @@ import type {
     TicketInfo,
     TicketSalesState,
 } from './conference-state-client-safe'
-import type { ConferenceConfigYear, ConferenceYear, DateTimeRange, TicketRelease } from '@ddd/conference-config'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
 
 export function getCurrentConferenceState(
     dateTimeProvider: DateTimeProvider,
-    conference: typeof conferenceConfig,
+    conference: ConferenceConfig,
 ): ConferenceState {
     const currentDate = dateTimeProvider.nowDate()
 
     const conferenceList = (
-        Object.entries(conference.conferences) as Array<[ConferenceYears, ConferenceConfigYear]>
-    ).filter((year): year is [ConferenceYears, ConferenceYear] => year[1].kind === 'conference')
+        Object.entries(conference.conferences) as Array<[Year, ConferenceConfigYear]>
+    ).filter((year): year is [Year, ConferenceYear] => year[1].kind === 'conference')
     const [latestConference, previousConference] = conferenceList
         .sort(([, a], [, b]) => {
             const dateA = a.conferenceDate?.valueOf() ?? Infinity

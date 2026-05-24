@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { conferenceManifest } from '@conference/manifest'
 import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
@@ -90,8 +91,8 @@ function SponsorCta({ year }: { year: Year }) {
                     {year} sponsors not announced yet
                 </styled.p>
                 <styled.p fontSize={{ base: 'sm', md: 'md' }} color="text.secondary" maxWidth="[60ch]">
-                    Want your logo here? DDD Perth runs on the generosity of our sponsors — partner with us to support
-                    Perth's tech community.
+                    Want your logo here? {conferenceManifest.public.name} runs on the generosity of our sponsors —
+                    partner with us to support our local tech community.
                 </styled.p>
             </Flex>
             <StyledLink

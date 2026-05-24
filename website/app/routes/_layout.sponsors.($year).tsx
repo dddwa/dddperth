@@ -1,8 +1,7 @@
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest } from '@conference/manifest'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -21,7 +20,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year, context.config)
     const sponsors = yearConfig.kind === 'conference' ? yearConfig.sponsors : {}
 
-    const conferences = Object.values(conferenceConfig.conferences)
+    const conferences = Object.values(conferenceManifest.conferences.conferences)
         .filter((conf) => conf.kind === 'conference')
         .map((conf) => ({
             year: conf.year,
@@ -53,7 +52,7 @@ export default function Sponsors() {
         <PageLayout minHeight="100vh">
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
-                    {conferenceConfigPublic.name} {year}{' '}
+                    {conferenceManifest.public.name} {year}{' '}
                     {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
                 </p>
                 <Box color="text.primary" textAlign="center" fontSize="lg" mt="10">
@@ -67,10 +66,10 @@ export default function Sponsors() {
         <PageLayout minHeight="100vh">
             <Box color="text.primary" textAlign="center" mt="10" mb="8">
                 <styled.p fontSize="3xl">
-                    {conferenceConfigPublic.name} {year} sponsor information has not been{' '}
+                    {conferenceManifest.public.name} {year} sponsor information has not been{' '}
                     {isLatestConference
                         ? 'announced yet.'
-                        : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
+                        : `imported from the previous ${conferenceManifest.public.name} site yet.`}
                 </styled.p>
             </Box>
             {stillAcceptingSponsors ? <BecomeSponsorCta year={year} /> : null}
@@ -80,11 +79,11 @@ export default function Sponsors() {
         <PageLayout minHeight="100vh">
             <Box width="full">
                 <styled.h1 fontSize="5xl" textAlign="center" color="text.primary" mb="8" mt="8">
-                    DDD Perth {year} Sponsors
+                    {conferenceManifest.public.name} {year} Sponsors
                 </styled.h1>
                 <styled.p fontSize="lg" textAlign="center" color="text.secondary" mb="12" maxWidth="[800px]" mx="auto">
-                    We are grateful to all the sponsors who have supported DDD Perth over the years. Their contribution
-                    makes it possible for us to run this community-driven conference.
+                    We are grateful to all the sponsors who have supported {conferenceManifest.public.name} over the
+                    years. Their contribution makes it possible for us to run this community-driven conference.
                 </styled.p>
 
                 <Box mb="16">
@@ -116,7 +115,7 @@ function BecomeSponsorCta({ year }: { year: Year }) {
                 We&apos;re still accepting sponsors for {year}
             </styled.h2>
             <styled.p color="text.primary" mb="6">
-                Sponsorship makes {conferenceConfigPublic.name} possible — and we&apos;d love to talk
+                Sponsorship makes {conferenceManifest.public.name} possible — and we&apos;d love to talk
                 about how your organisation can be part of this year&apos;s conference.
             </styled.p>
             <styled.a

@@ -1,7 +1,7 @@
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
@@ -62,7 +62,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                     >
                         <styled.span>
                             {DateTime.fromISO(conferenceDate, {
-                                zone: conferenceConfigPublic.timezone,
+                                zone: conferenceManifest.public.timezone,
                             }).toLocaleString(DateTime.DATE_HUGE, {
                                 locale: 'en-AU',
                             })}

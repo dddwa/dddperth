@@ -1,4 +1,4 @@
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest } from '@conference/manifest'
 import type { Sponsor, YearSponsors } from './conference-state-client-safe'
 
 export interface PastSponsor {
@@ -70,7 +70,7 @@ function sponsorIdentityKey(sponsor: Sponsor): string {
 }
 
 export function getSponsorPageData(): SponsorPageData {
-    const conferences = Object.values(conferenceConfig.conferences)
+    const conferences = Object.values(conferenceManifest.conferences.conferences)
         .filter((conf) => conf.kind === 'conference')
         .sort((a, b) => parseInt(b.year) - parseInt(a.year))
 

@@ -5,8 +5,7 @@ import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -53,7 +52,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             year,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
-            conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
+            conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
                 year: conf.year,
             })),
             schedule: schedule
@@ -92,7 +91,7 @@ export default function Agenda() {
         <PageLayout>
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
-                    {conferenceConfigPublic.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+                    {conferenceManifest.public.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
                 </p>
                 <Box color="text.primary" textAlign="center" fontSize="lg" mt="10">
                     <p>{cancelledMessage}</p>
@@ -106,10 +105,10 @@ export default function Agenda() {
         <PageLayout>
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
-                    {conferenceConfigPublic.name} {year} agenda has not been{' '}
+                    {conferenceManifest.public.name} {year} agenda has not been{' '}
                     {isLatestConference
                         ? 'announced yet.'
-                        : `imported from the previous ${conferenceConfigPublic.name} site yet.`}
+                        : `imported from the previous ${conferenceManifest.public.name} site yet.`}
                 </p>
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
@@ -164,7 +163,7 @@ export default function Agenda() {
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
                         const startTime12 = DateTime.fromISO(timeSlot.slotStart, {
-                            zone: conferenceConfigPublic.timezone,
+                            zone: conferenceManifest.public.timezone,
                         })
                             .toFormat('h:mm a')
                             .toLowerCase()
@@ -191,7 +190,7 @@ export default function Agenda() {
                                             {' '}
                                             -{' '}
                                             {DateTime.fromISO(nextTimeSlot.slotStart, {
-                                                zone: conferenceConfigPublic.timezone,
+                                                zone: conferenceManifest.public.timezone,
                                             })
                                                 .toFormat('h:mm a')
                                                 .toLowerCase()}
@@ -317,11 +316,11 @@ function RoomTimeSlot({
         ?.sessions.find((session) => session.id === room.session.id)
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
-        ? DateTime.fromISO(fullSession.endsAt, { zone: conferenceConfigPublic.timezone })
+        ? DateTime.fromISO(fullSession.endsAt, { zone: conferenceManifest.public.timezone })
               .toFormat('h:mm a')
               .toLowerCase()
         : nextTimeSlotIso
-          ? DateTime.fromISO(nextTimeSlotIso, { zone: conferenceConfigPublic.timezone })
+          ? DateTime.fromISO(nextTimeSlotIso, { zone: conferenceManifest.public.timezone })
                 .toFormat('h:mm a')
                 .toLowerCase()
           : undefined

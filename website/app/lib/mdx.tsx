@@ -21,7 +21,7 @@ import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
 
@@ -125,7 +125,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceConfigPublic.timezone })} />
+                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceManifest.public.timezone })} />
             }
         },
         EditSession: () => {
@@ -145,7 +145,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceConfigPublic.timezone })} />
+                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceManifest.public.timezone })} />
             }
         },
         VolunteersNeeded: ({ children }) => {

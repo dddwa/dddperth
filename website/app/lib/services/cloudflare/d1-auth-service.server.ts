@@ -1,8 +1,11 @@
+import { conferenceManifest } from '@conference/manifest'
 import { logAuthEvent } from '../../auth/log.server'
 import type { AppConfig } from '../app-config'
 import type { AuthService } from '../auth-service'
 import type { EmailService } from '../email-service'
 import type { User } from '../../session-types'
+
+const conferenceName = conferenceManifest.public.name
 
 const TOKEN_TTL_SECONDS = 15 * 60 // 15 minutes
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60 // 30 days
@@ -72,7 +75,7 @@ export function createD1AuthService(args: { config: AppConfig; db: D1Database; e
             try {
                 await email.send({
                     to: normalised,
-                    subject: 'Sign in to DDD Perth admin',
+                    subject: `Sign in to ${conferenceName} admin`,
                     html: renderMagicLinkHtml(verifyUrl, requestUrl),
                     text: renderMagicLinkText(verifyUrl, requestUrl),
                 })
@@ -218,7 +221,7 @@ function renderMagicLinkHtml(verifyUrl: string, requestUrl: string): string {
     return `<!DOCTYPE html>
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #111; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to DDD Perth admin</h1>
+  <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to ${escapeHtml(conferenceName)} admin</h1>
   <p>Click the button below to confirm your sign-in. This link expires in 15 minutes.</p>
   <p style="margin: 24px 0;">
     <a href="${safeVerify}" style="display: inline-block; background: #4338ca; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">Confirm sign-in</a>
@@ -240,7 +243,7 @@ function escapeHtml(s: string): string {
 }
 
 function renderMagicLinkText(verifyUrl: string, requestUrl: string): string {
-    return `Sign in to DDD Perth admin
+    return `Sign in to ${conferenceName} admin
 
 Click to confirm: ${verifyUrl}
 

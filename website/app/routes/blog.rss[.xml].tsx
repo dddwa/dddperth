@@ -1,21 +1,21 @@
 import { Feed } from 'feed'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/blog.rss[.xml]'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const blogUrl = `https://dddperth.com/blog`
+    const blogUrl = `https://${conferenceManifest.brand.domain}/blog`
     const posts = await context.services.content.getPagesList('blog')
 
     const feed = new Feed({
         id: blogUrl,
-        title: conferenceConfigPublic.name + ' Blog',
-        description: conferenceConfigPublic.blogDescription,
+        title: conferenceManifest.public.name + ' Blog',
+        description: conferenceManifest.public.blogDescription,
         link: blogUrl,
         language: 'en',
         updated: posts.length > 0 && posts[0].date ? new Date(posts[0].date) : new Date(),
         generator: 'https://github.com/jpmonette/feed',
-        copyright: '© DDD Perth',
+        copyright: `© ${conferenceManifest.brand.legalName}`,
     })
 
     posts.forEach((post) => {

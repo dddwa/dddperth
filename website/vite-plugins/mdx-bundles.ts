@@ -187,8 +187,16 @@ async function readContentDir(absDir: string, extensions: string[]): Promise<Arr
 }
 
 export interface MdxBundlesOptions {
-    /** Monorepo root — parent of `website/`, `website-content/`, `blog/`. */
-    workspaceRoot: string
+    /**
+     * Absolute path to the folder containing page .mdx files
+     * (typically `<fork>/conference/content/pages`).
+     */
+    pagesDir: string
+    /**
+     * Absolute path to the folder containing blog post .md/.mdx files
+     * (typically `<fork>/conference/content/blog/posts`).
+     */
+    blogDir: string
 }
 
 /**
@@ -240,9 +248,8 @@ function parseCodeId(id: string): { type: ContentType; slug: string } | null {
     return { type, slug }
 }
 
-export function mdxBundlesPlugin({ workspaceRoot }: MdxBundlesOptions): Plugin {
-    const pageDir = path.resolve(workspaceRoot, 'website-content/pages')
-    const blogDir = path.resolve(workspaceRoot, 'blog/posts')
+export function mdxBundlesPlugin({ pagesDir, blogDir }: MdxBundlesOptions): Plugin {
+    const pageDir = pagesDir
 
     const catalog: Catalog = { page: new Map(), blog: new Map() }
     // Cache compiled output keyed by absolute file path so edits re-compile the

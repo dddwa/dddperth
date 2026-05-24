@@ -2,7 +2,7 @@ import { Portal } from '@ark-ui/react/portal'
 import { useState } from 'react'
 import { useRouteLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import type { Theme } from '~/lib/theme.server'
@@ -79,7 +79,7 @@ export function Header({
                     {/* Logo */}
                     <Box gridArea="logo">
                         <AppLink
-                            aria-label={`Visit the ${conferenceConfigPublic.name} homepage`}
+                            aria-label={`Visit the ${conferenceManifest.public.name} homepage`}
                             to={`/`}
                             // PERTH letters inside the logo use `currentColor` so the
                             // wordmark adapts to the header surface (white on dark

@@ -1,7 +1,9 @@
 import type { DateTime } from 'luxon'
+import { conferenceManifest } from '@conference/manifest'
 import { AppLink } from '~/components/app-link'
-import type { Year } from '~/lib/conference-state-client-safe'
+import type { ConferenceState, Year } from '~/lib/conference-state-client-safe'
 import type { ImportantDate } from '~/lib/important-dates'
+import { useMdxPage } from '~/lib/mdx'
 import type { ResolvedSponsors } from '~/lib/sponsor-fallback.server'
 import { Box, Flex } from '~/styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
@@ -15,12 +17,14 @@ export function Hero({
     importantDates,
     sponsors,
     currentYear,
+    conferenceState,
 }: {
     currentDate: DateTime
     conferenceDate: string | undefined
     importantDates: ImportantDate[]
     sponsors: ResolvedSponsors
     currentYear: Year
+    conferenceState: ConferenceState
 }) {
     return (
         <Box overflowX="hidden" position="relative">
@@ -52,11 +56,7 @@ export function Hero({
                             pt="6"
                             maxWidth="3xl"
                         >
-                            <p>
-                                Perth’s largest community-run tech conference. Held on a Saturday and built to be
-                                approachable, inclusive, and welcoming, especially for people who don’t usually attend
-                                or speak at conferences.
-                            </p>
+                            <HeroBlurb conferenceState={conferenceState} />
                             <p>
                                 <AppLink
                                     to="/about"
@@ -65,7 +65,7 @@ export function Hero({
                                     textUnderlineOffset="[6px]"
                                     _hover={{ color: 'brand.primary' }}
                                 >
-                                    Read more about DDD →
+                                    Read more about {conferenceManifest.public.name} →
                                 </AppLink>
                             </p>
                         </Flex>
@@ -78,4 +78,24 @@ export function Hero({
             </Box>
         </Box>
     )
+}
+
+/**
+ * The hero's lead paragraph. When the fork sets
+ * `manifest.homepage.heroBlurbSlug`, the corresponding MDX file renders here.
+ * Otherwise we fall back to a one-line description from
+ * `manifest.public.description` — bland enough not to misrepresent any
+ * conference, specific enough to fill the slot.
+ */
+function HeroBlurb({ conferenceState }: { conferenceState: ConferenceState }) {
+    const slug = conferenceManifest.homepage?.heroBlurbSlug
+    if (!slug) {
+        return <p>{conferenceManifest.public.description}</p>
+    }
+    return <HeroBlurbMdx slug={slug} conferenceState={conferenceState} />
+}
+
+function HeroBlurbMdx({ slug, conferenceState }: { slug: string; conferenceState: ConferenceState }) {
+    const Body = useMdxPage(slug, 'page', conferenceState)
+    return <Body />
 }

@@ -1,21 +1,18 @@
-import fs from 'fs'
-import path from 'path'
+import bundles from 'virtual:mdx-bundles'
 
-// Function to get all content pages from the website-content directory
+/**
+ * List of content pages for the sitemap. Filters out underscore-prefixed
+ * slugs (e.g. `_home-hero`, `_acknowledgement`) which are MDX fragments
+ * embedded in other pages rather than navigable pages of their own.
+ */
 export function getContentPages() {
-    const contentDir = path.join(process.cwd(), '..', 'website-content', 'pages')
-    try {
-        const files = fs.readdirSync(contentDir)
-        return files
-            .filter((file) => file.endsWith('.mdx'))
-            .map((file) => ({
-                path: `/${file.replace('.mdx', '')}`,
-                lastmod: new Date().toISOString().split('T')[0],
-                changefreq: 'monthly',
-                priority: 0.7,
-            }))
-    } catch (error) {
-        console.error('Error reading content directory:', error)
-        return []
-    }
+    const today = new Date().toISOString().split('T')[0]
+    return Object.keys(bundles.page)
+        .filter((slug) => !slug.startsWith('_'))
+        .map((slug) => ({
+            path: `/${slug}`,
+            lastmod: today,
+            changefreq: 'monthly',
+            priority: 0.7,
+        }))
 }

@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
 import { Link } from 'react-router'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import type {
     EndEventImportantDate,
     ImportantDate,
@@ -422,7 +422,7 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
 }
 
 function EventInfo({ dateInfo, smallSidebar }: { dateInfo: ImportantDate; smallSidebar: boolean | undefined }) {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceConfigPublic.timezone })
+    const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceManifest.public.timezone })
 
     return (
         <Flex flexDirection="column">
@@ -481,7 +481,7 @@ export const ImportantDates: React.FC<{
                         That's a wrap!
                     </styled.p>
                     <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="text.secondary">
-                        Thanks for being part of DDD Perth this year — hope to see you next year!
+                        Thanks for being part of {conferenceManifest.public.name} this year — hope to see you next year!
                     </styled.p>
                 </Flex>
             ) : (

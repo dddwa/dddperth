@@ -5,7 +5,7 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
@@ -381,14 +381,14 @@ export default function VotingValidationStats() {
                             <>
                                 <styled.p fontSize="sm" color="text.secondary" mb="1">
                                     Started:{' '}
-                                    {DateTime.fromISO(runDetails.startedAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    {DateTime.fromISO(runDetails.startedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
                                 {runDetails.completedAt && (
                                     <styled.p fontSize="sm" color="text.secondary" mb="1">
                                         Completed:{' '}
-                                        {DateTime.fromISO(runDetails.completedAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                                        {DateTime.fromISO(runDetails.completedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                                             DateTime.DATETIME_SHORT,
                                             { locale: 'en-AU' },
                                         )}

@@ -5,8 +5,7 @@ import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { SponsorLogo } from '~/components/sponsor-logo'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -57,19 +56,19 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
         {
             year: year as Year,
             sponsors: yearConfig.sponsors,
-            conferences: Object.values(conferenceConfig.conferences).map((conf) => ({
+            conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
                 year: conf.year,
             })),
             session,
             talkSpeakers,
             sessionStart: session.startsAt
-                ? DateTime.fromISO(session.startsAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                ? DateTime.fromISO(session.startsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                       DateTime.TIME_SIMPLE,
                       { locale: 'en-AU' },
                   )
                 : null,
             sessionEnd: session.endsAt
-                ? DateTime.fromISO(session.endsAt, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                ? DateTime.fromISO(session.endsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                       DateTime.TIME_SIMPLE,
                       { locale: 'en-AU' },
                   )

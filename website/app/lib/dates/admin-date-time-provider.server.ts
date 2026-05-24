@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { getUser, isAdmin } from '../auth.server'
 import type { AppServices } from '../services/app-services'
 import type { DateTimeProvider } from './date-time-provider.server'
@@ -22,7 +22,7 @@ export class AdminDateTimeProvider implements DateTimeProvider {
 
         if (overrideDate) {
             provider._override = DateTime.fromISO(overrideDate, {
-                zone: conferenceConfigPublic.timezone,
+                zone: conferenceManifest.public.timezone,
             })
             console.log('Admin date override active:', provider._override.toISO())
         }

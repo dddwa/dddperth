@@ -86,16 +86,35 @@ pnpm nx panda website <command>
 
 ### Project Structure
 
-- **`/website`** - Main React Router application
-    - `app/` - Application code (components, routes, config)
-    - `workers/` - Cloudflare Worker entry point (`app.ts`)
-    - `migrations/` - D1 database migrations
-    - `styled-system/` - Generated PandaCSS files
-    - `build/` - Build outputs (remix & worker)
-    - `wrangler.jsonc` - Cloudflare Workers configuration
-- **`/website-content`** - MDX content files for static pages
-- **`/blog`** - Blog posts in markdown
-- **`/infra-archive`** - Archived Azure Bicep infrastructure files (historical reference)
+This repo is split into a **core** layer (shared infrastructure) and a **fork** layer (DDD Perth-specific content + config). See `ARCHITECTURE.md` at the repo root for the full picture.
+
+- **`/website`** — CORE: React Router + Cloudflare Worker app
+    - `app/` — components, routes, lib, services
+    - `workers/` — worker entry (`app.ts`)
+    - `migrations/` — D1 schema migrations
+    - `themes/` — base.theme.ts (token contract) + theme-builder
+    - `app/theme/` — token primitives (colors, durations, shadows, recipes)
+    - `vite-plugins/`, `panda.config.ts`, `vite.config.ts` — build pipeline
+    - `tsconfig.json` — defines `@conference/*` path aliases
+- **`/libs/conference-config`** — CORE: types-only shared package (`@ddd/conference-config`)
+    - `src/types.ts`, `src/manifest.ts`, `src/sessionize-schema.ts`
+- **`/conference`** — FORK: DDD Perth's owned content + config
+    - `manifest.ts`, `build-manifest.ts` — wired into core via `@conference/manifest` and `@conference/build-manifest`
+    - `config/` — public.ts, socials.ts, years/, venues/
+    - `content/pages/`, `content/blog/` — MDX content
+    - `theme/perth.theme.ts`, `theme/perth-light.theme.ts`
+    - `wrangler/{local,staging,production}.jsonc`
+- **`/conference-stub`** — CORE: working sample conference ("DevConf Example") shipped with `ddd-core`. Makes core runnable on its own (`pnpm nx dev website` in a fresh `ddd-core` clone) and is the source of truth that `/new-conference` copies as the seed for a new fork's `/conference/`.
+- **`/infra-archive`** — Archived Azure Bicep infrastructure (historical reference)
+
+### Creating sister conferences
+
+Two skills live in `.claude/skills/`:
+
+- `/new-conference` — scaffolds a sibling fork repo using `git subtree` to embed `core/` (this repo's `website` + `libs`).
+- `/pull-upstream` — pulls latest ddd-core into an existing fork.
+
+Read `.claude/skills/new-conference/SKILL.md` and `ARCHITECTURE.md` before reorganising any cross-layer code.
 
 ### Key Application Patterns
 

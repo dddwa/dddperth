@@ -4,8 +4,7 @@ import { DateTime } from 'luxon'
 import type { PropsWithChildren } from 'react'
 import { ImportantDates } from '~/components/page-components/important-dates'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
-import { socials } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getConferenceActions } from '~/lib/conference-actions'
 import type { ConferenceState } from '~/lib/conference-state-client-safe'
@@ -34,6 +33,12 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     if (contentSlug.includes('.well-known')) {
         console.log('Attempt to access .well-known through content route:', contentSlug)
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+
+    // Underscore-prefixed slugs are MDX fragments embedded in other pages
+    // (e.g. `_home-hero`, `_acknowledgement`) — not navigable.
+    if (contentSlug.startsWith('_')) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
@@ -108,16 +113,15 @@ export function meta(args: Route.MetaArgs) {
 
     const { siteUrl, frontmatter } = loaderData || {}
     if (!frontmatter) {
-        return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
+        return [{ title: `404 Not Found | ${conferenceManifest.public.name}` }]
     }
 
     // Generate a description if summary isn't available
     const description =
-        frontmatter.summary ||
-        `${frontmatter.title} - DDD Perth is an inclusive non-profit conference for the Perth software community.`
+        frontmatter.summary || `${frontmatter.title} - ${conferenceManifest.public.description}`
 
     // Generate keywords based on the content slug and title
-    const baseKeywords = 'DDD Perth, Conference, Software Development, Perth Tech'
+    const baseKeywords = `${conferenceManifest.public.name}, Conference, Software Development`
     const pageKeywords = `${frontmatter.title}, ${contentSlug.replace(/[/]/g, ', ').replace(/-/g, ' ')}`
     const keywords = `${pageKeywords}, ${baseKeywords}`
 
@@ -134,20 +138,27 @@ export function meta(args: Route.MetaArgs) {
     const url = siteUrl ? `${siteUrl}/${contentSlug}` : null
     const canonicalUrl = url
 
+    const twitterHandle = conferenceManifest.socials.Twitter?.Name
+
     return [
-        { title: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
+        { title: `${frontmatter.title} | ${conferenceManifest.public.name}` },
         { name: 'description', content: description },
         { name: 'keywords', content: keywords },
         { property: 'og:type', content: 'article' },
         { property: 'og:url', content: url },
-        { property: 'og:title', content: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
+        { property: 'og:title', content: `${frontmatter.title} | ${conferenceManifest.public.name}` },
         { property: 'og:image', content: socialImageUrl },
         { property: 'og:description', content: description },
-        { property: 'og:site_name', content: conferenceConfigPublic.name },
+        { property: 'og:site_name', content: conferenceManifest.public.name },
         { property: 'og:locale', content: 'en_AU' },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:creator', content: `@${socials.Twitter.Name}` },
-        { name: 'twitter:site', content: `@${socials.Twitter.Name}` },
+        // Only emit Twitter creator/site tags if the conference has a Twitter account.
+        ...(twitterHandle
+            ? [
+                  { name: 'twitter:creator', content: `@${twitterHandle}` },
+                  { name: 'twitter:site', content: `@${twitterHandle}` },
+              ]
+            : []),
         { name: 'twitter:title', content: frontmatter.title },
         { name: 'twitter:description', content: description },
         { name: 'twitter:image', content: socialImageUrl },
@@ -193,7 +204,7 @@ export default function WebsiteContentPage() {
                     currentPath={currentPath}
                     frontmatter={frontmatter}
                     conferenceState={conferenceState}
-                    currentDate={DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })}
+                    currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
                     importantDates={importantDates}
                 >
                     <Component sponsors={sponsorPageData} />
@@ -268,7 +279,7 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                         {conferenceState.conferenceState === 'before-conference' ? 'Next event' : 'Previous event'}
                     </small>
                     <time>
-                        {DateTime.fromISO(relevantDate, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                        {DateTime.fromISO(relevantDate, { zone: conferenceManifest.public.timezone }).toLocaleString(
                             DateTime.DATE_HUGE,
                             { locale: 'en-AU' },
                         )}

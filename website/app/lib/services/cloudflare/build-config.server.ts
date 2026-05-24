@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import type { CloudflareEnv } from '../../../remix-app-load-context'
 import type { AppConfig } from '../app-config'
 
@@ -6,12 +7,15 @@ import type { AppConfig } from '../app-config'
  * The only place in the app that knows about CloudflareEnv shape.
  */
 export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
+    // Fallback derives the From: from the manifest brand so a fork doesn't
+    // need to set AUTH_EMAIL_FROM in wrangler vars just to look right.
+    const fallbackEmailFrom = `${conferenceManifest.public.name} <${conferenceManifest.brand.noreplyEmail}>`
     return {
         webUrl: env.WEB_URL,
         sessionSecret: env.SESSION_SECRET,
         websiteAuthRequired: env.WEBSITE_AUTH_REQUIRED === 'true',
         auth: {
-            emailFrom: env.AUTH_EMAIL_FROM ?? 'DDD Perth <noreply@dddperth.com>',
+            emailFrom: env.AUTH_EMAIL_FROM ?? fallbackEmailFrom,
             resendApiKey: env.RESEND_API_KEY,
         },
         sessionizeOverrides: collectSessionizeOverrides(env),

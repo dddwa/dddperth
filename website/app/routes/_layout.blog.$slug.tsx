@@ -1,8 +1,7 @@
 import { useRef } from 'react'
 import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
-import { socials } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -46,7 +45,7 @@ export function meta(args: Route.MetaArgs) {
 
     const { siteUrl, frontmatter } = data || {}
     if (!frontmatter) {
-        return [{ title: `404 Not Found | ${conferenceConfigPublic.name}` }]
+        return [{ title: `404 Not Found | ${conferenceManifest.public.name}` }]
     }
 
     const ogImageUrl = siteUrl ? new URL(`${siteUrl}/img/${slug}`) : null
@@ -68,17 +67,22 @@ export function meta(args: Route.MetaArgs) {
 
     const socialImageUrl = ogImageUrl?.toString()
     const url = siteUrl ? `${siteUrl}/blog/${slug}` : null
+    const twitterHandle = conferenceManifest.socials.Twitter?.Name
 
     return [
-        { title: `${frontmatter.title} | ${conferenceConfigPublic.name}` },
+        { title: `${frontmatter.title} | ${conferenceManifest.public.name}` },
         { name: 'description', content: frontmatter.summary },
         { property: 'og:url', content: url },
         { property: 'og:title', content: frontmatter.title },
         { property: 'og:image', content: socialImageUrl },
         { property: 'og:description', content: frontmatter.summary },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:creator', content: `@${socials.Twitter.Name}` },
-        { name: 'twitter:site', content: `@${socials.Twitter.Name}` },
+        ...(twitterHandle
+            ? [
+                  { name: 'twitter:creator', content: `@${twitterHandle}` },
+                  { name: 'twitter:site', content: `@${twitterHandle}` },
+              ]
+            : []),
         { name: 'twitter:title', content: frontmatter.title },
         { name: 'twitter:description', content: frontmatter.summary },
         { name: 'twitter:image', content: socialImageUrl },

@@ -1,14 +1,14 @@
 import * as React from 'react'
 import { data, Link, useLoaderData } from 'react-router'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { Route } from './+types/_layout.blog._index'
 
 export async function loader({ context }: Route.LoaderArgs) {
     return data(
         {
-            conferenceName: conferenceConfigPublic.name,
-            blogDescription: conferenceConfigPublic.blogDescription,
+            conferenceName: conferenceManifest.public.name,
+            blogDescription: conferenceManifest.public.blogDescription,
             posts: await context.services.content.getPagesList('blog'),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },

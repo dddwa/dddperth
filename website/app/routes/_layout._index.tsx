@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { HeadersFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -32,24 +32,26 @@ export async function loader({ context }: Route.LoaderArgs) {
             // Passed separately so the "Sponsor 2026" CTA always names the
             // *current* conference year, not the year the fallback came from.
             currentYear: context.conferenceState.conference.year,
+            conferenceState: context.conferenceState,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )
 }
 
 export default function Index() {
-    const { importantDates, currentDate, conferenceDate, heroSponsors, currentYear } =
+    const { importantDates, currentDate, conferenceDate, heroSponsors, currentYear, conferenceState } =
         useLoaderData<typeof loader>()
 
     return (
         <>
             <SkipToContent />
             <Hero
-                currentDate={DateTime.fromISO(currentDate, { zone: conferenceConfigPublic.timezone })}
+                currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
                 conferenceDate={conferenceDate}
                 importantDates={importantDates}
                 sponsors={heroSponsors}
                 currentYear={currentYear}
+                conferenceState={conferenceState}
             />
         </>
     )

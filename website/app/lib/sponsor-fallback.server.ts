@@ -14,7 +14,7 @@
  * FooterSponsorRow / TicketSponsorAcknowledgement.
  */
 
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from './conference-state-client-safe'
 
 export type ResolvedSponsors =
@@ -41,7 +41,7 @@ export function resolveSponsorsWithFallback(
     }
 
     const currentYearNum = parseInt(currentYear, 10)
-    const priorYears = Object.values(conferenceConfig.conferences)
+    const priorYears = Object.values(conferenceManifest.conferences.conferences)
         .filter((conf) => conf.kind === 'conference')
         .filter((conf) => parseInt(conf.year, 10) < currentYearNum)
         .sort((a, b) => parseInt(b.year, 10) - parseInt(a.year, 10))

@@ -2,3 +2,5 @@ packages:
     - 'website'
     - 'apps/*'
     - 'libs/*'
+    - 'conference'
+    - 'conference-stub'

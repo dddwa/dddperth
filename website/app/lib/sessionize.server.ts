@@ -2,7 +2,7 @@ import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
 import { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema } from '@ddd/conference-config'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 
 export { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema }
 
@@ -220,5 +220,5 @@ export function getSpeakerUnderrepresentedGroup(
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {
-    return DateTime.fromISO(date, { zone: conferenceConfigPublic.timezone }).toLocaleString(opts, { locale: 'en-AU' })
+    return DateTime.fromISO(date, { zone: conferenceManifest.public.timezone }).toLocaleString(opts, { locale: 'en-AU' })
 }

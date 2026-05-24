@@ -4,7 +4,7 @@ import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import type { Sponsor } from '~/lib/conference-state-client-safe'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
@@ -199,10 +199,10 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, { zone: conferenceManifest.public.timezone }).toLocaleString(
                               DateTime.DATETIME_SHORT,
                               { locale: 'en-AU' },
-                          )} and closes ${DateTime.fromISO(data.talkVoting.closes, { zone: conferenceConfigPublic.timezone }).toLocaleString(
+                          )} and closes ${DateTime.fromISO(data.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
                               DateTime.DATETIME_SHORT,
                               { locale: 'en-AU' },
                           )}`

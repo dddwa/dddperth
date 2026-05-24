@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { SponsorLogo } from '~/components/sponsor-logo'
 import { Box, Grid, styled } from '~/styled-system/jsx'
 
@@ -10,7 +11,7 @@ export interface PastSponsorsGridProps {
 export function PastSponsorsGrid({
     sponsors,
     title = 'Trusted by',
-    lede = "A decade of sponsors who've made DDD Perth possible.",
+    lede = `Sponsors who've made ${conferenceManifest.public.name} possible.`,
 }: PastSponsorsGridProps) {
     if (!sponsors || sponsors.length === 0) return null
 

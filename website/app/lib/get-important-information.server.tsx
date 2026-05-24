@@ -1,9 +1,9 @@
-import type { conferenceConfig, ConferenceYears } from '@ddd/conference-config'
+import type { ConferenceConfigYear } from '@ddd/conference-config'
 import type { ConferenceImportantInformation } from './conference-state-client-safe'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
 
 export function getImportantInformation(
-    yearConfig: (typeof conferenceConfig.conferences)[ConferenceYears],
+    yearConfig: ConferenceConfigYear,
     dateTimeProvider: DateTimeProvider,
 ): ConferenceImportantInformation {
     const now = dateTimeProvider.nowDate()

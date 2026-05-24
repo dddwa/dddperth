@@ -10,7 +10,10 @@ import { colors as parkBaseColors } from './app/theme/tokens/colors'
 import { durations } from './app/theme/tokens/durations'
 import { shadows as parkShadows } from './app/theme/tokens/shadows'
 import { zIndex as parkZIndex } from './app/theme/tokens/z-index'
-import { currentLightTheme, currentTheme } from './app/theme.config'
+// Theme barrel deliberately picked over build-manifest: panda bundles
+// panda.config.ts as CJS, which breaks build-manifest's `import.meta.dirname`.
+// @conference/theme has no Node-only imports.
+import { currentLightTheme, currentTheme } from '@conference/theme'
 import { createSemanticTokens, createThemeColorSemanticTokens, createThemeTokens } from './themes/theme-builder'
 
 const navLinkRecipe = defineRecipe({

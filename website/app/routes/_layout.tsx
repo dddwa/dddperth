@@ -6,7 +6,7 @@ import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
-import { conferenceConfigPublic } from '@ddd/conference-config/public'
+import { conferenceManifest } from '@conference/manifest'
 import { getUser, isAdmin } from '~/lib/auth.server'
 import type { Route } from './+types/_layout'
 
@@ -24,13 +24,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
                 name: user.name,
             },
             overrideDate: overrideDate || null,
-            currentDate: DateTime.local({ zone: conferenceConfigPublic.timezone }).toISO(),
-            timezone: conferenceConfigPublic.timezone,
+            currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
+            timezone: conferenceManifest.public.timezone,
         }
     }
 
     return {
-        conferenceDescription: conferenceConfigPublic.description,
+        conferenceDescription: conferenceManifest.public.description,
         conferenceState: context.conferenceState,
         webUrl: context.config.webUrl,
         adminData,
@@ -39,12 +39,12 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
 export function meta({ data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
-        ? `${conferenceConfigPublic.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
-              zone: conferenceConfigPublic.timezone,
+        ? `${conferenceManifest.public.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
+              zone: conferenceManifest.public.timezone,
           }).toLocaleString(DateTime.DATE_HUGE, {
               locale: 'en-AU',
           })}`
-        : conferenceConfigPublic.name
+        : conferenceManifest.public.name
 
     const description = data?.conferenceDescription
     const url = `${data?.webUrl ?? ''}${location.pathname}`
@@ -110,7 +110,7 @@ export default function Index() {
                         __html: JSON.stringify({
                             '@context': 'https://schema.org',
                             '@type': 'Event',
-                            name: `DDD Perth ${conference.year}`,
+                            name: `${conferenceManifest.public.name} ${conference.year}`,
                             startDate: conference.date ?? '',
                             endDate: conference.date ?? '',
                             eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
@@ -132,7 +132,7 @@ export default function Index() {
                             description: conferenceDescription,
                             organizer: {
                                 '@type': 'Organization',
-                                name: conferenceConfigPublic.name,
+                                name: conferenceManifest.public.name,
                                 url: webUrl,
                             },
                         }),
@@ -141,7 +141,7 @@ export default function Index() {
             )}
             <Outlet />
             <Footer />
-            <Acknowledgement />
+            <Acknowledgement conferenceState={conferenceState} />
         </div>
     )
 }

@@ -1,6 +1,8 @@
+import { conferenceManifest } from '@conference/manifest'
 import { getContentPages } from '~/lib/get-content-pages.server'
 
 export async function loader() {
+    const siteUrl = `https://${conferenceManifest.brand.domain}`
     // Get the current date in ISO format for the lastmod field
     const today = new Date().toISOString().split('T')[0]
 
@@ -32,7 +34,7 @@ export async function loader() {
 ${allRoutes
     .map(
         (route) => `  <url>
-    <loc>https://dddperth.com${route.path}</loc>
+    <loc>${siteUrl}${route.path}</loc>
     <lastmod>${route.lastmod}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>

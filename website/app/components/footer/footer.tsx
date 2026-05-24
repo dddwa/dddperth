@@ -1,8 +1,11 @@
+import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
 import { css } from '~/styled-system/css'
 import { Box, Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
+
+const contactEmail = conferenceManifest.brand.contactEmail
 
 export const Footer = () => (
     // Footer blends into the body in both themes (header behaves the same).
@@ -69,8 +72,8 @@ export const Footer = () => (
                 <AppLink to="/volunteer" variant="chrome">
                     Work With Us
                 </AppLink>
-                <styled.a href="mailto:info@dddperth.com" color="text.highlight" _hover={{ color: 'interactive.active' }}>
-                    info@dddperth.com
+                <styled.a href={`mailto:${contactEmail}`} color="text.highlight" _hover={{ color: 'interactive.active' }}>
+                    {contactEmail}
                 </styled.a>
             </Flex>
             <Flex direction="column" gap="4">

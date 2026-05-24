@@ -23,7 +23,13 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "paths": {
-            "~/*": ["./app/*"]
+            "~/*": ["./app/*"],
+            // Conference manifest indirection — see /libs/conference-config/src/manifest.ts.
+            // Forks point these at their own ../../conference/. In ddd-core
+            // standalone they point at ../conference-stub/.
+            "@conference/manifest": ["../conference/manifest"],
+            "@conference/build-manifest": ["../conference/build-manifest"],
+            "@conference/*": ["../conference/*"]
         },
         "noEmit": true,
         "rootDirs": [".", "./.react-router/types"]

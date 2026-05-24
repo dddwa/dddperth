@@ -1,37 +1,61 @@
+// Renders a mobile-app download page when the fork's manifest has
+// `mobileApp` set (iOS + Android store URLs). Forks without a mobile app
+// get a 404 here — the route never tells visitors to download something
+// that doesn't exist.
+//
+// The page copy is intentionally generic ("the official conference app");
+// if a fork has app-specific marketing copy, the right place for it is an
+// MDX page under conference/content/pages/, not this layout component.
+
 import type { HeadersFunction } from 'react-router'
+import { conferenceManifest } from '@conference/manifest'
 import { ContentPageLayout } from '~/components/page-layout'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, styled } from '~/styled-system/jsx'
+import type { Route } from './+types/_layout.app'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
 }
 
+export function loader() {
+    const mobileApp = conferenceManifest.mobileApp
+    if (!mobileApp) {
+        // No app for this fork — pretend the route doesn't exist.
+        throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
+    }
+    // Loader-returned values are serialised, so we only ship the URL strings
+    // the page needs. (Bundle IDs are only consumed by /app-config.)
+    return { iosUrl: mobileApp.iosUrl, androidUrl: mobileApp.androidUrl }
+}
+
+const conferenceName = conferenceManifest.public.name
+
 export function meta() {
     return [
-        { title: 'Download the DDD Perth App | DDD Perth' },
+        { title: `Download the ${conferenceName} App | ${conferenceName}` },
         {
             name: 'description',
-            content:
-                'Get the official DDD Perth conference app for iOS and Android to access the agenda, speaker info, venue maps, and real-time updates during the conference.',
+            content: `Get the official ${conferenceName} conference app for iOS and Android to access the agenda, speaker info, venue maps, and real-time updates during the conference.`,
         },
     ]
 }
 
-export default function AppDownloadPage() {
+export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
+    const { iosUrl, androidUrl } = loaderData
     return (
         <ContentPageLayout>
-            <styled.main id="content" marginX={{ base: "6", lg: "0" }}>
+            <styled.main id="content" marginX={{ base: '6', lg: '0' }}>
                 <styled.div display="flex" flexDirection="column" alignItems="center" gap="8" py="8">
                     <styled.div textAlign="center" maxW="3xl" mb="4">
                         <styled.h1 fontSize="3xl" fontWeight="bold" mb="6">
-                            Download the DDD Perth App
+                            Download the {conferenceName} App
                         </styled.h1>
 
                         <styled.p fontSize="lg" mb="6">
-                            The official DDD Perth app is your essential companion for the conference. Get instant
-                            access to the full agenda, speaker profiles, venue maps, and real-time announcements - all
-                            in the palm of your hand.
+                            The official {conferenceName} app is your essential companion for the conference. Get
+                            instant access to the full agenda, speaker profiles, venue maps, and real-time announcements
+                            — all in the palm of your hand.
                         </styled.p>
                     </styled.div>
 
@@ -43,7 +67,7 @@ export default function AppDownloadPage() {
                         justifyContent="center"
                     >
                         <styled.a
-                            href="https://apps.apple.com/au/app/ddd-perth/id6670743492"
+                            href={iosUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             display="inline-flex"
@@ -53,14 +77,14 @@ export default function AppDownloadPage() {
                             <styled.img
                                 src="/images/get-app-store.svg"
                                 alt="Download on the App Store"
-                                height={{ base: "[48px]", md: "[56px]" }}
+                                height={{ base: '[48px]', md: '[56px]' }}
                                 width="[200px]"
                                 objectFit="contain"
                             />
                         </styled.a>
 
                         <styled.a
-                            href="https://play.google.com/store/apps/details?id=com.dddperth.conference&hl=en_AU"
+                            href={androidUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             display="inline-flex"
@@ -70,7 +94,7 @@ export default function AppDownloadPage() {
                             <styled.img
                                 src="/images/get-google-play.png"
                                 alt="Get it on Google Play"
-                                height={{ base: "[48px]", md: "[56px]" }}
+                                height={{ base: '[48px]', md: '[56px]' }}
                                 width="[200px]"
                                 objectFit="contain"
                             />

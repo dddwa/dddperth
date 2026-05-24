@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { isRouteErrorResponse, useRouteError } from 'react-router'
+import { conferenceManifest } from '@conference/manifest'
 import { Center, Flex, styled } from '~/styled-system/jsx'
 
 export function ErrorPage() {
@@ -48,7 +49,11 @@ export function ErrorPage() {
                         <>
                             <styled.p fontSize="xl" fontWeight="semibold" color="text.primary">
                                 Oops, we have encountered an unexpected error and our team has been alerted. Please{' '}
-                                <styled.a color="text.highlight" textDecoration="underline" href={`mailto:info@dddperth.com`}>
+                                <styled.a
+                                    color="text.highlight"
+                                    textDecoration="underline"
+                                    href={`mailto:${conferenceManifest.brand.contactEmail}`}
+                                >
                                     email us
                                 </styled.a>{' '}
                                 if this error persists.

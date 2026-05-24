@@ -63,6 +63,14 @@
                 "cwd": "website"
             }
         },
+        "wrangler-dev": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler dev -c ../conference/wrangler/local.jsonc",
+                "cwd": "website",
+                "tty": true
+            }
+        },
         "build": {
             "executor": "nx:run-commands",
             "cache": true,
@@ -100,7 +108,7 @@
         "deploy": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler deploy",
+                "command": "wrangler deploy -c ../conference/wrangler/local.jsonc",
                 "cwd": "website",
                 "tty": true
             },
@@ -125,14 +133,14 @@
         "d1-migrate-local": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler d1 migrations apply dddperth-voting-local --local",
+                "command": "node scripts/manifest-d1-migrate.mjs local",
                 "cwd": "website"
             }
         },
         "d1-migrate-staging": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler d1 migrations apply dddperth-voting-staging -c wrangler.staging.jsonc --remote",
+                "command": "node scripts/manifest-d1-migrate.mjs staging",
                 "cwd": "website",
                 "tty": true
             }
@@ -140,7 +148,7 @@
         "d1-migrate-production": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler d1 migrations apply dddperth-voting-prod -c wrangler.production.jsonc --remote",
+                "command": "node scripts/manifest-d1-migrate.mjs production",
                 "cwd": "website",
                 "tty": true
             }

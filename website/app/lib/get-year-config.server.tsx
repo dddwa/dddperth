@@ -1,7 +1,6 @@
 import { redirect } from 'react-router'
 import { $path } from 'safe-routes'
-import type { ConferenceYears } from '@ddd/conference-config'
-import { conferenceConfig } from '@ddd/conference-config'
+import { conferenceManifest, type ConferenceYears } from '@conference/manifest'
 import type { AppConfig } from '~/lib/services/app-config'
 
 export function getYearConfig(year: string, appConfig?: AppConfig) {
@@ -9,7 +8,7 @@ export function getYearConfig(year: string, appConfig?: AppConfig) {
         throw redirect($path('/agenda/:year?', { year: undefined }))
     }
 
-    const yearConfig = conferenceConfig.conferences[year]
+    const yearConfig = conferenceManifest.conferences.conferences[year]
 
     if (appConfig && yearConfig.kind === 'conference' && yearConfig.sessions?.kind === 'sessionize') {
         const overrides = appConfig.sessionizeOverrides[year]
@@ -35,5 +34,5 @@ export function getYearConfig(year: string, appConfig?: AppConfig) {
 }
 
 export function isConferenceYear(year: string): year is ConferenceYears {
-    return Object.keys(conferenceConfig.conferences).includes(year)
+    return Object.keys(conferenceManifest.conferences.conferences).includes(year)
 }
