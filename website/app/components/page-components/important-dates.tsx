@@ -71,16 +71,21 @@ const StartEventImportantDateBox: FC<{
     }
 
     if (currentDate < eventEndTime) {
+        const daysUntilClose = Math.floor(eventEndTime.diff(currentDate, 'days').days)
+
         return (
             <ActiveRow smallSidebar={smallSidebar}>
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
-                <EventLink
-                    highlighted
-                    eventHref={dateInfo.eventActiveHref}
-                    smallSidebar={smallSidebar}
-                    message={dateInfo.eventActiveMessage}
-                />
+                <Flex alignItems="center" gap={smallSidebar ? '2' : '3'}>
+                    <DaysLeftPill smallSidebar={smallSidebar} daysLeft={daysUntilClose} />
+                    <EventLink
+                        highlighted
+                        eventHref={dateInfo.eventActiveHref}
+                        smallSidebar={smallSidebar}
+                        message={dateInfo.eventActiveMessage}
+                    />
+                </Flex>
             </ActiveRow>
         )
     }
@@ -333,6 +338,30 @@ function EventCountdown({
         <StyledLink to={eventHref} className={styles} cursor="pointer">
             {countdownMessage}
         </StyledLink>
+    )
+}
+
+function DaysLeftPill({ smallSidebar, daysLeft }: { smallSidebar: boolean | undefined; daysLeft: number }) {
+    // Sits left of the open-state CTA to add a soft urgency cue without
+    // competing with the pink button. Hidden in narrow contexts (mobile + the
+    // small sidebar) where horizontal space is tight.
+    const label = daysLeft === 0 ? 'Last day!' : daysLeft === 1 ? '1 day left' : `${daysLeft} days left`
+
+    return (
+        <styled.span
+            display={smallSidebar ? 'none' : { base: 'none', sm: 'inline-flex' }}
+            alignItems="center"
+            fontSize="xs"
+            fontWeight="semibold"
+            paddingX="3"
+            paddingY="1"
+            rounded="full"
+            bg="overlay.subtle"
+            color="text.primary"
+            whiteSpace="nowrap"
+        >
+            {label}
+        </styled.span>
     )
 }
 
