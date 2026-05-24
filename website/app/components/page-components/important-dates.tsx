@@ -77,7 +77,11 @@ const StartEventImportantDateBox: FC<{
             <ActiveRow smallSidebar={smallSidebar}>
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
 
-                <Flex alignItems="center" gap={smallSidebar ? '2' : '3'}>
+                <Flex
+                    flexDirection={smallSidebar ? 'row' : { base: 'column', sm: 'row' }}
+                    alignItems="center"
+                    gap={smallSidebar ? '2' : { base: '2', sm: '3' }}
+                >
                     <DaysLeftPill smallSidebar={smallSidebar} daysLeft={daysUntilClose} />
                     <EventLink
                         highlighted
@@ -342,14 +346,18 @@ function EventCountdown({
 }
 
 function DaysLeftPill({ smallSidebar, daysLeft }: { smallSidebar: boolean | undefined; daysLeft: number }) {
-    // Sits left of the open-state CTA to add a soft urgency cue without
-    // competing with the pink button. Hidden in narrow contexts (mobile + the
-    // small sidebar) where horizontal space is tight.
+    // Adds a soft urgency cue alongside the open-state CTA. On wide layouts
+    // it sits to the left of the button; on mobile it stacks above it. Hidden
+    // in the small sidebar where horizontal space is tight.
     const label = daysLeft === 0 ? 'Last day!' : daysLeft === 1 ? '1 day left' : `${daysLeft} days left`
+
+    if (smallSidebar) {
+        return null
+    }
 
     return (
         <styled.span
-            display={smallSidebar ? 'none' : { base: 'none', sm: 'inline-flex' }}
+            display="inline-flex"
             alignItems="center"
             fontSize="xs"
             fontWeight="semibold"
