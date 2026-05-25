@@ -124,7 +124,7 @@ export default function Login() {
                             fontSize="md"
                             color="admin.900"
                             bg="white"
-                            _focus={{ outline: 'none', borderColor: 'admin.700', boxShadow: '0 0 0 3px {colors.admin.200}' }}
+                            _focus={{ outline: 'none', borderColor: 'admin.700', boxShadow: 'focus-ring' }}
                         />
                     </styled.label>
                     <styled.button
