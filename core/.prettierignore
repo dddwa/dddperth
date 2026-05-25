@@ -1,0 +1,12 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+build
+styled-system
+.react-router
+
+/.nx/workspace-data
+safe-routes.d.ts
+
+.nx/self-healing

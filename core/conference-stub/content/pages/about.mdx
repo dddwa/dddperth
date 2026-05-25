@@ -1,0 +1,47 @@
+---
+title: 'About DevConf Example'
+summary: 'About page for DevConf Example, the fictional reference conference shipped with ddd-core.'
+---
+
+DevConf Example is a fictional conference that ships with `ddd-core` as a reference
+implementation of what a `/conference/` folder looks like. It's not a real event you
+can attend — but every page on this site is rendered from real configuration files,
+real MDX content, and real components.
+
+## Why does this exist?
+
+If you're reading this, you're probably looking at `ddd-core` standalone, or evaluating
+the codebase to start a new conference fork. DevConf Example exists so you can:
+
+- See every page render against realistic data without needing to set anything up
+- Use it as a template — the `/new-conference` skill copies this folder as the seed for a new fork
+- Verify that core builds and works after a `pull-upstream` of upstream changes
+
+## How to make this your own
+
+Run the `/new-conference` skill from this repo's parent directory. It will:
+
+1. Create a sibling repo for your conference
+2. Embed `ddd-core` as a `git subtree` at `core/`
+3. Copy `/conference-stub/` into your fork as `/conference/`
+4. Run a substitution pass for name, domain, slug, brand colours
+5. Print a checklist of manual steps (Cloudflare account, D1 database, Sessionize, etc.)
+
+## Anatomy of the example
+
+| Page | What you'll see |
+|---|---|
+| `/` | Hero, important dates, sponsors for the current year |
+| `/agenda` | Sessionize integration (stub: no sessions, falls back to "agenda coming soon") |
+| `/2024`, `/2025`, `/2026` | Year-specific landing pages |
+| `/about` | This page |
+| `/faq` | Generic conference FAQ |
+| `/sponsorship` | Tier descriptions sourced from sponsor data |
+| `/code-of-conduct` | Standard code of conduct template |
+| `/venue` | Example Convention Centre (a real San Francisco address as placeholder) |
+
+## A sister event note
+
+The platinum sponsor for DevConf Example is **DDD Perth**, which is the actual
+conference behind `ddd-core`. Visit [dddperth.com](https://dddperth.com/) for the
+real thing.
