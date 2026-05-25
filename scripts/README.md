@@ -14,7 +14,7 @@ export CLOUDFLARE_API_TOKEN=...   # needs D1:Edit + Workers Scripts:Edit + Accou
 pnpm provision:cloudflare
 ```
 
-See [`docs/deploy.md`](../docs/deploy.md) for the rest of the deploy setup, including the worker runtime secrets.
+See [`core/docs/deploy.md`](../core/docs/deploy.md) (in ddd-core) for the rest of the deploy setup, including the worker runtime secrets.
 
 ## `add-sponsor.mjs`
 

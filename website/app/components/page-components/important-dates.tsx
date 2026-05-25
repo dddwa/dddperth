@@ -513,18 +513,6 @@ export function Workshops() {
             <styled.p fontSize="xl" color="text.secondary">
                 Coming soon!
             </styled.p>
-
-            {/* TODO Drive by config */}
-            {/* <ImportantDateBox
-                dateInfo={{
-                    type: 'important-date',
-                    dateTime: DateTime.fromISO('2024-06-25T09:30:00.000Z'),
-                    event: 'CFP & Bio Workshop - (In Person)',
-                    eventHref: 'https://ti.to/dddperth/f2f-cfp-workshop-2024',
-                    eventClosedMessage: 'Workshop Completed',
-                }}
-                currentDate={currentDate}
-            /> */}
         </Flex>
     )
 }

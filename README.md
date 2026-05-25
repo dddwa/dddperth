@@ -46,7 +46,7 @@ pnpm wrangler d1 execute dddperth-voting-local --local --command \
   "INSERT INTO auth_allowlist (email, name, added_at) VALUES ('you@example.com', 'You', unixepoch())"
 ```
 
-The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`docs/deploy.md`](./docs/deploy.md) for what each one does and which are needed in production.
+The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`core/docs/deploy.md`](./core/docs/deploy.md) (in ddd-core) for what each one does and which are needed in production.
 
 ### Nx Commands
 
@@ -82,7 +82,7 @@ pnpm wrangler d1 execute dddperth-voting-local --local --command "SELECT * FROM 
 
 ## Deployment
 
-Production deploys on every push to `main`. Staging deploys when an authorised user comments `/deploy-staging` on a pull request. See [`docs/deploy.md`](./docs/deploy.md) for setup, secrets, and the provisioning script.
+Production deploys on every push to `main`. Staging deploys when an authorised user comments `/deploy-staging` on a pull request. See [`core/docs/deploy.md`](./core/docs/deploy.md) for setup, secrets, and the provisioning script.
 
 ## ParkUI
 
