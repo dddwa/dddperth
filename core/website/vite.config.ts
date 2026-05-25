@@ -7,11 +7,11 @@ import { defineConfig } from 'vite'
 import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
 // Vite's config loader uses native Node ESM — it doesn't honour the
 // @conference/* tsconfig path alias the rest of the app uses. Use a
-// relative import here. ddd-core standalone points at conference-stub;
-// the /new-conference skill repoints this at ../../conference/build-manifest
-// when scaffolding a fork.
+// relative import here. Fork override: points at the fork's
+// /conference/build-manifest (two levels up from core/website/).
+// ddd-core standalone uses ../conference-stub/build-manifest.
 // eslint-disable-next-line @nx/enforce-module-boundaries -- relative path required at vite config load time
-import { conferenceBuildManifest } from '../conference-stub/build-manifest'
+import { conferenceBuildManifest } from '../../conference/build-manifest'
 
 export default defineConfig({
     root: import.meta.dirname,
@@ -69,13 +69,13 @@ export default defineConfig({
         },
     },
     plugins: [
-        // wrangler config lives in /conference-stub/wrangler/ for ddd-core
-        // standalone. Forks repoint this at their own /conference/wrangler/
-        // during scaffolding. Path is fixed at build time; if it ever needs
-        // to vary per env, switch to an env-var-driven path.
+        // wrangler config lives in /conference/wrangler/ for forks (two
+        // levels up from core/website/). ddd-core standalone uses
+        // /conference-stub/wrangler/. Path is fixed at build time; if it
+        // ever needs to vary per env, switch to an env-var-driven path.
         cloudflare({
             viteEnvironment: { name: 'ssr' },
-            configPath: path.resolve(import.meta.dirname, '..', 'conference-stub', 'wrangler', 'local.jsonc'),
+            configPath: path.resolve(import.meta.dirname, '..', '..', 'conference', 'wrangler', 'local.jsonc'),
         }),
         reactRouter(),
         safeRoutes({

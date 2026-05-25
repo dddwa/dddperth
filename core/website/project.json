@@ -15,7 +15,7 @@
                     }
                 ],
                 "parallel": false,
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "parkui": {
@@ -28,28 +28,28 @@
                     }
                 ],
                 "parallel": false,
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "setup-panda": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm panda setup",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "setup-react-router": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm react-router typegen",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "setup-safe-routes": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm safe-routes typegen",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "setup": {
@@ -60,14 +60,14 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm vite",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "wrangler-dev": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler dev -c ../conference-stub/wrangler/local.jsonc",
-                "cwd": "website",
+                "command": "wrangler dev -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website",
                 "tty": true
             }
         },
@@ -83,7 +83,7 @@
             "outputs": ["{projectRoot}/build/**/*.*"],
             "options": {
                 "command": "react-router build",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "test": {
@@ -102,14 +102,14 @@
             "outputs": ["{workspaceRoot}/coverage/website"],
             "options": {
                 "command": "vitest run",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "deploy": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "wrangler deploy -c ../conference-stub/wrangler/local.jsonc",
-                "cwd": "website",
+                "command": "wrangler deploy -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website",
                 "tty": true
             },
             "dependsOn": ["build"]
@@ -118,7 +118,7 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs staging && wrangler deploy",
-                "cwd": "website",
+                "cwd": "core/website",
                 "tty": true
             }
         },
@@ -126,7 +126,7 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs production && wrangler deploy",
-                "cwd": "website",
+                "cwd": "core/website",
                 "tty": true
             }
         },
@@ -134,14 +134,14 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "node scripts/manifest-d1-migrate.mjs local",
-                "cwd": "website"
+                "cwd": "core/website"
             }
         },
         "d1-migrate-staging": {
             "executor": "nx:run-commands",
             "options": {
                 "command": "node scripts/manifest-d1-migrate.mjs staging",
-                "cwd": "website",
+                "cwd": "core/website",
                 "tty": true
             }
         },
@@ -149,7 +149,7 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "node scripts/manifest-d1-migrate.mjs production",
-                "cwd": "website",
+                "cwd": "core/website",
                 "tty": true
             }
         }

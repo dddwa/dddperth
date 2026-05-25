@@ -1,7 +1,7 @@
 {
     "$schema": "../../node_modules/wrangler/config-schema.json",
     "name": "dddperth-website",
-    "main": "../../website/workers/app.ts",
+    "main": "../../core/website/workers/app.ts",
     "compatibility_date": "2024-12-30",
     "compatibility_flags": ["nodejs_compat"],
 
@@ -20,7 +20,7 @@
 
     // Static assets served from Cloudflare
     "assets": {
-        "directory": "../../website/build/client"
+        "directory": "../../core/website/build/client"
     },
 
     // Default environment variables (local dev)
