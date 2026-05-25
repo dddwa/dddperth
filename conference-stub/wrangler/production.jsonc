@@ -1,0 +1,34 @@
+{
+    // Placeholder production config — `database_id` and the production
+    // hostname are intentionally invalid. The /new-conference skill rewrites
+    // these when scaffolding a real fork. Don't try to deploy this verbatim.
+    "$schema": "../../node_modules/wrangler/config-schema.json",
+    "name": "devconf-example-website-production",
+    "main": "../../website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "devconf-example-voting-prod",
+            "database_id": "replace-me-production-d1-id"
+        }
+    ],
+
+    "assets": {
+        "directory": "../../website/build/client"
+    },
+
+    "vars": {
+        "WEB_URL": "https://example.test",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DevConf Example <noreply@example.test>"
+    },
+
+    "routes": [{ "pattern": "example.test", "custom_domain": true }],
+
+    "observability": {
+        "enabled": true
+    }
+}

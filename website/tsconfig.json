@@ -1,0 +1,37 @@
+{
+    "include": [
+        "env.d.ts",
+        "worker-configuration.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        "vite.config.mjs",
+        ".react-router/types/**/*"
+    ],
+    "compilerOptions": {
+        "lib": ["DOM", "DOM.Iterable", "ES2022"],
+        "types": ["@cloudflare/workers-types"],
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "jsx": "react-jsx",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "target": "ES2022",
+        "strict": true,
+        "allowJs": true,
+        "pretty": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "paths": {
+            "~/*": ["./app/*"],
+            // Conference manifest indirection — see /libs/conference-config/src/manifest.ts.
+            // ddd-core standalone points these at ../conference-stub/. Forks
+            // override them to point at their own ../../conference/.
+            "@conference/manifest": ["../conference-stub/manifest"],
+            "@conference/build-manifest": ["../conference-stub/build-manifest"],
+            "@conference/*": ["../conference-stub/*"]
+        },
+        "noEmit": true,
+        "rootDirs": [".", "./.react-router/types"]
+    }
+}
