@@ -1,6 +1,4 @@
 packages:
-    - 'website'
-    - 'apps/*'
-    - 'libs/*'
+    - 'core/website'
+    - 'core/libs/*'
     - 'conference'
-    - 'conference-stub'

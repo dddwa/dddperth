@@ -1,9 +1,0 @@
-# Author profiles referenced by blog posts via the `authors` frontmatter field.
-# Must be a YAML array (not a keyed map) — see core/website/app/lib/authors.server.ts.
-- name: Sam Example
-  title: Conference Chair (Fictional)
-  avatar: /images/logo.png
-
-- name: Alex Sample
-  title: Sponsorship Lead (Fictional)
-  avatar: /images/logo.png
