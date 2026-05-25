@@ -62,9 +62,7 @@ jobs:
               run: pnpm nx build website
 
             - name: Apply D1 migrations (production)
-              run: pnpm wrangler d1 migrations apply dddperth-voting-prod --env production --remote
-              working-directory: website
+              run: pnpm nx d1-migrate-production website
 
             - name: Deploy
-              run: pnpm wrangler deploy --env production
-              working-directory: website
+              run: pnpm nx deploy-production website

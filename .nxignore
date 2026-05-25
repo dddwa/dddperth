@@ -1,0 +1,9 @@
+# conference-stub is the reference conference shipped with ddd-core for its
+# standalone build. The fork uses /conference/ instead — exclude the stub so
+# Nx doesn't try to lint/build/typecheck it.
+core/conference-stub
+
+# core/ is the subtree root: its package.json defines @ddd-core/source which
+# Nx would otherwise pick up as a project. The fork's actual workspace
+# projects live one level deeper (core/website, core/libs/*).
+core/package.json

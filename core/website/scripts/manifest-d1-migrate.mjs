@@ -20,13 +20,14 @@ if (env !== 'local' && env !== 'staging' && env !== 'production') {
 }
 
 const websiteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const repoRoot = resolve(websiteRoot, '..')
 
-// Resolve the conference folder. We try /conference first (a fork) and fall
-// back to /conference-stub (core standalone).
+// Resolve the conference folder. Try the most-specific location first:
+//   - fork:                  <fork-root>/conference/    (websiteRoot is core/website/, climb two)
+//   - ddd-core standalone:   <repo-root>/conference-stub/  (websiteRoot is website/, climb one)
 const manifestCandidates = [
-    resolve(repoRoot, 'conference', 'manifest.ts'),
-    resolve(repoRoot, 'conference-stub', 'manifest.ts'),
+    resolve(websiteRoot, '..', '..', 'conference', 'manifest.ts'),    // fork
+    resolve(websiteRoot, '..', 'conference', 'manifest.ts'),          // (defensive) sibling
+    resolve(websiteRoot, '..', 'conference-stub', 'manifest.ts'),     // standalone
 ]
 const manifestPath = manifestCandidates.find((p) => {
     try {

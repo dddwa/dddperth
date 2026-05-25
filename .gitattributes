@@ -1,1 +1,7 @@
+# The fork uses its own /conference/, so ignore upstream changes to the stub.
 core/conference-stub/** merge=ours
+
+# core/nx.json competes with the fork-root nx.json when tools walk up from
+# inside core/website/ to find the workspace root. We delete it at fork-shape
+# time; merge=ours keeps it deleted across future subtree pulls.
+core/nx.json merge=ours
