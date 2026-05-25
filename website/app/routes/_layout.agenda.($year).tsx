@@ -4,7 +4,7 @@ import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
-import { SponsorSection } from '~/components/page-components/SponsorSection'
+import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -117,6 +117,9 @@ export default function Agenda() {
     ) : (
         <PageLayout>
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
+                {conferenceManifest.public.features?.sponsorOverview ? (
+                    <SponsorOverview sponsors={sponsors} />
+                ) : null}
                 <Box
                     color="text.secondary"
                     p="1"

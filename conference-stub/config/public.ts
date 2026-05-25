@@ -10,4 +10,8 @@ export const conferenceConfigPublic = {
         'DevConf Example is a fictional conference shipped with ddd-core as a reference implementation. Real forks replace this stub with their own /conference/.',
 
     timezone: 'Etc/UTC',
+
+    features: {
+        sponsorOverview: true,
+    },
 } satisfies ConferenceConfigPublic

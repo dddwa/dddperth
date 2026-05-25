@@ -8,4 +8,8 @@ export const conferenceConfigPublic = {
     blogDescription: 'DDD Perth is an inclusive non-profit conference for the Perth software community.',
 
     timezone: 'Australia/Perth',
+
+    features: {
+        sponsorOverview: true,
+    },
 } satisfies ConferenceConfigPublic

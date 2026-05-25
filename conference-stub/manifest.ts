@@ -18,6 +18,7 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
+import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
 import { socials } from './config/socials'
 import { conferenceConfig } from './config/years-index'
@@ -38,6 +39,7 @@ export const conferenceManifest: ConferenceManifest = {
         githubOrg: 'devconf-example',
     },
     conferences: conferenceConfig,
+    nav,
     homepage: {
         // Demonstrates the optional MDX-fragment pattern: a fork can supply
         // a hero blurb under content/pages/_home-hero.mdx without writing a

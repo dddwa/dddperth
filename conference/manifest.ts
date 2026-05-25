@@ -13,6 +13,7 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
+import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
 import { socials } from './config/socials'
 import { conferenceConfig } from './config/years-index'
@@ -33,6 +34,7 @@ export const conferenceManifest: ConferenceManifest = {
         githubOrg: 'dddwa',
     },
     conferences: conferenceConfig,
+    nav,
     homepage: {
         heroBlurbSlug: '_home-hero',
         acknowledgementSlug: '_acknowledgement',

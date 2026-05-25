@@ -13,11 +13,6 @@ import { HeaderContainer } from '../page-layout'
 import { ThemeToggle } from '../theme-toggle'
 import * as Drawer from '../ui/drawer'
 
-interface NavItem {
-    to: string
-    label: string
-}
-
 export function Header({
     cfpOpen,
     votingOpen,
@@ -33,13 +28,13 @@ export function Header({
     const rootData = useRouteLoaderData<typeof rootLoader>('root')
     const theme: Theme = rootData?.theme ?? 'dark'
 
-    const navItems: NavItem[] = [
-        { to: '/sponsorship', label: 'Sponsorship' },
-        { to: '/sponsors', label: 'Sponsors' },
-        { to: '/agenda', label: 'Agenda' },
-        ...(venue ? [{ to: '/venue', label: 'Venue' }] : []),
-        { to: '/about', label: 'About' },
-    ]
+    // Fork-owned base list, then splice in the venue link conditionally on
+    // having a published venue. We place /venue immediately before /about if
+    // both are present — matches existing visual order without needing the
+    // fork to know about runtime gating.
+    const navItems = venue
+        ? insertVenueBeforeAbout(conferenceManifest.nav)
+        : conferenceManifest.nav
 
     // CTA layout:
     // - During voting: Vote is the only CTA (most urgent action)
@@ -249,6 +244,13 @@ export function Header({
             </Drawer.Root>
         </styled.header>
     )
+}
+
+function insertVenueBeforeAbout(items: typeof conferenceManifest.nav) {
+    const venueItem = { to: '/venue', label: 'Venue' }
+    const aboutIdx = items.findIndex((i) => i.to === '/about')
+    if (aboutIdx === -1) return [...items, venueItem]
+    return [...items.slice(0, aboutIdx), venueItem, ...items.slice(aboutIdx)]
 }
 
 function MenuButton({

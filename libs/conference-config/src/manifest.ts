@@ -30,6 +30,25 @@ export interface ConferenceConfigPublic {
     blogDescription: string
     /** IANA timezone used for all date display (e.g. "Australia/Perth") */
     timezone: string
+    /**
+     * Per-fork opt-ins for optional UI. Each fork picks which extras to show.
+     * Missing = treated as `false` so a fork can ignore the section entirely
+     * until they want a feature on.
+     */
+    features?: ConferenceFeatures
+}
+
+/**
+ * Optional UI features a fork can opt into. Each flag should default to off
+ * in core; only the fork that wants the feature flips it on.
+ */
+export interface ConferenceFeatures {
+    /**
+     * Render the per-tier logo strip at the top of the sponsors page and
+     * agenda page. Useful for forks with lots of sponsors; usually noisy
+     * for small lineups.
+     */
+    sponsorOverview?: boolean
 }
 
 /**
@@ -153,6 +172,24 @@ export interface HomepageContentSlots {
 }
 
 /**
+ * A single navigation entry rendered in the site header (and mobile drawer).
+ * Conditional entries (Venue, Vote, Tickets, CFP) stay computed in core from
+ * runtime state — `NavConfig` is for the always-on links that vary per fork.
+ */
+export interface NavItem {
+    /** Internal path (e.g. "/sponsors") or absolute URL. */
+    to: string
+    /** Display label. */
+    label: string
+}
+
+/**
+ * Fork-owned ordered list of header nav entries. Core composes the venue/
+ * tickets/voting CTAs on top of these. Order is preserved.
+ */
+export type NavConfig = NavItem[]
+
+/**
  * Optional mobile app advertising. When set, /app is reachable and links to
  * the app stores. When absent, /app returns 404 (most forks don't have a
  * mobile app and shouldn't surface a dead route).
@@ -177,6 +214,8 @@ export interface ConferenceManifest {
     socials: Socials
     brand: Brand
     conferences: ConferenceConfig
+    /** Fork-owned header nav. Core appends conditional CTAs (venue/CFP/tickets/vote). */
+    nav: NavConfig
     /** Fork-supplied homepage content. Optional — sensible fallbacks exist. */
     homepage?: HomepageContentSlots
     /** Mobile app config. Omit for forks without an app — /app returns 404 then. */
