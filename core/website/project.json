@@ -84,7 +84,8 @@
             "options": {
                 "command": "react-router build",
                 "cwd": "core/website"
-            }
+            },
+            "dependsOn": ["setup"]
         },
         "test": {
             "executor": "nx:run-commands",
