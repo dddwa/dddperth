@@ -67,6 +67,13 @@ export default defineConfig({
         hmr: {
             port: 3805,
         },
+        fs: {
+            // Vite's root is website/, but @conference/* aliases point at
+            // ../conference-stub/ (standalone) or ../../conference/ (fork).
+            // Loads via ?raw / fs go through Vite's allow-list, so widen it
+            // to the repo root so cross-layer content imports aren't denied.
+            allow: [path.resolve(import.meta.dirname, '..')],
+        },
     },
     plugins: [
         // wrangler config lives in /conference-stub/wrangler/ for ddd-core

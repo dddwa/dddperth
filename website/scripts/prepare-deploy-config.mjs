@@ -15,14 +15,19 @@ if (env !== 'staging' && env !== 'production') {
 }
 
 const websiteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-// Wrangler configs live alongside theme/content/config. Forks own /conference/;
-// ddd-core standalone uses /conference-stub/. Try the fork path first.
-const conferenceCandidates = ['conference', 'conference-stub']
-const conferenceDir = conferenceCandidates
-    .map((d) => resolve(websiteRoot, '..', d))
-    .find((p) => existsSync(resolve(p, 'wrangler', `${env}.jsonc`)))
+// Wrangler configs live alongside theme/content/config. Try the most-specific
+// location first:
+//   - ddd-core standalone:  <repo-root>/conference-stub/wrangler/  (websiteRoot/..)
+//   - fork:                 <fork-root>/conference/wrangler/       (websiteRoot/../..)
+//                           fork sits at core/website/ so we need to climb two levels
+const conferenceCandidates = [
+    resolve(websiteRoot, '..', '..', 'conference'),     // fork: /<root>/conference
+    resolve(websiteRoot, '..', 'conference'),           // (defensive) sibling /conference
+    resolve(websiteRoot, '..', 'conference-stub'),      // standalone: /<root>/conference-stub
+]
+const conferenceDir = conferenceCandidates.find((p) => existsSync(resolve(p, 'wrangler', `${env}.jsonc`)))
 if (!conferenceDir) {
-    console.error(`No wrangler/${env}.jsonc found in either /conference or /conference-stub`)
+    console.error(`No wrangler/${env}.jsonc found. Tried:\n  ${conferenceCandidates.join('\n  ')}`)
     process.exit(1)
 }
 const envConfigPath = resolve(conferenceDir, 'wrangler', `${env}.jsonc`)

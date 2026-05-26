@@ -75,3 +75,4 @@ conference-stub/wrangler/.dev.vars
 qa
 
 .nx/self-healing
+conference-stub/wrangler/.wrangler/

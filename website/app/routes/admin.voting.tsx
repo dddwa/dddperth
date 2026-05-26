@@ -242,7 +242,7 @@ export default function AdminVoting() {
 
                 <Flex gap="6" direction={{ base: 'column', md: 'row' }}>
                     <Box flex="1">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Status
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium" textTransform="capitalize">
@@ -251,7 +251,7 @@ export default function AdminVoting() {
                     </Box>
 
                     <Box flex="1">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Total Voting Sessions
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -261,7 +261,7 @@ export default function AdminVoting() {
 
                     {conferenceState.talkVoting.state === 'open' && (
                         <Box flex="1">
-                            <styled.p fontSize="sm" color="text.secondary" mb="1">
+                            <styled.p fontSize="sm" color="admin.600" mb="1">
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
@@ -278,7 +278,7 @@ export default function AdminVoting() {
                     {conferenceState.talkVoting.state === 'not-open-yet' && conferenceState.talkVoting.opens && (
                         <>
                             <Box flex="1">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -291,7 +291,7 @@ export default function AdminVoting() {
                                 </styled.p>
                             </Box>
                             <Box flex="1">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -314,10 +314,10 @@ export default function AdminVoting() {
                 </styled.h2>
 
                 {votingState === 'closed' ? (
-                    <styled.p color="text.secondary">Voting has closed for this conference.</styled.p>
+                    <styled.p color="admin.600">Voting has closed for this conference.</styled.p>
                 ) : votingState === 'not-open-yet' ? (
                     <Box>
-                        <styled.p color="text.secondary" mb="4">
+                        <styled.p color="admin.600" mb="4">
                             Voting hasn't opened yet, but as an admin you can jump forward in time to start voting.
                         </styled.p>
                         <Flex gap="4">
@@ -340,7 +340,7 @@ export default function AdminVoting() {
                     </Box>
                 ) : (
                     <Box>
-                        <styled.p color="text.secondary" mb="4">
+                        <styled.p color="admin.600" mb="4">
                             Voting is currently open.
                         </styled.p>
                         <Flex gap="4" alignItems="flex-start">
@@ -435,7 +435,7 @@ export default function AdminVoting() {
                                 {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
                             </Button>
 
-                            <styled.span fontSize="sm" color="text.secondary">
+                            <styled.span fontSize="sm" color="admin.600">
                                 {underrepresentedGroups.selectedGroups.length} of{' '}
                                 {underrepresentedGroups.availableGroups.length} groups selected
                             </styled.span>
@@ -449,7 +449,7 @@ export default function AdminVoting() {
                     Voting Validation
                 </styled.h2>
 
-                <styled.p color="text.secondary" mb="4">
+                <styled.p color="admin.600" mb="4">
                     Run validation to calculate statistics for all talks based on voting data. This process analyzes how
                     many times each talk has been seen and voted for.
                 </styled.p>
@@ -467,7 +467,7 @@ export default function AdminVoting() {
                     </Form>
 
                     {validationRuns.isRunning && validationRuns.runs[0]?.status === 'running' && (
-                        <styled.span color="text.secondary" alignSelf="center">
+                        <styled.span color="admin.600" alignSelf="center">
                             Progress: {validationRuns.runs[0].percentComplete}% (
                             {validationRuns.runs[0].processedSessions}/{validationRuns.runs[0].totalSessions} sessions)
                         </styled.span>
