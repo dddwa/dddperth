@@ -5,7 +5,7 @@
  * Downstream forks should create their own theme file based on this structure.
  */
 
-import { defineTheme } from '../../website/themes/theme-builder'
+import { defineTheme } from '../../core/website/themes/theme-builder'
 
 export const dddPerthTheme = defineTheme({
   colors: {

@@ -39,13 +39,7 @@ export default [
                 'error',
                 {
                     enforceBuildableLibDependency: true,
-                    // The fork's /conference/ legitimately imports the
-                    // defineTheme helper from /core/website/themes/. It's a
-                    // typed identity function for theme config (not website
-                    // runtime code), but lives there for upstream reasons.
-                    // Allow this specific path until defineTheme moves to
-                    // @ddd/conference-config.
-                    allow: ['^.*/core/website/themes/theme-builder$'],
+                    allow: [],
                     depConstraints: [
                         {
                             sourceTag: '*',

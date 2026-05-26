@@ -7,7 +7,7 @@
  * stay readable as foreground on light backgrounds (WCAG AA targeted).
  */
 
-import { defineTheme } from '../../website/themes/theme-builder'
+import { defineTheme } from '../../core/website/themes/theme-builder'
 
 export const dddPerthLightTheme = defineTheme({
   colors: {
