@@ -371,7 +371,7 @@ export default function VotingValidationStats() {
                         <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
                             Validation Run Details
                         </styled.h2>
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Run ID:{' '}
                             <styled.code fontSize="xs" bg="admin.100" px="1" borderRadius="sm">
                                 {runId}
@@ -379,14 +379,14 @@ export default function VotingValidationStats() {
                         </styled.p>
                         {runDetails && (
                             <>
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
                                     {DateTime.fromISO(runDetails.startedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
                                 {runDetails.completedAt && (
-                                    <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                    <styled.p fontSize="sm" color="admin.600" mb="1">
                                         Completed:{' '}
                                         {DateTime.fromISO(runDetails.completedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                                             DateTime.DATETIME_SHORT,
@@ -394,7 +394,7 @@ export default function VotingValidationStats() {
                                         )}
                                     </styled.p>
                                 )}
-                                <styled.p fontSize="sm" color="text.secondary">
+                                <styled.p fontSize="sm" color="admin.600">
                                     Status:{' '}
                                     <styled.span
                                         px="2"
@@ -423,7 +423,7 @@ export default function VotingValidationStats() {
 
                                 <Flex gap="6" direction={{ base: 'column', md: 'row' }} mt="3">
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                        <styled.p fontSize="sm" color="admin.600" mb="1">
                                             Sessions Processed
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -432,7 +432,7 @@ export default function VotingValidationStats() {
                                     </Box>
 
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                        <styled.p fontSize="sm" color="admin.600" mb="1">
                                             Total Rounds
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -441,7 +441,7 @@ export default function VotingValidationStats() {
                                     </Box>
 
                                     <Box flex="1">
-                                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                        <styled.p fontSize="sm" color="admin.600" mb="1">
                                             Total Votes
                                         </styled.p>
                                         <styled.p fontSize="lg" fontWeight="medium">
@@ -617,7 +617,7 @@ export default function VotingValidationStats() {
                                                 p="2"
                                                 border="admin-subtle"
                                                 fontSize="xs"
-                                                color="text.secondary"
+                                                color="admin.600"
                                             >
                                                 {sessionizeTalk?.speakers.map((speaker) => speaker.name).join(', ') ||
                                                     'Unknown Speaker'}
@@ -676,7 +676,7 @@ export default function VotingValidationStats() {
                         </styled.table>
                     </Box>
 
-                    <styled.p fontSize="sm" color="text.secondary" mt="4">
+                    <styled.p fontSize="sm" color="admin.600" mt="4">
                         Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted.
                         For talks with the same rank, speakers from underrepresented groups (URG) are prioritized.
                     </styled.p>
@@ -690,7 +690,7 @@ export default function VotingValidationStats() {
                     </styled.h2>
 
                     <Box>
-                        <styled.label fontSize="sm" color="text.secondary" mb="1" display="block">
+                        <styled.label fontSize="sm" color="admin.600" mb="1" display="block">
                             Version Filter
                         </styled.label>
                         <styled.select
@@ -722,7 +722,7 @@ export default function VotingValidationStats() {
 
                         <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="4">
                             <Box flex="1" minW="[150px]">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Mean Appearances
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -731,7 +731,7 @@ export default function VotingValidationStats() {
                             </Box>
 
                             <Box flex="1" minW="[150px]">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Standard Deviation
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -740,12 +740,12 @@ export default function VotingValidationStats() {
                             </Box>
 
                             <Box flex="1" minW="[150px]">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Gini Coefficient
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
                                     {fairnessMetrics[versionFilter].giniCoefficient.toFixed(3)}
-                                    <styled.span fontSize="sm" color="text.secondary" ml="1">
+                                    <styled.span fontSize="sm" color="admin.600" ml="1">
                                         (
                                         {fairnessMetrics[versionFilter].giniCoefficient < 0.2
                                             ? 'Fair'
@@ -758,7 +758,7 @@ export default function VotingValidationStats() {
                             </Box>
 
                             <Box flex="1" minW="[150px]">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     CV (Variation)
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
@@ -767,7 +767,7 @@ export default function VotingValidationStats() {
                             </Box>
 
                             <Box flex="1" minW="[150px]">
-                                <styled.p fontSize="sm" color="text.secondary" mb="1">
+                                <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Distribution
                                 </styled.p>
                                 <styled.p
@@ -782,7 +782,7 @@ export default function VotingValidationStats() {
                             </Box>
                         </Flex>
 
-                        <styled.p fontSize="sm" color="text.secondary" mb="6">
+                        <styled.p fontSize="sm" color="admin.600" mb="6">
                             <strong>Interpretation:</strong> Lower Gini coefficient and CV indicate fairer distribution.
                             A Gini coefficient below 0.2 suggests good fairness, while above 0.4 indicates significant
                             inequality.
@@ -792,7 +792,7 @@ export default function VotingValidationStats() {
 
                 <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="6">
                     <Box flex="1" minW="[120px]">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Talks with Votes
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -801,7 +801,7 @@ export default function VotingValidationStats() {
                     </Box>
 
                     <Box flex="1" minW="[120px]">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Total Votes
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -810,7 +810,7 @@ export default function VotingValidationStats() {
                     </Box>
 
                     <Box flex="1" minW="[120px]">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Times Seen (Avg)
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -819,7 +819,7 @@ export default function VotingValidationStats() {
                     </Box>
 
                     <Box flex="1" minW="[120px]">
-                        <styled.p fontSize="sm" color="text.secondary" mb="1">
+                        <styled.p fontSize="sm" color="admin.600" mb="1">
                             Range (Min - Max)
                         </styled.p>
                         <styled.p fontSize="lg" fontWeight="medium">
@@ -828,7 +828,7 @@ export default function VotingValidationStats() {
                     </Box>
                 </Flex>
 
-                <styled.p fontSize="sm" color="text.secondary" mb="2">
+                <styled.p fontSize="sm" color="admin.600" mb="2">
                     Click on column headers to sort the data. Use the distribution metrics above to assess voting
                     fairness.
                 </styled.p>
@@ -951,7 +951,7 @@ export default function VotingValidationStats() {
                 </Box>
 
                 {talks.length === 0 && (
-                    <styled.p textAlign="center" py="8" color="text.secondary">
+                    <styled.p textAlign="center" py="8" color="admin.600">
                         No statistics available for this validation run.
                     </styled.p>
                 )}

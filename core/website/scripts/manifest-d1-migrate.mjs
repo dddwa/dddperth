@@ -69,7 +69,11 @@ const conferenceDir = dirname(manifestPath)
 const wranglerConfig = resolve(conferenceDir, 'wrangler', `${env}.jsonc`)
 const args = ['wrangler', 'd1', 'migrations', 'apply', dbName, '-c', wranglerConfig]
 if (env === 'local') {
-    args.push('--local')
+    // Wrangler defaults --persist-to to .wrangler/state next to the *config*
+    // file, but @cloudflare/vite-plugin reads from .wrangler/state next to
+    // the *Vite root* (website/). Pin both to the website root so the dev
+    // server sees migrations applied here.
+    args.push('--local', '--persist-to', resolve(websiteRoot, '.wrangler/state'))
 } else {
     args.push('--remote')
 }

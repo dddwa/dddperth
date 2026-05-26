@@ -136,9 +136,7 @@ Then apply user choices:
 
 ### 6. Point core at the fork's /conference/
 
-ddd-core ships with its `@conference/*` aliases pointing at `../conference-stub/` so it can build standalone. In a fork, those aliases need to point at the fork's own `/conference/` (which is two levels up from `core/website/`).
-
-Three files inside `core/` need editing:
+ddd-core ships configured for standalone use: `@conference/*` aliases point at `../conference-stub/`, `cwd`s in project.json are `"website"`, and the repo has its own root configs (`nx.json`, `eslint.config.mjs`, `tsconfig.base.json`). In a fork, several of these need to change so core resolves the fork's `/conference/` (two levels up from `core/website/`) and so Nx/ESLint find the fork-root workspace rather than the embedded core one.
 
 **`core/website/tsconfig.json`** — change the four `@conference/*` paths from `../conference-stub/...` to `../../conference/...`:
 
@@ -162,18 +160,35 @@ cloudflare({
 }),
 ```
 
-These edits happen inside `core/` but **don't conflict with future `git subtree pull`s** as long as core's defaults stay pointing at `conference-stub`. If upstream ever changes the alias structure, the user will get a one-time merge conflict during `/pull-upstream` and fix it by re-applying these path overrides.
+**`core/website/project.json`** — rewrite all `"cwd": "website"` entries to `"cwd": "core/website"` (15 occurrences) and fix the two wrangler config paths:
 
-> An alternative would be a fork-root `tsconfig.json` that overrides the paths and a `vite.config.ts` shim that re-exports core's. That avoids touching `core/` files but adds two indirection files at fork root. The direct edit is simpler and the conflict surface is small.
+```bash
+sed -i '' 's|"cwd": "website"|"cwd": "core/website"|g' core/website/project.json
+sed -i '' 's|../conference-stub/wrangler/local.jsonc|../../conference/wrangler/local.jsonc|g' core/website/project.json
+```
+
+**Delete `core/nx.json`** — when Nx or ESLint tools start from inside `core/website/`, they walk up looking for `nx.json`. If `core/nx.json` exists they pick that up before reaching the fork-root `nx.json` and load a workspace pointing at `core/website` only, which crashes the `@nx/nx-plugin-checks` rule and breaks every nx command run from the fork root. Delete it once at fork-shape time:
+
+```bash
+rm core/nx.json
+```
+
+Other in-core root configs (`core/eslint.config.mjs`, `core/tsconfig.base.json`, `core/package.json`, `core/pnpm-workspace.yaml`, `core/vitest.workspace.ts`, `core/tsconfig.json`) **must stay** — files inside `core/` reference them with relative paths (e.g. `core/website/eslint.config.mjs` does `import '../eslint.config.mjs'`).
+
+These edits happen inside `core/` but **don't conflict with future `git subtree pull`s** as long as core's upstream defaults don't change. If upstream ever moves the path aliases or renames project.json targets, the user will get a one-time merge conflict during `/pull-upstream` and fix it by re-applying these overrides. Step 7's `.gitattributes` keeps `core/nx.json` deleted across pulls.
+
+> An alternative would be a fork-root `tsconfig.json` that overrides the paths and a `vite.config.ts` shim that re-exports core's. That avoids touching `core/` files but adds indirection at fork root, and doesn't help with the project.json cwd or nx.json collision. The direct edits are simpler and the conflict surface is small.
 
 ### 7. Write the workspace files at fork root
 
-These five files don't have stub equivalents because they live at the fork's *root*, not inside `/conference/`. Generate them inline:
+These files don't have stub equivalents because they live at the fork's *root*, not inside `/conference/`. Generate them inline:
 
 - `package.json` — minimal, scripts proxy to core
 - `pnpm-workspace.yaml` — `core/website`, `core/libs/*`, `conference`
 - `tsconfig.json` — extends `core/tsconfig.base.json`, overrides `@conference/*` paths to point at the fork's `./conference/*`
-- `.gitattributes` — `core/conference-stub/** merge=ours` so upstream pulls never bring stub changes into a fork
+- `eslint.config.mjs` — re-exports core's config plus the fork-specific `enforce-module-boundaries` allow rule (see below)
+- `.gitattributes` — keeps stub + nx.json out of subtree pulls (see below)
+- `.nxignore` — excludes embedded core's stub + package.json from Nx project discovery (see below)
 - `FORK_GUIDE.md` — manual checklist (Cloudflare account, D1 IDs, replace placeholder logos in core/website/public/images/sponsors/, etc.)
 
 Inline content for these files (substitute `{{SLUG}}`, `{{NAME}}`, etc.):
@@ -211,8 +226,42 @@ packages:
 
 **`.gitattributes`**:
 ```
+# The fork uses its own /conference/, so ignore upstream changes to the stub.
 core/conference-stub/** merge=ours
+
+# core/nx.json competes with the fork-root nx.json when tools walk up from
+# inside core/website/ to find the workspace root. We delete it at fork-shape
+# time (step 6); merge=ours keeps it deleted across future subtree pulls.
+core/nx.json merge=ours
 ```
+
+**`.nxignore`**:
+```
+# conference-stub is the reference conference shipped with ddd-core for its
+# standalone build. The fork uses /conference/ instead — exclude the stub.
+core/conference-stub
+
+# core/ is the subtree root: its package.json defines @ddd-core/source which
+# Nx would otherwise pick up as a project.
+core/package.json
+```
+
+**`eslint.config.mjs`** — the fork's themes import `defineTheme` from `core/website/themes/theme-builder` via a relative path that crosses Nx project boundaries. Copy `core/eslint.config.mjs` to the fork root and add the `allow` entry to the `@nx/enforce-module-boundaries` rule:
+
+```js
+'@nx/enforce-module-boundaries': [
+    'error',
+    {
+        enforceBuildableLibDependency: true,
+        allow: ['^.*/core/website/themes/theme-builder$'],
+        depConstraints: [
+            { sourceTag: '*', onlyDependOnLibsWithTags: ['*'] },
+        ],
+    },
+],
+```
+
+(A future cleanup would move `defineTheme` into `@ddd/conference-config` so themes don't cross project boundaries — then the allow rule and this whole eslint duplication go away.)
 
 **`FORK_GUIDE.md`** — a checklist. Key items:
 - Replace placeholder D1 database IDs in `conference/wrangler/{staging,production}.jsonc` after creating real Cloudflare D1 databases

@@ -18,7 +18,7 @@ export default function AdminContent() {
                     🚧
                 </styled.div>
 
-                <styled.h2 fontSize="2xl" fontWeight="semibold" mb="4" color="gray.12">
+                <styled.h2 fontSize="2xl" fontWeight="semibold" mb="4" color="admin.900">
                     Content Management Coming Soon
                 </styled.h2>
 

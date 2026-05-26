@@ -12,7 +12,8 @@
         {
             "binding": "DB",
             "database_name": "devconf-example-voting-staging",
-            "database_id": "replace-me-staging-d1-id"
+            "database_id": "replace-me-staging-d1-id",
+            "migrations_dir": "../../website/migrations"
         }
     ],
 
