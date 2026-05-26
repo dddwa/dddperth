@@ -24,10 +24,12 @@ const websiteRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // Resolve the conference folder. Try the most-specific location first:
 //   - fork:                  <fork-root>/conference/    (websiteRoot is core/website/, climb two)
 //   - ddd-core standalone:   <repo-root>/conference-stub/  (websiteRoot is website/, climb one)
+// d1DatabaseName lives in build-manifest.ts (per-env deployment config), not
+// the runtime manifest.
 const manifestCandidates = [
-    resolve(websiteRoot, '..', '..', 'conference', 'manifest.ts'),    // fork
-    resolve(websiteRoot, '..', 'conference', 'manifest.ts'),          // (defensive) sibling
-    resolve(websiteRoot, '..', 'conference-stub', 'manifest.ts'),     // standalone
+    resolve(websiteRoot, '..', '..', 'conference', 'build-manifest.ts'),    // fork
+    resolve(websiteRoot, '..', 'conference', 'build-manifest.ts'),          // (defensive) sibling
+    resolve(websiteRoot, '..', 'conference-stub', 'build-manifest.ts'),     // standalone
 ]
 const manifestPath = manifestCandidates.find((p) => {
     try {
@@ -61,7 +63,8 @@ const dbName = fieldMatch[1]
 
 // Derive the wrangler dir from the same conference folder we resolved the
 // manifest from, so core standalone uses conference-stub/wrangler and forks
-// use their own conference/wrangler.
+// use their own conference/wrangler. The wrangler config itself sets
+// migrations_dir to point at <website>/migrations.
 const conferenceDir = dirname(manifestPath)
 const wranglerConfig = resolve(conferenceDir, 'wrangler', `${env}.jsonc`)
 const args = ['wrangler', 'd1', 'migrations', 'apply', dbName, '-c', wranglerConfig]

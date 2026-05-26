@@ -9,7 +9,8 @@
         {
             "binding": "DB",
             "database_name": "dddperth-voting-prod",
-            "database_id": "cdca3dcc-d6e6-4588-86d0-da6b0579a10b"
+            "database_id": "cdca3dcc-d6e6-4588-86d0-da6b0579a10b",
+            "migrations_dir": "../../core/website/migrations"
         }
     ],
 
