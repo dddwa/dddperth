@@ -73,3 +73,4 @@ conference/wrangler/.dev.vars
 qa
 
 .nx/self-healing
+conference/wrangler/.wrangler/

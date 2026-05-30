@@ -14,7 +14,8 @@
         {
             "binding": "DB",
             "database_name": "devconf-example-voting-local",
-            "database_id": "local"
+            "database_id": "local",
+            "migrations_dir": "../../website/migrations"
         }
     ],
 

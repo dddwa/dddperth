@@ -242,8 +242,8 @@ export default function AdminSettings() {
                     </Flex>
                 )}
 
-                <Box mt="6" p="4" bg="gray.2" borderRadius="md" fontSize="sm">
-                    <styled.p fontWeight="medium" mb="2">
+                <Box mt="6" p="4" bg="admin.100" borderRadius="md" fontSize="sm" color="admin.700">
+                    <styled.p fontWeight="medium" mb="2" color="admin.900">
                         Note:
                     </styled.p>
                     <styled.ul pl="5" listStyleType="disc">
@@ -277,7 +277,7 @@ export default function AdminSettings() {
 
                 {(!announcement || !announcement.isActive) && (
                     <Box mb="6" p="4" bg="admin.100" borderRadius="md" fontSize="sm">
-                        <styled.p color="text.secondary">
+                        <styled.p color="admin.700">
                             No active announcement
                         </styled.p>
                     </Box>
@@ -346,8 +346,8 @@ export default function AdminSettings() {
                     </Flex>
                 </Form>
 
-                <Box mt="6" p="4" bg="gray.2" borderRadius="md" fontSize="sm">
-                    <styled.p fontWeight="medium" mb="2">
+                <Box mt="6" p="4" bg="admin.100" borderRadius="md" fontSize="sm" color="admin.700">
+                    <styled.p fontWeight="medium" mb="2" color="admin.900">
                         Note:
                     </styled.p>
                     <styled.ul pl="5" listStyleType="disc">
@@ -365,7 +365,7 @@ export default function AdminSettings() {
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                         Quick Jump to Important Dates ({year})
                     </styled.h2>
-                    <styled.p fontSize="sm" color="text.secondary" mb="4">
+                    <styled.p fontSize="sm" color="admin.600" mb="4">
                         Click any button below to instantly jump to that date/time for testing purposes:
                     </styled.p>
                     <VStack gap="3" alignItems="stretch">
