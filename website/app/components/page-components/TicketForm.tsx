@@ -24,6 +24,11 @@ export function TitoTicketForm({ accountId, eventId }: { eventId: string; accoun
     useEffect(() => {
         if (status === 'ready' && typeof tito !== 'undefined') {
             tito('widget.mount', { el: '#tito-widget', event: `${accountId}/${eventId}` })
+            tito('on:registration:finished', (data: { slug?: string } & Record<string, unknown>) => {
+                if (data?.slug) {
+                    localStorage.setItem('tito:registration', JSON.stringify({ slug: data.slug }))
+                }
+            })
         }
     }, [accountId, eventId, status])
 

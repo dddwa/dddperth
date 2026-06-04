@@ -54,6 +54,10 @@ declare module "safe-routes" {
       params: {'year': string | number; 'sessionId': string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId').SearchParams>,
     },
+    "/api/tito-registration": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.tito-registration').SearchParams>,
+    },
     "/api/voting/batch": {
       params: never,
       query: ExportedQuery<import('app/routes/api.voting.batch').SearchParams>,
@@ -118,6 +122,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt]').SearchParams>,
     },
+    "/share": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.share').SearchParams>,
+    },
     "/sitemap.xml": {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml]').SearchParams>,
@@ -145,6 +153,7 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
+            | 'routes/api.tito-registration'
             | 'routes/auth.github.callback'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
@@ -168,6 +177,7 @@ declare module "safe-routes" {
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
+            | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
             | 'routes/admin'
