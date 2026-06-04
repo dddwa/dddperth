@@ -37,6 +37,7 @@ export interface AppConfig {
 
     tito: {
         securityToken?: string
+        apiToken?: string
     }
 
     jira: {

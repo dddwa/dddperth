@@ -121,6 +121,11 @@ function TitoMount({ accountId, eventId }: { accountId: string; eventId: string 
         `
         host.appendChild(mountPoint)
         window.tito('widget.mount', { el: `#${mountPoint.id}`, event: `${accountId}/${eventId}` })
+        window.tito('on:registration:finished', (data: { slug?: string } & Record<string, unknown>) => {
+            if (data?.slug) {
+                localStorage.setItem('tito:registration', JSON.stringify({ slug: data.slug }))
+            }
+        })
 
         // Tito's widget.mount lazy-loads a chunk and then resolves the el via
         // document.querySelector. If we're torn down before that resolution
