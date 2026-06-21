@@ -121,3 +121,5 @@ Check out [Nx Console extensions](https://nx.dev/nx-console) for VSCode, Intelli
 ### Project Graph
 
 Run `nx graph` to visualize the workspace dependency graph.
+
+<end of file>
