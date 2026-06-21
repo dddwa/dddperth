@@ -51,7 +51,7 @@ export default defineConfig({
                 ],
             },
             build: {
-                rollupOptions: {
+                rolldownOptions: {
                     // @cloudflare/vite-plugin's output-config asserts an entry
                     // chunk named "index" exists in the SSR bundle. RR7's default
                     // input is a string (`virtual:react-router/server-build`),
