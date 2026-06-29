@@ -306,9 +306,6 @@ importers:
       '@cloudflare/vite-plugin':
         specifier: ^1.42.1
         version: 1.42.1(vite@8.0.16(@types/node@26.0.0)(esbuild@0.28.1)(jiti@1.21.7)(less@4.2.2)(sass@1.85.1)(stylus@0.64.0)(terser@5.39.0)(tsx@4.22.3)(yaml@2.9.0))(workerd@1.20260617.1)(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1))
-      '@cloudflare/workers-types':
-        specifier: ^4.20260621.1
-        version: 4.20260621.1
       vite:
         specifier: ^8.0.16
         version: 8.0.16(@types/node@26.0.0)(esbuild@0.28.1)(jiti@1.21.7)(less@4.2.2)(sass@1.85.1)(stylus@0.64.0)(terser@5.39.0)(tsx@4.22.3)(yaml@2.9.0)
@@ -8638,7 +8635,8 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260617.1':
     optional: true
 
-  '@cloudflare/workers-types@4.20260621.1': {}
+  '@cloudflare/workers-types@4.20260621.1':
+    optional: true
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:

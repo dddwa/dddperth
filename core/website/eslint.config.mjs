@@ -86,7 +86,6 @@ export default [
                     ignoredDependencies: [
                         'vite',
                         '@react-router/dev',
-                        '@react-router/cloudflare',
                         '@pandacss/dev',
                         '@park-ui/panda-preset',
                         'pandacss-preset-typography',

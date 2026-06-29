@@ -52,9 +52,24 @@
                 "cwd": "core/website"
             }
         },
+        "setup-cf-types": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm exec wrangler types -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website"
+            }
+        },
         "setup": {
             "executor": "nx:noop",
-            "dependsOn": ["setup-panda", "setup-react-router"]
+            "dependsOn": ["setup-panda", "setup-react-router", "setup-safe-routes", "setup-cf-types"]
+        },
+        "typecheck": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "tsc --noEmit",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
         },
         "dev": {
             "executor": "nx:run-commands",
