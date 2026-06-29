@@ -49,12 +49,12 @@ export function Hero({
                         <Flex
                             className={`paragraph-wrapper`}
                             direction="column"
-                            fontSize={{ base: 'xl', md: '2xl' }}
+                            fontSize={{ base: 'lg', md: 'xl' }}
                             fontWeight="medium"
                             color="text.primary"
                             gap="4"
                             pt="6"
-                            maxWidth="3xl"
+                            maxWidth="4xl"
                         >
                             <HeroBlurb conferenceState={conferenceState} />
                             <p>

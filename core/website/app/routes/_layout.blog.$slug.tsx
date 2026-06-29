@@ -1,11 +1,12 @@
+import { conferenceManifest } from '@conference/manifest'
 import { useRef } from 'react'
 import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
-import { conferenceManifest } from '@conference/manifest'
 import type { BlogAuthor } from '~/lib/authors.server'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
+import { getConferenceState, getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/_layout.blog.$slug'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -14,7 +15,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await context.services.content.getPage(slug, 'blog')
+    const post = await getServices(context).content.getPage(slug, 'blog')
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
@@ -24,7 +25,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             siteUrl,
             frontmatter: post.frontmatter,
             slug: post.slug,
-            conferenceState: context.conferenceState,
+            conferenceState: getConferenceState(context),
             blogAuthors: getValidAuthorNames(post.frontmatter.authors ?? [])
                 .map(getAuthor)
                 .filter((a): a is BlogAuthor => !!a),
@@ -39,7 +40,7 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 }
 
 export function meta(args: Route.MetaArgs) {
-    const { data, params } = args
+    const { loaderData: data, params } = args
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
 

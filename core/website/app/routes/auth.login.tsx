@@ -2,19 +2,20 @@ import { data, Form, redirect, useActionData, useLoaderData, useNavigation, useS
 import { getUser } from '~/lib/auth.server'
 import { isValidEmail, sanitiseRedirect } from '~/lib/auth/validation'
 import { recordException } from '~/lib/record-exception'
+import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
 
 const REDIRECT_PARAM = 'redirectTo'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const user = await getUser(request.headers, context.services)
+    const user = await getUser(request.headers, getServices(context))
     if (user) {
         const url = new URL(request.url)
         const redirectTo = sanitiseRedirect(url.searchParams.get(REDIRECT_PARAM))
         throw redirect(redirectTo)
     }
-    return data({ canSendEmail: context.services.email.canSend() })
+    return data({ canSendEmail: getServices(context).email.canSend() })
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -33,7 +34,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         // sendMagicLink checks the allowlist itself and is a no-op for
         // unallowlisted addresses. We always respond with "check your inbox"
         // either way, so the form can't be used to probe who has access.
-        await context.services.auth.sendMagicLink({
+        await getServices(context).auth.sendMagicLink({
             email,
             redirectTo,
             requestUrl: new URL(request.url).origin,
@@ -68,7 +69,16 @@ export default function Login() {
                         its way. The link expires in 15 minutes.
                     </styled.p>
                     {!canSendEmail && (
-                        <Box mt="4" p="3" bg="status.info.bg" border="default" borderColor="status.info.border" borderRadius="md" color="status.info.fg" fontSize="sm">
+                        <Box
+                            mt="4"
+                            p="3"
+                            bg="status.info.bg"
+                            border="default"
+                            borderColor="status.info.border"
+                            borderRadius="md"
+                            color="status.info.fg"
+                            fontSize="sm"
+                        >
                             Email isn't configured in this environment. Check the server console for the magic link.
                         </Box>
                     )}
@@ -151,4 +161,3 @@ export default function Login() {
         </Flex>
     )
 }
-

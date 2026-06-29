@@ -9,30 +9,31 @@ import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { Hero } from '../components/hero/hero'
 import { SkipToContent } from '../components/skip-to-content'
 import type { Route } from './+types/_layout._index'
+import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     const heroSponsors = resolveSponsorsWithFallback(
-        context.conferenceState.conference.year,
-        context.conferenceState.conference.sponsors,
+        getConferenceState(context).conference.year,
+        getConferenceState(context).conference.sponsors,
     )
 
     return data(
         {
-            currentDate: context.dateTimeProvider.nowDate().toISO(),
-            conferenceDate: context.conferenceState.conference.date,
+            currentDate: getDateTimeProvider(context).nowDate().toISO(),
+            conferenceDate: getConferenceState(context).conference.date,
             importantDates,
             heroSponsors,
             // Passed separately so the "Sponsor 2026" CTA always names the
             // *current* conference year, not the year the fallback came from.
-            currentYear: context.conferenceState.conference.year,
-            conferenceState: context.conferenceState,
+            currentYear: getConferenceState(context).conference.year,
+            conferenceState: getConferenceState(context),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
     )

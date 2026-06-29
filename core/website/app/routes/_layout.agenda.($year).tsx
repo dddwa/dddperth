@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Fragment } from 'react'
 import { data, redirect, useLoaderData } from 'react-router'
@@ -5,15 +6,15 @@ import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
-import { conferenceManifest } from '@conference/manifest'
+import { PageLayout } from '~/components/page-layout'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
 import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
+import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import { PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.agenda.($year)'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
@@ -22,16 +23,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
 
     const year =
-        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
+        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, context.config)
+    const yearConfig = getYearConfig(year, getConfig(context))
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
-    const now = context.dateTimeProvider.nowDate()
+    const now = getDateTimeProvider(context).nowDate()
     const agendaPublished = conferenceYearConfig
         ? (conferenceYearConfig.agendaPublishedDateTime
               ? now >= conferenceYearConfig.agendaPublishedDateTime
-              : false) || (!!conferenceYearConfig.conferenceDate && now >= conferenceYearConfig.conferenceDate)
+              : false) ||
+          (!!conferenceYearConfig.conferenceDate && now >= conferenceYearConfig.conferenceDate)
         : false
 
     const schedules: TypeOf<typeof gridSmartSchema> =
@@ -117,9 +119,7 @@ export default function Agenda() {
     ) : (
         <PageLayout>
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
-                {conferenceManifest.public.features?.sponsorOverview ? (
-                    <SponsorOverview sponsors={sponsors} />
-                ) : null}
+                {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
                 <Box
                     color="text.secondary"
                     p="1"
@@ -180,7 +180,7 @@ export default function Agenda() {
                                     gridColumn="times"
                                     style={{ gridRow: `time-${timeSlotSimple}` }}
                                     mt="2"
-                                    xl={{ mt: "0" }}
+                                    xl={{ mt: '0' }}
                                     fontSize={{ base: 'sm', md: 'md' }}
                                     fontWeight="semibold"
                                     color="text.secondary"
@@ -253,8 +253,8 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
             xl={{
                 display: 'block',
                 position: 'sticky',
-                top: "4",
-                zIndex: "modal",
+                top: '4',
+                zIndex: 'modal',
             }}
         >
             {room.name}
@@ -381,7 +381,7 @@ function RoomTimeSlot({
         <styled.div
             key={room.id}
             marginBottom="0"
-            xl={{ marginBottom: "1" }}
+            xl={{ marginBottom: '1' }}
             style={{
                 gridRow: `time-${timeSlotSimple} / time-${earliestEnd}`,
                 gridColumn: gridColumn,
@@ -395,7 +395,7 @@ function RoomTimeSlot({
                 padding="2"
                 mt="2"
                 xl={{
-                    mt: "0",
+                    mt: '0',
                 }}
             >
                 <styled.h3
@@ -449,7 +449,14 @@ function RoomTimeSlot({
                     {startTime12} - {endTime12}
                 </styled.span>
                 {fullSession?.isServiceSession ? null : (
-                    <Flex alignItems="center" gap="2" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" fontSize={{ base: 'xs', xl: 'sm' }}>
+                    <Flex
+                        alignItems="center"
+                        gap="2"
+                        color="text.secondary"
+                        textOverflow="ellipsis"
+                        textWrap="nowrap"
+                        fontSize={{ base: 'xs', xl: 'sm' }}
+                    >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 16 16"

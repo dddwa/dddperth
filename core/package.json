@@ -62,8 +62,8 @@
     "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
     "dependencies": {
         "@pandacss/preset-panda": "^1.11.1",
-        "@react-router/dev": "^7.15.1",
-        "@react-router/fs-routes": "^7.15.1",
+        "@react-router/dev": "^8.0.1",
+        "@react-router/fs-routes": "^8.0.1",
         "@svgr/plugin-jsx": "^8.1.0",
         "@svgr/plugin-svgo": "^8.1.0",
         "eslint-plugin-import": "^2.32.0",

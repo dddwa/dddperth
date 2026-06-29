@@ -1,11 +1,12 @@
-import { Feed } from 'feed'
 import { conferenceManifest } from '@conference/manifest'
+import { Feed } from 'feed'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/blog.rss[.xml]'
 
 export async function loader({ context }: Route.LoaderArgs) {
     const blogUrl = `https://${conferenceManifest.brand.domain}/blog`
-    const posts = await context.services.content.getPagesList('blog')
+    const posts = await getServices(context).content.getPagesList('blog')
 
     const feed = new Feed({
         id: blogUrl,

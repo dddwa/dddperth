@@ -1,7 +1,8 @@
+import { conferenceManifest } from '@conference/manifest'
 import * as React from 'react'
 import { data, Link, useLoaderData } from 'react-router'
-import { conferenceManifest } from '@conference/manifest'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/_layout.blog._index'
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -9,18 +10,18 @@ export async function loader({ context }: Route.LoaderArgs) {
         {
             conferenceName: conferenceManifest.public.name,
             blogDescription: conferenceManifest.public.blogDescription,
-            posts: await context.services.content.getPagesList('blog'),
+            posts: await getServices(context).content.getPagesList('blog'),
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )
 }
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ loaderData }: Route.MetaArgs) {
     return [
-        { title: data.conferenceName + ' Blog' },
+        { title: loaderData.conferenceName + ' Blog' },
         {
             name: 'description',
-            content: data.blogDescription,
+            content: loaderData.blogDescription,
         },
     ]
 }

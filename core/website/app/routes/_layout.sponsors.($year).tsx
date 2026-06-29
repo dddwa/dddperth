@@ -1,12 +1,13 @@
+import { conferenceManifest } from '@conference/manifest'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
-import { conferenceManifest } from '@conference/manifest'
-import { CACHE_CONTROL } from '~/lib/http.server'
+import { PageLayout } from '~/components/page-layout'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import { CACHE_CONTROL } from '~/lib/http.server'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, styled } from '~/styled-system/jsx'
-import { PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.sponsors.($year)'
 
 export async function loader({ params, context }: Route.LoaderArgs) {
@@ -15,9 +16,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
 
     const year =
-        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : context.conferenceState.conference.year
+        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, context.config)
+    const yearConfig = getYearConfig(year, getConfig(context))
     const sponsors = yearConfig.kind === 'conference' ? yearConfig.sponsors : {}
 
     const conferences = Object.values(conferenceManifest.conferences.conferences)
@@ -28,8 +29,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         .sort((a, b) => parseInt(a.year) - parseInt(b.year))
 
     const stillAcceptingSponsors =
-        year === context.conferenceState.conference.year &&
-        context.conferenceState.conferenceState === 'before-conference'
+        year === getConferenceState(context).conference.year &&
+        getConferenceState(context).conferenceState === 'before-conference'
 
     return data(
         {
@@ -44,16 +45,14 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Sponsors() {
-    const { year, sponsors, conferences, cancelledMessage, stillAcceptingSponsors } =
-        useLoaderData<typeof loader>()
+    const { year, sponsors, conferences, cancelledMessage, stillAcceptingSponsors } = useLoaderData<typeof loader>()
     const isLatestConference = conferences.every((c) => c.year <= year)
 
     return cancelledMessage ? (
         <PageLayout minHeight="100vh">
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
-                    {conferenceManifest.public.name} {year}{' '}
-                    {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
+                    {conferenceManifest.public.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
                 </p>
                 <Box color="text.primary" textAlign="center" fontSize="lg" mt="10">
                     <p>{cancelledMessage}</p>
@@ -86,9 +85,7 @@ export default function Sponsors() {
                     years. Their contribution makes it possible for us to run this community-driven conference.
                 </styled.p>
 
-                {conferenceManifest.public.features?.sponsorOverview ? (
-                    <SponsorOverview sponsors={sponsors} />
-                ) : null}
+                {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
 
                 <Box mb="16">
                     <SponsorSection sponsors={sponsors} year={year} />
@@ -119,8 +116,8 @@ function BecomeSponsorCta({ year }: { year: Year }) {
                 We&apos;re still accepting sponsors for {year}
             </styled.h2>
             <styled.p color="text.primary" mb="6">
-                Sponsorship makes {conferenceManifest.public.name} possible — and we&apos;d love to talk
-                about how your organisation can be part of this year&apos;s conference.
+                Sponsorship makes {conferenceManifest.public.name} possible — and we&apos;d love to talk about how your
+                organisation can be part of this year&apos;s conference.
             </styled.p>
             <styled.a
                 href="/sponsorship"
