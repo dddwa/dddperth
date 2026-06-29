@@ -110,47 +110,27 @@ async function getSponsorsByYear(year) {
                         sponsors[tier] = elements.map((element) => {
                             const sponsor = {}
 
-                            // Extract properties using correct ts-morph API
-                            const nameProperty = element.getProperty('name')
-                            if (nameProperty) {
-                                const nameInit = nameProperty.getInitializer()
-                                if (nameInit && nameInit.getText) {
-                                    // Remove quotes from the string value
-                                    sponsor.name = nameInit.getText().replace(/['"]/g, '')
-                                }
+                            // Read a string-valued property. getLiteralValue() returns the
+                            // *decoded* JS string (handles quotes + escapes like \n), so
+                            // multiline quotes don't leak raw control chars into the JSON.
+                            const readStringProp = (name) => {
+                                const prop = element.getProperty(name)
+                                if (!prop) return undefined
+                                const init = prop.getInitializer()
+                                if (!init) return undefined
+                                if (init.getLiteralValue) return init.getLiteralValue()
+                                // Fallback for non-literal initializers (e.g. template strings)
+                                return init.getText ? init.getText().replace(/['"`]/g, '') : undefined
                             }
 
-                            const websiteProperty = element.getProperty('website')
-                            if (websiteProperty) {
-                                const websiteInit = websiteProperty.getInitializer()
-                                if (websiteInit && websiteInit.getText) {
-                                    sponsor.website = websiteInit.getText().replace(/['"]/g, '')
-                                }
-                            }
+                            sponsor.name = readStringProp('name')
+                            sponsor.website = readStringProp('website')
+                            sponsor.logoUrlDarkMode = readStringProp('logoUrlDarkMode')
+                            sponsor.logoUrlLightMode = readStringProp('logoUrlLightMode')
 
-                            const logoDarkProperty = element.getProperty('logoUrlDarkMode')
-                            if (logoDarkProperty) {
-                                const logoDarkInit = logoDarkProperty.getInitializer()
-                                if (logoDarkInit && logoDarkInit.getText) {
-                                    sponsor.logoUrlDarkMode = logoDarkInit.getText().replace(/['"]/g, '')
-                                }
-                            }
-
-                            const logoLightProperty = element.getProperty('logoUrlLightMode')
-                            if (logoLightProperty) {
-                                const logoLightInit = logoLightProperty.getInitializer()
-                                if (logoLightInit && logoLightInit.getText) {
-                                    sponsor.logoUrlLightMode = logoLightInit.getText().replace(/['"]/g, '')
-                                }
-                            }
-
-                            const quoteProperty = element.getProperty('quote')
-                            if (quoteProperty) {
-                                const quoteInit = quoteProperty.getInitializer()
-                                if (quoteInit && quoteInit.getText) {
-                                    const quoteText = quoteInit.getText().replace(/['"]/g, '')
-                                    sponsor.quote = quoteText && quoteText !== 'undefined' ? quoteText : ''
-                                }
+                            const quoteText = readStringProp('quote')
+                            if (quoteText !== undefined) {
+                                sponsor.quote = quoteText && quoteText !== 'undefined' ? quoteText : ''
                             }
 
                             return sponsor
