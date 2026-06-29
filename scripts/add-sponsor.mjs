@@ -10,8 +10,11 @@ import { processLogo } from './lib/process-logo.mjs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.join(__dirname, '..')
-const SPONSORS_DIR = path.join(ROOT_DIR, 'website', 'public', 'images', 'sponsors')
-const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'website', 'app', 'config', 'years')
+const SPONSORS_DIR = path.join(ROOT_DIR, 'core', 'website', 'public', 'images', 'sponsors')
+const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'conference', 'config', 'years')
+
+// Relative path to a year's config file — used for parsing and display messages.
+const yearConfigRelPath = (year) => `conference/config/years/${year}.ts`
 
 // Colors for output
 const colors = {
@@ -34,6 +37,7 @@ const config = {
     appName: 'DDD Perth Sponsor Management',
 }
 
+// Mirrors the YearSponsors tier keys in core/libs/conference-config/src/types.ts
 const SPONSOR_TIERS = [
     'platinum',
     'gold',
@@ -45,11 +49,12 @@ const SPONSOR_TIERS = [
     'quietRoom',
     'keynotes',
     'room',
+    'lunch',
 ]
 
 // Helper function to read year config
 async function readYearConfig(year) {
-    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
     try {
         const content = await fs.readFile(configPath, 'utf-8')
         return content
@@ -60,7 +65,7 @@ async function readYearConfig(year) {
 
 // Improved sponsor parsing using ts-morph for reliable TypeScript parsing
 async function getSponsorsByYear(year) {
-    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
     try {
         // Try ts-morph approach first (more reliable)
@@ -255,7 +260,7 @@ async function addSponsorToConfig(year, tier, sponsorObj) {
         const { Project } = await import('ts-morph')
         const project = new Project()
 
-        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
         // Check if config file exists, if not create a basic one
         try {
@@ -367,7 +372,7 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         const { Project } = await import('ts-morph')
         const project = new Project()
 
-        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
         // Check if config file exists
         try {
@@ -413,18 +418,7 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         }
 
         // Search through all tier arrays to find the sponsor
-        const tiers = [
-            'platinum',
-            'gold',
-            'silver',
-            'standard',
-            'bronze',
-            'community',
-            'coffee',
-            'keynote',
-            'afterparty',
-            'service',
-        ]
+        const tiers = SPONSOR_TIERS
         let sponsorFound = false
         let sponsorTier = null
 
@@ -1439,11 +1433,11 @@ const server = http.createServer(async (req, res) => {
                     print.info(JSON.stringify(sponsorObj, null, 2))
 
                     if (configUpdated) {
-                        print.success(`✅ Sponsor automatically added to: website/app/config/years/${year}.server.ts`)
+                        print.success(`✅ Sponsor automatically added to: ${yearConfigRelPath(year)}`)
                         print.success(`Added to "${tier}" array in the sponsors section`)
                     } else {
                         print.warning(`❌ Could not automatically add to config file`)
-                        print.warning(`Please manually add this to: website/app/config/years/${year}.server.ts`)
+                        print.warning(`Please manually add this to: ${yearConfigRelPath(year)}`)
                         print.warning(`Under the "${tier}" array in the sponsors section`)
                     }
 
