@@ -52,6 +52,21 @@ const SPONSOR_TIERS = [
     'lunch',
 ]
 
+// Discover available conference years by scanning the years config directory.
+// Returns an array of year strings sorted newest-first (e.g. ['2026', '2025', ...]).
+async function getAvailableYears() {
+    try {
+        const entries = await fs.readdir(YEARS_CONFIG_DIR)
+        return entries
+            .filter((name) => /^\d{4}\.ts$/.test(name))
+            .map((name) => name.replace(/\.ts$/, ''))
+            .sort((a, b) => Number(b) - Number(a))
+    } catch (error) {
+        print.error(`Failed to read years config directory: ${error.message}`)
+        return []
+    }
+}
+
 // Helper function to read year config
 async function readYearConfig(year) {
     const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
@@ -482,7 +497,8 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
 }
 
 // HTML template for the UI
-function getHTML() {
+function getHTML(years) {
+    const yearOptions = years.map((year) => `<option value="${year}">${year}</option>`).join('\n                ')
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -554,14 +570,7 @@ function getHTML() {
         <div class="year-selector">
             <label for="year">Conference Year:</label>
             <select id="year" onchange="loadSponsors()">
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-                <option value="2021">2021</option>
-                <option value="2020">2020</option>
-                <option value="2019">2019</option>
-                <option value="2018">2018</option>
+                ${yearOptions}
             </select>
         </div>
 
@@ -1165,8 +1174,9 @@ const server = http.createServer(async (req, res) => {
     try {
         if (pathname === '/' && method === 'GET') {
             // Serve the HTML interface
+            const years = await getAvailableYears()
             res.writeHead(200, { 'Content-Type': 'text/html' })
-            res.end(getHTML())
+            res.end(getHTML(years))
         } else if (pathname.startsWith('/images/sponsors/') && method === 'GET') {
             // Serve sponsor logo files
             const filename = pathname.split('/').pop()
@@ -1194,7 +1204,7 @@ const server = http.createServer(async (req, res) => {
             }
         } else if (pathname === '/api/debug/config' && method === 'GET') {
             // Debug endpoint to check raw config content
-            const year = parsedUrl.query.year || '2024'
+            const year = parsedUrl.query.year || (await getAvailableYears())[0]
             const configContent = await readYearConfig(year)
 
             if (configContent) {
@@ -1227,7 +1237,7 @@ const server = http.createServer(async (req, res) => {
             }
 
             const results = []
-            const years = ['2024', '2023', '2022', '2021', '2020', '2019', '2018']
+            const years = await getAvailableYears()
 
             for (const year of years) {
                 if (year === currentYear) continue // Don't search current year
