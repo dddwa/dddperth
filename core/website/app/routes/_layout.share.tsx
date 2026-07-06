@@ -66,8 +66,8 @@ function buildShareUrl(userName: string) {
     };
 
     const encoded = encodeURIComponent(base64EncodeUtf8(JSON.stringify(payload)));
-    // const url = new URL("https://ddd-2026.sharecast.io/");
-    const url = new URL("http://localhost:1152/");
+    const url = new URL("https://ddd-2026.sharecast.io/");
+    // const url = new URL("http://localhost:1152/");
     url.hash = `data=${encoded}`;
     return url.toString();
 }
@@ -102,7 +102,7 @@ export default function Share() {
             signal: controller.signal,
         })
             .then(async (res) => {
-                const body = (await res.json()) as { error?: string; registration?: Registration };
+                const body = await res.json();
                 if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`);
                 setState({ kind: "ready", registration: body.registration ?? {} });
             })
