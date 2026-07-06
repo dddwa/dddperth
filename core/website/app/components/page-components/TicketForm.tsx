@@ -3,7 +3,10 @@ import { Spinner } from '~/components/ui/spinner'
 import type { TicketSalesState } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 
-const TITO_SCRIPT_SRC = 'https://js.tito.io/v2'
+// `test_mode` lets fake orders through
+const TITO_SCRIPT_SRC = import.meta.env.DEV
+    ? "https://js.tito.io/v2/with/development_mode,test_mode"
+    : "https://js.tito.io/v2";
 
 declare global {
     interface Window {
