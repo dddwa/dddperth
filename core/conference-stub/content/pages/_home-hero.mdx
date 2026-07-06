@@ -1,0 +1,14 @@
+---
+title: About DevConf Example
+summary: Hero panel blurb rendered on the home page. Slug prefixed with `_` so it doesn't show up as a navigable page or in the sitemap.
+---
+
+DevConf Example is the reference conference shipped with `ddd-core`. It's not a
+real event — every page on this site is rendered from the configuration and MDX
+that lives in `/conference-stub/`.
+
+If you're seeing this in a fork's deployed site, the fork's tsconfig isn't
+pointing `@conference/*` at its own `/conference/` folder.
+
+To make this your own conference, run the `/new-conference` skill from the parent
+directory. It copies this folder as the seed for a new fork.

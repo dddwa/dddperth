@@ -1,0 +1,78 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+dist
+tmp
+/out-tsc
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+vite.config.ts.timestamp*
+website/styled-system
+.azure
+website/vite.config.*timestamp-*.mjs
+
+tsconfig.tsbuildinfo
+
+infra/main.json
+infra/modules/fetch-container-image.json
+
+# Azurite local storage
+.azurite
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+
+docs/prompts
+.playwright-mcp
+
+.claude/worktrees
+.claude/settings.local.json
+
+website/.wrangler/
+.nx/polygraph
+
+# Wrangler local secrets — legacy website path plus the fork-owned path
+# (conference/wrangler/.dev.vars resolves to a website symlink) and the
+# conference-stub path used when ddd-core is running standalone.
+website/.dev.vars
+conference/wrangler/.dev.vars
+conference-stub/wrangler/.dev.vars
+
+qa
+
+.nx/self-healing
+conference-stub/wrangler/.wrangler/

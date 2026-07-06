@@ -1,0 +1,38 @@
+{
+    "$schema": "../../node_modules/wrangler/config-schema.json",
+    "name": "dddperth-website",
+    "main": "../../core/website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    // D1 Database binding for voting (local dev)
+    // Staging and production use separate config files
+    // (wrangler.staging.jsonc, wrangler.production.jsonc) because
+    // @cloudflare/vite-plugin flattens only the top-level config into
+    // the build output, which dropped env.* overrides at deploy time.
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "dddperth-voting-local",
+            "database_id": "local",
+            "migrations_dir": "../../core/website/migrations"
+        }
+    ],
+
+    // Static assets served from Cloudflare
+    "assets": {
+        "directory": "../../core/website/build/client"
+    },
+
+    // Default environment variables (local dev)
+    "vars": {
+        "WEB_URL": "http://localhost:3800",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+    },
+
+    // Observability
+    "observability": {
+        "enabled": true
+    }
+}

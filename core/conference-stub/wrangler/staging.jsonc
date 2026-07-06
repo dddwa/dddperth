@@ -1,0 +1,35 @@
+{
+    // Placeholder staging config — `database_id` and the staging hostname
+    // are intentionally invalid. The /new-conference skill rewrites these
+    // when scaffolding a real fork. Don't try to deploy this verbatim.
+    "$schema": "../../node_modules/wrangler/config-schema.json",
+    "name": "devconf-example-website-staging",
+    "main": "../../website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "devconf-example-voting-staging",
+            "database_id": "replace-me-staging-d1-id",
+            "migrations_dir": "../../website/migrations"
+        }
+    ],
+
+    "assets": {
+        "directory": "../../website/build/client"
+    },
+
+    "vars": {
+        "WEB_URL": "https://staging.example.test",
+        "WEBSITE_AUTH_REQUIRED": "true",
+        "AUTH_EMAIL_FROM": "DevConf Example <noreply@example.test>"
+    },
+
+    "routes": [{ "pattern": "staging.example.test", "custom_domain": true }],
+
+    "observability": {
+        "enabled": true
+    }
+}

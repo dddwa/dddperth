@@ -1,0 +1,158 @@
+{
+    "name": "website",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "website",
+    "projectType": "application",
+    "tags": [],
+    "targets": {
+        "panda": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": [
+                    {
+                        "command": "pnpm panda",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
+                "cwd": "core/website"
+            }
+        },
+        "parkui": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    {
+                        "command": "pnpm exec park-ui",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
+                "cwd": "core/website"
+            }
+        },
+        "setup-panda": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm panda setup",
+                "cwd": "core/website"
+            }
+        },
+        "setup-react-router": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm react-router typegen",
+                "cwd": "core/website"
+            }
+        },
+        "setup-safe-routes": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm safe-routes typegen",
+                "cwd": "core/website"
+            }
+        },
+        "setup": {
+            "executor": "nx:noop",
+            "dependsOn": ["setup-panda", "setup-react-router"]
+        },
+        "dev": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm vite",
+                "cwd": "core/website"
+            }
+        },
+        "wrangler-dev": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler dev -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
+        "build": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": [
+                "{projectRoot}/app/**/*.*",
+                "{projectRoot}/workers/**/*.*",
+                "{projectRoot}/vite-plugins/**/*.*",
+                "{projectRoot}/vite.config.ts"
+            ],
+            "outputs": ["{projectRoot}/build/**/*.*"],
+            "options": {
+                "command": "react-router build",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["vitest"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{workspaceRoot}/coverage/website"],
+            "options": {
+                "command": "vitest run",
+                "cwd": "core/website"
+            }
+        },
+        "deploy": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "wrangler deploy -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website",
+                "tty": true
+            },
+            "dependsOn": ["build"]
+        },
+        "deploy-staging": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs staging && wrangler deploy",
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
+        "deploy-production": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs production && wrangler deploy",
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
+        "d1-migrate-local": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/manifest-d1-migrate.mjs local",
+                "cwd": "core/website"
+            }
+        },
+        "d1-migrate-staging": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/manifest-d1-migrate.mjs staging",
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
+        "d1-migrate-production": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/manifest-d1-migrate.mjs production",
+                "cwd": "core/website",
+                "tty": true
+            }
+        }
+    }
+}

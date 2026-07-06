@@ -1,87 +1,123 @@
-# DDD Website
+# DDD Perth Website
 
 This repository uses [Nx](https://nx.dev) to manage the mono repo and keep everything together.
 
-## Quick Start & Documentation
+## Quick Start
 
-```
+```bash
+# Enable corepack (for pnpm)
+corepack enable pnpm
+
+# Install dependencies
 pnpm i
+
+# Apply D1 database migrations (first time only)
+pnpm nx d1-migrate-local website
+
+# Start development server
 pnpm start
 ```
 
-Url: http://localhost:3800
+URL: http://localhost:3800
 
-### Enable corepack
+## Architecture
 
-Corepack is shipped in newer versions of NodeJS is used for managing Node package managers. This repository uses pnpm as the package manager.
+- **Cloudflare Workers** - Serverless hosting
+- **Cloudflare D1** - SQLite database for voting
+- **React Router v7** - Full-stack React framework with SSR
+- **PandaCSS + Park UI** - Styling system
+- **Vite** - Development server and build tool
 
-`corepack enable pnpm`
+## Development
 
-## Debugging
+### Environment Variables
 
-We use Open Telemetry for tracing and logging. You can use Jaeger locally to trace the application.
+Create `website/.dev.vars` for local development. The minimum to boot the dev server is:
 
-```
-docker run --rm --name jaeger \
-  -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
-  -p 6831:6831/udp \
-  -p 6832:6832/udp \
-  -p 5778:5778 \
-  -p 16686:16686 \
-  -p 4317:4317 \
-  -p 4318:4318 \
-  -p 14250:14250 \
-  -p 14268:14268 \
-  -p 14269:14269 \
-  -p 9411:9411 \
-  jaegertracing/all-in-one
+```ini
+SESSION_SECRET=local-dev-secret
+WEB_URL=http://localhost:3800
 ```
 
-Then add the following to your .env
+Admin login uses **magic links**. Locally, leave `RESEND_API_KEY` empty — the dev server prints the magic-link URL to the console instead of sending email. Add yourself to the `auth_allowlist` D1 table to log in (the initial migration seeds `jake@ginnivan.net`):
 
-`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4318/v1/traces`
+```bash
+pnpm wrangler d1 execute dddperth-voting-local --local --command \
+  "INSERT INTO auth_allowlist (email, name, added_at) VALUES ('you@example.com', 'You', unixepoch())"
+```
 
-To open Jaeger, go to http://localhost:16686
+The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`core/docs/deploy.md`](./core/docs/deploy.md) (in ddd-core) for what each one does and which are needed in production.
+
+### Nx Commands
+
+```bash
+# Start dev server (Vite + Cloudflare workerd)
+pnpm nx dev website
+
+# Build for production
+pnpm nx build website
+
+# Run linting
+pnpm nx lint website
+
+# Apply D1 migrations
+pnpm nx d1-migrate-local website      # Local
+pnpm nx d1-migrate-staging website    # Staging (remote)
+pnpm nx d1-migrate-production website # Production (remote)
+
+# Deploy
+pnpm nx deploy website            # Default environment
+pnpm nx deploy-staging website    # Staging
+pnpm nx deploy-production website # Production
+```
+
+### D1 Database
+
+Local D1 data is stored in `website/.wrangler/state/`. To inspect data:
+
+```bash
+cd website
+pnpm wrangler d1 execute dddperth-voting-local --local --command "SELECT * FROM voting_sessions"
+```
+
+## Deployment
+
+Production deploys on every push to `main`. Staging deploys when an authorised user comments `/deploy-staging` on a pull request. See [`core/docs/deploy.md`](./core/docs/deploy.md) for setup, secrets, and the provisioning script.
 
 ## ParkUI
 
-This project uses ParkUI as the UI framework. You can find the documentation [here](https://park-ui.com)
+This project uses [Park UI](https://park-ui.com) as the UI framework.
 
-You can use the ParkUI CLI to add components. `pnpm nx parkui website add <component>`
+Add components using the CLI:
 
-## Using NX
-
-While we have kept the NX usage to a minimum, it is still a powerful tool that can be used to manage the project. Below are some of the commands that can be used to manage the project.
-
-### Running tasks
-
-To execute tasks with Nx use the following syntax:
-
+```bash
+pnpm nx parkui website add <component>
 ```
+
+## Using Nx
+
+### Running Tasks
+
+```bash
 nx <target> <project> <...options>
 ```
 
-You can also run multiple targets:
+Run multiple targets:
 
-```
+```bash
 nx run-many -t <target1> <target2>
 ```
 
-..or add `-p` to filter specific projects
+Filter specific projects:
 
-```
+```bash
 nx run-many -t <target1> <target2> -p <proj1> <proj2>
 ```
 
-Targets can be defined in the `package.json` or `projects.json`. Learn more [in the docs](https://nx.dev/features/run-tasks).
+### Editor Integration
 
-### Want better Editor Integration?
+Check out [Nx Console extensions](https://nx.dev/nx-console) for VSCode, IntelliJ, and Vim.
 
-Have a look at the [Nx Console extensions](https://nx.dev/nx-console). It provides autocomplete support, a UI for exploring and running tasks & generators, and more! Available for VSCode, IntelliJ and comes with a LSP for Vim users.
+### Project Graph
 
-### Explore the Project Graph
-
-Run `nx graph` to show the graph of the workspace.
-It will show tasks that you can run with Nx.
-
--   [Learn more about Exploring the Project Graph](https://nx.dev/core-features/explore-graph)
+Run `nx graph` to visualize the workspace dependency graph.

@@ -1,0 +1,34 @@
+{
+    "$schema": "../../node_modules/wrangler/config-schema.json",
+    "name": "dddperth-website-staging",
+    "main": "../../core/website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "dddperth-voting-staging",
+            "database_id": "6740aedd-b54f-4562-bf01-2cc1184ddcc7",
+            "migrations_dir": "../../core/website/migrations"
+        }
+    ],
+
+    "assets": {
+        "directory": "../../core/website/build/client"
+    },
+
+    "vars": {
+        "WEB_URL": "https://staging.dddperth.com",
+        "WEBSITE_AUTH_REQUIRED": "true",
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+    },
+
+    "routes": [
+        { "pattern": "staging.dddperth.com", "custom_domain": true }
+    ],
+
+    "observability": {
+        "enabled": true
+    }
+}

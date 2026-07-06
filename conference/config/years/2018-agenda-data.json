@@ -1,0 +1,2128 @@
+[
+  {
+    "date": "2018-08-04T00:00:00",
+    "isDefault": true,
+    "rooms": [
+      {
+        "id": 0,
+        "name": "RR4",
+        "sessions": [
+          {
+            "id": "service-0800-registration",
+            "title": "Registration",
+            "description": null,
+            "startsAt": "2018-08-04T08:00:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0845-welcome-and-housekeeping",
+            "title": "Welcome and housekeeping",
+            "description": null,
+            "startsAt": "2018-08-04T08:45:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0900-welcome-to-country",
+            "title": "Welcome to country",
+            "description": null,
+            "startsAt": "2018-08-04T09:00:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "c79f149d-4e7b-4202-ba30-13cbb1df1b33",
+            "title": "Keynote: Towards a welcoming Web",
+            "description": "The Internet is supposed to be an open, accessible platform. Unfortunately, frequently we see pitfalls in reliability, accessibility or performance stemming from a privileged understanding of connectivity, cultural and economic context. It turns out; the Web can be unwelcoming to many.\r\n\r\nThis talk will set the necessary context for inclusive design practice, focusing on accessibility, performance and equality. We'll learn how to foster a user-experience focused culture, no matter whether you're a developer, designer, project or business owner. You will leave inspired to build a better Web for everyone.",
+            "startsAt": "2018-08-04T09:10:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": true,
+            "speakers": [
+              {
+                "id": "35732f50-0f3f-4402-b91a-cfdfe4f02fc6",
+                "name": "Karolina Szczur"
+              }
+            ],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-0955-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2018-08-04T09:55:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "68927257-08c3-41f7-9810-5d290c373405",
+            "title": "Securing Single Page Applications",
+            "description": "We’ve been spending more and more time developing applications that run in the browser, Single Page Applications, SPA's, and more recently Progressive Web Applications, PWA’s. But with more code running client side what changes do we need to make to how we write applications, test applications and secure applications?\r\n\r\nSo how do we write a secure SPA? What do we do with our security tokens, client-side data, track vulnerabilities in our dependencies or implement trust between the client and server?\r\n\r\nIn this talk, we'll deep dive into some practical solutions on how to create secure modern web applications.",
+            "startsAt": "2018-08-04T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "f97156c1-d647-4771-9135-c3d0d7e1c16e",
+                "name": "Aaron Powell"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1050-morning-tea",
+            "title": "Morning tea",
+            "description": null,
+            "startsAt": "2018-08-04T10:50:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "24bc1c06-ec0d-4ba0-8d3e-a995d2118f46",
+            "title": "Thinking in Streams - gentle introduction to reactive programming via RxJS",
+            "description": "Apps nowadays have an abundance of real-time events of every kind that enable a highly interactive experience to the user. We need tools for dealing with that and reactive programming comes to the rescue.\r\n\r\nIn this talk, I will introduce you to reactive paradigm using RxJS and JavaScript for examples. We'll talk about important principles when getting started with Rx, like observable and observer pattern, leveraging functional programming concepts, hot and cold observables and Rx operators.\r\n\r\nYou'll learn how to let go of old imperative and stateful programming habits, and stretch your brain to work in a different paradigm.\r\n\r\nRx is not restricted to client-side apps (it works great also in event-heavy backends), neither to a specific language (it is widely available in many dialects: .NET, Java, Scala, Clojure, JavaScript, Ruby, Kotlin, Swift, C++, Elixir, etc.), so whatever your tools are, you can definitely benefit from it.",
+            "startsAt": "2018-08-04T11:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "0053c86a-b250-4161-9d4b-ca8d5b6e598a",
+                "name": "Chris Filipowski"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1140-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2018-08-04T11:40:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "6cf90233-65d8-4bdd-868f-9d13683aac78",
+            "title": "You're doing TypeScript wrong",
+            "description": "TypeScript is a great language with a ton of features to support application development in JavaScript. By allowing optional type annotations, TypeScript can tell you at write-time or compile-time when something could break at run-time, reducing the number of bugs in your code. What could be wrong with that?\r\n\r\nWe will look at a few examples where you may have inadvertently prevented TypeScript from being able to help you, how you can avoid them in the future, and (maybe) how we all got in this mess in the first place.",
+            "startsAt": "2018-08-04T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "9640d000-a8f6-4f25-be3a-5eb5c369f981",
+                "name": "Ben Lowry"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1210-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2018-08-04T12:10:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "5588dee1-39a1-47a9-bc04-376ff1578930",
+            "title": "Sketching & how to win at Pictionary",
+            "description": "Have you ever told yourself or others that you can’t draw? If you’ve ever played a game of Pictionary then you’ll know that getting your point across isn’t necessarily about how beautiful your drawing is. Sketching isn’t just for artists and designers - it’s a powerful tool for communicating ideas, and you don’t have to be Da Vinci to do it.\r\n\r\nMaybe you’ve struggled to get a concept across in a meeting, but hesitated to grab a marker and start scribbling on the whiteboard. Maybe you’ve struggled getting ideas out of your own head and onto paper, and dot points aren’t cutting it. Maybe you’re just not very good at Pictionary and want to beat your cousins at the next family party.\r\n\r\nYou’ll learn why sketching is such an effective method of communication, and how to put together your own visual vocabulary to bust out next time when words alone are not enough. More importantly, we’ll go over why anyone can develop the skills and confidence to use sketching in their work. No fancy tools or artistic talent required.",
+            "startsAt": "2018-08-04T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "ff110d04-8331-4a79-a527-bb968ffc464a",
+                "name": "Teresa Watts"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1305-lunch",
+            "title": "Lunch",
+            "description": null,
+            "startsAt": "2018-08-04T13:05:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "26c62196-0d96-4e52-b4ba-7896ddf2ff04",
+            "title": "Lunchnote: The Structure of Software Revolutions",
+            "description": "This talk will provide a new view of the Agile and DevOps movements, through the lens of scientific and cognitive revolutions.\r\n\r\nIt will show how to make strategic choices in recruitment, organization, culture, and technology to best situate an organization for success in this brave new world.",
+            "startsAt": "2018-08-04T13:15:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": true,
+            "speakers": [
+              {
+                "id": "c47df330-a5c0-4b70-b4f3-1ef295d0b317",
+                "name": "Mike Long"
+              }
+            ],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1345-lunch-continued",
+            "title": "Lunch (continued)",
+            "description": null,
+            "startsAt": "2018-08-04T13:45:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "3a0236e4-c8fa-4cc9-ab48-fc0371a6b990",
+            "title": "Serverless Cloud Native Progressive Web Apps in Production : Lesson from the Trenches",
+            "description": "This talks outlines our experience in building PWA in the Cloud and how we manage to utilise most if not all of the browser API that makes a web app progressive, while doing it without hosting any server at all.\r\n\r\nTechnologies that I will touch on:\r\n- Notification Api in collaboration with Push Api\r\n- Sync Api \r\n- Offline Storage (local storage, IndexedDB)\r\n- Event Sourcing with DynamoDB stream\r\n- Data Lake with Kinesis Firehose and S3\r\n- Analytics with AWS Athena",
+            "startsAt": "2018-08-04T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "8a048784-97e3-4cb1-8190-d6e65a4d227d",
+                "name": "William Sia"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1425-changeover",
+            "title": "Changeover",
+            "description": null,
+            "startsAt": "2018-08-04T14:25:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "f7fc010d-8c47-4b86-b1e9-1221b63e0281",
+            "title": "Understand Functional Programming in 40 Minutes (or your Money Back*)",
+            "description": "Functional programming is becoming increasingly important as we build more complex systems and use more parallel and concurrent programming.  It’s also now present and being used more in mainstream languages like Java, C#, Swift and Javascript so it can no-longer be ignored by developers.  \r\n\r\nHave you tried to understand functional programming but been completely bamboozled?  Or do you know what a function is and understand the basics of functional programming but wonder what’s with all the other stuff?  It’s most likely the big picture hasn’t been explained, or at least not clearly enough.\r\n\r\nThis talk will give you a clear conceptual overview of functional programming with simple examples so that you will really get what it’s all about.  There are consequences of only using functions and this is what makes functional programming very different from other programming paradigms.   \r\n\r\nThis talk won’t use terms like functor, applicative, or monad but by the end of the talk you will definitely understand them.  It also won’t make you a functional programmer overnight but it will give you a conceptual framework to know what you need to do and why when doing functional programming.  \r\n\r\nThe presenter has more than twenty years experience explaining complex technical concepts in clear and simple terms.  \r\n\r\n(* not really but you’ll certainly get your money’s worth and more)",
+            "startsAt": "2018-08-04T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "84bee702-93a5-494f-8ecc-2a7b567eae0f",
+                "name": "Ashley Aitken"
+              }
+            ],
+            "categories": [],
+            "roomId": 0,
+            "room": "RR4",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1520-afternoon-tea",
+            "title": "Afternoon tea",
+            "description": null,
+            "startsAt": "2018-08-04T15:20:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1550-prize-draw",
+            "title": "Prize Draw",
+            "description": null,
+            "startsAt": "2018-08-04T15:50:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "264b7669-8127-41a3-9f6b-87511a879cf1",
+            "title": "Locknote: Better mental health in the workplace",
+            "description": "Mark Leopold, beyondblue’s Head of Workplace Engagement, will discuss the importance of improving workplace mental health. Attendees will learn about best practice approaches in workplace mental health and strategies for adopting an integrated approach to workplace mental health including: minimising risk, supporting those with mental health conditions and promoting the positives within the workplace. This session will include introduction to resources to help people and organisations take effective action to improve workplace mental health. Mark is a passionate advocate for workplace mental health. Informed by his personal experience with depression and experience across numerous industries, Mark discusses the topic in a relatable manner; helping people and organisations to take action. ",
+            "startsAt": "2018-08-04T16:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": true,
+            "speakers": [
+              {
+                "id": "bf95ea05-6881-43cf-99fa-af201c7e859c",
+                "name": "Mark Leopold"
+              }
+            ],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1705-thank-yous-and-wrap-up",
+            "title": "Thank yous and wrap up",
+            "description": null,
+            "startsAt": "2018-08-04T17:05:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "service-1710-afterparty",
+            "title": "Afterparty",
+            "description": null,
+            "startsAt": "2018-08-04T17:10:00",
+            "endsAt": null,
+            "isServiceSession": true,
+            "isPlenumSession": true,
+            "speakers": [],
+            "categories": [],
+            "roomId": null,
+            "room": null,
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 1,
+        "name": "M3",
+        "sessions": [
+          {
+            "id": "318d8f95-54e8-486b-8119-94bb91924f64",
+            "title": "Looking for a pet project? Here is a list of humanity's biggest challenges.",
+            "description": "It's your well earned time off, an evening or a weekend - yet you are at your keyboard, in the flow, working on your side project, devouring whatever skills and new tech your goal demands, and getting an endorphin kick from seeing results of your efforts along the way. It runs! It does something! And I created it!\r\n\r\nNot only it's the best feeling ever it also makes you better at your job and a more interesting person; people are drawn to driven, passionate people. But it's not easy to pick something that is really... really worth all that time and focus, is it? \r\n\r\nHave you started on a website for a local public speaking club and after few months of work felt.. underwhelmed? Or perhaps have you tried to dip your toe into a new technology, like machine learning, and raise your eyebrow at the number of tutorials on how to distinguish tomatoes from grapes or kittens from cars? Yet - we forget there are those nasty problems that we all face as humanity, like climate change, health or equal rights.\r\n\r\nThey do sound monstrous and abstract, but we did our research and split them into bite-size pet projects, actionable and inspiring.  We believe - we can all make this world a better place - by following our passion, leveraging technology and having fun!\r\n\r\nWe are two data analysts from Perth, and while every problem does resemble \"a machine learning nail\" to us,\r\nwe filled this call to action presentation with ideas ranging from educational visualization to apps and digital communities so everyone feels that there is something for them. \r\n\r\nWould you chip in?",
+            "startsAt": "2018-08-04T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "24060020-34d7-4db5-8109-5e74fc49e83a",
+                "name": "Rimma Shafikova"
+              },
+              {
+                "id": "8638c295-fce5-40f6-adb4-efde3d8d2a44",
+                "name": "Diana Mozo"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "0f383402-2fee-4728-a6bf-fbe74ba2671e",
+            "title": "Building Highly Engaged Teams",
+            "description": "Hiring and retaining good people is hard but super critical. A high performing team delivers, has fun and kicks goals.\r\n\r\nOver the years I have become known for hiring and spotting good talent. I have had compliments from senior architects and leaders on the quality of people I choose for my teams.\r\n\r\nHiring is an art form and a challenging endeavour. Get it wrong and you will pay the price.\r\n\r\nSo how do you attract top talent and maintain top class engagement scores?",
+            "startsAt": "2018-08-04T11:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c7ae22bd-dc33-4b5a-8611-16774fee0060",
+                "name": "Will Webster"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "96326393-7372-46d0-a07c-3006b97517cf",
+            "title": "Toxic Developers and You",
+            "description": "Have you ever started your morning by worrying about “that person”, and how long you can put off having to deal with them? Do thoughts of this person and their actions occupy your mind when you should be focussing on work or your personal life? Have you been so unmotivated and anxious about work that you’ve considered quitting?\r\n\r\nToxic developers can make you doubt yourself and your abilities.  Their behaviour can be hugely disruptive to the success of individuals and ultimately teams as a whole.\r\n\r\nI will address how to identify and deal with toxic developers in the workplace by providing you with strategies you can apply day to day. My aim is to help you regain your focus by sharing coping mechanisms and healthy ways to respond to a situation, whether it is you who is affected or your teammates.\r\n\r\nThere may be others on your team who struggle and self-sacrifice in an attempt to cope with the situation. No one should leave a job they enjoy or lose their passion for their work because of one individual.",
+            "startsAt": "2018-08-04T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "a941c0cc-1133-484e-8a91-4f94295f02ef",
+                "name": "Patrik Affentranger"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "dd4a2717-47ed-426f-a97d-5bb4f9c1fef3",
+            "title": "Creating a ‘best place to work’ culture",
+            "description": "Being a leader in a ‘best place to work’ has many advantages. It’s easier to attract the best talent, employees are engaged and more productive, employees collaborate and actively contribute to making your company better and more successful.  \r\n\r\nBut where do you start? How do you create this type of environment? In this talk I will take you through some practical advice on how to create and implement strategies to turn your organisation into a ‘best place’.  ",
+            "startsAt": "2018-08-04T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "18918042-749f-4012-b5da-de1c721f4c63",
+                "name": "Donna Edwards"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "2f2a3626-5ec3-4085-baca-941910c09467",
+            "title": "Overcoming fear, anxiety and doubt as a developer",
+            "description": "This talks about the common fears we encounter as developers and how to overcome them. This includes (and won't be limited to) impostor syndrome, contributing to open source, being a \"good developer\", speaking publicly, etc. If you have ever asked yourself: \"Was I good enough?\" or \"Did I do a good job?\", then this talk is for you! ",
+            "startsAt": "2018-08-04T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "66b3c0ea-b5bb-4834-acc8-afb4638b4877",
+                "name": "Eumir Gaspar"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "2234f8f6-6e13-4998-ba37-baf53ae44d9d",
+            "title": "Rise of the Tech Influencer - Small steps you can take to increase your reach",
+            "description": "Keeping your head down and working hard is not enough anymore. If you want to move onwards and upwards in this world you have to make sure the world knows your name. This can be hard when all you care about is the code and you don't want to look like a dick.\r\n\r\nAs Microsoft's #1 Social Seller on LinkedIn Globally - I have more influence and engagement across that platform than Mark Russinovich. I will share all my tips and tricks to help raise your profile with very little effort - so you can keep your focus where it counts.",
+            "startsAt": "2018-08-04T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "3637dcb5-42cc-49eb-9cbe-1fa83fd4b3a3",
+                "name": "Michelle @ Microsoft"
+              }
+            ],
+            "categories": [],
+            "roomId": 1,
+            "room": "M3",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 2,
+        "name": "M2",
+        "sessions": [
+          {
+            "id": "ab660bb2-d12a-4627-9c2a-b92900e87bca",
+            "title": "Service Meshes - Powering the next wave of microservice architectures",
+            "description": "Microservices and containers have transformed application design and deployment patterns. Modern cloud native architectures - which underpin many of the world's groundbreaking tech companies such as Uber, Netflix and Airbnb - afford unparalleled levels of agility and scale but are not without trade-offs. In applications comprising hundreds of services (and thousands of service instances), concerns such as security, operability and observability pose significant challenges. Supporting compensating capabilities such as circuit breakers, retry policies and service discovery in each microservice adds undesirable code bloat and impacts our ability to choose the best language for the problem at hand should the required libraries not be available. \r\n\r\nIn this session, we will take an in-depth look at the service mesh pattern; the benefits that a decentralized microservice management approach brings; the best practices that have evolved; and most importantly what you need to know to effectively leverage a service mesh in your architecture:\r\n\r\n- How to determine the suitability of a service mesh for your application context. Don't just drink the cloud native Kool-Aid!\r\n- Disambiguate the overlapping responsibilities of an API gateway and service mesh in a modern architecture and demonstrate how they can be used in harmony.\r\n- How a service mesh enables choosing the best tool or language for a given service without being constrained by the availability of libraries for each platform. Effectively it's a weight loss plan for your microservices.\r\n- What techniques to apply when transitioning to a service mesh based architecture.\r\n\r\nAdditionally, we will take a hands-on look at what is involved to build and manage a microservice architecture leveraging Kubernetes and Istio, a leading open source service mesh. By the end of the session, you will not only understand the concepts underpinning the service mesh pattern but also have the knowledge to put them into practice.",
+            "startsAt": "2018-08-04T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "3ec360b0-1700-4723-a91f-c287bd1e11ac",
+                "name": "Rob Crowley"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "0d35dfb9-c75f-48a4-bd73-18fe07f6a04b",
+            "title": "Blockchain: More than cryptocurrency!",
+            "description": "Blockchain is more than just cryptocurrency; it's a complex assembly of technologies that offer practical solutions to some very challenging problems.\r\n\r\nIn this session {the speaker} will share their adventure learning about blockchain, how it works and how they developed their own. From its defining principles, its distributed nature and the magic that is consensus. I'll also explore some of the potential real world applications that aren’t just another altcoin!\r\n\r\nBy the end of the session, you will have an understanding of blockchain outside of the context of cryptocurrency and be equipped with the knowledge you need to embark on your own blockchain adventure! ",
+            "startsAt": "2018-08-04T11:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "a728c224-8f1a-4a3b-b932-49922af99c53",
+                "name": "Brandon Lewis"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "ee60b006-8662-4d8c-8a60-4ee4ad2018f7",
+            "title": "How to win friends and comply with the Notifiable Data Breaches scheme*",
+            "description": "The \"Notifiable Data Breaches scheme\" amendment to the Australian Privacy Act kicked in in February 2018, to much confusion amongst Australian businesses. If you're interested in demystifying the \"legalese\" of the scheme to understand what actually counts as a data breach, who the laws apply to and what they require - this is the talk for you!\r\n*will not actually win you friends",
+            "startsAt": "2018-08-04T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "0b364a6a-5f92-4b17-917f-2c8f6bfc6e2c",
+                "name": "Cairo Malet"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "a9c48983-c3c9-4ceb-b21b-6b1d116a6882",
+            "title": "MicroServices UI Composition",
+            "description": "Ever wondered how websites like Amazon were created? They rely on Microservices architecture to be loosely-coupled but what about the UI? How do we avoid a monolithic UI? Join me on this talk to learn about techniques for developing a UI for a Microservices backend.\r\n",
+            "startsAt": "2018-08-04T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "d302dfdd-9a37-4b2a-9ec9-de753a7cd28b",
+                "name": "Hadi Eskandari"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "9ac2e311-7559-436c-8ee8-6f0aed17a431",
+            "title": "10 UX principles you should know about",
+            "description": "User Experience Design is closely connected to human psychology. From research to usability testing, human behaviour is at the centre of what we do. We can only build better products when we pay special attention to things like the user's memory, attention and perception. \r\n\r\nLet's take a dive into the \"Laws of UX\", and reflect on how they can help us craft better experiences.\r\n\r\nAn example? According to Hick's law, \"The time it takes to make a decision increases with the number and complexity of choices.\"",
+            "startsAt": "2018-08-04T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "2d606884-ac12-4224-91d0-a6e425f0841c",
+                "name": "Phil Delalande"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "4f463f9b-bf28-446a-9558-c6ac59697cc9",
+            "title": "Functional HTML",
+            "description": "HTML, the foundation of the web! With so much time being spent on typed javascript, functional programming, unit tests, visual regression testing, tools, frameworks and a drive to write better more efficient code we often forget that the web starts with HTML.\r\n\r\nLet’s talk HTML and semantics and why choosing the right HTML elements will help you write more accessible, efficient and maintainable code not just in your HTML but your CSS and Javascript as well. \r\n\r\nMost importantly we’ll explore why HTML is so vital in improving your projects overall functionality for people and for bots. \r\n",
+            "startsAt": "2018-08-04T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "f5d4c6a5-c993-4de3-9647-c652dc19bf9f",
+                "name": "Mandy Michael"
+              }
+            ],
+            "categories": [],
+            "roomId": 2,
+            "room": "M2",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      },
+      {
+        "id": 3,
+        "name": "M1",
+        "sessions": [
+          {
+            "id": "77fea600-238f-4523-baf8-f51b5db5d666",
+            "title": "Reverse Engineering is Good and also For Everyone",
+            "description": "In the tech press, you have probably seen a story or two showcasing some kind of ridiculous hacking or technical feat. Maybe it's modifying a video game to have new features or characters, maybe it's rigging an ATM to play a jingle and spit out money like a jackpotting slot machine, maybe it's revealing every workstation/server CPU on Earth as hopelessly insecure in the space of an afternoon. For many, the reaction these stories evoke is roughly \"geez that's pretty rad, I'd love to try something like that but unfortunately I don't have the skill to pull it off\". \r\n\r\nSo how IS it possible? Did these people spend half their lives memorising an entire architecture before starting? Do you need some sort of gift to magically understand assembly language? Are modern chips so different and complex that there's no such thing anymore as a one-size-fits-most understanding? Is there no entry level approach to this at all?\r\n\r\nSpoiler: the answer to all of these questions is HECK NO. In this talk, we will cover basic reverse engineering applications and techniques, and how they can scale up to match almost any technical challenge you can name. Even when starting from scratch. These skills can prove useful for original research, fun personal projects, and even plain ordinary development! How sick is that?",
+            "startsAt": "2018-08-04T10:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "cfabbbd7-d349-4239-ac57-399032476850",
+                "name": "Scott Percival"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "88344a80-a3e8-484a-93b6-e6a4f80af84f",
+            "title": "What to do with our unconscious bias.",
+            "description": "Upgrade your skills on how to identify your own unconscious bias, when to challenge it, how to communicate it and best deal with the environment that doesn't match your perfect world scenario.\r\n\r\nA journey into a critical and hysterical investigation of the speakers own personal unconscious bias across childhood experiences, education and careers.\r\n\r\nYou don’t need to be a manager help create safe space to question bias in your organisation.",
+            "startsAt": "2018-08-04T11:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "5664deb1-f1d9-4b40-b00c-29cb3230f66b",
+                "name": "Ming Johanson"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "a45d6be4-668d-4c01-8522-34c43580baab",
+            "title": "Machine Learning to Diagnose Childhood Brain Tumours",
+            "description": "Brain tumours are currently the number one cause of cancer related death in children worldwide. The current method of identifying childhood brain tumours is problematic at best and useless at worse for remote and budget limiting healthcare locations. But perhaps machine learning holds the key to speed and cost allowing isolated areas like Perth to diagnosis these deadly diseases locally. I will be discussing how we have addressed this problem both from machine learning software development perspective and deployment approach.",
+            "startsAt": "2018-08-04T11:50:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "c9aacc98-f53b-428f-a1bd-fd556c4a4f8a",
+                "name": "Wes Wilson"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "c0f29a8d-0c21-43d6-aeb1-c34054e6541f",
+            "title": "Delightful Frontend Development: An Intro to Elm",
+            "description": "\"undefined is not a function\" - Google Chrome, 2018\r\n\r\nLet's be honest, it's not a great user experience is it? To say JavaScript is a prickly learning experience is an understatement. There's all the little quirks inherit to JavaScript itself, combine that with a colourful cast of frameworks, libraries and patterns, and you've got a recipe for disaster.\r\n\r\nElm provides a refreshing alternative to JavaScript. Elm is a language built with an emphasis on being easy to use, building robust applications and great performance. Elm does this through polite and friendly error messages, no runtime exceptions and a virtual DOM similar to React.\r\n\r\nIn this session we'll cover a brief overview of Elm and some of the developer-focused features it provides. As well as a live demonstration of coding in Elm.",
+            "startsAt": "2018-08-04T12:20:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "a450c432-e108-48a7-b3ab-abb69d5dbdf0",
+                "name": "Dylan Pindur"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "9a72d1fa-6563-4de2-bb3c-27d13d7e0d64",
+            "title": "DDD from the trenches",
+            "description": "You’ve probably heard about Domain Driven Design, heck you may have even read THE book on it, but like most of us you’ve probably wondered how to apply it in practice. Where do you begin? How do you win people over to this sometimes drastically different way of thinking and doing? In this short talk you’ll hear from both a UX Designer and Engineer on how they navigated the early stages of a project, the challenges encountered along the way and some of the techniques that were employed to overcome them. Finally, we’ll retrospect on the overall process of DDD and contrast the outcomes with those of other traditional approaches. Make sure you don’t miss this talk!",
+            "startsAt": "2018-08-04T14:05:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "0aeafde6-614e-447e-bf3d-823f71b016d5",
+                "name": "Rami Ruhayel"
+              },
+              {
+                "id": "954c4d31-6e60-4c75-b730-caab6159d612",
+                "name": "Valeria Spirovski"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          },
+          {
+            "id": "fd830fb5-8e7b-4527-bc79-f7ddf693232f",
+            "title": "Advanced Testing Techniques: Tips from the trenches",
+            "description": "Software testing is undeniably hard. We have worked with many teams over many years through consulting with a wide range of companies. Through this perspective we have had a unique opportunity to see the entire continuum of testing successes and failures. This has ranged from highly effective teams that can confidently deploy changes multiple times a day through to teams struggling to deploy twice in a year.\r\n\r\nOne of the key things we've observed in the teams that are highly effective is a pragmmatic approach to software testing and a realisation of how to effectively and judiciously use test automation to accelerate delivery speed and confidence. On the other end of the spectrum, we ourselves have written (and seen) everything from heavily mocked, time-consuming implementation tests that impede refactoring, 24 hour long brittle automated UI test suites and 4 week long regression testing cycles (as well as everything in between).\r\n\r\nWe both have a strong passion for code quality, automated testing, DevOps and getting valuable features out quickly and safely to users. This passion, combined with our extensive experience has led to us uncovering and adopting a number of testing techniques and mindsets which we, and teams we have worked with, have found highly effective at reducing overhead of testing while improving confidence and utility.\r\n\r\nIn this presentation, we will blow apart the traditional testing mindset/methodologies and contrast them with the battle-tested pragmatic approaches we've been using. We will also leave attendees with some new, highly effective testing techniques for their toolbelt that are easy to get started with.\r\n\r\n",
+            "startsAt": "2018-08-04T14:35:00",
+            "endsAt": null,
+            "isServiceSession": false,
+            "isPlenumSession": false,
+            "speakers": [
+              {
+                "id": "482e8c11-340a-44fd-8cef-56eeab34a8b4",
+                "name": "Graeme Foster"
+              },
+              {
+                "id": "99574c10-1a69-481e-a338-8372b1750949",
+                "name": "Rob Moore"
+              }
+            ],
+            "categories": [],
+            "roomId": 3,
+            "room": "M1",
+            "liveUrl": null,
+            "recordingUrl": null,
+            "status": null,
+            "isInformed": true,
+            "isConfirmed": true
+          }
+        ],
+        "hasOnlyPlenumSessions": false
+      }
+    ],
+    "timeSlots": [
+      {
+        "slotStart": "2018-08-04T08:00:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-0800-registration",
+              "title": "Registration",
+              "description": null,
+              "startsAt": "2018-08-04T08:00:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T08:45:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-0845-welcome-and-housekeeping",
+              "title": "Welcome and housekeeping",
+              "description": null,
+              "startsAt": "2018-08-04T08:45:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T09:00:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-0900-welcome-to-country",
+              "title": "Welcome to country",
+              "description": null,
+              "startsAt": "2018-08-04T09:00:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T09:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "c79f149d-4e7b-4202-ba30-13cbb1df1b33",
+              "title": "Keynote: Towards a welcoming Web",
+              "description": "The Internet is supposed to be an open, accessible platform. Unfortunately, frequently we see pitfalls in reliability, accessibility or performance stemming from a privileged understanding of connectivity, cultural and economic context. It turns out; the Web can be unwelcoming to many.\r\n\r\nThis talk will set the necessary context for inclusive design practice, focusing on accessibility, performance and equality. We'll learn how to foster a user-experience focused culture, no matter whether you're a developer, designer, project or business owner. You will leave inspired to build a better Web for everyone.",
+              "startsAt": "2018-08-04T09:10:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": true,
+              "speakers": [
+                {
+                  "id": "35732f50-0f3f-4402-b91a-cfdfe4f02fc6",
+                  "name": "Karolina Szczur"
+                }
+              ],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T09:55:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-0955-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2018-08-04T09:55:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T10:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "68927257-08c3-41f7-9810-5d290c373405",
+              "title": "Securing Single Page Applications",
+              "description": "We’ve been spending more and more time developing applications that run in the browser, Single Page Applications, SPA's, and more recently Progressive Web Applications, PWA’s. But with more code running client side what changes do we need to make to how we write applications, test applications and secure applications?\r\n\r\nSo how do we write a secure SPA? What do we do with our security tokens, client-side data, track vulnerabilities in our dependencies or implement trust between the client and server?\r\n\r\nIn this talk, we'll deep dive into some practical solutions on how to create secure modern web applications.",
+              "startsAt": "2018-08-04T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "f97156c1-d647-4771-9135-c3d0d7e1c16e",
+                  "name": "Aaron Powell"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "318d8f95-54e8-486b-8119-94bb91924f64",
+              "title": "Looking for a pet project? Here is a list of humanity's biggest challenges.",
+              "description": "It's your well earned time off, an evening or a weekend - yet you are at your keyboard, in the flow, working on your side project, devouring whatever skills and new tech your goal demands, and getting an endorphin kick from seeing results of your efforts along the way. It runs! It does something! And I created it!\r\n\r\nNot only it's the best feeling ever it also makes you better at your job and a more interesting person; people are drawn to driven, passionate people. But it's not easy to pick something that is really... really worth all that time and focus, is it? \r\n\r\nHave you started on a website for a local public speaking club and after few months of work felt.. underwhelmed? Or perhaps have you tried to dip your toe into a new technology, like machine learning, and raise your eyebrow at the number of tutorials on how to distinguish tomatoes from grapes or kittens from cars? Yet - we forget there are those nasty problems that we all face as humanity, like climate change, health or equal rights.\r\n\r\nThey do sound monstrous and abstract, but we did our research and split them into bite-size pet projects, actionable and inspiring.  We believe - we can all make this world a better place - by following our passion, leveraging technology and having fun!\r\n\r\nWe are two data analysts from Perth, and while every problem does resemble \"a machine learning nail\" to us,\r\nwe filled this call to action presentation with ideas ranging from educational visualization to apps and digital communities so everyone feels that there is something for them. \r\n\r\nWould you chip in?",
+              "startsAt": "2018-08-04T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "24060020-34d7-4db5-8109-5e74fc49e83a",
+                  "name": "Rimma Shafikova"
+                },
+                {
+                  "id": "8638c295-fce5-40f6-adb4-efde3d8d2a44",
+                  "name": "Diana Mozo"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "ab660bb2-d12a-4627-9c2a-b92900e87bca",
+              "title": "Service Meshes - Powering the next wave of microservice architectures",
+              "description": "Microservices and containers have transformed application design and deployment patterns. Modern cloud native architectures - which underpin many of the world's groundbreaking tech companies such as Uber, Netflix and Airbnb - afford unparalleled levels of agility and scale but are not without trade-offs. In applications comprising hundreds of services (and thousands of service instances), concerns such as security, operability and observability pose significant challenges. Supporting compensating capabilities such as circuit breakers, retry policies and service discovery in each microservice adds undesirable code bloat and impacts our ability to choose the best language for the problem at hand should the required libraries not be available. \r\n\r\nIn this session, we will take an in-depth look at the service mesh pattern; the benefits that a decentralized microservice management approach brings; the best practices that have evolved; and most importantly what you need to know to effectively leverage a service mesh in your architecture:\r\n\r\n- How to determine the suitability of a service mesh for your application context. Don't just drink the cloud native Kool-Aid!\r\n- Disambiguate the overlapping responsibilities of an API gateway and service mesh in a modern architecture and demonstrate how they can be used in harmony.\r\n- How a service mesh enables choosing the best tool or language for a given service without being constrained by the availability of libraries for each platform. Effectively it's a weight loss plan for your microservices.\r\n- What techniques to apply when transitioning to a service mesh based architecture.\r\n\r\nAdditionally, we will take a hands-on look at what is involved to build and manage a microservice architecture leveraging Kubernetes and Istio, a leading open source service mesh. By the end of the session, you will not only understand the concepts underpinning the service mesh pattern but also have the knowledge to put them into practice.",
+              "startsAt": "2018-08-04T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "3ec360b0-1700-4723-a91f-c287bd1e11ac",
+                  "name": "Rob Crowley"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "77fea600-238f-4523-baf8-f51b5db5d666",
+              "title": "Reverse Engineering is Good and also For Everyone",
+              "description": "In the tech press, you have probably seen a story or two showcasing some kind of ridiculous hacking or technical feat. Maybe it's modifying a video game to have new features or characters, maybe it's rigging an ATM to play a jingle and spit out money like a jackpotting slot machine, maybe it's revealing every workstation/server CPU on Earth as hopelessly insecure in the space of an afternoon. For many, the reaction these stories evoke is roughly \"geez that's pretty rad, I'd love to try something like that but unfortunately I don't have the skill to pull it off\". \r\n\r\nSo how IS it possible? Did these people spend half their lives memorising an entire architecture before starting? Do you need some sort of gift to magically understand assembly language? Are modern chips so different and complex that there's no such thing anymore as a one-size-fits-most understanding? Is there no entry level approach to this at all?\r\n\r\nSpoiler: the answer to all of these questions is HECK NO. In this talk, we will cover basic reverse engineering applications and techniques, and how they can scale up to match almost any technical challenge you can name. Even when starting from scratch. These skills can prove useful for original research, fun personal projects, and even plain ordinary development! How sick is that?",
+              "startsAt": "2018-08-04T10:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "cfabbbd7-d349-4239-ac57-399032476850",
+                  "name": "Scott Percival"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T10:50:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1050-morning-tea",
+              "title": "Morning tea",
+              "description": null,
+              "startsAt": "2018-08-04T10:50:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T11:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "24bc1c06-ec0d-4ba0-8d3e-a995d2118f46",
+              "title": "Thinking in Streams - gentle introduction to reactive programming via RxJS",
+              "description": "Apps nowadays have an abundance of real-time events of every kind that enable a highly interactive experience to the user. We need tools for dealing with that and reactive programming comes to the rescue.\r\n\r\nIn this talk, I will introduce you to reactive paradigm using RxJS and JavaScript for examples. We'll talk about important principles when getting started with Rx, like observable and observer pattern, leveraging functional programming concepts, hot and cold observables and Rx operators.\r\n\r\nYou'll learn how to let go of old imperative and stateful programming habits, and stretch your brain to work in a different paradigm.\r\n\r\nRx is not restricted to client-side apps (it works great also in event-heavy backends), neither to a specific language (it is widely available in many dialects: .NET, Java, Scala, Clojure, JavaScript, Ruby, Kotlin, Swift, C++, Elixir, etc.), so whatever your tools are, you can definitely benefit from it.",
+              "startsAt": "2018-08-04T11:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "0053c86a-b250-4161-9d4b-ca8d5b6e598a",
+                  "name": "Chris Filipowski"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "0f383402-2fee-4728-a6bf-fbe74ba2671e",
+              "title": "Building Highly Engaged Teams",
+              "description": "Hiring and retaining good people is hard but super critical. A high performing team delivers, has fun and kicks goals.\r\n\r\nOver the years I have become known for hiring and spotting good talent. I have had compliments from senior architects and leaders on the quality of people I choose for my teams.\r\n\r\nHiring is an art form and a challenging endeavour. Get it wrong and you will pay the price.\r\n\r\nSo how do you attract top talent and maintain top class engagement scores?",
+              "startsAt": "2018-08-04T11:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c7ae22bd-dc33-4b5a-8611-16774fee0060",
+                  "name": "Will Webster"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "0d35dfb9-c75f-48a4-bd73-18fe07f6a04b",
+              "title": "Blockchain: More than cryptocurrency!",
+              "description": "Blockchain is more than just cryptocurrency; it's a complex assembly of technologies that offer practical solutions to some very challenging problems.\r\n\r\nIn this session {the speaker} will share their adventure learning about blockchain, how it works and how they developed their own. From its defining principles, its distributed nature and the magic that is consensus. I'll also explore some of the potential real world applications that aren’t just another altcoin!\r\n\r\nBy the end of the session, you will have an understanding of blockchain outside of the context of cryptocurrency and be equipped with the knowledge you need to embark on your own blockchain adventure! ",
+              "startsAt": "2018-08-04T11:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "a728c224-8f1a-4a3b-b932-49922af99c53",
+                  "name": "Brandon Lewis"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "88344a80-a3e8-484a-93b6-e6a4f80af84f",
+              "title": "What to do with our unconscious bias.",
+              "description": "Upgrade your skills on how to identify your own unconscious bias, when to challenge it, how to communicate it and best deal with the environment that doesn't match your perfect world scenario.\r\n\r\nA journey into a critical and hysterical investigation of the speakers own personal unconscious bias across childhood experiences, education and careers.\r\n\r\nYou don’t need to be a manager help create safe space to question bias in your organisation.",
+              "startsAt": "2018-08-04T11:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "5664deb1-f1d9-4b40-b00c-29cb3230f66b",
+                  "name": "Ming Johanson"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T11:40:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1140-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2018-08-04T11:40:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T11:50:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "6cf90233-65d8-4bdd-868f-9d13683aac78",
+              "title": "You're doing TypeScript wrong",
+              "description": "TypeScript is a great language with a ton of features to support application development in JavaScript. By allowing optional type annotations, TypeScript can tell you at write-time or compile-time when something could break at run-time, reducing the number of bugs in your code. What could be wrong with that?\r\n\r\nWe will look at a few examples where you may have inadvertently prevented TypeScript from being able to help you, how you can avoid them in the future, and (maybe) how we all got in this mess in the first place.",
+              "startsAt": "2018-08-04T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "9640d000-a8f6-4f25-be3a-5eb5c369f981",
+                  "name": "Ben Lowry"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "96326393-7372-46d0-a07c-3006b97517cf",
+              "title": "Toxic Developers and You",
+              "description": "Have you ever started your morning by worrying about “that person”, and how long you can put off having to deal with them? Do thoughts of this person and their actions occupy your mind when you should be focussing on work or your personal life? Have you been so unmotivated and anxious about work that you’ve considered quitting?\r\n\r\nToxic developers can make you doubt yourself and your abilities.  Their behaviour can be hugely disruptive to the success of individuals and ultimately teams as a whole.\r\n\r\nI will address how to identify and deal with toxic developers in the workplace by providing you with strategies you can apply day to day. My aim is to help you regain your focus by sharing coping mechanisms and healthy ways to respond to a situation, whether it is you who is affected or your teammates.\r\n\r\nThere may be others on your team who struggle and self-sacrifice in an attempt to cope with the situation. No one should leave a job they enjoy or lose their passion for their work because of one individual.",
+              "startsAt": "2018-08-04T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "a941c0cc-1133-484e-8a91-4f94295f02ef",
+                  "name": "Patrik Affentranger"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "ee60b006-8662-4d8c-8a60-4ee4ad2018f7",
+              "title": "How to win friends and comply with the Notifiable Data Breaches scheme*",
+              "description": "The \"Notifiable Data Breaches scheme\" amendment to the Australian Privacy Act kicked in in February 2018, to much confusion amongst Australian businesses. If you're interested in demystifying the \"legalese\" of the scheme to understand what actually counts as a data breach, who the laws apply to and what they require - this is the talk for you!\r\n*will not actually win you friends",
+              "startsAt": "2018-08-04T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "0b364a6a-5f92-4b17-917f-2c8f6bfc6e2c",
+                  "name": "Cairo Malet"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "a45d6be4-668d-4c01-8522-34c43580baab",
+              "title": "Machine Learning to Diagnose Childhood Brain Tumours",
+              "description": "Brain tumours are currently the number one cause of cancer related death in children worldwide. The current method of identifying childhood brain tumours is problematic at best and useless at worse for remote and budget limiting healthcare locations. But perhaps machine learning holds the key to speed and cost allowing isolated areas like Perth to diagnosis these deadly diseases locally. I will be discussing how we have addressed this problem both from machine learning software development perspective and deployment approach.",
+              "startsAt": "2018-08-04T11:50:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "c9aacc98-f53b-428f-a1bd-fd556c4a4f8a",
+                  "name": "Wes Wilson"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T12:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1210-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2018-08-04T12:10:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T12:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "5588dee1-39a1-47a9-bc04-376ff1578930",
+              "title": "Sketching & how to win at Pictionary",
+              "description": "Have you ever told yourself or others that you can’t draw? If you’ve ever played a game of Pictionary then you’ll know that getting your point across isn’t necessarily about how beautiful your drawing is. Sketching isn’t just for artists and designers - it’s a powerful tool for communicating ideas, and you don’t have to be Da Vinci to do it.\r\n\r\nMaybe you’ve struggled to get a concept across in a meeting, but hesitated to grab a marker and start scribbling on the whiteboard. Maybe you’ve struggled getting ideas out of your own head and onto paper, and dot points aren’t cutting it. Maybe you’re just not very good at Pictionary and want to beat your cousins at the next family party.\r\n\r\nYou’ll learn why sketching is such an effective method of communication, and how to put together your own visual vocabulary to bust out next time when words alone are not enough. More importantly, we’ll go over why anyone can develop the skills and confidence to use sketching in their work. No fancy tools or artistic talent required.",
+              "startsAt": "2018-08-04T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "ff110d04-8331-4a79-a527-bb968ffc464a",
+                  "name": "Teresa Watts"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "dd4a2717-47ed-426f-a97d-5bb4f9c1fef3",
+              "title": "Creating a ‘best place to work’ culture",
+              "description": "Being a leader in a ‘best place to work’ has many advantages. It’s easier to attract the best talent, employees are engaged and more productive, employees collaborate and actively contribute to making your company better and more successful.  \r\n\r\nBut where do you start? How do you create this type of environment? In this talk I will take you through some practical advice on how to create and implement strategies to turn your organisation into a ‘best place’.  ",
+              "startsAt": "2018-08-04T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "18918042-749f-4012-b5da-de1c721f4c63",
+                  "name": "Donna Edwards"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "a9c48983-c3c9-4ceb-b21b-6b1d116a6882",
+              "title": "MicroServices UI Composition",
+              "description": "Ever wondered how websites like Amazon were created? They rely on Microservices architecture to be loosely-coupled but what about the UI? How do we avoid a monolithic UI? Join me on this talk to learn about techniques for developing a UI for a Microservices backend.\r\n",
+              "startsAt": "2018-08-04T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "d302dfdd-9a37-4b2a-9ec9-de753a7cd28b",
+                  "name": "Hadi Eskandari"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "c0f29a8d-0c21-43d6-aeb1-c34054e6541f",
+              "title": "Delightful Frontend Development: An Intro to Elm",
+              "description": "\"undefined is not a function\" - Google Chrome, 2018\r\n\r\nLet's be honest, it's not a great user experience is it? To say JavaScript is a prickly learning experience is an understatement. There's all the little quirks inherit to JavaScript itself, combine that with a colourful cast of frameworks, libraries and patterns, and you've got a recipe for disaster.\r\n\r\nElm provides a refreshing alternative to JavaScript. Elm is a language built with an emphasis on being easy to use, building robust applications and great performance. Elm does this through polite and friendly error messages, no runtime exceptions and a virtual DOM similar to React.\r\n\r\nIn this session we'll cover a brief overview of Elm and some of the developer-focused features it provides. As well as a live demonstration of coding in Elm.",
+              "startsAt": "2018-08-04T12:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "a450c432-e108-48a7-b3ab-abb69d5dbdf0",
+                  "name": "Dylan Pindur"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T13:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1305-lunch",
+              "title": "Lunch",
+              "description": null,
+              "startsAt": "2018-08-04T13:05:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T13:15:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "26c62196-0d96-4e52-b4ba-7896ddf2ff04",
+              "title": "Lunchnote: The Structure of Software Revolutions",
+              "description": "This talk will provide a new view of the Agile and DevOps movements, through the lens of scientific and cognitive revolutions.\r\n\r\nIt will show how to make strategic choices in recruitment, organization, culture, and technology to best situate an organization for success in this brave new world.",
+              "startsAt": "2018-08-04T13:15:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": true,
+              "speakers": [
+                {
+                  "id": "c47df330-a5c0-4b70-b4f3-1ef295d0b317",
+                  "name": "Mike Long"
+                }
+              ],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T13:45:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1345-lunch-continued",
+              "title": "Lunch (continued)",
+              "description": null,
+              "startsAt": "2018-08-04T13:45:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T14:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "3a0236e4-c8fa-4cc9-ab48-fc0371a6b990",
+              "title": "Serverless Cloud Native Progressive Web Apps in Production : Lesson from the Trenches",
+              "description": "This talks outlines our experience in building PWA in the Cloud and how we manage to utilise most if not all of the browser API that makes a web app progressive, while doing it without hosting any server at all.\r\n\r\nTechnologies that I will touch on:\r\n- Notification Api in collaboration with Push Api\r\n- Sync Api \r\n- Offline Storage (local storage, IndexedDB)\r\n- Event Sourcing with DynamoDB stream\r\n- Data Lake with Kinesis Firehose and S3\r\n- Analytics with AWS Athena",
+              "startsAt": "2018-08-04T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "8a048784-97e3-4cb1-8190-d6e65a4d227d",
+                  "name": "William Sia"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "2f2a3626-5ec3-4085-baca-941910c09467",
+              "title": "Overcoming fear, anxiety and doubt as a developer",
+              "description": "This talks about the common fears we encounter as developers and how to overcome them. This includes (and won't be limited to) impostor syndrome, contributing to open source, being a \"good developer\", speaking publicly, etc. If you have ever asked yourself: \"Was I good enough?\" or \"Did I do a good job?\", then this talk is for you! ",
+              "startsAt": "2018-08-04T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "66b3c0ea-b5bb-4834-acc8-afb4638b4877",
+                  "name": "Eumir Gaspar"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "9ac2e311-7559-436c-8ee8-6f0aed17a431",
+              "title": "10 UX principles you should know about",
+              "description": "User Experience Design is closely connected to human psychology. From research to usability testing, human behaviour is at the centre of what we do. We can only build better products when we pay special attention to things like the user's memory, attention and perception. \r\n\r\nLet's take a dive into the \"Laws of UX\", and reflect on how they can help us craft better experiences.\r\n\r\nAn example? According to Hick's law, \"The time it takes to make a decision increases with the number and complexity of choices.\"",
+              "startsAt": "2018-08-04T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "2d606884-ac12-4224-91d0-a6e425f0841c",
+                  "name": "Phil Delalande"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "9a72d1fa-6563-4de2-bb3c-27d13d7e0d64",
+              "title": "DDD from the trenches",
+              "description": "You’ve probably heard about Domain Driven Design, heck you may have even read THE book on it, but like most of us you’ve probably wondered how to apply it in practice. Where do you begin? How do you win people over to this sometimes drastically different way of thinking and doing? In this short talk you’ll hear from both a UX Designer and Engineer on how they navigated the early stages of a project, the challenges encountered along the way and some of the techniques that were employed to overcome them. Finally, we’ll retrospect on the overall process of DDD and contrast the outcomes with those of other traditional approaches. Make sure you don’t miss this talk!",
+              "startsAt": "2018-08-04T14:05:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "0aeafde6-614e-447e-bf3d-823f71b016d5",
+                  "name": "Rami Ruhayel"
+                },
+                {
+                  "id": "954c4d31-6e60-4c75-b730-caab6159d612",
+                  "name": "Valeria Spirovski"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T14:25:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1425-changeover",
+              "title": "Changeover",
+              "description": null,
+              "startsAt": "2018-08-04T14:25:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T14:35:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "f7fc010d-8c47-4b86-b1e9-1221b63e0281",
+              "title": "Understand Functional Programming in 40 Minutes (or your Money Back*)",
+              "description": "Functional programming is becoming increasingly important as we build more complex systems and use more parallel and concurrent programming.  It’s also now present and being used more in mainstream languages like Java, C#, Swift and Javascript so it can no-longer be ignored by developers.  \r\n\r\nHave you tried to understand functional programming but been completely bamboozled?  Or do you know what a function is and understand the basics of functional programming but wonder what’s with all the other stuff?  It’s most likely the big picture hasn’t been explained, or at least not clearly enough.\r\n\r\nThis talk will give you a clear conceptual overview of functional programming with simple examples so that you will really get what it’s all about.  There are consequences of only using functions and this is what makes functional programming very different from other programming paradigms.   \r\n\r\nThis talk won’t use terms like functor, applicative, or monad but by the end of the talk you will definitely understand them.  It also won’t make you a functional programmer overnight but it will give you a conceptual framework to know what you need to do and why when doing functional programming.  \r\n\r\nThe presenter has more than twenty years experience explaining complex technical concepts in clear and simple terms.  \r\n\r\n(* not really but you’ll certainly get your money’s worth and more)",
+              "startsAt": "2018-08-04T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "84bee702-93a5-494f-8ecc-2a7b567eae0f",
+                  "name": "Ashley Aitken"
+                }
+              ],
+              "categories": [],
+              "roomId": 0,
+              "room": "RR4",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 1,
+            "name": "M3",
+            "index": 1,
+            "session": {
+              "id": "2234f8f6-6e13-4998-ba37-baf53ae44d9d",
+              "title": "Rise of the Tech Influencer - Small steps you can take to increase your reach",
+              "description": "Keeping your head down and working hard is not enough anymore. If you want to move onwards and upwards in this world you have to make sure the world knows your name. This can be hard when all you care about is the code and you don't want to look like a dick.\r\n\r\nAs Microsoft's #1 Social Seller on LinkedIn Globally - I have more influence and engagement across that platform than Mark Russinovich. I will share all my tips and tricks to help raise your profile with very little effort - so you can keep your focus where it counts.",
+              "startsAt": "2018-08-04T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "3637dcb5-42cc-49eb-9cbe-1fa83fd4b3a3",
+                  "name": "Michelle @ Microsoft"
+                }
+              ],
+              "categories": [],
+              "roomId": 1,
+              "room": "M3",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 2,
+            "name": "M2",
+            "index": 2,
+            "session": {
+              "id": "4f463f9b-bf28-446a-9558-c6ac59697cc9",
+              "title": "Functional HTML",
+              "description": "HTML, the foundation of the web! With so much time being spent on typed javascript, functional programming, unit tests, visual regression testing, tools, frameworks and a drive to write better more efficient code we often forget that the web starts with HTML.\r\n\r\nLet’s talk HTML and semantics and why choosing the right HTML elements will help you write more accessible, efficient and maintainable code not just in your HTML but your CSS and Javascript as well. \r\n\r\nMost importantly we’ll explore why HTML is so vital in improving your projects overall functionality for people and for bots. \r\n",
+              "startsAt": "2018-08-04T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "f5d4c6a5-c993-4de3-9647-c652dc19bf9f",
+                  "name": "Mandy Michael"
+                }
+              ],
+              "categories": [],
+              "roomId": 2,
+              "room": "M2",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          },
+          {
+            "id": 3,
+            "name": "M1",
+            "index": 3,
+            "session": {
+              "id": "fd830fb5-8e7b-4527-bc79-f7ddf693232f",
+              "title": "Advanced Testing Techniques: Tips from the trenches",
+              "description": "Software testing is undeniably hard. We have worked with many teams over many years through consulting with a wide range of companies. Through this perspective we have had a unique opportunity to see the entire continuum of testing successes and failures. This has ranged from highly effective teams that can confidently deploy changes multiple times a day through to teams struggling to deploy twice in a year.\r\n\r\nOne of the key things we've observed in the teams that are highly effective is a pragmmatic approach to software testing and a realisation of how to effectively and judiciously use test automation to accelerate delivery speed and confidence. On the other end of the spectrum, we ourselves have written (and seen) everything from heavily mocked, time-consuming implementation tests that impede refactoring, 24 hour long brittle automated UI test suites and 4 week long regression testing cycles (as well as everything in between).\r\n\r\nWe both have a strong passion for code quality, automated testing, DevOps and getting valuable features out quickly and safely to users. This passion, combined with our extensive experience has led to us uncovering and adopting a number of testing techniques and mindsets which we, and teams we have worked with, have found highly effective at reducing overhead of testing while improving confidence and utility.\r\n\r\nIn this presentation, we will blow apart the traditional testing mindset/methodologies and contrast them with the battle-tested pragmatic approaches we've been using. We will also leave attendees with some new, highly effective testing techniques for their toolbelt that are easy to get started with.\r\n\r\n",
+              "startsAt": "2018-08-04T14:35:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": false,
+              "speakers": [
+                {
+                  "id": "482e8c11-340a-44fd-8cef-56eeab34a8b4",
+                  "name": "Graeme Foster"
+                },
+                {
+                  "id": "99574c10-1a69-481e-a338-8372b1750949",
+                  "name": "Rob Moore"
+                }
+              ],
+              "categories": [],
+              "roomId": 3,
+              "room": "M1",
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T15:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1520-afternoon-tea",
+              "title": "Afternoon tea",
+              "description": null,
+              "startsAt": "2018-08-04T15:20:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T15:50:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1550-prize-draw",
+              "title": "Prize Draw",
+              "description": null,
+              "startsAt": "2018-08-04T15:50:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T16:20:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "264b7669-8127-41a3-9f6b-87511a879cf1",
+              "title": "Locknote: Better mental health in the workplace",
+              "description": "Mark Leopold, beyondblue’s Head of Workplace Engagement, will discuss the importance of improving workplace mental health. Attendees will learn about best practice approaches in workplace mental health and strategies for adopting an integrated approach to workplace mental health including: minimising risk, supporting those with mental health conditions and promoting the positives within the workplace. This session will include introduction to resources to help people and organisations take effective action to improve workplace mental health. Mark is a passionate advocate for workplace mental health. Informed by his personal experience with depression and experience across numerous industries, Mark discusses the topic in a relatable manner; helping people and organisations to take action. ",
+              "startsAt": "2018-08-04T16:20:00",
+              "endsAt": null,
+              "isServiceSession": false,
+              "isPlenumSession": true,
+              "speakers": [
+                {
+                  "id": "bf95ea05-6881-43cf-99fa-af201c7e859c",
+                  "name": "Mark Leopold"
+                }
+              ],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T17:05:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1705-thank-yous-and-wrap-up",
+              "title": "Thank yous and wrap up",
+              "description": null,
+              "startsAt": "2018-08-04T17:05:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      },
+      {
+        "slotStart": "2018-08-04T17:10:00",
+        "rooms": [
+          {
+            "id": 0,
+            "name": "RR4",
+            "index": 0,
+            "session": {
+              "id": "service-1710-afterparty",
+              "title": "Afterparty",
+              "description": null,
+              "startsAt": "2018-08-04T17:10:00",
+              "endsAt": null,
+              "isServiceSession": true,
+              "isPlenumSession": true,
+              "speakers": [],
+              "categories": [],
+              "roomId": null,
+              "room": null,
+              "liveUrl": null,
+              "recordingUrl": null,
+              "status": null,
+              "isInformed": true,
+              "isConfirmed": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

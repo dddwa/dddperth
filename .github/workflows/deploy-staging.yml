@@ -1,0 +1,139 @@
+name: Deploy to Staging
+
+# Triggered by a "/deploy-staging" comment on a pull request.
+# Author must be the repo OWNER, an org MEMBER, or an explicit COLLABORATOR.
+
+on:
+    issue_comment:
+        types: [created]
+
+permissions:
+    contents: read
+    pull-requests: write
+    deployments: write
+
+concurrency:
+    group: deploy-staging-${{ github.event.issue.number }}
+    cancel-in-progress: true
+
+jobs:
+    gate:
+        if: >-
+            github.event.issue.pull_request != null &&
+            startsWith(github.event.comment.body, '/deploy-staging') &&
+            (
+              github.event.comment.author_association == 'OWNER' ||
+              github.event.comment.author_association == 'MEMBER' ||
+              github.event.comment.author_association == 'COLLABORATOR'
+            )
+        runs-on: ubuntu-latest
+        outputs:
+            sha: ${{ steps.pr.outputs.sha }}
+            ref: ${{ steps.pr.outputs.ref }}
+            repo: ${{ steps.pr.outputs.repo }}
+        steps:
+            - name: React to trigger comment
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      await github.rest.reactions.createForIssueComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        comment_id: context.payload.comment.id,
+                        content: 'rocket',
+                      })
+
+            - name: Resolve PR head
+              id: pr
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const { data: pr } = await github.rest.pulls.get({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        pull_number: context.issue.number,
+                      })
+                      core.setOutput('sha', pr.head.sha)
+                      core.setOutput('ref', pr.head.ref)
+                      core.setOutput('repo', pr.head.repo.full_name)
+
+    deploy:
+        needs: gate
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        environment:
+            name: staging
+            url: ${{ steps.deploy.outputs.url }}
+
+        env:
+            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+
+        steps:
+            - name: Checkout PR head
+              uses: actions/checkout@v4
+              with:
+                  repository: ${{ needs.gate.outputs.repo }}
+                  ref: ${{ needs.gate.outputs.sha }}
+
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
+              with:
+                  run_install: false
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm run setup
+
+            - name: Build
+              run: pnpm nx build website
+
+            - name: Apply D1 migrations (staging)
+              run: pnpm nx d1-migrate-staging website
+
+            - name: Deploy
+              id: deploy
+              run: |
+                  output=$(pnpm nx deploy-staging website 2>&1 | tee /dev/stderr)
+                  url=$(echo "$output" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | head -n1)
+                  if [ -z "$url" ]; then
+                    url="https://staging.dddperth.com"
+                  fi
+                  echo "url=$url" >> "$GITHUB_OUTPUT"
+
+            - name: Comment deployment URL on PR
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const url = '${{ steps.deploy.outputs.url }}'
+                      const sha = '${{ needs.gate.outputs.sha }}'
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: context.issue.number,
+                        body: `Staging deployed from \`${sha.substring(0, 7)}\`: ${url}`,
+                      })
+
+    failure-comment:
+        needs: [gate, deploy]
+        if: failure() && needs.gate.result == 'success'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/github-script@v8
+              with:
+                  script: |
+                      const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: context.issue.number,
+                        body: `Staging deploy failed. [View logs](${runUrl})`,
+                      })
