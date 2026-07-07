@@ -65,8 +65,8 @@ export default function Login() {
                         Check your inbox
                     </styled.h1>
                     <styled.p color="gray.9">
-                        If <styled.strong>{actionData.email}</styled.strong> is on the allowlist, a sign-in link is on
-                        its way. The link expires in 15 minutes.
+                        If <styled.strong>{actionData.email}</styled.strong> has access, a sign-in link is on its way.
+                        The link expires in 15 minutes.
                     </styled.p>
                     {!canSendEmail && (
                         <Box

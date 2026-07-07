@@ -18,14 +18,28 @@
         }
     ],
 
+    "r2_buckets": [
+        {
+            "binding": "SPONSOR_ASSETS",
+            "bucket_name": "dddperth-sponsor-assets-staging"
+        }
+    ],
+
     "assets": {
         "directory": "../../core/website/build/client"
     },
 
+    // No cron trigger here — staging syncs via the admin "Sync now" button
+    // only, and JIRA_WRITEBACK_ENABLED stays off so staging test profiles
+    // can never tick checkboxes on real Jira issues. JIRA_SYNC_JQL scopes
+    // staging to issues labelled portal-test, so real sponsors never sync
+    // into the staging portal.
     "vars": {
         "WEB_URL": "https://staging.dddperth.com",
         "WEBSITE_AUTH_REQUIRED": "true",
-        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>",
+        "JIRA_WRITEBACK_ENABLED": "false",
+        "JIRA_SYNC_JQL": "project = SPN AND issuetype = Sponsor AND labels = \"portal-test\""
     },
 
     "routes": [

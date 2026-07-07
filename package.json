@@ -15,6 +15,7 @@
         "start": "nx dev website",
         "install-browsers": "pnpm playwright install",
         "sponsor:add": "node scripts/add-sponsor.mjs",
+        "jira:auth": "node scripts/jira-auth.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",
         "provision:cloudflare": "node scripts/provision-cloudflare.mjs"
     },

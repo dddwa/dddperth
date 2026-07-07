@@ -38,4 +38,20 @@ export interface AppConfig {
     tito: {
         securityToken?: string
     }
+
+    jira: {
+        /** Service-account email for Jira Basic auth. Absent → sync is disabled. */
+        apiEmail?: string
+        apiToken?: string
+        /** API base override for scoped tokens (api.atlassian.com gateway). */
+        apiBaseUrl?: string
+        /** Gates flipping the Jira completion checkbox so staging/dev can't touch real issues. */
+        writebackEnabled: boolean
+        /** Use the fixture Jira client instead of the real API (local dev). */
+        stub: boolean
+        /** Per-env JQL override — scopes test envs to "portal-test"-labelled issues. */
+        syncJqlOverride?: string
+        /** Token expiry (epoch millis) — drives committee reminder emails. */
+        tokenExpiresAt?: number
+    }
 }

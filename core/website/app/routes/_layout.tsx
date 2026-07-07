@@ -7,7 +7,7 @@ import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
-import { getUser, isAdmin } from '~/lib/auth.server'
+import { getUser, isAdminUser } from '~/lib/auth.server'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/_layout'
 
@@ -15,7 +15,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     const user = await getUser(request.headers, getServices(context))
     let adminData = null
 
-    if (user && isAdmin(user)) {
+    if (user && (await isAdminUser(user, getServices(context)))) {
         const session = await getServices(context).sessions.adminDateTime.getSession(request.headers.get('cookie'))
         const overrideDate = session.get('adminDateOverride')
 

@@ -45,5 +45,18 @@ builtConfig.vars = { ...builtConfig.vars, ...envConfig.vars }
 builtConfig.d1_databases = envConfig.d1_databases
 if (envConfig.routes) builtConfig.routes = envConfig.routes
 
+// R2 buckets differ per env (the build bakes in local.jsonc's local bucket
+// name); replace or drop to match the env config.
+if (envConfig.r2_buckets) {
+    builtConfig.r2_buckets = envConfig.r2_buckets
+} else {
+    delete builtConfig.r2_buckets
+}
+
+// Cron triggers are production-only (sponsor sync). Deploying with no
+// `triggers` key leaves previously-deployed crons in place, so write an
+// explicit empty list to clear them for envs without cron.
+builtConfig.triggers = envConfig.triggers ?? { crons: [] }
+
 writeFileSync(builtConfigPath, JSON.stringify(builtConfig))
 console.log(`Patched build/server/wrangler.json for ${env} (worker: ${envConfig.name})`)

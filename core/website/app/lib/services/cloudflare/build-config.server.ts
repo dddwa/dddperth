@@ -1,5 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { CloudflareEnv } from '../../../remix-app-load-context'
+import { parseExpiryDate } from '../../sponsors/token-expiry'
 import type { AppConfig } from '../app-config'
 
 /**
@@ -21,6 +22,15 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
         sessionizeOverrides: collectSessionizeOverrides(env),
         tito: {
             securityToken: env.TITO_SECURITY_TOKEN,
+        },
+        jira: {
+            apiEmail: env.JIRA_API_EMAIL,
+            apiToken: env.JIRA_API_TOKEN,
+            apiBaseUrl: env.JIRA_API_BASE_URL || undefined,
+            writebackEnabled: env.JIRA_WRITEBACK_ENABLED === 'true',
+            stub: env.JIRA_STUB === 'true',
+            syncJqlOverride: env.JIRA_SYNC_JQL,
+            tokenExpiresAt: parseExpiryDate(env.JIRA_TOKEN_EXPIRES),
         },
     }
 }

@@ -203,6 +203,72 @@ export interface MobileApp {
 }
 
 /**
+ * Jira wiring for the sponsor portal sync. All values are fork-owned config
+ * — field ids and option ids differ per Jira site, so nothing here can live
+ * in core. Credentials are NOT here; they're host secrets (wrangler
+ * `JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
+ */
+export interface SponsorPortalJiraConfig {
+    /** Jira site, e.g. "https://dddperth.atlassian.net" */
+    baseUrl: string
+    /** Sponsors project key, e.g. "SPN" */
+    projectKey: string
+    /**
+     * JQL selecting this year's sponsor issues. `{year}` is substituted with
+     * `SponsorPortalConfig.year`, e.g.
+     * `project = SPN AND issuetype = Sponsor AND labels = "{year}"`.
+     */
+    jql: string
+    /** Custom field ids on the sponsor issue type. */
+    fields: {
+        /** Text field holding the company display name (falls back to issue summary). */
+        companyName: string
+        /**
+         * URL field with the company website. Sponsor-owned: prefills the
+         * portal, and portal saves push the sponsor's value back.
+         */
+        website: string
+        /** Text field holding comma/semicolon-separated contact emails. */
+        contactEmail: string
+        /** Single-select holding the sponsorship tier. */
+        tier: string
+        /** Multi-checkbox "tasks" field the portal writes completion into. */
+        sponsorTasks: string
+        /**
+         * Paragraph field the sponsor's quote/blurb is pushed into on every
+         * portal save (sponsor-owned — the portal's value overrides Jira's).
+         * Omit if the field doesn't exist; the push is skipped.
+         */
+        quote?: string
+        /**
+         * Paragraph field the sponsor's social links are pushed into, one
+         * "platform: url" per line. Sponsor-owned like `quote`.
+         */
+        socialLinks?: string
+    }
+    /** Option id on `fields.sponsorTasks` flipped when a profile completes. */
+    assetsTaskOptionId: string
+    /**
+     * Raw Jira tier option value → `YearSponsors` category key (e.g.
+     * `{ Coffee: 'coffeeCart' }`). Unmapped values still sync and display
+     * raw — new Jira options must not break the portal.
+     */
+    tierMap: Record<string, string>
+}
+
+/**
+ * Sponsor self-service portal. When set, /portal routes come alive, sponsor
+ * contacts can log in via the same magic-link flow as admins, and sponsor
+ * records sync from Jira. Omit for forks without a sponsor portal — /portal
+ * returns 404 and the sync never runs.
+ */
+export interface SponsorPortalConfig {
+    /** Conference year the portal is collecting assets for, e.g. "2026". */
+    year: string
+    jira: SponsorPortalJiraConfig
+}
+
+/**
  * Runtime manifest — the bits the app needs at request time.
  *
  * Importable from anywhere (server or client) without bundler hazards.
@@ -220,6 +286,8 @@ export interface ConferenceManifest {
     homepage?: HomepageContentSlots
     /** Mobile app config. Omit for forks without an app — /app returns 404 then. */
     mobileApp?: MobileApp
+    /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
+    sponsorPortal?: SponsorPortalConfig
 }
 
 /**

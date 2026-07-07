@@ -30,12 +30,16 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // future code path that issues tokens (e.g. an admin-driven invite)
     // shouldn't be able to plant an open redirect via a malformed
     // redirect_to column. Defence in depth.
-    return await createUserSession(
-        request.headers,
-        getServices(context),
-        { email: result.email, name: null },
-        sanitiseRedirect(result.redirectTo),
-    )
+    let redirectTo = sanitiseRedirect(result.redirectTo)
+
+    // The default destination is /admin, but sponsor contacts who logged in
+    // without an explicit destination belong in their portal. Explicit
+    // redirects are honoured either way — requireAdmin bounces non-admins.
+    if (redirectTo === '/admin' && !(await getServices(context).auth.isAdminEmail(result.email))) {
+        redirectTo = '/portal'
+    }
+
+    return await createUserSession(request.headers, getServices(context), { email: result.email, name: null }, redirectTo)
 }
 
 export default function Verify() {
