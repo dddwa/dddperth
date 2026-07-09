@@ -120,7 +120,7 @@ declare module "safe-routes" {
     },
     "/runsheets": {
       params: never,
-      query: ExportedQuery<import('app/routes/_layout.runsheets._index.js').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
     },
     "/sitemap.xml": {
       params: never,
@@ -162,7 +162,7 @@ declare module "safe-routes" {
             | 'routes/api.theme'
             | 'routes/_layout'
             | 'routes/_layout.agenda.$year.talk.$sessionId'
-            | 'routes/_layout.runsheets._index'
+            | 'routes/_layout.runsheets.($filter)'
             | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
