@@ -18,6 +18,7 @@ import { Box, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
 import { ContentPageLayout, PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.$'
+import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
     const contentSlug = params['*']
@@ -44,7 +45,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await context.services.content.getPage(contentSlug, 'page')
+    const post = await getServices(context).content.getPage(contentSlug, 'page')
     if (!post) {
         console.log('Content not found for slug:', contentSlug)
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
@@ -58,7 +59,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     const sponsorPageData = getSponsorPageData()
@@ -68,14 +69,14 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     // (in which case the MDX component switches to "past supporters" copy
     // and adds a "Sponsor [year]" CTA — see lib/mdx.tsx).
     const ticketSponsorsResolved = resolveSponsorsWithFallback(
-        context.conferenceState.conference.year,
-        context.conferenceState.conference.sponsors,
+        getConferenceState(context).conference.year,
+        getConferenceState(context).conference.sponsors,
     )
     const ticketSponsors =
         ticketSponsorsResolved.kind === 'empty'
             ? undefined
             : {
-                  currentYear: context.conferenceState.conference.year,
+                  currentYear: getConferenceState(context).conference.year,
                   sponsors: [
                       ...(ticketSponsorsResolved.sponsors.platinum ?? []),
                       ...(ticketSponsorsResolved.sponsors.gold ?? []),
@@ -85,12 +86,12 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     return data(
         {
-            currentDate: context.dateTimeProvider.nowDate().toISO(),
+            currentDate: getDateTimeProvider(context).nowDate().toISO(),
             currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
             slug: post.slug,
-            conferenceState: context.conferenceState,
+            conferenceState: getConferenceState(context),
             importantDates,
             sponsorPageData,
             ticketSponsors,

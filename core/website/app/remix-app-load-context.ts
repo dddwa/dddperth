@@ -1,4 +1,4 @@
-import 'react-router'
+import { createContext, type RouterContext } from 'react-router'
 import type { ConferenceState } from './lib/conference-state-client-safe'
 import type { DateTimeProvider } from './lib/dates/date-time-provider.server'
 import type { AppConfig } from './lib/services/app-config'
@@ -7,7 +7,7 @@ import type { AppServices } from './lib/services/app-services'
 /**
  * Cloudflare-specific environment bindings. Only consumed by the Cloudflare
  * service builders and the worker entry — application code should read from
- * `context.config` and `context.services` instead.
+ * `getConfig(context)` and `getServices(context)` instead.
  */
 export interface CloudflareEnv {
     DB: D1Database
@@ -28,11 +28,23 @@ export interface CloudflareEnv {
     SESSIONIZE_2026_ALL_SESSIONS?: string
 }
 
-declare module 'react-router' {
-    export interface AppLoadContext {
-        config: AppConfig
-        services: AppServices
-        conferenceState: ConferenceState
-        dateTimeProvider: DateTimeProvider
-    }
+/**
+ * React Router v8 replaced the object-style `AppLoadContext` with a
+ * `RouterContextProvider`: `getLoadContext` populates these context keys and
+ * loaders/actions read them back via `context.get(...)`. Use the accessor
+ * helpers below rather than calling `context.get` directly so routes stay
+ * terse and type-safe.
+ */
+export const configContext = createContext<AppConfig>()
+export const servicesContext = createContext<AppServices>()
+export const conferenceStateContext = createContext<ConferenceState>()
+export const dateTimeProviderContext = createContext<DateTimeProvider>()
+
+interface ContextReader {
+    get<T>(context: RouterContext<T>): T
 }
+
+export const getConfig = (context: ContextReader): AppConfig => context.get(configContext)
+export const getServices = (context: ContextReader): AppServices => context.get(servicesContext)
+export const getConferenceState = (context: ContextReader): ConferenceState => context.get(conferenceStateContext)
+export const getDateTimeProvider = (context: ContextReader): DateTimeProvider => context.get(dateTimeProviderContext)

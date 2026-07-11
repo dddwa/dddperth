@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useEffect } from 'react'
 import { Form, useActionData, useLoaderData, useNavigation, useRevalidator } from 'react-router'
@@ -5,22 +6,22 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
 import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
 import type { StartValidationResponse } from '~/lib/voting-validation-types'
 import { getSessionsForVoting } from '~/lib/voting.server'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
-    const conferenceState = context.conferenceState
+    const conferenceState = getConferenceState(context)
     const year = conferenceState.conference.year
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     // Get the voting session counter
     let sessionCount = 0
@@ -81,7 +82,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const yearConfig = getYearConfig(year, context.config)
+        const yearConfig = getYearConfig(year, getConfig(context))
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
@@ -129,9 +130,9 @@ export async function action({
     const formData = await request.formData()
     const intent = formData.get('intent')
 
-    const conferenceState = context.conferenceState
+    const conferenceState = getConferenceState(context)
     const year = conferenceState.conference.year
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     if (intent === 'update_underrepresented_groups') {
         try {
@@ -165,7 +166,7 @@ export async function action({
             return response
         }
 
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+        const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
 
         if (yearConfig.kind === 'cancelled') {
             return {
@@ -265,12 +266,11 @@ export default function AdminVoting() {
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
-                                {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                    DateTime.DATETIME_SHORT,
-                                    {
-                                        locale: 'en-AU',
-                                    },
-                                )}
+                                {DateTime.fromISO(conferenceState.talkVoting.closes, {
+                                    zone: conferenceManifest.public.timezone,
+                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    locale: 'en-AU',
+                                })}
                             </styled.p>
                         </Box>
                     )}
@@ -282,12 +282,11 @@ export default function AdminVoting() {
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.opens, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                        DateTime.DATETIME_SHORT,
-                                        {
-                                            locale: 'en-AU',
-                                        },
-                                    )}
+                                    {DateTime.fromISO(conferenceState.talkVoting.opens, {
+                                        zone: conferenceManifest.public.timezone,
+                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                        locale: 'en-AU',
+                                    })}
                                 </styled.p>
                             </Box>
                             <Box flex="1">
@@ -295,12 +294,11 @@ export default function AdminVoting() {
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                        DateTime.DATETIME_SHORT,
-                                        {
-                                            locale: 'en-AU',
-                                        },
-                                    )}
+                                    {DateTime.fromISO(conferenceState.talkVoting.closes, {
+                                        zone: conferenceManifest.public.timezone,
+                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                        locale: 'en-AU',
+                                    })}
                                 </styled.p>
                             </Box>
                         </>
@@ -490,32 +488,16 @@ export default function AdminVoting() {
                             <styled.table width="full" fontSize="sm">
                                 <thead>
                                     <tr>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Started
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Status
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Progress
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Actions
                                         </styled.th>
                                     </tr>
@@ -524,12 +506,11 @@ export default function AdminVoting() {
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
                                             <styled.td p="2" border="admin-subtle">
-                                                {DateTime.fromISO(run.startedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                                    DateTime.DATETIME_SHORT,
-                                                    {
-                                                        locale: 'en-AU',
-                                                    },
-                                                )}
+                                                {DateTime.fromISO(run.startedAt, {
+                                                    zone: conferenceManifest.public.timezone,
+                                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                                    locale: 'en-AU',
+                                                })}
                                             </styled.td>
                                             <styled.td p="2" border="admin-subtle">
                                                 <styled.span

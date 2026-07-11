@@ -9,6 +9,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { YearSponsors } from '~/lib/conference-state-client-safe'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getConferenceState } from '~/remix-app-load-context'
 import type { Route } from './+types/app-config'
 
 interface AppConfig {
@@ -38,8 +39,8 @@ export function loader({ context }: Route.LoaderArgs) {
     const repoName = domain.split('.')[0]
     const rawContentBase = `https://raw.githubusercontent.com/${githubOrg}/${repoName}/refs/heads/main/conference/content/pages`
     const appConfig: AppConfig = {
-        conferenceDate: context.conferenceState.conference.date ?? null,
-        sponsors: context.conferenceState.conference.sponsors,
+        conferenceDate: getConferenceState(context).conference.date ?? null,
+        sponsors: getConferenceState(context).conference.sponsors,
         support: `${rawContentBase}/support.mdx`,
         home: {
             after: `${rawContentBase}/post-conference.mdx`,

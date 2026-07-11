@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Outlet, useLoaderData } from 'react-router'
 import { Acknowledgement } from '~/components/acknowledgement'
@@ -6,16 +7,16 @@ import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
-import { conferenceManifest } from '@conference/manifest'
 import { getUser, isAdmin } from '~/lib/auth.server'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/_layout'
 
 export async function loader({ context, request }: Route.LoaderArgs) {
-    const user = await getUser(request.headers, context.services)
+    const user = await getUser(request.headers, getServices(context))
     let adminData = null
 
     if (user && isAdmin(user)) {
-        const session = await context.services.sessions.adminDateTime.getSession(request.headers.get('cookie'))
+        const session = await getServices(context).sessions.adminDateTime.getSession(request.headers.get('cookie'))
         const overrideDate = session.get('adminDateOverride')
 
         adminData = {
@@ -31,13 +32,13 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
     return {
         conferenceDescription: conferenceManifest.public.description,
-        conferenceState: context.conferenceState,
-        webUrl: context.config.webUrl,
+        conferenceState: getConferenceState(context),
+        webUrl: getConfig(context).webUrl,
         adminData,
     }
 }
 
-export function meta({ data, location }: Route.MetaArgs) {
+export function meta({ loaderData: data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
         ? `${conferenceManifest.public.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
               zone: conferenceManifest.public.timezone,

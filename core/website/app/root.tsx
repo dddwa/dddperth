@@ -8,6 +8,7 @@ import { readThemeCookie } from '~/lib/theme.server'
 import type { Theme } from '~/lib/theme.server'
 import type { Route } from './+types/root'
 import './index.css'
+import { getConfig } from '~/remix-app-load-context'
 
 Settings.throwOnInvalid = true
 declare module 'luxon' {
@@ -24,7 +25,7 @@ declare module 'luxon' {
 export async function loader({ request, context }: Route.LoaderArgs) {
     const theme = readThemeCookie(request)
 
-    if (!context.config.websiteAuthRequired) return { theme }
+    if (!getConfig(context).websiteAuthRequired) return { theme }
 
     const url = new URL(request.url)
     if (url.pathname.startsWith('/auth/')) return { theme }

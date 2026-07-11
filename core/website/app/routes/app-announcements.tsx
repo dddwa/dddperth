@@ -1,5 +1,6 @@
-import type { Route } from './+types/app-announcements'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { getConferenceState, getServices } from '~/remix-app-load-context'
+import type { Route } from './+types/app-announcements'
 
 export interface GoogleFormUpdates {
     Timestamp: string
@@ -8,8 +9,8 @@ export interface GoogleFormUpdates {
 
 /** This route is used by the app for on the day announcements */
 export async function loader({ context }: Route.LoaderArgs) {
-    const year = context.conferenceState.conference.year
-    const announcements = await context.services.announcements.getActive(year)
+    const year = getConferenceState(context).conference.year
+    const announcements = await getServices(context).announcements.getActive(year)
 
     return new Response(JSON.stringify(announcements), {
         headers: {

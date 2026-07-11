@@ -1,6 +1,6 @@
-import type { AppLoadContext } from 'react-router'
-import { redirect } from 'react-router'
+import { redirect, type RouterContext } from 'react-router'
 import { $path } from 'safe-routes'
+import { getServices } from '~/remix-app-load-context'
 import { FairPairingGeneratorV5 } from './pairing-generator-v5'
 import type { AppServices } from './services/app-services'
 import { getConfSessions } from './sessionize.server'
@@ -46,11 +46,11 @@ export async function recordVoteInTable(
 
 export async function getVotingSession(
     request: Request,
-    context: AppLoadContext,
+    context: { get<T>(context: RouterContext<T>): T },
     year: string,
     getCurrentSessions: () => Promise<TalkVotingData[]>,
 ): Promise<VotingSession> {
-    const { services } = context
+    const services = getServices(context)
     const votingStorageSession = await services.sessions.voting.getSession(request.headers.get('Cookie'))
     const sessionId = votingStorageSession.get('sessionId')
 
@@ -84,11 +84,11 @@ export function extractSessionIds(sessions: TalkVotingData[]): string[] {
 
 export async function createUserVotingSessionAndRedirect(
     request: Request,
-    context: AppLoadContext,
+    context: { get<T>(context: RouterContext<T>): T },
     year: string,
     currentSessions: TalkVotingData[],
 ): Promise<never> {
-    const { services } = context
+    const services = getServices(context)
     const currentSessionIds = extractSessionIds(currentSessions)
 
     if (currentSessions.length === 0) {

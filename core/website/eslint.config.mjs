@@ -84,10 +84,8 @@ export default [
                         '{projectRoot}/vite.config.{js,ts,mjs,mts}',
                     ],
                     ignoredDependencies: [
-                        'tslib',
                         'vite',
                         '@react-router/dev',
-                        '@react-router/cloudflare',
                         '@pandacss/dev',
                         '@park-ui/panda-preset',
                         'pandacss-preset-typography',

@@ -1,17 +1,18 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Suspense, useEffect, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
-import { getYearConfig } from '~/lib/get-year-config.server'
 import type { Sponsor } from '~/lib/conference-state-client-safe'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import type { TalkPair } from '~/lib/voting.server'
 import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
 
@@ -21,7 +22,7 @@ const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
 const CLIENT_VERSION = CURRENT_CLIENT_VERSION
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })
@@ -30,14 +31,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Platinum sponsors are surfaced as a single-line acknowledgement on the
     // active voting view. Top tier only keeps the line short and reserves
     // this high-engagement surface as a premium perk.
-    const votingSponsors: Sponsor[] = context.conferenceState.conference.sponsors.platinum ?? []
+    const votingSponsors: Sponsor[] = getConferenceState(context).conference.sponsors.platinum ?? []
 
     if (
-        context.conferenceState.talkVoting.state === 'not-open-yet' ||
-        context.conferenceState.talkVoting.state === 'closed'
+        getConferenceState(context).talkVoting.state === 'not-open-yet' ||
+        getConferenceState(context).talkVoting.state === 'closed'
     ) {
         return {
-            talkVoting: context.conferenceState.talkVoting,
+            talkVoting: getConferenceState(context).talkVoting,
             votingSession: {
                 sessionId: null,
                 votingProgress: 0,
@@ -53,7 +54,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Check if Sessionize endpoint is configured
     if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
         return {
-            talkVoting: context.conferenceState.talkVoting,
+            talkVoting: getConferenceState(context).talkVoting,
             votingSession: {
                 sessionId: null,
                 votingProgress: 0,
@@ -69,18 +70,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const allSessionsEndpoint = yearConfig.sessions.allSessionsEndpoint
     // This will create a session and redirect
-    const votingSession = await getVotingSession(
-        request,
-        context,
-        context.conferenceState.conference.year,
-        () => getSessionsForVoting(allSessionsEndpoint),
+    const votingSession = await getVotingSession(request, context, getConferenceState(context).conference.year, () =>
+        getSessionsForVoting(allSessionsEndpoint),
     )
 
     // Calculate actual voting progress based on session state
     const votingProgress = votingSession.roundNumber * votingSession.maxPairsPerRound + votingSession.currentIndex
 
     return {
-        talkVoting: context.conferenceState.talkVoting,
+        talkVoting: getConferenceState(context).talkVoting,
         votingSession: {
             sessionId: votingSession.sessionId,
             currentRound: votingSession.roundNumber,
@@ -199,13 +197,13 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                              DateTime.DATETIME_SHORT,
-                              { locale: 'en-AU' },
-                          )} and closes ${DateTime.fromISO(data.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                              DateTime.DATETIME_SHORT,
-                              { locale: 'en-AU' },
-                          )}`
+                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, {
+                              zone: conferenceManifest.public.timezone,
+                          }).toLocaleString(DateTime.DATETIME_SHORT, {
+                              locale: 'en-AU',
+                          })} and closes ${DateTime.fromISO(data.talkVoting.closes, {
+                              zone: conferenceManifest.public.timezone,
+                          }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
                         : 'Voting is not available for this conference'
                 }
             />
@@ -264,10 +262,7 @@ function VotingPageWithSession({
     return (
         <Container py="12" maxW="6xl">
             <VStack gap="8">
-                <SponsorAcknowledgement
-                    prefix="Voting brought to you by"
-                    sponsors={data.votingSponsors}
-                />
+                <SponsorAcknowledgement prefix="Voting brought to you by" sponsors={data.votingSponsors} />
                 <VStack gap="4">
                     <styled.h2 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?

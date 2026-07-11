@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
@@ -5,23 +6,23 @@ import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { SponsorLogo } from '~/components/sponsor-logo'
-import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
+import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(year, context.config)
+    const yearConfig = getYearConfig(year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
         return redirect($path('/agenda/:year?', { year: undefined }))
     }
 
-    const now = context.dateTimeProvider.nowDate()
+    const now = getDateTimeProvider(context).nowDate()
     const agendaPublished =
         (yearConfig.agendaPublishedDateTime ? now >= yearConfig.agendaPublishedDateTime : false) ||
         (!!yearConfig.conferenceDate && now >= yearConfig.conferenceDate)

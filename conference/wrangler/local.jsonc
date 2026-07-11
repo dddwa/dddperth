@@ -2,8 +2,12 @@
     "$schema": "../../node_modules/wrangler/config-schema.json",
     "name": "dddperth-website",
     "main": "../../core/website/workers/app.ts",
-    "compatibility_date": "2024-12-30",
+    "compatibility_date": "2026-06-24",
     "compatibility_flags": ["nodejs_compat"],
+
+    // Upload source maps so Cloudflare error stack traces map back to
+    // original source rather than the minified worker bundle.
+    "upload_source_maps": true,
 
     // D1 Database binding for voting (local dev)
     // Staging and production use separate config files

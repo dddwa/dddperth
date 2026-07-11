@@ -1,5 +1,5 @@
-import type { AppLoadContext } from 'react-router'
-import { redirect } from 'react-router'
+import { redirect, type RouterContext } from 'react-router'
+import { getServices } from '~/remix-app-load-context'
 import type { AppServices } from './services/app-services'
 import type { User } from './session-types'
 
@@ -30,8 +30,11 @@ export async function getUser(requestHeaders: Headers, services: AppServices): P
  * Anyone with a session is, by definition, allowlisted — the allowlist is
  * checked at magic-link issue time. There is no separate admin role.
  */
-export async function requireUser(request: Request, context: AppLoadContext): Promise<User> {
-    const user = await getUser(request.headers, context.services)
+export async function requireUser(
+    request: Request,
+    context: { get<T>(context: RouterContext<T>): T },
+): Promise<User> {
+    const user = await getUser(request.headers, getServices(context))
     if (user) return user
 
     const url = new URL(request.url)

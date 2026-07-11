@@ -1,6 +1,7 @@
 import { data, Form, useNavigation, useSearchParams } from 'react-router'
 import { createUserSession } from '~/lib/auth.server'
 import { sanitiseRedirect } from '~/lib/auth/validation'
+import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.verify.$token'
 
@@ -17,7 +18,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
         return data({ error: 'Missing sign-in token.' as const }, { status: 400 })
     }
 
-    const result = await context.services.auth.consumeMagicLink(token)
+    const result = await getServices(context).auth.consumeMagicLink(token)
     if (!result) {
         return data(
             { error: 'This sign-in link is invalid or has expired. Request a new one.' as const },
@@ -31,7 +32,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // redirect_to column. Defence in depth.
     return await createUserSession(
         request.headers,
-        context.services,
+        getServices(context),
         { email: result.email, name: null },
         sanitiseRedirect(result.redirectTo),
     )

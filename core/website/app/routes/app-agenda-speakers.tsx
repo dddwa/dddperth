@@ -3,10 +3,11 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { speakersSchema } from '~/lib/sessionize.server'
 import { getConfSpeakers } from '~/lib/sessionize.server'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import type { Route } from './+types/app-agenda-speakers'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
