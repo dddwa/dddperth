@@ -175,7 +175,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 - Node 20+ required
 - pnpm is the package manager (enforced via corepack)
 - Build outputs are in `website/build/` directory
-- Static assets served from `website/public/`
+- Static assets served from core's `website/public/` plus `conference/public/` (conference-owned assets like sponsor logos; overlaid onto the site root at the same URLs)
 - Environment variables for local dev go in `website/.dev.vars`
 - Local D1 data stored in `website/.wrangler/state/`
 

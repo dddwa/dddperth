@@ -153,7 +153,7 @@ pnpm sponsor:add    # http://localhost:3802 → "Portal Import" tab
 Pick the environment, **Fetch submissions** (shells out to `wrangler d1 execute --remote`; you
 must be `wrangler login`-ed), then **Import** on a sponsor: the Add Sponsor form pre-fills, the
 logo downloads from R2 and runs through the usual light/dark processing, and **Approve & Save**
-writes `core/website/public/images/sponsors/` files + the `conference/config/years/<year>.ts`
+writes `conference/public/images/sponsors/` files + the `conference/config/years/<year>.ts`
 entry exactly like a manual add. Commit the result.
 
 **Update tracking.** Each approved import is recorded in a committed sidecar,

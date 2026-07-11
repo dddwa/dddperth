@@ -18,7 +18,7 @@ See [`core/docs/deploy.md`](../core/docs/deploy.md) (in ddd-core) for the rest o
 
 ## `add-sponsor.mjs`
 
-Local web UI (http://localhost:3802) for adding sponsors to a year's config: processes the logo into light/dark variants under `core/website/public/images/sponsors/`, then patches the matching `conference/config/years/<year>.ts` via ts-morph.
+Local web UI (http://localhost:3802) for adding sponsors to a year's config: processes the logo into light/dark variants under `conference/public/images/sponsors/`, then patches the matching `conference/config/years/<year>.ts` via ts-morph.
 
 ```bash
 pnpm sponsor:add

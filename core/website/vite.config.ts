@@ -4,6 +4,7 @@ import path from 'node:path'
 import { safeRoutes } from 'safe-routes/vite'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig } from 'vite'
+import { conferencePublicPlugin } from './vite-plugins/conference-public'
 import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
 // Vite's config loader uses native Node ESM — it doesn't honour the
 // @conference/* tsconfig path alias the rest of the app uses. Use a
@@ -94,6 +95,9 @@ export default defineConfig({
             pagesDir: conferenceBuildManifest.content.pagesDir,
             blogDir: conferenceBuildManifest.content.blogDir,
         }),
+        ...(conferenceBuildManifest.content.publicDir
+            ? [conferencePublicPlugin({ publicDir: conferenceBuildManifest.content.publicDir })]
+            : []),
         svgr({
             svgrOptions: {
                 plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx'],

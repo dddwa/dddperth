@@ -189,7 +189,7 @@ These files don't have stub equivalents because they live at the fork's *root*, 
 - `eslint.config.mjs` — re-exports core's config plus the fork-specific `enforce-module-boundaries` allow rule (see below)
 - `.gitattributes` — keeps stub + nx.json out of subtree pulls (see below)
 - `.nxignore` — excludes embedded core's stub + package.json from Nx project discovery (see below)
-- `FORK_GUIDE.md` — manual checklist (Cloudflare account, D1 IDs, replace placeholder logos in core/website/public/images/sponsors/, etc.)
+- `FORK_GUIDE.md` — manual checklist (Cloudflare account, D1 IDs, replace placeholder logos in conference/public/images/sponsors/, etc.)
 
 Inline content for these files (substitute `{{SLUG}}`, `{{NAME}}`, etc.):
 
@@ -265,7 +265,7 @@ core/package.json
 
 **`FORK_GUIDE.md`** — a checklist. Key items:
 - Replace placeholder D1 database IDs in `conference/wrangler/{staging,production}.jsonc` after creating real Cloudflare D1 databases
-- Move sponsor logos from `core/website/public/images/sponsors/devconf-*` (the stub's placeholders) to your own under the same path with your slug prefix
+- Replace the stub's placeholder sponsor logos in `conference/public/images/sponsors/` (devconf-*) with your own, prefixed with your slug
 - Update `conference/content/pages/team.mdx` with real organising committee
 - Update `conference/content/pages/contact.mdx` with real contact details
 - If you chose Country acknowledgement: write `conference/content/pages/_acknowledgement.mdx`

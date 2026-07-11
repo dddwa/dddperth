@@ -12,7 +12,7 @@ import { processLogo } from './lib/process-logo.mjs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.join(__dirname, '..')
-const SPONSORS_DIR = path.join(ROOT_DIR, 'core', 'website', 'public', 'images', 'sponsors')
+const SPONSORS_DIR = path.join(ROOT_DIR, 'conference', 'public', 'images', 'sponsors')
 const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'conference', 'config', 'years')
 // 'local' reads the dev server's D1/R2 state (core/website/.wrangler/state)
 // so the whole portal→website loop can be tested without deploying.

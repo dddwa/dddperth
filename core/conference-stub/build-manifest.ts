@@ -44,5 +44,6 @@ export const conferenceBuildManifest: ConferenceBuildManifest<typeof exampleThem
         pagesDir: path.resolve(stubDir, 'content/pages'),
         blogDir: path.resolve(stubDir, 'content/blog/posts'),
         blogAuthorsFile: path.resolve(stubDir, 'content/blog/authors.yml'),
+        publicDir: path.resolve(stubDir, 'public'),
     },
 }

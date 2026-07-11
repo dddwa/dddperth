@@ -143,6 +143,14 @@ export interface ContentPaths {
     blogDir: string
     /** Absolute path to the blog authors.yml */
     blogAuthorsFile: string
+    /**
+     * Absolute path to a folder of fork-owned static assets (sponsor logos,
+     * team photos, PDFs). Served at the site root alongside core's
+     * website/public/ — a file at `<publicDir>/images/sponsors/x.svg` is
+     * reachable at `/images/sponsors/x.svg`. On name collisions the
+     * conference file wins. Optional: omit if the fork has no static assets.
+     */
+    publicDir?: string
 }
 
 /**

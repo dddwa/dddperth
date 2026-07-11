@@ -42,5 +42,6 @@ export const conferenceBuildManifest: ConferenceBuildManifest<typeof dddPerthThe
         pagesDir: path.resolve(conferenceDir, 'content/pages'),
         blogDir: path.resolve(conferenceDir, 'content/blog/posts'),
         blogAuthorsFile: path.resolve(conferenceDir, 'content/blog/authors.yml'),
+        publicDir: path.resolve(conferenceDir, 'public'),
     },
 }

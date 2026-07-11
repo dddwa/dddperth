@@ -7,7 +7,7 @@
  *     node scripts/process-logo.mjs <input-file> <year> <slug> [--out-dir <dir>]
  *
  * Writes <year>-<slug>-light.<ext> and <year>-<slug>-dark.<ext> into <out-dir>
- * (default: website/public/images/sponsors).
+ * (default: conference/public/images/sponsors).
  */
 
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 import { dataUrlToBuffer, processLogo } from './lib/process-logo.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DEFAULT_OUT_DIR = path.join(__dirname, '..', 'website', 'public', 'images', 'sponsors')
+const DEFAULT_OUT_DIR = path.join(__dirname, '..', 'conference', 'public', 'images', 'sponsors')
 
 function parseArgs(argv) {
     const positional = []
