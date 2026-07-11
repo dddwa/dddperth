@@ -8,8 +8,10 @@
  * Without the height cap, a 48px-tall portrait logo balloons to ~150px
  * wide and dominates the row.
  *
- * Tier weight is still expressed (Platinum cells taller than Gold) but
- * within each tier all logos sit in identical boxes for a clean rhythm.
+ * Tier weight is expressed two ways: Platinum renders as its own row above
+ * Gold (never mixed into the same wrapped line), and Platinum cells are
+ * taller. Within each tier all logos sit in identical boxes for a clean
+ * rhythm.
  *
  * Fallback behaviour: while the current year's sponsors are still being
  * lined up, we surface the most recent prior year's Platinum + Gold under
@@ -21,33 +23,65 @@
  * is available.
  */
 
+import type { ReactNode } from 'react'
 import { AppLink } from '~/components/app-link'
-import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import type { Sponsor, Year } from '~/lib/conference-state-client-safe'
 import type { ResolvedSponsors } from '~/lib/sponsor-fallback.server'
+import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import type { SystemStyleObject } from '~/styled-system/types'
 import { SponsorInlineLogo } from '../sponsor-inline-logo'
 
 /**
  * Cell dimensions per tier. Width caps stop wide wordmarks from sprawling;
  * height caps stop portrait/stacked marks from over-towering.
+ *
+ * Defined via css.raw so Panda's static extraction sees the arbitrary
+ * values — passing them through a variable as plain style props generates
+ * the class names but not the CSS rules, silently dropping the cells.
  */
-const PLATINUM_CELL = { width: '[180px]', height: '[64px]' } as const
-const GOLD_CELL = { width: '[140px]', height: '[48px]' } as const
+const PLATINUM_CELL = css.raw({ width: '[180px]', height: '[64px]' })
+const GOLD_CELL = css.raw({ width: '[140px]', height: '[48px]' })
 
-interface HeroSponsorEntry {
-    sponsor: Sponsor
-    cell: typeof PLATINUM_CELL | typeof GOLD_CELL
-}
-
-function collect(sponsors: YearSponsors): HeroSponsorEntry[] {
-    const entries: HeroSponsorEntry[] = []
-    for (const sponsor of sponsors.platinum ?? []) {
-        entries.push({ sponsor, cell: PLATINUM_CELL })
-    }
-    for (const sponsor of sponsors.gold ?? []) {
-        entries.push({ sponsor, cell: GOLD_CELL })
-    }
-    return entries
+function SponsorRow({ sponsors, cell, children }: {
+    sponsors: Sponsor[]
+    cell: SystemStyleObject
+    children?: ReactNode
+}) {
+    if (sponsors.length === 0 && !children) return null
+    return (
+        <Flex flexWrap="wrap" alignItems="center" columnGap="8" rowGap="6">
+            {sponsors.map((sponsor) => (
+                <styled.a
+                    key={sponsor.name}
+                    href={sponsor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    display="inline-flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    css={cell}
+                    aria-label={sponsor.name}
+                    opacity={0.9}
+                    transition="opacity"
+                    _hover={{ opacity: 1 }}
+                >
+                    {/* Fill the cell rather than sizing from the image's intrinsic
+                        dimensions — SVGs with only a viewBox (no width/height attrs)
+                        have none and would collapse to 0×0 under width/height:auto. */}
+                    <SponsorInlineLogo
+                        logoUrlDarkMode={sponsor.logoUrlDarkMode}
+                        logoUrlLightMode={sponsor.logoUrlLightMode}
+                        name={sponsor.name}
+                        width="full"
+                        height="full"
+                        maxWidth="full"
+                    />
+                </styled.a>
+            ))}
+            {children}
+        </Flex>
+    )
 }
 
 export function HeroSponsorStrip({
@@ -59,8 +93,9 @@ export function HeroSponsorStrip({
 }) {
     if (sponsors.kind === 'empty') return null
 
-    const entries = collect(sponsors.sponsors)
-    if (entries.length === 0) return null
+    const platinum = sponsors.sponsors.platinum ?? []
+    const gold = sponsors.sponsors.gold ?? []
+    if (platinum.length === 0 && gold.length === 0) return null
 
     const isFallback = sponsors.kind === 'fallback'
     const heading = isFallback
@@ -78,47 +113,23 @@ export function HeroSponsorStrip({
             >
                 {heading}
             </styled.h2>
-            <Flex flexWrap="wrap" alignItems="center" columnGap="8" rowGap="6">
-                {entries.map(({ sponsor, cell }) => (
-                    <styled.a
-                        key={sponsor.name}
-                        href={sponsor.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        display="inline-flex"
-                        alignItems="center"
-                        justifyContent="center"
-                        width={cell.width}
-                        height={cell.height}
-                        aria-label={sponsor.name}
-                        opacity={0.9}
-                        transition="opacity"
-                        _hover={{ opacity: 1 }}
-                    >
-                        <SponsorInlineLogo
-                            logoUrlDarkMode={sponsor.logoUrlDarkMode}
-                            logoUrlLightMode={sponsor.logoUrlLightMode}
-                            name={sponsor.name}
-                            height="auto"
-                            width="auto"
-                            maxWidth="full"
-                            maxHeight="full"
-                        />
-                    </styled.a>
-                ))}
-                {isFallback ? (
-                    <AppLink
-                        to="/sponsorship"
-                        color="text.highlight"
-                        fontSize="md"
-                        fontWeight="semibold"
-                        textDecoration="underline"
-                        textUnderlineOffset="[3px]"
-                        _hover={{ color: 'interactive.active' }}
-                    >
-                        Join them — sponsor {currentYear} →
-                    </AppLink>
-                ) : null}
+            <Flex direction="column" gap="6">
+                <SponsorRow sponsors={platinum} cell={PLATINUM_CELL} />
+                <SponsorRow sponsors={gold} cell={GOLD_CELL}>
+                    {isFallback ? (
+                        <AppLink
+                            to="/sponsorship"
+                            color="text.highlight"
+                            fontSize="md"
+                            fontWeight="semibold"
+                            textDecoration="underline"
+                            textUnderlineOffset="[3px]"
+                            _hover={{ color: 'interactive.active' }}
+                        >
+                            Join them — sponsor {currentYear} →
+                        </AppLink>
+                    ) : null}
+                </SponsorRow>
             </Flex>
         </Box>
     )
