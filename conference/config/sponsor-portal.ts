@@ -30,6 +30,14 @@ export const sponsorPortal: SponsorPortalConfig = {
             contactEmail: 'customfield_10091',
             tier: 'customfield_10086',
             sponsorTasks: 'customfield_10096',
+            quote: 'customfield_10140',
+            socials: {
+                linkedin: 'customfield_10141',
+                twitter: 'customfield_10142',
+                instagram: 'customfield_10143',
+                facebook: 'customfield_10144',
+                youtube: 'customfield_10145',
+            },
         },
         assetsTaskOptionId: '10078',
         tierMap: {

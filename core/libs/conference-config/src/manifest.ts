@@ -241,10 +241,12 @@ export interface SponsorPortalJiraConfig {
          */
         quote?: string
         /**
-         * Paragraph field the sponsor's social links are pushed into, one
-         * "platform: url" per line. Sponsor-owned like `quote`.
+         * URL fields the sponsor's social links are pushed into, keyed by
+         * portal platform (`linkedin`, `twitter`, `instagram`, `facebook`,
+         * `youtube`). Sponsor-owned like `quote`; platforms without a
+         * field id are skipped.
          */
-        socialLinks?: string
+        socials?: Record<string, string>
     }
     /** Option id on `fields.sponsorTasks` flipped when a profile completes. */
     assetsTaskOptionId: string

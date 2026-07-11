@@ -205,8 +205,8 @@ Each piece of sponsor data has one owner, which resolves every "who wins" questi
 | Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's |
 
 **On every portal save**, sponsor-owned values are pushed into the Jira fields (`Company
-Website`, plus the `quote`/`socialLinks` paragraph fields if configured in
-`conference/config/sponsor-portal.ts` — omit them and the push skips those). A save with
+Website`, plus the `quote` paragraph field and per-platform `socials` URL fields if configured
+in `conference/config/sponsor-portal.ts` — omit them and the push skips those). A save with
 unchanged values produces no Jira history noise. A logo replaced *after* completion is
 re-attached to the issue with a note in the activity feed. All pushes are best-effort — Jira
 being down never fails a sponsor's save.

@@ -247,11 +247,9 @@ export function createJiraSponsorSyncService(args: {
                 const payload: Record<string, unknown> = {}
                 if (profile.websiteUrl) payload[jiraFields.website] = profile.websiteUrl
                 if (jiraFields.quote && profile.blurb) payload[jiraFields.quote] = textToAdf(profile.blurb)
-                if (jiraFields.socialLinks && Object.keys(profile.socials).length > 0) {
-                    const lines = Object.entries(profile.socials)
-                        .map(([platform, url]) => `${platform[0].toUpperCase()}${platform.slice(1)}: ${url}`)
-                        .join('\n')
-                    payload[jiraFields.socialLinks] = textToAdf(lines)
+                for (const [platform, fieldId] of Object.entries(jiraFields.socials ?? {})) {
+                    const url = profile.socials[platform]
+                    if (url) payload[fieldId] = url
                 }
                 if (Object.keys(payload).length > 0) {
                     await client.updateIssueFields(issueKey, payload)
