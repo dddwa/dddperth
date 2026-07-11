@@ -131,11 +131,13 @@ handler locally, run the built worker with wrangler's scheduled test endpoint:
 
 ```bash
 pnpm nx build website
-cd core/website
-pnpm exec wrangler dev -c build/server/wrangler.json --test-scheduled \
+pnpm nx wrangler website -- dev -c build/server/wrangler.json --test-scheduled \
     --persist-to .wrangler/state --var JIRA_STUB:true
 curl "http://localhost:8787/cdn-cgi/handler/scheduled?cron=0+*+*+*+*"
 ```
+
+(`nx wrangler website` runs the locally-installed wrangler from `core/website` — wrangler is a
+devDependency there, not a global install, so a bare `wrangler` on your PATH won't exist.)
 
 You should see `Sponsor sync (cron): …` in the wrangler output.
 
@@ -151,7 +153,7 @@ pnpm sponsor:add    # http://localhost:3802 → "Portal Import" tab
 ```
 
 Pick the environment, **Fetch submissions** (shells out to `wrangler d1 execute --remote`; you
-must be `wrangler login`-ed), then **Import** on a sponsor: the Add Sponsor form pre-fills, the
+must be logged in — `pnpm nx wrangler website -- login`), then **Import** on a sponsor: the Add Sponsor form pre-fills, the
 logo downloads from R2 and runs through the usual light/dark processing, and **Approve & Save**
 writes `conference/public/images/sponsors/` files + the `conference/config/years/<year>.ts`
 entry exactly like a manual add. Commit the result.
@@ -176,8 +178,14 @@ a phantom update.
 ## Deployment checklist (per environment)
 
 1. **R2 buckets** (once):
-   `wrangler r2 bucket create dddperth-sponsor-assets-staging` and `…-prod`
-   (names referenced from `conference/wrangler/{staging,production}.jsonc`).
+   ```bash
+   pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-staging
+   pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-prod
+   ```
+   (names referenced from `conference/wrangler/{staging,production}.jsonc`). Requires R2 to be
+   enabled on the Cloudflare account and a `wrangler login` token that includes the R2 scope —
+   if you get `[code: 10042]` or a permission error, check both (log in via
+   `pnpm nx wrangler website -- login`; verify the account with `… -- whoami`).
 2. **Secrets** (once, per env):
    ```bash
    pnpm jira:auth --secrets staging
@@ -188,7 +196,7 @@ a phantom update.
    needs permission to read and edit issues in the sponsors project), not a personal token — a
    scoped token with `read:jira-work` + `write:jira-work` is the least-privilege option.
 3. **D1 migrations**: `pnpm nx d1-migrate-staging website` / `d1-migrate-production website`
-   (applies `0004_sponsor_portal.sql`).
+   (applies `0004_sponsor_portal.sql` and `0005_notification_log.sql`).
 4. **Deploy**: the usual `nx deploy-staging|deploy-production website`.
    `prepare-deploy-config.mjs` carries the env's R2 binding and cron triggers into the built
    wrangler config (staging deliberately has no cron, `JIRA_WRITEBACK_ENABLED=false`, and a

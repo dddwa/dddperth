@@ -266,6 +266,7 @@ core/package.json
 **`FORK_GUIDE.md`** — a checklist. Key items:
 - Replace placeholder D1 database IDs in `conference/wrangler/{staging,production}.jsonc` after creating real Cloudflare D1 databases
 - Replace the stub's placeholder sponsor logos in `conference/public/images/sponsors/` (devconf-*) with your own, prefixed with your slug
+- Replace the placeholder `conference/public/favicon.svg` and `conference/public/images/logo.png` — core references both by URL (favicon link, og:image meta)
 - Update `conference/content/pages/team.mdx` with real organising committee
 - Update `conference/content/pages/contact.mdx` with real contact details
 - If you chose Country acknowledgement: write `conference/content/pages/_acknowledgement.mdx`

@@ -149,6 +149,10 @@ export interface ContentPaths {
      * website/public/ — a file at `<publicDir>/images/sponsors/x.svg` is
      * reachable at `/images/sponsors/x.svg`. On name collisions the
      * conference file wins. Optional: omit if the fork has no static assets.
+     *
+     * Core references two of these files by URL, so every conference should
+     * supply them: `/favicon.svg` (root.tsx icon link + structured data) and
+     * `/images/logo.png` (og:image / twitter:image meta tags).
      */
     publicDir?: string
 }
