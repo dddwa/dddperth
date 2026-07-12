@@ -102,6 +102,8 @@ jobs:
             - name: Deploy
               id: deploy
               run: |
+                  # pipefail so a wrangler/nx failure isn't masked by tee's exit code
+                  set -o pipefail
                   output=$(pnpm nx deploy-staging website 2>&1 | tee /dev/stderr)
                   url=$(echo "$output" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | head -n1)
                   if [ -z "$url" ]; then

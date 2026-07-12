@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'child_process'
 import fs from 'fs/promises'
 import http from 'http'
+import os from 'os'
 import path from 'path'
 import { Project } from 'ts-morph'
 import url, { fileURLToPath } from 'url'
@@ -10,8 +12,19 @@ import { processLogo } from './lib/process-logo.mjs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.join(__dirname, '..')
-const SPONSORS_DIR = path.join(ROOT_DIR, 'website', 'public', 'images', 'sponsors')
-const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'website', 'app', 'config', 'years')
+const SPONSORS_DIR = path.join(ROOT_DIR, 'conference', 'public', 'images', 'sponsors')
+const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'conference', 'config', 'years')
+// 'local' reads the dev server's D1/R2 state (core/website/.wrangler/state)
+// so the whole portal→website loop can be tested without deploying.
+const PORTAL_ENVS = ['local', 'staging', 'production']
+const LOCAL_PERSIST_DIR = path.join(ROOT_DIR, 'core', 'website', '.wrangler', 'state')
+
+function portalWranglerLocationArgs(env) {
+    return env === 'local' ? ['--local', '--persist-to', LOCAL_PERSIST_DIR] : ['--remote']
+}
+
+// Relative path to a year's config file — used for parsing and display messages.
+const yearConfigRelPath = (year) => `conference/config/years/${year}.ts`
 
 // Colors for output
 const colors = {
@@ -34,6 +47,7 @@ const config = {
     appName: 'DDD Perth Sponsor Management',
 }
 
+// Mirrors the YearSponsors tier keys in core/libs/conference-config/src/types.ts
 const SPONSOR_TIERS = [
     'platinum',
     'gold',
@@ -45,11 +59,210 @@ const SPONSOR_TIERS = [
     'quietRoom',
     'keynotes',
     'room',
+    'lunch',
 ]
+
+// ---------------------------------------------------------------------------
+// Portal import: pull sponsor submissions out of the deployed portal's D1/R2
+// via wrangler (same shell-out pattern as core/website/scripts/manifest-d1-migrate.mjs)
+// and feed them through the existing logo-processing + config-injection flow.
+// ---------------------------------------------------------------------------
+
+function portalWranglerConfig(env) {
+    return path.join(ROOT_DIR, 'conference', 'wrangler', `${env}.jsonc`)
+}
+
+// ---------------------------------------------------------------------------
+// Import tracking. A committed sidecar per year records what was approved
+// into the config (field values at import time, keyed by Jira issue key).
+// The submissions list diffs live portal data against it to flag sponsors
+// as new / updated / imported — and re-imports update the existing config
+// entry instead of appending a duplicate. Committed to git so the whole
+// committee shares the same import state.
+// ---------------------------------------------------------------------------
+
+function portalImportsPath(year) {
+    return path.join(YEARS_CONFIG_DIR, `${year}.portal-imports.json`)
+}
+
+async function loadPortalImports(year) {
+    try {
+        return JSON.parse(await fs.readFile(portalImportsPath(year), 'utf-8'))
+    } catch {
+        return {}
+    }
+}
+
+async function recordPortalImport(year, issueKey, record) {
+    const all = await loadPortalImports(year)
+    all[issueKey] = record
+    await fs.writeFile(portalImportsPath(year), JSON.stringify(all, null, 4) + '\n')
+}
+
+/** Field-by-field diff of a live submission against its import record.
+ * Value comparison (not timestamps) so re-saving identical data in the
+ * portal doesn't flag a phantom update. */
+function diffSubmission(submission, record) {
+    if (!record) return { status: 'new', changes: [] }
+    const changes = []
+    if ((submission.name || '') !== (record.portalName ?? record.name ?? '')) changes.push('name')
+    if ((submission.quote || '') !== (record.blurb || '')) changes.push('blurb')
+    if ((submission.website || '') !== (record.websiteUrl || '')) changes.push('website')
+    if (JSON.stringify(submission.socials ?? {}) !== JSON.stringify(record.socials ?? {})) changes.push('socials')
+    if ((submission.logoR2Key || '') !== (record.logoR2Key || '')) changes.push('logo')
+    return { status: changes.length > 0 ? 'updated' : 'imported', changes }
+}
+
+// D1 database name for an env, scanned from build-manifest.ts the same way
+// the migrate script does (no TS compiler in this script).
+async function portalD1Name(env) {
+    const source = await fs.readFile(path.join(ROOT_DIR, 'conference', 'build-manifest.ts'), 'utf-8')
+    const block = source.match(/d1DatabaseName\s*:\s*\{([^}]+)\}/)
+    const field = block && block[1].match(new RegExp(`${env}\\s*:\\s*['"]([^'"]+)['"]`))
+    if (!field) throw new Error(`Could not find d1DatabaseName.${env} in conference/build-manifest.ts`)
+    return field[1]
+}
+
+async function portalBucketName(env) {
+    const source = await fs.readFile(portalWranglerConfig(env), 'utf-8')
+    const match = source.match(/"bucket_name"\s*:\s*"([^"]+)"/)
+    if (!match) throw new Error(`No r2 bucket_name in conference/wrangler/${env}.jsonc`)
+    return match[1]
+}
+
+// Jira tier value -> YearSponsors tier key, scanned from the fork's
+// sponsor-portal config. Unmapped tiers fall back to 'gold' in the UI where
+// the committee can correct them before saving.
+async function portalTierMap() {
+    try {
+        const source = await fs.readFile(path.join(ROOT_DIR, 'conference', 'config', 'sponsor-portal.ts'), 'utf-8')
+        const block = source.match(/tierMap\s*:\s*\{([^}]+)\}/)
+        if (!block) return {}
+        const map = {}
+        for (const entry of block[1].matchAll(/(\w+)\s*:\s*'([^']+)'/g)) {
+            map[entry[1]] = entry[2]
+        }
+        return map
+    } catch {
+        return {}
+    }
+}
+
+function runWrangler(args) {
+    // wrangler is a core/website dependency, so pnpm must resolve it from
+    // there (all paths passed in are absolute, cwd only affects resolution).
+    const result = spawnSync('pnpm', ['exec', 'wrangler', ...args], {
+        cwd: path.join(ROOT_DIR, 'core', 'website'),
+        encoding: 'utf-8',
+        maxBuffer: 64 * 1024 * 1024,
+    })
+    if (result.status !== 0) {
+        throw new Error(`wrangler ${args[0]} ${args[1] ?? ''} failed: ${result.stderr || result.stdout}`)
+    }
+    return result.stdout
+}
+
+async function fetchPortalSubmissions(env) {
+    const dbName = await portalD1Name(env)
+    const sql =
+        'SELECT s.issue_key, s.year, s.company_name, s.tier, p.blurb, p.website_url, p.socials_json, ' +
+        'p.logo_r2_key, p.logo_filename, p.completed_at, p.updated_at ' +
+        'FROM sponsors s LEFT JOIN sponsor_profiles p ON p.issue_key = s.issue_key ' +
+        'WHERE s.active = 1 ORDER BY s.company_name'
+
+    const stdout = runWrangler([
+        'd1',
+        'execute',
+        dbName,
+        '-c',
+        portalWranglerConfig(env),
+        ...portalWranglerLocationArgs(env),
+        '--json',
+        '--command',
+        sql,
+    ])
+
+    // wrangler --json prints an array of result sets; anything before the
+    // JSON (banner noise) is trimmed by finding the first bracket.
+    const jsonStart = stdout.indexOf('[')
+    if (jsonStart === -1) throw new Error(`Unexpected wrangler output: ${stdout.slice(0, 200)}`)
+    const parsed = JSON.parse(stdout.slice(jsonStart))
+    const rows = parsed[0]?.results ?? []
+
+    const tierMap = await portalTierMap()
+    const importsByYear = new Map()
+
+    const submissions = []
+    for (const row of rows) {
+        const submission = {
+            issueKey: row.issue_key,
+            year: row.year,
+            name: row.company_name,
+            jiraTier: row.tier,
+            suggestedTier: tierMap[row.tier] || null,
+            quote: row.blurb || '',
+            website: row.website_url || '',
+            socials: row.socials_json ? JSON.parse(row.socials_json) : {},
+            logoR2Key: row.logo_r2_key || null,
+            logoFilename: row.logo_filename || null,
+            completedAt: row.completed_at || null,
+            profileUpdatedAt: row.updated_at || null,
+        }
+
+        if (!importsByYear.has(row.year)) {
+            importsByYear.set(row.year, await loadPortalImports(row.year))
+        }
+        const record = importsByYear.get(row.year)[row.issue_key]
+        const { status, changes } = diffSubmission(submission, record)
+        submission.status = status
+        submission.changes = changes
+        submission.importedTier = record?.tier || null
+        submission.importedName = record?.name || null
+
+        submissions.push(submission)
+    }
+    return submissions
+}
+
+async function downloadPortalLogo(env, r2Key, filename) {
+    const bucket = await portalBucketName(env)
+    const tmpFile = path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'portal-logo-')), path.basename(filename || 'logo'))
+
+    runWrangler([
+        'r2',
+        'object',
+        'get',
+        `${bucket}/${r2Key}`,
+        '--file',
+        tmpFile,
+        ...portalWranglerLocationArgs(env),
+        '-c',
+        portalWranglerConfig(env),
+    ])
+
+    const buffer = await fs.readFile(tmpFile)
+    await fs.rm(path.dirname(tmpFile), { recursive: true, force: true })
+    return buffer
+}
+
+// Discover available conference years by scanning the years config directory.
+// Returns an array of year strings sorted newest-first (e.g. ['2026', '2025', ...]).
+async function getAvailableYears() {
+    try {
+        const entries = await fs.readdir(YEARS_CONFIG_DIR)
+        return entries
+            .filter((name) => /^\d{4}\.ts$/.test(name))
+            .map((name) => name.replace(/\.ts$/, ''))
+            .sort((a, b) => Number(b) - Number(a))
+    } catch (error) {
+        print.error(`Failed to read years config directory: ${error.message}`)
+        return []
+    }
+}
 
 // Helper function to read year config
 async function readYearConfig(year) {
-    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
     try {
         const content = await fs.readFile(configPath, 'utf-8')
         return content
@@ -60,7 +273,7 @@ async function readYearConfig(year) {
 
 // Improved sponsor parsing using ts-morph for reliable TypeScript parsing
 async function getSponsorsByYear(year) {
-    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
     try {
         // Try ts-morph approach first (more reliable)
@@ -105,47 +318,27 @@ async function getSponsorsByYear(year) {
                         sponsors[tier] = elements.map((element) => {
                             const sponsor = {}
 
-                            // Extract properties using correct ts-morph API
-                            const nameProperty = element.getProperty('name')
-                            if (nameProperty) {
-                                const nameInit = nameProperty.getInitializer()
-                                if (nameInit && nameInit.getText) {
-                                    // Remove quotes from the string value
-                                    sponsor.name = nameInit.getText().replace(/['"]/g, '')
-                                }
+                            // Read a string-valued property. getLiteralValue() returns the
+                            // *decoded* JS string (handles quotes + escapes like \n), so
+                            // multiline quotes don't leak raw control chars into the JSON.
+                            const readStringProp = (name) => {
+                                const prop = element.getProperty(name)
+                                if (!prop) return undefined
+                                const init = prop.getInitializer()
+                                if (!init) return undefined
+                                if (init.getLiteralValue) return init.getLiteralValue()
+                                // Fallback for non-literal initializers (e.g. template strings)
+                                return init.getText ? init.getText().replace(/['"`]/g, '') : undefined
                             }
 
-                            const websiteProperty = element.getProperty('website')
-                            if (websiteProperty) {
-                                const websiteInit = websiteProperty.getInitializer()
-                                if (websiteInit && websiteInit.getText) {
-                                    sponsor.website = websiteInit.getText().replace(/['"]/g, '')
-                                }
-                            }
+                            sponsor.name = readStringProp('name')
+                            sponsor.website = readStringProp('website')
+                            sponsor.logoUrlDarkMode = readStringProp('logoUrlDarkMode')
+                            sponsor.logoUrlLightMode = readStringProp('logoUrlLightMode')
 
-                            const logoDarkProperty = element.getProperty('logoUrlDarkMode')
-                            if (logoDarkProperty) {
-                                const logoDarkInit = logoDarkProperty.getInitializer()
-                                if (logoDarkInit && logoDarkInit.getText) {
-                                    sponsor.logoUrlDarkMode = logoDarkInit.getText().replace(/['"]/g, '')
-                                }
-                            }
-
-                            const logoLightProperty = element.getProperty('logoUrlLightMode')
-                            if (logoLightProperty) {
-                                const logoLightInit = logoLightProperty.getInitializer()
-                                if (logoLightInit && logoLightInit.getText) {
-                                    sponsor.logoUrlLightMode = logoLightInit.getText().replace(/['"]/g, '')
-                                }
-                            }
-
-                            const quoteProperty = element.getProperty('quote')
-                            if (quoteProperty) {
-                                const quoteInit = quoteProperty.getInitializer()
-                                if (quoteInit && quoteInit.getText) {
-                                    const quoteText = quoteInit.getText().replace(/['"]/g, '')
-                                    sponsor.quote = quoteText && quoteText !== 'undefined' ? quoteText : ''
-                                }
+                            const quoteText = readStringProp('quote')
+                            if (quoteText !== undefined) {
+                                sponsor.quote = quoteText && quoteText !== 'undefined' ? quoteText : ''
                             }
 
                             return sponsor
@@ -255,7 +448,7 @@ async function addSponsorToConfig(year, tier, sponsorObj) {
         const { Project } = await import('ts-morph')
         const project = new Project()
 
-        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
         // Check if config file exists, if not create a basic one
         try {
@@ -367,7 +560,7 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         const { Project } = await import('ts-morph')
         const project = new Project()
 
-        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
         // Check if config file exists
         try {
@@ -413,18 +606,7 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
         }
 
         // Search through all tier arrays to find the sponsor
-        const tiers = [
-            'platinum',
-            'gold',
-            'silver',
-            'standard',
-            'bronze',
-            'community',
-            'coffee',
-            'keynote',
-            'afterparty',
-            'service',
-        ]
+        const tiers = SPONSOR_TIERS
         let sponsorFound = false
         let sponsorTier = null
 
@@ -507,8 +689,78 @@ async function updateSponsorLogoInConfig(year, sponsorName, logoUrlDarkMode, log
     }
 }
 
+/**
+ * Updates string fields on an existing sponsor entry in place (portal
+ * re-imports use this instead of appending a duplicate). Finds the sponsor
+ * by its current name across all tiers, then replaces each provided field —
+ * or inserts it before the closing brace when the entry doesn't have it yet
+ * (e.g. hand-written entries without a quote).
+ */
+async function updateSponsorFieldsInConfig(year, sponsorName, fields) {
+    try {
+        const project = new Project()
+        const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
+        const sourceFile = project.addSourceFileAtPath(configPath)
+
+        const conferenceVar = sourceFile.getVariableDeclaration(`conference${year}`)
+        const initializer = conferenceVar?.getInitializer()
+        const sponsorsProperty =
+            initializer?.getKindName() === 'ObjectLiteralExpression' ? initializer.getProperty('sponsors') : null
+        const sponsorsInitializer = sponsorsProperty
+            ?.getChildren()
+            .find((child) => child.getKindName() === 'ObjectLiteralExpression')
+        if (!sponsorsInitializer) {
+            print.error(`Could not locate sponsors object in ${yearConfigRelPath(year)}`)
+            return false
+        }
+
+        const escapedName = sponsorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const sponsorRegex = new RegExp(`\\{[^{}]*name:\\s*['"\`]${escapedName}['"\`][^{}]*\\}`, 's')
+        const escapeValue = (value) => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+
+        for (const tier of SPONSOR_TIERS) {
+            const tierProperty = sponsorsInitializer.getProperty(tier)
+            const tierInitializer = tierProperty
+                ?.getChildren()
+                .find((child) => child.getKindName() === 'ArrayLiteralExpression')
+            if (!tierInitializer) continue
+
+            const tierText = tierInitializer.getText()
+            if (!sponsorRegex.test(tierText)) continue
+
+            const updatedText = tierText.replace(sponsorRegex, (match) => {
+                let updated = match
+                for (const [key, value] of Object.entries(fields)) {
+                    if (value === undefined || value === null) continue
+                    const fieldRegex = new RegExp(`${key}:\\s*['"\`][^'"\`]*['"\`]`)
+                    if (fieldRegex.test(updated)) {
+                        updated = updated.replace(fieldRegex, `${key}: '${escapeValue(value)}'`)
+                    } else if (value !== '') {
+                        // Insert missing field before the closing brace,
+                        // matching the entry's trailing-comma style.
+                        updated = updated.replace(/,?\s*\}$/, `, ${key}: '${escapeValue(value)}' }`)
+                    }
+                }
+                return updated
+            })
+
+            tierInitializer.replaceWithText(updatedText)
+            await sourceFile.save()
+            print.info(`Updated ${Object.keys(fields).join(', ')} for "${sponsorName}" in ${tier} (${year})`)
+            return true
+        }
+
+        print.error(`Could not find sponsor "${sponsorName}" in any tier for year ${year}`)
+        return false
+    } catch (error) {
+        print.error(`Error updating sponsor fields in config: ${error.message}`)
+        return false
+    }
+}
+
 // HTML template for the UI
-function getHTML() {
+function getHTML(years) {
+    const yearOptions = years.map((year) => `<option value="${year}">${year}</option>`).join('\n                ')
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -580,20 +832,14 @@ function getHTML() {
         <div class="year-selector">
             <label for="year">Conference Year:</label>
             <select id="year" onchange="loadSponsors()">
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-                <option value="2021">2021</option>
-                <option value="2020">2020</option>
-                <option value="2019">2019</option>
-                <option value="2018">2018</option>
+                ${yearOptions}
             </select>
         </div>
 
         <div class="tabs">
             <div class="tab active" onclick="showTab('add')">Add Sponsor</div>
             <div class="tab" onclick="showTab('view')">View Sponsors</div>
+            <div class="tab" onclick="showTab('portal')">Portal Import</div>
         </div>
 
         <div id="add-tab" class="tab-content active">
@@ -661,6 +907,24 @@ function getHTML() {
             <div id="sponsor-list" class="sponsor-list">
                 <div class="loading">Loading sponsors...</div>
             </div>
+        </div>
+
+        <div id="portal-tab" class="tab-content">
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                Pull sponsor submissions from the deployed sponsor portal (remote D1/R2 via wrangler —
+                you need to be logged in with <code>wrangler login</code>). Importing pre-fills the Add
+                Sponsor form and processes the uploaded logo; review then Approve &amp; Save as usual.
+            </p>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+                <label for="portal-env" style="font-weight: 500;">Environment</label>
+                <select id="portal-env">
+                    <option value="production">production</option>
+                    <option value="staging">staging</option>
+                    <option value="local">local (dev server)</option>
+                </select>
+                <button type="button" class="btn" onclick="loadPortalSubmissions()" id="portal-fetch-btn">Fetch submissions</button>
+            </div>
+            <div id="portal-list"></div>
         </div>
     </div>
 
@@ -768,6 +1032,11 @@ function getHTML() {
                 formData.append('logoData', JSON.stringify(currentPreviews));
             }
 
+            // Record portal-sourced saves for update tracking
+            if (currentPortalImport) {
+                formData.append('portalImport', JSON.stringify(currentPortalImport));
+            }
+
             formData.append('year', year);
 
             try {
@@ -784,6 +1053,7 @@ function getHTML() {
                     document.getElementById('preview-section').style.display = 'none';
                     document.getElementById('save-btn').disabled = true;
                     currentPreviews = null;
+                    currentPortalImport = null;
 
                     // Clear search results and cache
                     document.getElementById('sponsor-search').value = '';
@@ -799,6 +1069,133 @@ function getHTML() {
                 }
             } catch (error) {
                 alert('Error saving sponsor: ' + error.message);
+            }
+        }
+
+        let portalSubmissions = [];
+        // The portal submission behind the current Add Sponsor form, if any.
+        // Attached to Approve & Save so the import is recorded for update
+        // tracking; cleared whenever the form is filled from anywhere else.
+        let currentPortalImport = null;
+
+        async function loadPortalSubmissions() {
+            const env = document.getElementById('portal-env').value;
+            const listDiv = document.getElementById('portal-list');
+            const fetchBtn = document.getElementById('portal-fetch-btn');
+
+            fetchBtn.disabled = true;
+            listDiv.innerHTML = '<div class="loading">Fetching from ' + env + ' (this shells out to wrangler, give it a few seconds)...</div>';
+
+            try {
+                const response = await fetch('/api/portal/submissions?env=' + env);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Fetch failed');
+
+                portalSubmissions = data;
+                if (data.length === 0) {
+                    listDiv.innerHTML = '<p>No sponsors found in the ' + env + ' portal.</p>';
+                    return;
+                }
+
+                let html = '<table style="width:100%; border-collapse: collapse; font-size: 14px;">' +
+                    '<tr style="text-align:left; border-bottom: 1px solid #ddd;">' +
+                    '<th style="padding:8px;">Sponsor</th><th>Status</th><th>Jira tier</th><th>Website</th><th>Blurb</th><th>Logo</th><th></th></tr>';
+                data.forEach(function(sub, index) {
+                    let statusHtml, buttonLabel;
+                    if (sub.status === 'new') {
+                        statusHtml = '<span style="background:#e6f3ff; color:#005a87; padding:2px 8px; border-radius:10px; font-size:12px;">🆕 New</span>';
+                        buttonLabel = 'Import';
+                    } else if (sub.status === 'updated') {
+                        statusHtml = '<span style="background:#fff3cd; color:#856404; padding:2px 8px; border-radius:10px; font-size:12px;">🔄 Updated</span>' +
+                            '<br><span style="color:#856404; font-size:11px;">' + sub.changes.map(escapeHtmlText).join(', ') + ' changed</span>';
+                        buttonLabel = 'Review update';
+                    } else {
+                        statusHtml = '<span style="background:#e6ffe6; color:#006600; padding:2px 8px; border-radius:10px; font-size:12px;">✅ Imported</span>';
+                        buttonLabel = 'Re-import';
+                    }
+                    html += '<tr style="border-bottom: 1px solid #eee;">' +
+                        '<td style="padding:8px;"><strong>' + escapeHtmlText(sub.name) + '</strong><br><span style="color:#888; font-size:12px;">' + escapeHtmlText(sub.issueKey) + '</span></td>' +
+                        '<td>' + statusHtml + '</td>' +
+                        '<td>' + escapeHtmlText(sub.jiraTier || '') + (sub.suggestedTier ? '<br><span style="color:#888; font-size:12px;">→ ' + escapeHtmlText(sub.suggestedTier) + '</span>' : '') + '</td>' +
+                        '<td>' + (sub.website ? '<a href="' + encodeURI(sub.website) + '" target="_blank">link</a>' : '—') + '</td>' +
+                        '<td style="max-width: 260px;">' + escapeHtmlText((sub.quote || '').slice(0, 120)) + '</td>' +
+                        '<td>' + (sub.logoR2Key ? '✅' : '—') + '</td>' +
+                        '<td><button type="button" class="btn" onclick="importPortalSponsor(' + index + ')">' + buttonLabel + '</button></td>' +
+                        '</tr>';
+                });
+                html += '</table>';
+                listDiv.innerHTML = html;
+            } catch (error) {
+                listDiv.innerHTML = '<p style="color: #c00;">Error: ' + escapeHtmlText(error.message) + '</p>';
+            } finally {
+                fetchBtn.disabled = false;
+            }
+        }
+
+        function escapeHtmlText(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        async function importPortalSponsor(index) {
+            const sub = portalSubmissions[index];
+            if (!sub) return;
+            const env = document.getElementById('portal-env').value;
+
+            // Remembered until Approve & Save so the import gets recorded in
+            // the year's portal-imports sidecar (enables update detection).
+            currentPortalImport = sub;
+
+            // Pre-fill the Add Sponsor form from the submission
+            document.getElementById('name').value = sub.name || '';
+            document.getElementById('website').value = sub.website || '';
+            document.getElementById('quote').value = sub.quote || '';
+            const tierSelect = document.getElementById('tier');
+            // Updates keep the tier the committee chose last time; new
+            // imports start from the Jira tier mapping.
+            const preferredTier = sub.importedTier || sub.suggestedTier;
+            if (preferredTier && Array.from(tierSelect.options).some(function(o) { return o.value === preferredTier; })) {
+                tierSelect.value = preferredTier;
+            }
+
+            showTab('add');
+
+            if (sub.status === 'updated') {
+                showNotification('Changed since last import: ' + sub.changes.join(', ') + '. Review and Approve & Save to update in place.', 'info');
+            }
+
+            if (!sub.logoR2Key) {
+                showNotification('Imported details for ' + sub.name + ' — no logo uploaded yet, add one manually.', 'info');
+                return;
+            }
+
+            if (sub.status === 'updated' && sub.changes.indexOf('logo') === -1) {
+                // Logo unchanged: no download/reprocessing needed, existing
+                // files stay. Enable saving so the detail changes can land.
+                document.getElementById('preview-grid').innerHTML =
+                    '<div class="preview-item"><h4>Logo unchanged</h4><p style="font-size:12px; color:#666;">Keeping the existing logo files — only details will update.</p></div>';
+                document.getElementById('preview-section').style.display = 'block';
+                document.getElementById('save-btn').disabled = false;
+                showNotification('Logo unchanged since last import — details will update in place.', 'info');
+                return;
+            }
+
+            showNotification('Downloading and processing ' + sub.name + ' logo from ' + env + '…', 'info');
+            try {
+                const response = await fetch('/api/portal/import-logo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ env: env, r2Key: sub.logoR2Key, filename: sub.logoFilename })
+                });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || 'Logo processing failed');
+
+                currentPreviews = result;
+                displayPreview(result);
+                showNotification('Logo processed — review the variants below, pick the tier, then Approve & Save.', 'info');
+            } catch (error) {
+                showNotification('Logo import failed: ' + error.message + ' — you can still save details and add a logo manually.', 'error');
             }
         }
 
@@ -993,6 +1390,7 @@ function getHTML() {
         }
 
         function fillSponsorForm(sponsor, copyLogos, copiedFiles) {
+            currentPortalImport = null; // manual prefill, not a portal import
             // Fill form with sponsor data
             document.getElementById('name').value = sponsor.name || '';
             document.getElementById('website').value = sponsor.website || '';
@@ -1154,6 +1552,7 @@ function getHTML() {
 
         // Function to prefill sponsor form
         function prefillSponsorForm(sponsorName, year) {
+            currentPortalImport = null; // manual prefill, not a portal import
             document.getElementById('name').value = sponsorName;
             document.getElementById('year').value = year;
 
@@ -1191,8 +1590,9 @@ const server = http.createServer(async (req, res) => {
     try {
         if (pathname === '/' && method === 'GET') {
             // Serve the HTML interface
+            const years = await getAvailableYears()
             res.writeHead(200, { 'Content-Type': 'text/html' })
-            res.end(getHTML())
+            res.end(getHTML(years))
         } else if (pathname.startsWith('/images/sponsors/') && method === 'GET') {
             // Serve sponsor logo files
             const filename = pathname.split('/').pop()
@@ -1220,7 +1620,7 @@ const server = http.createServer(async (req, res) => {
             }
         } else if (pathname === '/api/debug/config' && method === 'GET') {
             // Debug endpoint to check raw config content
-            const year = parsedUrl.query.year || '2024'
+            const year = parsedUrl.query.year || (await getAvailableYears())[0]
             const configContent = await readYearConfig(year)
 
             if (configContent) {
@@ -1253,7 +1653,7 @@ const server = http.createServer(async (req, res) => {
             }
 
             const results = []
-            const years = ['2024', '2023', '2022', '2021', '2020', '2019', '2018']
+            const years = await getAvailableYears()
 
             for (const year of years) {
                 if (year === currentYear) continue // Don't search current year
@@ -1394,6 +1794,9 @@ const server = http.createServer(async (req, res) => {
 
                     const { name, website, tier, quote, year, logoData } = parts
                     const logos = logoData ? JSON.parse(logoData) : null
+                    // Present when this save came through the Portal Import
+                    // tab — carries the submission so we can track it.
+                    const portalImport = parts.portalImport ? JSON.parse(parts.portalImport) : null
 
                     if (!name || !tier || !year) {
                         throw new Error('Missing required fields: name, tier, year')
@@ -1402,9 +1805,13 @@ const server = http.createServer(async (req, res) => {
                     // Generate sponsor object
                     const sponsorNameSlug = name.toLowerCase().replace(/\s+/g, '-')
 
-                    // Determine correct file extension
+                    // Determine correct file extension from the processed
+                    // data URLs (covers both file uploads and portal imports,
+                    // where no file input is present).
                     let ext = 'svg' // default
-                    if (logos && files.logo) {
+                    if (logos && logos.light) {
+                        ext = logos.light.startsWith('data:image/svg') ? 'svg' : 'png'
+                    } else if (files.logo) {
                         ext = files.logo.filename.endsWith('.svg') ? 'svg' : 'png'
                     }
 
@@ -1416,8 +1823,8 @@ const server = http.createServer(async (req, res) => {
                         quote: quote || '',
                     }
 
-                    // Save logo files if provided
-                    if (logos && files.logo) {
+                    // Save logo files if provided (file upload or portal import)
+                    if (logos) {
                         // Save light and dark variants only
                         const variants = ['light', 'dark']
                         for (const variant of variants) {
@@ -1431,20 +1838,80 @@ const server = http.createServer(async (req, res) => {
                         }
                     }
 
-                    // Automatically add sponsor to config file
-                    const configUpdated = await addSponsorToConfig(year, tier, sponsorObj)
+                    // Upsert into the config: if this sponsor already exists
+                    // (matched by current name, or the name recorded at the
+                    // previous portal import), update the entry in place —
+                    // otherwise re-importing an update would append a
+                    // duplicate. New sponsors append as before.
+                    const existingByTier = (await getSponsorsByYear(year)) ?? {}
+                    const candidateNames = [name, portalImport?.importedName].filter(Boolean)
+                    let existing = null
+                    for (const [existingTier, tierSponsors] of Object.entries(existingByTier)) {
+                        const match = tierSponsors.find((s) => candidateNames.includes(s.name))
+                        if (match) {
+                            existing = { tier: existingTier, name: match.name }
+                            break
+                        }
+                    }
+
+                    let configUpdated
+                    if (existing) {
+                        configUpdated = await updateSponsorFieldsInConfig(year, existing.name, {
+                            name,
+                            website: sponsorObj.website,
+                            quote: sponsorObj.quote,
+                            ...(logos
+                                ? {
+                                      logoUrlDarkMode: sponsorObj.logoUrlDarkMode,
+                                      logoUrlLightMode: sponsorObj.logoUrlLightMode,
+                                  }
+                                : {}),
+                        })
+                        if (existing.tier !== tier) {
+                            print.warning(
+                                `Sponsor stayed in "${existing.tier}" — move to "${tier}" manually if the tier changed.`,
+                            )
+                        }
+                    } else {
+                        configUpdated = await addSponsorToConfig(year, tier, sponsorObj)
+                    }
 
                     print.success(`Sponsor "${name}" prepared for ${year}`)
                     print.info('Generated configuration:')
                     print.info(JSON.stringify(sponsorObj, null, 2))
 
                     if (configUpdated) {
-                        print.success(`✅ Sponsor automatically added to: website/app/config/years/${year}.server.ts`)
-                        print.success(`Added to "${tier}" array in the sponsors section`)
+                        print.success(
+                            existing
+                                ? `✅ Sponsor updated in place in: ${yearConfigRelPath(year)}`
+                                : `✅ Sponsor automatically added to: ${yearConfigRelPath(year)} ("${tier}" array)`,
+                        )
                     } else {
-                        print.warning(`❌ Could not automatically add to config file`)
-                        print.warning(`Please manually add this to: website/app/config/years/${year}.server.ts`)
+                        print.warning(`❌ Could not automatically update config file`)
+                        print.warning(`Please manually edit: ${yearConfigRelPath(year)}`)
                         print.warning(`Under the "${tier}" array in the sponsors section`)
+                    }
+
+                    // Record the import so future fetches can flag changes.
+                    if (configUpdated && portalImport?.issueKey) {
+                        await recordPortalImport(portalImport.year ?? year, portalImport.issueKey, {
+                            // Config entry name (possibly committee-edited) —
+                            // used to find the entry for in-place updates.
+                            name,
+                            // Portal's own name at import time — used for
+                            // change detection so a committee rename doesn't
+                            // flag as a sponsor update forever.
+                            portalName: portalImport.name ?? name,
+                            tier,
+                            configYear: year,
+                            importedAt: new Date().toISOString(),
+                            blurb: portalImport.quote ?? '',
+                            websiteUrl: portalImport.website ?? '',
+                            socials: portalImport.socials ?? {},
+                            logoR2Key: portalImport.logoR2Key ?? '',
+                            profileUpdatedAt: portalImport.profileUpdatedAt ?? null,
+                        })
+                        print.success(`Import recorded in ${path.basename(portalImportsPath(portalImport.year ?? year))}`)
                     }
 
                     res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -1457,6 +1924,53 @@ const server = http.createServer(async (req, res) => {
                     )
                 } catch (error) {
                     res.writeHead(500, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify({ success: false, error: error.message }))
+                }
+            })
+        } else if (pathname === '/api/portal/submissions' && method === 'GET') {
+            // List sponsor submissions from the deployed portal (remote D1)
+            const env = parsedUrl.query.env
+            if (!PORTAL_ENVS.includes(env)) {
+                res.writeHead(400, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ error: `env must be one of: ${PORTAL_ENVS.join(', ')}` }))
+                return
+            }
+
+            try {
+                print.info(`Fetching portal submissions from ${env}…`)
+                const submissions = await fetchPortalSubmissions(env)
+                print.success(`Found ${submissions.length} sponsors in ${env}`)
+                res.writeHead(200, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify(submissions))
+            } catch (error) {
+                print.error(`Portal fetch failed: ${error.message}`)
+                res.writeHead(502, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ error: error.message }))
+            }
+        } else if (pathname === '/api/portal/import-logo' && method === 'POST') {
+            // Download a submission's logo from remote R2 and run it through
+            // the same processing as a manual upload — the response matches
+            // /api/process-logo so the existing preview/save flow takes over.
+            let body = Buffer.alloc(0)
+            req.on('data', (chunk) => {
+                body = Buffer.concat([body, chunk])
+            })
+            req.on('end', async () => {
+                try {
+                    const { env, r2Key, filename } = JSON.parse(body.toString())
+                    if (!PORTAL_ENVS.includes(env) || !r2Key) {
+                        throw new Error('env and r2Key are required')
+                    }
+
+                    print.info(`Downloading ${r2Key} from ${env} R2…`)
+                    const buffer = await downloadPortalLogo(env, r2Key, filename)
+                    const result = await processLogo(buffer, filename || path.basename(r2Key))
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' })
+                    res.end(JSON.stringify(result))
+                } catch (error) {
+                    print.error(`Portal logo import failed: ${error.message}`)
+                    res.writeHead(502, { 'Content-Type': 'application/json' })
                     res.end(JSON.stringify({ success: false, error: error.message }))
                 }
             })

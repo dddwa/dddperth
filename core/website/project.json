@@ -18,6 +18,20 @@
                 "cwd": "core/website"
             }
         },
+        "wrangler": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    {
+                        "command": "pnpm exec wrangler",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
         "parkui": {
             "executor": "nx:run-commands",
             "options": {

@@ -18,10 +18,22 @@ See [`core/docs/deploy.md`](../core/docs/deploy.md) (in ddd-core) for the rest o
 
 ## `add-sponsor.mjs`
 
-Adds a new sponsor to a year's config: downloads/optimises the logo into `website/public/images/sponsors/`, then patches the matching `website/app/config/years/<year>.server.ts` via ts-morph.
+Local web UI (http://localhost:3802) for adding sponsors to a year's config: processes the logo into light/dark variants under `conference/public/images/sponsors/`, then patches the matching `conference/config/years/<year>.ts` via ts-morph.
 
 ```bash
-node scripts/add-sponsor.mjs
+pnpm sponsor:add
+```
+
+The **Portal Import** tab pulls sponsor submissions out of the deployed sponsor portal (remote D1 rows + R2 logos, fetched by shelling out to `wrangler` — run `wrangler login` first) and feeds them through the same preview/approve flow. Imports are recorded in a committed `conference/config/years/<year>.portal-imports.json` sidecar so the list flags new/updated/imported sponsors, and re-imports update the existing config entry in place. See [`core/website/SPONSOR_PORTAL_SETUP.md`](../core/website/SPONSOR_PORTAL_SETUP.md).
+
+## `jira-auth.mjs`
+
+Sets up Jira credentials for the sponsor portal. Validates the token against the real Jira site (auth, project access, sync-JQL dry run) before saving anything. Classic and scoped API tokens (create at <https://id.atlassian.com/manage-profile/security/api-tokens>) both work — scoped tokens are auto-detected and routed via the api.atlassian.com gateway.
+
+```bash
+pnpm jira:auth                    # save to core/website/.dev.vars, scoped to portal-test issues
+pnpm jira:auth --full-sync        # local dev against the real sponsor list (use deliberately)
+pnpm jira:auth --secrets staging  # push as wrangler secrets (also: production)
 ```
 
 ## `sponsor-manager.mjs`

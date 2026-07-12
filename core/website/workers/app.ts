@@ -1,6 +1,8 @@
 import { createRequestHandler } from 'react-router'
 import type { CloudflareEnv } from '../app/remix-app-load-context'
 import { getLoadContext } from '../app/entry.server'
+import { buildAppConfigFromEnv } from '../app/lib/services/cloudflare/build-config.server'
+import { buildCloudflareServices } from '../app/lib/services/cloudflare/build-services.server'
 
 const requestHandler = createRequestHandler(
     () => import('virtual:react-router/server-build'),
@@ -34,5 +36,25 @@ export default {
             console.error('Request handler error:', error)
             throw error
         }
+    },
+
+    // Hourly sponsor sync (see triggers.crons in the production wrangler
+    // config). No-ops when the fork has no sponsorPortal manifest entry or
+    // the Jira secrets aren't set.
+    async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        const config = buildAppConfigFromEnv(env)
+        const services = buildCloudflareServices(config, env)
+
+        if (!services.sponsorSync.isConfigured()) {
+            console.log('Scheduled run: sponsor sync not configured, skipping')
+            return
+        }
+
+        ctx.waitUntil(
+            services.sponsorSync
+                .syncNow('cron')
+                .then(() => services.sponsorSync.retryPendingWritebacks())
+                .catch((error) => console.error('Scheduled sponsor sync failed:', error)),
+        )
     },
 } satisfies ExportedHandler<CloudflareEnv>

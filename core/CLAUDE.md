@@ -98,7 +98,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 - Node 20+ required
 - pnpm is the package manager (enforced via corepack)
 - Build outputs: `website/build/`
-- Static assets: `website/public/`
+- Static assets: `website/public/` (core) + the conference layer's `public/` (declared via `content.publicDir` in the build manifest; overlaid onto the site root by the `conference-public` vite plugin)
 - Local env vars: `website/.dev.vars`
 - Local D1 data: `website/.wrangler/state/`
 

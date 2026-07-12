@@ -15,7 +15,7 @@ export default function AdminLayout() {
 
     return (
         <Box minH="screen" bg="admin.50">
-            <styled.nav bg="indigo.7" color="white" py="4" px="8" borderBottom="admin-emphasis">
+            <styled.nav bg="indigo.9" color="white" py="4" px="8" borderBottom="admin-emphasis">
                 <Flex justify="space-between" align="center">
                     <Flex align="center" gap="8">
                         <AppLink to="/" color="white" textDecoration="none">
@@ -32,6 +32,9 @@ export default function AdminLayout() {
                             </AppNavLink>
                             <AppNavLink to="/admin/content" variant="admin">
                                 Content
+                            </AppNavLink>
+                            <AppNavLink to="/admin/sponsors" variant="admin">
+                                Sponsors
                             </AppNavLink>
                             <AppNavLink to="/admin/settings" variant="admin">
                                 Settings

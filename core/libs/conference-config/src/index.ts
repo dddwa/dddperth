@@ -33,6 +33,8 @@ export type {
     NavConfig,
     NavItem,
     Socials,
+    SponsorPortalConfig,
+    SponsorPortalJiraConfig,
     ThemeRefs,
 } from './manifest'
 

@@ -1,8 +1,12 @@
 import type { AnnouncementsStore } from './announcements-store'
+import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { NotificationLog } from './notification-log'
 import type { SessionStorages } from './session-storages'
+import type { SponsorSyncService } from './sponsor-sync-service'
+import type { SponsorsStore } from './sponsors-store'
 import type { TicketsService } from './tickets-service'
 import type { VotingStore } from './voting-store'
 
@@ -21,4 +25,8 @@ export interface AppServices {
     auth: AuthService
     email: EmailService
     sessions: SessionStorages
+    sponsors: SponsorsStore
+    assets: AssetStorage
+    sponsorSync: SponsorSyncService
+    notifications: NotificationLog
 }

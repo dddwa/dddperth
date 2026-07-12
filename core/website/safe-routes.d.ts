@@ -30,6 +30,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
+    "/admin/sponsors": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -114,6 +118,18 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/blog.rss[.xml].js').SearchParams>,
     },
+    "/portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
+    },
+    "/portal/logo/:issueKey": {
+      params: {'issueKey': string | number},
+      query: ExportedQuery<import('app/routes/portal.logo.$issueKey.js').SearchParams>,
+    },
+    "/portal/profile": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal.profile.js').SearchParams>,
+    },
     "/robots.txt": {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
@@ -166,11 +182,16 @@ declare module "safe-routes" {
             | 'routes/_layout.voting'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
+            | 'routes/portal'
+            | 'routes/portal.logo.$issueKey'
+            | 'routes/portal.profile'
+            | 'routes/portal._index'
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
+            | 'routes/admin.sponsors'
             | 'routes/admin.content'
             | 'routes/admin._index'
             | 'routes/admin.voting';

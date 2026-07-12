@@ -23,7 +23,7 @@ export async function getLoadContext({
     ctx: ExecutionContext
 }): Promise<RouterContextProvider> {
     const config = buildAppConfigFromEnv(env)
-    const services = buildCloudflareServices(config, env.DB)
+    const services = buildCloudflareServices(config, env)
     const dateTimeProvider = await AdminDateTimeProvider.create(request.headers, services)
 
     const context = new RouterContextProvider()

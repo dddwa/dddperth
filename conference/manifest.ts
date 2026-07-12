@@ -16,6 +16,7 @@ import type { ConferenceManifest } from '@ddd/conference-config'
 import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
 import { socials } from './config/socials'
+import { sponsorPortal } from './config/sponsor-portal'
 import { conferenceConfig } from './config/years-index'
 
 // Year keys this fork knows about. Re-exported so consumers can constrain
@@ -45,4 +46,5 @@ export const conferenceManifest: ConferenceManifest = {
         iosBundleId: 'au.com.dddperth.app',
         androidBundleId: 'com.dddperth.conference',
     },
+    sponsorPortal,
 }

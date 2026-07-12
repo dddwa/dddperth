@@ -18,14 +18,30 @@
         }
     ],
 
+    "r2_buckets": [
+        {
+            "binding": "SPONSOR_ASSETS",
+            "bucket_name": "dddperth-sponsor-assets-staging"
+        }
+    ],
+
     "assets": {
         "directory": "../../core/website/build/client"
     },
 
+    // No cron trigger here — staging syncs via the admin "Sync now" button
+    // only. Writeback is enabled so the full portal flow (ticking "Assets
+    // for Conference", logo attachment, completion comment, field pushes)
+    // can be tested end-to-end. It's safe because writeback only ever acts
+    // on issues the portal has synced, and JIRA_SYNC_JQL scopes staging to
+    // issues labelled portal-test — so real sponsor issues are never
+    // touched.
     "vars": {
         "WEB_URL": "https://staging.dddperth.com",
         "WEBSITE_AUTH_REQUIRED": "true",
-        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>",
+        "JIRA_WRITEBACK_ENABLED": "true",
+        "JIRA_SYNC_JQL": "project = SPN AND issuetype = Sponsor AND labels = \"portal-test\""
     },
 
     "routes": [

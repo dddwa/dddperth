@@ -23,6 +23,15 @@
         }
     ],
 
+    // Sponsor portal logo uploads. Locally miniflare simulates the bucket
+    // under .wrangler/state — no real bucket needed.
+    "r2_buckets": [
+        {
+            "binding": "SPONSOR_ASSETS",
+            "bucket_name": "dddperth-sponsor-assets-local"
+        }
+    ],
+
     // Static assets served from Cloudflare
     "assets": {
         "directory": "../../core/website/build/client"

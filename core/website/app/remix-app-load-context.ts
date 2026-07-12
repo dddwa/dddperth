@@ -11,6 +11,8 @@ import type { AppServices } from './lib/services/app-services'
  */
 export interface CloudflareEnv {
     DB: D1Database
+    /** Sponsor portal uploads. Absent for forks without a sponsor portal. */
+    SPONSOR_ASSETS?: R2Bucket
 
     SESSION_SECRET: string
     WEB_URL: string
@@ -23,6 +25,33 @@ export interface CloudflareEnv {
     AUTH_EMAIL_FROM?: string
 
     TITO_SECURITY_TOKEN?: string
+
+    /** Jira service-account credentials for sponsor sync (wrangler secrets). */
+    JIRA_API_EMAIL?: string
+    JIRA_API_TOKEN?: string
+    /**
+     * REST API base URL override. Scoped API tokens only authenticate via
+     * the api.atlassian.com gateway (https://api.atlassian.com/ex/jira/<cloudId>),
+     * not the site URL. Set by `pnpm jira:auth` when it detects one; classic
+     * tokens leave this unset and use the site baseUrl.
+     */
+    JIRA_API_BASE_URL?: string
+    /** "true" enables flipping the Jira completion checkbox (production only). */
+    JIRA_WRITEBACK_ENABLED?: string
+    /**
+     * Expiry date of the Jira API token (YYYY-MM-DD, captured by
+     * `pnpm jira:auth` — Atlassian doesn't expose it via API). Drives the
+     * committee reminder emails; unset/unparsable disables them.
+     */
+    JIRA_TOKEN_EXPIRES?: string
+    /**
+     * Overrides the manifest's sponsor-sync JQL for this environment.
+     * Used to scope test environments to issues labelled "portal-test" so
+     * they can never pull real sponsors. `{year}` is still substituted.
+     */
+    JIRA_SYNC_JQL?: string
+    /** "true" swaps the Jira client for fixture data — local dev without Jira. */
+    JIRA_STUB?: string
 
     SESSIONIZE_2026_SESSIONS: string
     SESSIONIZE_2026_ALL_SESSIONS?: string

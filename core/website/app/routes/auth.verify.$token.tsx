@@ -30,12 +30,16 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // future code path that issues tokens (e.g. an admin-driven invite)
     // shouldn't be able to plant an open redirect via a malformed
     // redirect_to column. Defence in depth.
-    return await createUserSession(
-        request.headers,
-        getServices(context),
-        { email: result.email, name: null },
-        sanitiseRedirect(result.redirectTo),
-    )
+    let redirectTo = sanitiseRedirect(result.redirectTo)
+
+    // The default destination is /admin, but sponsor contacts who logged in
+    // without an explicit destination belong in their portal. Explicit
+    // redirects are honoured either way — requireAdmin bounces non-admins.
+    if (redirectTo === '/admin' && !(await getServices(context).auth.isAdminEmail(result.email))) {
+        redirectTo = '/portal'
+    }
+
+    return await createUserSession(request.headers, getServices(context), { email: result.email, name: null }, redirectTo)
 }
 
 export default function Verify() {
@@ -47,10 +51,10 @@ export default function Verify() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
-                <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Confirm sign-in
                 </styled.h1>
-                <styled.p mb="6" color="gray.9">
+                <styled.p mb="6" color="admin.700">
                     Click the button to finish signing in.
                 </styled.p>
                 {error && (
@@ -72,7 +76,7 @@ export default function Verify() {
                         type="submit"
                         disabled={isSubmitting}
                         bg="admin.900"
-                        color="text.primary"
+                        color="admin.50"
                         border="none"
                         py="3"
                         px="6"
@@ -81,7 +85,7 @@ export default function Verify() {
                         fontWeight="medium"
                         cursor="pointer"
                         _hover={{ bg: 'admin.800' }}
-                        _disabled={{ bg: 'gray.8', cursor: 'not-allowed', opacity: 0.7 }}
+                        _disabled={{ bg: 'admin.400', cursor: 'not-allowed', opacity: 0.7 }}
                     >
                         {isSubmitting ? 'Signing in…' : 'Sign in'}
                     </styled.button>
@@ -95,10 +99,10 @@ export function ErrorBoundary() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
-                <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Sign-in failed
                 </styled.h1>
-                <styled.p color="gray.9">
+                <styled.p color="admin.700">
                     The sign-in link couldn't be used. Please request a new one from the{' '}
                     <styled.a href="/auth/login" color="admin.900" textDecoration="underline">
                         login page

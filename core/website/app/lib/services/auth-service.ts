@@ -9,8 +9,16 @@ import type { User } from '../session-types'
  * their own storage and email provider.
  */
 export interface AuthService {
-    /** True when `email` is in the allowlist (case-insensitive). */
+    /**
+     * True when `email` may log in (case-insensitive): either on the admin
+     * allowlist or a contact of an active sponsor. Checked at magic-link
+     * issue time — what the login grants access to is decided per request
+     * by `requireAdmin` / `requireSponsorContact`.
+     */
     isAllowed(email: string): Promise<boolean>
+
+    /** True when `email` is on the admin allowlist. The strict admin gate. */
+    isAdminEmail(email: string): Promise<boolean>
 
     /**
      * Issues a one-time login token and emails the magic link. The raw token

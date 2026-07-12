@@ -18,6 +18,13 @@
         }
     ],
 
+    "r2_buckets": [
+        {
+            "binding": "SPONSOR_ASSETS",
+            "bucket_name": "dddperth-sponsor-assets-prod"
+        }
+    ],
+
     "assets": {
         "directory": "../../core/website/build/client"
     },
@@ -25,7 +32,14 @@
     "vars": {
         "WEB_URL": "https://dddperth.com",
         "WEBSITE_AUTH_REQUIRED": "false",
-        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>"
+        "AUTH_EMAIL_FROM": "DDD Perth <noreply@dddperth.com>",
+        "JIRA_WRITEBACK_ENABLED": "true"
+    },
+
+    // Hourly sponsor sync from Jira. Production only — staging uses the
+    // manual "Sync now" button so test runs never poll Jira on a timer.
+    "triggers": {
+        "crons": ["0 * * * *"]
     },
 
     "routes": [

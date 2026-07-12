@@ -27,6 +27,7 @@ ddd-core/                    ← shared layer (its own repo)
     manifest.ts, build-manifest.ts
     config/                  public, socials, years/{2024,2025,2026}, venues
     content/                 pages/, blog/
+    public/                  static assets (placeholder sponsor logos)
     theme/                   example.theme.ts + example-light.theme.ts + index.ts
     wrangler/                local + staging + production with placeholder IDs
 
@@ -37,6 +38,7 @@ ddd-core/                    ← shared layer (its own repo)
     build-manifest.ts        build manifest: theme refs, content paths, deployment names
     config/                  public.ts, socials.ts, years-index.ts, years/, venues/
     content/                 pages/ (15+ MDX), blog/ (posts + authors.yml)
+    public/                  static assets (sponsor logos, ...) overlaid onto the site root
     theme/                   <slug>.theme.ts + <slug>-light.theme.ts + index.ts
     wrangler/                local.jsonc, staging.jsonc, production.jsonc
   package.json               proxies pnpm/nx into core/
@@ -74,7 +76,7 @@ In `ddd-core` standalone, those aliases point at `../conference-stub/`. In a for
 The split between **runtime** and **build** manifest matters:
 
 - `ConferenceManifest` (runtime) — what the app needs at request time: name, socials, brand info, year configs. No Node imports. Safe in the client bundle.
-- `ConferenceBuildManifest` (build) — extends runtime with `content.{pagesDir,blogDir,blogAuthorsFile}` (computed with `path.resolve(import.meta.dirname, ...)`), `theme.{currentTheme,currentLightTheme}` (Panda CSS types), and `deployment.{workerName,d1DatabaseName,webUrl}` (per-env names). Only ever imported by build-time code.
+- `ConferenceBuildManifest` (build) — extends runtime with `content.{pagesDir,blogDir,blogAuthorsFile,publicDir}` (computed with `path.resolve(import.meta.dirname, ...)`; `publicDir` is optional — the `conference-public` vite plugin overlays it onto the site root in dev and copies it into `build/client` on build), `theme.{currentTheme,currentLightTheme}` (Panda CSS types), and `deployment.{workerName,d1DatabaseName,webUrl}` (per-env names). Only ever imported by build-time code.
 
 Mixing the two ships `path.resolve` calls into the browser bundle, which fails at runtime under workerd. The type system enforces the split.
 
