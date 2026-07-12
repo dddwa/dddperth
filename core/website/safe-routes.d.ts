@@ -60,7 +60,7 @@ declare module "safe-routes" {
     },
     "/api/tito-registration": {
       params: never,
-      query: ExportedQuery<import('app/routes/api.tito-registration').SearchParams>,
+      query: ExportedQuery<import('app/routes/api.tito-registration.js').SearchParams>,
     },
     "/api/voting/batch": {
       params: never,
@@ -140,7 +140,7 @@ declare module "safe-routes" {
     },
     "/share": {
       params: never,
-      query: ExportedQuery<import('app/routes/_layout.share').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
     },
     "/sitemap.xml": {
       params: never,

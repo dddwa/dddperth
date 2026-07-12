@@ -14,7 +14,7 @@ export function loader({ context }: Route.LoaderArgs) {
     }
 }
 
-type Ticket = { name?: string; first_name?: string; last_name?: string }
+type Ticket = { name?: string; first_name?: string; last_name?: string; release_title?: string }
 
 type Registration = {
     name?: string
@@ -209,7 +209,11 @@ function RegistrationShare({ sharecastUrl, registration }: { sharecastUrl: strin
                                     checked={idx === selectedIdx}
                                     onChange={() => setSelectedIdx(idx)}
                                 />
-                                <span>{ticket.name ?? `Ticket ${idx + 1}`}</span>
+                                <span>
+                                    {[ticketDisplayName(ticket) || `Ticket ${idx + 1}`, ticket.release_title]
+                                        .filter(Boolean)
+                                        .join(' — ')}
+                                </span>
                             </styled.label>
                         ))}
                     </Flex>

@@ -118,6 +118,14 @@ export interface ConferenceYear {
      */
     sharecastUrl?: string
 
+    /**
+     * Which Tito ticket releases count as attendees on the /share picker, matched
+     * case-insensitively against the start of the release title (e.g. 'General Attendee'
+     * matches 'General Attendee (Early Release)'). Filters out add-ons like sponsorships
+     * or childcare tickets. Unset → every ticket on a registration is shown.
+     */
+    sharecastReleaseTitlePrefixes?: string[]
+
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
     cfpDates: DateTimeRange | undefined
