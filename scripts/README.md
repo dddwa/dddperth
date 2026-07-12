@@ -24,7 +24,7 @@ Local web UI (http://localhost:3802) for adding sponsors to a year's config: pro
 pnpm sponsor:add
 ```
 
-The **Portal Import** tab pulls sponsor submissions out of the deployed sponsor portal (remote D1 rows + R2 logos, fetched by shelling out to `wrangler` — run `wrangler login` first) and feeds them through the same preview/approve flow. Imports are recorded in a committed `conference/config/years/<year>.portal-imports.json` sidecar so the list flags new/updated/imported sponsors, and re-imports update the existing config entry in place. See [`core/website/SPONSOR_PORTAL_SETUP.md`](../core/website/SPONSOR_PORTAL_SETUP.md).
+The **Portal Import** tab pulls sponsor submissions out of the deployed sponsor portal (remote D1 rows + R2 logos, fetched by shelling out to `wrangler` — run `wrangler login` first) and feeds them through the same preview/approve flow. Imports are recorded in a committed `conference/config/years/<year>.portal-imports.json` sidecar so the list flags new/updated/imported sponsors, and re-imports update the existing config entry in place. Approving a portal import also attaches the processed light/dark logo variants to the sponsor's Jira issue (replacing same-named attachments), using the credentials saved by `pnpm jira:auth` — skipped with a warning when no credentials or `JIRA_STUB=true` is set. See [`core/website/SPONSOR_PORTAL_SETUP.md`](../core/website/SPONSOR_PORTAL_SETUP.md).
 
 ## `jira-auth.mjs`
 
