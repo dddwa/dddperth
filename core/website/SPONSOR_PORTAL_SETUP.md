@@ -25,6 +25,8 @@ sync never runs.
 - One **Sponsor** issue per sponsorship per year in the sponsors project (DDD Perth: `SPN`).
 - Label each issue with the conference year (e.g. `2026`) — the sync JQL filters on it.
 - **Contact Email** holds comma/semicolon-separated addresses; those people get portal access.
+- **Additional Sponsor Portal Emails** (optional field) takes the same format and grants the
+  same access — for extra logins that shouldn't sit in the primary contact field.
 - **Level of Sponsorship** is the tier shown in the portal (read-only for sponsors).
 - The portal ticks **Sponsor Tasks → "Assets for Conference"** when a profile completes
   (logo + blurb + website).

@@ -7,6 +7,7 @@ import os from 'os'
 import path from 'path'
 import { Project } from 'ts-morph'
 import url, { fileURLToPath } from 'url'
+import { attachFilesToIssue, loadJiraSession } from './lib/jira-attach.mjs'
 import { processLogo } from './lib/process-logo.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -914,6 +915,8 @@ function getHTML(years) {
                 Pull sponsor submissions from the deployed sponsor portal (remote D1/R2 via wrangler —
                 you need to be logged in with <code>wrangler login</code>). Importing pre-fills the Add
                 Sponsor form and processes the uploaded logo; review then Approve &amp; Save as usual.
+                Saving a portal import also attaches the processed light/dark logo variants to the
+                sponsor's Jira issue (uses the credentials saved by <code>pnpm jira:auth</code>).
             </p>
             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
                 <label for="portal-env" style="font-weight: 500;">Environment</label>
@@ -1048,7 +1051,20 @@ function getHTML(years) {
                 const result = await response.json();
 
                 if (result.success) {
-                    alert('Sponsor added successfully!\\n\\nNext steps:\\n1. Review the generated config in your terminal\\n2. Add it to the year config file\\n3. Commit the changes');
+                    let jiraSummary = '';
+                    if (result.jira) {
+                        if (result.jira.skipped) {
+                            jiraSummary = '\\n\\nJira: attach skipped — ' + result.jira.skipped;
+                        } else {
+                            if (result.jira.attached && result.jira.attached.length > 0) {
+                                jiraSummary = '\\n\\nJira: attached ' + result.jira.attached.join(', ');
+                            }
+                            if (result.jira.errors && result.jira.errors.length > 0) {
+                                jiraSummary += '\\n\\nJira warnings:\\n' + result.jira.errors.join('\\n');
+                            }
+                        }
+                    }
+                    alert('Sponsor added successfully!' + jiraSummary + '\\n\\nNext steps:\\n1. Review the generated config in your terminal\\n2. Add it to the year config file\\n3. Commit the changes');
                     form.reset();
                     document.getElementById('preview-section').style.display = 'none';
                     document.getElementById('save-btn').disabled = true;
@@ -1823,7 +1839,10 @@ const server = http.createServer(async (req, res) => {
                         quote: quote || '',
                     }
 
-                    // Save logo files if provided (file upload or portal import)
+                    // Save logo files if provided (file upload or portal import).
+                    // Keep the buffers around — portal-sourced saves also
+                    // attach these variants to the sponsor's Jira issue.
+                    const savedLogoFiles = []
                     if (logos) {
                         // Save light and dark variants only
                         const variants = ['light', 'dark']
@@ -1834,6 +1853,7 @@ const server = http.createServer(async (req, res) => {
                                 const filename = `${year}-${sponsorNameSlug}-${variant}.${ext}`
                                 const filepath = path.join(SPONSORS_DIR, filename)
                                 await fs.writeFile(filepath, buffer)
+                                savedLogoFiles.push({ filename, buffer })
                             }
                         }
                     }
@@ -1914,12 +1934,38 @@ const server = http.createServer(async (req, res) => {
                         print.success(`Import recorded in ${path.basename(portalImportsPath(portalImport.year ?? year))}`)
                     }
 
+                    // Portal-sourced saves: attach the processed black/white
+                    // variants back onto the sponsor's Jira issue so the
+                    // committee has them alongside the original upload.
+                    // Best-effort — a Jira failure never fails the save.
+                    let jiraResult = null
+                    if (configUpdated && portalImport?.issueKey && savedLogoFiles.length > 0) {
+                        const session = await loadJiraSession()
+                        if (session.error) {
+                            jiraResult = { skipped: session.error }
+                            print.warning(`Jira attach skipped: ${session.error}`)
+                        } else {
+                            print.info(`Attaching ${savedLogoFiles.length} logo variant(s) to ${portalImport.issueKey}…`)
+                            jiraResult = await attachFilesToIssue(session, portalImport.issueKey, savedLogoFiles)
+                            for (const filename of jiraResult.attached) {
+                                print.success(
+                                    `Attached ${filename} to ${portalImport.issueKey}` +
+                                        (jiraResult.replaced.includes(filename) ? ' (replaced previous version)' : ''),
+                                )
+                            }
+                            for (const message of jiraResult.errors) {
+                                print.warning(message)
+                            }
+                        }
+                    }
+
                     res.writeHead(200, { 'Content-Type': 'application/json' })
                     res.end(
                         JSON.stringify({
                             success: true,
                             message: 'Sponsor processed successfully',
                             config: sponsorObj,
+                            jira: jiraResult,
                         }),
                     )
                 } catch (error) {
