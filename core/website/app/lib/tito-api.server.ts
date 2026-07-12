@@ -28,7 +28,7 @@ export interface TitoRegistration {
  */
 const CACHE_TTL_SECONDS = 300
 
-async function titoGet(apiToken: string | undefined, path: string) {
+async function titoGet(apiToken: string | undefined, path: string): Promise<Record<string, unknown>> {
     if (!apiToken) {
         throw new Error('TITO_API_TOKEN is not set')
     }
@@ -37,7 +37,7 @@ async function titoGet(apiToken: string | undefined, path: string) {
     const cache = await caches.open('tito-api')
     const cached = await cache.match(url)
     if (cached) {
-        return (await cached.json()) as Record<string, unknown>
+        return await cached.json()
     }
 
     const res = await fetch(url, {
@@ -52,7 +52,7 @@ async function titoGet(apiToken: string | undefined, path: string) {
         throw new Error(`Tito API ${res.status}: ${await res.text()}`)
     }
 
-    const body = (await res.json()) as Record<string, unknown>
+    const body: Record<string, unknown> = await res.json()
     await cache.put(
         url,
         new Response(JSON.stringify(body), {
@@ -75,7 +75,7 @@ export async function getRegistration(
     if (!body.registration) {
         throw new Error('Tito response is missing the registration')
     }
-    return body.registration as TitoRegistration
+    return body.registration
 }
 
 export async function getTicket(
@@ -88,5 +88,5 @@ export async function getTicket(
     if (!body.ticket) {
         throw new Error('Tito response is missing the ticket')
     }
-    return body.ticket as TitoTicket
+    return body.ticket
 }
