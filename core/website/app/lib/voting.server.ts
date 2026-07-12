@@ -202,7 +202,14 @@ export async function getSessionsForVoting(allSessionsEndpoint: string) {
 
     const regularSessions: TalkVotingData[] = []
     for (const session of sessions) {
-        if (!session.isServiceSession && !session.isPlenumSession) {
+        // Keynotes are invited talks, not CFP submissions — they carry a
+        // 'Keynote' session format in Sessionize rather than the plenum flag
+        const isKeynote = session.categories.some(
+            (category) =>
+                category.name === 'Session format' &&
+                category.categoryItems.some((item) => item.name === 'Keynote'),
+        )
+        if (!session.isServiceSession && !session.isPlenumSession && !isKeynote) {
             regularSessions.push({
                 id: session.id,
                 title: session.title,
