@@ -174,6 +174,22 @@ export async function updateValidationRunProgress(
 // SESSION PROCESSING
 // ============================================================================
 
+/**
+ * Rebuild the exact talk array the pairing generator ran against when a
+ * session's votes were cast. Deriving it from the session's stored ids rather
+ * than the current talk list keeps every position stable even if the
+ * Sessionize talk set changed later — talks removed since then keep their slot
+ * as placeholders (updateTalkStats skips ids it doesn't know), instead of
+ * shifting every index and misattributing or discarding the whole session's
+ * votes.
+ */
+export function rebuildSessionTalks(sessionTalkIds: string[], currentTalks: TalkVotingData[]): TalkVotingData[] {
+    const talksById = new Map(currentTalks.map((talk) => [talk.id, talk]))
+    return sessionTalkIds.map(
+        (id) => talksById.get(id) ?? { id, title: `Removed talk ${id}`, description: null, tags: [] },
+    )
+}
+
 export async function processVotingSession(
     db: D1Database,
     runId: string,
@@ -219,7 +235,7 @@ export async function processVotingSession(
     })
 
     const sessionTalkIds = JSON.parse(session.inputSessionizeTalkIdsJson) as string[]
-    const sessionTalks = talks.filter((t) => sessionTalkIds.includes(t.id))
+    const sessionTalks = rebuildSessionTalks(sessionTalkIds, talks)
 
     let votesProcessed = 0
     let totalRounds = 1

@@ -41,6 +41,17 @@ export async function recordVoteInTable(
         )
     }
 
+    // A real client votes sequentially, so it can only ever be in the
+    // session's recorded round or just crossing into the next one. Anything
+    // further ahead is a fabricated position — the pairing schedule is
+    // deterministic and public, so without this cap a single session could
+    // stuff votes for a chosen talk across unlimited future rounds.
+    if (roundNumber > session.roundNumber + 1) {
+        throw new Error(
+            `Vote round ${roundNumber} is ahead of session progress (round ${session.roundNumber})`,
+        )
+    }
+
     await services.voting.recordVote({ sessionId, year, roundNumber, indexInRound, vote: voteChar })
 }
 
