@@ -5,8 +5,8 @@ import { Flex, styled } from '~/styled-system/jsx'
 
 // `test_mode` lets fake orders through
 const TITO_SCRIPT_SRC = import.meta.env.DEV
-    ? "https://js.tito.io/v2/with/development_mode,test_mode"
-    : "https://js.tito.io/v2";
+    ? 'https://js.tito.io/v2/with/development_mode,test_mode'
+    : 'https://js.tito.io/v2'
 
 declare global {
     interface Window {
@@ -156,4 +156,3 @@ function getTitoOrphanContainer(): HTMLDivElement {
     }
     return container
 }
-

@@ -112,6 +112,12 @@ export interface ConferenceYear {
 
     ticketInfo: TicketInfo | undefined
 
+    /**
+     * Sharecast "I'm attending" share-image generator for this year, e.g. https://ddd-2026.sharecast.io/.
+     * When unset the /share page tells visitors sharing isn't available this year.
+     */
+    sharecastUrl?: string
+
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
     cfpDates: DateTimeRange | undefined

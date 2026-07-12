@@ -88,6 +88,8 @@ export const conference2026: ConferenceYear = {
         eventId: '2026',
     },
 
+    sharecastUrl: 'https://ddd-2026.sharecast.io/',
+
     sponsors: {},
 
     foodInfo: {

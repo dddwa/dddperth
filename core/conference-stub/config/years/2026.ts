@@ -23,6 +23,8 @@ export const conference2026: ConferenceYear = {
     ticketReleases: [],
     feedbackOpenUntilDateTime: undefined,
     ticketInfo: undefined,
+    // Set to a Sharecast instance URL (e.g. https://myconf-2026.sharecast.io/) to enable the /share page
+    sharecastUrl: undefined,
 
     sponsors: {},
 }
