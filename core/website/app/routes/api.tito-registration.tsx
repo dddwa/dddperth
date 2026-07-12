@@ -11,13 +11,17 @@ const RequestSchema = z.union([
     z.object({ ticketSlug: z.string().min(1) }),
 ])
 
-/** Tito ticket/registration objects carry attendee PII (email, IP, payment refs) — only display fields leave the server. */
+/**
+ * Tito ticket/registration objects carry attendee PII (email, IP, payment refs) — only display
+ * fields leave the server. Tito uses empty strings (not null) for unset names, so normalise
+ * with || to keep downstream ?? / || fallback chains working.
+ */
 function toPublicTicket(ticket: TitoTicket) {
     return {
-        name: ticket.name ?? undefined,
-        first_name: ticket.first_name ?? undefined,
-        last_name: ticket.last_name ?? undefined,
-        release_title: ticket.release_title ?? undefined,
+        name: ticket.name || undefined,
+        first_name: ticket.first_name || undefined,
+        last_name: ticket.last_name || undefined,
+        release_title: ticket.release_title || undefined,
     }
 }
 
@@ -41,7 +45,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     const yearConfig = getYearConfig(conferenceState.conference.year)
-    const titlePrefixes = yearConfig.kind === 'conference' ? yearConfig.sharecastReleaseTitlePrefixes : undefined
+    const titlePrefixes = yearConfig.kind === 'conference' ? yearConfig.sharecast?.releaseTitlePrefixes : undefined
 
     try {
         if ('ticketSlug' in parsed.data) {
@@ -62,7 +66,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         )
         return data({
             registration: {
-                name: registration.name ?? undefined,
+                name: registration.name || undefined,
                 tickets: (registration.tickets ?? [])
                     .filter((ticket) => isAttendeeRelease(ticket, titlePrefixes))
                     .map(toPublicTicket),

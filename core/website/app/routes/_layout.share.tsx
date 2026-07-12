@@ -10,7 +10,7 @@ export function loader({ context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(getConferenceState(context).conference.year)
     return {
         conferenceName: conferenceManifest.public.name,
-        sharecastUrl: yearConfig.kind === 'conference' ? (yearConfig.sharecastUrl ?? null) : null,
+        sharecastUrl: yearConfig.kind === 'conference' ? (yearConfig.sharecast?.url ?? null) : null,
     }
 }
 
@@ -87,8 +87,9 @@ function buildShareUrl(sharecastUrl: string, userName: string) {
     return url.toString()
 }
 
+// || not ?? throughout: Tito uses empty strings for unset names, which are not nullish
 function ticketDisplayName(ticket: Ticket): string {
-    return ticket.name ?? [ticket.first_name, ticket.last_name].filter(Boolean).join(' ')
+    return ticket.name || [ticket.first_name, ticket.last_name].filter(Boolean).join(' ')
 }
 
 /** Embed mode: the Tito widget on the tickets page stashes the registration slug after purchase. */
@@ -138,8 +139,13 @@ function ShareResolver({ sharecastUrl }: { sharecastUrl: string }) {
             signal: controller.signal,
         })
             .then(async (res) => {
-                const body = (await res.json()) as { error?: string; ticket?: Ticket; registration?: Registration }
-                if (!res.ok) throw new Error(body?.error ?? `HTTP ${res.status}`)
+                // Non-JSON bodies happen on infrastructure errors (e.g. a Cloudflare 502 page)
+                const body = (await res.json().catch(() => null)) as {
+                    error?: string
+                    ticket?: Ticket
+                    registration?: Registration
+                } | null
+                if (!res.ok || !body) throw new Error(body?.error ?? `HTTP ${res.status}`)
                 if (body.ticket) {
                     setState({ kind: 'ticket', ticket: body.ticket })
                 } else {
@@ -183,7 +189,7 @@ function RegistrationShare({ sharecastUrl, registration }: { sharecastUrl: strin
     const [selectedIdx, setSelectedIdx] = useState(0)
 
     const selected = tickets[selectedIdx]
-    const userName = (selected ? ticketDisplayName(selected) : undefined) ?? registration.name ?? ''
+    const userName = (selected ? ticketDisplayName(selected) : '') || registration.name || ''
 
     return (
         <ShareContainer>
