@@ -12,7 +12,7 @@ import { recordException } from '~/lib/record-exception'
 import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
 import type { StartValidationResponse } from '~/lib/voting-validation-types'
 import { getSessionsForVoting } from '~/lib/voting.server'
-import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getExecutionContext, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
 
@@ -194,11 +194,14 @@ export async function action({
         const runId = crypto.randomUUID()
         await voting.markValidationStarted(runId)
 
-        // Start the validation process in the background
-        voting.runValidation(year, talks).catch((error) => {
-            recordException(error)
-            console.error('Validation process error:', error)
-        })
+        // waitUntil keeps the validation alive after this response returns —
+        // without it the Workers runtime cancels the promise mid-run
+        getExecutionContext(context).waitUntil(
+            voting.runValidation(runId, year, talks).catch((error) => {
+                recordException(error)
+                console.error('Validation process error:', error)
+            }),
+        )
 
         const response: StartValidationResponse = {
             success: true,

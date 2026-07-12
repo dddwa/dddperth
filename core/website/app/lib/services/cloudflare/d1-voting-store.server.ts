@@ -116,8 +116,8 @@ export function createD1VotingStore(db: D1Database): VotingStore {
             return d1GetValidationRunById(db, runId)
         },
 
-        async runValidation(year, talks) {
-            return runD1Validation(db, year, talks)
+        async runValidation(runId, year, talks) {
+            return runD1Validation(db, runId, year, talks)
         },
 
         async getTalkStatistics(runId) {
@@ -192,8 +192,7 @@ async function updateSessionIndexSafely(
  * voting-validation.server.ts helpers but owns the orchestration so the
  * store interface stays clean.
  */
-async function runD1Validation(db: D1Database, year: string, talks: TalkVotingData[]): Promise<string> {
-    const runId = crypto.randomUUID()
+async function runD1Validation(db: D1Database, runId: string, year: string, talks: TalkVotingData[]): Promise<string> {
     let processedSessions = 0
     let processedRounds = 0
     let processedVotes = 0

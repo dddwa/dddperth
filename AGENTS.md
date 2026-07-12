@@ -21,3 +21,21 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# Wrangler commands
+
+Always give wrangler commands in their Nx form, using the `wrangler` passthrough target (runs `pnpm exec wrangler` from `core/website`, so config paths are relative to that directory):
+
+```bash
+pnpm nx wrangler website -- <wrangler args>
+# e.g.
+pnpm nx wrangler website -- secret list -c ../../conference/wrangler/production.jsonc
+```
+
+Prefer the dedicated targets where they exist (`d1-migrate-local|staging|production`, `deploy-staging`, `deploy-production`) over raw wrangler equivalents.
+
+# Testing time-gated features (voting, CFP, ticket releases, agenda)
+
+Admins can override the website's current date/time at `/admin/settings` ("Set Override" / "Quick Jump to Important Dates"). The override is stored in the `__adminDateTime` cookie and only affects that admin's own session — the public site is untouched, so it is safe to use in production too.
+
+Use this override to test date-gated behaviour (e.g. jump past a voting/CFP open date) instead of editing the dates in `conference/config/years/*.ts`. In local dev, admin access works without login (`WEBSITE_AUTH_REQUIRED=false` in `conference/wrangler/local.jsonc`).

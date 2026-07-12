@@ -1,6 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
@@ -101,7 +101,6 @@ export default function VotingPage() {
                         sessionId={votingSession.sessionId}
                         currentRound={votingSession.currentRound}
                         currentIndex={votingSession.currentIndex}
-                        totalPairs={votingSession.totalPairs}
                     />
                 )}
             </Await>
@@ -113,12 +112,10 @@ function VotingPageWithSession({
     sessionId,
     currentRound,
     currentIndex,
-    totalPairs,
 }: {
     sessionId: string | null
     currentRound: number
     currentIndex: number
-    totalPairs: number
 }) {
     const data = useLoaderData<typeof loader>()
 
@@ -130,9 +127,13 @@ function VotingPageWithSession({
     const [isFetching, setIsFetching] = useState(false)
     const [isExhausted, setIsExhausted] = useState(false)
 
-    // Load initial batch
+    // Load initial batch. The ref makes this fire once per mount — without it
+    // a failed load flips isFetching back to false and re-triggers the effect,
+    // auto-retrying forever and clearing the error before the user can see it.
+    const initialLoadStarted = useRef(false)
     useEffect(() => {
-        if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0) {
+        if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0 && !initialLoadStarted.current) {
+            initialLoadStarted.current = true
             void loadInitialBatch(
                 currentRound,
                 currentIndex,
@@ -150,11 +151,16 @@ function VotingPageWithSession({
         // Don't prefetch if we haven't loaded any pairs yet
         if (pairs.length === 0) return
 
+        // A failed prefetch parks here until the user reaches the end of the
+        // loaded pairs and hits Try Again — auto-retrying on every state
+        // change would loop against a persistent failure.
+        if (error) return
+
         const remainingPairs = pairs.length - localIndex
         if (remainingPairs <= PREFETCH_THRESHOLD) {
             void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs, setIsExhausted)
         }
-    }, [localIndex, pairs, isFetching])
+    }, [localIndex, pairs, isFetching, error])
 
     async function handleVote(vote: 'A' | 'B' | 'skip') {
         const currentPair = pairs[localIndex]
@@ -226,7 +232,10 @@ function VotingPageWithSession({
         return <VotingMessage message="Talk Voting" details="No talk comparisons are available right now." />
     }
 
-    if (error) {
+    // Only block on an error once there is nothing left to vote on — a failed
+    // background prefetch shouldn't interrupt voting through the pairs we
+    // already have.
+    if (error && localIndex >= pairs.length) {
         return (
             <VotingMessage message="Talk Voting" error={error} cta={<Button onClick={handleRetry}>Try Again</Button>} />
         )
@@ -235,17 +244,6 @@ function VotingPageWithSession({
     if (localIndex >= pairs.length && pairs.length > 0) {
         if (isExhausted) {
             return <VotingMessage message="Talk Voting" details="No more talk comparisons are available right now." />
-        }
-
-        // If we've run out of pairs and not currently fetching, show loading or error
-        if (error && !isFetching) {
-            return (
-                <VotingMessage
-                    message="Failed to load more talks"
-                    error={error}
-                    cta={<Button onClick={handleRetry}>Retry</Button>}
-                />
-            )
         }
 
         // Otherwise, show loading
@@ -267,9 +265,15 @@ function VotingPageWithSession({
                     <styled.h2 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?
                     </styled.h2>
-                    <styled.p fontSize="sm" color="text.muted">
-                        Round {currentPair.roundNumber + 1} · Pair {currentPair.index + 1} of {totalPairs}
-                    </styled.p>
+                    {/* A voter who has crossed into round 2 has seen every talk
+                        once — let them know they can stop, without turning
+                        voting into a progress-bar chore with concrete counts */}
+                    {currentPair.roundNumber >= 1 && (
+                        <styled.p fontSize="sm" color="text.muted" textAlign="center">
+                            You've seen every talk now, so feel free to stop here — or keep going and you'll get fresh
+                            match-ups. Every vote counts!
+                        </styled.p>
+                    )}
                 </VStack>
 
                 <HStack justify="center" gap="4">

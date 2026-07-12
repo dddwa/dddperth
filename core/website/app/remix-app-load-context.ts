@@ -68,6 +68,7 @@ export const configContext = createContext<AppConfig>()
 export const servicesContext = createContext<AppServices>()
 export const conferenceStateContext = createContext<ConferenceState>()
 export const dateTimeProviderContext = createContext<DateTimeProvider>()
+export const executionContext = createContext<ExecutionContext>()
 
 interface ContextReader {
     get<T>(context: RouterContext<T>): T
@@ -77,3 +78,4 @@ export const getConfig = (context: ContextReader): AppConfig => context.get(conf
 export const getServices = (context: ContextReader): AppServices => context.get(servicesContext)
 export const getConferenceState = (context: ContextReader): ConferenceState => context.get(conferenceStateContext)
 export const getDateTimeProvider = (context: ContextReader): DateTimeProvider => context.get(dateTimeProviderContext)
+export const getExecutionContext = (context: ContextReader): ExecutionContext => context.get(executionContext)

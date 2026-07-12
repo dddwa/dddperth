@@ -11,8 +11,8 @@ import type {
     ValidationRunIndex,
     VoteResult,
 } from './voting-validation-types'
-import { getVotesForSession, listVotingSessions } from './d1.server'
-import { rowToVoteRecord, rowToVotingSession } from './services/cloudflare/row-converters.server'
+import { getVotesForSession } from './d1.server'
+import { rowToVoteRecord } from './services/cloudflare/row-converters.server'
 import type { TalkVotingData, VoteRecord, VotingSession } from './voting-types'
 
 // ============================================================================
@@ -174,6 +174,22 @@ export async function updateValidationRunProgress(
 // SESSION PROCESSING
 // ============================================================================
 
+/**
+ * Rebuild the exact talk array the pairing generator ran against when a
+ * session's votes were cast. Deriving it from the session's stored ids rather
+ * than the current talk list keeps every position stable even if the
+ * Sessionize talk set changed later — talks removed since then keep their slot
+ * as placeholders (updateTalkStats skips ids it doesn't know), instead of
+ * shifting every index and misattributing or discarding the whole session's
+ * votes.
+ */
+export function rebuildSessionTalks(sessionTalkIds: string[], currentTalks: TalkVotingData[]): TalkVotingData[] {
+    const talksById = new Map(currentTalks.map((talk) => [talk.id, talk]))
+    return sessionTalkIds.map(
+        (id) => talksById.get(id) ?? { id, title: `Removed talk ${id}`, description: null, tags: [] },
+    )
+}
+
 export async function processVotingSession(
     db: D1Database,
     runId: string,
@@ -219,7 +235,7 @@ export async function processVotingSession(
     })
 
     const sessionTalkIds = JSON.parse(session.inputSessionizeTalkIdsJson) as string[]
-    const sessionTalks = talks.filter((t) => sessionTalkIds.includes(t.id))
+    const sessionTalks = rebuildSessionTalks(sessionTalkIds, talks)
 
     let votesProcessed = 0
     let totalRounds = 1
@@ -887,159 +903,6 @@ export async function saveUnderrepresentedGroupsConfig(
             .bind(JSON.stringify(selectedGroups.sort()), now, year)
             .run()
     } catch (error: any) {
-        recordException(error)
-        throw error
-    }
-}
-
-// ============================================================================
-// MAIN VALIDATION PROCESS
-// ============================================================================
-
-export async function runVotingValidation(db: D1Database, year: string, talks: TalkVotingData[]): Promise<string> {
-    const runId = crypto.randomUUID()
-    let processedSessions = 0
-    let processedRounds = 0
-    let processedVotes = 0
-
-    try {
-        // Get all voting sessions from D1
-        const sessionRows = await listVotingSessions(db, year, CURRENT_SESSION_VERSION)
-        const sessions = sessionRows.map(rowToVotingSession)
-
-        // Create run index
-        await createValidationRunIndex(db, runId, year, sessions.length)
-
-        // Process sessions
-        const globalStats = new Map<string, TalkStatsAccumulator>()
-
-        // Initialize global stats
-        talks.forEach((talk) => {
-            globalStats.set(talk.id, {
-                talkId: talk.id,
-                title: talk.title,
-                timesSeenAggregated: 0,
-                timesVotedForAggregated: 0,
-                timesVotedAgainstAggregated: 0,
-                timesSkippedAggregated: 0,
-                timesSeenV1: 0,
-                timesVotedForV1: 0,
-                timesVotedAgainstV1: 0,
-                timesSkippedV1: 0,
-                timesSeenV2: 0,
-                timesVotedForV2: 0,
-                timesVotedAgainstV2: 0,
-                timesSkippedV2: 0,
-                timesSeenV3: 0,
-                timesVotedForV3: 0,
-                timesVotedAgainstV3: 0,
-                timesSkippedV3: 0,
-                timesSeenV4: 0,
-                timesVotedForV4: 0,
-                timesVotedAgainstV4: 0,
-                timesSkippedV4: 0,
-                timesSeenV5: 0,
-                timesVotedForV5: 0,
-                timesVotedAgainstV5: 0,
-                timesSkippedV5: 0,
-            })
-        })
-
-        try {
-            for (const session of sessions) {
-                const sessionStats = await processVotingSession(db, runId, session, talks)
-
-                // Merge session stats into global stats
-                for (const [talkId, sessionStat] of sessionStats.talkStats) {
-                    const globalStat = globalStats.get(talkId)
-                    if (globalStat) {
-                        globalStat.timesSeenAggregated += sessionStat.timesSeenAggregated
-                        globalStat.timesVotedForAggregated += sessionStat.timesVotedForAggregated
-                        globalStat.timesVotedAgainstAggregated += sessionStat.timesVotedAgainstAggregated
-                        globalStat.timesSkippedAggregated += sessionStat.timesSkippedAggregated
-                        globalStat.timesSeenV1 += sessionStat.timesSeenV1
-                        globalStat.timesVotedForV1 += sessionStat.timesVotedForV1
-                        globalStat.timesVotedAgainstV1 += sessionStat.timesVotedAgainstV1
-                        globalStat.timesSkippedV1 += sessionStat.timesSkippedV1
-                        globalStat.timesSeenV2 += sessionStat.timesSeenV2
-                        globalStat.timesVotedForV2 += sessionStat.timesVotedForV2
-                        globalStat.timesVotedAgainstV2 += sessionStat.timesVotedAgainstV2
-                        globalStat.timesSkippedV2 += sessionStat.timesSkippedV2
-                        globalStat.timesSeenV3 += sessionStat.timesSeenV3
-                        globalStat.timesVotedForV3 += sessionStat.timesVotedForV3
-                        globalStat.timesVotedAgainstV3 += sessionStat.timesVotedAgainstV3
-                        globalStat.timesSkippedV3 += sessionStat.timesSkippedV3
-                        globalStat.timesSeenV4 += sessionStat.timesSeenV4
-                        globalStat.timesVotedForV4 += sessionStat.timesVotedForV4
-                        globalStat.timesVotedAgainstV4 += sessionStat.timesVotedAgainstV4
-                        globalStat.timesSkippedV4 += sessionStat.timesSkippedV4
-                        globalStat.timesSeenV5 += sessionStat.timesSeenV5
-                        globalStat.timesVotedForV5 += sessionStat.timesVotedForV5
-                        globalStat.timesVotedAgainstV5 += sessionStat.timesVotedAgainstV5
-                        globalStat.timesSkippedV5 += sessionStat.timesSkippedV5
-                    }
-                }
-
-                processedSessions++
-                processedRounds += sessionStats.processedRounds
-                processedVotes += sessionStats.processedVotes
-
-                // Update progress every 10 sessions
-                if (processedSessions % 10 === 0) {
-                    await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes)
-                }
-
-                // Small delay to reduce load on server/table
-                await new Promise((resolve) => setTimeout(resolve, 100))
-            }
-
-            // Save final statistics
-            await saveTalkStatistics(db, runId, globalStats)
-
-            // Calculate and save fairness metrics
-            await calculateAndSaveFairnessMetrics(db, runId, globalStats)
-
-            // Mark as completed
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'completed',
-            )
-            await markValidationCompleted(db, runId)
-
-            return runId
-        } catch (error) {
-            // Mark as incomplete on error
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'incomplete',
-            )
-            await markValidationCompleted(db, runId)
-            recordException(error)
-            throw error
-        }
-    } catch (error) {
-        // Mark as incomplete on error for outer try block
-        try {
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'incomplete',
-            )
-            await markValidationCompleted(db, runId)
-        } catch {
-            // Ignore errors in cleanup
-        }
         recordException(error)
         throw error
     }
