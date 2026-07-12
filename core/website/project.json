@@ -18,20 +18,6 @@
                 "cwd": "core/website"
             }
         },
-        "wrangler": {
-            "executor": "nx:run-commands",
-            "options": {
-                "commands": [
-                    {
-                        "command": "pnpm exec wrangler",
-                        "forwardAllArgs": true
-                    }
-                ],
-                "parallel": false,
-                "cwd": "core/website",
-                "tty": true
-            }
-        },
         "parkui": {
             "executor": "nx:run-commands",
             "options": {
@@ -96,6 +82,20 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "wrangler dev -c ../../conference/wrangler/local.jsonc",
+                "cwd": "core/website",
+                "tty": true
+            }
+        },
+        "wrangler": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    {
+                        "command": "pnpm exec wrangler",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
                 "cwd": "core/website",
                 "tty": true
             }
