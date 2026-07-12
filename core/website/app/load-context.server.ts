@@ -9,6 +9,7 @@ import {
     conferenceStateContext,
     configContext,
     dateTimeProviderContext,
+    executionContext,
     servicesContext,
     type CloudflareEnv,
 } from './remix-app-load-context'
@@ -16,7 +17,7 @@ import {
 export async function getLoadContext({
     request,
     env,
-    ctx: _ctx,
+    ctx,
 }: {
     request: Request
     env: CloudflareEnv
@@ -31,6 +32,7 @@ export async function getLoadContext({
     context.set(servicesContext, services)
     context.set(dateTimeProviderContext, dateTimeProvider)
     context.set(conferenceStateContext, getCurrentConferenceState(dateTimeProvider, conferenceManifest.conferences))
+    context.set(executionContext, ctx)
 
     return context
 }

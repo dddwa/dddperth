@@ -44,7 +44,7 @@ export interface VotingStore {
     getValidationRunById(runId: string): Promise<ValidationRunIndex | null>
 
     // ---------- Validation execution ----------
-    runValidation(year: string, talks: TalkVotingData[]): Promise<string>
+    runValidation(runId: string, year: string, talks: TalkVotingData[]): Promise<string>
 
     // ---------- Validation results ----------
     getTalkStatistics(runId: string): Promise<TalkStatistics[]>
