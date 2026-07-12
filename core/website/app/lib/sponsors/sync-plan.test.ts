@@ -10,6 +10,23 @@ describe('parseContactEmails', () => {
         ])
     })
 
+    it('splits on semicolons with or without surrounding spaces', () => {
+        expect(parseContactEmails('a@example.com;b@example.com ; c@example.com')).toEqual([
+            'a@example.com',
+            'b@example.com',
+            'c@example.com',
+        ])
+    })
+
+    it('merges and dedupes across multiple field values', () => {
+        expect(parseContactEmails('a@example.com; b@example.com', 'b@example.com; c@example.com')).toEqual([
+            'a@example.com',
+            'b@example.com',
+            'c@example.com',
+        ])
+        expect(parseContactEmails('a@example.com', null, undefined, '')).toEqual(['a@example.com'])
+    })
+
     it('normalises case and whitespace', () => {
         expect(parseContactEmails('  Sales@Example.COM ')).toEqual(['sales@example.com'])
     })

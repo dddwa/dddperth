@@ -7,7 +7,9 @@ import type { SponsorPortalConfig } from '@ddd/conference-config'
  *   - Each sponsorship is a "Sponsor" issue in the SPN project, labelled
  *     with the conference year (e.g. `2026`).
  *   - "Contact Email" holds comma/semicolon-separated addresses; those
- *     people can log into the portal for that sponsor.
+ *     people can log into the portal for that sponsor. "Additional Sponsor
+ *     Portal Emails" takes the same format and grants the same access —
+ *     use it when the extra logins shouldn't clutter the primary contact.
  *   - When a sponsor finishes uploading their assets, the portal ticks
  *     "Assets for Conference" under "Sponsor Tasks" on their issue.
  *   - Test issues live on the same board with a `portal-test` label. This
@@ -28,6 +30,7 @@ export const sponsorPortal: SponsorPortalConfig = {
             companyName: 'customfield_10087',
             website: 'customfield_10089',
             contactEmail: 'customfield_10091',
+            additionalContactEmails: 'customfield_10147',
             tier: 'customfield_10086',
             sponsorTasks: 'customfield_10096',
             quote: 'customfield_10140',

@@ -105,7 +105,15 @@ export function createJiraClient(args: {
     return {
         async searchSponsorIssues() {
             const jql = (jqlOverride ?? portalConfig.jira.jql).replaceAll('{year}', portalConfig.year)
-            const requestFields = ['summary', 'status', fields.companyName, fields.website, fields.contactEmail, fields.tier]
+            const requestFields = [
+                'summary',
+                'status',
+                fields.companyName,
+                fields.website,
+                fields.contactEmail,
+                fields.tier,
+                ...(fields.additionalContactEmails ? [fields.additionalContactEmails] : []),
+            ]
 
             const issues: SyncSourceSponsor[] = []
             let nextPageToken: string | undefined
@@ -128,7 +136,12 @@ export function createJiraClient(args: {
                         tier: fieldOptionValue(issueFields, fields.tier) ?? 'Unknown',
                         website: fieldString(issueFields, fields.website),
                         jiraStatus: typeof status?.name === 'string' ? status.name : undefined,
-                        contactEmails: parseContactEmails(fieldString(issueFields, fields.contactEmail)),
+                        contactEmails: parseContactEmails(
+                            fieldString(issueFields, fields.contactEmail),
+                            fields.additionalContactEmails
+                                ? fieldString(issueFields, fields.additionalContactEmails)
+                                : undefined,
+                        ),
                     })
                 }
 

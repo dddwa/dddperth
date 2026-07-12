@@ -242,6 +242,13 @@ export interface SponsorPortalJiraConfig {
         website: string
         /** Text field holding comma/semicolon-separated contact emails. */
         contactEmail: string
+        /**
+         * Optional second text field of comma/semicolon-separated emails,
+         * merged with `contactEmail` (deduplicated) when granting portal
+         * access. Lets the committee keep the primary contact separate from
+         * extra portal logins. Omit if the field doesn't exist.
+         */
+        additionalContactEmails?: string
         /** Single-select holding the sponsorship tier. */
         tier: string
         /** Multi-checkbox "tasks" field the portal writes completion into. */
