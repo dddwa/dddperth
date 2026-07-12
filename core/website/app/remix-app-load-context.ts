@@ -25,6 +25,7 @@ export interface CloudflareEnv {
     AUTH_EMAIL_FROM?: string
 
     TITO_SECURITY_TOKEN?: string
+    TITO_API_TOKEN?: string
 
     /** Jira service-account credentials for sponsor sync (wrangler secrets). */
     JIRA_API_EMAIL?: string

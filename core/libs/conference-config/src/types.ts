@@ -112,6 +112,22 @@ export interface ConferenceYear {
 
     ticketInfo: TicketInfo | undefined
 
+    /**
+     * Sharecast "I'm attending" share-image generator for this year.
+     * When unset the /share page tells visitors sharing isn't available this year.
+     */
+    sharecast?: {
+        /** Sharecast instance URL, e.g. https://ddd-2026.sharecast.io/ */
+        url: string
+        /**
+         * Which Tito ticket releases count as attendees on the /share picker, matched
+         * case-insensitively against the start of the release title (e.g. 'General Attendee'
+         * matches 'General Attendee (Early Release)'). Filters out add-ons like sponsorships
+         * or childcare tickets. Unset → every ticket on a registration is shown.
+         */
+        releaseTitlePrefixes?: string[]
+    }
+
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
     cfpDates: DateTimeRange | undefined

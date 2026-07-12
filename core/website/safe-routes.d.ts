@@ -58,6 +58,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/api.theme.js').SearchParams>,
     },
+    "/api/tito-registration": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.tito-registration.js').SearchParams>,
+    },
     "/api/voting/batch": {
       params: never,
       query: ExportedQuery<import('app/routes/api.voting.batch.js').SearchParams>,
@@ -134,6 +138,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
     },
+    "/share": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
+    },
     "/sitemap.xml": {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml].js').SearchParams>,
@@ -157,6 +165,7 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
+            | 'routes/api.tito-registration'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
             | 'routes/auth.verify.$token'
@@ -180,6 +189,7 @@ declare module "safe-routes" {
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
+            | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
             | 'routes/portal'

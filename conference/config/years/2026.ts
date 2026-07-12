@@ -88,6 +88,12 @@ export const conference2026: ConferenceYear = {
         eventId: '2026',
     },
 
+    sharecast: {
+        url: 'https://ddd-2026.sharecast.io/',
+        // Keeps add-ons (Coffee Cart Sponsorship, Childcare, Pay it Forward) out of the /share ticket picker
+        releaseTitlePrefixes: ['General Attendee'],
+    },
+
     sponsors: {},
 
     foodInfo: {

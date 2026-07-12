@@ -22,6 +22,7 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
         sessionizeOverrides: collectSessionizeOverrides(env),
         tito: {
             securityToken: env.TITO_SECURITY_TOKEN,
+            apiToken: env.TITO_API_TOKEN,
         },
         jira: {
             apiEmail: env.JIRA_API_EMAIL,
