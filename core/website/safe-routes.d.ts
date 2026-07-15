@@ -193,11 +193,8 @@ declare module "safe-routes" {
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout.voting'
-<<<<<<< HEAD
             | 'routes/_layout.share'
-=======
             | 'routes/_layout._index'
->>>>>>> db53a11 (add runsheets page)
             | 'routes/_layout.app'
             | 'routes/_layout.$'
             | 'routes/portal'
