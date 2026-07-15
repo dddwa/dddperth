@@ -138,13 +138,13 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
     },
+    "/runsheets/:filter?": {
+      params: {'filter'?: string | number},
+      query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
+    },
     "/share": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
-    },
-    "/runsheets": {
-      params: never,
-      query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
     },
     "/sitemap.xml": {
       params: never,
@@ -193,8 +193,8 @@ declare module "safe-routes" {
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout.voting'
-            | 'routes/_layout.share'
             | 'routes/_layout._index'
+            | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
             | 'routes/portal'
