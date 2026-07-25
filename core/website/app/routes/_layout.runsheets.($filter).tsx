@@ -1,8 +1,9 @@
-import { ReactNode } from 'react'
-import { data, useLoaderData } from 'react-router'
+import type { ReactNode } from 'react'
+import { data, Form, redirect, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
+import { Button } from '~/components/ui/styled/button'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
@@ -52,6 +53,15 @@ const locationList = [
     'loc-L2-lobby',
     'loc-black-swan-room',
 ]
+export async function action({ request }: Route.ActionArgs) {
+    const formData = await request.formData()
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    const filter = formData.get('filter')?.toString()
+    if (filter) {
+        return redirect(`/runsheets/${filter}`)
+    }
+    return redirect(`/runsheets`)
+}
 
 export async function loader({ params }: Route.LoaderArgs) {
     const filter: string | undefined = params.filter
@@ -96,129 +106,70 @@ export async function loader({ params }: Route.LoaderArgs) {
     }
 
     // get issue details
-    if (issueIds.length > 0) {
-        const bodyData = `{
-          "expand": [
-            "names"
-          ],
-          "fields": [
-            "issuetype",
-            "labels",
-            "status",
-            "description",
-            "customfield_10131",
-            "customfield_10132",
-            "customfield_10133",
-            "customfield_10134",
-            "customfield_10135",
-            "summary"
-          ],
-          "fieldsByKeys": false,
-          "issueIdsOrKeys": [${issueIds}],
-          "properties": []
-        }`
-        const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
-            method: 'POST',
-            headers: {
-                Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: bodyData,
-        })
-        if (!fetchedIssues.ok) {
-            throw new Error('Error fetching issues, responded with status: ' + fetchedIssues.status)
-        }
-        const issueJson = await fetchedIssues.json()
-        const issues = bulkIssuesSchema.parse(issueJson).issues
-
-        return data(issues)
+    if (issueIds.length <= 0) {
+        throw new Error(`Error, no issues found${label && value ? ` with filter: ${value}` : ''}`)
     }
+    const bodyData = `{
+        "expand": [
+        "names"
+        ],
+        "fields": [
+        "issuetype",
+        "labels",
+        "status",
+        "description",
+        "customfield_10131",
+        "customfield_10132",
+        "customfield_10133",
+        "customfield_10134",
+        "customfield_10135",
+        "summary"
+        ],
+        "fieldsByKeys": false,
+        "issueIdsOrKeys": [${issueIds}],
+        "properties": []
+    }`
+    const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: bodyData,
+    })
+    if (!fetchedIssues.ok) {
+        throw new Error('Error fetching issues, responded with status: ' + fetchedIssues.status)
+    }
+    const issueJson = await fetchedIssues.json()
+    const issues = bulkIssuesSchema.parse(issueJson).issues
+    return data({ issues, filter })
 }
 
 export default function Index() {
-    const issues = useLoaderData<typeof loader>()
+    const { issues, filter } = useLoaderData<typeof loader>()
 
     return (
         <>
             <AdminLayout heading="Runsheets">
-                <Flex alignItems="center">
-                    <styled.h2>Filter by</styled.h2>
-                    <styled.a key={'clear'} href={`/runsheets`} color="text.highlight">
-                        <FilterButton>Clear Filter</FilterButton>
-                    </styled.a>
-                </Flex>
-
-                <Flex wrap="wrap" marginY="2">
-                    <styled.a key={'team-1'} href={`/runsheets/team.team-1`} color="text.highlight">
-                        <FilterButton>Team 1</FilterButton>
-                    </styled.a>
-                    <styled.a key={'team-2'} href={`/runsheets/team.team-2`} color="text.highlight">
-                        <FilterButton>Team 2</FilterButton>
-                    </styled.a>
-                    <styled.a key={'team-3'} href={`/runsheets/team.team-3`} color="text.highlight">
-                        <FilterButton>Team 3</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-black-swan-room'}
-                        href={`/runsheets/location.loc-black-swan-room`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>Black Swan Room</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-champions-terrace'}
-                        href={`/runsheets/location.loc-champions-terrace`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>Champions Terrace</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-cygnet-room'}
-                        href={`/runsheets/location.loc-cygnet-room`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>Cygnet Room</FilterButton>
-                    </styled.a>
-                    <styled.a key={'loc-L2-lobby'} href={`/runsheets/location.loc-L2-lobby`} color="text.highlight">
-                        <FilterButton>Lobby Level 2</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-registration-area'}
-                        href={`/runsheets/location.loc-registration-area`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>Registration Area</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-river-room-1'}
-                        href={`/runsheets/location.loc-river-room-1`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>River View Room 1</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-river-room-2'}
-                        href={`/runsheets/location.loc-river-room-2`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>River View Room 2</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-river-room-3'}
-                        href={`/runsheets/location.loc-river-room-3`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>River View Room 3</FilterButton>
-                    </styled.a>
-                    <styled.a
-                        key={'loc-sports-lounge'}
-                        href={`/runsheets/location.loc-sports-lounge`}
-                        color="text.highlight"
-                    >
-                        <FilterButton>Sports Lounge</FilterButton>
-                    </styled.a>
-                </Flex>
+                <Form method="post">
+                    <select name="filter" defaultValue={filter ? filter : ''}>
+                        <option value="">Filter by Team or Location</option>
+                        <option value="team.team-1">Team 1</option>
+                        <option value="team.team-2">Team 2</option>
+                        <option value="team.team-3">Team 3</option>
+                        <option value="location.loc-black-swan-room">Black Swan Room</option>
+                        <option value="location.loc-champions-terrace">Champions Terrace</option>
+                        <option value="location.loc-cygnet-room">Cygnet Room</option>
+                        <option value="location.loc-L2-lobby">Lobby Level 2</option>
+                        <option value="location.loc-registration-area">Registration Area</option>
+                        <option value="location.loc-river-room-1">River View Room 1</option>
+                        <option value="location.loc-river-room-2">River View Room 2</option>
+                        <option value="location.loc-river-room-3">River View Room 3</option>
+                        <option value="location.loc-sports-lounge">Sports Lounge</option>
+                    </select>
+                    <Button type="submit">Apply Filter</Button>
+                </Form>
                 <Box maxW="4xl" mx="auto">
                     <AdminCard>
                         <styled.table width="full" fontSize="sm">
