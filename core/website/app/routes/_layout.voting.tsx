@@ -156,11 +156,16 @@ function VotingPageWithSession({
         // change would loop against a persistent failure.
         if (error) return
 
+        // Once the server reports exhaustion there is nothing left to fetch —
+        // without this guard the effect refetches in a tight loop until the
+        // voter reaches the end of the loaded pairs.
+        if (isExhausted) return
+
         const remainingPairs = pairs.length - localIndex
         if (remainingPairs <= PREFETCH_THRESHOLD) {
             void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs, setIsExhausted)
         }
-    }, [localIndex, pairs, isFetching, error])
+    }, [localIndex, pairs, isFetching, error, isExhausted])
 
     async function handleVote(vote: 'A' | 'B' | 'skip') {
         const currentPair = pairs[localIndex]
