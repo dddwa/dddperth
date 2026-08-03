@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { data, Form, redirect, useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
@@ -271,27 +270,4 @@ function formatTime(dateString: string) {
     const date: Date = new Date(dateString)
     const minutes = date.getMinutes()
     return `${date.getHours()}:${minutes < 10 ? 0 : ''}${minutes}`
-}
-
-function FilterButton({ children, disabled }: { children: ReactNode; disabled?: boolean }) {
-    return (
-        <styled.button
-            disabled={disabled}
-            bg="admin.200"
-            color="admin.800"
-            border="admin-subtle"
-            py="1.5"
-            px="2.5"
-            margin="1"
-            borderRadius="md"
-            fontSize="sm"
-            fontWeight="semibold"
-            cursor="pointer"
-            transition="colors"
-            _hover={{ bg: 'admin.800', color: 'admin.200' }}
-            _disabled={{ bg: 'brand.primary', cursor: 'not-allowed', opacity: 0.8 }}
-        >
-            {children}
-        </styled.button>
-    )
 }
