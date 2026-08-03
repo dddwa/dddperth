@@ -43,6 +43,7 @@ export const bulkIssuesSchema = z.object({
 
 const teamList = ['team-1', 'team-2', 'team-3']
 const locationList = [
+    // todo update this
     'loc-registration-area',
     'loc-river-room-1',
     'loc-river-room-2',
@@ -80,12 +81,14 @@ export async function loader({ params }: Route.LoaderArgs) {
     }
 
     // get ids of issues in team
+    // todo filter on time slot - conference day, nothing
     const fetchedIds = await fetch(
         `https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item"${label && value ? jql : ''}&type=issue&product=jira`,
         // 'https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item" AND "Volunteer Team[Labels]" %3D team-1&type=issue&product=jira',
         {
             method: 'GET',
             headers: {
+                // Auth WIP - currently using my email and api locally
                 Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
                 Accept: 'application/json',
             },
@@ -132,6 +135,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
         method: 'POST',
         headers: {
+            // Auth WIP - currently using my email and api locally
             Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
             Accept: 'application/json',
             'Content-Type': 'application/json',
