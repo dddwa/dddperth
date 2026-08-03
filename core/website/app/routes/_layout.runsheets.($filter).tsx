@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/styled/button'
+import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
@@ -29,7 +30,7 @@ export const issueSchema = z.object({
         customfield_10132: z.array(z.string()).nullable(), // Volunteer Team
         customfield_10133: z.string().nullable(), // Item End Time
         customfield_10134: z.string().nullable(), // Item Start Time
-        customfield_10135: z.array(z.string()), // Location
+        customfield_10135: z.array(z.string()).nullable(), // Location
     }),
 })
 export const jsonSchema = z.object({
@@ -50,7 +51,7 @@ const locationList = [
     'loc-sports-lounge',
     'loc-cygnet-room',
     'loc-champions-terrace',
-    'loc-L2-lobby',
+    'loc-L3-lobby',
     'loc-black-swan-room',
 ]
 export async function action({ request }: Route.ActionArgs) {
@@ -161,7 +162,9 @@ export default function Index() {
                         <option value="location.loc-black-swan-room">Black Swan Room</option>
                         <option value="location.loc-champions-terrace">Champions Terrace</option>
                         <option value="location.loc-cygnet-room">Cygnet Room</option>
-                        <option value="location.loc-L2-lobby">Lobby Level 2</option>
+                        <option value="location.loc-help-desk">Help Desk Level 3</option>
+                        <option value="location.loc-L2-lobby">Lobby Level 3</option>
+                        <option value="location.loc-platinum-terrace">Platinum Terrace</option>
                         <option value="location.loc-registration-area">Registration Area</option>
                         <option value="location.loc-river-room-1">River View Room 1</option>
                         <option value="location.loc-river-room-2">River View Room 2</option>
@@ -171,26 +174,32 @@ export default function Index() {
                     <Button type="submit">Apply Filter</Button>
                 </Form>
                 <Box maxW="4xl" mx="auto">
-                    <AdminCard>
-                        <styled.table width="full" fontSize="sm">
+                    <AdminCard overflow="scroll">
+                        <styled.table width="full" fontSize="sm" overflow="scroll">
                             <thead>
                                 <tr>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th textAlign="left" p="2" textWrap="wrap">
                                         Start Time
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th textAlign="left" p="2" textWrap="wrap">
                                         End Time
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th textAlign="left" p="2" textWrap="wrap">
                                         Summary
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th textAlign="left" p="2" textWrap="wrap">
                                         Location
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th textAlign="left" p="2" textWrap="wrap">
                                         Team
                                     </styled.th>
-                                    <styled.th textAlign="left" p="2">
+                                    <styled.th
+                                        textAlign="left"
+                                        p="2"
+                                        maxW="40"
+                                        overflowWrap="break-word"
+                                        textWrap="wrap"
+                                    >
                                         Role Instructions
                                     </styled.th>
                                 </tr>
@@ -204,20 +213,20 @@ export default function Index() {
                                                 backgroundColor: `${issue.fields.customfield_10132 && issue.fields.customfield_10132[0] === 'session' ? '#e9d5ff' : ''}`,
                                             }}
                                         >
-                                            <styled.td p="2">
+                                            <styled.td key="start-time" p="2">
                                                 {issue.fields.customfield_10134
                                                     ? formatTime(issue.fields.customfield_10134)
                                                     : '-'}
                                             </styled.td>
-                                            <styled.td p="2">
-                                                {formatTime(
-                                                    issue.fields.customfield_10133
-                                                        ? issue.fields.customfield_10133
-                                                        : '-',
-                                                )}
+                                            <styled.td key="end-time" p="2">
+                                                {issue.fields.customfield_10133
+                                                    ? formatTime(issue.fields.customfield_10133)
+                                                    : '-'}
                                             </styled.td>
-                                            <styled.td p="2">{issue.fields.summary}</styled.td>
-                                            <styled.td p="2">
+                                            <styled.td key="summary" p="2">
+                                                {issue.fields.summary}
+                                            </styled.td>
+                                            <styled.td key="location" p="2">
                                                 {issue.fields.customfield_10135 ? (
                                                     issue.fields.customfield_10135.map((location) => {
                                                         return <>{location} </>
@@ -226,8 +235,8 @@ export default function Index() {
                                                     <></>
                                                 )}
                                             </styled.td>
-                                            <styled.td p="2" maxW="20">
-                                                <Flex spaceX="1">
+                                            <styled.td key="team" p="2" maxW="20">
+                                                <Flex spaceX="1" overflowWrap="break-word" textWrap="wrap">
                                                     {issue.fields.customfield_10132 ? (
                                                         issue.fields.customfield_10132.map((team) => {
                                                             return <>{team} </>
@@ -237,7 +246,15 @@ export default function Index() {
                                                     )}
                                                 </Flex>
                                             </styled.td>
-                                            <styled.td p="2">{issue.fields.customfield_10131}</styled.td>
+                                            <styled.td key="role-instructions" p="2" maxW="20">
+                                                {issue.fields.customfield_10131 ? (
+                                                    <a href={issue.fields.customfield_10131}>
+                                                        <ConfluenceLogo height="2rem" />
+                                                    </a>
+                                                ) : (
+                                                    ''
+                                                )}
+                                            </styled.td>
                                         </tr>
                                     )
                                 })}
