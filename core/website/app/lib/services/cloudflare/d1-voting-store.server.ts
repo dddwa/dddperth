@@ -8,10 +8,10 @@ import {
     recordVote as d1RecordVote,
     updateVotingSessionIndex as d1UpdateVotingSessionIndex,
 } from '../../d1.server'
-import { recordException } from '../../record-exception'
 import {
     canStartValidation as d1CanStartValidation,
     calculateAndSaveFairnessMetrics,
+    computeTalkStatsFromVoteResults,
     createValidationRunIndex,
     getFairnessMetrics as d1GetFairnessMetrics,
     getTalkResults as d1GetTalkResults,
@@ -28,7 +28,7 @@ import {
     saveUnderrepresentedGroupsConfig as d1SaveUnderrepresentedGroupsConfig,
     updateValidationRunProgress,
 } from '../../voting-validation.server'
-import type { TalkStatsAccumulator } from '../../voting-validation-types'
+import type { ValidationChunkResult } from '../../voting-validation-types'
 import type { TalkVotingData, VoteRecord, VotingSession } from '../../voting-types'
 import { CURRENT_SESSION_VERSION } from '../../voting-version-constants'
 import type { VotingStore } from '../voting-store'
@@ -85,14 +85,6 @@ export function createD1VotingStore(db: D1Database): VotingStore {
             return d1CanStartValidation(db)
         },
 
-        async markValidationStarted(runId) {
-            await d1MarkValidationStarted(db, runId)
-        },
-
-        async markValidationCompleted(runId) {
-            await d1MarkValidationCompleted(db, runId)
-        },
-
         async getValidationRunStatus() {
             const row = await db
                 .prepare(`SELECT is_running, current_run_id FROM voting_validation_globals WHERE id = 'global'`)
@@ -116,8 +108,12 @@ export function createD1VotingStore(db: D1Database): VotingStore {
             return d1GetValidationRunById(db, runId)
         },
 
-        async runValidation(runId, year, talks) {
-            return runD1Validation(db, runId, year, talks)
+        async startValidationRun(runId, year) {
+            return startD1ValidationRun(db, runId, year)
+        },
+
+        async processValidationChunk(runId, year, talks, chunkSize) {
+            return processD1ValidationChunk(db, runId, year, talks, chunkSize)
         },
 
         async getTalkStatistics(runId) {
@@ -188,150 +184,82 @@ async function updateSessionIndexSafely(
 }
 
 /**
- * Runs the full voting validation pass. Mostly delegates to the existing
- * voting-validation.server.ts helpers but owns the orchestration so the
- * store interface stays clean.
+ * Starts a validation run: takes the global lock and creates the run row.
+ * No sessions are processed here — processing happens in subsequent
+ * processValidationChunk calls driven by the admin UI, because a Workers
+ * request can't run long enough to process every session in one invocation.
  */
-async function runD1Validation(db: D1Database, runId: string, year: string, talks: TalkVotingData[]): Promise<string> {
-    let processedSessions = 0
-    let processedRounds = 0
-    let processedVotes = 0
+async function startD1ValidationRun(
+    db: D1Database,
+    runId: string,
+    year: string,
+): Promise<{ totalSessions: number }> {
+    // Any run still marked running has lost its driver — canStartValidation
+    // vetoed genuinely-active runs before we got here — so record it honestly
+    // rather than leaving a permanent 'running' row.
+    const now = new Date().toISOString()
+    await db
+        .prepare(`UPDATE voting_validation_runs SET status = 'incomplete', last_updated_at = ? WHERE status = 'running'`)
+        .bind(now)
+        .run()
 
-    try {
-        const sessionRows = await d1ListVotingSessions(db, year, CURRENT_SESSION_VERSION)
-        const sessions = sessionRows.map(rowToVotingSession)
+    const sessionRows = await d1ListVotingSessions(db, year, CURRENT_SESSION_VERSION)
+    await d1MarkValidationStarted(db, runId)
+    await createValidationRunIndex(db, runId, year, sessionRows.length)
 
-        await createValidationRunIndex(db, runId, year, sessions.length)
-
-        const globalStats = new Map<string, TalkStatsAccumulator>()
-        talks.forEach((talk) => {
-            globalStats.set(talk.id, blankAccumulator(talk.id, talk.title))
-        })
-
-        try {
-            for (const session of sessions) {
-                const sessionStats = await processVotingSession(db, runId, session, talks)
-
-                for (const [talkId, sessionStat] of sessionStats.talkStats) {
-                    const globalStat = globalStats.get(talkId)
-                    if (globalStat) {
-                        mergeStats(globalStat, sessionStat)
-                    }
-                }
-
-                processedSessions++
-                processedRounds += sessionStats.processedRounds
-                processedVotes += sessionStats.processedVotes
-
-                if (processedSessions % 10 === 0) {
-                    await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes)
-                }
-
-                await new Promise((resolve) => setTimeout(resolve, 100))
-            }
-
-            await saveTalkStatistics(db, runId, globalStats)
-            await calculateAndSaveFairnessMetrics(db, runId, globalStats)
-
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'completed',
-            )
-            await d1MarkValidationCompleted(db, runId)
-
-            return runId
-        } catch (error) {
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'incomplete',
-            )
-            await d1MarkValidationCompleted(db, runId)
-            recordException(error)
-            throw error
-        }
-    } catch (error) {
-        try {
-            await updateValidationRunProgress(
-                db,
-                runId,
-                processedSessions,
-                processedRounds,
-                processedVotes,
-                'incomplete',
-            )
-            await d1MarkValidationCompleted(db, runId)
-        } catch {
-            // Ignore cleanup errors
-        }
-        recordException(error)
-        throw error
-    }
+    return { totalSessions: sessionRows.length }
 }
 
-function blankAccumulator(talkId: string, title: string): TalkStatsAccumulator {
-    return {
-        talkId,
-        title,
-        timesSeenAggregated: 0,
-        timesVotedForAggregated: 0,
-        timesVotedAgainstAggregated: 0,
-        timesSkippedAggregated: 0,
-        timesSeenV1: 0,
-        timesVotedForV1: 0,
-        timesVotedAgainstV1: 0,
-        timesSkippedV1: 0,
-        timesSeenV2: 0,
-        timesVotedForV2: 0,
-        timesVotedAgainstV2: 0,
-        timesSkippedV2: 0,
-        timesSeenV3: 0,
-        timesVotedForV3: 0,
-        timesVotedAgainstV3: 0,
-        timesSkippedV3: 0,
-        timesSeenV4: 0,
-        timesVotedForV4: 0,
-        timesVotedAgainstV4: 0,
-        timesSkippedV4: 0,
-        timesSeenV5: 0,
-        timesVotedForV5: 0,
-        timesVotedAgainstV5: 0,
-        timesSkippedV5: 0,
+/**
+ * Processes the next chunk of sessions for a run, resuming from the cursor
+ * persisted in the run row (processed_sessions). The final chunk recomputes
+ * talk statistics from vote_results, so retried or concurrently-driven chunks
+ * can never double-count. Errors are left to propagate: the run stays
+ * 'running' and a later chunk call resumes from the last persisted cursor.
+ */
+async function processD1ValidationChunk(
+    db: D1Database,
+    runId: string,
+    year: string,
+    talks: TalkVotingData[],
+    chunkSize: number,
+): Promise<ValidationChunkResult> {
+    const run = await d1GetValidationRunById(db, runId)
+    if (!run) {
+        throw new Error(`Validation run ${runId} not found`)
     }
-}
+    if (run.status !== 'running') {
+        return { done: true, processedSessions: run.processedSessions, totalSessions: run.totalSessions }
+    }
 
-function mergeStats(target: TalkStatsAccumulator, source: TalkStatsAccumulator) {
-    target.timesSeenAggregated += source.timesSeenAggregated
-    target.timesVotedForAggregated += source.timesVotedForAggregated
-    target.timesVotedAgainstAggregated += source.timesVotedAgainstAggregated
-    target.timesSkippedAggregated += source.timesSkippedAggregated
-    target.timesSeenV1 += source.timesSeenV1
-    target.timesVotedForV1 += source.timesVotedForV1
-    target.timesVotedAgainstV1 += source.timesVotedAgainstV1
-    target.timesSkippedV1 += source.timesSkippedV1
-    target.timesSeenV2 += source.timesSeenV2
-    target.timesVotedForV2 += source.timesVotedForV2
-    target.timesVotedAgainstV2 += source.timesVotedAgainstV2
-    target.timesSkippedV2 += source.timesSkippedV2
-    target.timesSeenV3 += source.timesSeenV3
-    target.timesVotedForV3 += source.timesVotedForV3
-    target.timesVotedAgainstV3 += source.timesVotedAgainstV3
-    target.timesSkippedV3 += source.timesSkippedV3
-    target.timesSeenV4 += source.timesSeenV4
-    target.timesVotedForV4 += source.timesVotedForV4
-    target.timesVotedAgainstV4 += source.timesVotedAgainstV4
-    target.timesSkippedV4 += source.timesSkippedV4
-    target.timesSeenV5 += source.timesSeenV5
-    target.timesVotedForV5 += source.timesVotedForV5
-    target.timesVotedAgainstV5 += source.timesVotedAgainstV5
-    target.timesSkippedV5 += source.timesSkippedV5
+    const sessionRows = await d1ListVotingSessions(db, year, CURRENT_SESSION_VERSION)
+    const sessions = sessionRows.map(rowToVotingSession)
+
+    const cursor = Math.min(run.processedSessions, sessions.length)
+    const slice = sessions.slice(cursor, cursor + chunkSize)
+
+    let processedRounds = run.processedRounds
+    let processedVotes = run.processedVotes
+    for (const session of slice) {
+        const result = await processVotingSession(db, runId, session, talks)
+        processedRounds += result.processedRounds
+        processedVotes += result.processedVotes
+    }
+
+    const processedSessions = cursor + slice.length
+    const done = processedSessions >= sessions.length
+
+    if (done) {
+        const stats = await computeTalkStatsFromVoteResults(db, runId, talks)
+        await saveTalkStatistics(db, runId, stats)
+        await calculateAndSaveFairnessMetrics(db, runId, stats)
+        await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes, 'completed')
+        await d1MarkValidationCompleted(db, runId)
+    } else {
+        await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes)
+    }
+
+    return { done, processedSessions, totalSessions: sessions.length }
 }
 
 // Re-exported for caller convenience (kept here to avoid public surface noise)
