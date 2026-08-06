@@ -197,6 +197,10 @@ export function rebuildSessionTalks(sessionTalkIds: string[], currentTalks: Talk
  * chunk retried after its driver died) changes nothing. Talk statistics are
  * NOT accumulated here; they are recomputed from vote_results when the run
  * finalizes, which is what makes reprocessing safe.
+ *
+ * Errors propagate: the chunk fails before the run's cursor advances, so
+ * Resume retries this session instead of the run completing with its votes
+ * silently missing from the analysis.
  */
 export async function processVotingSession(
     db: D1Database,
@@ -258,9 +262,8 @@ export async function processVotingSession(
 
         // Save vote results in batches
         await saveVoteResults(db, voteResults)
-    } catch (error: any) {
-        console.error(`Error processing votes for session ${session.sessionId}:`, error)
-        recordException(error)
+    } catch (error) {
+        throw new Error(`Error processing votes for session ${session.sessionId}`, { cause: error })
     }
 
     return {
