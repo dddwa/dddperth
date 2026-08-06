@@ -25,6 +25,14 @@ import type { Route } from './+types/admin.voting'
  */
 const VALIDATION_CHUNK_SIZE = 25
 
+/**
+ * A running run whose last progress is fresher than this is assumed to still
+ * have a live driving page (chunks update it every few seconds), so Resume is
+ * not offered. A second concurrent driver would be harmless — chunk
+ * processing is idempotent — but it double-counts the progress counters.
+ */
+const RUN_DRIVERLESS_AFTER_MS = 60 * 1000
+
 /** A run with no progress for this long has lost its driving page. */
 const RUN_STALLED_AFTER_MS = 5 * 60 * 1000
 
@@ -85,8 +93,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }))
 
         // A run whose driving page went away stays status 'running' forever;
-        // surface it as resumable, and once it's been dead for long enough
-        // stop letting it disable the Start button.
+        // offer it for resume once it stops looking actively driven, and once
+        // it's been dead for long enough stop letting it disable Start.
         const runningRun = mappedRuns.find((run) => run.status === 'running')
         const msSinceUpdate = runningRun ? Date.now() - new Date(runningRun.lastUpdatedAt).getTime() : 0
 
@@ -94,7 +102,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             runs: mappedRuns,
             currentRunId: status.currentRunId,
             isRunning: status.isRunning && runningRun !== undefined && msSinceUpdate < RUN_DEAD_AFTER_MS,
-            resumableRunId: runningRun?.runId,
+            resumableRunId: runningRun && msSinceUpdate >= RUN_DRIVERLESS_AFTER_MS ? runningRun.runId : undefined,
             stalledMinutes: Math.floor(msSinceUpdate / 60000),
         }
     } catch (error: any) {
@@ -301,7 +309,10 @@ export default function AdminVoting() {
         if (!drivingRunId || chunkFetcher.state !== 'idle') return
 
         const data = chunkFetcher.data
-        if (data && data !== handledChunkResponse.current && data.runId === drivingRunId) {
+        // Errors are terminal even when their runId is missing or mismatched —
+        // an error that never satisfied the runId check would otherwise be
+        // resubmitted forever.
+        if (data && data !== handledChunkResponse.current && (!data.success || data.runId === drivingRunId)) {
             handledChunkResponse.current = data
             if (!data.success || data.done) {
                 setDrivingRunId(null)
@@ -326,7 +337,12 @@ export default function AdminVoting() {
     }, [validationRuns.isRunning, revalidator])
 
     const chunkError = chunkFetcher.data && !chunkFetcher.data.success ? chunkFetcher.data.error : null
-    const showResume = validationRuns.resumableRunId !== undefined && drivingRunId === null
+    // The loader only offers Resume once a run looks driverless, so a run this
+    // tab just errored on (its progress is only seconds old) uses the failed
+    // chunk's runId as the resume target instead.
+    const chunkErrorRunId = chunkFetcher.data && !chunkFetcher.data.success ? chunkFetcher.data.runId : undefined
+    const resumeRunId = validationRuns.resumableRunId ?? chunkErrorRunId
+    const showResume = resumeRunId !== undefined && drivingRunId === null
     const isStalled = showResume && validationRuns.stalledMinutes * 60000 >= RUN_STALLED_AFTER_MS
 
     return (
@@ -565,7 +581,7 @@ export default function AdminVoting() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setDrivingRunId(validationRuns.resumableRunId ?? null)}
+                            onClick={() => setDrivingRunId(resumeRunId ?? null)}
                         >
                             Resume Validation
                         </Button>

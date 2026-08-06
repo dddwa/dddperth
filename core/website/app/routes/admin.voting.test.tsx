@@ -23,11 +23,13 @@ interface HarnessOptions {
     totalSessions: number
     /** 1-based index of the chunk call that should fail (fails once). */
     failChunkCall?: number
+    /** Omit the runId from the failure response (a malformed server error). */
+    failWithoutRunId?: boolean
     initialRun?: RunState
     stalledMinutes?: number
 }
 
-function setupHarness({ totalSessions, failChunkCall, initialRun, stalledMinutes = 0 }: HarnessOptions) {
+function setupHarness({ totalSessions, failChunkCall, failWithoutRunId, initialRun, stalledMinutes = 0 }: HarnessOptions) {
     const state = {
         run: initialRun ? { ...initialRun } : null,
         chunkCalls: [] as string[],
@@ -56,7 +58,9 @@ function setupHarness({ totalSessions, failChunkCall, initialRun, stalledMinutes
                     : [],
                 isRunning: running,
                 currentRunId: running ? state.run?.runId : undefined,
-                resumableRunId: running ? state.run?.runId : undefined,
+                // Mirrors the loader: Resume is only offered once the run looks
+                // driverless (no progress for RUN_DRIVERLESS_AFTER_MS = 1 minute)
+                resumableRunId: running && stalledMinutes >= 1 ? state.run?.runId : undefined,
                 stalledMinutes: running ? stalledMinutes : 0,
             },
             underrepresentedGroups: { availableGroups: [], selectedGroups: [] },
@@ -72,7 +76,9 @@ function setupHarness({ totalSessions, failChunkCall, initialRun, stalledMinutes
             state.chunkCalls.push(runId)
 
             if (failChunkCall === state.chunkCalls.length) {
-                return { success: false, runId, error: 'Simulated chunk failure' }
+                return failWithoutRunId
+                    ? { success: false, error: 'Simulated chunk failure' }
+                    : { success: false, runId, error: 'Simulated chunk failure' }
             }
 
             if (!state.run || state.run.runId !== runId) {
@@ -156,6 +162,19 @@ describe('AdminVoting validation chunk driver', () => {
         await waitFor(() => expect(state.run?.status).toBe('completed'))
         expect(state.chunkCalls).toHaveLength(4)
         expect(state.run?.processed).toBe(60)
+    })
+
+    it('treats an error response missing its runId as terminal instead of resubmitting forever', async () => {
+        const { state } = setupHarness({ totalSessions: 60, failChunkCall: 2, failWithoutRunId: true })
+        await pageReady()
+
+        fireEvent.click(startButton())
+
+        await waitFor(() => expect(state.chunkCalls).toHaveLength(2))
+        await waitFor(() => expect(screen.getByText(/Validation processing stopped/)).toBeTruthy())
+
+        await settle()
+        expect(state.chunkCalls).toHaveLength(2)
     })
 
     it('offers Resume for a stalled run from a fresh page load and completes it', async () => {

@@ -153,10 +153,6 @@ declare module "safe-routes" {
     "/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.voting.js').SearchParams>,
-    },
-    "/voting/test": {
-      params: never,
-      query: ExportedQuery<import('app/routes/_layout.voting.test.js').SearchParams>,
     }
   }
 
@@ -193,7 +189,6 @@ declare module "safe-routes" {
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
-            | 'routes/_layout.voting.test'
             | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
