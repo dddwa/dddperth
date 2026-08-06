@@ -18,26 +18,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
     const { runId } = params
-    const conferenceState = getConferenceState(context)
-    const year = conferenceState.conference.year
-
-    const yearConfig = getYearConfig(year, getConfig(context))
-
-    if (yearConfig.kind === 'cancelled') {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-
-    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-    const sessionizeEndpoint = yearConfig.sessions.sessionizeEndpoint
-
     const voting = getServices(context).voting
 
     let runDetails = null
+    let runYear: string | null = null
     try {
         const runEntity = await voting.getValidationRunById(runId)
         if (runEntity) {
+            runYear = runEntity.year
             runDetails = {
                 startedAt: runEntity.startedAt,
                 completedAt: runEntity.completedAt,
@@ -51,6 +39,21 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     } catch (error: any) {
         console.error('Error getting run details:', error)
     }
+
+    const year = runYear ?? getConferenceState(context).conference.year
+    const yearConfig = getYearConfig(year, getConfig(context))
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    // Validation runs cover every submitted talk, so enrichment uses the
+    // all-sessions endpoint — the published-agenda endpoint may not exist yet
+    // (it is only configured once the agenda goes public).
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+    const sessionizeEndpoint = yearConfig.sessions.allSessionsEndpoint
 
     const stats = await voting.getTalkStatistics(runId)
 
