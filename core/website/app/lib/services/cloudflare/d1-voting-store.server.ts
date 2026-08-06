@@ -253,10 +253,18 @@ async function processD1ValidationChunk(
         const stats = await computeTalkStatsFromVoteResults(db, runId, talks)
         await saveTalkStatistics(db, runId, stats)
         await calculateAndSaveFairnessMetrics(db, runId, stats)
-        await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes, 'completed')
+        await updateValidationRunProgress(
+            db,
+            runId,
+            processedSessions,
+            sessions.length,
+            processedRounds,
+            processedVotes,
+            'completed',
+        )
         await d1MarkValidationCompleted(db, runId)
     } else {
-        await updateValidationRunProgress(db, runId, processedSessions, processedRounds, processedVotes)
+        await updateValidationRunProgress(db, runId, processedSessions, sessions.length, processedRounds, processedVotes)
     }
 
     return { done, processedSessions, totalSessions: sessions.length }

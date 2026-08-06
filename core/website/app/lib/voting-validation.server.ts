@@ -127,10 +127,17 @@ export async function createValidationRunIndex(
         .run()
 }
 
+/**
+ * total_sessions is rewritten on every update because the session list is
+ * re-read live each chunk — sessions created after the run started (voting
+ * still open, or a resume days later) grow the denominator, and the snapshot
+ * taken at run creation would report progress above 100%.
+ */
 export async function updateValidationRunProgress(
     db: D1Database,
     runId: string,
     processedSessions: number,
+    totalSessions: number,
     processedRounds: number,
     processedVotes: number,
     status?: 'running' | 'completed' | 'incomplete',
@@ -141,31 +148,31 @@ export async function updateValidationRunProgress(
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?, status = 'completed', completed_at = ?
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, now, runId)
             .run()
     } else if (status === 'incomplete') {
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?, status = 'incomplete'
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, runId)
             .run()
     } else {
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, runId)
             .run()
     }
 }
