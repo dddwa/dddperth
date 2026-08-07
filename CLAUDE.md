@@ -174,10 +174,10 @@ export async function loader({ context }: Route.LoaderArgs) {
 - The project uses ESM modules throughout
 - Node 20+ required
 - pnpm is the package manager (enforced via corepack)
-- Build outputs are in `website/build/` directory
-- Static assets served from core's `website/public/` plus `conference/public/` (conference-owned assets like sponsor logos; overlaid onto the site root at the same URLs)
-- Environment variables for local dev go in `website/.dev.vars`
-- Local D1 data stored in `website/.wrangler/state/`
+- Build outputs are in `core/website/build/` directory
+- Static assets served from core's `core/website/public/` plus `conference/public/` (conference-owned assets like sponsor logos; overlaid onto the site root at the same URLs)
+- Environment variables for local dev go in `conference/wrangler/.dev.vars` (the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root)
+- Local D1 data stored in `core/website/.wrangler/state/`
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

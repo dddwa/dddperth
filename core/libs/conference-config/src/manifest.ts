@@ -290,6 +290,86 @@ export interface SponsorPortalConfig {
 }
 
 /**
+ * Jira wiring for the speaker portal. Speaker issues are created and
+ * maintained manually (same convention as sponsor issues) — this app only
+ * ever searches and updates them, never creates one. Credentials are NOT
+ * here; they're the same host secrets the sponsor portal uses
+ * (`JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
+ */
+export interface SpeakerPortalJiraConfig {
+    /** Jira site, e.g. "https://dddperth.atlassian.net" */
+    baseUrl: string
+    /** Speakers project key, e.g. "SPK" */
+    projectKey: string
+    /**
+     * JQL selecting this year's speaker issues. `{year}` is substituted with
+     * `SpeakerPortalConfig.year`.
+     */
+    jql: string
+    /**
+     * Custom field ids on the speaker issue type. Only `sessionizeId` and
+     * `email` are required — sync needs those to grant portal access at
+     * all. The rest are write-back targets for the extra-info form; omit
+     * any the committee hasn't created a Jira field for yet and the push
+     * just skips that one (same pattern as the sponsor portal's optional
+     * `quote`/`socials` fields).
+     */
+    fields: {
+        /** Text field holding the Sessionize speaker id — the join key sync matches issues on. */
+        sessionizeId: string
+        /** Text field holding the speaker's email, granting portal access. */
+        email: string
+        namePhoneticSpelling?: string
+        /** Whether/how they'll take audience questions, e.g. "Yes, moderated" or "Other: <text>". */
+        questionsPreference?: string
+        /** Comma-joined presentation format needs, e.g. "Video, Live Demo, Other: <text>". */
+        presentationDetails?: string
+        /** "Yes"/"No" — opted out of recording. */
+        optOutOfRecording?: string
+        /** "Use Sessionize bio" or the speaker's custom introduction text. */
+        introduction?: string
+        anythingElse?: string
+        dietaryRequirements?: string
+        /** "Yes"/"No"/"Maybe" — speakers dinner RSVP. */
+        rsvpSpeakersDinner?: string
+        /** Comma-joined chosen training sessions, e.g. "Session 1, Session 3". */
+        rsvpSpeakerTraining?: string
+        /** "Yes"/"No"/"Maybe" or "Other: <text>" — Meet the Experts registration. */
+        registerMeetTheExperts?: string
+    }
+}
+
+/**
+ * Speaker self-service portal. When set, /speaker-portal routes come alive
+ * for anyone with an accepted or waitlisted Sessionize session whose
+ * Sessionize speaker id is also matched to a Jira speaker issue (for their
+ * email). Omit for forks without a speaker portal — the routes 404 and the
+ * sync never runs.
+ */
+export interface SpeakerPortalConfig {
+    /** Conference year the portal is collecting speaker info for, e.g. "2026". */
+    year: string
+    /** Sessionize session statuses that grant portal access, e.g. ['Accepted', 'Waitlisted']. */
+    portalAccessStatuses: string[]
+    jira: SpeakerPortalJiraConfig
+    /** Static link to a speaker info pack, rendered as a download on the dashboard. Omit to hide it. */
+    infoPackUrl?: string
+    /**
+     * Sessionize category *names* (as configured for this event in
+     * Sessionize, under Event → Categories) that map to the dashboard's
+     * format/level/general topic/talk topics fields. Category names aren't
+     * stable across events/forks, so this is fork-configurable rather than
+     * hardcoded in core.
+     */
+    sessionizeCategoryNames: {
+        format: string
+        level: string
+        generalTopic: string
+        talkTopics: string
+    }
+}
+
+/**
  * Runtime manifest — the bits the app needs at request time.
  *
  * Importable from anywhere (server or client) without bundler hazards.
@@ -309,6 +389,8 @@ export interface ConferenceManifest {
     mobileApp?: MobileApp
     /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
     sponsorPortal?: SponsorPortalConfig
+    /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
+    speakerPortal?: SpeakerPortalConfig
 }
 
 /**

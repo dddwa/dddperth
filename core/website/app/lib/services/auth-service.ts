@@ -10,10 +10,11 @@ import type { User } from '../session-types'
  */
 export interface AuthService {
     /**
-     * True when `email` may log in (case-insensitive): either on the admin
-     * allowlist or a contact of an active sponsor. Checked at magic-link
-     * issue time — what the login grants access to is decided per request
-     * by `requireAdmin` / `requireSponsorContact`.
+     * True when `email` may log in (case-insensitive): on the admin
+     * allowlist, a contact of an active sponsor, or a contact of an active
+     * speaker. Checked at magic-link issue time — what the login grants
+     * access to is decided per request by `requireAdmin` /
+     * `requireSponsorContact` / `requireSpeaker`.
      */
     isAllowed(email: string): Promise<boolean>
 

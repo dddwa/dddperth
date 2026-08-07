@@ -15,6 +15,7 @@
 import type { ConferenceManifest } from '@ddd/conference-config'
 import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
+import { speakerPortal } from './config/speaker-portal'
 import { socials } from './config/socials'
 import { sponsorPortal } from './config/sponsor-portal'
 import { conferenceConfig } from './config/years-index'
@@ -47,4 +48,5 @@ export const conferenceManifest: ConferenceManifest = {
         androidBundleId: 'com.dddperth.conference',
     },
     sponsorPortal,
+    speakerPortal,
 }

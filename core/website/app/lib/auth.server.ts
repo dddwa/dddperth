@@ -1,6 +1,7 @@
 import { redirect, type RouterContext } from 'react-router'
 import { getServices } from '~/remix-app-load-context'
 import type { AppServices } from './services/app-services'
+import type { SpeakerRecord } from './services/speakers-store'
 import type { SponsorRecord } from './services/sponsors-store'
 import type { User } from './session-types'
 
@@ -53,23 +54,40 @@ export async function isAdminUser(user: User | null, services: AppServices): Pro
 }
 
 /**
+ * Where a logged-in user belongs when they've hit the wrong area — checked
+ * in priority order (admin, then sponsor, then speaker). Shared by every
+ * `require*` gate below so a speaker who ends up at /admin or /portal lands
+ * on /speaker-portal instead of a confusing 404, and vice versa. Returns
+ * null only for the (normally unreachable, since `isAllowed` gates login)
+ * case where the session belongs to none of the three roles.
+ */
+async function findHomeArea(email: string, services: AppServices): Promise<'/admin' | '/portal' | '/speaker-portal' | null> {
+    if (await services.auth.isAdminEmail(email)) return '/admin'
+    if (await services.sponsors.isSponsorContact(email)) return '/portal'
+    if (await services.speakers.isSpeakerContact(email)) return '/speaker-portal'
+    return null
+}
+
+/**
  * Gate for /admin/*: logged in AND on the admin allowlist. Logged-in
- * non-admins (sponsor contacts) are sent to their portal instead.
+ * non-admins (sponsor/speaker contacts) are sent to their own portal instead.
  */
 export async function requireAdmin(
     request: Request,
     context: { get<T>(context: RouterContext<T>): T },
 ): Promise<User> {
     const user = await requireUser(request, context)
-    if (await getServices(context).auth.isAdminEmail(user.email)) return user
-    throw redirect('/portal')
+    const services = getServices(context)
+    if (await services.auth.isAdminEmail(user.email)) return user
+    throw redirect((await findHomeArea(user.email, services)) ?? '/portal')
 }
 
 /**
  * Gate for /portal/*: logged in AND a contact of an active sponsor. The
  * email → sponsor link is re-resolved on every request, so a contact removed
  * in Jira loses access on the next sync even with a live session. Admins
- * without a sponsorship are bounced to /admin; anyone else gets a 404.
+ * without a sponsorship go to /admin; speakers without one go to
+ * /speaker-portal; anyone else gets a 404.
  */
 export async function requireSponsorContact(
     request: Request,
@@ -81,9 +99,29 @@ export async function requireSponsorContact(
     const sponsor = await services.sponsors.getSponsorForEmail(user.email)
     if (sponsor) return { user, sponsor }
 
-    if (await services.auth.isAdminEmail(user.email)) {
-        throw redirect('/admin')
-    }
+    if (await services.auth.isAdminEmail(user.email)) throw redirect('/admin')
+    if (await services.speakers.isSpeakerContact(user.email)) throw redirect('/speaker-portal')
+    throw new Response('Not Found', { status: 404 })
+}
+
+/**
+ * Gate for /speaker-portal/*: logged in AND a contact of an active speaker.
+ * The email → speaker link is re-resolved on every request, same as
+ * requireSponsorContact. Admins without a speaker record go to /admin;
+ * sponsors without one go to /portal; anyone else gets a 404.
+ */
+export async function requireSpeaker(
+    request: Request,
+    context: { get<T>(context: RouterContext<T>): T },
+): Promise<{ user: User; speaker: SpeakerRecord }> {
+    const user = await requireUser(request, context)
+    const services = getServices(context)
+
+    const speaker = await services.speakers.getSpeakerForEmail(user.email)
+    if (speaker) return { user, speaker }
+
+    if (await services.auth.isAdminEmail(user.email)) throw redirect('/admin')
+    if (await services.sponsors.isSponsorContact(user.email)) throw redirect('/portal')
     throw new Response('Not Found', { status: 404 })
 }
 

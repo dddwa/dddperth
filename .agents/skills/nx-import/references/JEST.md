@@ -12,10 +12,10 @@ Jest-specific guidance for `nx import`. For the basic "Jest Preset Missing" fix 
 
 ```json
 {
-    "plugin": "@nx/jest/plugin",
-    "options": {
-        "targetName": "test"
-    }
+  "plugin": "@nx/jest/plugin",
+  "options": {
+    "targetName": "test"
+  }
 }
 ```
 
@@ -37,18 +37,18 @@ The preset provides shared Jest configuration (test patterns, ts-jest transform,
 **Root `jest.preset.js`:**
 
 ```js
-const nxPreset = require('@nx/jest/preset').default
-module.exports = { ...nxPreset }
+const nxPreset = require('@nx/jest/preset').default;
+module.exports = { ...nxPreset };
 ```
 
 **Project `jest.config.ts`:**
 
 ```ts
 export default {
-    displayName: 'my-lib',
-    preset: '../../jest.preset.js',
-    // project-specific overrides
-}
+  displayName: 'my-lib',
+  preset: '../../jest.preset.js',
+  // project-specific overrides
+};
 ```
 
 The `preset` path is relative from the project root to the workspace root. Subdirectory imports preserve the original relative path (e.g. `../../jest.preset.js`), which resolves correctly if the import destination matches the source directory depth.
@@ -100,13 +100,18 @@ Jest projects need a `tsconfig.spec.json` that includes test files:
 
 ```json
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "outDir": "../../dist/out-tsc",
-        "module": "commonjs",
-        "types": ["jest", "node"]
-    },
-    "include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "module": "commonjs",
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "jest.config.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.d.ts"
+  ]
 }
 ```
 
@@ -131,8 +136,8 @@ Both `@nx/jest/plugin` and `@nx/vite/plugin` (which infers Vitest targets) coexi
 
 ```json
 {
-    "plugin": "@nx/jest/plugin",
-    "options": { "targetName": "jest-test" }
+  "plugin": "@nx/jest/plugin",
+  "options": { "targetName": "jest-test" }
 }
 ```
 
@@ -145,13 +150,13 @@ Projects migrating from Jest to Vitest (or workspaces with both) need different 
 **Jest** (in `test-setup.ts`):
 
 ```ts
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 ```
 
 **Vitest** (in `test-setup.ts`):
 
 ```ts
-import '@testing-library/jest-dom/vitest'
+import '@testing-library/jest-dom/vitest';
 ```
 
 If the source used Jest but the dest workspace uses Vitest for that project type, update the import path. Also add `@testing-library/jest-dom` to tsconfig `types` array.
@@ -175,11 +180,11 @@ Nx rewrites `package.json` scripts during init. Test scripts get broken:
 
 ```json
 {
-    "plugin": "@nx/jest/plugin",
-    "options": {
-        "targetName": "test",
-        "ciTargetName": "test-ci"
-    }
+  "plugin": "@nx/jest/plugin",
+  "options": {
+    "targetName": "test",
+    "ciTargetName": "test-ci"
+  }
 }
 ```
 

@@ -33,6 +33,8 @@ export type {
     NavConfig,
     NavItem,
     Socials,
+    SpeakerPortalConfig,
+    SpeakerPortalJiraConfig,
     SponsorPortalConfig,
     SponsorPortalJiraConfig,
     ThemeRefs,

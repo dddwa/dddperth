@@ -36,6 +36,9 @@ export default function AdminLayout() {
                             <AppNavLink to="/admin/sponsors" variant="admin">
                                 Sponsors
                             </AppNavLink>
+                            <AppNavLink to="/admin/speakers" variant="admin">
+                                Speakers
+                            </AppNavLink>
                             <AppNavLink to="/admin/settings" variant="admin">
                                 Settings
                             </AppNavLink>

@@ -30,6 +30,14 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
+    "/admin/speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers._index.js').SearchParams>,
+    },
+    "/admin/speakers/:sessionizeId": {
+      params: {'sessionizeId': string | number},
+      query: ExportedQuery<import('app/routes/admin.speakers.$sessionizeId.js').SearchParams>,
+    },
     "/admin/sponsors": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
@@ -146,6 +154,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml].js').SearchParams>,
     },
+    "/speaker-portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/speaker-portal._index.js').SearchParams>,
+    },
     "/sponsors/:year?": {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.sponsors.($year).js').SearchParams>,
@@ -174,6 +186,8 @@ declare module "safe-routes" {
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
+            | 'routes/speaker-portal'
+            | 'routes/speaker-portal._index'
             | 'routes/app-content.$'
             | 'routes/sitemap[.xml]'
             | 'routes/[robots.txt]'
@@ -201,6 +215,9 @@ declare module "safe-routes" {
             | 'routes/admin.voting-validation.stats.$runId.download'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
+            | 'routes/admin.speakers'
+            | 'routes/admin.speakers.$sessionizeId'
+            | 'routes/admin.speakers._index'
             | 'routes/admin.sponsors'
             | 'routes/admin.content'
             | 'routes/admin._index'
