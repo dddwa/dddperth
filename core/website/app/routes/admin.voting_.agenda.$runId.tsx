@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useEffect, useMemo, useState } from 'react'
-import { useLoaderData } from 'react-router'
+import { useFetcher, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
@@ -10,6 +10,7 @@ import * as Modal from '~/components/ui/drawer'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
+import type { AgendaDecision } from '~/lib/voting-validation-types'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { ColorToken } from '~/styled-system/tokens'
@@ -232,7 +233,41 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             .sort((a, b) => a.rank - b.rank)
     }
 
-    return { runId, runDetails, agendaTalks }
+    const savedDecisions = await voting.getAgendaDecisions(runId)
+
+    return { runId, runDetails, agendaTalks, savedDecisions }
+}
+
+export async function action({ request, params, context }: Route.ActionArgs) {
+    const user = await requireAdmin(request, context)
+
+    const { runId } = params
+    const formData = await request.formData()
+    const intent = formData.get('intent')
+
+    if (intent !== 'save_agenda') {
+        throw new Response('Invalid intent', { status: 400 })
+    }
+
+    const raw = formData.get('decisions')
+    if (typeof raw !== 'string') {
+        return { success: false as const, error: 'No decisions provided' }
+    }
+
+    let decisions: AgendaDecision[]
+    try {
+        decisions = JSON.parse(raw)
+    } catch {
+        return { success: false as const, error: 'Invalid decisions payload' }
+    }
+
+    try {
+        await getServices(context).voting.saveAgendaDecisions(runId, decisions)
+        return { success: true as const, savedAt: new Date().toISOString(), savedBy: user.email }
+    } catch (error) {
+        console.error('Error saving agenda decisions:', error)
+        return { success: false as const, error: 'Failed to save agenda decisions' }
+    }
 }
 
 function formatSpeakerValues(speakers: AgendaSpeaker[], get: (speaker: AgendaSpeaker) => string | undefined) {
@@ -657,13 +692,37 @@ function ColumnBodyCell({ column, collapsed, talk }: { column: ColumnDef; collap
 }
 
 export default function VotingAgenda() {
-    const { runId, runDetails, agendaTalks } = useLoaderData<typeof loader>()
+    const { runId, runDetails, agendaTalks, savedDecisions } = useLoaderData<typeof loader>()
+    const saveFetcher = useFetcher<typeof action>()
 
     const statusStorageKey = `voting-agenda-status:${runId}`
     const overridesStorageKey = `voting-agenda-overrides:${runId}`
     const [statusByTalkId, setStatusByTalkId] = useState<Record<string, TalkStatus>>({})
     const [overridesByTalkId, setOverridesByTalkId] = useState<Record<string, TalkOverrides>>({})
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedTalkId, setSelectedTalkId] = useState<string | null>(null)
+
+    // What the database already has, keyed by talk — used to seed a fresh
+    // browser's localStorage so a reviewer on a new device sees the last save.
+    const savedStatusByTalkId = useMemo(() => {
+        const map: Record<string, TalkStatus> = {}
+        for (const decision of savedDecisions) {
+            if (decision.status) map[decision.talkId] = decision.status
+        }
+        return map
+    }, [savedDecisions])
+
+    const savedOverridesByTalkId = useMemo(() => {
+        const map: Record<string, TalkOverrides> = {}
+        for (const decision of savedDecisions) {
+            const override: TalkOverrides = {}
+            if (decision.umOverride !== null) override.um = decision.umOverride
+            if (decision.expOverride !== null) override.exp = decision.expOverride
+            if (decision.topicOverride !== null) override.topic = decision.topicOverride
+            if (Object.keys(override).length > 0) map[decision.talkId] = override
+        }
+        return map
+    }, [savedDecisions])
 
     const [lengthFilter, setLengthFilter] = useState('')
     const [tagFilter, setTagFilter] = useState('')
@@ -689,18 +748,16 @@ export default function VotingAgenda() {
     useEffect(() => {
         try {
             const raw = localStorage.getItem(statusStorageKey)
-            if (raw) {
-                setStatusByTalkId(JSON.parse(raw))
-            }
+            // No local edits yet on this browser — start from what's saved in
+            // the database rather than a blank slate.
+            setStatusByTalkId(raw ? JSON.parse(raw) : savedStatusByTalkId)
         } catch (error) {
             console.error('Failed to load saved talk statuses:', error)
         }
 
         try {
             const raw = localStorage.getItem(overridesStorageKey)
-            if (raw) {
-                setOverridesByTalkId(JSON.parse(raw))
-            }
+            setOverridesByTalkId(raw ? JSON.parse(raw) : savedOverridesByTalkId)
         } catch (error) {
             console.error('Failed to load saved talk overrides:', error)
         }
@@ -716,6 +773,7 @@ export default function VotingAgenda() {
             }
             return next
         })
+        setIsDirty(true)
     }
 
     function updateOverride<K extends keyof TalkOverrides>(talkId: string, key: K, value: TalkOverrides[K]) {
@@ -728,6 +786,7 @@ export default function VotingAgenda() {
             }
             return next
         })
+        setIsDirty(true)
     }
 
     // A manual override always wins; otherwise a talk Sessionize marked
@@ -989,6 +1048,30 @@ export default function VotingAgenda() {
         }
         return ids
     }, [agendaTalks, speakerIdsWithLockedTalk, statusByTalkId])
+
+    // Reset the dirty flag once a save actually lands — a fresh success
+    // response means the payload we just sent now matches the database.
+    useEffect(() => {
+        if (saveFetcher.state === 'idle' && saveFetcher.data?.success) {
+            setIsDirty(false)
+        }
+    }, [saveFetcher.state, saveFetcher.data])
+
+    function saveAgenda() {
+        const talkIds = new Set([...Object.keys(statusByTalkId), ...Object.keys(overridesByTalkId)])
+        const decisions: AgendaDecision[] = Array.from(talkIds).map((talkId) => {
+            const override = overridesByTalkId[talkId]
+            return {
+                talkId,
+                status: statusByTalkId[talkId] ?? '',
+                umOverride: override?.um ?? null,
+                expOverride: override?.exp ?? null,
+                topicOverride: override?.topic ?? null,
+            }
+        })
+
+        void saveFetcher.submit({ intent: 'save_agenda', decisions: JSON.stringify(decisions) }, { method: 'post' })
+    }
 
     const selectedTalk = selectedTalkId ? agendaTalks.find((t) => t.talkId === selectedTalkId) : undefined
 
@@ -1379,7 +1462,27 @@ export default function VotingAgenda() {
                         Ranked Talks
                     </styled.h2>
                     {agendaTalks.length > 0 && (
-                        <Flex gap="3">
+                        <Flex gap="3" alignItems="center">
+                            <styled.span fontSize="xs" color={isDirty ? 'status.warning.fg' : 'admin.500'}>
+                                {saveFetcher.state !== 'idle'
+                                    ? 'Saving…'
+                                    : saveFetcher.data?.success === false
+                                      ? saveFetcher.data.error
+                                      : isDirty
+                                        ? 'Unsaved changes'
+                                        : savedDecisions.length > 0
+                                          ? 'All changes saved'
+                                          : ''}
+                            </styled.span>
+                            <Button
+                                type="button"
+                                variant="solid"
+                                size="sm"
+                                disabled={!isDirty || saveFetcher.state !== 'idle'}
+                                onClick={saveAgenda}
+                            >
+                                {saveFetcher.state !== 'idle' ? 'Saving…' : 'Save Agenda'}
+                            </Button>
                             {hasActiveFilters && (
                                 <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
                                     Clear filters

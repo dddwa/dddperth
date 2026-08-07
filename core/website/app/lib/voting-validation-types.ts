@@ -246,3 +246,13 @@ export interface UnderrepresentedGroupsConfig {
     lastUpdatedAt: string
     lastUpdatedYear: string // Track which year made the last update
 }
+
+// Agenda planning decision for a single talk within a validation run — the
+// durable copy of what the "Save Agenda" button persists from localStorage.
+export interface AgendaDecision {
+    talkId: string
+    status: 'locked' | 'tentative' | 'waitlist' | 'declined' | ''
+    umOverride: boolean | null
+    expOverride: boolean | null
+    topicOverride: string | null
+}

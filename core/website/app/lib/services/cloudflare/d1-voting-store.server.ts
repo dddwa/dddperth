@@ -13,6 +13,7 @@ import {
     canStartValidation as d1CanStartValidation,
     calculateAndSaveFairnessMetrics,
     createValidationRunIndex,
+    getAgendaDecisions as d1GetAgendaDecisions,
     getFairnessMetrics as d1GetFairnessMetrics,
     getTalkResults as d1GetTalkResults,
     getTalkStatistics as d1GetTalkStatistics,
@@ -23,6 +24,7 @@ import {
     markValidationCompleted as d1MarkValidationCompleted,
     markValidationStarted as d1MarkValidationStarted,
     processVotingSession,
+    saveAgendaDecisions as d1SaveAgendaDecisions,
     saveTalkResults as d1SaveTalkResults,
     saveTalkStatistics,
     saveUnderrepresentedGroupsConfig as d1SaveUnderrepresentedGroupsConfig,
@@ -146,6 +148,14 @@ export function createD1VotingStore(db: D1Database): VotingStore {
 
         async saveUnderrepresentedGroupsConfig(year, selectedGroups) {
             await d1SaveUnderrepresentedGroupsConfig(db, year, selectedGroups)
+        },
+
+        async getAgendaDecisions(runId) {
+            return d1GetAgendaDecisions(db, runId)
+        },
+
+        async saveAgendaDecisions(runId, decisions) {
+            await d1SaveAgendaDecisions(db, runId, decisions)
         },
     }
 }

@@ -1,4 +1,5 @@
 import type {
+    AgendaDecision,
     EloResultImport,
     FairnessMetrics,
     TalkResult,
@@ -56,4 +57,8 @@ export interface VotingStore {
     // ---------- Underrepresented groups config ----------
     getUnderrepresentedGroupsConfig(): Promise<string[]>
     saveUnderrepresentedGroupsConfig(year: string, selectedGroups: string[]): Promise<void>
+
+    // ---------- Agenda planning decisions ----------
+    getAgendaDecisions(runId: string): Promise<AgendaDecision[]>
+    saveAgendaDecisions(runId: string, decisions: AgendaDecision[]): Promise<void>
 }

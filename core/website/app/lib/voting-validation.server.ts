@@ -3,6 +3,7 @@ import { recordException } from './record-exception'
 import { batchReconstructVoteContexts, removeVotesOnDuplicatedTalksInRound } from './voting-reconstruction.server'
 import { CURRENT_SESSION_VERSION } from './voting-version-constants'
 import type {
+    AgendaDecision,
     EloResultImport,
     FairnessMetrics,
     TalkResult,
@@ -902,6 +903,81 @@ export async function saveUnderrepresentedGroupsConfig(
             )
             .bind(JSON.stringify(selectedGroups.sort()), now, year)
             .run()
+    } catch (error: any) {
+        recordException(error)
+        throw error
+    }
+}
+
+// ============================================================================
+// AGENDA PLANNING DECISIONS
+// ============================================================================
+
+export async function getAgendaDecisions(db: D1Database, runId: string): Promise<AgendaDecision[]> {
+    try {
+        const result = await db
+            .prepare(
+                `SELECT talk_id, status, um_override, exp_override, topic_override
+                 FROM agenda_decisions WHERE run_id = ?`,
+            )
+            .bind(runId)
+            .all<{
+                talk_id: string
+                status: AgendaDecision['status']
+                um_override: number | null
+                exp_override: number | null
+                topic_override: string | null
+            }>()
+
+        return result.results.map((row) => ({
+            talkId: row.talk_id,
+            status: row.status,
+            umOverride: row.um_override === null ? null : Boolean(row.um_override),
+            expOverride: row.exp_override === null ? null : Boolean(row.exp_override),
+            topicOverride: row.topic_override,
+        }))
+    } catch (error: any) {
+        recordException(error)
+        throw error
+    }
+}
+
+export async function saveAgendaDecisions(
+    db: D1Database,
+    runId: string,
+    decisions: AgendaDecision[],
+): Promise<void> {
+    try {
+        const now = new Date().toISOString()
+
+        // Batch in groups of 20 — same ceiling used elsewhere for D1 batch writes.
+        const batchSize = 20
+        for (let i = 0; i < decisions.length; i += batchSize) {
+            const batch = decisions.slice(i, i + batchSize)
+            const statements = batch.map((decision) =>
+                db
+                    .prepare(
+                        `INSERT INTO agenda_decisions (run_id, talk_id, status, um_override, exp_override, topic_override, updated_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)
+                         ON CONFLICT(run_id, talk_id) DO UPDATE SET
+                             status = excluded.status,
+                             um_override = excluded.um_override,
+                             exp_override = excluded.exp_override,
+                             topic_override = excluded.topic_override,
+                             updated_at = excluded.updated_at`,
+                    )
+                    .bind(
+                        runId,
+                        decision.talkId,
+                        decision.status,
+                        decision.umOverride === null ? null : decision.umOverride ? 1 : 0,
+                        decision.expOverride === null ? null : decision.expOverride ? 1 : 0,
+                        decision.topicOverride,
+                        now,
+                    ),
+            )
+            await db.batch(statements)
+        }
     } catch (error: any) {
         recordException(error)
         throw error
