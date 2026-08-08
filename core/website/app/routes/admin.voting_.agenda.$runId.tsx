@@ -1170,9 +1170,10 @@ export default function VotingAgenda() {
                     title: talk.title,
                     length: talk.length,
                     speakers: talk.speakers.map((s) => s.name).join(', ') || 'Unknown Speaker',
+                    topic: getEffectiveTopic(talk),
                     status: getEffectiveStatus(talk),
                 })),
-        [agendaTalks, statusByTalkId],
+        [agendaTalks, statusByTalkId, overridesByTalkId],
     )
 
     const columns: ColumnDef[] = [
