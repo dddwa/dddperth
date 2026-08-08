@@ -11,6 +11,7 @@ import {
     renameTrack as d1RenameTrack,
     saveTalkPlanningField as d1SaveTalkPlanningField,
     setCapacity as d1SetCapacity,
+    updateSlotLabel as d1UpdateSlotLabel,
     updateSlotLength as d1UpdateSlotLength,
 } from '../../agenda-planning.server'
 import type { AgendaPlanningStore } from '../agenda-planning-store'
@@ -47,6 +48,10 @@ export function createD1AgendaPlanningStore(db: D1Database): AgendaPlanningStore
 
         async updateSlotLength(args) {
             await d1UpdateSlotLength(db, args)
+        },
+
+        async updateSlotLabel(args) {
+            await d1UpdateSlotLabel(db, args)
         },
 
         async removeSlot(args) {

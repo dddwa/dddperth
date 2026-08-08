@@ -56,7 +56,9 @@ describe('parseImportPayload', () => {
             }),
         )
         expect(result?.board?.tracks).toHaveLength(1)
-        expect(result?.board?.tracks[0].slots).toEqual([{ slotId: 's1', length: '45 minutes', talkId: 'X' }])
+        expect(result?.board?.tracks[0].slots).toEqual([
+            { slotId: 's1', length: '45 minutes', talkId: 'X', kind: 'talk', label: null },
+        ])
         expect(result?.board?.capacity).toEqual({ '45 minutes': 3 })
     })
 
@@ -65,6 +67,46 @@ describe('parseImportPayload', () => {
             JSON.stringify({
                 board: {
                     tracks: [{ trackId: 't', name: 'n', slots: [{ slotId: 's', length: 'l', talkId: { evil: 1 } }] }],
+                },
+            }),
+        )
+        expect(result?.board?.tracks[0].slots[0].talkId).toBeNull()
+    })
+
+    it('preserves break slots and their labels', () => {
+        const result = parseImportPayload(
+            JSON.stringify({
+                board: {
+                    tracks: [
+                        {
+                            trackId: 't',
+                            name: 'n',
+                            slots: [{ slotId: 'b1', length: '45 minutes', kind: 'break', label: 'Lunch' }],
+                        },
+                    ],
+                },
+            }),
+        )
+        expect(result?.board?.tracks[0].slots[0]).toEqual({
+            slotId: 'b1',
+            length: '45 minutes',
+            talkId: null,
+            kind: 'break',
+            label: 'Lunch',
+        })
+    })
+
+    it('never lets a break hold a talk, even if the payload says it does', () => {
+        const result = parseImportPayload(
+            JSON.stringify({
+                board: {
+                    tracks: [
+                        {
+                            trackId: 't',
+                            name: 'n',
+                            slots: [{ slotId: 'b1', length: 'l', kind: 'break', label: 'Lunch', talkId: 'X' }],
+                        },
+                    ],
                 },
             }),
         )

@@ -24,10 +24,19 @@ export interface TalkPlanning {
     updatedByEmail?: string | null
 }
 
+/**
+ * A slot is either a placeholder a talk can be dropped into, or a labelled
+ * break (Morning Tea, Lunch) that marks the shape of the day.
+ */
+export type SlotKind = 'talk' | 'break'
+
 export interface PlannerSlot {
     slotId: string
     length: string
     talkId: string | null
+    kind: SlotKind
+    /** Break label ("Lunch"); null on talk slots. */
+    label: string | null
 }
 
 export interface PlannerTrack {

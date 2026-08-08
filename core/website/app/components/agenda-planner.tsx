@@ -40,8 +40,9 @@ export type PlannerChange =
     | { intent: 'add_track'; trackId: string; name: string }
     | { intent: 'rename_track'; trackId: string; name: string }
     | { intent: 'remove_track'; trackId: string }
-    | { intent: 'add_slot'; trackId: string; slotId: string; length: string }
+    | { intent: 'add_slot'; trackId: string; slotId: string; length: string; kind?: string; label?: string }
     | { intent: 'update_slot_length'; slotId: string; length: string }
+    | { intent: 'update_slot_label'; slotId: string; label: string }
     | { intent: 'remove_slot'; slotId: string }
     | { intent: 'assign_talk'; slotId: string; talkId: string }
     | { intent: 'set_capacity'; length: string; capacity: string }
@@ -290,6 +291,9 @@ export function AgendaPlanner({
         const filled = new Map<string, number>()
         for (const track of state.tracks) {
             for (const slot of track.slots) {
+                // Breaks aren't talk capacity — counting them would make the
+                // board look over its target for that length.
+                if (slot.kind === 'break') continue
                 created.set(slot.length, (created.get(slot.length) ?? 0) + 1)
                 if (slot.talkId) {
                     filled.set(slot.length, (filled.get(slot.length) ?? 0) + 1)
@@ -325,8 +329,24 @@ export function AgendaPlanner({
         onChange({ intent: 'add_slot', trackId, slotId: createId('slot'), length: lengthOptions[0] })
     }
 
+    function addBreak(trackId: string) {
+        onChange({
+            intent: 'add_slot',
+            trackId,
+            slotId: createId('slot'),
+            length: lengthOptions[0],
+            kind: 'break',
+            label: 'Break',
+        })
+    }
+
     function updateSlotLength(slotId: string, length: string) {
         onChange({ intent: 'update_slot_length', slotId, length })
+    }
+
+    function renameBreak(slotId: string, label: string) {
+        setDraftNames((current) => ({ ...current, [slotId]: label }))
+        debouncedChange(`slot:${slotId}`, { intent: 'update_slot_label', slotId, label })
     }
 
     function removeSlot(slotId: string) {
@@ -508,6 +528,59 @@ export function AgendaPlanner({
                         {state.tracks.map((track, trackIndex) => (
                             <Fragment key={`slots-${track.trackId}`}>
                                 {track.slots.map((slot, slotIndex) => {
+                                        // A break is a labelled divider, not a home for a talk —
+                                        // it renders as a solid bar so the shape of the day (what
+                                        // sits before and after lunch) reads at a glance.
+                                        if (slot.kind === 'break') {
+                                            return (
+                                                <Flex
+                                                    key={slot.slotId}
+                                                    style={{
+                                                        gridColumn: trackIndex + 1,
+                                                        gridRow: slotIndex + 2,
+                                                    }}
+                                                    mx="3"
+                                                    zIndex="[1]"
+                                                    alignItems="center"
+                                                    gap="1"
+                                                    bg="admin.700"
+                                                    borderRadius="md"
+                                                    px="2"
+                                                    py="1"
+                                                >
+                                                    <styled.input
+                                                        value={draftNames[slot.slotId] ?? slot.label ?? 'Break'}
+                                                        onChange={(e) => renameBreak(slot.slotId, e.target.value)}
+                                                        aria-label="Break name"
+                                                        bg="transparent"
+                                                        border="none"
+                                                        color="white"
+                                                        fontWeight="semibold"
+                                                        fontSize="xs"
+                                                        textAlign="center"
+                                                        width="full"
+                                                        px="1"
+                                                        borderRadius="sm"
+                                                        _hover={{ bg: 'admin.600' }}
+                                                        _focus={{ bg: 'admin.600' }}
+                                                    />
+                                                    <styled.button
+                                                        type="button"
+                                                        onClick={() => removeSlot(slot.slotId)}
+                                                        title={`Remove ${slot.label ?? 'break'}`}
+                                                        aria-label={`Remove ${slot.label ?? 'break'}`}
+                                                        cursor="pointer"
+                                                        color="admin.200"
+                                                        fontSize="xs"
+                                                        px="1"
+                                                        _hover={{ color: 'white' }}
+                                                    >
+                                                        ×
+                                                    </styled.button>
+                                                </Flex>
+                                            )
+                                        }
+
                                         const talk = slot.talkId ? talksById.get(slot.talkId) : undefined
                                         // Flag a talk whose Sessionize length doesn't match the
                                         // slot it's been dropped into.
@@ -674,26 +747,46 @@ export function AgendaPlanner({
                                     })}
 
                                 {/* Pinned to the last grid row so every track's
-                                    button lines up, however few slots it has. */}
-                                <styled.button
-                                    type="button"
-                                    onClick={() => addSlot(track.trackId)}
+                                    buttons line up, however few slots it has. */}
+                                <Flex
                                     style={{ gridColumn: trackIndex + 1, gridRow: -2 }}
                                     alignSelf="end"
+                                    gap="1"
                                     mx="3"
                                     mb="3"
                                     mt="2"
                                     zIndex="[1]"
-                                    py="1"
-                                    fontSize="xs"
-                                    color="admin.600"
-                                    bg="white"
-                                    borderRadius="md"
-                                    cursor="pointer"
-                                    _hover={{ bg: 'admin.100' }}
                                 >
-                                    + Add slot
-                                </styled.button>
+                                    <styled.button
+                                        type="button"
+                                        onClick={() => addSlot(track.trackId)}
+                                        flex="1"
+                                        py="1"
+                                        fontSize="xs"
+                                        color="admin.600"
+                                        bg="white"
+                                        borderRadius="md"
+                                        cursor="pointer"
+                                        _hover={{ bg: 'admin.100' }}
+                                    >
+                                        + Slot
+                                    </styled.button>
+                                    <styled.button
+                                        type="button"
+                                        onClick={() => addBreak(track.trackId)}
+                                        title="Add a break (Morning Tea, Lunch)"
+                                        flex="1"
+                                        py="1"
+                                        fontSize="xs"
+                                        color="admin.600"
+                                        bg="white"
+                                        borderRadius="md"
+                                        cursor="pointer"
+                                        _hover={{ bg: 'admin.100' }}
+                                    >
+                                        + Break
+                                    </styled.button>
+                                </Flex>
                             </Fragment>
                         ))}
                     </styled.div>

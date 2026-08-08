@@ -29,7 +29,7 @@ function talk(overrides: Partial<PlannerTalk> = {}): PlannerTalk {
 }
 
 const BOARD_WITH_EMPTY_SLOT: PlannerBoard = {
-    tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: null }] }],
+    tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: null, kind: 'talk' as const, label: null }] }],
     capacity: {},
 }
 
@@ -103,7 +103,7 @@ describe('talk signal chips', () => {
     it('omits the length chip on placed cards, where the slot already names it', () => {
         const board: PlannerBoard = {
             tracks: [
-                { trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] },
+                { trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk' as const, label: null }] },
             ],
             capacity: {},
         }
@@ -114,7 +114,7 @@ describe('talk signal chips', () => {
     it('renders chips on a placed talk too, not just unplaced ones', () => {
         const board: PlannerBoard = {
             tracks: [
-                { trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] },
+                { trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk' as const, label: null }] },
             ],
             capacity: {},
         }
@@ -151,6 +151,57 @@ describe('tentative talks in the unplaced list', () => {
     })
 })
 
+describe('breaks', () => {
+    const BOARD_WITH_BREAK: PlannerBoard = {
+        tracks: [
+            {
+                trackId: 'tr1',
+                name: 'Track 1',
+                slots: [
+                    { slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk', label: null },
+                    { slotId: 'b1', length: '45 minutes', talkId: null, kind: 'break', label: 'Lunch' },
+                    { slotId: 's2', length: '45 minutes', talkId: null, kind: 'talk', label: null },
+                ],
+            },
+        ],
+        capacity: { '45 minutes': 4 },
+    }
+
+    it('renders a break as a named divider rather than a talk slot', () => {
+        renderPlanner([talk()], BOARD_WITH_BREAK)
+        expect(screen.getByLabelText<HTMLInputElement>('Break name').value).toBe('Lunch')
+    })
+
+    it('gives a break no talk dropdown, so nothing can be scheduled into it', () => {
+        // t1 fills slot s1, leaving exactly one empty talk slot (s2). If the
+        // break rendered a dropdown too there would be two.
+        renderPlanner([talk({ talkId: 't1' })], BOARD_WITH_BREAK)
+        expect(screen.getAllByLabelText('Assign talk to slot')).toHaveLength(1)
+        // And no length selector on the break either.
+        expect(screen.getAllByLabelText('Slot length')).toHaveLength(2)
+    })
+
+    it('keeps talks before and after a break in their own rows', () => {
+        renderPlanner([talk()], BOARD_WITH_BREAK)
+        const breakRow = screen.getByLabelText('Break name').closest<HTMLElement>('[style*="grid-row"]')
+        const afterBreak = screen.getByLabelText('Assign talk to slot').closest<HTMLElement>('[style*="grid-row"]')
+        // Header is row 1, so: talk row 2, break row 3, talk row 4.
+        expect(breakRow?.style.gridRow).toBe('3')
+        expect(afterBreak?.style.gridRow).toBe('4')
+    })
+
+    it('excludes breaks from the slot capacity count', () => {
+        renderPlanner([talk()], BOARD_WITH_BREAK)
+        // Two talk slots exist plus one break; the break must not be counted.
+        expect(screen.getByText(/2 created/)).toBeTruthy()
+    })
+
+    it('offers an add-break control per track', () => {
+        renderPlanner([talk()], BOARD_WITH_BREAK)
+        expect(screen.getByTitle('Add a break (Morning Tea, Lunch)')).toBeTruthy()
+    })
+})
+
 describe('board grid alignment', () => {
     // Two tracks of differing length: slot N of each must share a grid row so
     // the cards line up across columns however tall any one card grows.
@@ -160,14 +211,14 @@ describe('board grid alignment', () => {
                 trackId: 'tr1',
                 name: 'Track 1',
                 slots: [
-                    { slotId: 'a1', length: '45 minutes', talkId: 't1' },
-                    { slotId: 'a2', length: '20 minutes', talkId: null },
+                    { slotId: 'a1', length: '45 minutes', talkId: 't1', kind: 'talk' as const, label: null },
+                    { slotId: 'a2', length: '20 minutes', talkId: null, kind: 'talk' as const, label: null },
                 ],
             },
             {
                 trackId: 'tr2',
                 name: 'Track 2',
-                slots: [{ slotId: 'b1', length: '45 minutes', talkId: 't2' }],
+                slots: [{ slotId: 'b1', length: '45 minutes', talkId: 't2', kind: 'talk' as const, label: null }],
             },
         ],
         capacity: {},
@@ -232,7 +283,7 @@ describe('board grid alignment', () => {
 
 describe('tentative talks placed on the board', () => {
     const boardWithTalk: PlannerBoard = {
-        tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] }],
+        tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk' as const, label: null }] }],
         capacity: {},
     }
 

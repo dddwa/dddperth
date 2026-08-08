@@ -320,10 +320,13 @@ export function parseImportPayload(raw: string): AgendaPlanningImport | null {
                         if (typeof slotValue !== 'object' || slotValue === null) continue
                         const slot = slotValue as Record<string, unknown>
                         if (typeof slot.slotId !== 'string' || typeof slot.length !== 'string') continue
+                        const isBreak = slot.kind === 'break'
                         slots.push({
                             slotId: slot.slotId,
                             length: slot.length,
-                            talkId: typeof slot.talkId === 'string' ? slot.talkId : null,
+                            talkId: isBreak || typeof slot.talkId !== 'string' ? null : slot.talkId,
+                            kind: isBreak ? 'break' : 'talk',
+                            label: isBreak && typeof slot.label === 'string' ? slot.label : null,
                         })
                     }
                 }
@@ -406,11 +409,17 @@ export async function action({ request, params, context }: Route.ActionArgs) {
                     slotId: str('slotId'),
                     length: str('length'),
                     email,
+                    kind: str('kind') === 'break' ? 'break' : 'talk',
+                    label: str('kind') === 'break' ? str('label') || 'Break' : null,
                 })
                 break
 
             case 'update_slot_length':
                 await store.updateSlotLength({ runId, slotId: str('slotId'), length: str('length'), email })
+                break
+
+            case 'update_slot_label':
+                await store.updateSlotLabel({ runId, slotId: str('slotId'), label: str('label'), email })
                 break
 
             case 'remove_slot':

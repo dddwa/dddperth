@@ -1,4 +1,4 @@
-import type { AgendaPlanningImport, AgendaPlanningState } from '../agenda-planning-types'
+import type { AgendaPlanningImport, AgendaPlanningState, SlotKind } from '../agenda-planning-types'
 
 /**
  * Persistence boundary for shared agenda planning — the per-talk decisions
@@ -31,8 +31,13 @@ export interface AgendaPlanningStore {
         slotId: string
         length: string
         email: string | null
+        /** 'break' creates a labelled divider (Morning Tea, Lunch). */
+        kind?: SlotKind
+        label?: string | null
     }): Promise<void>
     updateSlotLength(args: { runId: string; slotId: string; length: string; email: string | null }): Promise<void>
+    /** Rename a break slot. */
+    updateSlotLabel(args: { runId: string; slotId: string; label: string; email: string | null }): Promise<void>
     removeSlot(args: { runId: string; slotId: string }): Promise<void>
     /** Place a talk in a slot (or clear it), vacating whatever slot held it. */
     assignTalkToSlot(args: {
