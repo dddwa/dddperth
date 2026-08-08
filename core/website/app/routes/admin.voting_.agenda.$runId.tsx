@@ -1648,24 +1648,6 @@ export default function VotingAgenda() {
                             options={filterOptions.generalTopics.map((t) => ({ value: t, label: t }))}
                         />
                         <MultiSelectFilter
-                            label="Length"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[130px]"
-                            values={lengthFilter}
-                            onChange={setLengthFilter}
-                            options={filterOptions.lengths.map((l) => ({ value: l, label: l }))}
-                        />
-                        <MultiSelectFilter
-                            label="Level"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[150px]"
-                            values={levelFilter}
-                            onChange={setLevelFilter}
-                            options={filterOptions.levels.map((l) => ({ value: l, label: l }))}
-                        />
-                        <MultiSelectFilter
                             label="Status"
                             showLabel
                             fontSize="sm"
@@ -1677,11 +1659,14 @@ export default function VotingAgenda() {
                                 label: o.label,
                             }))}
                         />
+                        {/* The derived junior/new-speaker flag (including manual
+                            overrides) — the Exp column filters by the specific
+                            disclosed experience level instead. */}
                         <MultiSelectFilter
-                            label="New speaker"
+                            label="New speaker flag"
                             showLabel
                             fontSize="sm"
-                            minWidth="[150px]"
+                            minWidth="[160px]"
                             values={newSpeakerFilter}
                             onChange={setNewSpeakerFilter}
                             options={[
@@ -1689,11 +1674,14 @@ export default function VotingAgenda() {
                                 { value: 'no', label: 'Experienced' },
                             ]}
                         />
+                        {/* Broader than the UM column filter, which matches the
+                            ticked-group checkbox alone — this also counts any
+                            non-He/Him pronoun, matching the UM stat tile. */}
                         <MultiSelectFilter
-                            label="Minorities"
+                            label="Minorities (incl. pronoun)"
                             showLabel
                             fontSize="sm"
-                            minWidth="[170px]"
+                            minWidth="[190px]"
                             values={minorityFilter}
                             onChange={setMinorityFilter}
                             options={[
