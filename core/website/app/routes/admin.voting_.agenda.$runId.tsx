@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { useEffect, useMemo, useState } from 'react'
-import { useLoaderData } from 'react-router'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useFetcher, useLoaderData, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AgendaPlanner, type PlannerTalk } from '~/components/agenda-planner'
 import { AdminLayout } from '~/components/admin-layout'
@@ -9,6 +9,8 @@ import { AppLink } from '~/components/app-link'
 import { MultiSelectFilter, type MultiSelectOption } from '~/components/multi-select-filter'
 import { Button } from '~/components/ui/button'
 import * as Modal from '~/components/ui/drawer'
+import { isPlanningStateEmpty } from '~/lib/agenda-planning.server'
+import type { AgendaPlanningImport, PlannerBoard, TalkStatus } from '~/lib/agenda-planning-types'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
@@ -43,8 +45,6 @@ const DECLINED_SESSIONIZE_STATUSES = new Set(['declined', 'rejected', 'withdrawn
 // can never collide with a real Sessionize answer.
 const NEW_SPEAKER_FLAG_FILTER = '__new_speaker_flag__'
 const ANY_MINORITY_FILTER = 'minority'
-
-type TalkStatus = 'locked' | 'tentative' | 'declined' | 'waitlist' | ''
 
 const STATUS_OPTIONS: { value: TalkStatus; label: string }[] = [
     { value: '', label: '—' },
@@ -258,7 +258,218 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             .sort((a, b) => a.rank - b.rank)
     }
 
-    return { runId, runDetails, agendaTalks }
+    const agendaPlanning = getServices(context).agendaPlanning
+    const planning = await agendaPlanning.getPlanningState(runId)
+    // Same predicate the import action guards with, so the button's
+    // visibility and the server-side check can't drift apart.
+    const planningIsEmpty = isPlanningStateEmpty(planning)
+
+    return { runId, runDetails, agendaTalks, planning, planningIsEmpty }
+}
+
+/**
+ * Coerce a localStorage payload into the shape `importPlanning` binds into
+ * SQL. The JSON comes from a browser this code wrote to months ago, so treat
+ * it as untrusted: anything the wrong shape is dropped rather than bound as
+ * an object. Returns null when the payload isn't usable at all.
+ */
+export function parseImportPayload(raw: string): AgendaPlanningImport | null {
+    let parsed: unknown
+    try {
+        parsed = JSON.parse(raw)
+    } catch {
+        return null
+    }
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const source = parsed as Record<string, unknown>
+
+    const statusByTalkId: Record<string, TalkStatus> = {}
+    if (typeof source.statusByTalkId === 'object' && source.statusByTalkId !== null) {
+        for (const [talkId, value] of Object.entries(source.statusByTalkId as Record<string, unknown>)) {
+            if (STATUS_OPTIONS.some((option) => option.value === value)) {
+                statusByTalkId[talkId] = value as TalkStatus
+            }
+        }
+    }
+
+    const overridesByTalkId: Record<string, TalkOverrides> = {}
+    if (typeof source.overridesByTalkId === 'object' && source.overridesByTalkId !== null) {
+        for (const [talkId, value] of Object.entries(source.overridesByTalkId as Record<string, unknown>)) {
+            if (typeof value !== 'object' || value === null) continue
+            const entry = value as Record<string, unknown>
+            const overrides: TalkOverrides = {}
+            if (typeof entry.um === 'boolean') overrides.um = entry.um
+            if (typeof entry.exp === 'boolean') overrides.exp = entry.exp
+            if (typeof entry.topic === 'string') overrides.topic = entry.topic
+            if (Object.keys(overrides).length > 0) overridesByTalkId[talkId] = overrides
+        }
+    }
+
+    const tracks: PlannerBoard['tracks'] = []
+    const capacity: Record<string, number> = {}
+    if (typeof source.board === 'object' && source.board !== null) {
+        const board = source.board as Record<string, unknown>
+        if (Array.isArray(board.tracks)) {
+            for (const value of board.tracks) {
+                if (typeof value !== 'object' || value === null) continue
+                const track = value as Record<string, unknown>
+                if (typeof track.trackId !== 'string' || typeof track.name !== 'string') continue
+                const slots: PlannerBoard['tracks'][number]['slots'] = []
+                if (Array.isArray(track.slots)) {
+                    for (const slotValue of track.slots) {
+                        if (typeof slotValue !== 'object' || slotValue === null) continue
+                        const slot = slotValue as Record<string, unknown>
+                        if (typeof slot.slotId !== 'string' || typeof slot.length !== 'string') continue
+                        slots.push({
+                            slotId: slot.slotId,
+                            length: slot.length,
+                            talkId: typeof slot.talkId === 'string' ? slot.talkId : null,
+                        })
+                    }
+                }
+                tracks.push({ trackId: track.trackId, name: track.name, slots })
+            }
+        }
+        if (typeof board.capacity === 'object' && board.capacity !== null) {
+            for (const [length, value] of Object.entries(board.capacity as Record<string, unknown>)) {
+                if (typeof value === 'number' && Number.isFinite(value)) capacity[length] = Math.trunc(value)
+            }
+        }
+    }
+
+    return { statusByTalkId, overridesByTalkId, board: { tracks, capacity } }
+}
+
+/**
+ * Every planning edit posts here, so decisions are shared across the
+ * organizer team rather than trapped in one browser. Writes are
+ * last-write-wins per row; the page polls for other people's changes.
+ */
+export async function action({ request, params, context }: Route.ActionArgs) {
+    const user = await requireAdmin(request, context)
+    const { runId } = params
+    const store = getServices(context).agendaPlanning
+    const email = user.email
+
+    const formData = await request.formData()
+    // Every field this action reads is a plain text input; a File would
+    // stringify to '[object Object]', so treat it as absent instead.
+    const str = (key: string) => {
+        const value = formData.get(key)
+        return typeof value === 'string' ? value : ''
+    }
+    const intent = str('intent')
+
+    try {
+        switch (intent) {
+            case 'set_status':
+                await store.saveTalkPlanningField({
+                    runId,
+                    talkId: str('talkId'),
+                    field: 'status',
+                    value: str('status'),
+                    email,
+                })
+                break
+
+            case 'set_override': {
+                const field = str('field')
+                if (field !== 'um' && field !== 'exp' && field !== 'topic') {
+                    return { success: false as const, error: `Unknown override field: ${field}` }
+                }
+                await store.saveTalkPlanningField({
+                    runId,
+                    talkId: str('talkId'),
+                    field,
+                    value: field === 'topic' ? str('value') : str('value') === 'true',
+                    email,
+                })
+                break
+            }
+
+            case 'add_track':
+                await store.addTrack({ runId, trackId: str('trackId'), name: str('name'), email })
+                break
+
+            case 'rename_track':
+                await store.renameTrack({ runId, trackId: str('trackId'), name: str('name'), email })
+                break
+
+            case 'remove_track':
+                await store.removeTrack({ runId, trackId: str('trackId') })
+                break
+
+            case 'add_slot':
+                await store.addSlot({
+                    runId,
+                    trackId: str('trackId'),
+                    slotId: str('slotId'),
+                    length: str('length'),
+                    email,
+                })
+                break
+
+            case 'update_slot_length':
+                await store.updateSlotLength({ runId, slotId: str('slotId'), length: str('length'), email })
+                break
+
+            case 'remove_slot':
+                await store.removeSlot({ runId, slotId: str('slotId') })
+                break
+
+            case 'assign_talk':
+                await store.assignTalkToSlot({
+                    runId,
+                    slotId: str('slotId'),
+                    // An empty talkId means "clear this slot".
+                    talkId: str('talkId') || null,
+                    email,
+                })
+                break
+
+            case 'set_capacity':
+                await store.setCapacity({
+                    runId,
+                    length: str('length'),
+                    capacity: Number(str('capacity')) || 0,
+                    email,
+                })
+                break
+
+            case 'clear_board':
+                await store.clearBoard(runId)
+                break
+
+            case 'import_local': {
+                // Guarded server-side too: the button only shows when the run
+                // has no shared data, but a stale page could still post this.
+                const force = str('force') === 'true'
+                if (!force && !(await store.isPlanningEmpty(runId))) {
+                    return {
+                        success: false as const,
+                        error: 'This run already has shared planning data. Reload to see it.',
+                    }
+                }
+                const payload = parseImportPayload(str('payload'))
+                if (!payload) {
+                    return { success: false as const, error: 'Could not read the planning data in this browser.' }
+                }
+                const imported = await store.importPlanning({ runId, payload, email })
+                return {
+                    success: true as const,
+                    message: `Imported ${imported.statuses} statuses, ${imported.overrides} overrides, ${imported.tracks} tracks and ${imported.slots} slots.`,
+                }
+            }
+
+            default:
+                return { success: false as const, error: `Unknown intent: ${intent}` }
+        }
+
+        return { success: true as const }
+    } catch (error: any) {
+        console.error('Agenda planning action failed:', error)
+        return { success: false as const, error: error?.message ?? 'Failed to save' }
+    }
 }
 
 function formatSpeakerValues(speakers: AgendaSpeaker[], get: (speaker: AgendaSpeaker) => string | undefined) {
@@ -740,14 +951,281 @@ function ColumnBodyCell({ column, collapsed, talk }: { column: ColumnDef; collap
     )
 }
 
-export default function VotingAgenda() {
-    const { runId, runDetails, agendaTalks } = useLoaderData<typeof loader>()
+/** How often the page picks up other organizers' changes. */
+const POLL_INTERVAL_MS = 10_000
 
-    const statusStorageKey = `voting-agenda-status:${runId}`
-    const overridesStorageKey = `voting-agenda-overrides:${runId}`
-    const plannerStorageKey = `voting-agenda-planner:${runId}`
-    const [statusByTalkId, setStatusByTalkId] = useState<Record<string, TalkStatus>>({})
-    const [overridesByTalkId, setOverridesByTalkId] = useState<Record<string, TalkOverrides>>({})
+// The three keys this page used to save into before planning moved to D1.
+// Kept so an organizer who did their planning before the change can pull it
+// into the shared board rather than redoing it.
+const LEGACY_STATUS_KEY = (runId: string) => `voting-agenda-status:${runId}`
+const LEGACY_OVERRIDES_KEY = (runId: string) => `voting-agenda-overrides:${runId}`
+const LEGACY_PLANNER_KEY = (runId: string) => `voting-agenda-planner:${runId}`
+
+function readLegacyJson<T>(key: string): T | undefined {
+    try {
+        const raw = localStorage.getItem(key)
+        return raw ? (JSON.parse(raw) as T) : undefined
+    } catch (error) {
+        console.error(`Failed to read ${key}:`, error)
+        return undefined
+    }
+}
+
+/**
+ * Offers a one-click migration of planning left in this browser's
+ * localStorage into the shared tables. Only appears when this browser
+ * actually has something to import; importing over existing shared data
+ * needs an explicit confirmation so a stale tab can't quietly replace the
+ * team's work.
+ */
+function LocalPlanningImport({ runId, planningIsEmpty }: { runId: string; planningIsEmpty: boolean }) {
+    const fetcher = useFetcher<typeof action>()
+    const [local, setLocal] = useState<{ payload: AgendaPlanningImport; summary: string } | null>(null)
+    const [dismissed, setDismissed] = useState(false)
+
+    useEffect(() => {
+        const statusByTalkId = readLegacyJson<Record<string, TalkStatus>>(LEGACY_STATUS_KEY(runId))
+        const overridesByTalkId = readLegacyJson<Record<string, TalkOverrides>>(LEGACY_OVERRIDES_KEY(runId))
+        const board = readLegacyJson<PlannerBoard>(LEGACY_PLANNER_KEY(runId))
+
+        const statuses = Object.keys(statusByTalkId ?? {}).length
+        const overrides = Object.keys(overridesByTalkId ?? {}).length
+        const tracks = board?.tracks?.length ?? 0
+        if (statuses === 0 && overrides === 0 && tracks === 0) {
+            setLocal(null)
+            return
+        }
+
+        const parts = []
+        if (statuses) parts.push(`${statuses} status${statuses === 1 ? '' : 'es'}`)
+        if (overrides) parts.push(`${overrides} override${overrides === 1 ? '' : 's'}`)
+        if (tracks) parts.push(`${tracks} track${tracks === 1 ? '' : 's'}`)
+
+        setLocal({
+            payload: {
+                statusByTalkId,
+                overridesByTalkId,
+                board: board ? { tracks: board.tracks ?? [], capacity: board.capacity ?? {} } : undefined,
+            },
+            summary: parts.join(', '),
+        })
+    }, [runId])
+
+    // Clearing the old keys on success stops the banner coming back and
+    // makes it obvious the browser copy is no longer the source of truth.
+    const imported = fetcher.data && 'success' in fetcher.data && fetcher.data.success
+    useEffect(() => {
+        if (imported) {
+            localStorage.removeItem(LEGACY_STATUS_KEY(runId))
+            localStorage.removeItem(LEGACY_OVERRIDES_KEY(runId))
+            localStorage.removeItem(LEGACY_PLANNER_KEY(runId))
+        }
+    }, [imported, runId])
+
+    if (!local || dismissed) return null
+
+    if (imported) {
+        const message = fetcher.data && 'message' in fetcher.data ? fetcher.data.message : 'Imported.'
+        return (
+            <AdminCard mb="6">
+                <styled.p fontSize="sm" color="status.success.fg">
+                    {message}
+                </styled.p>
+            </AdminCard>
+        )
+    }
+
+    const error = fetcher.data && 'error' in fetcher.data ? fetcher.data.error : null
+    const payload = local.payload
+
+    function runImport() {
+        if (
+            !planningIsEmpty &&
+            !confirm(
+                'This run already has shared planning data that other organizers may have entered. ' +
+                    'Importing will overwrite the board and merge your local statuses over the top. Continue?',
+            )
+        ) {
+            return
+        }
+        void fetcher.submit(
+            {
+                intent: 'import_local',
+                force: String(!planningIsEmpty),
+                payload: JSON.stringify(payload),
+            },
+            { method: 'post' },
+        )
+    }
+
+    return (
+        <AdminCard mb="6">
+            <Flex justifyContent="space-between" alignItems="center" gap="4" flexWrap="wrap">
+                <Box>
+                    <styled.h2 fontSize="md" fontWeight="semibold" mb="1">
+                        Planning found in this browser
+                    </styled.h2>
+                    <styled.p fontSize="sm" color="admin.600">
+                        {local.summary} saved locally before agenda planning became shared.
+                        {planningIsEmpty
+                            ? ' Import it so the rest of the team can see it.'
+                            : ' This run already has shared data — importing will overwrite the board.'}
+                    </styled.p>
+                    {error && (
+                        <styled.p fontSize="sm" color="status.danger.fg" mt="1">
+                            {error}
+                        </styled.p>
+                    )}
+                </Box>
+                <Flex gap="3">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setDismissed(true)}>
+                        Not now
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="solid"
+                        size="sm"
+                        disabled={fetcher.state !== 'idle'}
+                        onClick={runImport}
+                    >
+                        {fetcher.state === 'idle' ? 'Import into shared agenda' : 'Importing…'}
+                    </Button>
+                </Flex>
+            </Flex>
+        </AdminCard>
+    )
+}
+
+export default function VotingAgenda() {
+    const { runId, runDetails, agendaTalks, planning, planningIsEmpty } = useLoaderData<typeof loader>()
+    const revalidator = useRevalidator()
+
+    // Planning decisions now live in D1 so the whole organizer team shares
+    // one view. Server state is the source of truth; `pending` holds edits
+    // that haven't round-tripped yet so the UI stays responsive and a poll
+    // landing mid-edit can't flicker the old value back.
+    const [pendingStatus, setPendingStatus] = useState<Record<string, TalkStatus>>({})
+    const [pendingOverrides, setPendingOverrides] = useState<Record<string, TalkOverrides>>({})
+
+    const statusByTalkId = useMemo(() => {
+        const merged: Record<string, TalkStatus> = {}
+        for (const [talkId, entry] of Object.entries(planning.planningByTalkId)) {
+            if (entry.status !== undefined) merged[talkId] = entry.status
+        }
+        return { ...merged, ...pendingStatus }
+    }, [planning.planningByTalkId, pendingStatus])
+
+    const overridesByTalkId = useMemo(() => {
+        const merged: Record<string, TalkOverrides> = {}
+        for (const [talkId, entry] of Object.entries(planning.planningByTalkId)) {
+            merged[talkId] = { um: entry.um, exp: entry.exp, topic: entry.topic }
+        }
+        for (const [talkId, overrides] of Object.entries(pendingOverrides)) {
+            merged[talkId] = { ...merged[talkId], ...overrides }
+        }
+        return merged
+    }, [planning.planningByTalkId, pendingOverrides])
+
+    // Edits post through a queue rather than a fetcher: a fetcher aborts its
+    // own in-flight request when it submits again, so two edits landing close
+    // together (two debounced track renames, a capacity change during a
+    // rename) would silently drop the first. Chaining keeps every write, and
+    // in submission order — which matters because these are last-write-wins.
+    const queue = useRef<Promise<unknown>>(Promise.resolve())
+    const [inFlight, setInFlight] = useState(0)
+    const [saveError, setSaveError] = useState<string | null>(null)
+
+    const save = useCallback(
+        (fields: Record<string, string>) => {
+            setInFlight((n) => n + 1)
+            queue.current = queue.current
+                .then(async () => {
+                    const response = await fetch(window.location.pathname, {
+                        method: 'POST',
+                        body: new URLSearchParams(fields),
+                    })
+                    if (!response.ok) {
+                        throw new Error(`Save failed (${response.status})`)
+                    }
+                    const result: { success: boolean; error?: string } = await response.json()
+                    if (!result.success) {
+                        throw new Error(result.error ?? 'Save failed')
+                    }
+                    setSaveError(null)
+                })
+                .catch((error: unknown) => {
+                    console.error('Failed to save agenda planning:', error)
+                    setSaveError(error instanceof Error ? error.message : 'Failed to save')
+                })
+                .finally(() => setInFlight((n) => n - 1))
+        },
+        [],
+    )
+
+    const isSaving = inFlight > 0
+
+    // Pull the saved values back once the queue drains, so the optimistic
+    // copies below can be retired against real server state. Guarding on
+    // revalidator.state keeps this from re-entering while a fetch is running.
+    useEffect(() => {
+        if (!isSaving && revalidator.state === 'idle') {
+            void revalidator.revalidate()
+        }
+    }, [isSaving, revalidator])
+
+    // Drop an optimistic value only once the server echoes it back. Clearing
+    // as soon as the request settles would briefly un-apply the edit: the
+    // save resolves before the revalidated loader data lands, so the UI would
+    // flip to the stale server value and back again.
+    useEffect(() => {
+        setPendingStatus((current) => {
+            const next = { ...current }
+            let changed = false
+            for (const [talkId, status] of Object.entries(current)) {
+                if (planning.planningByTalkId[talkId]?.status === status) {
+                    delete next[talkId]
+                    changed = true
+                }
+            }
+            return changed ? next : current
+        })
+        setPendingOverrides((current) => {
+            const next = { ...current }
+            let changed = false
+            for (const [talkId, overrides] of Object.entries(current)) {
+                const saved = planning.planningByTalkId[talkId]
+                if (!saved) continue
+                const remaining = { ...overrides }
+                let touched = false
+                for (const key of ['um', 'exp', 'topic'] as const) {
+                    if (key in remaining && saved[key] === remaining[key]) {
+                        delete remaining[key]
+                        touched = true
+                    }
+                }
+                if (!touched) continue
+                changed = true
+                if (Object.keys(remaining).length === 0) {
+                    delete next[talkId]
+                } else {
+                    next[talkId] = remaining
+                }
+            }
+            return changed ? next : current
+        })
+    }, [planning])
+
+    // Poll so one organizer's changes show up on everyone else's screen.
+    // Skipped while a save is in flight or the tab is hidden.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible' && revalidator.state === 'idle' && !isSaving) {
+                void revalidator.revalidate()
+            }
+        }, POLL_INTERVAL_MS)
+        return () => clearInterval(interval)
+    }, [revalidator, isSaving])
+
     const [selectedTalkId, setSelectedTalkId] = useState<string | null>(null)
     // Additional Info is too long to sit inline in the table, so the cell is a
     // one-line preview that opens the full text in its own popup.
@@ -785,48 +1263,14 @@ export default function VotingAgenda() {
         })
     }
 
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem(statusStorageKey)
-            if (raw) {
-                setStatusByTalkId(JSON.parse(raw))
-            }
-        } catch (error) {
-            console.error('Failed to load saved talk statuses:', error)
-        }
-
-        try {
-            const raw = localStorage.getItem(overridesStorageKey)
-            if (raw) {
-                setOverridesByTalkId(JSON.parse(raw))
-            }
-        } catch (error) {
-            console.error('Failed to load saved talk overrides:', error)
-        }
-    }, [statusStorageKey, overridesStorageKey])
-
     function updateStatus(talkId: string, status: TalkStatus) {
-        setStatusByTalkId((current) => {
-            const next = { ...current, [talkId]: status }
-            try {
-                localStorage.setItem(statusStorageKey, JSON.stringify(next))
-            } catch (error) {
-                console.error('Failed to save talk status:', error)
-            }
-            return next
-        })
+        setPendingStatus((current) => ({ ...current, [talkId]: status }))
+        save({ intent: 'set_status', talkId, status })
     }
 
     function updateOverride<K extends keyof TalkOverrides>(talkId: string, key: K, value: TalkOverrides[K]) {
-        setOverridesByTalkId((current) => {
-            const next = { ...current, [talkId]: { ...current[talkId], [key]: value } }
-            try {
-                localStorage.setItem(overridesStorageKey, JSON.stringify(next))
-            } catch (error) {
-                console.error('Failed to save talk override:', error)
-            }
-            return next
-        })
+        setPendingOverrides((current) => ({ ...current, [talkId]: { ...current[talkId], [key]: value } }))
+        save({ intent: 'set_override', talkId, field: key, value: String(value) })
     }
 
     // A manual override always wins; otherwise a talk Sessionize marked
@@ -1172,6 +1616,16 @@ export default function VotingAgenda() {
                     speakers: talk.speakers.map((s) => s.name).join(', ') || 'Unknown Speaker',
                     topic: getEffectiveTopic(talk),
                     status: getEffectiveStatus(talk),
+                    // Signals mirrored from the table so the balance of the
+                    // agenda (diversity, experience, level) is visible while
+                    // the board is being filled, not only in the stats above.
+                    rank: talk.rank,
+                    level: formatLevel(talk.level),
+                    um: getEffectiveUm(talk),
+                    newSpeaker: getEffectiveExpFlag(talk),
+                    pronouns: Array.from(
+                        new Set(talk.speakers.map((s) => s.pronoun).filter((p): p is string => Boolean(p))),
+                    ),
                 })),
         [agendaTalks, statusByTalkId, overridesByTalkId],
     )
@@ -1504,6 +1958,17 @@ export default function VotingAgenda() {
                 </Flex>
             </AdminCard>
 
+            {saveError && (
+                <AdminCard mb="6">
+                    <styled.p fontSize="sm" color="status.danger.fg">
+                        Couldn&rsquo;t save your last change: {saveError}. Your edits may not be shared with the rest
+                        of the team — reload to see the current state.
+                    </styled.p>
+                </AdminCard>
+            )}
+
+            <LocalPlanningImport runId={runId} planningIsEmpty={planningIsEmpty} />
+
             {agendaTalks.length > 0 && (
                 <AdminCard mb="6">
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
@@ -1619,13 +2084,14 @@ export default function VotingAgenda() {
                         Agenda Planner
                     </styled.h2>
                     <styled.p fontSize="sm" color="admin.600" mb="4">
-                        Lay out tracks and slots for the {plannerTalks.length} accepted and tentative talks. Saved in
-                        this browser only.
+                        Lay out tracks and slots for the {plannerTalks.length} accepted and tentative talks. Shared
+                        with the whole organizer team.
                     </styled.p>
                     <AgendaPlanner
-                        storageKey={plannerStorageKey}
+                        board={planning.board}
                         talks={plannerTalks}
                         availableLengths={filterOptions.lengths}
+                        onChange={(change) => save(change)}
                     />
                 </AdminCard>
             )}

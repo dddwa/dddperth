@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/components/ui/button'
+import type { PlannerBoard } from '~/lib/agenda-planning-types'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import type { ColorToken } from '~/styled-system/tokens'
 
 /**
  * Trello-style board for laying talks into the agenda grid.
@@ -10,8 +12,9 @@ import { Box, Flex, styled } from '~/styled-system/jsx'
  * Sessionize's "Session format" values like "45 minutes") so capacity planning
  * lines up with the Length stats on the agenda page without a hardcoded list.
  *
- * Board state lives in localStorage alongside the page's talk statuses and
- * overrides — it's a planning scratchpad, so it's per-browser and never synced.
+ * The board is persisted in D1 by the agenda route and shared across the
+ * organizer team — this component renders whatever it's handed and reports
+ * every edit back through `onChange`, which posts it to the server.
  */
 
 export interface PlannerTalk {
@@ -22,27 +25,29 @@ export interface PlannerTalk {
     /** Effective general topic (respects organizer overrides), or '' when uncategorised. */
     topic: string
     status: string
+    /** Vote rank from the validation run — lower is stronger. */
+    rank: number
+    /** Effective level ("Beginner", "Advanced"), already normalised for display. */
+    level: string
+    /** Underrepresented-minority flag, respecting the per-talk override. */
+    um: boolean
+    /** Junior or first-time/rare speaker, respecting the per-talk override. */
+    newSpeaker: boolean
+    /** Distinct speaker pronouns on this talk, e.g. ['She/Her']. */
+    pronouns: string[]
 }
 
-export interface PlannerSlot {
-    slotId: string
-    length: string
-    talkId: string | null
-}
-
-export interface PlannerTrack {
-    trackId: string
-    name: string
-    slots: PlannerSlot[]
-}
-
-export interface PlannerState {
-    tracks: PlannerTrack[]
-    /** Capacity targets, keyed by slot length (e.g. "45 minutes" -> 12). */
-    capacity: Record<string, number>
-}
-
-const EMPTY_STATE: PlannerState = { tracks: [], capacity: {} }
+/** One board edit, mapped 1:1 onto the route's action intents. */
+export type PlannerChange =
+    | { intent: 'add_track'; trackId: string; name: string }
+    | { intent: 'rename_track'; trackId: string; name: string }
+    | { intent: 'remove_track'; trackId: string }
+    | { intent: 'add_slot'; trackId: string; slotId: string; length: string }
+    | { intent: 'update_slot_length'; slotId: string; length: string }
+    | { intent: 'remove_slot'; slotId: string }
+    | { intent: 'assign_talk'; slotId: string; talkId: string }
+    | { intent: 'set_capacity'; length: string; capacity: string }
+    | { intent: 'clear_board' }
 
 // Lengths offered in the slot dropdown when the run has no Sessionize length
 // data to derive them from (e.g. every talk has vanished from the feed).
@@ -58,51 +63,174 @@ function lengthMinutes(length: string): number {
     return match ? Number(match[1]) : 0
 }
 
+// Levels get a one-letter chip so a card can show it without eating a line.
+const LEVEL_INITIALS: Record<string, string> = {
+    beginner: 'B',
+    intermediate: 'I',
+    advanced: 'A',
+}
+
+function levelInitial(level: string): string {
+    return LEVEL_INITIALS[level.toLowerCase()] ?? level.charAt(0).toUpperCase()
+}
+
+/**
+ * Compact signal chip on a talk card. These exist so the balance of the
+ * agenda (diversity, experience, level spread) is visible while the board is
+ * being built, rather than only in the stats above the table.
+ */
+function SignalBadge({
+    label,
+    title,
+    bg,
+    fg,
+}: {
+    label: string
+    title: string
+    bg: ColorToken
+    fg: ColorToken
+}) {
+    return (
+        <styled.span
+            title={title}
+            aria-label={title}
+            display="inline-block"
+            px="1"
+            borderRadius="sm"
+            fontSize="2xs"
+            fontWeight="bold"
+            lineHeight="tight"
+            bg={bg}
+            color={fg}
+            flexShrink="0"
+        >
+            {label}
+        </styled.span>
+    )
+}
+
+/** The signal chips for one talk, shared by placed cards and the unplaced list. */
+function TalkSignals({ talk }: { talk: PlannerTalk }) {
+    // Pronouns are shown as-is rather than reduced to a flag — the point is to
+    // see the actual spread while balancing, and He/Him is the common case so
+    // it's dimmed rather than hidden.
+    const notablePronouns = talk.pronouns.filter((p) => p !== 'He/Him')
+    return (
+        <Flex gap="1" flexWrap="wrap" alignItems="center">
+            {/* Rank is the strongest cue for picking, so it gets the darkest
+                chip; level sits a shade lighter beside it. */}
+            <SignalBadge label={`#${talk.rank}`} title={`Vote rank #${talk.rank}`} bg="admin.700" fg="white" />
+            {talk.level && (
+                <SignalBadge
+                    label={levelInitial(talk.level)}
+                    title={`Level: ${talk.level}`}
+                    bg="admin.100"
+                    fg="admin.700"
+                />
+            )}
+            {talk.um && (
+                <SignalBadge
+                    label="UM"
+                    title="Speaker is from an underrepresented group"
+                    bg="status.info.bg"
+                    fg="status.info.fg"
+                />
+            )}
+            {talk.newSpeaker && (
+                <SignalBadge
+                    label="NEW"
+                    title="Junior or first-time / infrequent speaker"
+                    bg="status.success.bg"
+                    fg="status.success.fg"
+                />
+            )}
+            {/* Deliberately not pink.200 — that's the "speaker locked
+                elsewhere" row flag on the table, and reusing it here would
+                read as the same signal. */}
+            {notablePronouns.map((pronoun) => (
+                <SignalBadge
+                    key={pronoun}
+                    label={pronoun}
+                    title={`Pronoun: ${pronoun}`}
+                    bg="admin.200"
+                    fg="admin.800"
+                />
+            ))}
+        </Flex>
+    )
+}
+
 function shortLength(length: string): string {
     const minutes = lengthMinutes(length)
     return minutes > 0 ? `${minutes}m` : length
 }
 
 export function AgendaPlanner({
-    storageKey,
+    board,
     talks,
     availableLengths,
+    onChange,
 }: {
-    storageKey: string
+    board: PlannerBoard
     talks: PlannerTalk[]
     availableLengths: string[]
+    /** Posts one edit to the server; the board re-renders from the response. */
+    onChange: (change: PlannerChange) => void
 }) {
-    const [state, setState] = useState<PlannerState>(EMPTY_STATE)
-    const [loaded, setLoaded] = useState(false)
     const [draggingTalkId, setDraggingTalkId] = useState<string | null>(null)
+    // Track names and capacity are free-text inputs, so they render the local
+    // draft while being typed into — otherwise a poll landing mid-word would
+    // replace what's in the box with the server's older value. The draft is
+    // dropped once the value the server echoes back matches it.
+    const [draftNames, setDraftNames] = useState<Record<string, string>>({})
+    const [draftCapacity, setDraftCapacity] = useState<Record<string, string>>({})
+
+    // Typing sends one request per keystroke otherwise. Held per key so two
+    // tracks renamed at once don't cancel each other.
+    const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+    const debouncedChange = useCallback(
+        (key: string, change: PlannerChange) => {
+            clearTimeout(debounceTimers.current[key])
+            debounceTimers.current[key] = setTimeout(() => onChange(change), 500)
+        },
+        [onChange],
+    )
+    useEffect(() => {
+        const timers = debounceTimers.current
+        return () => {
+            for (const timer of Object.values(timers)) clearTimeout(timer)
+        }
+    }, [])
+
+    // Once the server echoes the draft back, stop overriding it so other
+    // people's later edits to the same field can show through.
+    useEffect(() => {
+        setDraftNames((current) => {
+            const next = { ...current }
+            let changed = false
+            for (const track of board.tracks) {
+                if (next[track.trackId] === track.name) {
+                    delete next[track.trackId]
+                    changed = true
+                }
+            }
+            return changed ? next : current
+        })
+        setDraftCapacity((current) => {
+            const next = { ...current }
+            let changed = false
+            for (const [length, value] of Object.entries(current)) {
+                if ((Number(value) || 0) === (board.capacity[length] ?? 0)) {
+                    delete next[length]
+                    changed = true
+                }
+            }
+            return changed ? next : current
+        })
+    }, [board])
 
     const lengthOptions = availableLengths.length > 0 ? availableLengths : FALLBACK_LENGTHS
-
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem(storageKey)
-            if (raw) {
-                const parsed = JSON.parse(raw) as PlannerState
-                setState({ tracks: parsed.tracks ?? [], capacity: parsed.capacity ?? {} })
-            }
-        } catch (error) {
-            console.error('Failed to load agenda planner state:', error)
-        }
-        setLoaded(true)
-    }, [storageKey])
-
-    function update(next: PlannerState) {
-        setState(next)
-        try {
-            localStorage.setItem(storageKey, JSON.stringify(next))
-        } catch (error) {
-            console.error('Failed to save agenda planner state:', error)
-        }
-    }
-
-    function updateTracks(tracks: PlannerTrack[]) {
-        update({ ...state, tracks })
-    }
+    const state = board
 
     const talksById = useMemo(() => new Map(talks.map((talk) => [talk.talkId, talk])), [talks])
 
@@ -118,9 +246,17 @@ export function AgendaPlanner({
         return ids
     }, [state.tracks])
 
+    // Kept in the incoming rank order — the list is for picking the strongest
+    // remaining talk, so rank is the useful sort. Tentative ones are tinted
+    // rather than grouped, so they stay comparable against their rank peers.
     const unplacedTalks = useMemo(
         () => talks.filter((talk) => !placedTalkIds.has(talk.talkId)),
         [talks, placedTalkIds],
+    )
+
+    const unplacedTentativeCount = useMemo(
+        () => unplacedTalks.filter((talk) => talk.status === 'tentative').length,
+        [unplacedTalks],
     )
 
     // Slots by length vs the capacity targets, so organizers can see at a
@@ -149,87 +285,42 @@ export function AgendaPlanner({
     }, [state])
 
     function addTrack() {
-        updateTracks([
-            ...state.tracks,
-            { trackId: createId('track'), name: `Track ${state.tracks.length + 1}`, slots: [] },
-        ])
+        onChange({ intent: 'add_track', trackId: createId('track'), name: `Track ${state.tracks.length + 1}` })
     }
 
     function renameTrack(trackId: string, name: string) {
-        updateTracks(state.tracks.map((track) => (track.trackId === trackId ? { ...track, name } : track)))
+        setDraftNames((current) => ({ ...current, [trackId]: name }))
+        debouncedChange(`track:${trackId}`, { intent: 'rename_track', trackId, name })
     }
 
     function removeTrack(trackId: string) {
-        updateTracks(state.tracks.filter((track) => track.trackId !== trackId))
+        onChange({ intent: 'remove_track', trackId })
     }
 
     function addSlot(trackId: string) {
-        updateTracks(
-            state.tracks.map((track) =>
-                track.trackId === trackId
-                    ? {
-                          ...track,
-                          slots: [
-                              ...track.slots,
-                              { slotId: createId('slot'), length: lengthOptions[0], talkId: null },
-                          ],
-                      }
-                    : track,
-            ),
-        )
+        onChange({ intent: 'add_slot', trackId, slotId: createId('slot'), length: lengthOptions[0] })
     }
 
-    function updateSlot(trackId: string, slotId: string, changes: Partial<PlannerSlot>) {
-        updateTracks(
-            state.tracks.map((track) =>
-                track.trackId === trackId
-                    ? {
-                          ...track,
-                          slots: track.slots.map((slot) =>
-                              slot.slotId === slotId ? { ...slot, ...changes } : slot,
-                          ),
-                      }
-                    : track,
-            ),
-        )
+    function updateSlotLength(slotId: string, length: string) {
+        onChange({ intent: 'update_slot_length', slotId, length })
     }
 
-    function removeSlot(trackId: string, slotId: string) {
-        updateTracks(
-            state.tracks.map((track) =>
-                track.trackId === trackId
-                    ? { ...track, slots: track.slots.filter((slot) => slot.slotId !== slotId) }
-                    : track,
-            ),
-        )
+    function removeSlot(slotId: string) {
+        onChange({ intent: 'remove_slot', slotId })
     }
 
-    /** Drop a talk into a slot, clearing it from whatever slot held it before. */
-    function assignTalk(trackId: string, slotId: string, talkId: string | null) {
-        updateTracks(
-            state.tracks.map((track) => ({
-                ...track,
-                slots: track.slots.map((slot) => {
-                    if (track.trackId === trackId && slot.slotId === slotId) {
-                        return { ...slot, talkId }
-                    }
-                    // Same talk parked elsewhere — vacate that slot.
-                    if (talkId && slot.talkId === talkId) {
-                        return { ...slot, talkId: null }
-                    }
-                    return slot
-                }),
-            })),
-        )
+    /** Drop a talk into a slot; the server clears whatever slot held it before. */
+    function assignTalk(slotId: string, talkId: string | null) {
+        onChange({ intent: 'assign_talk', slotId, talkId: talkId ?? '' })
     }
 
-    function setCapacity(length: string, value: number) {
-        update({ ...state, capacity: { ...state.capacity, [length]: value } })
-    }
-
-    // Avoid rendering the empty default over saved state on first paint.
-    if (!loaded) {
-        return null
+    function setCapacity(length: string, value: string) {
+        setDraftCapacity((current) => ({ ...current, [length]: value }))
+        debouncedChange(`capacity:${length}`, {
+            intent: 'set_capacity',
+            length,
+            capacity: String(Number(value) || 0),
+        })
     }
 
     return (
@@ -259,9 +350,9 @@ export function AgendaPlanner({
                                 id={`capacity-${length}`}
                                 type="number"
                                 min="0"
-                                value={capacity || ''}
+                                value={draftCapacity[length] ?? (capacity || '')}
                                 placeholder="0"
-                                onChange={(e) => setCapacity(length, Number(e.target.value) || 0)}
+                                onChange={(e) => setCapacity(length, e.target.value)}
                                 bg="white"
                                 border="admin-subtle"
                                 borderRadius="md"
@@ -304,8 +395,12 @@ export function AgendaPlanner({
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                            if (confirm('Clear the whole board? Capacity targets are kept.')) {
-                                update({ ...state, tracks: [] })
+                            if (
+                                confirm(
+                                    'Clear the whole board for everyone? Capacity targets are kept.',
+                                )
+                            ) {
+                                onChange({ intent: 'clear_board' })
                             }
                         }}
                     >
@@ -332,7 +427,7 @@ export function AgendaPlanner({
                             >
                                 <Flex justifyContent="space-between" alignItems="center" gap="2" mb="2">
                                     <styled.input
-                                        value={track.name}
+                                        value={draftNames[track.trackId] ?? track.name}
                                         onChange={(e) => renameTrack(track.trackId, e.target.value)}
                                         aria-label="Track name"
                                         bg="transparent"
@@ -384,19 +479,30 @@ export function AgendaPlanner({
                                                     e.preventDefault()
                                                     const talkId =
                                                         e.dataTransfer.getData('text/plain') || draggingTalkId
-                                                    if (talkId) {
-                                                        assignTalk(track.trackId, slot.slotId, talkId)
-                                                    }
                                                     setDraggingTalkId(null)
+                                                    if (!talkId || talkId === slot.talkId) return
+                                                    // Dropping onto a filled slot bumps whatever
+                                                    // was there back to Unplaced — say so rather
+                                                    // than silently discarding someone's work.
+                                                    const occupant = slot.talkId
+                                                        ? talksById.get(slot.talkId)
+                                                        : undefined
+                                                    if (
+                                                        occupant &&
+                                                        !confirm(
+                                                            `That slot holds "${occupant.title}". Replace it? It will move back to Unplaced talks.`,
+                                                        )
+                                                    ) {
+                                                        return
+                                                    }
+                                                    assignTalk(slot.slotId, talkId)
                                                 }}
                                             >
                                                 <Flex justifyContent="space-between" alignItems="center" gap="1" mb="1">
                                                     <styled.select
                                                         value={slot.length}
                                                         onChange={(e) =>
-                                                            updateSlot(track.trackId, slot.slotId, {
-                                                                length: e.target.value,
-                                                            })
+                                                            updateSlotLength(slot.slotId, e.target.value)
                                                         }
                                                         aria-label="Slot length"
                                                         bg="admin.100"
@@ -416,7 +522,7 @@ export function AgendaPlanner({
                                                     </styled.select>
                                                     <styled.button
                                                         type="button"
-                                                        onClick={() => removeSlot(track.trackId, slot.slotId)}
+                                                        onClick={() => removeSlot(slot.slotId)}
                                                         title="Remove slot"
                                                         aria-label="Remove slot"
                                                         cursor="pointer"
@@ -445,9 +551,10 @@ export function AgendaPlanner({
                                                         <styled.p fontSize="xs" fontWeight="medium" mb="0.5">
                                                             {talk.title}
                                                         </styled.p>
-                                                        <styled.p fontSize="xs" color="admin.600">
+                                                        <styled.p fontSize="xs" color="admin.600" mb="1">
                                                             {talk.speakers}
                                                         </styled.p>
+                                                        <TalkSignals talk={talk} />
                                                         {mismatch && (
                                                             <styled.p
                                                                 fontSize="2xs"
@@ -460,9 +567,7 @@ export function AgendaPlanner({
                                                         )}
                                                         <styled.button
                                                             type="button"
-                                                            onClick={() =>
-                                                                assignTalk(track.trackId, slot.slotId, null)
-                                                            }
+                                                            onClick={() => assignTalk(slot.slotId, null)}
                                                             fontSize="xs"
                                                             color="prose.link"
                                                             cursor="pointer"
@@ -476,8 +581,7 @@ export function AgendaPlanner({
                                                     <styled.select
                                                         value=""
                                                         onChange={(e) =>
-                                                            e.target.value &&
-                                                            assignTalk(track.trackId, slot.slotId, e.target.value)
+                                                            e.target.value && assignTalk(slot.slotId, e.target.value)
                                                         }
                                                         aria-label="Assign talk to slot"
                                                         bg="white"
@@ -524,11 +628,28 @@ export function AgendaPlanner({
 
             {state.tracks.length > 0 && (
                 <Box mt="4">
-                    <styled.h3 fontSize="md" fontWeight="semibold" mb="2" color="admin.600">
-                        Unplaced talks ({unplacedTalks.length})
-                    </styled.h3>
+                    <Flex alignItems="center" gap="2" mb="2" flexWrap="wrap">
+                        <styled.h3 fontSize="md" fontWeight="semibold" color="admin.600">
+                            Unplaced talks ({unplacedTalks.length})
+                        </styled.h3>
+                        {unplacedTentativeCount > 0 && (
+                            <styled.span
+                                px="2"
+                                py="0.5"
+                                borderRadius="full"
+                                fontSize="xs"
+                                fontWeight="semibold"
+                                bg="status.warning.bg"
+                                color="status.warning.fg"
+                                title="Unplaced talks still marked tentative"
+                            >
+                                {unplacedTentativeCount} tentative
+                            </styled.span>
+                        )}
+                    </Flex>
                     <styled.p fontSize="xs" color="admin.500" mb="2">
-                        Drag a talk onto a slot, or use the dropdown inside an empty slot.
+                        Drag a talk onto a slot, or use the dropdown inside an empty slot. Highest-ranked first;
+                        tentative talks are shaded. Chips show rank, level (B/I/A), UM, new speaker and pronouns.
                     </styled.p>
                     <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
@@ -536,36 +657,43 @@ export function AgendaPlanner({
                                 Every talk has been placed.
                             </styled.p>
                         ) : (
-                            unplacedTalks.map((talk) => (
-                                <Box
-                                    key={talk.talkId}
-                                    draggable
-                                    onDragStart={(e) => {
-                                        e.dataTransfer.setData('text/plain', talk.talkId)
-                                        setDraggingTalkId(talk.talkId)
-                                    }}
-                                    onDragEnd={() => setDraggingTalkId(null)}
-                                    bg="white"
-                                    border="admin-subtle"
-                                    borderRadius="md"
-                                    px="2"
-                                    py="1"
-                                    maxW="[240px]"
-                                    cursor="grab"
-                                    opacity={draggingTalkId === talk.talkId ? '0.5' : '1'}
-                                    title={`${talk.title} — ${talk.speakers}`}
-                                >
-                                    <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
-                                        {talk.title}
-                                    </styled.p>
-                                    <styled.p fontSize="2xs" color="admin.600" lineClamp={1}>
-                                        {talk.speakers}
-                                    </styled.p>
-                                    <styled.p fontSize="2xs" color="admin.600">
-                                        {shortLength(talk.length) || '—'} · {talk.topic || 'Uncategorised'}
-                                    </styled.p>
-                                </Box>
-                            ))
+                            unplacedTalks.map((talk) => {
+                                // Tentative talks are tinted so the ones still
+                                // needing a decision stand out from the accepted
+                                // ones while filling the board.
+                                const isTentative = talk.status === 'tentative'
+                                return (
+                                    <Box
+                                        key={talk.talkId}
+                                        draggable
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.setData('text/plain', talk.talkId)
+                                            setDraggingTalkId(talk.talkId)
+                                        }}
+                                        onDragEnd={() => setDraggingTalkId(null)}
+                                        bg={isTentative ? 'status.warning.bg' : 'white'}
+                                        border={isTentative ? 'admin-emphasis' : 'admin-subtle'}
+                                        borderRadius="md"
+                                        px="2"
+                                        py="1"
+                                        maxW="[240px]"
+                                        cursor="grab"
+                                        opacity={draggingTalkId === talk.talkId ? '0.5' : '1'}
+                                        title={`${talk.title} — ${talk.speakers}${isTentative ? ' (tentative)' : ''}`}
+                                    >
+                                        <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
+                                            {talk.title}
+                                        </styled.p>
+                                        <styled.p fontSize="2xs" color="admin.600" lineClamp={1}>
+                                            {talk.speakers}
+                                        </styled.p>
+                                        <styled.p fontSize="2xs" color="admin.600" mb="1">
+                                            {shortLength(talk.length) || '—'} · {talk.topic || 'Uncategorised'}
+                                        </styled.p>
+                                        <TalkSignals talk={talk} />
+                                    </Box>
+                                )
+                            })
                         )}
                     </Flex>
                 </Box>

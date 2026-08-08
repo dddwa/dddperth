@@ -1,3 +1,4 @@
+import type { AgendaPlanningStore } from './agenda-planning-store'
 import type { AnnouncementsStore } from './announcements-store'
 import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
@@ -19,6 +20,7 @@ import type { VotingStore } from './voting-store'
  */
 export interface AppServices {
     voting: VotingStore
+    agendaPlanning: AgendaPlanningStore
     announcements: AnnouncementsStore
     content: ContentService
     tickets: TicketsService
