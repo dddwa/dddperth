@@ -33,8 +33,6 @@ export interface PlannerTalk {
     um: boolean
     /** Junior or first-time/rare speaker, respecting the per-talk override. */
     newSpeaker: boolean
-    /** Distinct speaker pronouns on this talk, e.g. ['She/Her']. */
-    pronouns: string[]
 }
 
 /** One board edit, mapped 1:1 onto the route's action intents. */
@@ -75,34 +73,46 @@ function levelInitial(level: string): string {
 }
 
 /**
- * Compact signal chip on a talk card. These exist so the balance of the
- * agenda (diversity, experience, level spread) is visible while the board is
- * being built, rather than only in the stats above the table.
+ * Signal chip on a talk card. These exist so the balance of the agenda
+ * (topic mix, experience, level spread) is visible while the board is being
+ * built, rather than only in the stats above the table.
  */
 function SignalBadge({
     label,
     title,
     bg,
     fg,
+    truncate,
 }: {
     label: string
     title: string
     bg: ColorToken
     fg: ColorToken
+    /** Clip long labels (topic names) rather than letting them wrap the row. */
+    truncate?: boolean
 }) {
     return (
         <styled.span
             title={title}
             aria-label={title}
             display="inline-block"
-            px="1"
+            px="1.5"
+            py="0.5"
             borderRadius="sm"
-            fontSize="2xs"
+            fontSize="xs"
             fontWeight="bold"
             lineHeight="tight"
             bg={bg}
             color={fg}
             flexShrink="0"
+            {...(truncate
+                ? {
+                      maxW: '[130px]',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap' as const,
+                  }
+                : {})}
         >
             {label}
         </styled.span>
@@ -111,10 +121,6 @@ function SignalBadge({
 
 /** The signal chips for one talk, shared by placed cards and the unplaced list. */
 function TalkSignals({ talk }: { talk: PlannerTalk }) {
-    // Pronouns are shown as-is rather than reduced to a flag — the point is to
-    // see the actual spread while balancing, and He/Him is the common case so
-    // it's dimmed rather than hidden.
-    const notablePronouns = talk.pronouns.filter((p) => p !== 'He/Him')
     return (
         <Flex gap="1" flexWrap="wrap" alignItems="center">
             {/* Rank is the strongest cue for picking, so it gets the darkest
@@ -128,6 +134,15 @@ function TalkSignals({ talk }: { talk: PlannerTalk }) {
                     fg="admin.700"
                 />
             )}
+            {/* The topic is what the agenda is balanced across, so it's the
+                one chip that carries its full label rather than an initial. */}
+            <SignalBadge
+                label={talk.topic || 'Uncategorised'}
+                title={`Topic: ${talk.topic || 'Uncategorised'}`}
+                bg="indigo.7"
+                fg="white"
+                truncate
+            />
             {talk.um && (
                 <SignalBadge
                     label="UM"
@@ -144,18 +159,6 @@ function TalkSignals({ talk }: { talk: PlannerTalk }) {
                     fg="status.success.fg"
                 />
             )}
-            {/* Deliberately not pink.200 — that's the "speaker locked
-                elsewhere" row flag on the table, and reusing it here would
-                read as the same signal. */}
-            {notablePronouns.map((pronoun) => (
-                <SignalBadge
-                    key={pronoun}
-                    label={pronoun}
-                    title={`Pronoun: ${pronoun}`}
-                    bg="admin.200"
-                    fg="admin.800"
-                />
-            ))}
         </Flex>
     )
 }
@@ -463,10 +466,13 @@ export function AgendaPlanner({
                                             talk && talk.length && talk.length !== slot.length
                                                 ? talk.length
                                                 : undefined
+                                        // Tentative talks stay tinted once placed, so an agenda
+                                        // that looks full still shows which slots aren't settled.
+                                        const isTentative = talk?.status === 'tentative'
                                         return (
                                             <Box
                                                 key={slot.slotId}
-                                                bg="white"
+                                                bg={isTentative ? 'status.warning.bg' : 'white'}
                                                 borderRadius="md"
                                                 border={
                                                     draggingTalkId ? 'admin-emphasis' : 'admin-subtle'
@@ -505,7 +511,9 @@ export function AgendaPlanner({
                                                             updateSlotLength(slot.slotId, e.target.value)
                                                         }
                                                         aria-label="Slot length"
-                                                        bg="admin.100"
+                                                        // White on the tinted card, so the control
+                                                        // stays legible against the orange.
+                                                        bg={isTentative ? 'white' : 'admin.100'}
                                                         border="none"
                                                         borderRadius="sm"
                                                         px="1"
@@ -649,7 +657,7 @@ export function AgendaPlanner({
                     </Flex>
                     <styled.p fontSize="xs" color="admin.500" mb="2">
                         Drag a talk onto a slot, or use the dropdown inside an empty slot. Highest-ranked first;
-                        tentative talks are shaded. Chips show rank, level (B/I/A), UM, new speaker and pronouns.
+                        tentative talks are shaded orange. Chips show rank, level (B/I/A), topic, UM and new speaker.
                     </styled.p>
                     <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
@@ -687,8 +695,9 @@ export function AgendaPlanner({
                                         <styled.p fontSize="2xs" color="admin.600" lineClamp={1}>
                                             {talk.speakers}
                                         </styled.p>
+                                        {/* Topic moved into the chips below, so it isn't repeated here. */}
                                         <styled.p fontSize="2xs" color="admin.600" mb="1">
-                                            {shortLength(talk.length) || '—'} · {talk.topic || 'Uncategorised'}
+                                            {shortLength(talk.length) || '—'}
                                         </styled.p>
                                         <TalkSignals talk={talk} />
                                     </Box>

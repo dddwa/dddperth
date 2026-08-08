@@ -1623,9 +1623,6 @@ export default function VotingAgenda() {
                     level: formatLevel(talk.level),
                     um: getEffectiveUm(talk),
                     newSpeaker: getEffectiveExpFlag(talk),
-                    pronouns: Array.from(
-                        new Set(talk.speakers.map((s) => s.pronoun).filter((p): p is string => Boolean(p))),
-                    ),
                 })),
         [agendaTalks, statusByTalkId, overridesByTalkId],
     )
