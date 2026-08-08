@@ -46,6 +46,10 @@ declare module "safe-routes" {
       params: {'runId': string | number},
       query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId.download.js').SearchParams>,
     },
+    "/admin/voting/agenda/:runId": {
+      params: {'runId': string | number},
+      query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId.js').SearchParams>,
+    },
     "/agenda/:year?": {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.($year).js').SearchParams>,
@@ -199,6 +203,7 @@ declare module "safe-routes" {
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
             | 'routes/admin.sponsors'

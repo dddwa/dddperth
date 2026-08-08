@@ -683,14 +683,24 @@ export default function AdminVoting() {
                                                 {run.processedSessions}/{run.totalSessions} ({run.percentComplete}%)
                                             </styled.td>
                                             <styled.td p="2" border="admin-subtle">
-                                                <AppLink
-                                                    to={`/admin/voting-validation/stats/${run.runId}`}
-                                                    fontSize="sm"
-                                                    color="indigo.7"
-                                                    _hover={{ textDecoration: 'underline' }}
-                                                >
-                                                    View Stats
-                                                </AppLink>
+                                                <Flex gap="3">
+                                                    <AppLink
+                                                        to={`/admin/voting-validation/stats/${run.runId}`}
+                                                        fontSize="sm"
+                                                        color="indigo.7"
+                                                        _hover={{ textDecoration: 'underline' }}
+                                                    >
+                                                        View Stats
+                                                    </AppLink>
+                                                    <AppLink
+                                                        to={`/admin/voting/agenda/${run.runId}`}
+                                                        fontSize="sm"
+                                                        color="indigo.7"
+                                                        _hover={{ textDecoration: 'underline' }}
+                                                    >
+                                                        Plan Agenda
+                                                    </AppLink>
+                                                </Flex>
                                             </styled.td>
                                         </tr>
                                     ))}

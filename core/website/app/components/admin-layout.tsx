@@ -1,12 +1,20 @@
 import type { ReactNode } from 'react'
 import { Box, styled } from '~/styled-system/jsx'
 
-export function AdminLayout({ heading, children }: { heading: string; children: ReactNode }) {
+export function AdminLayout({
+    heading,
+    children,
+    fullWidth,
+}: {
+    heading: string
+    children: ReactNode
+    fullWidth?: boolean
+}) {
     return (
         <Box
             bg="white"
             p={{ base: '6', md: '12' }}
-            maxW="7xl"
+            maxW={fullWidth ? 'full' : '7xl'}
             mx="auto"
             borderRadius="2xl"
             boxShadow="lg"
