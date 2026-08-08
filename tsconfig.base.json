@@ -18,7 +18,11 @@
         // TS 6 deprecates baseUrl; keep it for now (referenced by Nx project
         // configs) but silence the deprecation. Remove when baseUrl is fully
         // dropped — see https://aka.ms/ts6.
-        "ignoreDeprecations": "6.0"
+        "ignoreDeprecations": "6.0",
+        "strict": false,
+        "noUncheckedSideEffectImports": false,
+        "types": ["*"],
+        "esModuleInterop": false
     },
     "exclude": ["node_modules", "tmp"]
 }
