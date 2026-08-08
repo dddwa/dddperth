@@ -2,6 +2,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
+import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
@@ -213,6 +214,45 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     return response
 }
 
+/**
+ * Accepts result files from both generations of the ELO ranking tool: the
+ * original format (rank/wins/totalVotes/…) and the Monte Carlo tool's output,
+ * whose exponential_rank is its final ranking. Win/loss percentages are
+ * derived for the latter since it doesn't emit them.
+ */
+const eloResultSchema = z.union([
+    z.object({
+        id: z.string(),
+        rank: z.number(),
+        wins: z.number(),
+        totalVotes: z.number(),
+        losses: z.number(),
+        winPct: z.number(),
+        lossPct: z.number(),
+    }),
+    z
+        .object({
+            id: z.string(),
+            exponential_rank: z.number(),
+            total_wins: z.number(),
+            total_losses: z.number(),
+        })
+        .transform(({ id, exponential_rank, total_wins, total_losses }): EloResultImport => {
+            const totalVotes = total_wins + total_losses
+            return {
+                id,
+                rank: exponential_rank,
+                wins: total_wins,
+                totalVotes,
+                losses: total_losses,
+                winPct: totalVotes > 0 ? total_wins / totalVotes : 0,
+                lossPct: totalVotes > 0 ? total_losses / totalVotes : 0,
+            }
+        }),
+])
+
+const eloResultsFileSchema = z.array(eloResultSchema).min(1)
+
 export async function action({ request, params, context }: Route.ActionArgs) {
     await requireAdmin(request, context)
 
@@ -223,47 +263,35 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     const intent = formData.get('intent')
 
     if (intent === 'upload') {
-        const file = formData.get('file') as File
-        if (!file || file.size === 0) {
-            throw new Error('No file uploaded')
+        const file = formData.get('file')
+        if (!(file instanceof File) || file.size === 0) {
+            return { success: false as const, error: 'No file uploaded' }
         }
 
         const content = await file.text()
-        let results: EloResultImport[]
+        let json: unknown
         try {
-            results = JSON.parse(content)
-        } catch (error) {
-            throw new Error('Invalid JSON format in the uploaded file')
+            json = JSON.parse(content)
+        } catch {
+            return { success: false as const, error: 'The uploaded file is not valid JSON' }
         }
 
-        // Validate the format
-        if (!Array.isArray(results) || results.length === 0) {
-            throw new Error('Invalid file format: expected an array of results')
-        }
-
-        // Validate each result has required fields
-        for (const result of results) {
-            if (
-                typeof result.id !== 'string' ||
-                typeof result.rank !== 'number' ||
-                typeof result.wins !== 'number' ||
-                typeof result.totalVotes !== 'number' ||
-                typeof result.losses !== 'number' ||
-                typeof result.winPct !== 'number' ||
-                typeof result.lossPct !== 'number'
-            ) {
-                throw new Error(
-                    'Invalid result format: missing required fields (id, rank, wins, totalVotes, losses, winPct, lossPct)',
-                )
+        const parsed = eloResultsFileSchema.safeParse(json)
+        if (!parsed.success) {
+            return {
+                success: false as const,
+                error:
+                    'The uploaded file does not match a supported ELO results format — expected an array of entries with either ' +
+                    'id/rank/wins/totalVotes/losses/winPct/lossPct or id/exponential_rank/total_wins/total_losses',
             }
         }
 
-        await voting.saveTalkResults(runId, results)
+        await voting.saveTalkResults(runId, parsed.data)
 
-        return { success: true }
+        return { success: true as const }
     }
 
-    throw new Error('Invalid intent')
+    return { success: false as const, error: 'Invalid intent' }
 }
 
 type SortField = 'title' | 'seen' | 'win'
@@ -284,7 +312,7 @@ export default function VotingValidationStats() {
     const [sortField, setSortField] = useState<SortField>('win')
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
     const [versionFilter, setVersionFilter] = useState<VersionFilter>('aggregated')
-    const uploadFetcher = useFetcher()
+    const uploadFetcher = useFetcher<typeof action>()
 
     // Helper function to check if a talk has speakers from underrepresented groups
     const hasSpeakerFromUnderrepresentedGroup = (talkId: string): boolean => {
@@ -498,6 +526,11 @@ export default function VotingValidationStats() {
                                     {uploadFetcher.state !== 'idle' ? 'Uploading...' : 'Import Results'}
                                 </Button>
                             </Flex>
+                            {uploadFetcher.state === 'idle' && uploadFetcher.data && !uploadFetcher.data.success ? (
+                                <styled.p fontSize="sm" color="status.danger.fg" mt="2" maxW="[400px]">
+                                    {uploadFetcher.data.error}
+                                </styled.p>
+                            ) : null}
                         </uploadFetcher.Form>
 
                         <AppLink
