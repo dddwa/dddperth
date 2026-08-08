@@ -516,6 +516,42 @@ function formatExperience(experience: string): string {
     return EXPERIENCE_SHORT_LABELS[experience] ?? experience
 }
 
+// Sessionize's speaking-frequency answers, least to most experienced. Used to
+// pick which co-speaker's answer represents the talk on the planner board.
+const EXPERIENCE_ORDER = [
+    "I haven't done it before :)",
+    'A few times',
+    'Once every few months',
+    'Once a month or so',
+    'Usually more than once a month',
+]
+
+/**
+ * The most experienced speaker's disclosed frequency, shortened for display.
+ *
+ * Most-experienced rather than least: a first-timer paired with a regular is
+ * a supported talk, so the pairing shouldn't read as inexperienced on the
+ * board. The separate new/junior flag still catches the first-timer.
+ * Returns '' when nobody disclosed an answer.
+ */
+export function getMostExperienced(speakers: AgendaSpeaker[]): string {
+    let best = -1
+    let fallback = ''
+    for (const speaker of speakers) {
+        if (!speaker.experience) continue
+        const rank = EXPERIENCE_ORDER.indexOf(speaker.experience)
+        if (rank < 0) {
+            // An answer Sessionize has since reworded: unrankable, but still
+            // better than showing nothing.
+            fallback ||= formatExperience(speaker.experience)
+            continue
+        }
+        if (rank > best) best = rank
+    }
+    if (best >= 0) return formatExperience(EXPERIENCE_ORDER[best])
+    return fallback
+}
+
 function formatLevel(level: string): string {
     const normalised = level.replace(/Mostly /g, '').replace('No experience necessary', 'Beginner')
     // Sessionize's level answers are inconsistently cased ("Mostly advanced" vs
@@ -1632,6 +1668,7 @@ export default function VotingAgenda() {
                     level: formatLevel(talk.level),
                     um: getEffectiveUm(talk),
                     newSpeaker: getEffectiveExpFlag(talk),
+                    speakerExperience: getMostExperienced(talk.speakers),
                 })),
         [agendaTalks, statusByTalkId, overridesByTalkId],
     )
@@ -2098,6 +2135,7 @@ export default function VotingAgenda() {
                         talks={plannerTalks}
                         availableLengths={filterOptions.lengths}
                         onChange={(change) => save(change)}
+                        onSelectTalk={setSelectedTalkId}
                     />
                 </AdminCard>
             )}

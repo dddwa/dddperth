@@ -33,6 +33,13 @@ export interface PlannerTalk {
     um: boolean
     /** Junior or first-time/rare speaker, respecting the per-talk override. */
     newSpeaker: boolean
+    /**
+     * Most-experienced speaker on the talk, as the shortened Sessionize
+     * answer ("First time", "Monthly", "> monthly"). Empty when undisclosed.
+     * Shown so the board reveals the whole spread — a good agenda wants some
+     * seasoned speakers, not just first-timers flagged.
+     */
+    speakerExperience: string
 }
 
 /** One board edit, mapped 1:1 onto the route's action intents. */
@@ -72,6 +79,23 @@ const LEVEL_INITIALS: Record<string, string> = {
 function levelInitial(level: string): string {
     return LEVEL_INITIALS[level.toLowerCase()] ?? level.charAt(0).toUpperCase()
 }
+
+/**
+ * Speaker-experience chip styling, keyed by the shortened Sessionize answer.
+ *
+ * The whole scale is shown rather than only flagging newcomers: balancing an
+ * agenda means seeing the experienced speakers too, so green (seasoned)
+ * reads as distinctly as the newer end.
+ */
+const EXPERIENCE_STYLES: Record<string, { bg: ColorToken; fg: ColorToken }> = {
+    'First time': { bg: 'status.success.bg', fg: 'status.success.fg' },
+    'A few times': { bg: 'status.success.bg', fg: 'status.success.fg' },
+    '< monthly': { bg: 'admin.100', fg: 'admin.700' },
+    Monthly: { bg: 'status.info.bg', fg: 'status.info.fg' },
+    '> monthly': { bg: 'indigo.7', fg: 'white' },
+}
+
+const DEFAULT_EXPERIENCE_STYLE = { bg: 'admin.100' as ColorToken, fg: 'admin.700' as ColorToken }
 
 /**
  * Signal chip on a talk card. These exist so the balance of the agenda
@@ -166,13 +190,24 @@ function TalkSignals({ talk, showLength }: { talk: PlannerTalk; showLength?: boo
                     fg="status.info.fg"
                 />
             )}
-            {talk.newSpeaker && (
+            {/* The disclosed speaking frequency, so the board shows the whole
+                spread rather than only flagging newcomers. Falls back to the
+                derived new/junior flag when nothing was disclosed. */}
+            {talk.speakerExperience ? (
                 <SignalBadge
-                    label="NEW"
-                    title="Junior or first-time / infrequent speaker"
-                    bg="status.success.bg"
-                    fg="status.success.fg"
+                    label={talk.speakerExperience}
+                    title={`Speaks: ${talk.speakerExperience}${talk.newSpeaker ? ' — flagged new / junior' : ''}`}
+                    {...(EXPERIENCE_STYLES[talk.speakerExperience] ?? DEFAULT_EXPERIENCE_STYLE)}
                 />
+            ) : (
+                talk.newSpeaker && (
+                    <SignalBadge
+                        label="NEW"
+                        title="Junior or first-time / infrequent speaker"
+                        bg="status.success.bg"
+                        fg="status.success.fg"
+                    />
+                )
             )}
         </Flex>
     )
@@ -188,12 +223,15 @@ export function AgendaPlanner({
     talks,
     availableLengths,
     onChange,
+    onSelectTalk,
 }: {
     board: PlannerBoard
     talks: PlannerTalk[]
     availableLengths: string[]
     /** Posts one edit to the server; the board re-renders from the response. */
     onChange: (change: PlannerChange) => void
+    /** Opens the talk-details modal — the same one the ranked table uses. */
+    onSelectTalk: (talkId: string) => void
 }) {
     const [draggingTalkId, setDraggingTalkId] = useState<string | null>(null)
     // Track names and capacity are free-text inputs, so they render the local
@@ -689,9 +727,25 @@ export function AgendaPlanner({
                                                         onDragEnd={() => setDraggingTalkId(null)}
                                                         cursor="grab"
                                                     >
-                                                        <styled.p fontSize="xs" fontWeight="medium" mb="0.5">
+                                                        {/* The title opens the same details modal the
+                                                            ranked table uses. A button (not a click
+                                                            on the card) keeps it keyboard-reachable
+                                                            and clear of the drag handle. */}
+                                                        <styled.button
+                                                            type="button"
+                                                            onClick={() => onSelectTalk(talk.talkId)}
+                                                            title={`${talk.title} — view details`}
+                                                            display="block"
+                                                            width="full"
+                                                            textAlign="left"
+                                                            fontSize="xs"
+                                                            fontWeight="medium"
+                                                            mb="0.5"
+                                                            cursor="pointer"
+                                                            _hover={{ textDecoration: 'underline' }}
+                                                        >
                                                             {talk.title}
-                                                        </styled.p>
+                                                        </styled.button>
                                                         <styled.p fontSize="xs" color="admin.600" mb="1">
                                                             {talk.speakers}
                                                         </styled.p>
@@ -816,8 +870,8 @@ export function AgendaPlanner({
                     </Flex>
                     <styled.p fontSize="xs" color="admin.500" mb="2">
                         Drag a talk onto a slot, or use the dropdown inside an empty slot. Highest-ranked first;
-                        tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and new
-                        speaker.
+                        tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and how
+                        often the speaker presents.
                     </styled.p>
                     <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
@@ -849,9 +903,20 @@ export function AgendaPlanner({
                                         opacity={draggingTalkId === talk.talkId ? '0.5' : '1'}
                                         title={`${talk.title} — ${talk.speakers}${isTentative ? ' (tentative)' : ''}`}
                                     >
-                                        <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
+                                        <styled.button
+                                            type="button"
+                                            onClick={() => onSelectTalk(talk.talkId)}
+                                            display="block"
+                                            width="full"
+                                            textAlign="left"
+                                            fontSize="xs"
+                                            fontWeight="medium"
+                                            lineClamp={2}
+                                            cursor="pointer"
+                                            _hover={{ textDecoration: 'underline' }}
+                                        >
                                             {talk.title}
-                                        </styled.p>
+                                        </styled.button>
                                         <styled.p fontSize="2xs" color="admin.600" lineClamp={1} mb="1">
                                             {talk.speakers}
                                         </styled.p>

@@ -5,7 +5,7 @@
  * speaker) while filling it, and the tentative shading on both the board and
  * the unplaced list.
  */
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { PlannerBoard } from '~/lib/agenda-planning-types'
 import { AgendaPlanner, type PlannerTalk } from './agenda-planner'
@@ -24,6 +24,7 @@ function talk(overrides: Partial<PlannerTalk> = {}): PlannerTalk {
         level: 'Beginner',
         um: false,
         newSpeaker: false,
+        speakerExperience: '',
         ...overrides,
     }
 }
@@ -35,7 +36,7 @@ const BOARD_WITH_EMPTY_SLOT: PlannerBoard = {
 
 function renderPlanner(talks: PlannerTalk[], board: PlannerBoard = BOARD_WITH_EMPTY_SLOT) {
     return render(
-        <AgendaPlanner board={board} talks={talks} availableLengths={['45 minutes']} onChange={() => {}} />,
+        <AgendaPlanner board={board} talks={talks} availableLengths={['45 minutes']} onChange={() => {}} onSelectTalk={() => {}} />,
     )
 }
 
@@ -74,6 +75,27 @@ describe('talk signal chips', () => {
         const card = unplacedCard('A Talk')
         expect(within(card).queryByText('UM')).toBeNull()
         expect(within(card).queryByText('NEW')).toBeNull()
+    })
+
+    it('shows how often an experienced speaker presents, not just a new flag', () => {
+        renderPlanner([talk({ speakerExperience: '> monthly' })])
+        const card = unplacedCard('A Talk')
+        expect(within(card).getByText('> monthly')).toBeTruthy()
+        expect(within(card).getByTitle('Speaks: > monthly')).toBeTruthy()
+    })
+
+    it('shows the frequency for newer speakers too', () => {
+        renderPlanner([talk({ speakerExperience: 'First time', newSpeaker: true })])
+        const card = unplacedCard('A Talk')
+        expect(within(card).getByText('First time')).toBeTruthy()
+        // The new/junior flag is folded into the tooltip rather than a second chip.
+        expect(within(card).getByTitle('Speaks: First time — flagged new / junior')).toBeTruthy()
+        expect(within(card).queryByText('NEW')).toBeNull()
+    })
+
+    it('falls back to the NEW flag when nothing was disclosed', () => {
+        renderPlanner([talk({ speakerExperience: '', newSpeaker: true })])
+        expect(within(unplacedCard('A Talk')).getByText('NEW')).toBeTruthy()
     })
 
     it('shows the topic category in full rather than an initial', () => {
@@ -121,6 +143,74 @@ describe('talk signal chips', () => {
         renderPlanner([talk({ um: true, rank: 7 })], board)
         expect(screen.getByText('#7')).toBeTruthy()
         expect(screen.getByText('UM')).toBeTruthy()
+    })
+})
+
+describe('opening talk details', () => {
+    const BOARD_WITH_PLACED_TALK: PlannerBoard = {
+        tracks: [
+            {
+                trackId: 'tr1',
+                name: 'Track 1',
+                slots: [
+                    { slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk', label: null },
+                    { slotId: 'b1', length: '45 minutes', talkId: null, kind: 'break', label: 'Lunch' },
+                ],
+            },
+        ],
+        capacity: {},
+    }
+
+    it('reports the talk id when a placed card is clicked', () => {
+        const selected: string[] = []
+        render(
+            <AgendaPlanner
+                board={BOARD_WITH_PLACED_TALK}
+                talks={[talk({ talkId: 't1', title: 'Placed Talk' })]}
+                availableLengths={['45 minutes']}
+                onChange={() => {}}
+                onSelectTalk={(id) => selected.push(id)}
+            />,
+        )
+        fireEvent.click(screen.getByText('Placed Talk'))
+        expect(selected).toEqual(['t1'])
+    })
+
+    it('reports the talk id when an unplaced card is clicked', () => {
+        const selected: string[] = []
+        render(
+            <AgendaPlanner
+                board={BOARD_WITH_PLACED_TALK}
+                talks={[talk({ talkId: 'other', title: 'Unplaced Talk' })]}
+                availableLengths={['45 minutes']}
+                onChange={() => {}}
+                onSelectTalk={(id) => selected.push(id)}
+            />,
+        )
+        // The title also appears in the empty slot's <option> list, so match
+        // the button specifically.
+        fireEvent.click(screen.getByRole('button', { name: 'Unplaced Talk' }))
+        expect(selected).toEqual(['other'])
+    })
+
+    it('exposes the title as a button so it is keyboard reachable', () => {
+        renderPlanner([talk({ title: 'Keyboard Talk' })])
+        expect(screen.getByRole('button', { name: 'Keyboard Talk' })).toBeTruthy()
+    })
+
+    it('does not open details when a break label is clicked', () => {
+        const selected: string[] = []
+        render(
+            <AgendaPlanner
+                board={BOARD_WITH_PLACED_TALK}
+                talks={[talk({ talkId: 't1', title: 'Placed Talk' })]}
+                availableLengths={['45 minutes']}
+                onChange={() => {}}
+                onSelectTalk={(id) => selected.push(id)}
+            />,
+        )
+        fireEvent.click(screen.getByLabelText('Break name'))
+        expect(selected).toEqual([])
     })
 })
 
@@ -244,7 +334,7 @@ describe('board grid alignment', () => {
 
     it('puts the first slot of every track in the same grid row', () => {
         render(
-            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} onSelectTalk={() => {}} />,
         )
         // Row 1 is the track header, so the first slot of each track sits in
         // row 2 — that shared row is what keeps the cards aligned.
@@ -254,7 +344,7 @@ describe('board grid alignment', () => {
 
     it('places each track in its own grid column', () => {
         render(
-            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} onSelectTalk={() => {}} />,
         )
         expect(slotCardFor('First Talk')?.style.gridColumn).toBe('1')
         expect(slotCardFor(TALKS[1].title)?.style.gridColumn).toBe('2')
@@ -262,7 +352,7 @@ describe('board grid alignment', () => {
 
     it('puts a second slot in the next row down, not alongside the first', () => {
         render(
-            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} onSelectTalk={() => {}} />,
         )
         // Track 1's empty second slot renders its "pick a talk" dropdown.
         const emptySlot = screen.getByLabelText('Assign talk to slot').closest<HTMLElement>('[style*="grid-row"]')
@@ -272,7 +362,7 @@ describe('board grid alignment', () => {
 
     it('sizes the grid to the longest track so shorter ones leave empty rows', () => {
         const { container } = render(
-            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} onSelectTalk={() => {}} />,
         )
         const grid = container.querySelector<HTMLElement>('[style*="grid-template-columns"]')
         expect(grid?.style.gridTemplateColumns).toBe('repeat(2, 260px)')
