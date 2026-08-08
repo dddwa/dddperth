@@ -39,6 +39,11 @@ const HE_HIM_PRONOUN = 'He/Him'
 // to auto-default the agenda status below rather than making reviewers set it by hand.
 const DECLINED_SESSIONIZE_STATUSES = new Set(['declined', 'rejected', 'withdrawn'])
 
+// Sentinel values used inside otherwise value-based filters, prefixed so they
+// can never collide with a real Sessionize answer.
+const NEW_SPEAKER_FLAG_FILTER = '__new_speaker_flag__'
+const ANY_MINORITY_FILTER = 'minority'
+
 type TalkStatus = 'locked' | 'tentative' | 'declined' | 'waitlist' | ''
 
 const STATUS_OPTIONS: { value: TalkStatus; label: string }[] = [
@@ -759,10 +764,7 @@ export default function VotingAgenda() {
     const [pronounFilter, setPronounFilter] = useState<string[]>([])
     const [roleFilter, setRoleFilter] = useState<string[]>([])
     const [expFilter, setExpFilter] = useState<string[]>([])
-    const [topicFilter, setTopicFilter] = useState<string[]>([])
     const [statusFilter, setStatusFilter] = useState<string[]>([])
-    const [newSpeakerFilter, setNewSpeakerFilter] = useState<string[]>([])
-    const [minorityFilter, setMinorityFilter] = useState<string[]>([])
 
     /** Toggle a value in a multi-select filter — used by the clickable stat tiles. */
     function toggleFilterValue(setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) {
@@ -898,6 +900,7 @@ export default function VotingAgenda() {
     }, [agendaTalks])
 
     const activeFilterCount = [
+        statusFilter,
         lengthFilter,
         tagFilter,
         levelFilter,
@@ -905,14 +908,11 @@ export default function VotingAgenda() {
         pronounFilter,
         roleFilter,
         expFilter,
-        topicFilter,
-        statusFilter,
-        newSpeakerFilter,
-        minorityFilter,
     ].reduce((total, filter) => total + filter.length, 0)
     const hasActiveFilters = activeFilterCount > 0
 
     function clearFilters() {
+        setStatusFilter([])
         setLengthFilter([])
         setTagFilter([])
         setLevelFilter([])
@@ -920,10 +920,6 @@ export default function VotingAgenda() {
         setPronounFilter([])
         setRoleFilter([])
         setExpFilter([])
-        setTopicFilter([])
-        setStatusFilter([])
-        setNewSpeakerFilter([])
-        setMinorityFilter([])
     }
 
     const filteredTalks = useMemo(() => {
@@ -931,34 +927,51 @@ export default function VotingAgenda() {
         // value is enough (OR). Filters are then AND'd together.
         const matchesAny = (selected: string[], predicate: (value: string) => boolean) =>
             selected.length === 0 || selected.some(predicate)
-        // Yes/no filters: selecting both is the same as selecting neither.
-        const matchesBoolean = (selected: string[], actual: boolean) =>
-            selected.length === 0 || selected.includes(actual ? 'yes' : 'no')
 
         return agendaTalks.filter((talk) => {
+            if (!matchesAny(statusFilter, (value) => getEffectiveStatus(talk) === value)) return false
             if (!matchesAny(lengthFilter, (value) => talk.length === value)) return false
+            // The Tags filter covers both the general-topic badge and the
+            // individual talk topics, since both render in that column.
             if (!matchesAny(tagFilter, (value) => getEffectiveTopic(talk) === value || talk.tags.includes(value))) {
                 return false
             }
             if (!matchesAny(levelFilter, (value) => formatLevel(talk.level) === value)) return false
-            if (!matchesBoolean(umFilter, getEffectiveUm(talk))) return false
             if (!matchesAny(pronounFilter, (value) => talk.speakers.some((s) => s.pronoun === value))) return false
             if (!matchesAny(roleFilter, (value) => talk.speakers.some((s) => s.role === value))) return false
-            if (!matchesAny(expFilter, (value) => talk.speakers.some((s) => s.experience === value))) return false
 
-            // Top-level (stat tile) filters.
-            if (!matchesAny(topicFilter, (value) => getEffectiveTopic(talk) === value)) return false
-            if (!matchesAny(statusFilter, (value) => getEffectiveStatus(talk) === value)) return false
-            if (!matchesBoolean(newSpeakerFilter, getEffectiveExpFlag(talk))) return false
-            // Matches the "UM" stat tile's definition of a diverse speaker:
-            // a disclosed+ticked group, or any pronoun other than He/Him.
-            const hasMinoritySpeaker =
-                getEffectiveUm(talk) || talk.speakers.some((s) => s.pronoun && s.pronoun !== HE_HIM_PRONOUN)
-            if (!matchesBoolean(minorityFilter, hasMinoritySpeaker)) return false
+            // UM: the ticked-group checkbox, plus a wider "any minority" option
+            // matching the UM stat tile (ticked group OR non-He/Him pronoun).
+            if (
+                !matchesAny(umFilter, (value) => {
+                    if (value === ANY_MINORITY_FILTER) {
+                        return (
+                            getEffectiveUm(talk) ||
+                            talk.speakers.some((s) => s.pronoun && s.pronoun !== HE_HIM_PRONOUN)
+                        )
+                    }
+                    return getEffectiveUm(talk) === (value === 'yes')
+                })
+            ) {
+                return false
+            }
+
+            // Exp: specific disclosed experience levels, plus the derived
+            // junior/new-speaker flag.
+            if (
+                !matchesAny(expFilter, (value) =>
+                    value === NEW_SPEAKER_FLAG_FILTER
+                        ? getEffectiveExpFlag(talk)
+                        : talk.speakers.some((s) => s.experience === value),
+                )
+            ) {
+                return false
+            }
             return true
         })
     }, [
         agendaTalks,
+        statusFilter,
         lengthFilter,
         tagFilter,
         levelFilter,
@@ -966,10 +979,6 @@ export default function VotingAgenda() {
         pronounFilter,
         roleFilter,
         expFilter,
-        topicFilter,
-        statusFilter,
-        newSpeakerFilter,
-        minorityFilter,
         overridesByTalkId,
         statusByTalkId,
     ])
@@ -1172,6 +1181,14 @@ export default function VotingAgenda() {
             label: 'Status',
             headerWidth: '[150px]',
             cellProps: { minW: '[150px]' },
+            filter: {
+                values: statusFilter,
+                onChange: setStatusFilter,
+                options: STATUS_OPTIONS.filter((o) => o.value !== '').map((o) => ({
+                    value: o.value,
+                    label: o.label,
+                })),
+            },
             renderCell: (talk) => (
                 <styled.select
                     value={getEffectiveStatus(talk)}
@@ -1307,9 +1324,13 @@ export default function VotingAgenda() {
             filter: {
                 values: umFilter,
                 onChange: setUmFilter,
+                // "Ticked group" is the checkbox in this column; "incl. pronoun"
+                // is the wider definition the UM stat tile counts (ticked group
+                // OR any non-He/Him pronoun).
                 options: [
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'no', label: 'No' },
+                    { value: 'yes', label: 'Ticked group' },
+                    { value: 'no', label: 'Not ticked' },
+                    { value: ANY_MINORITY_FILTER, label: 'Any minority (incl. pronoun)' },
                 ],
             },
             cellProps: { fontSize: 'xs', color: 'admin.600' },
@@ -1354,7 +1375,12 @@ export default function VotingAgenda() {
             filter: {
                 values: expFilter,
                 onChange: setExpFilter,
-                options: filterOptions.experiences.map((exp) => ({ value: exp, label: formatExperience(exp) })),
+                // The disclosed experience levels, plus the derived junior/new
+                // flag (which honours the per-talk checkbox override).
+                options: [
+                    { value: NEW_SPEAKER_FLAG_FILTER, label: 'New / junior (flagged)' },
+                    ...filterOptions.experiences.map((exp) => ({ value: exp, label: formatExperience(exp) })),
+                ],
             },
             cellProps: { fontSize: 'xs', color: 'admin.600' },
             renderCell: (talk) => (
@@ -1501,8 +1527,8 @@ export default function VotingAgenda() {
                                     lockedCount={item.lockedCount}
                                     lockedPct={item.lockedPct}
                                     tentativeCount={item.tentativeCount}
-                                    active={topicFilter.includes(item.key)}
-                                    onToggle={() => toggleFilterValue(setTopicFilter, item.key)}
+                                    active={tagFilter.includes(item.key)}
+                                    onToggle={() => toggleFilterValue(setTagFilter, item.key)}
                                 />
                             ))
                         )}
@@ -1571,14 +1597,14 @@ export default function VotingAgenda() {
                                 <StatTile
                                     label="UM"
                                     value={formatCountPercent(stats.diverseSpeakerCount, stats.totalSpeakers)}
-                                    active={minorityFilter.includes('yes')}
-                                    onToggle={() => toggleFilterValue(setMinorityFilter, 'yes')}
+                                    active={umFilter.includes(ANY_MINORITY_FILTER)}
+                                    onToggle={() => toggleFilterValue(setUmFilter, ANY_MINORITY_FILTER)}
                                 />
                                 <StatTile
                                     label="New"
                                     value={formatCountPercent(stats.juniorOrNewSpeakerCount, stats.totalSpeakers)}
-                                    active={newSpeakerFilter.includes('yes')}
-                                    onToggle={() => toggleFilterValue(setNewSpeakerFilter, 'yes')}
+                                    active={expFilter.includes(NEW_SPEAKER_FLAG_FILTER)}
+                                    onToggle={() => toggleFilterValue(setExpFilter, NEW_SPEAKER_FLAG_FILTER)}
                                 />
                             </Flex>
                         </Box>
@@ -1637,62 +1663,9 @@ export default function VotingAgenda() {
                 </Flex>
 
                 {agendaTalks.length > 0 && (
-                    <Flex gap="3" flexWrap="wrap" mb="4" alignItems="flex-end">
-                        <MultiSelectFilter
-                            label="General Topic"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[190px]"
-                            values={topicFilter}
-                            onChange={setTopicFilter}
-                            options={filterOptions.generalTopics.map((t) => ({ value: t, label: t }))}
-                        />
-                        <MultiSelectFilter
-                            label="Status"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[150px]"
-                            values={statusFilter}
-                            onChange={setStatusFilter}
-                            options={STATUS_OPTIONS.filter((o) => o.value !== '').map((o) => ({
-                                value: o.value,
-                                label: o.label,
-                            }))}
-                        />
-                        {/* The derived junior/new-speaker flag (including manual
-                            overrides) — the Exp column filters by the specific
-                            disclosed experience level instead. */}
-                        <MultiSelectFilter
-                            label="New speaker flag"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[160px]"
-                            values={newSpeakerFilter}
-                            onChange={setNewSpeakerFilter}
-                            options={[
-                                { value: 'yes', label: 'New / junior' },
-                                { value: 'no', label: 'Experienced' },
-                            ]}
-                        />
-                        {/* Broader than the UM column filter, which matches the
-                            ticked-group checkbox alone — this also counts any
-                            non-He/Him pronoun, matching the UM stat tile. */}
-                        <MultiSelectFilter
-                            label="Minorities (incl. pronoun)"
-                            showLabel
-                            fontSize="sm"
-                            minWidth="[190px]"
-                            values={minorityFilter}
-                            onChange={setMinorityFilter}
-                            options={[
-                                { value: 'yes', label: 'Underrepresented' },
-                                { value: 'no', label: 'Not underrepresented' },
-                            ]}
-                        />
-                        <styled.p fontSize="sm" color="admin.600" pb="1">
-                            Showing {filteredTalks.length} of {agendaTalks.length}
-                        </styled.p>
-                    </Flex>
+                    <styled.p fontSize="sm" color="admin.600" mb="3">
+                        Showing {filteredTalks.length} of {agendaTalks.length}
+                    </styled.p>
                 )}
 
                 {filteredTalks.length > 0 ? (
