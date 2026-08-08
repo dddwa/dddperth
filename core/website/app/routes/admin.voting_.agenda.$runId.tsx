@@ -3,8 +3,10 @@ import { DateTime } from 'luxon'
 import { useEffect, useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
+import { AgendaPlanner, type PlannerTalk } from '~/components/agenda-planner'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
+import { MultiSelectFilter, type MultiSelectOption } from '~/components/multi-select-filter'
 import { Button } from '~/components/ui/button'
 import * as Modal from '~/components/ui/drawer'
 import { requireAdmin } from '~/lib/auth.server'
@@ -36,6 +38,11 @@ const HE_HIM_PRONOUN = 'He/Him'
 // Sessionize session statuses that mean a talk was withdrawn/rejected — used
 // to auto-default the agenda status below rather than making reviewers set it by hand.
 const DECLINED_SESSIONIZE_STATUSES = new Set(['declined', 'rejected', 'withdrawn'])
+
+// Sentinel values used inside otherwise value-based filters, prefixed so they
+// can never collide with a real Sessionize answer.
+const NEW_SPEAKER_FLAG_FILTER = '__new_speaker_flag__'
+const ANY_MINORITY_FILTER = 'minority'
 
 type TalkStatus = 'locked' | 'tentative' | 'declined' | 'waitlist' | ''
 
@@ -84,7 +91,6 @@ interface AgendaTalk {
     wins: number
     losses: number
     totalVotes: number
-    winPct: number
     speakers: AgendaSpeaker[]
     isDeclinedInSessionize: boolean
     // False when Sessionize no longer returns this talk at all (withdrawn talks
@@ -165,6 +171,18 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
     const talkResults = await voting.getTalkResults(runId)
 
+    // The curated list of disclosed answers that actually count as
+    // underrepresented, ticked by organizers on /admin/voting. Matched
+    // case-insensitively on the trimmed answer, since the free-text answers
+    // come straight from Sessionize ("Women in Tech" vs "women in tech").
+    let underrepresentedGroupConfig = new Set<string>()
+    try {
+        const selectedGroups = await voting.getUnderrepresentedGroupsConfig()
+        underrepresentedGroupConfig = new Set(selectedGroups.map((group) => group.trim().toLowerCase()))
+    } catch (error: any) {
+        console.error('Error loading underrepresented groups config:', error)
+    }
+
     let agendaTalks: AgendaTalk[] = []
 
     if (talkResults.length > 0) {
@@ -192,10 +210,12 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
                             ? getSpeakerUnderrepresentedGroup(speaker, underrepresentedGroupsQuestionId)
                             : undefined
 
-                    // Any disclosed answer counts as underrepresented unless the
-                    // speaker explicitly answered "No" — organizers override
-                    // individual talks case-by-case via the UM checkbox instead
-                    // of maintaining a curated group list.
+                    // A disclosed answer only counts as underrepresented when
+                    // organizers have ticked it on /admin/voting — the raw
+                    // answers are free text, so plenty of them ("No", or a
+                    // speaker musing that their groups are debatable) shouldn't
+                    // count. Individual talks can still be overridden by hand
+                    // via the UM checkbox.
                     return {
                         id: sessionSpeaker.id,
                         name: sessionSpeaker.name,
@@ -207,7 +227,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
                         additionalInfo: speaker ? getSpeakerAdditionalInfo(speaker) : undefined,
                         underrepresentedGroup,
                         isUnderrepresented: underrepresentedGroup
-                            ? underrepresentedGroup.trim().toLowerCase() !== 'no'
+                            ? underrepresentedGroupConfig.has(underrepresentedGroup.trim().toLowerCase())
                             : false,
                     }
                 })
@@ -224,7 +244,6 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
                     wins: result.wins,
                     losses: result.losses,
                     totalVotes: result.totalVotes,
-                    winPct: result.winPct,
                     speakers: agendaSpeakers,
                     // Sessionize's Sessions view drops declined/withdrawn talks
                     // entirely rather than returning them with a "Declined"
@@ -249,6 +268,15 @@ function formatSpeakerValues(speakers: AgendaSpeaker[], get: (speaker: AgendaSpe
     return speakers.map((speaker) => get(speaker) || '—').join(', ')
 }
 
+// Derived from wins/totalVotes rather than the stored winPct, because the two
+// supported ELO import formats disagree on units: the Monte Carlo importer
+// derives a fraction (0.83) while the original format passes the file's own
+// value through as a percentage (83.3). Wins and totalVotes are unambiguous.
+function formatWinPct(talk: { wins: number; totalVotes: number }): string {
+    if (talk.totalVotes <= 0) return '0.0'
+    return ((talk.wins / talk.totalVotes) * 100).toFixed(1)
+}
+
 function formatCountPercent(count: number, total: number): string {
     const pct = total > 0 ? (count / total) * 100 : 0
     return `${count} (${pct.toFixed(1)}%)`
@@ -269,7 +297,11 @@ function formatExperience(experience: string): string {
 }
 
 function formatLevel(level: string): string {
-    return level.replace(/Mostly /g, '').replace('No experience necessary', 'Beginner')
+    const normalised = level.replace(/Mostly /g, '').replace('No experience necessary', 'Beginner')
+    // Sessionize's level answers are inconsistently cased ("Mostly advanced" vs
+    // "No experience necessary"), which makes the filter list look ragged and
+    // sort oddly — upper-case the first letter so they line up.
+    return normalised.charAt(0).toUpperCase() + normalised.slice(1)
 }
 
 function csvEscape(value: string): string {
@@ -330,7 +362,7 @@ function downloadAgendaCsv(
         String(talk.wins),
         String(talk.losses),
         String(talk.totalVotes),
-        talk.winPct.toFixed(2),
+        formatWinPct(talk),
     ])
 
     const csv = [headers, ...rows].map((row) => row.map((cell) => csvEscape(cell)).join(',')).join('\r\n')
@@ -347,14 +379,38 @@ function StatTile({
     label,
     value,
     tentativeCount,
+    active,
+    onToggle,
 }: {
     label: string
     value: string | number
     tentativeCount?: number
+    /** True when this tile's value is currently in the matching filter. */
+    active?: boolean
+    onToggle?: () => void
 }) {
     return (
-        <Box flex="1" minW="[170px]">
-            <styled.p fontSize="sm" color="admin.600" mb="1">
+        <Box
+            flex="1"
+            minW="[170px]"
+            {...(onToggle
+                ? {
+                      as: 'button' as const,
+                      type: 'button' as const,
+                      onClick: onToggle,
+                      textAlign: 'left' as const,
+                      cursor: 'pointer',
+                      title: active ? `Remove "${label}" filter` : `Filter by "${label}"`,
+                      'aria-pressed': active,
+                      borderRadius: 'md',
+                      p: '2',
+                      m: '-2',
+                      bg: active ? 'admin.100' : 'transparent',
+                      _hover: { bg: 'admin.50' },
+                  }
+                : {})}
+        >
+            <styled.p fontSize="sm" color={active ? 'indigo.7' : 'admin.600'} fontWeight={active ? 'semibold' : 'normal'} mb="1">
                 {label}
             </styled.p>
             <styled.p fontSize="lg" fontWeight="medium">
@@ -389,6 +445,8 @@ function CategoryStatTile({
     lockedCount,
     lockedPct,
     tentativeCount,
+    active,
+    onToggle,
 }: {
     label: string
     totalCount: number
@@ -396,10 +454,34 @@ function CategoryStatTile({
     lockedCount: number
     lockedPct: number
     tentativeCount: number
+    /** True when this tile's value is currently in the matching filter. */
+    active?: boolean
+    onToggle?: () => void
 }) {
     return (
-        <Box flex="1" minW="[170px]">
-            <styled.p fontSize="sm" color="admin.600" mb="1">
+        <Box
+            flex="1"
+            minW="[170px]"
+            // Tiles double as filter toggles — clicking one adds/removes its
+            // value from the multi-select filter for that dimension.
+            {...(onToggle
+                ? {
+                      as: 'button' as const,
+                      type: 'button' as const,
+                      onClick: onToggle,
+                      textAlign: 'left' as const,
+                      cursor: 'pointer',
+                      title: active ? `Remove "${label}" from filter` : `Filter by "${label}"`,
+                      'aria-pressed': active,
+                      borderRadius: 'md',
+                      p: '2',
+                      m: '-2',
+                      bg: active ? 'admin.100' : 'transparent',
+                      _hover: { bg: 'admin.50' },
+                  }
+                : {})}
+        >
+            <styled.p fontSize="sm" color={active ? 'indigo.7' : 'admin.600'} fontWeight={active ? 'semibold' : 'normal'} mb="1">
                 {label}
             </styled.p>
             <styled.p fontSize="xs" color="admin.500" mb="0.5">
@@ -436,7 +518,7 @@ function TagBadge({ children, emphasis }: { children: string; emphasis?: boolean
             bg={emphasis ? 'indigo.7' : 'admin.100'}
             color={emphasis ? 'white' : 'admin.700'}
             borderRadius="sm"
-            fontSize="[0.7rem]"
+            fontSize="xs"
             fontWeight={emphasis ? 'semibold' : 'normal'}
         >
             {children}
@@ -466,7 +548,9 @@ function TopicSelectBadge({
     // topic name (e.g. "Cloud, Infrastructure & Operations") can't blow out
     // the whole Tags column — it clips with the full name in the tooltip.
     const selectedText = value || 'Uncategorised'
-    const selectWidthCh = Math.min(selectedText.length, 16) + 2
+    // Cap sized for the badge's font — long topic names still clip, but with
+    // the full name in the tooltip. Keep in step with the fontSize below.
+    const selectWidthCh = Math.min(selectedText.length, 24) + 2
 
     return (
         <>
@@ -479,7 +563,7 @@ function TopicSelectBadge({
                 bg="indigo.7"
                 color="white"
                 borderRadius="sm"
-                fontSize="xs"
+                fontSize="sm"
                 fontWeight="semibold"
                 border="none"
                 appearance="none"
@@ -547,9 +631,9 @@ const SESSION_DEPENDENT_COLUMNS = new Set<ColumnId>([
 ])
 
 interface ColumnFilter {
-    value: string
-    onChange: (value: string) => void
-    options: { value: string; label: string }[]
+    values: string[]
+    onChange: (values: string[]) => void
+    options: MultiSelectOption[]
 }
 
 interface ColumnDef {
@@ -576,8 +660,12 @@ function ColumnHeaderCell({
     onToggle: () => void
 }) {
     const filter = column.filter
-    const activeFilterLabel = filter ? filter.options.find((o) => o.value === filter.value)?.label : undefined
-    const tooltip = activeFilterLabel && filter?.value ? `${column.label} — filter: ${activeFilterLabel}` : column.label
+    const activeFilterLabels = filter
+        ? filter.options.filter((o) => filter.values.includes(o.value)).map((o) => o.label)
+        : []
+    const tooltip = activeFilterLabels.length
+        ? `${column.label} — filter: ${activeFilterLabels.join(', ')}`
+        : column.label
 
     if (collapsed) {
         return (
@@ -595,7 +683,7 @@ function ColumnHeaderCell({
                     borderRadius="sm"
                     py="1"
                     fontSize="xs"
-                    color={filter?.value ? 'indigo.7' : 'admin.600'}
+                    color={activeFilterLabels.length ? 'indigo.7' : 'admin.600'}
                 >
                     »
                 </styled.button>
@@ -628,24 +716,13 @@ function ColumnHeaderCell({
                 </styled.button>
             </Flex>
             {filter && (
-                <styled.select
-                    value={filter.value}
-                    onChange={(e) => filter.onChange(e.target.value)}
-                    bg="white"
-                    border="admin-subtle"
-                    borderRadius="sm"
-                    px="1"
-                    py="1"
-                    fontSize="2xs"
-                    fontWeight="normal"
-                    width="full"
-                >
-                    {filter.options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </styled.select>
+                <MultiSelectFilter
+                    label={column.label}
+                    values={filter.values}
+                    options={filter.options}
+                    onChange={filter.onChange}
+                    minWidth="[80px]"
+                />
             )}
         </styled.th>
     )
@@ -668,16 +745,31 @@ export default function VotingAgenda() {
 
     const statusStorageKey = `voting-agenda-status:${runId}`
     const overridesStorageKey = `voting-agenda-overrides:${runId}`
+    const plannerStorageKey = `voting-agenda-planner:${runId}`
     const [statusByTalkId, setStatusByTalkId] = useState<Record<string, TalkStatus>>({})
     const [overridesByTalkId, setOverridesByTalkId] = useState<Record<string, TalkOverrides>>({})
     const [selectedTalkId, setSelectedTalkId] = useState<string | null>(null)
+    // Additional Info is too long to sit inline in the table, so the cell is a
+    // one-line preview that opens the full text in its own popup.
+    const [infoTalkId, setInfoTalkId] = useState<string | null>(null)
 
-    const [lengthFilter, setLengthFilter] = useState('')
-    const [tagFilter, setTagFilter] = useState('')
-    const [umFilter, setUmFilter] = useState('')
-    const [pronounFilter, setPronounFilter] = useState('')
-    const [roleFilter, setRoleFilter] = useState('')
-    const [expFilter, setExpFilter] = useState('')
+    // Every filter is multi-select: an empty array means "no filter", and
+    // multiple values within one filter are OR'd. Separate filters are AND'd.
+    // The stat tiles at the top of the page write into the same state, so
+    // clicking a tile and picking from a dropdown are the same action.
+    const [lengthFilter, setLengthFilter] = useState<string[]>([])
+    const [tagFilter, setTagFilter] = useState<string[]>([])
+    const [levelFilter, setLevelFilter] = useState<string[]>([])
+    const [umFilter, setUmFilter] = useState<string[]>([])
+    const [pronounFilter, setPronounFilter] = useState<string[]>([])
+    const [roleFilter, setRoleFilter] = useState<string[]>([])
+    const [expFilter, setExpFilter] = useState<string[]>([])
+    const [statusFilter, setStatusFilter] = useState<string[]>([])
+
+    /** Toggle a value in a multi-select filter — used by the clickable stat tiles. */
+    function toggleFilterValue(setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) {
+        setter((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]))
+    }
 
     const [collapsedColumns, setCollapsedColumns] = useState<Set<ColumnId>>(new Set())
 
@@ -772,6 +864,7 @@ export default function VotingAgenda() {
     const filterOptions = useMemo(() => {
         const lengths = new Set<string>()
         const tags = new Set<string>()
+        const levels = new Set<string>()
         const generalTopics = new Set<string>()
         const pronouns = new Set<string>()
         const roles = new Set<string>()
@@ -779,6 +872,10 @@ export default function VotingAgenda() {
 
         for (const talk of agendaTalks) {
             if (talk.length) lengths.add(talk.length)
+            // Normalised the same way the Level column and stat tiles display
+            // it, so the filter values match what's on screen.
+            const level = formatLevel(talk.level)
+            if (level) levels.add(level)
             if (talk.generalTopic) {
                 tags.add(talk.generalTopic)
                 generalTopics.add(talk.generalTopic)
@@ -794,6 +891,7 @@ export default function VotingAgenda() {
         return {
             lengths: Array.from(lengths).sort(),
             tags: Array.from(tags).sort(),
+            levels: Array.from(levels).sort(),
             generalTopics: Array.from(generalTopics).sort(),
             pronouns: Array.from(pronouns).sort(),
             roles: Array.from(roles).sort(),
@@ -801,31 +899,89 @@ export default function VotingAgenda() {
         }
     }, [agendaTalks])
 
-    const hasActiveFilters = Boolean(
-        lengthFilter || tagFilter || umFilter || pronounFilter || roleFilter || expFilter,
-    )
+    const activeFilterCount = [
+        statusFilter,
+        lengthFilter,
+        tagFilter,
+        levelFilter,
+        umFilter,
+        pronounFilter,
+        roleFilter,
+        expFilter,
+    ].reduce((total, filter) => total + filter.length, 0)
+    const hasActiveFilters = activeFilterCount > 0
 
     function clearFilters() {
-        setLengthFilter('')
-        setTagFilter('')
-        setUmFilter('')
-        setPronounFilter('')
-        setRoleFilter('')
-        setExpFilter('')
+        setStatusFilter([])
+        setLengthFilter([])
+        setTagFilter([])
+        setLevelFilter([])
+        setUmFilter([])
+        setPronounFilter([])
+        setRoleFilter([])
+        setExpFilter([])
     }
 
     const filteredTalks = useMemo(() => {
+        // An empty filter array matches everything; otherwise any one selected
+        // value is enough (OR). Filters are then AND'd together.
+        const matchesAny = (selected: string[], predicate: (value: string) => boolean) =>
+            selected.length === 0 || selected.some(predicate)
+
         return agendaTalks.filter((talk) => {
-            if (lengthFilter && talk.length !== lengthFilter) return false
-            if (tagFilter && getEffectiveTopic(talk) !== tagFilter && !talk.tags.includes(tagFilter)) return false
-            if (umFilter === 'yes' && !getEffectiveUm(talk)) return false
-            if (umFilter === 'no' && getEffectiveUm(talk)) return false
-            if (pronounFilter && !talk.speakers.some((s) => s.pronoun === pronounFilter)) return false
-            if (roleFilter && !talk.speakers.some((s) => s.role === roleFilter)) return false
-            if (expFilter && !talk.speakers.some((s) => s.experience === expFilter)) return false
+            if (!matchesAny(statusFilter, (value) => getEffectiveStatus(talk) === value)) return false
+            if (!matchesAny(lengthFilter, (value) => talk.length === value)) return false
+            // The Tags filter covers both the general-topic badge and the
+            // individual talk topics, since both render in that column.
+            if (!matchesAny(tagFilter, (value) => getEffectiveTopic(talk) === value || talk.tags.includes(value))) {
+                return false
+            }
+            if (!matchesAny(levelFilter, (value) => formatLevel(talk.level) === value)) return false
+            if (!matchesAny(pronounFilter, (value) => talk.speakers.some((s) => s.pronoun === value))) return false
+            if (!matchesAny(roleFilter, (value) => talk.speakers.some((s) => s.role === value))) return false
+
+            // UM: the ticked-group checkbox, plus a wider "any minority" option
+            // matching the UM stat tile (ticked group OR non-He/Him pronoun).
+            if (
+                !matchesAny(umFilter, (value) => {
+                    if (value === ANY_MINORITY_FILTER) {
+                        return (
+                            getEffectiveUm(talk) ||
+                            talk.speakers.some((s) => s.pronoun && s.pronoun !== HE_HIM_PRONOUN)
+                        )
+                    }
+                    return getEffectiveUm(talk) === (value === 'yes')
+                })
+            ) {
+                return false
+            }
+
+            // Exp: specific disclosed experience levels, plus the derived
+            // junior/new-speaker flag.
+            if (
+                !matchesAny(expFilter, (value) =>
+                    value === NEW_SPEAKER_FLAG_FILTER
+                        ? getEffectiveExpFlag(talk)
+                        : talk.speakers.some((s) => s.experience === value),
+                )
+            ) {
+                return false
+            }
             return true
         })
-    }, [agendaTalks, lengthFilter, tagFilter, umFilter, pronounFilter, roleFilter, expFilter, overridesByTalkId])
+    }, [
+        agendaTalks,
+        statusFilter,
+        lengthFilter,
+        tagFilter,
+        levelFilter,
+        umFilter,
+        pronounFilter,
+        roleFilter,
+        expFilter,
+        overridesByTalkId,
+        statusByTalkId,
+    ])
 
     const stats = useMemo(() => {
         const totalTalks = agendaTalks.length
@@ -998,12 +1154,41 @@ export default function VotingAgenda() {
     }, [agendaTalks, speakerIdsWithLockedTalk, statusByTalkId])
 
     const selectedTalk = selectedTalkId ? agendaTalks.find((t) => t.talkId === selectedTalkId) : undefined
+    const infoTalk = infoTalkId ? agendaTalks.find((t) => t.talkId === infoTalkId) : undefined
+
+    // Only talks in the running are worth laying onto the board — scheduling a
+    // declined talk isn't meaningful, and the full ranked list would swamp it.
+    const plannerTalks: PlannerTalk[] = useMemo(
+        () =>
+            agendaTalks
+                .filter((talk) => {
+                    const status = getEffectiveStatus(talk)
+                    return status === 'locked' || status === 'tentative'
+                })
+                .map((talk) => ({
+                    talkId: talk.talkId,
+                    title: talk.title,
+                    length: talk.length,
+                    speakers: talk.speakers.map((s) => s.name).join(', ') || 'Unknown Speaker',
+                    status: getEffectiveStatus(talk),
+                })),
+        [agendaTalks, statusByTalkId],
+    )
 
     const columns: ColumnDef[] = [
         {
             id: 'status',
             label: 'Status',
-            headerWidth: '[130px]',
+            headerWidth: '[150px]',
+            cellProps: { minW: '[150px]' },
+            filter: {
+                values: statusFilter,
+                onChange: setStatusFilter,
+                options: STATUS_OPTIONS.filter((o) => o.value !== '').map((o) => ({
+                    value: o.value,
+                    label: o.label,
+                })),
+            },
             renderCell: (talk) => (
                 <styled.select
                     value={getEffectiveStatus(talk)}
@@ -1013,7 +1198,7 @@ export default function VotingAgenda() {
                     borderRadius="md"
                     px="2"
                     py="1"
-                    fontSize="xs"
+                    fontSize="sm"
                     width="full"
                 >
                     {STATUS_OPTIONS.map((option) => (
@@ -1035,13 +1220,17 @@ export default function VotingAgenda() {
         {
             id: 'title',
             label: 'Talk Title',
-            cellProps: { minW: '[300px]', maxW: '[420px]' },
+            headerWidth: '[420px]',
+            cellProps: { minW: '[420px]', maxW: '[560px]' },
             renderCell: (talk) => (
                 <styled.button
                     type="button"
                     onClick={() => setSelectedTalkId(talk.talkId)}
                     display="block"
                     width="full"
+                    // Anchors the column's intrinsic width — an auto-layout
+                    // <td> ignores minW, so the content has to carry it.
+                    minW="[380px]"
                     textAlign="left"
                     whiteSpace="normal"
                     fontWeight="medium"
@@ -1057,9 +1246,9 @@ export default function VotingAgenda() {
             id: 'length',
             label: 'Length',
             filter: {
-                value: lengthFilter,
+                values: lengthFilter,
                 onChange: setLengthFilter,
-                options: [{ value: '', label: 'All' }, ...filterOptions.lengths.map((l) => ({ value: l, label: l }))],
+                options: filterOptions.lengths.map((l) => ({ value: l, label: l })),
             },
             cellProps: { fontSize: 'xs', whiteSpace: 'nowrap' },
             renderCell: (talk) => talk.length || '—',
@@ -1067,6 +1256,11 @@ export default function VotingAgenda() {
         {
             id: 'level',
             label: 'Level',
+            filter: {
+                values: levelFilter,
+                onChange: setLevelFilter,
+                options: filterOptions.levels.map((l) => ({ value: l, label: l })),
+            },
             cellProps: { fontSize: 'xs', maxW: '[140px]' },
             renderCell: (talk) => {
                 const displayLevel = formatLevel(talk.level)
@@ -1083,14 +1277,17 @@ export default function VotingAgenda() {
             id: 'tags',
             label: 'Tags',
             filter: {
-                value: tagFilter,
+                values: tagFilter,
                 onChange: setTagFilter,
-                options: [{ value: '', label: 'All' }, ...filterOptions.tags.map((t) => ({ value: t, label: t }))],
+                options: filterOptions.tags.map((t) => ({ value: t, label: t })),
             },
-            cellProps: { minW: '[220px]', maxW: '[260px]' },
+            headerWidth: '[280px]',
+            cellProps: { minW: '[280px]', maxW: '[320px]' },
             renderCell: (talk) => {
-                const visibleTags = talk.tags.slice(0, 3)
-                const hiddenTags = talk.tags.slice(3)
+                // Two visible tags keeps rows compact now the badges are
+                // larger; the rest stay in the "+N" tooltip.
+                const visibleTags = talk.tags.slice(0, 2)
+                const hiddenTags = talk.tags.slice(2)
                 return (
                     <Flex gap="1" flexWrap="wrap" alignItems="center">
                         <TopicSelectBadge
@@ -1103,7 +1300,7 @@ export default function VotingAgenda() {
                             <TagBadge key={tag}>{tag}</TagBadge>
                         ))}
                         {hiddenTags.length > 0 && (
-                            <styled.span fontSize="[0.7rem]" color="admin.500" title={hiddenTags.join(', ')}>
+                            <styled.span fontSize="xs" color="admin.500" title={hiddenTags.join(', ')}>
                                 … +{hiddenTags.length}
                             </styled.span>
                         )}
@@ -1125,12 +1322,15 @@ export default function VotingAgenda() {
             id: 'um',
             label: 'UM',
             filter: {
-                value: umFilter,
+                values: umFilter,
                 onChange: setUmFilter,
+                // "Ticked group" is the checkbox in this column; "incl. pronoun"
+                // is the wider definition the UM stat tile counts (ticked group
+                // OR any non-He/Him pronoun).
                 options: [
-                    { value: '', label: 'Any' },
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'no', label: 'No' },
+                    { value: 'yes', label: 'Ticked group' },
+                    { value: 'no', label: 'Not ticked' },
+                    { value: ANY_MINORITY_FILTER, label: 'Any minority (incl. pronoun)' },
                 ],
             },
             cellProps: { fontSize: 'xs', color: 'admin.600' },
@@ -1151,12 +1351,9 @@ export default function VotingAgenda() {
             id: 'pronoun',
             label: 'Pronoun',
             filter: {
-                value: pronounFilter,
+                values: pronounFilter,
                 onChange: setPronounFilter,
-                options: [
-                    { value: '', label: 'All' },
-                    ...filterOptions.pronouns.map((p) => ({ value: p, label: p })),
-                ],
+                options: filterOptions.pronouns.map((p) => ({ value: p, label: p })),
             },
             cellProps: { fontSize: 'xs', color: 'admin.600' },
             renderCell: (talk) => formatSpeakerValues(talk.speakers, (s) => s.pronoun),
@@ -1165,9 +1362,9 @@ export default function VotingAgenda() {
             id: 'role',
             label: 'Role',
             filter: {
-                value: roleFilter,
+                values: roleFilter,
                 onChange: setRoleFilter,
-                options: [{ value: '', label: 'All' }, ...filterOptions.roles.map((r) => ({ value: r, label: r }))],
+                options: filterOptions.roles.map((r) => ({ value: r, label: r })),
             },
             cellProps: { fontSize: 'xs', color: 'admin.600' },
             renderCell: (talk) => formatSpeakerValues(talk.speakers, (s) => s.role),
@@ -1176,10 +1373,12 @@ export default function VotingAgenda() {
             id: 'exp',
             label: 'Exp',
             filter: {
-                value: expFilter,
+                values: expFilter,
                 onChange: setExpFilter,
+                // The disclosed experience levels, plus the derived junior/new
+                // flag (which honours the per-talk checkbox override).
                 options: [
-                    { value: '', label: 'All' },
+                    { value: NEW_SPEAKER_FLAG_FILTER, label: 'New / junior (flagged)' },
                     ...filterOptions.experiences.map((exp) => ({ value: exp, label: formatExperience(exp) })),
                 ],
             },
@@ -1198,14 +1397,37 @@ export default function VotingAgenda() {
         },
         {
             id: 'info',
-            label: 'Additional Info',
-            cellProps: { fontSize: 'xs', color: 'admin.600', maxW: '[240px]' },
+            label: 'Info',
+            align: 'center',
+            headerWidth: '[130px]',
+            cellProps: { fontSize: 'xs', color: 'admin.600', maxW: '[130px]' },
             renderCell: (talk) => {
+                const hasInfo = talk.speakers.some((s) => s.additionalInfo)
+                if (!hasInfo) {
+                    return <styled.span color="admin.400">—</styled.span>
+                }
                 const info = formatSpeakerValues(talk.speakers, (s) => s.additionalInfo)
                 return (
-                    <styled.div whiteSpace="normal" lineClamp={3} title={info}>
+                    <styled.button
+                        type="button"
+                        onClick={() => setInfoTalkId(talk.talkId)}
+                        title={info}
+                        display="block"
+                        // A fixed max width (not width="full") keeps the long
+                        // single-line text from forcing the whole table wide —
+                        // an auto-layout <td> grows to its content's intrinsic
+                        // width no matter what maxW the cell itself carries.
+                        maxW="[120px]"
+                        textAlign="left"
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        color="prose.link"
+                        cursor="pointer"
+                        _hover={{ textDecoration: 'underline' }}
+                    >
                         {info}
-                    </styled.div>
+                    </styled.button>
                 )
             },
         },
@@ -1305,6 +1527,8 @@ export default function VotingAgenda() {
                                     lockedCount={item.lockedCount}
                                     lockedPct={item.lockedPct}
                                     tentativeCount={item.tentativeCount}
+                                    active={tagFilter.includes(item.key)}
+                                    onToggle={() => toggleFilterValue(setTagFilter, item.key)}
                                 />
                             ))
                         )}
@@ -1330,6 +1554,8 @@ export default function VotingAgenda() {
                                             lockedCount={item.lockedCount}
                                             lockedPct={item.lockedPct}
                                             tentativeCount={item.tentativeCount}
+                                            active={lengthFilter.includes(item.key)}
+                                            onToggle={() => toggleFilterValue(setLengthFilter, item.key)}
                                         />
                                     ))
                                 )}
@@ -1355,6 +1581,8 @@ export default function VotingAgenda() {
                                             lockedCount={item.lockedCount}
                                             lockedPct={item.lockedPct}
                                             tentativeCount={item.tentativeCount}
+                                            active={levelFilter.includes(item.key)}
+                                            onToggle={() => toggleFilterValue(setLevelFilter, item.key)}
                                         />
                                     ))
                                 )}
@@ -1369,14 +1597,35 @@ export default function VotingAgenda() {
                                 <StatTile
                                     label="UM"
                                     value={formatCountPercent(stats.diverseSpeakerCount, stats.totalSpeakers)}
+                                    active={umFilter.includes(ANY_MINORITY_FILTER)}
+                                    onToggle={() => toggleFilterValue(setUmFilter, ANY_MINORITY_FILTER)}
                                 />
                                 <StatTile
                                     label="New"
                                     value={formatCountPercent(stats.juniorOrNewSpeakerCount, stats.totalSpeakers)}
+                                    active={expFilter.includes(NEW_SPEAKER_FLAG_FILTER)}
+                                    onToggle={() => toggleFilterValue(setExpFilter, NEW_SPEAKER_FLAG_FILTER)}
                                 />
                             </Flex>
                         </Box>
                     </Flex>
+                </AdminCard>
+            )}
+
+            {agendaTalks.length > 0 && (
+                <AdminCard mb="6">
+                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="1">
+                        Agenda Planner
+                    </styled.h2>
+                    <styled.p fontSize="sm" color="admin.600" mb="4">
+                        Lay out tracks and slots for the {plannerTalks.length} accepted and tentative talks. Saved in
+                        this browser only.
+                    </styled.p>
+                    <AgendaPlanner
+                        storageKey={plannerStorageKey}
+                        talks={plannerTalks}
+                        availableLengths={filterOptions.lengths}
+                    />
                 </AdminCard>
             )}
 
@@ -1389,7 +1638,7 @@ export default function VotingAgenda() {
                         <Flex gap="3">
                             {hasActiveFilters && (
                                 <Button type="button" variant="outline" size="sm" onClick={clearFilters}>
-                                    Clear filters
+                                    Clear filters ({activeFilterCount})
                                 </Button>
                             )}
                             <Button
@@ -1413,9 +1662,18 @@ export default function VotingAgenda() {
                     )}
                 </Flex>
 
+                {agendaTalks.length > 0 && (
+                    <styled.p fontSize="sm" color="admin.600" mb="3">
+                        Showing {filteredTalks.length} of {agendaTalks.length}
+                    </styled.p>
+                )}
+
                 {filteredTalks.length > 0 ? (
                     <Box overflowX="auto">
-                        <styled.table width="full" fontSize="sm">
+                        {/* minWidth stops the browser squeezing every column to
+                            fit the viewport — the wrapper scrolls instead, so
+                            Status and Talk Title keep their intended widths. */}
+                        <styled.table width="full" minWidth="[1500px]" fontSize="sm">
                             <thead>
                                 <tr>
                                     {columns.map((column) => (
@@ -1468,6 +1726,65 @@ export default function VotingAgenda() {
                 )}
             </AdminCard>
 
+            <Modal.Root open={infoTalk != null} onOpenChange={(details) => !details.open && setInfoTalkId(null)}>
+                <Modal.Backdrop position="fixed" inset="0" bg="overlay.scrim" zIndex="modal" />
+                <Modal.Positioner
+                    position="fixed"
+                    inset="0"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    p="4"
+                    zIndex="modal"
+                >
+                    <Modal.Content
+                        bg="white"
+                        borderRadius="xl"
+                        boxShadow="lg"
+                        maxW="[640px]"
+                        w="full"
+                        maxH="[85vh]"
+                        overflowY="auto"
+                        p="6"
+                    >
+                        {infoTalk && (
+                            <>
+                                <Flex justifyContent="space-between" alignItems="flex-start" gap="4" mb="4">
+                                    <Box>
+                                        <Modal.Title fontSize="lg" fontWeight="semibold">
+                                            Additional Info
+                                        </Modal.Title>
+                                        <styled.p fontSize="sm" color="admin.600" mt="1">
+                                            {infoTalk.title}
+                                        </styled.p>
+                                    </Box>
+                                    <Modal.CloseTrigger asChild>
+                                        <Button type="button" variant="outline" size="sm">
+                                            Close
+                                        </Button>
+                                    </Modal.CloseTrigger>
+                                </Flex>
+
+                                <Flex direction="column" gap="3">
+                                    {infoTalk.speakers
+                                        .filter((speaker) => speaker.additionalInfo)
+                                        .map((speaker) => (
+                                            <Box key={speaker.id} p="3" bg="admin.50" borderRadius="md">
+                                                <styled.p fontWeight="semibold" fontSize="sm" mb="1">
+                                                    {speaker.name}
+                                                </styled.p>
+                                                <styled.p fontSize="sm" color="admin.800" whiteSpace="pre-wrap">
+                                                    {speaker.additionalInfo}
+                                                </styled.p>
+                                            </Box>
+                                        ))}
+                                </Flex>
+                            </>
+                        )}
+                    </Modal.Content>
+                </Modal.Positioner>
+            </Modal.Root>
+
             <Modal.Root open={selectedTalk != null} onOpenChange={(details) => !details.open && setSelectedTalkId(null)}>
                 <Modal.Backdrop position="fixed" inset="0" bg="overlay.scrim" zIndex="modal" />
                 <Modal.Positioner
@@ -1514,7 +1831,7 @@ export default function VotingAgenda() {
                                     <StatTile label="Wins" value={selectedTalk.wins} />
                                     <StatTile label="Losses" value={selectedTalk.losses} />
                                     <StatTile label="Total Votes" value={selectedTalk.totalVotes} />
-                                    <StatTile label="Win %" value={`${selectedTalk.winPct.toFixed(1)}%`} />
+                                    <StatTile label="Win %" value={`${formatWinPct(selectedTalk)}%`} />
                                     {selectedTalk.hasSessionData && (
                                         <>
                                             <StatTile label="Length" value={selectedTalk.length || '—'} />
