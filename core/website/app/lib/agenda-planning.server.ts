@@ -305,6 +305,64 @@ export async function updateSlotLabel(
     }
 }
 
+/**
+ * Swap a slot with its neighbour in the same track, so a slot (typically a
+ * break) can be moved into position without rebuilding the track around it.
+ *
+ * Positions are only required to be ordered, not contiguous — imports and
+ * deletions leave gaps — so this swaps the two rows' actual position values
+ * rather than assuming ±1. No-op at either end of the track.
+ */
+export async function moveSlot(
+    db: D1Database,
+    args: { runId: string; slotId: string; direction: 'up' | 'down'; email: string | null },
+): Promise<void> {
+    const { runId, slotId, direction, email } = args
+    try {
+        const current = await db
+            .prepare(`SELECT track_id, position FROM agenda_slot WHERE run_id = ? AND slot_id = ?`)
+            .bind(runId, slotId)
+            .first<{ track_id: string; position: number }>()
+        if (!current) return
+
+        // The adjacent slot in the chosen direction — nearest by position
+        // rather than position ± 1, since positions can be sparse.
+        const neighbour = await db
+            .prepare(
+                direction === 'up'
+                    ? `SELECT slot_id, position FROM agenda_slot
+                       WHERE run_id = ? AND track_id = ? AND position < ?
+                       ORDER BY position DESC LIMIT 1`
+                    : `SELECT slot_id, position FROM agenda_slot
+                       WHERE run_id = ? AND track_id = ? AND position > ?
+                       ORDER BY position ASC LIMIT 1`,
+            )
+            .bind(runId, current.track_id, current.position)
+            .first<{ slot_id: string; position: number }>()
+        // Already at the top/bottom of its track.
+        if (!neighbour) return
+
+        const now = new Date().toISOString()
+        await db.batch([
+            db
+                .prepare(
+                    `UPDATE agenda_slot SET position = ?, updated_at = ?, updated_by_email = ?
+                     WHERE run_id = ? AND slot_id = ?`,
+                )
+                .bind(neighbour.position, now, email, runId, slotId),
+            db
+                .prepare(
+                    `UPDATE agenda_slot SET position = ?, updated_at = ?, updated_by_email = ?
+                     WHERE run_id = ? AND slot_id = ?`,
+                )
+                .bind(current.position, now, email, runId, neighbour.slot_id),
+        ])
+    } catch (error: any) {
+        recordException(error)
+        throw error
+    }
+}
+
 export async function updateSlotLength(
     db: D1Database,
     args: { runId: string; slotId: string; length: string; email: string | null },
@@ -395,18 +453,9 @@ export async function setCapacity(
     }
 }
 
-/** Clear every track and slot for a run, keeping capacity targets. */
-export async function clearBoard(db: D1Database, runId: string): Promise<void> {
-    try {
-        await db.batch([
-            db.prepare(`DELETE FROM agenda_slot WHERE run_id = ?`).bind(runId),
-            db.prepare(`DELETE FROM agenda_track WHERE run_id = ?`).bind(runId),
-        ])
-    } catch (error: any) {
-        recordException(error)
-        throw error
-    }
-}
+// Deliberately no clearBoard: the board is shared across the organizer team,
+// so a single call that wipes it has no safe caller. The import path below
+// replaces the board wholesale, but only behind an explicit confirmation.
 
 /**
  * One-shot migration of a browser's localStorage planning into the shared

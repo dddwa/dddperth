@@ -440,6 +440,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
                 await store.updateSlotLabel({ runId, slotId: str('slotId'), label: str('label'), email })
                 break
 
+            case 'move_slot':
+                await store.moveSlot({
+                    runId,
+                    slotId: str('slotId'),
+                    direction: str('direction') === 'up' ? 'up' : 'down',
+                    email,
+                })
+                break
+
             case 'remove_slot':
                 await store.removeSlot({ runId, slotId: str('slotId') })
                 break
@@ -461,10 +470,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
                     capacity: Number(str('capacity')) || 0,
                     email,
                 })
-                break
-
-            case 'clear_board':
-                await store.clearBoard(runId)
                 break
 
             case 'import_local': {
@@ -719,6 +724,7 @@ function CategoryStatTile({
     lockedCount,
     lockedPct,
     tentativeCount,
+    waitlistCount,
     active,
     onToggle,
 }: {
@@ -728,6 +734,7 @@ function CategoryStatTile({
     lockedCount: number
     lockedPct: number
     tentativeCount: number
+    waitlistCount: number
     /** True when this tile's value is currently in the matching filter. */
     active?: boolean
     onToggle?: () => void
@@ -763,6 +770,8 @@ function CategoryStatTile({
             </styled.p>
             <styled.p fontSize="lg" fontWeight="medium">
                 {lockedCount} ({lockedPct.toFixed(1)}%)
+                {/* Tentative (amber) then waitlist (blue), matching the row
+                    tints in the table below so the counts read the same way. */}
                 {tentativeCount > 0 && (
                     <>
                         {' + '}
@@ -774,8 +783,26 @@ function CategoryStatTile({
                             fontWeight="semibold"
                             bg="status.warning.bg"
                             color="status.warning.fg"
+                            title={`${tentativeCount} tentative`}
                         >
                             {tentativeCount}
+                        </styled.span>
+                    </>
+                )}
+                {waitlistCount > 0 && (
+                    <>
+                        {' + '}
+                        <styled.span
+                            px="2"
+                            py="0.5"
+                            borderRadius="full"
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            bg="status.info.bg"
+                            color="status.info.fg"
+                            title={`${waitlistCount} waitlisted`}
+                        >
+                            {waitlistCount}
                         </styled.span>
                     </>
                 )}
@@ -1494,6 +1521,7 @@ export default function VotingAgenda() {
         const totalTalks = agendaTalks.length
         const lockedTalks = agendaTalks.filter((talk) => getEffectiveStatus(talk) === 'locked')
         const tentativeTalks = agendaTalks.filter((talk) => getEffectiveStatus(talk) === 'tentative')
+        const waitlistTalks = agendaTalks.filter((talk) => getEffectiveStatus(talk) === 'waitlist')
         const totalLocked = lockedTalks.length
 
         // Topic grouping uses the effective (possibly overridden) topic;
@@ -1510,6 +1538,9 @@ export default function VotingAgenda() {
         const byTopicTentative = new Map<string, number>()
         const byLengthTentative = new Map<string, number>()
         const byLevelTentative = new Map<string, number>()
+        const byTopicWaitlist = new Map<string, number>()
+        const byLengthWaitlist = new Map<string, number>()
+        const byLevelWaitlist = new Map<string, number>()
         let totalTalksWithTopic = 0
         let totalTalksWithLength = 0
         let totalTalksWithLevel = 0
@@ -1574,6 +1605,23 @@ export default function VotingAgenda() {
             }
         }
 
+        for (const talk of waitlistTalks) {
+            const topic = getEffectiveTopic(talk)
+            if (topic) {
+                byTopicWaitlist.set(topic, (byTopicWaitlist.get(topic) ?? 0) + 1)
+            }
+
+            const length = talk.length
+            if (length) {
+                byLengthWaitlist.set(length, (byLengthWaitlist.get(length) ?? 0) + 1)
+            }
+
+            const level = formatLevel(talk.level)
+            if (level) {
+                byLevelWaitlist.set(level, (byLevelWaitlist.get(level) ?? 0) + 1)
+            }
+        }
+
         // Diversity/experience signals are counted per distinct speaker (not
         // per talk) — a speaker with multiple locked talks is only counted once.
         const lockedSpeakersById = new Map<string, AgendaSpeaker>()
@@ -1599,6 +1647,8 @@ export default function VotingAgenda() {
         return {
             total: totalLocked,
             totalTalks,
+            totalTentative: tentativeTalks.length,
+            totalWaitlist: waitlistTalks.length,
             totalSpeakers,
             byTopic: Array.from(byTopicTotal.entries())
                 .map(([topic, totalCount]) => ({
@@ -1609,6 +1659,7 @@ export default function VotingAgenda() {
                     lockedPct:
                         lockedTalksWithTopic > 0 ? ((byTopic.get(topic) ?? 0) / lockedTalksWithTopic) * 100 : 0,
                     tentativeCount: byTopicTentative.get(topic) ?? 0,
+                    waitlistCount: byTopicWaitlist.get(topic) ?? 0,
                 }))
                 .sort((a, b) => b.lockedCount - a.lockedCount),
             byLength: Array.from(byLengthTotal.entries())
@@ -1620,6 +1671,7 @@ export default function VotingAgenda() {
                     lockedPct:
                         lockedTalksWithLength > 0 ? ((byLength.get(length) ?? 0) / lockedTalksWithLength) * 100 : 0,
                     tentativeCount: byLengthTentative.get(length) ?? 0,
+                    waitlistCount: byLengthWaitlist.get(length) ?? 0,
                 }))
                 .sort((a, b) => b.lockedCount - a.lockedCount),
             byLevel: Array.from(byLevelTotal.entries())
@@ -1630,6 +1682,7 @@ export default function VotingAgenda() {
                     lockedCount: byLevel.get(level) ?? 0,
                     lockedPct: lockedTalksWithLevel > 0 ? ((byLevel.get(level) ?? 0) / lockedTalksWithLevel) * 100 : 0,
                     tentativeCount: byLevelTentative.get(level) ?? 0,
+                    waitlistCount: byLevelWaitlist.get(level) ?? 0,
                 }))
                 .sort((a, b) => b.lockedCount - a.lockedCount),
             diverseSpeakerCount,
@@ -1714,6 +1767,23 @@ export default function VotingAgenda() {
                 })),
             },
             renderCell: (talk) => (
+                <>
+                    {placedTalkIds.has(talk.talkId) && (
+                        <styled.span
+                            display="inline-block"
+                            mb="1"
+                            px="2"
+                            py="1"
+                            borderRadius="full"
+                            fontSize="xs"
+                            fontWeight="semibold"
+                            bg="status.success.bg"
+                            color="status.success.fg"
+                            title="This talk is placed on the agenda planner board"
+                        >
+                            ✓ In agenda
+                        </styled.span>
+                    )}
                 <styled.select
                     value={getEffectiveStatus(talk)}
                     onChange={(e) => updateStatus(talk.talkId, e.target.value as TalkStatus)}
@@ -1731,6 +1801,7 @@ export default function VotingAgenda() {
                         </option>
                     ))}
                 </styled.select>
+                </>
             ),
         },
         {
@@ -1765,22 +1836,6 @@ export default function VotingAgenda() {
                     >
                         {talk.title}
                     </styled.button>
-                    {placedTalkIds.has(talk.talkId) && (
-                        <styled.span
-                            display="inline-block"
-                            mt="1"
-                            px="2"
-                            py="0.5"
-                            borderRadius="full"
-                            fontSize="2xs"
-                            fontWeight="semibold"
-                            bg="status.success.bg"
-                            color="status.success.fg"
-                            title="This talk is placed on the agenda planner board"
-                        >
-                            In agenda
-                        </styled.span>
-                    )}
                 </>
             ),
         },
@@ -2062,6 +2117,31 @@ export default function VotingAgenda() {
                         Locked Talks Overview ({stats.total} of {stats.totalTalks})
                     </styled.h2>
 
+                    {/* Headline counts for the two undecided buckets, so the
+                        size of the remaining decisions is visible without
+                        totting up the per-category tiles. Both are clickable
+                        filters, like the category tiles below. */}
+                    <Flex gap="4" flexWrap="wrap" mb="4">
+                        <StatTile
+                            label="Accepted"
+                            value={stats.total}
+                            active={statusFilter.includes('locked')}
+                            onToggle={() => toggleFilterValue(setStatusFilter, 'locked')}
+                        />
+                        <StatTile
+                            label="Tentative"
+                            value={stats.totalTentative}
+                            active={statusFilter.includes('tentative')}
+                            onToggle={() => toggleFilterValue(setStatusFilter, 'tentative')}
+                        />
+                        <StatTile
+                            label="Waitlist"
+                            value={stats.totalWaitlist}
+                            active={statusFilter.includes('waitlist')}
+                            onToggle={() => toggleFilterValue(setStatusFilter, 'waitlist')}
+                        />
+                    </Flex>
+
                     <styled.h3 fontSize="md" fontWeight="semibold" mb="2" color="admin.600">
                         By General Topic Category
                     </styled.h3>
@@ -2080,6 +2160,7 @@ export default function VotingAgenda() {
                                     lockedCount={item.lockedCount}
                                     lockedPct={item.lockedPct}
                                     tentativeCount={item.tentativeCount}
+                                    waitlistCount={item.waitlistCount}
                                     active={tagFilter.includes(item.key)}
                                     onToggle={() => toggleFilterValue(setTagFilter, item.key)}
                                 />
@@ -2107,6 +2188,7 @@ export default function VotingAgenda() {
                                             lockedCount={item.lockedCount}
                                             lockedPct={item.lockedPct}
                                             tentativeCount={item.tentativeCount}
+                                            waitlistCount={item.waitlistCount}
                                             active={lengthFilter.includes(item.key)}
                                             onToggle={() => toggleFilterValue(setLengthFilter, item.key)}
                                         />
@@ -2134,6 +2216,7 @@ export default function VotingAgenda() {
                                             lockedCount={item.lockedCount}
                                             lockedPct={item.lockedPct}
                                             tentativeCount={item.tentativeCount}
+                                            waitlistCount={item.waitlistCount}
                                             active={levelFilter.includes(item.key)}
                                             onToggle={() => toggleFilterValue(setLevelFilter, item.key)}
                                         />

@@ -50,10 +50,10 @@ export type PlannerChange =
     | { intent: 'add_slot'; trackId: string; slotId: string; length: string; kind?: string; label?: string }
     | { intent: 'update_slot_length'; slotId: string; length: string }
     | { intent: 'update_slot_label'; slotId: string; label: string }
+    | { intent: 'move_slot'; slotId: string; direction: 'up' | 'down' }
     | { intent: 'remove_slot'; slotId: string }
     | { intent: 'assign_talk'; slotId: string; talkId: string }
     | { intent: 'set_capacity'; length: string; capacity: string }
-    | { intent: 'clear_board' }
 
 // Lengths offered in the slot dropdown when the run has no Sessionize length
 // data to derive them from (e.g. every talk has vanished from the feed).
@@ -210,6 +210,64 @@ function TalkSignals({ talk, showLength }: { talk: PlannerTalk; showLength?: boo
                 )
             )}
         </Flex>
+    )
+}
+
+/**
+ * Up/down controls for reordering a slot within its track.
+ *
+ * Without these a slot can only be appended, so adding a break to an agenda
+ * that's already laid out would mean rebuilding the track around it.
+ */
+function MoveControls({
+    onMove,
+    canMoveUp,
+    canMoveDown,
+    label,
+    tone = 'dark',
+}: {
+    onMove: (direction: 'up' | 'down') => void
+    canMoveUp: boolean
+    canMoveDown: boolean
+    label: string
+    /** 'light' for the dark break bar, 'dark' for white talk cards. */
+    tone?: 'light' | 'dark'
+}) {
+    const idle = tone === 'light' ? 'admin.200' : 'admin.500'
+    const hover = tone === 'light' ? 'white' : 'admin.800'
+    return (
+        <>
+            <styled.button
+                type="button"
+                onClick={() => onMove('up')}
+                disabled={!canMoveUp}
+                title={`Move ${label} earlier`}
+                aria-label={`Move ${label} earlier`}
+                cursor={canMoveUp ? 'pointer' : 'not-allowed'}
+                opacity={canMoveUp ? '1' : '0.3'}
+                color={idle}
+                fontSize="xs"
+                px="0.5"
+                _hover={canMoveUp ? { color: hover } : undefined}
+            >
+                ↑
+            </styled.button>
+            <styled.button
+                type="button"
+                onClick={() => onMove('down')}
+                disabled={!canMoveDown}
+                title={`Move ${label} later`}
+                aria-label={`Move ${label} later`}
+                cursor={canMoveDown ? 'pointer' : 'not-allowed'}
+                opacity={canMoveDown ? '1' : '0.3'}
+                color={idle}
+                fontSize="xs"
+                px="0.5"
+                _hover={canMoveDown ? { color: hover } : undefined}
+            >
+                ↓
+            </styled.button>
+        </>
     )
 }
 
@@ -382,6 +440,10 @@ export function AgendaPlanner({
         onChange({ intent: 'update_slot_length', slotId, length })
     }
 
+    function moveSlot(slotId: string, direction: 'up' | 'down') {
+        onChange({ intent: 'move_slot', slotId, direction })
+    }
+
     function renameBreak(slotId: string, label: string) {
         setDraftNames((current) => ({ ...current, [slotId]: label }))
         debouncedChange(`slot:${slotId}`, { intent: 'update_slot_label', slotId, label })
@@ -467,28 +529,13 @@ export function AgendaPlanner({
                 </Box>
             </Flex>
 
+            {/* No "clear board" control: the board is shared, so one click
+                would destroy the whole team's planning with no undo. Removing
+                a track or slot at a time is deliberate enough to be safe. */}
             <Flex gap="3" mb="4" flexWrap="wrap">
                 <Button type="button" variant="solid" size="sm" onClick={addTrack}>
                     + Add track
                 </Button>
-                {state.tracks.length > 0 && (
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            if (
-                                confirm(
-                                    'Clear the whole board for everyone? Capacity targets are kept.',
-                                )
-                            ) {
-                                onChange({ intent: 'clear_board' })
-                            }
-                        }}
-                    >
-                        Clear board
-                    </Button>
-                )}
             </Flex>
 
             {state.tracks.length === 0 ? (
@@ -602,6 +649,13 @@ export function AgendaPlanner({
                                                         _hover={{ bg: 'admin.600' }}
                                                         _focus={{ bg: 'admin.600' }}
                                                     />
+                                                    <MoveControls
+                                                        onMove={(direction) => moveSlot(slot.slotId, direction)}
+                                                        canMoveUp={slotIndex > 0}
+                                                        canMoveDown={slotIndex < track.slots.length - 1}
+                                                        label={slot.label ?? 'break'}
+                                                        tone="light"
+                                                    />
                                                     <styled.button
                                                         type="button"
                                                         onClick={() => removeSlot(slot.slotId)}
@@ -699,6 +753,12 @@ export function AgendaPlanner({
                                                             </option>
                                                         ))}
                                                     </styled.select>
+                                                    <MoveControls
+                                                        onMove={(direction) => moveSlot(slot.slotId, direction)}
+                                                        canMoveUp={slotIndex > 0}
+                                                        canMoveDown={slotIndex < track.slots.length - 1}
+                                                        label="slot"
+                                                    />
                                                     <styled.button
                                                         type="button"
                                                         onClick={() => removeSlot(slot.slotId)}
