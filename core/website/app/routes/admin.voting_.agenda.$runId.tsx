@@ -268,6 +268,24 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 }
 
 /**
+ * Talk ids currently laid onto the planner board.
+ *
+ * Drives the "In agenda" pill in the ranked table, so organizers can see
+ * which talks already have a home without cross-referencing the board.
+ */
+export function getPlacedTalkIds(board: PlannerBoard): Set<string> {
+    const ids = new Set<string>()
+    for (const track of board.tracks) {
+        for (const slot of track.slots) {
+            // Breaks never hold a talk, but guard on talkId rather than kind
+            // so a slot is only counted when it actually has one.
+            if (slot.talkId) ids.add(slot.talkId)
+        }
+    }
+    return ids
+}
+
+/**
  * Coerce a localStorage payload into the shape `importPlanning` binds into
  * SQL. The JSON comes from a browser this code wrote to months ago, so treat
  * it as untrusted: anything the wrong shape is dropped rather than bound as
@@ -1642,6 +1660,10 @@ export default function VotingAgenda() {
         return ids
     }, [agendaTalks, speakerIdsWithLockedTalk, statusByTalkId])
 
+    // Talks already laid onto the planner board, so the ranked table can show
+    // at a glance which ones are spoken for and which still need a home.
+    const placedTalkIds = useMemo(() => getPlacedTalkIds(planning.board), [planning.board])
+
     const selectedTalk = selectedTalkId ? agendaTalks.find((t) => t.talkId === selectedTalkId) : undefined
     const infoTalk = infoTalkId ? agendaTalks.find((t) => t.talkId === infoTalkId) : undefined
 
@@ -1682,9 +1704,13 @@ export default function VotingAgenda() {
             filter: {
                 values: statusFilter,
                 onChange: setStatusFilter,
-                options: STATUS_OPTIONS.filter((o) => o.value !== '').map((o) => ({
+                // '' is offered as "No status" so undecided talks can be
+                // filtered for alongside a real status (e.g. waitlist + no
+                // status). getEffectiveStatus returns '' for them, so the
+                // existing equality match already works.
+                options: STATUS_OPTIONS.map((o) => ({
                     value: o.value,
-                    label: o.label,
+                    label: o.value === '' ? 'No status' : o.label,
                 })),
             },
             renderCell: (talk) => (
@@ -1721,23 +1747,41 @@ export default function VotingAgenda() {
             headerWidth: '[420px]',
             cellProps: { minW: '[420px]', maxW: '[560px]' },
             renderCell: (talk) => (
-                <styled.button
-                    type="button"
-                    onClick={() => setSelectedTalkId(talk.talkId)}
-                    display="block"
-                    width="full"
-                    // Anchors the column's intrinsic width — an auto-layout
-                    // <td> ignores minW, so the content has to carry it.
-                    minW="[380px]"
-                    textAlign="left"
-                    whiteSpace="normal"
-                    fontWeight="medium"
-                    color="prose.link"
-                    cursor="pointer"
-                    _hover={{ textDecoration: 'underline' }}
-                >
-                    {talk.title}
-                </styled.button>
+                <>
+                    <styled.button
+                        type="button"
+                        onClick={() => setSelectedTalkId(talk.talkId)}
+                        display="block"
+                        width="full"
+                        // Anchors the column's intrinsic width — an auto-layout
+                        // <td> ignores minW, so the content has to carry it.
+                        minW="[380px]"
+                        textAlign="left"
+                        whiteSpace="normal"
+                        fontWeight="medium"
+                        color="prose.link"
+                        cursor="pointer"
+                        _hover={{ textDecoration: 'underline' }}
+                    >
+                        {talk.title}
+                    </styled.button>
+                    {placedTalkIds.has(talk.talkId) && (
+                        <styled.span
+                            display="inline-block"
+                            mt="1"
+                            px="2"
+                            py="0.5"
+                            borderRadius="full"
+                            fontSize="2xs"
+                            fontWeight="semibold"
+                            bg="status.success.bg"
+                            color="status.success.fg"
+                            title="This talk is placed on the agenda planner board"
+                        >
+                            In agenda
+                        </styled.span>
+                    )}
+                </>
             ),
         },
         {
