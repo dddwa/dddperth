@@ -88,6 +88,29 @@ describe('talk signal chips', () => {
         expect(within(unplacedCard('A Talk')).getByTitle('Topic: Uncategorised')).toBeTruthy()
     })
 
+    it('shows the talk length on unplaced cards, since it decides which slot fits', () => {
+        renderPlanner([talk({ length: '20 minutes' })])
+        const card = unplacedCard('A Talk')
+        expect(within(card).getByTitle('Length: 20 minutes')).toBeTruthy()
+        expect(within(card).getByText('20m')).toBeTruthy()
+    })
+
+    it('omits the length chip when the talk has no length', () => {
+        renderPlanner([talk({ length: '' })])
+        expect(within(unplacedCard('A Talk')).queryByTitle(/^Length:/)).toBeNull()
+    })
+
+    it('omits the length chip on placed cards, where the slot already names it', () => {
+        const board: PlannerBoard = {
+            tracks: [
+                { trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] },
+            ],
+            capacity: {},
+        }
+        renderPlanner([talk({ length: '45 minutes' })], board)
+        expect(screen.queryByTitle('Length: 45 minutes')).toBeNull()
+    })
+
     it('renders chips on a placed talk too, not just unplaced ones', () => {
         const board: PlannerBoard = {
             tracks: [
@@ -128,15 +151,94 @@ describe('tentative talks in the unplaced list', () => {
     })
 })
 
+describe('board grid alignment', () => {
+    // Two tracks of differing length: slot N of each must share a grid row so
+    // the cards line up across columns however tall any one card grows.
+    const UNEVEN_BOARD: PlannerBoard = {
+        tracks: [
+            {
+                trackId: 'tr1',
+                name: 'Track 1',
+                slots: [
+                    { slotId: 'a1', length: '45 minutes', talkId: 't1' },
+                    { slotId: 'a2', length: '20 minutes', talkId: null },
+                ],
+            },
+            {
+                trackId: 'tr2',
+                name: 'Track 2',
+                slots: [{ slotId: 'b1', length: '45 minutes', talkId: 't2' }],
+            },
+        ],
+        capacity: {},
+    }
+
+    const TALKS = [
+        talk({ talkId: 't1', title: 'First Talk' }),
+        talk({
+            talkId: 't2',
+            title: 'A considerably longer talk title that wraps onto several lines on the card',
+        }),
+    ]
+
+    /**
+     * Grid placement is set inline, not through Panda props — the row/column
+     * values are computed, and Panda's static extraction would emit a class
+     * with no CSS behind it. Asserting on style is therefore asserting on what
+     * actually positions the card.
+     */
+    function slotCardFor(title: string) {
+        return screen.getByText(title).closest<HTMLElement>('[style*="grid-row"]')
+    }
+
+    it('puts the first slot of every track in the same grid row', () => {
+        render(
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+        )
+        // Row 1 is the track header, so the first slot of each track sits in
+        // row 2 — that shared row is what keeps the cards aligned.
+        expect(slotCardFor('First Talk')?.style.gridRow).toBe('2')
+        expect(slotCardFor(TALKS[1].title)?.style.gridRow).toBe('2')
+    })
+
+    it('places each track in its own grid column', () => {
+        render(
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+        )
+        expect(slotCardFor('First Talk')?.style.gridColumn).toBe('1')
+        expect(slotCardFor(TALKS[1].title)?.style.gridColumn).toBe('2')
+    })
+
+    it('puts a second slot in the next row down, not alongside the first', () => {
+        render(
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+        )
+        // Track 1's empty second slot renders its "pick a talk" dropdown.
+        const emptySlot = screen.getByLabelText('Assign talk to slot').closest<HTMLElement>('[style*="grid-row"]')
+        expect(emptySlot?.style.gridRow).toBe('3')
+        expect(emptySlot?.style.gridColumn).toBe('1')
+    })
+
+    it('sizes the grid to the longest track so shorter ones leave empty rows', () => {
+        const { container } = render(
+            <AgendaPlanner board={UNEVEN_BOARD} talks={TALKS} availableLengths={['45 minutes']} onChange={() => {}} />,
+        )
+        const grid = container.querySelector<HTMLElement>('[style*="grid-template-columns"]')
+        expect(grid?.style.gridTemplateColumns).toBe('repeat(2, 260px)')
+        // Header + 2 slot rows (the longest track) + the add-slot row.
+        expect(grid?.style.gridTemplateRows).toBe('auto repeat(2, auto) auto')
+    })
+})
+
 describe('tentative talks placed on the board', () => {
     const boardWithTalk: PlannerBoard = {
         tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] }],
         capacity: {},
     }
 
-    /** The slot card is the nearest positioned ancestor of the talk title. */
+    /** The slot card is the element carrying the inline grid placement. */
     function slotCardFor(title: string) {
-        return screen.getByText(title).closest('div')?.parentElement
+        return screen.getByText(title).closest<HTMLElement>('[style*="grid-row"]')
     }
 
     it('tints a placed tentative talk so an apparently-full agenda still shows it', () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/components/ui/button'
 import type { PlannerBoard } from '~/lib/agenda-planning-types'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -119,13 +119,27 @@ function SignalBadge({
     )
 }
 
-/** The signal chips for one talk, shared by placed cards and the unplaced list. */
-function TalkSignals({ talk }: { talk: PlannerTalk }) {
+/**
+ * The signal chips for one talk, shared by placed cards and the unplaced list.
+ *
+ * `showLength` is on for the unplaced list, where length decides which slot a
+ * talk can go in. Placed cards leave it off — the slot above already names its
+ * length, and a mismatch is called out separately.
+ */
+function TalkSignals({ talk, showLength }: { talk: PlannerTalk; showLength?: boolean }) {
     return (
         <Flex gap="1" flexWrap="wrap" alignItems="center">
             {/* Rank is the strongest cue for picking, so it gets the darkest
                 chip; level sits a shade lighter beside it. */}
             <SignalBadge label={`#${talk.rank}`} title={`Vote rank #${talk.rank}`} bg="admin.700" fg="white" />
+            {showLength && talk.length && (
+                <SignalBadge
+                    label={shortLength(talk.length)}
+                    title={`Length: ${talk.length}`}
+                    bg="admin.200"
+                    fg="admin.800"
+                />
+            )}
             {talk.level && (
                 <SignalBadge
                     label={levelInitial(talk.level)}
@@ -260,6 +274,13 @@ export function AgendaPlanner({
     const unplacedTentativeCount = useMemo(
         () => unplacedTalks.filter((talk) => talk.status === 'tentative').length,
         [unplacedTalks],
+    )
+
+    // The board grid needs one row per slot position, sized to the longest
+    // track — shorter tracks simply leave their later rows empty.
+    const maxSlotCount = useMemo(
+        () => state.tracks.reduce((max, track) => Math.max(max, track.slots.length), 0),
+        [state.tracks],
     )
 
     // Slots by length vs the capacity targets, so organizers can see at a
@@ -418,47 +439,75 @@ export function AgendaPlanner({
                 </styled.p>
             ) : (
                 <Box overflowX="auto" pb="2">
-                    <Flex gap="4" alignItems="flex-start" minW="0">
-                        {state.tracks.map((track) => (
+                    {/* One grid for the whole board rather than a column per
+                        track: slot N of every track shares a grid row, so the
+                        cards line up across tracks however tall any one of them
+                        gets. Each track's header, slots and "add slot" button
+                        are placed into its own column by grid-column. */}
+                    <styled.div
+                        display="grid"
+                        gap="4"
+                        alignItems="start"
+                        style={{
+                            gridTemplateColumns: `repeat(${state.tracks.length}, 260px)`,
+                            // Header, one row per slot position, then the add button.
+                            gridTemplateRows: `auto repeat(${maxSlotCount}, auto) auto`,
+                        }}
+                    >
+                        {state.tracks.map((track, trackIndex) => (
+                            // The tinted panel spans the track's full column so
+                            // the column still reads as one card.
                             <Box
-                                key={track.trackId}
-                                minW="[260px]"
-                                maxW="[260px]"
+                                key={`bg-${track.trackId}`}
                                 bg="admin.50"
                                 borderRadius="lg"
-                                p="3"
-                            >
-                                <Flex justifyContent="space-between" alignItems="center" gap="2" mb="2">
-                                    <styled.input
-                                        value={draftNames[track.trackId] ?? track.name}
-                                        onChange={(e) => renameTrack(track.trackId, e.target.value)}
-                                        aria-label="Track name"
-                                        bg="transparent"
-                                        border="none"
-                                        fontWeight="semibold"
-                                        fontSize="sm"
-                                        width="full"
-                                        _hover={{ bg: 'white' }}
-                                        _focus={{ bg: 'white' }}
-                                        px="1"
-                                        borderRadius="sm"
-                                    />
-                                    <styled.button
-                                        type="button"
-                                        onClick={() => removeTrack(track.trackId)}
-                                        title={`Remove ${track.name}`}
-                                        aria-label={`Remove ${track.name}`}
-                                        cursor="pointer"
-                                        color="admin.500"
-                                        px="1"
-                                        _hover={{ color: 'status.danger.fg' }}
-                                    >
-                                        ×
-                                    </styled.button>
-                                </Flex>
+                                style={{ gridColumn: trackIndex + 1, gridRow: '1 / -1' }}
+                            />
+                        ))}
 
-                                <Flex direction="column" gap="2" mb="2">
-                                    {track.slots.map((slot) => {
+                        {state.tracks.map((track, trackIndex) => (
+                            <Flex
+                                key={`head-${track.trackId}`}
+                                justifyContent="space-between"
+                                alignItems="center"
+                                gap="2"
+                                style={{ gridColumn: trackIndex + 1, gridRow: 1 }}
+                                px="3"
+                                pt="3"
+                                zIndex="[1]"
+                            >
+                                <styled.input
+                                    value={draftNames[track.trackId] ?? track.name}
+                                    onChange={(e) => renameTrack(track.trackId, e.target.value)}
+                                    aria-label="Track name"
+                                    bg="transparent"
+                                    border="none"
+                                    fontWeight="semibold"
+                                    fontSize="sm"
+                                    width="full"
+                                    _hover={{ bg: 'white' }}
+                                    _focus={{ bg: 'white' }}
+                                    px="1"
+                                    borderRadius="sm"
+                                />
+                                <styled.button
+                                    type="button"
+                                    onClick={() => removeTrack(track.trackId)}
+                                    title={`Remove ${track.name}`}
+                                    aria-label={`Remove ${track.name}`}
+                                    cursor="pointer"
+                                    color="admin.500"
+                                    px="1"
+                                    _hover={{ color: 'status.danger.fg' }}
+                                >
+                                    ×
+                                </styled.button>
+                            </Flex>
+                        ))}
+
+                        {state.tracks.map((track, trackIndex) => (
+                            <Fragment key={`slots-${track.trackId}`}>
+                                {track.slots.map((slot, slotIndex) => {
                                         const talk = slot.talkId ? talksById.get(slot.talkId) : undefined
                                         // Flag a talk whose Sessionize length doesn't match the
                                         // slot it's been dropped into.
@@ -472,6 +521,17 @@ export function AgendaPlanner({
                                         return (
                                             <Box
                                                 key={slot.slotId}
+                                                // Row 1 is the track header, so slot N sits in
+                                                // row N+2 — the same row as slot N of every
+                                                // other track. Inline rather than a Panda prop:
+                                                // these values are computed, and Panda's static
+                                                // extraction would emit a class with no CSS.
+                                                style={{
+                                                    gridColumn: trackIndex + 1,
+                                                    gridRow: slotIndex + 2,
+                                                }}
+                                                mx="3"
+                                                zIndex="[1]"
                                                 bg={isTentative ? 'status.warning.bg' : 'white'}
                                                 borderRadius="md"
                                                 border={
@@ -612,12 +672,18 @@ export function AgendaPlanner({
                                             </Box>
                                         )
                                     })}
-                                </Flex>
 
+                                {/* Pinned to the last grid row so every track's
+                                    button lines up, however few slots it has. */}
                                 <styled.button
                                     type="button"
                                     onClick={() => addSlot(track.trackId)}
-                                    width="full"
+                                    style={{ gridColumn: trackIndex + 1, gridRow: -2 }}
+                                    alignSelf="end"
+                                    mx="3"
+                                    mb="3"
+                                    mt="2"
+                                    zIndex="[1]"
                                     py="1"
                                     fontSize="xs"
                                     color="admin.600"
@@ -628,9 +694,9 @@ export function AgendaPlanner({
                                 >
                                     + Add slot
                                 </styled.button>
-                            </Box>
+                            </Fragment>
                         ))}
-                    </Flex>
+                    </styled.div>
                 </Box>
             )}
 
@@ -657,7 +723,8 @@ export function AgendaPlanner({
                     </Flex>
                     <styled.p fontSize="xs" color="admin.500" mb="2">
                         Drag a talk onto a slot, or use the dropdown inside an empty slot. Highest-ranked first;
-                        tentative talks are shaded orange. Chips show rank, level (B/I/A), topic, UM and new speaker.
+                        tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and new
+                        speaker.
                     </styled.p>
                     <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
@@ -692,14 +759,12 @@ export function AgendaPlanner({
                                         <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
                                             {talk.title}
                                         </styled.p>
-                                        <styled.p fontSize="2xs" color="admin.600" lineClamp={1}>
+                                        <styled.p fontSize="2xs" color="admin.600" lineClamp={1} mb="1">
                                             {talk.speakers}
                                         </styled.p>
-                                        {/* Topic moved into the chips below, so it isn't repeated here. */}
-                                        <styled.p fontSize="2xs" color="admin.600" mb="1">
-                                            {shortLength(talk.length) || '—'}
-                                        </styled.p>
-                                        <TalkSignals talk={talk} />
+                                        {/* Length and topic both live in the chips, so neither is
+                                            repeated as small grey text above them. */}
+                                        <TalkSignals talk={talk} showLength />
                                     </Box>
                                 )
                             })
