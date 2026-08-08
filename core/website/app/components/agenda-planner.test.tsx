@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
  * Tests for the planner board's talk cards: the signal chips that let
- * organizers read the balance of the agenda (rank, level, UM, new speaker,
- * pronouns) while filling it, and the tentative shading in the unplaced list.
+ * organizers read the balance of the agenda (rank, level, topic, UM, new
+ * speaker) while filling it, and the tentative shading on both the board and
+ * the unplaced list.
  */
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -23,7 +24,6 @@ function talk(overrides: Partial<PlannerTalk> = {}): PlannerTalk {
         level: 'Beginner',
         um: false,
         newSpeaker: false,
-        pronouns: [],
         ...overrides,
     }
 }
@@ -76,11 +76,16 @@ describe('talk signal chips', () => {
         expect(within(card).queryByText('NEW')).toBeNull()
     })
 
-    it('shows non-He/Him pronouns and dims the common case', () => {
-        renderPlanner([talk({ pronouns: ['She/Her', 'He/Him'] })])
+    it('shows the topic category in full rather than an initial', () => {
+        renderPlanner([talk({ topic: 'Cloud & Infrastructure' })])
         const card = unplacedCard('A Talk')
-        expect(within(card).getByText('She/Her')).toBeTruthy()
-        expect(within(card).queryByText('He/Him')).toBeNull()
+        expect(within(card).getByTitle('Topic: Cloud & Infrastructure')).toBeTruthy()
+        expect(within(card).getByText('Cloud & Infrastructure')).toBeTruthy()
+    })
+
+    it('labels a talk with no topic as Uncategorised', () => {
+        renderPlanner([talk({ topic: '' })])
+        expect(within(unplacedCard('A Talk')).getByTitle('Topic: Uncategorised')).toBeTruthy()
     })
 
     it('renders chips on a placed talk too, not just unplaced ones', () => {
@@ -120,5 +125,30 @@ describe('tentative talks in the unplaced list', () => {
     it('omits the tentative pill when none are left unplaced', () => {
         renderPlanner([talk({ status: 'locked' })])
         expect(screen.queryByText(/tentative$/)).toBeNull()
+    })
+})
+
+describe('tentative talks placed on the board', () => {
+    const boardWithTalk: PlannerBoard = {
+        tracks: [{ trackId: 'tr1', name: 'Track 1', slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1' }] }],
+        capacity: {},
+    }
+
+    /** The slot card is the nearest positioned ancestor of the talk title. */
+    function slotCardFor(title: string) {
+        return screen.getByText(title).closest('div')?.parentElement
+    }
+
+    it('tints a placed tentative talk so an apparently-full agenda still shows it', () => {
+        renderPlanner([talk({ title: 'Tentative Talk', status: 'tentative' })], boardWithTalk)
+        const card = slotCardFor('Tentative Talk')
+        expect(card?.className).toMatch(/bg_status\.warning\.bg/)
+    })
+
+    it('leaves an accepted placed talk on the plain background', () => {
+        renderPlanner([talk({ title: 'Locked Talk', status: 'locked' })], boardWithTalk)
+        const card = slotCardFor('Locked Talk')
+        expect(card?.className).toMatch(/bg_white/)
+        expect(card?.className).not.toMatch(/bg_status\.warning\.bg/)
     })
 })
