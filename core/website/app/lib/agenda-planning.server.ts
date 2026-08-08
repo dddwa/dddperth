@@ -2,6 +2,7 @@ import type {
     AgendaPlanningImport,
     AgendaPlanningState,
     PlannerBoard,
+    SlotKind,
     TalkPlanning,
     TalkStatus,
 } from './agenda-planning-types'
@@ -37,6 +38,8 @@ interface SlotRow {
     length: string
     talk_id: string | null
     position: number
+    kind: string
+    label: string | null
 }
 
 interface CapacityRow {
@@ -81,7 +84,7 @@ export async function getAgendaPlanningState(db: D1Database, runId: string): Pro
                 .bind(runId),
             db
                 .prepare(
-                    `SELECT slot_id, track_id, length, talk_id, position
+                    `SELECT slot_id, track_id, length, talk_id, position, kind, label
                      FROM agenda_slot WHERE run_id = ? ORDER BY position`,
                 )
                 .bind(runId),
@@ -110,6 +113,8 @@ export async function getAgendaPlanningState(db: D1Database, runId: string): Pro
                 slotId: slot.slot_id,
                 length: slot.length,
                 talkId: slot.talk_id,
+                kind: slot.kind === 'break' ? ('break' as const) : ('talk' as const),
+                label: slot.label,
             })),
         }))
 
@@ -241,16 +246,25 @@ export async function removeTrack(db: D1Database, args: { runId: string; trackId
 
 export async function addSlot(
     db: D1Database,
-    args: { runId: string; trackId: string; slotId: string; length: string; email: string | null },
+    args: {
+        runId: string
+        trackId: string
+        slotId: string
+        length: string
+        email: string | null
+        /** 'break' creates a labelled divider instead of a talk placeholder. */
+        kind?: SlotKind
+        label?: string | null
+    },
 ): Promise<void> {
     try {
         await db
             .prepare(
-                `INSERT INTO agenda_slot (run_id, slot_id, track_id, length, talk_id, position, updated_at, updated_by_email)
+                `INSERT INTO agenda_slot (run_id, slot_id, track_id, length, talk_id, position, updated_at, updated_by_email, kind, label)
                  VALUES (
                      ?, ?, ?, ?, NULL,
                      (SELECT COALESCE(MAX(position), -1) + 1 FROM agenda_slot WHERE run_id = ? AND track_id = ?),
-                     ?, ?
+                     ?, ?, ?, ?
                  )`,
             )
             .bind(
@@ -262,7 +276,28 @@ export async function addSlot(
                 args.trackId,
                 new Date().toISOString(),
                 args.email,
+                args.kind ?? 'talk',
+                args.label ?? null,
             )
+            .run()
+    } catch (error: any) {
+        recordException(error)
+        throw error
+    }
+}
+
+/** Rename a break slot. No-op on talk slots, which take their label from the talk. */
+export async function updateSlotLabel(
+    db: D1Database,
+    args: { runId: string; slotId: string; label: string; email: string | null },
+): Promise<void> {
+    try {
+        await db
+            .prepare(
+                `UPDATE agenda_slot SET label = ?, updated_at = ?, updated_by_email = ?
+                 WHERE run_id = ? AND slot_id = ? AND kind = 'break'`,
+            )
+            .bind(args.label, new Date().toISOString(), args.email, args.runId, args.slotId)
             .run()
     } catch (error: any) {
         recordException(error)
@@ -325,8 +360,9 @@ export async function assignTalkToSlot(
         statements.push(
             db
                 .prepare(
+                    // kind guard: a break is a divider, never a home for a talk.
                     `UPDATE agenda_slot SET talk_id = ?, updated_at = ?, updated_by_email = ?
-                     WHERE run_id = ? AND slot_id = ?`,
+                     WHERE run_id = ? AND slot_id = ? AND kind = 'talk'`,
                 )
                 .bind(args.talkId, now, args.email, args.runId, args.slotId),
         )
@@ -417,7 +453,9 @@ export async function importAgendaPlanning(
             )
 
             track.slots.forEach((slot, slotIndex) => {
-                let talkId = slot.talkId
+                // A break never holds a talk, so drop any talkId a malformed
+                // payload attached to one.
+                let talkId = slot.kind === 'break' ? null : slot.talkId
                 if (talkId) {
                     if (seenTalkIds.has(talkId)) {
                         talkId = null
@@ -429,10 +467,21 @@ export async function importAgendaPlanning(
                 statements.push(
                     db
                         .prepare(
-                            `INSERT INTO agenda_slot (run_id, slot_id, track_id, length, talk_id, position, updated_at, updated_by_email)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                            `INSERT INTO agenda_slot (run_id, slot_id, track_id, length, talk_id, position, updated_at, updated_by_email, kind, label)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         )
-                        .bind(runId, slot.slotId, track.trackId, slot.length, talkId, slotIndex, now, email),
+                        .bind(
+                            runId,
+                            slot.slotId,
+                            track.trackId,
+                            slot.length,
+                            talkId,
+                            slotIndex,
+                            now,
+                            email,
+                            slot.kind === 'break' ? 'break' : 'talk',
+                            slot.kind === 'break' ? (slot.label ?? 'Break') : null,
+                        ),
                 )
             })
         })

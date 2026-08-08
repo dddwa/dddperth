@@ -33,6 +33,13 @@ export interface PlannerTalk {
     um: boolean
     /** Junior or first-time/rare speaker, respecting the per-talk override. */
     newSpeaker: boolean
+    /**
+     * Most-experienced speaker on the talk, as the shortened Sessionize
+     * answer ("First time", "Monthly", "> monthly"). Empty when undisclosed.
+     * Shown so the board reveals the whole spread — a good agenda wants some
+     * seasoned speakers, not just first-timers flagged.
+     */
+    speakerExperience: string
 }
 
 /** One board edit, mapped 1:1 onto the route's action intents. */
@@ -40,8 +47,9 @@ export type PlannerChange =
     | { intent: 'add_track'; trackId: string; name: string }
     | { intent: 'rename_track'; trackId: string; name: string }
     | { intent: 'remove_track'; trackId: string }
-    | { intent: 'add_slot'; trackId: string; slotId: string; length: string }
+    | { intent: 'add_slot'; trackId: string; slotId: string; length: string; kind?: string; label?: string }
     | { intent: 'update_slot_length'; slotId: string; length: string }
+    | { intent: 'update_slot_label'; slotId: string; label: string }
     | { intent: 'remove_slot'; slotId: string }
     | { intent: 'assign_talk'; slotId: string; talkId: string }
     | { intent: 'set_capacity'; length: string; capacity: string }
@@ -71,6 +79,23 @@ const LEVEL_INITIALS: Record<string, string> = {
 function levelInitial(level: string): string {
     return LEVEL_INITIALS[level.toLowerCase()] ?? level.charAt(0).toUpperCase()
 }
+
+/**
+ * Speaker-experience chip styling, keyed by the shortened Sessionize answer.
+ *
+ * The whole scale is shown rather than only flagging newcomers: balancing an
+ * agenda means seeing the experienced speakers too, so green (seasoned)
+ * reads as distinctly as the newer end.
+ */
+const EXPERIENCE_STYLES: Record<string, { bg: ColorToken; fg: ColorToken }> = {
+    'First time': { bg: 'status.success.bg', fg: 'status.success.fg' },
+    'A few times': { bg: 'status.success.bg', fg: 'status.success.fg' },
+    '< monthly': { bg: 'admin.100', fg: 'admin.700' },
+    Monthly: { bg: 'status.info.bg', fg: 'status.info.fg' },
+    '> monthly': { bg: 'indigo.7', fg: 'white' },
+}
+
+const DEFAULT_EXPERIENCE_STYLE = { bg: 'admin.100' as ColorToken, fg: 'admin.700' as ColorToken }
 
 /**
  * Signal chip on a talk card. These exist so the balance of the agenda
@@ -165,13 +190,24 @@ function TalkSignals({ talk, showLength }: { talk: PlannerTalk; showLength?: boo
                     fg="status.info.fg"
                 />
             )}
-            {talk.newSpeaker && (
+            {/* The disclosed speaking frequency, so the board shows the whole
+                spread rather than only flagging newcomers. Falls back to the
+                derived new/junior flag when nothing was disclosed. */}
+            {talk.speakerExperience ? (
                 <SignalBadge
-                    label="NEW"
-                    title="Junior or first-time / infrequent speaker"
-                    bg="status.success.bg"
-                    fg="status.success.fg"
+                    label={talk.speakerExperience}
+                    title={`Speaks: ${talk.speakerExperience}${talk.newSpeaker ? ' — flagged new / junior' : ''}`}
+                    {...(EXPERIENCE_STYLES[talk.speakerExperience] ?? DEFAULT_EXPERIENCE_STYLE)}
                 />
+            ) : (
+                talk.newSpeaker && (
+                    <SignalBadge
+                        label="NEW"
+                        title="Junior or first-time / infrequent speaker"
+                        bg="status.success.bg"
+                        fg="status.success.fg"
+                    />
+                )
             )}
         </Flex>
     )
@@ -187,12 +223,15 @@ export function AgendaPlanner({
     talks,
     availableLengths,
     onChange,
+    onSelectTalk,
 }: {
     board: PlannerBoard
     talks: PlannerTalk[]
     availableLengths: string[]
     /** Posts one edit to the server; the board re-renders from the response. */
     onChange: (change: PlannerChange) => void
+    /** Opens the talk-details modal — the same one the ranked table uses. */
+    onSelectTalk: (talkId: string) => void
 }) {
     const [draggingTalkId, setDraggingTalkId] = useState<string | null>(null)
     // Track names and capacity are free-text inputs, so they render the local
@@ -290,6 +329,9 @@ export function AgendaPlanner({
         const filled = new Map<string, number>()
         for (const track of state.tracks) {
             for (const slot of track.slots) {
+                // Breaks aren't talk capacity — counting them would make the
+                // board look over its target for that length.
+                if (slot.kind === 'break') continue
                 created.set(slot.length, (created.get(slot.length) ?? 0) + 1)
                 if (slot.talkId) {
                     filled.set(slot.length, (filled.get(slot.length) ?? 0) + 1)
@@ -325,8 +367,24 @@ export function AgendaPlanner({
         onChange({ intent: 'add_slot', trackId, slotId: createId('slot'), length: lengthOptions[0] })
     }
 
+    function addBreak(trackId: string) {
+        onChange({
+            intent: 'add_slot',
+            trackId,
+            slotId: createId('slot'),
+            length: lengthOptions[0],
+            kind: 'break',
+            label: 'Break',
+        })
+    }
+
     function updateSlotLength(slotId: string, length: string) {
         onChange({ intent: 'update_slot_length', slotId, length })
+    }
+
+    function renameBreak(slotId: string, label: string) {
+        setDraftNames((current) => ({ ...current, [slotId]: label }))
+        debouncedChange(`slot:${slotId}`, { intent: 'update_slot_label', slotId, label })
     }
 
     function removeSlot(slotId: string) {
@@ -508,6 +566,59 @@ export function AgendaPlanner({
                         {state.tracks.map((track, trackIndex) => (
                             <Fragment key={`slots-${track.trackId}`}>
                                 {track.slots.map((slot, slotIndex) => {
+                                        // A break is a labelled divider, not a home for a talk —
+                                        // it renders as a solid bar so the shape of the day (what
+                                        // sits before and after lunch) reads at a glance.
+                                        if (slot.kind === 'break') {
+                                            return (
+                                                <Flex
+                                                    key={slot.slotId}
+                                                    style={{
+                                                        gridColumn: trackIndex + 1,
+                                                        gridRow: slotIndex + 2,
+                                                    }}
+                                                    mx="3"
+                                                    zIndex="[1]"
+                                                    alignItems="center"
+                                                    gap="1"
+                                                    bg="admin.700"
+                                                    borderRadius="md"
+                                                    px="2"
+                                                    py="1"
+                                                >
+                                                    <styled.input
+                                                        value={draftNames[slot.slotId] ?? slot.label ?? 'Break'}
+                                                        onChange={(e) => renameBreak(slot.slotId, e.target.value)}
+                                                        aria-label="Break name"
+                                                        bg="transparent"
+                                                        border="none"
+                                                        color="white"
+                                                        fontWeight="semibold"
+                                                        fontSize="xs"
+                                                        textAlign="center"
+                                                        width="full"
+                                                        px="1"
+                                                        borderRadius="sm"
+                                                        _hover={{ bg: 'admin.600' }}
+                                                        _focus={{ bg: 'admin.600' }}
+                                                    />
+                                                    <styled.button
+                                                        type="button"
+                                                        onClick={() => removeSlot(slot.slotId)}
+                                                        title={`Remove ${slot.label ?? 'break'}`}
+                                                        aria-label={`Remove ${slot.label ?? 'break'}`}
+                                                        cursor="pointer"
+                                                        color="admin.200"
+                                                        fontSize="xs"
+                                                        px="1"
+                                                        _hover={{ color: 'white' }}
+                                                    >
+                                                        ×
+                                                    </styled.button>
+                                                </Flex>
+                                            )
+                                        }
+
                                         const talk = slot.talkId ? talksById.get(slot.talkId) : undefined
                                         // Flag a talk whose Sessionize length doesn't match the
                                         // slot it's been dropped into.
@@ -616,9 +727,25 @@ export function AgendaPlanner({
                                                         onDragEnd={() => setDraggingTalkId(null)}
                                                         cursor="grab"
                                                     >
-                                                        <styled.p fontSize="xs" fontWeight="medium" mb="0.5">
+                                                        {/* The title opens the same details modal the
+                                                            ranked table uses. A button (not a click
+                                                            on the card) keeps it keyboard-reachable
+                                                            and clear of the drag handle. */}
+                                                        <styled.button
+                                                            type="button"
+                                                            onClick={() => onSelectTalk(talk.talkId)}
+                                                            title={`${talk.title} — view details`}
+                                                            display="block"
+                                                            width="full"
+                                                            textAlign="left"
+                                                            fontSize="xs"
+                                                            fontWeight="medium"
+                                                            mb="0.5"
+                                                            cursor="pointer"
+                                                            _hover={{ textDecoration: 'underline' }}
+                                                        >
                                                             {talk.title}
-                                                        </styled.p>
+                                                        </styled.button>
                                                         <styled.p fontSize="xs" color="admin.600" mb="1">
                                                             {talk.speakers}
                                                         </styled.p>
@@ -674,26 +801,46 @@ export function AgendaPlanner({
                                     })}
 
                                 {/* Pinned to the last grid row so every track's
-                                    button lines up, however few slots it has. */}
-                                <styled.button
-                                    type="button"
-                                    onClick={() => addSlot(track.trackId)}
+                                    buttons line up, however few slots it has. */}
+                                <Flex
                                     style={{ gridColumn: trackIndex + 1, gridRow: -2 }}
                                     alignSelf="end"
+                                    gap="1"
                                     mx="3"
                                     mb="3"
                                     mt="2"
                                     zIndex="[1]"
-                                    py="1"
-                                    fontSize="xs"
-                                    color="admin.600"
-                                    bg="white"
-                                    borderRadius="md"
-                                    cursor="pointer"
-                                    _hover={{ bg: 'admin.100' }}
                                 >
-                                    + Add slot
-                                </styled.button>
+                                    <styled.button
+                                        type="button"
+                                        onClick={() => addSlot(track.trackId)}
+                                        flex="1"
+                                        py="1"
+                                        fontSize="xs"
+                                        color="admin.600"
+                                        bg="white"
+                                        borderRadius="md"
+                                        cursor="pointer"
+                                        _hover={{ bg: 'admin.100' }}
+                                    >
+                                        + Slot
+                                    </styled.button>
+                                    <styled.button
+                                        type="button"
+                                        onClick={() => addBreak(track.trackId)}
+                                        title="Add a break (Morning Tea, Lunch)"
+                                        flex="1"
+                                        py="1"
+                                        fontSize="xs"
+                                        color="admin.600"
+                                        bg="white"
+                                        borderRadius="md"
+                                        cursor="pointer"
+                                        _hover={{ bg: 'admin.100' }}
+                                    >
+                                        + Break
+                                    </styled.button>
+                                </Flex>
                             </Fragment>
                         ))}
                     </styled.div>
@@ -723,8 +870,8 @@ export function AgendaPlanner({
                     </Flex>
                     <styled.p fontSize="xs" color="admin.500" mb="2">
                         Drag a talk onto a slot, or use the dropdown inside an empty slot. Highest-ranked first;
-                        tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and new
-                        speaker.
+                        tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and how
+                        often the speaker presents.
                     </styled.p>
                     <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
@@ -756,9 +903,20 @@ export function AgendaPlanner({
                                         opacity={draggingTalkId === talk.talkId ? '0.5' : '1'}
                                         title={`${talk.title} — ${talk.speakers}${isTentative ? ' (tentative)' : ''}`}
                                     >
-                                        <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
+                                        <styled.button
+                                            type="button"
+                                            onClick={() => onSelectTalk(talk.talkId)}
+                                            display="block"
+                                            width="full"
+                                            textAlign="left"
+                                            fontSize="xs"
+                                            fontWeight="medium"
+                                            lineClamp={2}
+                                            cursor="pointer"
+                                            _hover={{ textDecoration: 'underline' }}
+                                        >
                                             {talk.title}
-                                        </styled.p>
+                                        </styled.button>
                                         <styled.p fontSize="2xs" color="admin.600" lineClamp={1} mb="1">
                                             {talk.speakers}
                                         </styled.p>
