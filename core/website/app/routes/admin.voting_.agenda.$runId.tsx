@@ -125,27 +125,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
     const { runId } = params
-    const conferenceState = getConferenceState(context)
-    const year = conferenceState.conference.year
-
-    const yearConfig = getYearConfig(year, getConfig(context))
-
-    if (yearConfig.kind === 'cancelled') {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-
-    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-    const sessionizeEndpoint = yearConfig.sessions.sessionizeEndpoint
-    const underrepresentedGroupsQuestionId = yearConfig.sessions.underrepresentedGroupsQuestionId
-
     const voting = getServices(context).voting
 
+    let runYear: string | null = null
     let runDetails: { startedAt: string; completedAt?: string; status: string } | null = null
     try {
         const runEntity = await voting.getValidationRunById(runId)
         if (runEntity) {
+            runYear = runEntity.year
             runDetails = {
                 startedAt: runEntity.startedAt,
                 completedAt: runEntity.completedAt,
@@ -155,6 +142,26 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     } catch (error: any) {
         console.error('Error getting run details:', error)
     }
+
+    // Use the run's own year so a past run still enriches against the
+    // Sessionize event it was voted on, not the current conference's.
+    const year = runYear ?? getConferenceState(context).conference.year
+
+    const yearConfig = getYearConfig(year, getConfig(context))
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    // Validation runs cover every submitted talk, so enrich from the
+    // all-sessions endpoint — the public sessionizeEndpoint only lists
+    // accepted talks (and may not exist yet while the agenda is planned),
+    // which would wrongly auto-default the rest to Declined.
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+    const sessionizeEndpoint = yearConfig.sessions.allSessionsEndpoint
+    const underrepresentedGroupsQuestionId = yearConfig.sessions.underrepresentedGroupsQuestionId
 
     const talkResults = await voting.getTalkResults(runId)
 
