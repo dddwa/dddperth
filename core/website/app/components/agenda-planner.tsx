@@ -19,6 +19,8 @@ export interface PlannerTalk {
     title: string
     length: string
     speakers: string
+    /** Effective general topic (respects organizer overrides), or '' when uncategorised. */
+    topic: string
     status: string
 }
 
@@ -556,8 +558,11 @@ export function AgendaPlanner({
                                     <styled.p fontSize="xs" fontWeight="medium" lineClamp={2}>
                                         {talk.title}
                                     </styled.p>
+                                    <styled.p fontSize="2xs" color="admin.600" lineClamp={1}>
+                                        {talk.speakers}
+                                    </styled.p>
                                     <styled.p fontSize="2xs" color="admin.600">
-                                        {shortLength(talk.length) || '—'}
+                                        {shortLength(talk.length) || '—'} · {talk.topic || 'Uncategorised'}
                                     </styled.p>
                                 </Box>
                             ))
