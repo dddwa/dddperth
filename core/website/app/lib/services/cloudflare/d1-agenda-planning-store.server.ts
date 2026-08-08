@@ -2,10 +2,10 @@ import {
     addSlot as d1AddSlot,
     addTrack as d1AddTrack,
     assignTalkToSlot as d1AssignTalkToSlot,
-    clearBoard as d1ClearBoard,
     getAgendaPlanningState,
     importAgendaPlanning,
     isAgendaPlanningEmpty,
+    moveSlot as d1MoveSlot,
     removeSlot as d1RemoveSlot,
     removeTrack as d1RemoveTrack,
     renameTrack as d1RenameTrack,
@@ -54,6 +54,10 @@ export function createD1AgendaPlanningStore(db: D1Database): AgendaPlanningStore
             await d1UpdateSlotLabel(db, args)
         },
 
+        async moveSlot(args) {
+            await d1MoveSlot(db, args)
+        },
+
         async removeSlot(args) {
             await d1RemoveSlot(db, args)
         },
@@ -64,10 +68,6 @@ export function createD1AgendaPlanningStore(db: D1Database): AgendaPlanningStore
 
         async setCapacity(args) {
             await d1SetCapacity(db, args)
-        },
-
-        async clearBoard(runId) {
-            await d1ClearBoard(db, runId)
         },
 
         async importPlanning(args) {

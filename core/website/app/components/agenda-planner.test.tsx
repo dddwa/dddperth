@@ -8,7 +8,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { PlannerBoard } from '~/lib/agenda-planning-types'
-import { AgendaPlanner, type PlannerTalk } from './agenda-planner'
+import { AgendaPlanner, type PlannerChange, type PlannerTalk } from './agenda-planner'
 
 afterEach(cleanup)
 
@@ -143,6 +143,80 @@ describe('talk signal chips', () => {
         renderPlanner([talk({ um: true, rank: 7 })], board)
         expect(screen.getByText('#7')).toBeTruthy()
         expect(screen.getByText('UM')).toBeTruthy()
+    })
+})
+
+describe('reordering slots', () => {
+    const THREE_SLOTS: PlannerBoard = {
+        tracks: [
+            {
+                trackId: 'tr1',
+                name: 'Track 1',
+                slots: [
+                    { slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk', label: null },
+                    { slotId: 's2', length: '45 minutes', talkId: null, kind: 'talk', label: null },
+                    { slotId: 'b1', length: '45 minutes', talkId: null, kind: 'break', label: 'Lunch' },
+                ],
+            },
+        ],
+        capacity: {},
+    }
+
+    function renderWithChanges(board: PlannerBoard) {
+        const changes: PlannerChange[] = []
+        render(
+            <AgendaPlanner
+                board={board}
+                talks={[talk({ talkId: 't1' })]}
+                availableLengths={['45 minutes']}
+                onChange={(c) => changes.push(c)}
+                onSelectTalk={() => {}}
+            />,
+        )
+        return changes
+    }
+
+    it('moves a break earlier, so it can be inserted into a built agenda', () => {
+        const changes = renderWithChanges(THREE_SLOTS)
+        fireEvent.click(screen.getByRole('button', { name: 'Move Lunch earlier' }))
+        expect(changes).toEqual([{ intent: 'move_slot', slotId: 'b1', direction: 'up' }])
+    })
+
+    it('moves a talk slot later', () => {
+        const changes = renderWithChanges(THREE_SLOTS)
+        fireEvent.click(screen.getAllByRole('button', { name: 'Move slot later' })[0])
+        expect(changes).toEqual([{ intent: 'move_slot', slotId: 's1', direction: 'down' }])
+    })
+
+    it('disables moving up on the first slot and down on the last', () => {
+        renderWithChanges(THREE_SLOTS)
+        const firstUp = screen.getAllByRole('button', { name: 'Move slot earlier' })[0]
+        expect(firstUp.hasAttribute('disabled')).toBe(true)
+        expect(screen.getByRole('button', { name: 'Move Lunch later' }).hasAttribute('disabled')).toBe(true)
+    })
+
+    it('leaves the middle slot movable in both directions', () => {
+        renderWithChanges(THREE_SLOTS)
+        const ups = screen.getAllByRole('button', { name: 'Move slot earlier' })
+        // s2 is the second talk slot, so its up control is enabled.
+        expect(ups[1].hasAttribute('disabled')).toBe(false)
+    })
+})
+
+describe('destructive controls', () => {
+    it('offers no clear-board control, since the board is shared and has no undo', () => {
+        const board: PlannerBoard = {
+            tracks: [
+                {
+                    trackId: 'tr1',
+                    name: 'Track 1',
+                    slots: [{ slotId: 's1', length: '45 minutes', talkId: 't1', kind: 'talk', label: null }],
+                },
+            ],
+            capacity: {},
+        }
+        renderPlanner([talk({ talkId: 't1' })], board)
+        expect(screen.queryByRole('button', { name: /clear board/i })).toBeNull()
     })
 })
 

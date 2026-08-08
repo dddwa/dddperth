@@ -38,6 +38,13 @@ export interface AgendaPlanningStore {
     updateSlotLength(args: { runId: string; slotId: string; length: string; email: string | null }): Promise<void>
     /** Rename a break slot. */
     updateSlotLabel(args: { runId: string; slotId: string; label: string; email: string | null }): Promise<void>
+    /** Swap a slot with its neighbour, so breaks can be inserted mid-agenda. */
+    moveSlot(args: {
+        runId: string
+        slotId: string
+        direction: 'up' | 'down'
+        email: string | null
+    }): Promise<void>
     removeSlot(args: { runId: string; slotId: string }): Promise<void>
     /** Place a talk in a slot (or clear it), vacating whatever slot held it. */
     assignTalkToSlot(args: {
@@ -47,7 +54,6 @@ export interface AgendaPlanningStore {
         email: string | null
     }): Promise<void>
     setCapacity(args: { runId: string; length: string; capacity: number; email: string | null }): Promise<void>
-    clearBoard(runId: string): Promise<void>
 
     // ---------- localStorage migration ----------
     importPlanning(args: {
