@@ -142,6 +142,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
     },
+    "/runsheets/:filter?": {
+      params: {'filter'?: string | number},
+      query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
+    },
     "/share": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
@@ -187,12 +191,13 @@ declare module "safe-routes" {
             | 'routes/api.theme'
             | 'routes/_layout'
             | 'routes/_layout.agenda.$year.talk.$sessionId'
+            | 'routes/_layout.runsheets.($filter)'
             | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
-            | 'routes/_layout._index'
             | 'routes/_layout.voting'
+            | 'routes/_layout._index'
             | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
@@ -208,8 +213,8 @@ declare module "safe-routes" {
             | 'routes/admin.settings'
             | 'routes/admin.sponsors'
             | 'routes/admin.content'
-            | 'routes/admin._index'
-            | 'routes/admin.voting';
+            | 'routes/admin.voting'
+            | 'routes/admin._index';
 
   export function $path<
     Route extends keyof Routes,
