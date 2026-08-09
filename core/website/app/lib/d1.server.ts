@@ -322,7 +322,7 @@ export async function listVotingSessions(db: D1Database, year?: string, version?
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
     const statement = db.prepare(
         `
-        SELECT * FROM voting_sessions ${whereSql} ORDER BY created_at
+        SELECT * FROM voting_sessions ${whereSql} ORDER BY created_at, session_id
     `,
     )
     const result =

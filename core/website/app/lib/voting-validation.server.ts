@@ -127,10 +127,17 @@ export async function createValidationRunIndex(
         .run()
 }
 
+/**
+ * total_sessions is rewritten on every update because the session list is
+ * re-read live each chunk — sessions created after the run started (voting
+ * still open, or a resume days later) grow the denominator, and the snapshot
+ * taken at run creation would report progress above 100%.
+ */
 export async function updateValidationRunProgress(
     db: D1Database,
     runId: string,
     processedSessions: number,
+    totalSessions: number,
     processedRounds: number,
     processedVotes: number,
     status?: 'running' | 'completed' | 'incomplete',
@@ -141,31 +148,31 @@ export async function updateValidationRunProgress(
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?, status = 'completed', completed_at = ?
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, now, runId)
             .run()
     } else if (status === 'incomplete') {
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?, status = 'incomplete'
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, runId)
             .run()
     } else {
         await db
             .prepare(
                 `UPDATE voting_validation_runs
-                 SET processed_sessions = ?, processed_rounds = ?, processed_votes = ?,
+                 SET processed_sessions = ?, total_sessions = ?, processed_rounds = ?, processed_votes = ?,
                      last_updated_at = ?
                  WHERE run_id = ?`,
             )
-            .bind(processedSessions, processedRounds, processedVotes, now, runId)
+            .bind(processedSessions, totalSessions, processedRounds, processedVotes, now, runId)
             .run()
     }
 }
@@ -190,50 +197,27 @@ export function rebuildSessionTalks(sessionTalkIds: string[], currentTalks: Talk
     )
 }
 
+/**
+ * Processes one voting session: reconstructs its votes and persists them as
+ * vote_results rows. Idempotent — vote_results dedupes on
+ * (run_id, session_id, original_row_key), so reprocessing a session (e.g. a
+ * chunk retried after its driver died) changes nothing. Talk statistics are
+ * NOT accumulated here; they are recomputed from vote_results when the run
+ * finalizes, which is what makes reprocessing safe.
+ *
+ * Errors propagate: the chunk fails before the run's cursor advances, so
+ * Resume retries this session instead of the run completing with its votes
+ * silently missing from the analysis.
+ */
 export async function processVotingSession(
     db: D1Database,
     runId: string,
     session: VotingSession,
     talks: TalkVotingData[],
 ): Promise<{
-    talkStats: Map<string, TalkStatsAccumulator>
     processedRounds: number
     processedVotes: number
 }> {
-    const stats = new Map<string, TalkStatsAccumulator>()
-
-    // Initialize stats for all talks
-    talks.forEach((talk) => {
-        stats.set(talk.id, {
-            talkId: talk.id,
-            title: talk.title,
-            timesSeenAggregated: 0,
-            timesVotedForAggregated: 0,
-            timesVotedAgainstAggregated: 0,
-            timesSkippedAggregated: 0,
-            timesSeenV1: 0,
-            timesVotedForV1: 0,
-            timesVotedAgainstV1: 0,
-            timesSkippedV1: 0,
-            timesSeenV2: 0,
-            timesVotedForV2: 0,
-            timesVotedAgainstV2: 0,
-            timesSkippedV2: 0,
-            timesSeenV3: 0,
-            timesVotedForV3: 0,
-            timesVotedAgainstV3: 0,
-            timesSkippedV3: 0,
-            timesSeenV4: 0,
-            timesVotedForV4: 0,
-            timesVotedAgainstV4: 0,
-            timesSkippedV4: 0,
-            timesSeenV5: 0,
-            timesVotedForV5: 0,
-            timesVotedAgainstV5: 0,
-            timesSkippedV5: 0,
-        })
-    })
-
     const sessionTalkIds = JSON.parse(session.inputSessionizeTalkIdsJson) as string[]
     const sessionTalks = rebuildSessionTalks(sessionTalkIds, talks)
 
@@ -265,7 +249,6 @@ export async function processVotingSession(
             const leftTalk = vote.pair.left
             const rightTalk = vote.pair.right
 
-            updateTalkStats(stats, leftTalk.id, rightTalk.id, vote.vote, CURRENT_SESSION_VERSION)
             votesProcessed++
             if (vote.roundNumber >= totalRounds) {
                 totalRounds = vote.roundNumber + 1
@@ -286,13 +269,11 @@ export async function processVotingSession(
 
         // Save vote results in batches
         await saveVoteResults(db, voteResults)
-    } catch (error: any) {
-        console.error(`Error processing votes for session ${session.sessionId}:`, error)
-        recordException(error)
+    } catch (error) {
+        throw new Error(`Error processing votes for session ${session.sessionId}`, { cause: error })
     }
 
     return {
-        talkStats: stats,
         processedRounds: totalRounds,
         processedVotes: votesProcessed,
     }
@@ -402,6 +383,103 @@ function updateTalkStats(
     // Update specific version stats
     const versionKey = `V${sessionVersion}` as const
     applyVoteUpdate(leftStats, rightStats, vote, versionKey)
+}
+
+export function blankTalkStatsAccumulator(talkId: string, title: string): TalkStatsAccumulator {
+    return {
+        talkId,
+        title,
+        timesSeenAggregated: 0,
+        timesVotedForAggregated: 0,
+        timesVotedAgainstAggregated: 0,
+        timesSkippedAggregated: 0,
+        timesSeenV1: 0,
+        timesVotedForV1: 0,
+        timesVotedAgainstV1: 0,
+        timesSkippedV1: 0,
+        timesSeenV2: 0,
+        timesVotedForV2: 0,
+        timesVotedAgainstV2: 0,
+        timesSkippedV2: 0,
+        timesSeenV3: 0,
+        timesVotedForV3: 0,
+        timesVotedAgainstV3: 0,
+        timesSkippedV3: 0,
+        timesSeenV4: 0,
+        timesVotedForV4: 0,
+        timesVotedAgainstV4: 0,
+        timesSkippedV4: 0,
+        timesSeenV5: 0,
+        timesVotedForV5: 0,
+        timesVotedAgainstV5: 0,
+        timesSkippedV5: 0,
+    }
+}
+
+export interface VoteResultStatsRow {
+    talkA: string
+    talkB: string
+    vote: 'a' | 'b' | 'skip'
+}
+
+/**
+ * Rebuilds talk statistics from persisted vote_results rows. Pairs where
+ * either talk is unknown (removed from Sessionize since voting) are excluded
+ * entirely — same semantics as the per-vote accumulation this replaced. All
+ * counted rows come from CURRENT_SESSION_VERSION sessions, so stats land in
+ * the aggregated columns plus that version's columns.
+ */
+export function computeTalkStatsFromVoteRows(
+    rows: VoteResultStatsRow[],
+    talks: TalkVotingData[],
+): Map<string, TalkStatsAccumulator> {
+    const stats = new Map(talks.map((talk) => [talk.id, blankTalkStatsAccumulator(talk.id, talk.title)]))
+    applyVoteRowsToStats(stats, rows)
+    return stats
+}
+
+function applyVoteRowsToStats(stats: Map<string, TalkStatsAccumulator>, rows: VoteResultStatsRow[]): void {
+    for (const row of rows) {
+        const vote = row.vote === 'a' ? 'A' : row.vote === 'b' ? 'B' : 'S'
+        updateTalkStats(stats, row.talkA, row.talkB, vote, CURRENT_SESSION_VERSION)
+    }
+}
+
+/**
+ * Recomputes the full statistics for a run from its vote_results rows.
+ * vote_results is the idempotent source of truth (unique on run/session/vote),
+ * so this gives the same answer no matter how many times chunks were retried
+ * or how many drivers processed them.
+ */
+export async function computeTalkStatsFromVoteResults(
+    db: D1Database,
+    runId: string,
+    talks: TalkVotingData[],
+): Promise<Map<string, TalkStatsAccumulator>> {
+    const stats = new Map(talks.map((talk) => [talk.id, blankTalkStatsAccumulator(talk.id, talk.title)]))
+
+    const pageSize = 1000
+    let lastId = 0
+    for (;;) {
+        const result = await db
+            .prepare(
+                `SELECT id, talk_a, talk_b, vote FROM vote_results
+                 WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?`,
+            )
+            .bind(runId, lastId, pageSize)
+            .all<{ id: number; talk_a: string; talk_b: string; vote: 'a' | 'b' | 'skip' }>()
+
+        const rows = result.results ?? []
+        applyVoteRowsToStats(
+            stats,
+            rows.map((row) => ({ talkA: row.talk_a, talkB: row.talk_b, vote: row.vote })),
+        )
+
+        if (rows.length < pageSize) break
+        lastId = rows[rows.length - 1].id
+    }
+
+    return stats
 }
 
 // ============================================================================
