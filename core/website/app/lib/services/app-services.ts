@@ -3,6 +3,7 @@ import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { JiraAuth } from './jira-auth'
 import type { NotificationLog } from './notification-log'
 import type { SessionStorages } from './session-storages'
 import type { SponsorSyncService } from './sponsor-sync-service'
@@ -29,4 +30,5 @@ export interface AppServices {
     assets: AssetStorage
     sponsorSync: SponsorSyncService
     notifications: NotificationLog
+    jiraAuth: JiraAuth
 }

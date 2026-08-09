@@ -1,9 +1,11 @@
 import { data, Form, redirect, useLoaderData } from 'react-router'
+import type { JSX } from 'react/jsx-runtime'
 import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
+import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
@@ -30,6 +32,11 @@ export const issueSchema = z.object({
         customfield_10133: z.string().nullable(), // Item End Time
         customfield_10134: z.string().nullable(), // Item Start Time
         customfield_10135: z.array(z.string()).nullable(), // Location
+        customfield_10136: z
+            .object({
+                value: z.string().nullable(),
+            })
+            .nullable(), //Time Bracket
     }),
 })
 export const jsonSchema = z.object({
@@ -78,7 +85,7 @@ export async function action({ request }: Route.ActionArgs) {
     return redirect(`/runsheets`)
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
     const filter: string | undefined = params.filter
 
     // filter using JQL based on the param passed from the select
@@ -106,6 +113,15 @@ export async function loader({ params }: Route.LoaderArgs) {
         }
     }
 
+    // auth needs to be set in JIRA_API_EMAIL JIRA_API_TOKEN env vars - pnpm jira:auth
+    const services = getServices(context)
+    const token = services.jiraAuth.authToken
+    const email = services.jiraAuth.authEmail
+    if (token === '' || email === '') {
+        throw new Error('Error - Jira API credentials missing')
+    }
+    const authorization = `Basic ${Buffer.from(`${email}:${token}`).toString('base64')}`
+
     // get ids of issues
     const fetchedIds = await fetch(
         `https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item" AND "Time Bracket[Dropdown]" %3D "Saturday Conference"${label && value ? jql : ''}&type=issue&product=jira&maxResults=150`,
@@ -113,7 +129,7 @@ export async function loader({ params }: Route.LoaderArgs) {
             method: 'GET',
             headers: {
                 // Auth WIP - currently using my email and api locally
-                Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
+                Authorization: authorization,
                 Accept: 'application/json',
             },
         },
@@ -161,8 +177,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
         method: 'POST',
         headers: {
-            // Auth WIP - currently using my email and api locally
-            Authorization: `Basic ${Buffer.from('email@email.com:api_key').toString('base64')}`,
+            Authorization: authorization,
             Accept: 'application/json',
             'Content-Type': 'application/json',
         },
