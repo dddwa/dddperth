@@ -128,7 +128,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         {
             method: 'GET',
             headers: {
-                // Auth WIP - currently using my email and api locally
                 Authorization: authorization,
                 Accept: 'application/json',
             },
