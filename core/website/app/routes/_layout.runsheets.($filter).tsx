@@ -41,19 +41,33 @@ export const bulkIssuesSchema = z.object({
     issues: z.array(issueSchema),
 })
 
-const teamList = ['team-1', 'team-2', 'team-3']
-const locationList = [
-    // todo update this
-    'loc-registration-area',
-    'loc-river-room-1',
-    'loc-river-room-2',
-    'loc-river-room-3',
-    'loc-sports-lounge',
-    'loc-cygnet-room',
-    'loc-champions-terrace',
-    'loc-L3-lobby',
-    'loc-black-swan-room',
-]
+enum teamList {
+    'team-1' = 'Team 1',
+    'team-2' = 'Team 2',
+    'team-3' = 'Team 3',
+    'team-4' = 'Team 4',
+    'team-5' = 'Team 5',
+    'team-6' = 'Team 6',
+    'team-7' = 'Team 7',
+    'team-photographers' = 'Photographers',
+    'team-Sat-Bump-Out' = 'Bump Out',
+}
+enum locationList {
+    'loc-black-swan-room' = 'Black Swan Room',
+    'loc-champions-terrace' = 'Champions Terrace',
+    'loc-cygnet-room' = 'Cygnet Room',
+    'loc-help-desk' = 'Help Desk Level 3',
+    'loc-L2-Lobby' = 'Lobby Level 2',
+    'loc-L3-lobby' = 'Lobby Level 3',
+    'loc-platinum-terrace' = 'Platinum Terrace',
+    'loc-premiership-terrace' = 'Premiership Terrace',
+    'loc-registration-area' = 'Registration Area',
+    'loc-river-view-room-1' = 'River View Room 1',
+    'loc-river-view-room-2' = 'River View Room 2',
+    'loc-river-view-room-3' = 'River View Room 3',
+    'loc-sports-lounge' = 'Sports Lounge',
+}
+
 export async function action({ request }: Route.ActionArgs) {
     const formData = await request.formData()
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -66,25 +80,35 @@ export async function action({ request }: Route.ActionArgs) {
 
 export async function loader({ params }: Route.LoaderArgs) {
     const filter: string | undefined = params.filter
-    // todo refactor when it's not 12am
-    const split = filter ? filter.split('.') : null
-    const label = split && (split[0] === 'team' || split[0] === 'location') ? split[0] : null
+
+    // filter using JQL based on the param passed from the select
     let value: string | null = null
+    let label: string | null = null
     let jql = ' AND '
-    if (split && label && label === 'team' && teamList.includes(split[1])) {
-        value = split[1]
-        jql = jql + '"Volunteer Team[Labels]" %3D ' + value
-    }
-    if (split && label && label === 'location' && locationList.includes(split[1])) {
-        value = split[1]
-        jql = jql + '"Location[Labels]" %3D ' + value
+    if (filter) {
+        const splitFilter = filter.split('.')
+        switch (splitFilter[0]) {
+            case 'team': {
+                label = 'team'
+                if (Object.keys(teamList).includes(splitFilter[1])) {
+                    value = splitFilter[1]
+                }
+                jql = jql + '"Volunteer Team[Labels]" %3D ' + value
+                break
+            }
+            case 'location': {
+                label = 'team'
+                if (Object.keys(locationList).includes(splitFilter[1])) {
+                    value = splitFilter[1]
+                }
+                jql = jql + '"Location[Labels]" %3D ' + value
+            }
+        }
     }
 
-    // get ids of issues in team
-    // todo filter on time slot - conference day, nothing
+    // get ids of issues
     const fetchedIds = await fetch(
-        `https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item"${label && value ? jql : ''}&type=issue&product=jira`,
-        // 'https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item" AND "Volunteer Team[Labels]" %3D team-1&type=issue&product=jira',
+        `https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item" AND "Time Bracket[Dropdown]" %3D "Saturday Conference"${label && value ? jql : ''}&type=issue&product=jira&maxResults=150`,
         {
             method: 'GET',
             headers: {
@@ -97,9 +121,10 @@ export async function loader({ params }: Route.LoaderArgs) {
     if (!fetchedIds.ok) {
         throw new Error('Error fetching issue ids, responded with status: ' + fetchedIds.status)
     }
+
+    // parse returned json to get the list of IDs that match the filters
     const jsonIds = await fetchedIds.json()
     const idList = jsonSchema.parse(jsonIds).issues
-
     if (!idList) {
         throw new Error('Error parsing issue ids')
     }
@@ -107,11 +132,10 @@ export async function loader({ params }: Route.LoaderArgs) {
     for (const issue of idList) {
         issueIds.push(issue.id)
     }
-
-    // get issue details
     if (issueIds.length <= 0) {
         throw new Error(`Error, no issues found${label && value ? ` with filter: ${value}` : ''}`)
     }
+
     const bodyData = `{
         "expand": [
         "names"
@@ -126,12 +150,14 @@ export async function loader({ params }: Route.LoaderArgs) {
         "customfield_10133",
         "customfield_10134",
         "customfield_10135",
+        "customfield_10136",
         "summary"
         ],
         "fieldsByKeys": false,
         "issueIdsOrKeys": [${issueIds}],
         "properties": []
     }`
+    // retrieve the issue details for all the ids in the issueIds list
     const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
         method: 'POST',
         headers: {
@@ -145,39 +171,67 @@ export async function loader({ params }: Route.LoaderArgs) {
     if (!fetchedIssues.ok) {
         throw new Error('Error fetching issues, responded with status: ' + fetchedIssues.status)
     }
+
+    // parse and sort issues
     const issueJson = await fetchedIssues.json()
     const issues = bulkIssuesSchema.parse(issueJson).issues
-    return data({ issues, filter })
+    issues.sort((a, b) => {
+        const timeA = a.fields.customfield_10134
+        const timeB = b.fields.customfield_10134
+
+        if (timeA === null && timeB === null) return 0
+        if (timeA === null) return 1
+        if (timeB === null) return -1
+
+        return timeA.localeCompare(timeB)
+    })
+
+    // todo - fix the type errors
+    // create options list for the select using the nice names for the teams and locations in the enums
+    const options: JSX.Element[] = []
+    Object.keys(teamList).forEach((team) => {
+        options.push(
+            <option key={team} value={`team.${team}`}>
+                {teamList[team]}
+            </option>,
+        )
+    })
+    Object.keys(locationList).forEach((location) => {
+        options.push(
+            <option key={location} value={`location.${location}`}>
+                {locationList[location]}
+            </option>,
+        )
+    })
+    return data({ issues, filter, options })
 }
 
 export default function Index() {
-    const { issues, filter } = useLoaderData<typeof loader>()
+    const { issues, filter, options } = useLoaderData<typeof loader>()
 
     return (
         <>
             <AdminLayout heading="Runsheets">
-                <Form method="post">
-                    <select name="filter" defaultValue={filter ? filter : ''}>
-                        <option value="">Filter by Team or Location</option>
-                        <option value="team.team-1">Team 1</option>
-                        <option value="team.team-2">Team 2</option>
-                        <option value="team.team-3">Team 3</option>
-                        <option value="location.loc-black-swan-room">Black Swan Room</option>
-                        <option value="location.loc-champions-terrace">Champions Terrace</option>
-                        <option value="location.loc-cygnet-room">Cygnet Room</option>
-                        <option value="location.loc-help-desk">Help Desk Level 3</option>
-                        <option value="location.loc-L2-lobby">Lobby Level 3</option>
-                        <option value="location.loc-platinum-terrace">Platinum Terrace</option>
-                        <option value="location.loc-registration-area">Registration Area</option>
-                        <option value="location.loc-river-room-1">River View Room 1</option>
-                        <option value="location.loc-river-room-2">River View Room 2</option>
-                        <option value="location.loc-river-room-3">River View Room 3</option>
-                        <option value="location.loc-sports-lounge">Sports Lounge</option>
-                    </select>
-                    <Button type="submit">Apply Filter</Button>
-                </Form>
                 <Box maxW="4xl" mx="auto">
                     <AdminCard overflow="scroll">
+                        <Form method="post">
+                            <Flex alignContent={'center'} marginBottom={'2'} maxWidth={'fit'} gap={'1'}>
+                                <select
+                                    name="filter"
+                                    defaultValue={filter ? filter : ''}
+                                    style={{
+                                        borderWidth: '1px',
+                                        borderColor: 'gray',
+                                        padding: '8px',
+                                        borderRadius: '5px',
+                                    }}
+                                >
+                                    <option value="">Filter by Team or Location</option>
+                                    {options}
+                                </select>
+                                <Button type="submit">Apply Filter</Button>
+                            </Flex>
+                        </Form>
                         <styled.table width="full" fontSize="sm" overflow="scroll">
                             <thead>
                                 <tr>
@@ -203,7 +257,7 @@ export default function Index() {
                                         overflowWrap="break-word"
                                         textWrap="wrap"
                                     >
-                                        Role Instructions
+                                        Role Details
                                     </styled.th>
                                 </tr>
                             </thead>
@@ -214,6 +268,8 @@ export default function Index() {
                                             key={issue.id}
                                             style={{
                                                 backgroundColor: `${issue.fields.customfield_10132 && issue.fields.customfield_10132[0] === 'session' ? '#e9d5ff' : ''}`,
+                                                borderWidth: '1px',
+                                                borderColor: 'gray',
                                             }}
                                         >
                                             <styled.td key="start-time" p="2">
@@ -230,32 +286,34 @@ export default function Index() {
                                                 {issue.fields.summary}
                                             </styled.td>
                                             <styled.td key="location" p="2">
-                                                {issue.fields.customfield_10135 ? (
-                                                    issue.fields.customfield_10135.map((location) => {
-                                                        return <>{location} </>
-                                                    })
-                                                ) : (
-                                                    <></>
-                                                )}
+                                                {issue.fields.customfield_10135
+                                                    ? issue.fields.customfield_10135.map((location) => {
+                                                          return `${
+                                                              locationList[location] === undefined
+                                                                  ? location
+                                                                  : locationList[location]
+                                                          }${issue.fields.customfield_10135?.length > 1 ? ', ' : ''}`
+                                                      })
+                                                    : ''}
                                             </styled.td>
                                             <styled.td key="team" p="2" maxW="20">
                                                 <Flex spaceX="1" overflowWrap="break-word" textWrap="wrap">
-                                                    {issue.fields.customfield_10132 ? (
-                                                        issue.fields.customfield_10132.map((team) => {
-                                                            return <>{team} </>
-                                                        })
-                                                    ) : (
-                                                        <></>
-                                                    )}
+                                                    {issue.fields.customfield_10132
+                                                        ? issue.fields.customfield_10132.map((team) => {
+                                                              return `${
+                                                                  teamList[team] === undefined ? team : teamList[team]
+                                                              }${issue.fields.customfield_10132?.length > 1 ? ', ' : ''}`
+                                                          })
+                                                        : ''}
                                                 </Flex>
                                             </styled.td>
-                                            <styled.td key="role-instructions" p="2" maxW="20">
+                                            <styled.td key="role-instructions" p="2" maxW="20" alignContent={'center'}>
                                                 {issue.fields.customfield_10131 ? (
                                                     <a href={issue.fields.customfield_10131}>
                                                         <ConfluenceLogo height="2rem" />
                                                     </a>
                                                 ) : (
-                                                    ''
+                                                    <></>
                                                 )}
                                             </styled.td>
                                         </tr>
