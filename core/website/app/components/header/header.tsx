@@ -48,7 +48,15 @@ export function Header({
           ]
 
     return (
-        <styled.header position="relative" bgColor="surface.header" w="full" display="flex" zIndex="banner" py="4">
+        <styled.header
+            id="header"
+            position="relative"
+            bgColor="surface.header"
+            w="full"
+            display="flex"
+            zIndex="banner"
+            py="4"
+        >
             <HeaderContainer>
                 <Grid
                     gridTemplateAreas={{
@@ -90,7 +98,8 @@ export function Header({
                     </Box>
 
                     {/* Desktop Navigation */}
-                    <Flex
+                    <styled.nav
+                        aria-label="Primary"
                         gridArea="nav"
                         display={{ base: 'none', lg: 'flex' }}
                         alignItems="center"
@@ -107,7 +116,7 @@ export function Header({
                                 {item.label}
                             </AppLink>
                         ))}
-                    </Flex>
+                    </styled.nav>
 
                     {/* CTAs — rightmost is the primary pill, others are square */}
                     {/* Below 460px, secondaries hide; only the primary pill stays in the header */}
@@ -219,8 +228,10 @@ export function Header({
                                     ))}
                                 </Flex>
                             ) : null}
-                            <Flex
-                                direction="column"
+                            <styled.nav
+                                aria-label="Mobile"
+                                display="flex"
+                                flexDirection="column"
                                 gap="5"
                                 px="5"
                                 py="6"
@@ -237,7 +248,7 @@ export function Header({
                                         {item.label}
                                     </AppLink>
                                 ))}
-                            </Flex>
+                            </styled.nav>
                         </Drawer.Content>
                     </Drawer.Positioner>
                 </Portal>

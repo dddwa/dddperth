@@ -98,9 +98,9 @@ export default function Agenda() {
                 <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
                     Back to {year} Agenda
                 </AppLink>
-                <styled.h2 fontSize="lg" pb="3">
+                <styled.h1 fontSize="lg" pb="3">
                     {session.title}
-                </styled.h2>
+                </styled.h1>
                 <styled.span
                     display="none"
                     md={{

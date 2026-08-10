@@ -32,30 +32,18 @@ const skipLinkStyles = css({
     },
 })
 
+/**
+ * WCAG 2.4.1 (Bypass Blocks) skip link. Rendered once, as the very first
+ * focusable element in the document (see `_layout.tsx`), so a keyboard user's
+ * first Tab press lands here before the header/nav — not after it.
+ *
+ * Points at `#main`, which every page renders via the `<main>` landmark in
+ * `_layout.tsx`.
+ */
 export function SkipToContent() {
     return (
-        <>
-            <styled.a id="skip-to-content" href="#main" className={skipLinkStyles}>
-                Skip to content
-            </styled.a>
-            <styled.a
-                id="skip-to-header"
-                href="#header"
-                display="none"
-                md={{ display: 'block' }}
-                className={skipLinkStyles}
-            >
-                Skip to Navigation
-            </styled.a>
-            <styled.a
-                id="skip-to-navigation"
-                href="#navigation"
-                display="block"
-                md={{ display: 'none' }}
-                className={skipLinkStyles}
-            >
-                Skip to Navigation
-            </styled.a>
-        </>
+        <styled.a id="skip-to-content" href="#main" className={skipLinkStyles}>
+            Skip to main content
+        </styled.a>
     )
 }
