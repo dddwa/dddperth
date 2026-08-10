@@ -179,6 +179,29 @@ export async function loader({ context }: Route.LoaderArgs) {
 - Environment variables for local dev go in `website/.dev.vars`
 - Local D1 data stored in `website/.wrangler/state/`
 
+## Accessibility
+
+All UI work must meet **WCAG 2.1 AA**, including hover and focus states (not just default appearance) — this
+applies to new code and to fixes/refactors of existing code you touch, not just dedicated a11y tickets.
+
+- **Lint**: `core/website/eslint.config.mjs` runs `eslint-plugin-jsx-a11y`'s `recommended` ruleset, plus
+  `jsx-a11y/no-aria-hidden-on-focusable`. It also maps the PandaCSS styled-system's layout primitives (`Box`,
+  `Flex`, `Grid`, `Container`, `VStack`, `HStack`, `Divider`) to their native elements via the `jsx-a11y` eslint
+  `settings.components` config — without that mapping, jsx-a11y silently skips anything written through the
+  styled-system, which is most of this codebase. When adding a new styled-system primitive that wraps a
+  meaningful native element (e.g. a new `styled(x)` helper), consider adding it to that mapping too.
+- **Automated e2e checks**: `nx e2e website` (Playwright + `@axe-core/playwright`) runs `wcag2a`/`wcag2aa`/
+  `wcag21aa`/`wcag22aa` axe scans against the key public routes, plus a couple of structural regression checks
+  (single `<main>`/skip-link, single `<h1>`) and a focus-visible check that tabs through real pages with the
+  keyboard and asserts a visible outline/box-shadow — axe's own ruleset under-covers focus-visible styling.
+  Config: `core/website/playwright.config.ts`. Tests: `core/website/e2e/`.
+- **CI**: the `a11y-e2e` job in `.github/workflows/pr.yml` runs this suite on every PR into `main`, but the test
+  step is currently `continue-on-error: true` — **it does not block merging yet**. That's temporary while the
+  known backlog in `core/website/A11Y_BACKLOG.md` is worked through; once that backlog is clear, remove
+  `continue-on-error` from that step so the suite becomes a real merge gate.
+- When you fix a page's accessibility, check whether it's also covered by `core/website/e2e/a11y.spec.ts`'s route
+  list — if not, and it's a key public route, add it rather than assuming the existing coverage extends to it.
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 

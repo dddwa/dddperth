@@ -135,6 +135,25 @@
                 "cwd": "core/website"
             }
         },
+        "e2e": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test", "@axe-core/playwright"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
+        },
         "deploy": {
             "executor": "nx:run-commands",
             "options": {
