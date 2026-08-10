@@ -38,6 +38,10 @@ declare module "safe-routes" {
       params: {'sessionizeId': string | number},
       query: ExportedQuery<import('app/routes/admin.speakers.$sessionizeId.js').SearchParams>,
     },
+    "/admin/speakers/export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.export.js').SearchParams>,
+    },
     "/admin/sponsors": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
@@ -218,6 +222,7 @@ declare module "safe-routes" {
             | 'routes/admin.speakers'
             | 'routes/admin.speakers.$sessionizeId'
             | 'routes/admin.speakers._index'
+            | 'routes/admin.speakers.export'
             | 'routes/admin.sponsors'
             | 'routes/admin.content'
             | 'routes/admin._index'

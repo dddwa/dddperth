@@ -7,6 +7,7 @@ function session(overrides: Partial<SyncSourceSession> & { sessionizeSessionId: 
         status: 'Accepted',
         speakerIds: [],
         talkTopics: [],
+        isConfirmed: false,
         ...overrides,
     }
 }
@@ -100,6 +101,7 @@ describe('computeSpeakerSyncPlan', () => {
                 endsAt: '2026-10-03T09:45:00',
                 roomName: 'Main Hall',
                 status: 'Accepted',
+                isConfirmed: false,
             },
             {
                 sessionizeSpeakerId: 'SPK-2',
@@ -114,8 +116,18 @@ describe('computeSpeakerSyncPlan', () => {
                 endsAt: '2026-10-03T09:45:00',
                 roomName: 'Main Hall',
                 status: 'Accepted',
+                isConfirmed: false,
             },
         ])
+    })
+
+    it('passes through isConfirmed', () => {
+        const plan = computeSpeakerSyncPlan(
+            baseArgs({
+                sessions: [session({ sessionizeSessionId: 'SESS-1', speakerIds: ['SPK-1'], isConfirmed: true })],
+            }),
+        )
+        expect(plan.sessionUpserts[0].isConfirmed).toBe(true)
     })
 
     it('passes through description, format, level, general topic, talk topics, and speaker links', () => {

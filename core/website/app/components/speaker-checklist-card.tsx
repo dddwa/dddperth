@@ -48,6 +48,22 @@ function ChecklistAction({
 }) {
     if (item.done) return null
 
+    if (item.key === 'confirmSession') {
+        return (
+            <Flex align="center" gap="3" wrap="wrap">
+                <styled.a href="https://sessionize.com/app/speaker" target="_blank" rel="noreferrer" className={actionLinkClass}>
+                    Open Sessionize ↗
+                </styled.a>
+                <styled.form method="post">
+                    <input type="hidden" name="_action" value="confirm-session" />
+                    <button type="submit" className={claimButtonClass}>
+                        I've already confirmed it
+                    </button>
+                </styled.form>
+            </Flex>
+        )
+    }
+
     if (item.key === 'sessionDetails' || item.key === 'speakerTraining') {
         const anchor = item.key === 'sessionDetails' ? 'session-details' : 'speaker-training'
         return hasOwnProfileForm ? (

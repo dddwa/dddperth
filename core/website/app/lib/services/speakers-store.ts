@@ -42,6 +42,9 @@ export interface SpeakerSession {
     roomName?: string
     /** Raw Sessionize status (Accepted/Waitlisted/etc). */
     status: string
+    /** Sessionize's "Owner Confirmed" flag — session-level, set once the
+     * session owner confirms their acceptance in Sessionize. */
+    isConfirmed: boolean
 }
 
 export const QUESTIONS_PREFERENCE_OPTIONS = ['Yes', 'No', 'Yes, moderated', 'Undecided', 'Other'] as const
@@ -86,6 +89,11 @@ export interface SpeakerProfile {
     /** Self-reported from the dashboard checklist — set the first time the
      * speaker marks their complimentary ticket as claimed; never unset. */
     ticketClaimedAt?: number
+    /** Self-reported from the dashboard checklist's "I've already confirmed
+     * it" button — set the first time, alongside a notification email;
+     * never unset. Independent of the synced `isConfirmed` on the session
+     * itself, which may lag behind. */
+    sessionConfirmedReportedAt?: number
 }
 
 /** Everything `saveProfile` accepts — same shape as `SpeakerProfile` minus
@@ -139,6 +147,7 @@ export interface SpeakerSyncPlan {
         endsAt?: string
         roomName?: string
         status: string
+        isConfirmed: boolean
     }>
     /** Session rows for speakers no longer accepted/waitlisted — removed outright. */
     sessionRemovals: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
@@ -203,6 +212,13 @@ export interface SpeakersStore {
      * stamps ticket_claimed_at only the first time it's called, creating the
      * profile row if the speaker hasn't saved one yet. */
     markTicketClaimed(sessionizeId: string, updatedBy: string): Promise<void>
+
+    /** Self-reported "I've already confirmed it" from the checklist.
+     * Idempotent — stamps `sessionConfirmedReportedAt` only the first time,
+     * creating the profile row if the speaker hasn't saved one yet. Returns
+     * true only when this call did the stamping, so the caller knows
+     * whether to send the notification email. */
+    markSessionConfirmed(sessionizeId: string, updatedBy: string): Promise<boolean>
 
     applySyncPlan(plan: SpeakerSyncPlan): Promise<{
         speakersUpserted: number

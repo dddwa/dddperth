@@ -325,6 +325,13 @@ export interface SpeakerPortalConfig {
      * item as plain text instead of a link.
      */
     checklist?: SpeakerPortalChecklistConfig
+    /**
+     * Notified by email when a speaker self-reports confirming their session
+     * in Sessionize (the checklist's "I've already confirmed it" button).
+     * Omit to skip sending — the self-report still completes the checklist
+     * item either way.
+     */
+    sessionConfirmationNotifyEmail?: string
 }
 
 export interface SpeakerPortalChecklistConfig {

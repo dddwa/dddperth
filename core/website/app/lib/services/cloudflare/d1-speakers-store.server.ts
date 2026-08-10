@@ -37,6 +37,7 @@ interface SpeakerSessionRow {
     ends_at: string | null
     room_name: string | null
     status: string
+    is_confirmed: number
 }
 
 interface SpeakerProfileRow {
@@ -59,6 +60,7 @@ interface SpeakerProfileRow {
     updated_at: number
     updated_by: string
     ticket_claimed_at: number | null
+    session_confirmed_reported_at: number | null
 }
 
 interface SyncRunRow {
@@ -119,6 +121,7 @@ function toSession(row: SpeakerSessionRow): SpeakerSession {
         endsAt: row.ends_at ?? undefined,
         roomName: row.room_name ?? undefined,
         status: row.status,
+        isConfirmed: row.is_confirmed === 1,
     }
 }
 
@@ -143,6 +146,7 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
         updatedAt: row.updated_at,
         updatedBy: row.updated_by,
         ticketClaimedAt: row.ticket_claimed_at ?? undefined,
+        sessionConfirmedReportedAt: row.session_confirmed_reported_at ?? undefined,
     }
 }
 
@@ -421,6 +425,28 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 .run()
         },
 
+        async markSessionConfirmed(sessionizeId, updatedBy) {
+            // Same idiom as markTicketClaimed, but we need to know whether
+            // *this* call did the stamping — the caller only sends the
+            // notification email the first time.
+            const before = await db
+                .prepare(`SELECT session_confirmed_reported_at FROM speaker_profiles WHERE sessionize_id = ?`)
+                .bind(sessionizeId)
+                .first<{ session_confirmed_reported_at: number | null }>()
+            if (before?.session_confirmed_reported_at) return false
+
+            await db
+                .prepare(
+                    `INSERT INTO speaker_profiles (sessionize_id, session_confirmed_reported_at, updated_at, updated_by)
+                     VALUES (?, unixepoch(), unixepoch(), ?)
+                     ON CONFLICT(sessionize_id) DO UPDATE SET
+                         session_confirmed_reported_at = COALESCE(speaker_profiles.session_confirmed_reported_at, unixepoch())`,
+                )
+                .bind(sessionizeId, updatedBy)
+                .run()
+            return true
+        },
+
         async applySyncPlan(plan) {
             const statements: D1PreparedStatement[] = []
 
@@ -467,8 +493,8 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                             `INSERT INTO speaker_sessions
                                  (sessionize_speaker_id, sessionize_session_id, session_title, description, format,
                                   level, general_topic, talk_topics_json, starts_at, ends_at, room_name, status,
-                                  updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())
+                                  is_confirmed, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())
                              ON CONFLICT(sessionize_speaker_id, sessionize_session_id) DO UPDATE SET
                                  session_title = excluded.session_title,
                                  description = excluded.description,
@@ -480,6 +506,7 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                                  ends_at = excluded.ends_at,
                                  room_name = excluded.room_name,
                                  status = excluded.status,
+                                 is_confirmed = excluded.is_confirmed,
                                  updated_at = excluded.updated_at`,
                         )
                         .bind(
@@ -495,6 +522,7 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                             s.endsAt ?? null,
                             s.roomName ?? null,
                             s.status,
+                            s.isConfirmed ? 1 : 0,
                         ),
                 )
             }

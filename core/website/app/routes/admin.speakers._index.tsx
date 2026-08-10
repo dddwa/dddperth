@@ -15,6 +15,7 @@ interface SessionTableRow {
     sessionizeSessionId: string
     title: string
     hasSlot: boolean
+    isConfirmed: boolean
     presenters: Array<{ sessionizeId: string; fullName: string; hasProfile: boolean }>
 }
 
@@ -54,6 +55,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                     title: session.sessionTitle,
                     status: session.status,
                     hasSlot: Boolean(session.startsAt),
+                    isConfirmed: session.isConfirmed,
                     presenters: [],
                 }
                 sessionsById.set(session.sessionizeSessionId, row)
@@ -200,12 +202,17 @@ export default function AdminSpeakers() {
                             )}
                         </styled.p>
                     </Box>
-                    <Form method="post">
-                        <input type="hidden" name="_action" value="sync-now" />
-                        <Button type="submit" disabled={isSyncing || !syncAvailable}>
-                            {isSyncing ? 'Syncing…' : 'Sync now'}
+                    <Flex gap="2" align="center">
+                        <Button asChild variant="outline">
+                            <a href="/admin/speakers/export">Export sessions + photos</a>
                         </Button>
-                    </Form>
+                        <Form method="post">
+                            <input type="hidden" name="_action" value="sync-now" />
+                            <Button type="submit" disabled={isSyncing || !syncAvailable}>
+                                {isSyncing ? 'Syncing…' : 'Sync now'}
+                            </Button>
+                        </Form>
+                    </Flex>
                 </Flex>
 
                 {!syncAvailable && (
@@ -340,6 +347,12 @@ function SessionsTable({
                                 >
                                     <styled.td py="2" pr="4">
                                         {session.title}
+                                        {session.isConfirmed && (
+                                            <styled.span aria-label="Confirmed in Sessionize" title="Confirmed in Sessionize">
+                                                {' '}
+                                                ✅
+                                            </styled.span>
+                                        )}
                                         {!session.hasSlot && (
                                             <styled.span color="admin.600" fontSize="xs">
                                                 {' '}

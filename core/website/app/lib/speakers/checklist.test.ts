@@ -2,10 +2,12 @@ import { DateTime } from 'luxon'
 import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
 import {
+    isSessionConfirmed,
     isSessionDetailsComplete,
     isSpeakerTrainingRsvpComplete,
     isTicketClaimed,
     speakerChecklist,
+    type SessionConfirmationInput,
 } from './checklist'
 
 function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
@@ -53,14 +55,35 @@ describe('isTicketClaimed', () => {
     })
 })
 
+describe('isSessionConfirmed', () => {
+    const accepted = (isConfirmed: boolean): SessionConfirmationInput => ({ status: 'Accepted', isConfirmed })
+
+    it('is not done with no sessions at all', () => {
+        expect(isSessionConfirmed(profile(), [])).toBe(false)
+    })
+
+    it('is not done while waitlisted — nothing to confirm yet', () => {
+        expect(isSessionConfirmed(profile(), [{ status: 'Waitlisted', isConfirmed: false }])).toBe(false)
+    })
+
+    it('is done once every accepted session is confirmed in Sessionize', () => {
+        expect(isSessionConfirmed(profile(), [accepted(true)])).toBe(true)
+        expect(isSessionConfirmed(profile(), [accepted(true), accepted(false)])).toBe(false)
+    })
+
+    it('is done via the self-report flag even if the sync has not caught up', () => {
+        expect(isSessionConfirmed(profile({ sessionConfirmedReportedAt: 1700000000 }), [accepted(false)])).toBe(true)
+    })
+})
+
 describe('speakerChecklist', () => {
     it('handles a missing profile — everything outstanding', () => {
-        expect(speakerChecklist(null).every((i) => !i.done)).toBe(true)
+        expect(speakerChecklist(null, []).every((i) => !i.done)).toBe(true)
     })
 
     it('carries due dates through as ISO strings', () => {
         const dueDate = DateTime.fromISO('2026-09-05T23:59:59', { zone: 'Australia/Perth' })
-        const items = speakerChecklist(null, { sessionDetails: dueDate })
+        const items = speakerChecklist(null, [], { sessionDetails: dueDate })
         expect(items.find((i) => i.key === 'sessionDetails')?.dueDateIso).toBe(dueDate.toISO())
         expect(items.find((i) => i.key === 'claimTicket')?.dueDateIso).toBeUndefined()
     })
@@ -70,6 +93,7 @@ describe('speakerChecklist', () => {
             rsvpSpeakerTraining: ['Session 1'],
             ticketClaimedAt: 1700000000,
         })
-        expect(speakerChecklist(complete).every((i) => i.done)).toBe(true)
+        const sessions: SessionConfirmationInput[] = [{ status: 'Accepted', isConfirmed: true }]
+        expect(speakerChecklist(complete, sessions).every((i) => i.done)).toBe(true)
     })
 })

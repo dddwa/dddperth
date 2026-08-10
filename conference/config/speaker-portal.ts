@@ -31,4 +31,5 @@ export const speakerPortal: SpeakerPortalConfig = {
         ticketClaimDueDate: DateTime.fromISO('2026-09-12T23:59:59', { zone: 'Australia/Perth' }),
         speakerTrainingDueDate: DateTime.fromISO('2026-09-19T23:59:59', { zone: 'Australia/Perth' }),
     },
+    sessionConfirmationNotifyEmail: 'speakers@dddperth.com',
 }

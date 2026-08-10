@@ -4,6 +4,7 @@ import { SpeakerChecklistCard } from '~/components/speaker-checklist-card'
 import { SpeakerProfileForm } from '~/components/speaker-profile-form'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
+import { recordException } from '~/lib/record-exception'
 import { speakerChecklist } from '~/lib/speakers/checklist'
 import {
     PRESENTATION_DETAIL_OPTIONS,
@@ -53,11 +54,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             fullName,
             profile,
         })),
-        checklist: speakerChecklist(presentersById.get(speaker.sessionizeId)?.profile ?? null, {
-            sessionDetails: checklistConfig?.sessionDetailsDueDate,
-            ticketClaim: checklistConfig?.ticketClaimDueDate,
-            speakerTraining: checklistConfig?.speakerTrainingDueDate,
-        }),
+        checklist: speakerChecklist(
+            presentersById.get(speaker.sessionizeId)?.profile ?? null,
+            workspace.sessions.map(({ session }) => ({ status: session.status, isConfirmed: session.isConfirmed })),
+            {
+                sessionDetails: checklistConfig?.sessionDetailsDueDate,
+                ticketClaim: checklistConfig?.ticketClaimDueDate,
+                speakerTraining: checklistConfig?.speakerTrainingDueDate,
+            },
+        ),
         ticketClaimUrl: checklistConfig?.ticketClaimUrl,
         // The checklist's session-details/training items link to the
         // presenter's own card below — only there once they have a session.
@@ -91,6 +96,28 @@ export async function action({ request, context }: Route.ActionArgs) {
         // own ticket, never a co-presenter's.
         await services.speakers.markTicketClaimed(speaker.sessionizeId, user.email)
         return data({ ticketClaimed: true })
+    }
+
+    if (actionType === 'confirm-session') {
+        // Personal, same as claim-ticket — always the logged-in speaker's
+        // own confirmation.
+        const justConfirmed = await services.speakers.markSessionConfirmed(speaker.sessionizeId, user.email)
+        const notifyEmail = conferenceManifest.speakerPortal?.sessionConfirmationNotifyEmail
+        if (justConfirmed && notifyEmail) {
+            try {
+                await services.email.send({
+                    to: notifyEmail,
+                    subject: `${speaker.fullName} confirmed their session in Sessionize`,
+                    text: `${speaker.fullName} (${user.email}) marked their session as confirmed in Sessionize via the speaker portal.`,
+                    html: `<p><strong>${speaker.fullName}</strong> (${user.email}) marked their session as confirmed in Sessionize via the speaker portal.</p>`,
+                })
+            } catch (error) {
+                // The self-report already landed — don't fail the request
+                // over a notification that can be resent/checked manually.
+                recordException(error)
+            }
+        }
+        return data({ sessionConfirmed: true })
     }
 
     if (actionType !== 'save-profile') {
