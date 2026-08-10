@@ -84,6 +84,7 @@ export function createSessionizeSpeakerSyncService(args: { config: AppConfig; sp
                         endsAt: s.endsAt ?? undefined,
                         roomName: s.room ?? undefined,
                         status: s.status ?? 'Unknown',
+                        isConfirmed: s.isConfirmed,
                         speakerIds: s.speakers.map((sp) => sp.id),
                     }))
 

@@ -44,8 +44,24 @@ function urgencyFor(dueDateIso: string | undefined, done: boolean, now: DateTime
     return 'normal'
 }
 
+/** A session's status + Sessionize confirmation flag — just enough for the
+ * confirm-session checklist rule. */
+export interface SessionConfirmationInput {
+    status: string
+    isConfirmed: boolean
+}
+
+/** Done once every Accepted session is confirmed in Sessionize (synced), or
+ * the speaker self-reports via the checklist button. A speaker with no
+ * Accepted sessions yet (e.g. still Waitlisted) has nothing to confirm. */
+export function isSessionConfirmed(profile: SpeakerProfile | null, sessions: SessionConfirmationInput[]): boolean {
+    if (profile?.sessionConfirmedReportedAt) return true
+    const accepted = sessions.filter((s) => s.status === 'Accepted')
+    return accepted.length > 0 && accepted.every((s) => s.isConfirmed)
+}
+
 export interface SpeakerChecklistItem {
-    key: 'sessionDetails' | 'claimTicket' | 'speakerTraining' | 'speakerDinner'
+    key: 'confirmSession' | 'sessionDetails' | 'claimTicket' | 'speakerTraining' | 'speakerDinner'
     label: string
     done: boolean
     /** ISO 8601 — loaders can't hand DateTime instances across the wire. */
@@ -54,6 +70,7 @@ export interface SpeakerChecklistItem {
 }
 
 export interface SpeakerChecklistDueDates {
+    confirmSession?: DateTime
     sessionDetails?: DateTime
     ticketClaim?: DateTime
     speakerTraining?: DateTime
@@ -62,6 +79,7 @@ export interface SpeakerChecklistDueDates {
 
 export function speakerChecklist(
     profile: SpeakerProfile | null,
+    sessions: SessionConfirmationInput[],
     dueDates: SpeakerChecklistDueDates = {},
     now: DateTime = DateTime.now(),
 ): SpeakerChecklistItem[] {
@@ -76,6 +94,7 @@ export function speakerChecklist(
     }
 
     return [
+        item('confirmSession', 'Confirm your session in Sessionize', isSessionConfirmed(profile, sessions), dueDates.confirmSession),
         item('sessionDetails', 'Fill in your session details', isSessionDetailsComplete(profile), dueDates.sessionDetails),
         item('claimTicket', 'Claim your speaker ticket', isTicketClaimed(profile), dueDates.ticketClaim),
         item(

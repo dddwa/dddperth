@@ -69,4 +69,5 @@ export const speakerPortal: SpeakerPortalConfig = {
             { id: 'slot-6', label: '3:05pm – 4:00pm' },
         ],
     },
+    sessionConfirmationNotifyEmail: 'speakers@dddperth.com',
 }

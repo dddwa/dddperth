@@ -63,6 +63,7 @@ export function buildSpeakerDashboardView(
 
     const checklist = speakerChecklist(
         ownProfile,
+        workspace.sessions.map(({ session }) => ({ status: session.status, isConfirmed: session.isConfirmed })),
         {
             sessionDetails: checklistConfig?.sessionDetailsDueDate,
             ticketClaim: checklistConfig?.ticketClaimDueDate,

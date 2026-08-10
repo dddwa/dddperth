@@ -2,12 +2,14 @@ import { DateTime } from 'luxon'
 import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
 import {
+    isSessionConfirmed,
     isSessionDetailsComplete,
     isSpeakerDinnerRsvpComplete,
     isSpeakerTrainingRsvpComplete,
     isTicketClaimed,
     speakerChecklist,
     upcomingRsvpedEvents,
+    type SessionConfirmationInput,
 } from './checklist'
 
 const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
@@ -70,14 +72,35 @@ describe('isTicketClaimed', () => {
     })
 })
 
+describe('isSessionConfirmed', () => {
+    const accepted = (isConfirmed: boolean): SessionConfirmationInput => ({ status: 'Accepted', isConfirmed })
+
+    it('is not done with no sessions at all', () => {
+        expect(isSessionConfirmed(profile(), [])).toBe(false)
+    })
+
+    it('is not done while waitlisted — nothing to confirm yet', () => {
+        expect(isSessionConfirmed(profile(), [{ status: 'Waitlisted', isConfirmed: false }])).toBe(false)
+    })
+
+    it('is done once every accepted session is confirmed in Sessionize', () => {
+        expect(isSessionConfirmed(profile(), [accepted(true)])).toBe(true)
+        expect(isSessionConfirmed(profile(), [accepted(true), accepted(false)])).toBe(false)
+    })
+
+    it('is done via the self-report flag even if the sync has not caught up', () => {
+        expect(isSessionConfirmed(profile({ sessionConfirmedReportedAt: 1700000000 }), [accepted(false)])).toBe(true)
+    })
+})
+
 describe('speakerChecklist', () => {
     it('handles a missing profile — everything outstanding', () => {
-        expect(speakerChecklist(null, {}, NOW).every((i) => !i.done)).toBe(true)
+        expect(speakerChecklist(null, [], {}, NOW).every((i) => !i.done)).toBe(true)
     })
 
     it('carries due dates through as ISO strings', () => {
         const dueDate = DateTime.fromISO('2026-09-05T23:59:59', { zone: 'Australia/Perth' })
-        const items = speakerChecklist(null, { sessionDetails: dueDate }, NOW)
+        const items = speakerChecklist(null, [], { sessionDetails: dueDate }, NOW)
         expect(items.find((i) => i.key === 'sessionDetails')?.dueDateIso).toBe(dueDate.toISO())
         expect(items.find((i) => i.key === 'claimTicket')?.dueDateIso).toBeUndefined()
     })
@@ -88,34 +111,35 @@ describe('speakerChecklist', () => {
             rsvpSpeakersDinner: 'Yes',
             ticketClaimedAt: 1700000000,
         })
-        expect(speakerChecklist(complete, {}, NOW).every((i) => i.done)).toBe(true)
+        const sessions: SessionConfirmationInput[] = [{ status: 'Accepted', isConfirmed: true }]
+        expect(speakerChecklist(complete, sessions, {}, NOW).every((i) => i.done)).toBe(true)
     })
 
     describe('urgency', () => {
         it('is normal with no due date or when far away', () => {
             const farDueDate = NOW.plus({ days: 30 })
-            const items = speakerChecklist(null, { sessionDetails: farDueDate }, NOW)
+            const items = speakerChecklist(null, [], { sessionDetails: farDueDate }, NOW)
             expect(items.find((i) => i.key === 'sessionDetails')?.urgency).toBe('normal')
             expect(items.find((i) => i.key === 'claimTicket')?.urgency).toBe('normal')
         })
 
         it('is upcoming when due within a week', () => {
             const soonDueDate = NOW.plus({ days: 5 })
-            const items = speakerChecklist(null, { sessionDetails: soonDueDate }, NOW)
+            const items = speakerChecklist(null, [], { sessionDetails: soonDueDate }, NOW)
             expect(items.find((i) => i.key === 'sessionDetails')?.urgency).toBe('upcoming')
         })
 
         it('is overdue when due within a day or already past', () => {
-            const dueSoon = speakerChecklist(null, { sessionDetails: NOW.plus({ hours: 12 }) }, NOW)
+            const dueSoon = speakerChecklist(null, [], { sessionDetails: NOW.plus({ hours: 12 }) }, NOW)
             expect(dueSoon.find((i) => i.key === 'sessionDetails')?.urgency).toBe('overdue')
 
-            const overdue = speakerChecklist(null, { sessionDetails: NOW.minus({ days: 2 }) }, NOW)
+            const overdue = speakerChecklist(null, [], { sessionDetails: NOW.minus({ days: 2 }) }, NOW)
             expect(overdue.find((i) => i.key === 'sessionDetails')?.urgency).toBe('overdue')
         })
 
         it('ignores urgency once the item is done', () => {
             const complete = profile({ ticketClaimedAt: 1700000000 })
-            const items = speakerChecklist(complete, { ticketClaim: NOW.minus({ days: 2 }) }, NOW)
+            const items = speakerChecklist(complete, [], { ticketClaim: NOW.minus({ days: 2 }) }, NOW)
             expect(items.find((i) => i.key === 'claimTicket')?.urgency).toBe('normal')
         })
     })

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { data, useActionData, useLoaderData } from 'react-router'
+import { conferenceManifest } from '@conference/manifest'
 import { SpeakerChecklistCard, type ChecklistModalKey } from '~/components/speaker-checklist-card'
 import { SpeakerCountdown } from '~/components/speaker-countdown'
 import { SpeakerDinnerModal } from '~/components/speaker-dinner-modal'
@@ -8,6 +9,7 @@ import { SpeakerSessionDetailsModal } from '~/components/speaker-session-details
 import { SpeakerTrainingModal } from '~/components/speaker-training-modal'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
+import { recordException } from '~/lib/record-exception'
 import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
 import { parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, YES_NO_MAYBE_OPTIONS, type SpeakerTrainingSession, type YesNoMaybe } from '~/lib/services/speakers-store'
@@ -45,12 +47,34 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ error: 'Missing target speaker' }, { status: 400 })
     }
 
-    // claim-ticket, rsvp-training and rsvp-dinner are all personal — always
-    // the logged-in speaker's own answer, never a co-presenter's.
+    // claim-ticket, rsvp-training, rsvp-dinner and confirm-session are all
+    // personal — always the logged-in speaker's own answer, never a
+    // co-presenter's.
     if (actionType === 'claim-ticket') {
         if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
         await services.speakers.markTicketClaimed(speaker.sessionizeId, user.email)
         return data({ ticketClaimed: true })
+    }
+
+    if (actionType === 'confirm-session') {
+        if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
+        const justConfirmed = await services.speakers.markSessionConfirmed(speaker.sessionizeId, user.email)
+        const notifyEmail = conferenceManifest.speakerPortal?.sessionConfirmationNotifyEmail
+        if (justConfirmed && notifyEmail) {
+            try {
+                await services.email.send({
+                    to: notifyEmail,
+                    subject: `${speaker.fullName} confirmed their session in Sessionize`,
+                    text: `${speaker.fullName} (${user.email}) marked their session as confirmed in Sessionize via the speaker portal.`,
+                    html: `<p><strong>${speaker.fullName}</strong> (${user.email}) marked their session as confirmed in Sessionize via the speaker portal.</p>`,
+                })
+            } catch (error) {
+                // The self-report already landed — don't fail the request
+                // over a notification that can be resent/checked manually.
+                recordException(error)
+            }
+        }
+        return data({ sessionConfirmed: true })
     }
 
     if (actionType === 'rsvp-training') {

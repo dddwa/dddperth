@@ -25,6 +25,8 @@ export interface SyncSourceSession {
     endsAt?: string
     roomName?: string
     status: string
+    /** Sessionize's "Owner Confirmed" flag — session-level. */
+    isConfirmed: boolean
     /** Sessionize speaker ids presenting this session (co-presenters share one row each). */
     speakerIds: string[]
 }
@@ -100,6 +102,7 @@ export function computeSpeakerSyncPlan(args: {
             endsAt: session.endsAt,
             roomName: session.roomName,
             status: session.status,
+            isConfirmed: session.isConfirmed,
         })),
     )
 
