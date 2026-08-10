@@ -1,5 +1,5 @@
 import { formatDate } from '../sessionize.server'
-import type { SpeakerWorkspace } from '../services/speakers-store'
+import type { SpeakerProfile, SpeakerWorkspace } from '../services/speakers-store'
 
 /**
  * Shapes a `SpeakerWorkspace` into exactly what the dashboard renders —
@@ -67,4 +67,36 @@ export function toWorkspaceView(workspace: SpeakerWorkspace): SpeakerWorkspaceVi
             })),
         })),
     }
+}
+
+export interface SpeakerPresenterProfile {
+    sessionizeId: string
+    fullName: string
+    /** Sessionize bio — prefills the read-only "use my Sessionize bio" field
+     * in the session-details modal. */
+    bio?: string
+    profile: SpeakerProfile | null
+}
+
+/**
+ * Every distinct presenter across a workspace's sessions, each with their
+ * "extra info for organisers" profile — de-duped, since a co-presenter
+ * appearing on more than one shared session should still only get one card.
+ * Shared by the speaker's own dashboard and the admin preview.
+ */
+export function collectPresenters(workspace: SpeakerWorkspace): SpeakerPresenterProfile[] {
+    const byId = new Map<string, { fullName: string; bio?: string; profile: SpeakerProfile | null }>()
+    for (const { presenters } of workspace.sessions) {
+        for (const { speaker: p, profile } of presenters) {
+            if (!byId.has(p.sessionizeId)) {
+                byId.set(p.sessionizeId, { fullName: p.fullName, bio: p.bio, profile })
+            }
+        }
+    }
+    return [...byId.entries()].map(([sessionizeId, { fullName, bio, profile }]) => ({
+        sessionizeId,
+        fullName,
+        bio,
+        profile,
+    }))
 }

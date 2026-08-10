@@ -56,7 +56,7 @@ export type YesNoMaybe = (typeof YES_NO_MAYBE_OPTIONS)[number]
 export const YES_NO_MAYBE_OTHER_OPTIONS = ['Yes', 'No', 'Maybe', 'Other'] as const
 export type YesNoMaybeOther = (typeof YES_NO_MAYBE_OTHER_OPTIONS)[number]
 
-export const SPEAKER_TRAINING_SESSION_OPTIONS = ['Session 1', 'Session 2', 'Session 3', 'Not attending'] as const
+export const SPEAKER_TRAINING_SESSION_OPTIONS = ['Session 1', 'Session 2', 'Session 3'] as const
 export type SpeakerTrainingSession = (typeof SPEAKER_TRAINING_SESSION_OPTIONS)[number]
 
 /** Extra info a speaker (or a co-presenter, on their behalf) submits through
@@ -74,10 +74,22 @@ export interface SpeakerProfile {
     introductionCustomText?: string
     anythingElse?: string
     dietaryRequirements?: string
-    rsvpSpeakersDinner?: YesNoMaybe
-    rsvpSpeakerTraining: SpeakerTrainingSession[]
     registerMeetTheExperts?: YesNoMaybeOther
     registerMeetTheExpertsOther?: string
+    /** Which configured Meet-the-Experts time-block ids they want to register
+     * for — only meaningful when registerMeetTheExperts is Yes/Maybe/Other. */
+    registerMeetTheExpertsSlots: string[]
+    /** RSVP'd through its own dedicated modal, not the main session-details
+     * form — see `saveSpeakerDinnerRsvp`. */
+    rsvpSpeakersDinner?: YesNoMaybe
+    /** Which configured training sessions they're attending — also RSVP'd
+     * through its own modal, see `saveSpeakerTrainingRsvp`. */
+    rsvpSpeakerTraining: SpeakerTrainingSession[]
+    /** Stamped every time the training RSVP is submitted (even with zero
+     * sessions selected — "not attending any" is still a completed RSVP).
+     * Presence, not the session list length, is what marks the checklist
+     * item done. */
+    rsvpSpeakerTrainingRespondedAt?: number
     /** First time the completion criteria were met; never unset. */
     completedAt?: number
     updatedAt?: number
@@ -88,11 +100,21 @@ export interface SpeakerProfile {
     ticketClaimedAt?: number
 }
 
-/** Everything `saveProfile` accepts — same shape as `SpeakerProfile` minus
- * the fields the store computes itself. */
+/** Everything the session-details modal's `save-profile` action accepts —
+ * same shape as `SpeakerProfile` minus the fields the store computes itself
+ * and the two RSVPs, which are saved through their own dedicated actions
+ * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp`) so that submitting
+ * this form can never clobber an RSVP already on file. */
 export type SpeakerProfileInput = Omit<
     SpeakerProfile,
-    'sessionizeId' | 'completedAt' | 'updatedAt' | 'updatedBy' | 'ticketClaimedAt'
+    | 'sessionizeId'
+    | 'completedAt'
+    | 'updatedAt'
+    | 'updatedBy'
+    | 'ticketClaimedAt'
+    | 'rsvpSpeakersDinner'
+    | 'rsvpSpeakerTraining'
+    | 'rsvpSpeakerTrainingRespondedAt'
 >
 
 export interface SpeakerListEntry extends SpeakerRecord {
@@ -203,6 +225,20 @@ export interface SpeakersStore {
      * stamps ticket_claimed_at only the first time it's called, creating the
      * profile row if the speaker hasn't saved one yet. */
     markTicketClaimed(sessionizeId: string, updatedBy: string): Promise<void>
+
+    /** Speaker-training RSVP, from its own modal. Overwrites the session
+     * selection and re-stamps rsvp_speaker_training_responded_at every call
+     * — unlike ticket claim, an RSVP can change. Creates the profile row if
+     * the speaker hasn't saved one yet. Never touches any other column. */
+    saveSpeakerTrainingRsvp(
+        sessionizeId: string,
+        sessions: SpeakerTrainingSession[],
+        updatedBy: string,
+    ): Promise<void>
+
+    /** Speaker-dinner RSVP, from its own modal. Same idiom as
+     * saveSpeakerTrainingRsvp — only touches rsvp_speakers_dinner. */
+    saveSpeakerDinnerRsvp(sessionizeId: string, response: YesNoMaybe, updatedBy: string): Promise<void>
 
     applySyncPlan(plan: SpeakerSyncPlan): Promise<{
         speakersUpserted: number

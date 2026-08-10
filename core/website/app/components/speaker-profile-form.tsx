@@ -1,11 +1,6 @@
 import { useNavigation } from 'react-router'
-import type { ReactNode } from 'react'
-import {
-    PRESENTATION_DETAIL_OPTIONS,
-    SPEAKER_TRAINING_SESSION_OPTIONS,
-    type SpeakerProfile,
-} from '~/lib/services/speakers-store'
-import { AdminCard } from '~/components/admin-card'
+import { useState, type ReactNode } from 'react'
+import { PRESENTATION_DETAIL_OPTIONS, type SpeakerProfile } from '~/lib/services/speakers-store'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
@@ -23,6 +18,20 @@ const inputClass = css({
     color: 'admin.900',
     _placeholder: { color: 'admin.400' },
     _focus: { outline: 'none', borderColor: 'indigo.7', boxShadow: 'focus-ring' },
+})
+
+const readOnlyTextareaClass = css({
+    mt: '1',
+    w: 'full',
+    px: '3',
+    py: '2',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'admin.300',
+    borderRadius: 'md',
+    fontSize: 'sm',
+    bg: 'admin.100',
+    color: 'admin.700',
 })
 
 const fieldLabelClass = css({
@@ -63,33 +72,50 @@ function PrimaryButton({ children, disabled }: { children: ReactNode; disabled?:
     )
 }
 
+const MEET_THE_EXPERTS_OPT_IN = new Set(['Yes', 'Maybe', 'Other'])
+
 /**
- * Extra-info form for one speaker (self or a co-presenter — either can fill
- * this in for the other; see requireSpeaker/getCoPresenterIds). Submits to
- * the current route's action with `_action=save-profile` and a hidden
- * `targetSessionizeId`, so multiple copies of this form (one per presenter)
- * can sit on the same dashboard page.
+ * Session/speaker-details form for one presenter (self or a co-presenter —
+ * either can fill this in for the other; see requireSpeaker/getCoPresenterIds).
+ * Lives inside the "Fill in session details" modal — one copy per presenter
+ * on the session, with co-presenters other than the active one collapsed by
+ * the caller. Submits to the current route's action with `_action=save-profile`
+ * and a hidden `targetSessionizeId`. Doesn't cover the training/dinner RSVPs
+ * — those are their own modals.
  */
 export function SpeakerProfileForm({
     sessionizeId,
     fullName,
+    bio,
     profile,
     justSaved,
+    meetTheExpertsSlots,
 }: {
     sessionizeId: string
     fullName: string
+    bio?: string
     profile: SpeakerProfile | null
     justSaved: boolean
+    meetTheExpertsSlots: Array<{ id: string; label: string }>
 }) {
     const navigation = useNavigation()
     const isSubmitting =
         navigation.state === 'submitting' && navigation.formData?.get('targetSessionizeId') === sessionizeId
 
+    const [questionsPreference, setQuestionsPreference] = useState(profile?.questionsPreference ?? '')
+    const [presentationDetails, setPresentationDetails] = useState(
+        new Set(profile?.presentationDetails ?? []),
+    )
+    const [editingIntroduction, setEditingIntroduction] = useState(
+        profile ? !profile.introductionUseSessionizeBio : false,
+    )
+    const [registerMeetTheExperts, setRegisterMeetTheExperts] = useState(profile?.registerMeetTheExperts ?? '')
+
     return (
-        <AdminCard id={`session-details-${sessionizeId}`}>
-            <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
+        <Box>
+            <styled.h3 fontSize="lg" fontWeight="semibold" mb="2">
                 {fullName}'s info
-            </styled.h2>
+            </styled.h3>
             <styled.p fontSize="sm" color="admin.600" mb="4">
                 Everything here is separate from Sessionize — it goes straight to the organisers for the run sheet.
             </styled.p>
@@ -125,7 +151,8 @@ export function SpeakerProfileForm({
                     <select
                         id={`questions-${sessionizeId}`}
                         name="questionsPreference"
-                        defaultValue={profile?.questionsPreference ?? ''}
+                        value={questionsPreference}
+                        onChange={(e) => setQuestionsPreference(e.target.value)}
                         className={inputClass}
                     >
                         <option value="">— Select —</option>
@@ -135,13 +162,15 @@ export function SpeakerProfileForm({
                         <option value="Undecided">Undecided</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input
-                        name="questionsPreferenceOther"
-                        type="text"
-                        defaultValue={profile?.questionsPreferenceOther ?? ''}
-                        placeholder="If Other, tell us more"
-                        className={inputClass}
-                    />
+                    {questionsPreference === 'Other' && (
+                        <input
+                            name="questionsPreferenceOther"
+                            type="text"
+                            defaultValue={profile?.questionsPreferenceOther ?? ''}
+                            placeholder="Tell us more"
+                            className={inputClass}
+                        />
+                    )}
                 </Box>
 
                 <Box mb="5">
@@ -155,19 +184,29 @@ export function SpeakerProfileForm({
                                     type="checkbox"
                                     name="presentationDetails"
                                     value={option}
-                                    defaultChecked={profile?.presentationDetails.includes(option) ?? false}
+                                    checked={presentationDetails.has(option)}
+                                    onChange={(e) =>
+                                        setPresentationDetails((prev) => {
+                                            const next = new Set(prev)
+                                            if (e.target.checked) next.add(option)
+                                            else next.delete(option)
+                                            return next
+                                        })
+                                    }
                                 />
                                 {option}
                             </label>
                         ))}
                     </Flex>
-                    <input
-                        name="presentationDetailsOther"
-                        type="text"
-                        defaultValue={profile?.presentationDetailsOther ?? ''}
-                        placeholder="If Other, tell us more"
-                        className={inputClass}
-                    />
+                    {presentationDetails.has('Other') && (
+                        <input
+                            name="presentationDetailsOther"
+                            type="text"
+                            defaultValue={profile?.presentationDetailsOther ?? ''}
+                            placeholder="Tell us more"
+                            className={inputClass}
+                        />
+                    )}
                 </Box>
 
                 <Box mb="5">
@@ -186,33 +225,43 @@ export function SpeakerProfileForm({
                     <styled.span display="block" className={fieldLabelClass} mb="2">
                         Introduction
                     </styled.span>
-                    <Flex direction="column" gap="1" mb="2">
-                        <label className={checkboxRowClass}>
-                            <input
-                                type="radio"
-                                name="introductionSource"
-                                value="sessionize"
-                                defaultChecked={profile?.introductionUseSessionizeBio ?? true}
-                            />
-                            Use my Sessionize bio
-                        </label>
-                        <label className={checkboxRowClass}>
-                            <input
-                                type="radio"
-                                name="introductionSource"
-                                value="custom"
-                                defaultChecked={profile ? !profile.introductionUseSessionizeBio : false}
-                            />
-                            Write a custom introduction
-                        </label>
-                    </Flex>
-                    <textarea
-                        name="introductionCustomText"
-                        rows={3}
-                        defaultValue={profile?.introductionCustomText ?? ''}
-                        placeholder="Only used if 'Write a custom introduction' is selected"
-                        className={inputClass}
+                    <input
+                        type="hidden"
+                        name="introductionSource"
+                        value={editingIntroduction ? 'custom' : 'sessionize'}
                     />
+                    {editingIntroduction ? (
+                        <textarea
+                            name="introductionCustomText"
+                            rows={4}
+                            defaultValue={profile?.introductionCustomText ?? bio ?? ''}
+                            placeholder="How should we introduce you on stage?"
+                            className={inputClass}
+                        />
+                    ) : (
+                        <>
+                            <textarea readOnly rows={4} value={bio ?? ''} className={readOnlyTextareaClass} />
+                            <Flex align="center" justify="space-between" mt="2" gap="3">
+                                <styled.p fontSize="xs" color="admin.600">
+                                    Just use the Sessionize bio.
+                                </styled.p>
+                                <styled.button
+                                    type="button"
+                                    onClick={() => setEditingIntroduction(true)}
+                                    fontSize="xs"
+                                    fontWeight="medium"
+                                    color="admin.900"
+                                    textDecoration="underline"
+                                    bg="transparent"
+                                    border="none"
+                                    cursor="pointer"
+                                    flexShrink="0"
+                                >
+                                    Edit introduction
+                                </styled.button>
+                            </Flex>
+                        </>
+                    )}
                 </Box>
 
                 <Box mb="5">
@@ -241,42 +290,6 @@ export function SpeakerProfileForm({
                     />
                 </Box>
 
-                <Box mb="5">
-                    <label htmlFor={`dinner-${sessionizeId}`} className={fieldLabelClass}>
-                        RSVP — Speakers dinner
-                    </label>
-                    <select
-                        id={`dinner-${sessionizeId}`}
-                        name="rsvpSpeakersDinner"
-                        defaultValue={profile?.rsvpSpeakersDinner ?? ''}
-                        className={inputClass}
-                    >
-                        <option value="">— Select —</option>
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                        <option value="Maybe">Maybe</option>
-                    </select>
-                </Box>
-
-                <Box id={`speaker-training-${sessionizeId}`} mb="5">
-                    <styled.span display="block" className={fieldLabelClass} mb="2">
-                        RSVP — Speaker training
-                    </styled.span>
-                    <Flex direction="column" gap="1">
-                        {SPEAKER_TRAINING_SESSION_OPTIONS.map((option) => (
-                            <label key={option} className={checkboxRowClass}>
-                                <input
-                                    type="checkbox"
-                                    name="rsvpSpeakerTraining"
-                                    value={option}
-                                    defaultChecked={profile?.rsvpSpeakerTraining.includes(option) ?? false}
-                                />
-                                {option}
-                            </label>
-                        ))}
-                    </Flex>
-                </Box>
-
                 <Box mb="6">
                     <label htmlFor={`meetExperts-${sessionizeId}`} className={fieldLabelClass}>
                         Register for Meet the Experts
@@ -284,7 +297,8 @@ export function SpeakerProfileForm({
                     <select
                         id={`meetExperts-${sessionizeId}`}
                         name="registerMeetTheExperts"
-                        defaultValue={profile?.registerMeetTheExperts ?? ''}
+                        value={registerMeetTheExperts}
+                        onChange={(e) => setRegisterMeetTheExperts(e.target.value)}
                         className={inputClass}
                     >
                         <option value="">— Select —</option>
@@ -293,19 +307,41 @@ export function SpeakerProfileForm({
                         <option value="Maybe">Maybe</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input
-                        name="registerMeetTheExpertsOther"
-                        type="text"
-                        defaultValue={profile?.registerMeetTheExpertsOther ?? ''}
-                        placeholder="If Other, tell us more"
-                        className={inputClass}
-                    />
+                    {registerMeetTheExperts === 'Other' && (
+                        <input
+                            name="registerMeetTheExpertsOther"
+                            type="text"
+                            defaultValue={profile?.registerMeetTheExpertsOther ?? ''}
+                            placeholder="Tell us more"
+                            className={inputClass}
+                        />
+                    )}
+                    {MEET_THE_EXPERTS_OPT_IN.has(registerMeetTheExperts) && meetTheExpertsSlots.length > 0 && (
+                        <Box mt="3">
+                            <styled.span display="block" className={fieldLabelClass} mb="2">
+                                Which time slots work for you?
+                            </styled.span>
+                            <Flex direction="column" gap="1">
+                                {meetTheExpertsSlots.map((slot) => (
+                                    <label key={slot.id} className={checkboxRowClass}>
+                                        <input
+                                            type="checkbox"
+                                            name="registerMeetTheExpertsSlots"
+                                            value={slot.id}
+                                            defaultChecked={profile?.registerMeetTheExpertsSlots.includes(slot.id) ?? false}
+                                        />
+                                        {slot.label}
+                                    </label>
+                                ))}
+                            </Flex>
+                        </Box>
+                    )}
                 </Box>
 
                 <Flex justify="flex-end">
                     <PrimaryButton disabled={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</PrimaryButton>
                 </Flex>
             </styled.form>
-        </AdminCard>
+        </Box>
     )
 }

@@ -327,12 +327,46 @@ export interface SpeakerPortalConfig {
     checklist?: SpeakerPortalChecklistConfig
 }
 
+/** One configured speaker-training session. `id` should match one of the
+ * app's `SPEAKER_TRAINING_SESSION_OPTIONS` values (e.g. "Session 1") — kept
+ * as a plain string here since this package doesn't depend on the website
+ * app's types. */
+export interface SpeakerTrainingSessionConfig {
+    id: string
+    title: string
+    dateTime: DateTime
+    endDateTime: DateTime
+}
+
+export interface SpeakerDinnerConfig {
+    dateTime: DateTime
+    endDateTime: DateTime
+    location?: string
+}
+
+/** One configured Meet-the-Experts time block. */
+export interface MeetTheExpertsSlotConfig {
+    id: string
+    label: string
+}
+
 export interface SpeakerPortalChecklistConfig {
     /** External link where a speaker claims/registers their complimentary ticket. */
     ticketClaimUrl?: string
     sessionDetailsDueDate?: DateTime
     ticketClaimDueDate?: DateTime
     speakerTrainingDueDate?: DateTime
+    speakerDinnerDueDate?: DateTime
+    /** The training sessions offered — rendered as checkboxes in the RSVP
+     * modal and used to generate calendar invites. Omit to hide the whole
+     * training-RSVP checklist item. */
+    speakerTrainingSessions?: SpeakerTrainingSessionConfig[]
+    /** The speaker dinner — rendered in its own RSVP modal. Omit to hide the
+     * checklist item entirely. */
+    speakerDinner?: SpeakerDinnerConfig
+    /** Meet-the-Experts time blocks, shown as checkboxes in the session-
+     * details form once the speaker opts in (Yes/Maybe/Other). */
+    meetTheExpertsSlots?: MeetTheExpertsSlotConfig[]
 }
 
 /**

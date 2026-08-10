@@ -1,26 +1,17 @@
-import { conferenceManifest } from '@conference/manifest'
+import { useState } from 'react'
 import { data, useActionData, useLoaderData } from 'react-router'
-import { SpeakerChecklistCard } from '~/components/speaker-checklist-card'
-import { SpeakerProfileForm } from '~/components/speaker-profile-form'
+import { SpeakerChecklistCard, type ChecklistModalKey } from '~/components/speaker-checklist-card'
+import { SpeakerCountdown } from '~/components/speaker-countdown'
+import { SpeakerDinnerModal } from '~/components/speaker-dinner-modal'
+import { SpeakerReminderBanner } from '~/components/speaker-reminder-banner'
+import { SpeakerSessionDetailsModal } from '~/components/speaker-session-details-modal'
+import { SpeakerTrainingModal } from '~/components/speaker-training-modal'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
-import { speakerChecklist } from '~/lib/speakers/checklist'
-import {
-    PRESENTATION_DETAIL_OPTIONS,
-    QUESTIONS_PREFERENCE_OPTIONS,
-    SPEAKER_TRAINING_SESSION_OPTIONS,
-    YES_NO_MAYBE_OPTIONS,
-    YES_NO_MAYBE_OTHER_OPTIONS,
-    type PresentationDetail,
-    type QuestionsPreference,
-    type SpeakerProfile,
-    type SpeakerTrainingSession,
-    type YesNoMaybe,
-    type YesNoMaybeOther,
-} from '~/lib/services/speakers-store'
-import { toWorkspaceView } from '~/lib/speakers/workspace-view.server'
+import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
+import { parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
+import { SPEAKER_TRAINING_SESSION_OPTIONS, YES_NO_MAYBE_OPTIONS, type SpeakerTrainingSession, type YesNoMaybe } from '~/lib/services/speakers-store'
 import { getServices } from '~/remix-app-load-context'
-import { Box, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/speaker-portal._index'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -32,43 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404 })
     }
 
-    // De-duped across sessions — a co-presenter appearing on more than one
-    // shared session should still only get one form.
-    const presentersById = new Map<string, { fullName: string; profile: SpeakerProfile | null }>()
-    for (const { presenters } of workspace.sessions) {
-        for (const { speaker: p, profile } of presenters) {
-            if (!presentersById.has(p.sessionizeId)) {
-                presentersById.set(p.sessionizeId, { fullName: p.fullName, profile })
-            }
-        }
-    }
-
-    const checklistConfig = conferenceManifest.speakerPortal?.checklist
-
-    return {
-        ...toWorkspaceView(workspace),
-        infoPackUrl: conferenceManifest.speakerPortal?.infoPackUrl,
-        presenters: [...presentersById.entries()].map(([sessionizeId, { fullName, profile }]) => ({
-            sessionizeId,
-            fullName,
-            profile,
-        })),
-        checklist: speakerChecklist(presentersById.get(speaker.sessionizeId)?.profile ?? null, {
-            sessionDetails: checklistConfig?.sessionDetailsDueDate,
-            ticketClaim: checklistConfig?.ticketClaimDueDate,
-            speakerTraining: checklistConfig?.speakerTrainingDueDate,
-        }),
-        ticketClaimUrl: checklistConfig?.ticketClaimUrl,
-        // The checklist's session-details/training items link to the
-        // presenter's own card below — only there once they have a session.
-        hasOwnProfileForm: presentersById.has(speaker.sessionizeId),
-    }
-}
-
-function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
-    if (typeof value !== 'string') return undefined
-    const trimmed = value.trim()
-    return trimmed.length > 0 ? trimmed : undefined
+    return buildSpeakerDashboardView(context, workspace, speaker.sessionizeId)
 }
 
 function oneOf<T extends string>(value: FormDataEntryValue | null, options: readonly T[]): T | undefined {
@@ -85,21 +40,39 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
     const actionType = formData.get('_action')
+    const targetSessionizeId = formData.get('targetSessionizeId')
+    if (typeof targetSessionizeId !== 'string' || !targetSessionizeId) {
+        return data({ error: 'Missing target speaker' }, { status: 400 })
+    }
 
+    // claim-ticket, rsvp-training and rsvp-dinner are all personal — always
+    // the logged-in speaker's own answer, never a co-presenter's.
     if (actionType === 'claim-ticket') {
-        // Personal, unlike the profile form — always the logged-in speaker's
-        // own ticket, never a co-presenter's.
+        if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
         await services.speakers.markTicketClaimed(speaker.sessionizeId, user.email)
         return data({ ticketClaimed: true })
     }
 
-    if (actionType !== 'save-profile') {
-        return data({ error: 'Unknown action' }, { status: 400 })
+    if (actionType === 'rsvp-training') {
+        if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
+        const sessions = allOf<SpeakerTrainingSession>(
+            formData.getAll('rsvpSpeakerTraining'),
+            SPEAKER_TRAINING_SESSION_OPTIONS,
+        )
+        await services.speakers.saveSpeakerTrainingRsvp(speaker.sessionizeId, sessions, user.email)
+        return data({ trainingRsvped: true })
     }
 
-    const targetSessionizeId = formData.get('targetSessionizeId')
-    if (typeof targetSessionizeId !== 'string' || !targetSessionizeId) {
-        return data({ error: 'Missing target speaker' }, { status: 400 })
+    if (actionType === 'rsvp-dinner') {
+        if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
+        const response = oneOf<YesNoMaybe>(formData.get('rsvpSpeakersDinner'), YES_NO_MAYBE_OPTIONS)
+        if (!response) return data({ error: 'Missing RSVP response' }, { status: 400 })
+        await services.speakers.saveSpeakerDinnerRsvp(speaker.sessionizeId, response, user.email)
+        return data({ dinnerRsvped: true })
+    }
+
+    if (actionType !== 'save-profile') {
+        return data({ error: 'Unknown action' }, { status: 400 })
     }
 
     // Either speaker on a shared session can fill this in for the other —
@@ -109,75 +82,69 @@ export async function action({ request, context }: Route.ActionArgs) {
         throw new Response('Not Found', { status: 404 })
     }
 
-    await services.speakers.saveProfile(
-        targetSessionizeId,
-        {
-            namePhoneticSpelling: emptyToUndefined(formData.get('namePhoneticSpelling')),
-            questionsPreference: oneOf<QuestionsPreference>(
-                formData.get('questionsPreference'),
-                QUESTIONS_PREFERENCE_OPTIONS,
-            ),
-            questionsPreferenceOther: emptyToUndefined(formData.get('questionsPreferenceOther')),
-            presentationDetails: allOf<PresentationDetail>(
-                formData.getAll('presentationDetails'),
-                PRESENTATION_DETAIL_OPTIONS,
-            ),
-            presentationDetailsOther: emptyToUndefined(formData.get('presentationDetailsOther')),
-            optOutOfRecording: formData.get('optOutOfRecording') === 'yes',
-            introductionUseSessionizeBio: formData.get('introductionSource') !== 'custom',
-            introductionCustomText: emptyToUndefined(formData.get('introductionCustomText')),
-            anythingElse: emptyToUndefined(formData.get('anythingElse')),
-            dietaryRequirements: emptyToUndefined(formData.get('dietaryRequirements')),
-            rsvpSpeakersDinner: oneOf<YesNoMaybe>(formData.get('rsvpSpeakersDinner'), YES_NO_MAYBE_OPTIONS),
-            rsvpSpeakerTraining: allOf<SpeakerTrainingSession>(
-                formData.getAll('rsvpSpeakerTraining'),
-                SPEAKER_TRAINING_SESSION_OPTIONS,
-            ),
-            registerMeetTheExperts: oneOf<YesNoMaybeOther>(
-                formData.get('registerMeetTheExperts'),
-                YES_NO_MAYBE_OTHER_OPTIONS,
-            ),
-            registerMeetTheExpertsOther: emptyToUndefined(formData.get('registerMeetTheExpertsOther')),
-        },
-        user.email,
-    )
+    await services.speakers.saveProfile(targetSessionizeId, parseSpeakerProfileForm(formData), user.email)
 
     return data({ savedFor: targetSessionizeId })
 }
 
 export default function SpeakerPortalDashboard() {
-    const { sessionizeId, sessions, infoPackUrl, presenters, checklist, ticketClaimUrl, hasOwnProfileForm } =
-        useLoaderData<typeof loader>()
+    const view = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
+    const [openModal, setOpenModal] = useState<ChecklistModalKey | null>(null)
+
     const savedFor = actionData && 'savedFor' in actionData ? actionData.savedFor : null
+    const trainingJustResponded = Boolean(actionData && 'trainingRsvped' in actionData)
+    const dinnerJustResponded = Boolean(actionData && 'dinnerRsvped' in actionData)
 
     return (
         <>
+            {view.daysUntilConference !== null && view.conferenceDateLabel && (
+                <SpeakerCountdown
+                    conferenceName={view.conferenceName}
+                    conferenceDateLabel={view.conferenceDateLabel}
+                    daysUntil={view.daysUntilConference}
+                />
+            )}
+
+            <SpeakerReminderBanner events={view.reminders} />
+
             <SpeakerChecklistCard
-                sessionizeId={sessionizeId}
-                checklist={checklist}
-                ticketClaimUrl={ticketClaimUrl}
-                hasOwnProfileForm={hasOwnProfileForm}
+                sessionizeId={view.sessionizeId}
+                checklist={view.checklist}
+                ticketClaimUrl={view.ticketClaimUrl}
+                onOpenModal={setOpenModal}
             />
 
-            <SpeakerWorkspaceView sessionizeId={sessionizeId} sessions={sessions} infoPackUrl={infoPackUrl} />
+            <SpeakerSessionDetailsModal
+                open={openModal === 'sessionDetails'}
+                onOpenChange={(open) => setOpenModal(open ? 'sessionDetails' : null)}
+                activeSessionizeId={view.sessionizeId}
+                presenters={view.presenters}
+                justSavedFor={savedFor}
+                meetTheExpertsSlots={view.meetTheExpertsSlots}
+            />
 
-            {presenters.length > 0 && (
-                <Box maxW="4xl" mx="auto">
-                    <styled.h2 fontSize="xl" fontWeight="semibold" mt="8" mb="4">
-                        Extra info for the organisers
-                    </styled.h2>
-                    {presenters.map((presenter) => (
-                        <SpeakerProfileForm
-                            key={presenter.sessionizeId}
-                            sessionizeId={presenter.sessionizeId}
-                            fullName={presenter.fullName}
-                            profile={presenter.profile}
-                            justSaved={savedFor === presenter.sessionizeId}
-                        />
-                    ))}
-                </Box>
-            )}
+            <SpeakerTrainingModal
+                open={openModal === 'speakerTraining'}
+                onOpenChange={(open) => setOpenModal(open ? 'speakerTraining' : null)}
+                sessionizeId={view.sessionizeId}
+                sessions={view.trainingSessions}
+                selectedSessionIds={view.trainingSelectedIds}
+                hasResponded={view.trainingResponded}
+                justResponded={trainingJustResponded}
+            />
+
+            <SpeakerDinnerModal
+                open={openModal === 'speakerDinner'}
+                onOpenChange={(open) => setOpenModal(open ? 'speakerDinner' : null)}
+                sessionizeId={view.sessionizeId}
+                dateLabel={view.dinnerDateLabel ?? ''}
+                calendarUrl={view.dinnerCalendarUrl ?? undefined}
+                currentResponse={view.dinnerResponse}
+                justResponded={dinnerJustResponded}
+            />
+
+            <SpeakerWorkspaceView sessionizeId={view.sessionizeId} sessions={view.sessions} infoPackUrl={view.infoPackUrl} />
         </>
     )
 }

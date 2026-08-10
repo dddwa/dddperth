@@ -53,8 +53,10 @@ interface SpeakerProfileRow {
     dietary_requirements: string | null
     rsvp_speakers_dinner: string | null
     rsvp_speaker_training_json: string | null
+    rsvp_speaker_training_responded_at: number | null
     register_meet_the_experts: string | null
     register_meet_the_experts_other: string | null
+    register_meet_the_experts_slots_json: string | null
     completed_at: number | null
     updated_at: number
     updated_by: string
@@ -137,8 +139,10 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
         dietaryRequirements: row.dietary_requirements ?? undefined,
         rsvpSpeakersDinner: (row.rsvp_speakers_dinner as YesNoMaybe | null) ?? undefined,
         rsvpSpeakerTraining: parseJsonArray(row.rsvp_speaker_training_json) as SpeakerTrainingSession[],
+        rsvpSpeakerTrainingRespondedAt: row.rsvp_speaker_training_responded_at ?? undefined,
         registerMeetTheExperts: (row.register_meet_the_experts as YesNoMaybeOther | null) ?? undefined,
         registerMeetTheExpertsOther: row.register_meet_the_experts_other ?? undefined,
+        registerMeetTheExpertsSlots: parseJsonArray(row.register_meet_the_experts_slots_json),
         completedAt: row.completed_at ?? undefined,
         updatedAt: row.updated_at,
         updatedBy: row.updated_by,
@@ -346,15 +350,20 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
         },
 
         async saveProfile(sessionizeId, details, updatedBy) {
+            // Deliberately doesn't touch rsvp_speakers_dinner /
+            // rsvp_speaker_training_json / rsvp_speaker_training_responded_at
+            // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp
+            // now, so a session-details save can never clobber an RSVP already
+            // on file.
             await db
                 .prepare(
                     `INSERT INTO speaker_profiles
                          (sessionize_id, name_phonetic_spelling, questions_preference, questions_preference_other,
                           presentation_details_json, presentation_details_other, opt_out_of_recording,
                           introduction_use_sessionize_bio, introduction_custom_text, anything_else,
-                          dietary_requirements, rsvp_speakers_dinner, rsvp_speaker_training_json,
-                          register_meet_the_experts, register_meet_the_experts_other, updated_at, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
+                          dietary_requirements, register_meet_the_experts, register_meet_the_experts_other,
+                          register_meet_the_experts_slots_json, updated_at, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
                      ON CONFLICT(sessionize_id) DO UPDATE SET
                          name_phonetic_spelling = excluded.name_phonetic_spelling,
                          questions_preference = excluded.questions_preference,
@@ -366,10 +375,9 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                          introduction_custom_text = excluded.introduction_custom_text,
                          anything_else = excluded.anything_else,
                          dietary_requirements = excluded.dietary_requirements,
-                         rsvp_speakers_dinner = excluded.rsvp_speakers_dinner,
-                         rsvp_speaker_training_json = excluded.rsvp_speaker_training_json,
                          register_meet_the_experts = excluded.register_meet_the_experts,
                          register_meet_the_experts_other = excluded.register_meet_the_experts_other,
+                         register_meet_the_experts_slots_json = excluded.register_meet_the_experts_slots_json,
                          updated_at = excluded.updated_at,
                          updated_by = excluded.updated_by`,
                 )
@@ -385,10 +393,11 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     details.introductionCustomText ?? null,
                     details.anythingElse ?? null,
                     details.dietaryRequirements ?? null,
-                    details.rsvpSpeakersDinner ?? null,
-                    details.rsvpSpeakerTraining.length > 0 ? JSON.stringify(details.rsvpSpeakerTraining) : null,
                     details.registerMeetTheExperts ?? null,
                     details.registerMeetTheExpertsOther ?? null,
+                    details.registerMeetTheExpertsSlots.length > 0
+                        ? JSON.stringify(details.registerMeetTheExpertsSlots)
+                        : null,
                     updatedBy,
                 )
                 .run()
@@ -418,6 +427,36 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                          ticket_claimed_at = COALESCE(speaker_profiles.ticket_claimed_at, unixepoch())`,
                 )
                 .bind(sessionizeId, updatedBy)
+                .run()
+        },
+
+        async saveSpeakerTrainingRsvp(sessionizeId, sessions, updatedBy) {
+            // Unlike markTicketClaimed, an RSVP can be resubmitted with a
+            // different selection — so both columns are overwritten on every
+            // call, not just set-once. Only these two columns are touched.
+            await db
+                .prepare(
+                    `INSERT INTO speaker_profiles
+                         (sessionize_id, rsvp_speaker_training_json, rsvp_speaker_training_responded_at,
+                          updated_at, updated_by)
+                     VALUES (?, ?, unixepoch(), unixepoch(), ?)
+                     ON CONFLICT(sessionize_id) DO UPDATE SET
+                         rsvp_speaker_training_json = excluded.rsvp_speaker_training_json,
+                         rsvp_speaker_training_responded_at = excluded.rsvp_speaker_training_responded_at`,
+                )
+                .bind(sessionizeId, sessions.length > 0 ? JSON.stringify(sessions) : null, updatedBy)
+                .run()
+        },
+
+        async saveSpeakerDinnerRsvp(sessionizeId, response, updatedBy) {
+            await db
+                .prepare(
+                    `INSERT INTO speaker_profiles (sessionize_id, rsvp_speakers_dinner, updated_at, updated_by)
+                     VALUES (?, ?, unixepoch(), ?)
+                     ON CONFLICT(sessionize_id) DO UPDATE SET
+                         rsvp_speakers_dinner = excluded.rsvp_speakers_dinner`,
+                )
+                .bind(sessionizeId, response, updatedBy)
                 .run()
         },
 
