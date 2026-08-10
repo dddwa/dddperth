@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { data, useActionData, useLoaderData } from 'react-router'
+import { conferenceManifest } from '@conference/manifest'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { SpeakerChecklistCard, type ChecklistModalKey } from '~/components/speaker-checklist-card'
 import { SpeakerCountdown } from '~/components/speaker-countdown'
 import { SpeakerDinnerModal } from '~/components/speaker-dinner-modal'
+import { SpeakerMeetTheExpertsModal } from '~/components/speaker-meet-the-experts-modal'
 import { SpeakerReminderBanner } from '~/components/speaker-reminder-banner'
 import { SpeakerSessionDetailsModal } from '~/components/speaker-session-details-modal'
 import { SpeakerTrainingModal } from '~/components/speaker-training-modal'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireAdmin } from '~/lib/auth.server'
+import { recordException } from '~/lib/record-exception'
 import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
-import { parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
+import { parseMeetTheExpertsForm, parseSessionDetailsForm, parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, YES_NO_MAYBE_OPTIONS, type SpeakerTrainingSession, type YesNoMaybe } from '~/lib/services/speakers-store'
 import { getServices } from '~/remix-app-load-context'
 import { Box, styled } from '~/styled-system/jsx'
@@ -19,7 +22,7 @@ import type { Route } from './+types/admin.speakers.$sessionizeId'
 
 /**
  * Admin view of exactly what a speaker sees at /speaker-portal — same data,
- * same components (`SpeakerChecklistCard`, the 3 RSVP modals, etc) as the
+ * same components (`SpeakerChecklistCard`, the 4 RSVP modals, etc) as the
  * speaker's own dashboard via `buildSpeakerDashboardView`, so the two can
  * never drift. Unlike the speaker's own view, an admin can act on behalf of
  * *any* presenter here — there's no co-presenter/self restriction, since an
@@ -54,6 +57,29 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
     const actionType = formData.get('_action')
+
+    // The whole "Fill in session details" modal submits as one form (one
+    // Save button, no per-section targetSessionizeId) — handled before the
+    // targetSessionizeId guard below, since this form has no such field. No
+    // ownership check needed — an admin is already fully trusted.
+    if (actionType === 'save-session-details-modal') {
+        const sessionIds = formData.getAll('sessionIds').filter((v): v is string => typeof v === 'string')
+        const presenterIds = formData.getAll('presenterIds').filter((v): v is string => typeof v === 'string')
+
+        for (const sessionizeSessionId of sessionIds) {
+            await services.speakers.saveSessionDetails(
+                sessionizeSessionId,
+                parseSessionDetailsForm(formData, sessionizeSessionId),
+                email,
+            )
+        }
+        for (const presenterId of presenterIds) {
+            await services.speakers.saveProfile(presenterId, parseSpeakerProfileForm(formData, presenterId), email)
+        }
+
+        return data({ sessionDetailsSaved: true })
+    }
+
     const targetSessionizeId = formData.get('targetSessionizeId')
     if (typeof targetSessionizeId !== 'string' || !targetSessionizeId) {
         return data({ error: 'Missing target speaker' }, { status: 400 })
@@ -62,6 +88,28 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (actionType === 'claim-ticket') {
         await services.speakers.markTicketClaimed(targetSessionizeId, email)
         return data({ ticketClaimed: true })
+    }
+
+    if (actionType === 'confirm-session') {
+        const justConfirmed = await services.speakers.markSessionConfirmed(targetSessionizeId, email)
+        const notifyEmail = conferenceManifest.speakerPortal?.sessionConfirmationNotifyEmail
+        if (justConfirmed && notifyEmail) {
+            const targetSpeaker = await services.speakers.getSpeaker(targetSessionizeId)
+            const speakerLabel = targetSpeaker?.fullName ?? targetSessionizeId
+            try {
+                await services.email.send({
+                    to: notifyEmail,
+                    subject: `${speakerLabel}'s session marked confirmed (via admin)`,
+                    text: `An admin (${email}) marked ${speakerLabel}'s session as confirmed in Sessionize on their behalf, via the admin speaker preview.`,
+                    html: `<p>An admin (<strong>${email}</strong>) marked <strong>${speakerLabel}</strong>'s session as confirmed in Sessionize on their behalf, via the admin speaker preview.</p>`,
+                })
+            } catch (error) {
+                // The self-report already landed — don't fail the request
+                // over a notification that can be resent/checked manually.
+                recordException(error)
+            }
+        }
+        return data({ sessionConfirmed: true })
     }
 
     if (actionType === 'rsvp-training') {
@@ -80,13 +128,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ dinnerRsvped: true })
     }
 
-    if (actionType !== 'save-profile') {
-        return data({ error: 'Unknown action' }, { status: 400 })
+    if (actionType === 'save-meet-the-experts') {
+        await services.speakers.saveMeetTheExpertsSlots(targetSessionizeId, parseMeetTheExpertsForm(formData), email)
+        return data({ meetTheExpertsSaved: true })
     }
 
-    await services.speakers.saveProfile(targetSessionizeId, parseSpeakerProfileForm(formData), email)
-
-    return data({ savedFor: targetSessionizeId })
+    return data({ error: 'Unknown action' }, { status: 400 })
 }
 
 export default function AdminSpeakerPreview() {
@@ -94,9 +141,10 @@ export default function AdminSpeakerPreview() {
     const actionData = useActionData<typeof action>()
     const [openModal, setOpenModal] = useState<ChecklistModalKey | null>(null)
 
-    const savedFor = actionData && 'savedFor' in actionData ? actionData.savedFor : null
+    const sessionDetailsJustSaved = Boolean(actionData && 'sessionDetailsSaved' in actionData)
     const trainingJustResponded = Boolean(actionData && 'trainingRsvped' in actionData)
     const dinnerJustResponded = Boolean(actionData && 'dinnerRsvped' in actionData)
+    const meetTheExpertsJustResponded = Boolean(actionData && 'meetTheExpertsSaved' in actionData)
 
     return (
         <AdminLayout heading={`Speaker view — ${fullName}`}>
@@ -125,15 +173,15 @@ export default function AdminSpeakerPreview() {
                 checklist={view.checklist}
                 ticketClaimUrl={view.ticketClaimUrl}
                 onOpenModal={setOpenModal}
+                alwaysEditable
             />
 
             <SpeakerSessionDetailsModal
                 open={openModal === 'sessionDetails'}
                 onOpenChange={(open) => setOpenModal(open ? 'sessionDetails' : null)}
                 activeSessionizeId={view.sessionizeId}
-                presenters={view.presenters}
-                justSavedFor={savedFor}
-                meetTheExpertsSlots={view.meetTheExpertsSlots}
+                sessions={view.sessionDetailsSections}
+                justSaved={sessionDetailsJustSaved}
             />
 
             <SpeakerTrainingModal
@@ -156,7 +204,21 @@ export default function AdminSpeakerPreview() {
                 justResponded={dinnerJustResponded}
             />
 
-            <SpeakerWorkspaceView sessionizeId={view.sessionizeId} sessions={view.sessions} infoPackUrl={view.infoPackUrl} />
+            <SpeakerMeetTheExpertsModal
+                open={openModal === 'meetTheExperts'}
+                onOpenChange={(open) => setOpenModal(open ? 'meetTheExperts' : null)}
+                sessionizeId={view.sessionizeId}
+                slots={view.meetTheExpertsSlots}
+                selectedSlotIds={view.meetTheExpertsSelectedSlotIds}
+                hasResponded={view.meetTheExpertsResponded}
+                justResponded={meetTheExpertsJustResponded}
+                bio={view.meetTheExpertsBio}
+                bioUseSessionizeBio={view.meetTheExpertsBioUseSessionizeBio}
+                bioCustomText={view.meetTheExpertsBioCustomText}
+                sessionDetailsIntroText={view.sessionDetailsIntroText}
+            />
+
+            <SpeakerWorkspaceView sessionizeId={view.sessionizeId} sessions={view.sessions} infoPackUrl={view.infoPackUrl} isAdminView />
         </AdminLayout>
     )
 }

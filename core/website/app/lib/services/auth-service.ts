@@ -51,4 +51,11 @@ export interface AuthService {
 
     /** Deletes the session row. Idempotent. */
     destroySession(sessionId: string): Promise<void>
+
+    /** Most recent login (session creation) time for every email that has
+     * ever logged in, as unix seconds, keyed by lowercased email. Emails
+     * that have never logged in are simply absent — distinct from a login
+     * time of 0. Powers "last login" columns in admin views (e.g. the
+     * speakers table); callers filter down to the emails they care about. */
+    getLastLoginTimes(): Promise<Record<string, number>>
 }

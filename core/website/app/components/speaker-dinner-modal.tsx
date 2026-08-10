@@ -1,6 +1,6 @@
-import { useNavigation } from 'react-router'
-import type { YesNoMaybe } from '~/lib/services/speakers-store'
+import { Form, useNavigation } from 'react-router'
 import { SpeakerModal } from '~/components/speaker-modal'
+import type { YesNoMaybe } from '~/lib/services/speakers-store'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
@@ -43,12 +43,12 @@ export function SpeakerDinnerModal({
             </styled.p>
 
             {justResponded && (
-                <Box mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                <Box role="status" mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
                     RSVP saved — thank you!
                 </Box>
             )}
 
-            <styled.form method="post">
+            <Form method="post">
                 <input type="hidden" name="_action" value="rsvp-dinner" />
                 <input type="hidden" name="targetSessionizeId" value={sessionizeId} />
                 <Flex direction="column" gap="2" mb="5">
@@ -83,7 +83,7 @@ export function SpeakerDinnerModal({
                         {isSubmitting ? 'Saving…' : 'RSVP'}
                     </styled.button>
                 </Flex>
-            </styled.form>
+            </Form>
 
             {(currentResponse === 'Yes' || currentResponse === 'Maybe') && calendarUrl && (
                 <Box mt="6" pt="5" borderTop="[1px solid token(colors.border.subtle)]">
@@ -94,7 +94,7 @@ export function SpeakerDinnerModal({
                         color="admin.900"
                         textDecoration="underline"
                     >
-                        Add to your calendar ↓
+                        Add to your calendar 🗓️
                     </styled.a>
                 </Box>
             )}

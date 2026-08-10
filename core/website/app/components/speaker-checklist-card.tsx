@@ -1,8 +1,12 @@
 import { DateTime } from 'luxon'
+import { Form } from 'react-router'
 import type { ChecklistUrgency, SpeakerChecklistItem } from '~/lib/speakers/checklist'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemAction, type ChecklistModalKey } from '~/lib/speakers/checklist-items'
 import { AdminCard } from '~/components/admin-card'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+
+export type { ChecklistModalKey } from '~/lib/speakers/checklist-items'
 
 const actionLinkClass = css({
     fontSize: 'sm',
@@ -49,11 +53,64 @@ function dueDateLabel(dueDateIso?: string): string | null {
     return `Due ${DateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
 }
 
-export type ChecklistModalKey = 'sessionDetails' | 'speakerTraining' | 'speakerDinner'
+/** Which modal reopens a completed item for editing — only items whose
+ * action is a modal trigger are editable this way (claiming a ticket or
+ * confirming a session isn't "editable", it's a one-off self-report). Null
+ * if there's no such action, or the item is past its due date and editing
+ * hasn't been granted regardless (see `alwaysEditable` on the card). */
+function editModalKeyFor(item: SpeakerChecklistItem, alwaysEditable: boolean): ChecklistModalKey | null {
+    if (!alwaysEditable && item.isPastDue) return null
+    const definition = SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === item.key)
+    const modalAction = definition?.actions.find((a) => 'kind' in a)
+    return modalAction && 'kind' in modalAction ? modalAction.modalKey : null
+}
 
-/** The action for one outstanding item — a modal trigger for everything
- * except ticket claim, which keeps its external-link + self-report pattern.
- * Renders nothing once the item is done. */
+/** Renders one entry from an item's `actions` list — a modal trigger, a
+ * plain link (falling back to the dynamic `ticketClaimUrl` prop when the
+ * action has no `href` of its own), or a "self-report" button. */
+function ChecklistActionButton({
+    action,
+    sessionizeId,
+    ticketClaimUrl,
+    onOpenModal,
+}: {
+    action: ChecklistItemAction
+    sessionizeId: string
+    ticketClaimUrl?: string
+    onOpenModal: (key: ChecklistModalKey) => void
+}) {
+    if ('kind' in action) {
+        return (
+            <button type="button" onClick={() => onOpenModal(action.modalKey)} className={actionLinkClass}>
+                {action.buttonLabel}
+            </button>
+        )
+    }
+
+    if (action.action) {
+        return (
+            <Form method="post">
+                <input type="hidden" name="_action" value={action.action} />
+                <input type="hidden" name="targetSessionizeId" value={sessionizeId} />
+                <button type="submit" className={claimButtonClass}>
+                    {action.label}
+                </button>
+            </Form>
+        )
+    }
+
+    const href = action.href ?? ticketClaimUrl
+    if (!href) return null
+    return (
+        <styled.a href={href} target="_blank" rel="noreferrer" className={actionLinkClass}>
+            {action.label}
+        </styled.a>
+    )
+}
+
+/** Every action for one outstanding item, driven by its entry in
+ * `SPEAKER_CHECKLIST_ITEMS`. Renders nothing once the item is done, or if it
+ * somehow has no matching definition. */
 function ChecklistAction({
     item,
     sessionizeId,
@@ -67,52 +124,20 @@ function ChecklistAction({
 }) {
     if (item.done) return null
 
-    if (item.key === 'confirmSession') {
-        return (
-            <Flex align="center" gap="3" wrap="wrap">
-                <styled.a href="https://sessionize.com/app/speaker" target="_blank" rel="noreferrer" className={actionLinkClass}>
-                    Open Sessionize ↗
-                </styled.a>
-                <styled.form method="post">
-                    <input type="hidden" name="_action" value="confirm-session" />
-                    <input type="hidden" name="targetSessionizeId" value={sessionizeId} />
-                    <button type="submit" className={claimButtonClass}>
-                        I've already confirmed it
-                    </button>
-                </styled.form>
-            </Flex>
-        )
-    }
+    const definition = SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === item.key)
+    if (!definition) return null
 
-    if (item.key === 'sessionDetails' || item.key === 'speakerTraining' || item.key === 'speakerDinner') {
-        const key = item.key
-        const label = key === 'sessionDetails' ? 'Fill in now' : 'RSVP now'
-        return (
-            <button type="button" onClick={() => onOpenModal(key)} className={actionLinkClass}>
-                {label}
-            </button>
-        )
-    }
-
-    // claimTicket
     return (
         <Flex align="center" gap="3" wrap="wrap">
-            {ticketClaimUrl ? (
-                <styled.a href={ticketClaimUrl} target="_blank" rel="noreferrer" className={actionLinkClass}>
-                    Claim your ticket ↗
-                </styled.a>
-            ) : (
-                <styled.span fontSize="xs" color="admin.600">
-                    Contact the organisers to claim your ticket
-                </styled.span>
-            )}
-            <styled.form method="post">
-                <input type="hidden" name="_action" value="claim-ticket" />
-                <input type="hidden" name="targetSessionizeId" value={sessionizeId} />
-                <button type="submit" className={claimButtonClass}>
-                    I've claimed it
-                </button>
-            </styled.form>
+            {definition.actions.map((action, index) => (
+                <ChecklistActionButton
+                    key={index}
+                    action={action}
+                    sessionizeId={sessionizeId}
+                    ticketClaimUrl={ticketClaimUrl}
+                    onOpenModal={onOpenModal}
+                />
+            ))}
         </Flex>
     )
 }
@@ -129,11 +154,17 @@ export function SpeakerChecklistCard({
     checklist,
     ticketClaimUrl,
     onOpenModal,
+    alwaysEditable = false,
 }: {
     sessionizeId: string
     checklist: SpeakerChecklistItem[]
     ticketClaimUrl?: string
     onOpenModal: (key: ChecklistModalKey) => void
+    /** Lets a completed modal-based item be reopened even past its due
+     * date — set by the admin preview, where an organiser acting on a
+     * speaker's behalf shouldn't be locked out by a deadline aimed at
+     * speakers. */
+    alwaysEditable?: boolean
 }) {
     const outstanding = checklist.filter((item) => !item.done)
     const completed = checklist.filter((item) => item.done)
@@ -150,7 +181,7 @@ export function SpeakerChecklistCard({
                 </styled.p>
 
                 {allDone && (
-                    <Box mb="6" p="4" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                    <Box role="status" mb="6" p="4" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
                         All done — thank you! 🎉
                     </Box>
                 )}
@@ -198,16 +229,54 @@ export function SpeakerChecklistCard({
 
                 {completed.length > 0 && (
                     <Flex direction="column" gap="1">
-                        {completed.map((item) => (
-                            <Flex key={item.key} align="center" gap="2" py="1.5" px="1">
-                                <styled.span fontSize="sm" aria-hidden>
-                                    ✅
-                                </styled.span>
-                                <styled.span fontSize="xs" color="admin.600" textDecoration="line-through">
-                                    {item.label}
-                                </styled.span>
-                            </Flex>
-                        ))}
+                        {completed.map((item) => {
+                            const editModalKey = editModalKeyFor(item, alwaysEditable)
+                            const content = (
+                                <>
+                                    <styled.span fontSize="sm" aria-hidden>
+                                        ✅
+                                    </styled.span>
+                                    <styled.span fontSize="xs" color="admin.600" textDecoration="line-through" flex="1">
+                                        {item.label}
+                                    </styled.span>
+                                    {editModalKey && (
+                                        <styled.span fontSize="xs" color="admin.700" textDecoration="underline" flexShrink="0">
+                                            Edit
+                                        </styled.span>
+                                    )}
+                                </>
+                            )
+
+                            if (!editModalKey) {
+                                return (
+                                    <Flex key={item.key} align="center" gap="2" py="1.5" px="1">
+                                        {content}
+                                    </Flex>
+                                )
+                            }
+
+                            return (
+                                <styled.button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => onOpenModal(editModalKey)}
+                                    display="flex"
+                                    alignItems="center"
+                                    gap="2"
+                                    py="1.5"
+                                    px="1"
+                                    w="full"
+                                    bg="transparent"
+                                    border="none"
+                                    borderRadius="sm"
+                                    cursor="pointer"
+                                    textAlign="left"
+                                    _hover={{ bg: 'admin.100' }}
+                                >
+                                    {content}
+                                </styled.button>
+                            )
+                        })}
                     </Flex>
                 )}
             </AdminCard>

@@ -23,17 +23,11 @@ export const speakerPortal: SpeakerPortalConfig = {
         generalTopic: 'General Topic Category',
         talkTopics: 'Talk Topics',
     },
-    // TODO: confirm the due dates and Meet-the-Experts slot boundaries with
-    // the speaker liaison team — placeholders spaced out before the 3 Oct
-    // 2026 event so the checklist ships with something reasonable. Training
-    // session dates/times and the dinner are confirmed.
+    // Checklist due dates live in
+    // core/website/app/lib/speakers/checklist-items.ts; training session
+    // dates/times and the dinner below are confirmed.
     checklist: {
         ticketClaimUrl: 'https://ti.to/dddperth/2026/with/speaker',
-        sessionDetailsDueDate: DateTime.fromISO('2026-09-05T23:59:59', { zone: 'Australia/Perth' }),
-        ticketClaimDueDate: DateTime.fromISO('2026-09-12T23:59:59', { zone: 'Australia/Perth' }),
-        // RSVP deadline for training — before the first session (2 Sep).
-        speakerTrainingDueDate: DateTime.fromISO('2026-08-28T23:59:59', { zone: 'Australia/Perth' }),
-        speakerDinnerDueDate: DateTime.fromISO('2026-09-18T23:59:59', { zone: 'Australia/Perth' }),
         speakerTrainingSessions: [
             {
                 id: 'Session 1',

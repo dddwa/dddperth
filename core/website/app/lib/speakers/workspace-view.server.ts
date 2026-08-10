@@ -1,5 +1,5 @@
 import { formatDate } from '../sessionize.server'
-import type { SpeakerProfile, SpeakerWorkspace } from '../services/speakers-store'
+import type { SessionDetailsInput, SpeakerProfile, SpeakerWorkspace } from '../services/speakers-store'
 
 /**
  * Shapes a `SpeakerWorkspace` into exactly what the dashboard renders —
@@ -78,25 +78,33 @@ export interface SpeakerPresenterProfile {
     profile: SpeakerProfile | null
 }
 
+export interface SpeakerSessionDetailsSection {
+    sessionizeSessionId: string
+    title: string
+    /** The shared session-level answers (audience questions, presentation
+     * format, recording, anything else) — filled in once for the whole
+     * session rather than per presenter. Null until any presenter submits
+     * the session-level form. */
+    sessionDetails: SessionDetailsInput | null
+    presenters: SpeakerPresenterProfile[]
+}
+
 /**
- * Every distinct presenter across a workspace's sessions, each with their
- * "extra info for organisers" profile — de-duped, since a co-presenter
- * appearing on more than one shared session should still only get one card.
- * Shared by the speaker's own dashboard and the admin preview.
+ * Shapes a workspace into one section per session — the shared session-level
+ * form once, followed by every presenter's own per-speaker form — for the
+ * "Fill in your session details" modal. Shared by the speaker's own
+ * dashboard and the admin preview, same idiom as `toWorkspaceView`.
  */
-export function collectPresenters(workspace: SpeakerWorkspace): SpeakerPresenterProfile[] {
-    const byId = new Map<string, { fullName: string; bio?: string; profile: SpeakerProfile | null }>()
-    for (const { presenters } of workspace.sessions) {
-        for (const { speaker: p, profile } of presenters) {
-            if (!byId.has(p.sessionizeId)) {
-                byId.set(p.sessionizeId, { fullName: p.fullName, bio: p.bio, profile })
-            }
-        }
-    }
-    return [...byId.entries()].map(([sessionizeId, { fullName, bio, profile }]) => ({
-        sessionizeId,
-        fullName,
-        bio,
-        profile,
+export function toSessionDetailsSections(workspace: SpeakerWorkspace): SpeakerSessionDetailsSection[] {
+    return workspace.sessions.map(({ session, sessionDetails, presenters }) => ({
+        sessionizeSessionId: session.sessionizeSessionId,
+        title: session.sessionTitle,
+        sessionDetails,
+        presenters: presenters.map(({ speaker: p, profile }) => ({
+            sessionizeId: p.sessionizeId,
+            fullName: p.fullName,
+            bio: p.bio,
+            profile,
+        })),
     }))
 }

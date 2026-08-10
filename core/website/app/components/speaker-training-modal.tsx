@@ -1,4 +1,4 @@
-import { useNavigation } from 'react-router'
+import { Form, useNavigation } from 'react-router'
 import { SpeakerModal } from '~/components/speaker-modal'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -55,7 +55,7 @@ export function SpeakerTrainingModal({
             </styled.p>
 
             {justResponded && (
-                <Box mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                <Box role="status" mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
                     RSVP saved — thank you!
                 </Box>
             )}
@@ -65,7 +65,7 @@ export function SpeakerTrainingModal({
                     No training sessions have been announced yet.
                 </styled.p>
             ) : (
-                <styled.form method="post">
+                <Form method="post">
                     <input type="hidden" name="_action" value="rsvp-training" />
                     <input type="hidden" name="targetSessionizeId" value={sessionizeId} />
                     <Flex direction="column" gap="2" mb="5">
@@ -113,7 +113,7 @@ export function SpeakerTrainingModal({
                             {isSubmitting ? 'Saving…' : 'RSVP'}
                         </styled.button>
                     </Flex>
-                </styled.form>
+                </Form>
             )}
 
             {hasResponded && selectedSessionIds.length > 0 && (
@@ -133,7 +133,7 @@ export function SpeakerTrainingModal({
                                     color="admin.900"
                                     textDecoration="underline"
                                 >
-                                    {session.title} ↓
+                                    {session.title} 🗓️
                                 </styled.a>
                             ))}
                     </Flex>

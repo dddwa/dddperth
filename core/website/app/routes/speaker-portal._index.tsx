@@ -4,6 +4,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { SpeakerChecklistCard, type ChecklistModalKey } from '~/components/speaker-checklist-card'
 import { SpeakerCountdown } from '~/components/speaker-countdown'
 import { SpeakerDinnerModal } from '~/components/speaker-dinner-modal'
+import { SpeakerMeetTheExpertsModal } from '~/components/speaker-meet-the-experts-modal'
 import { SpeakerReminderBanner } from '~/components/speaker-reminder-banner'
 import { SpeakerSessionDetailsModal } from '~/components/speaker-session-details-modal'
 import { SpeakerTrainingModal } from '~/components/speaker-training-modal'
@@ -11,7 +12,7 @@ import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
 import { recordException } from '~/lib/record-exception'
 import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
-import { parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
+import { parseMeetTheExpertsForm, parseSessionDetailsForm, parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, YES_NO_MAYBE_OPTIONS, type SpeakerTrainingSession, type YesNoMaybe } from '~/lib/services/speakers-store'
 import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/speaker-portal._index'
@@ -42,14 +43,49 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
     const actionType = formData.get('_action')
+
+    // The whole "Fill in session details" modal submits as one form (one
+    // Save button, no per-section targetSessionizeId) — handled before the
+    // targetSessionizeId guard below, since this form has no such field.
+    if (actionType === 'save-session-details-modal') {
+        const sessionIds = formData.getAll('sessionIds').filter((v): v is string => typeof v === 'string')
+        const presenterIds = formData.getAll('presenterIds').filter((v): v is string => typeof v === 'string')
+
+        // Any presenter on a session may submit its shared details on the
+        // group's behalf; a presenter's own fields may be submitted by any
+        // co-presenter sharing a session with them. Same authorization idiom
+        // as save-profile used to use, just checked per id in the batch.
+        for (const sessionizeSessionId of sessionIds) {
+            const onSession = await services.speakers.isSpeakerOnSession(speaker.sessionizeId, sessionizeSessionId)
+            if (!onSession) throw new Response('Not Found', { status: 404 })
+        }
+        const allowedIds = await services.speakers.getCoPresenterIds(speaker.sessionizeId)
+        for (const presenterId of presenterIds) {
+            if (!allowedIds.includes(presenterId)) throw new Response('Not Found', { status: 404 })
+        }
+
+        for (const sessionizeSessionId of sessionIds) {
+            await services.speakers.saveSessionDetails(
+                sessionizeSessionId,
+                parseSessionDetailsForm(formData, sessionizeSessionId),
+                user.email,
+            )
+        }
+        for (const presenterId of presenterIds) {
+            await services.speakers.saveProfile(presenterId, parseSpeakerProfileForm(formData, presenterId), user.email)
+        }
+
+        return data({ sessionDetailsSaved: true })
+    }
+
     const targetSessionizeId = formData.get('targetSessionizeId')
     if (typeof targetSessionizeId !== 'string' || !targetSessionizeId) {
         return data({ error: 'Missing target speaker' }, { status: 400 })
     }
 
-    // claim-ticket, rsvp-training, rsvp-dinner and confirm-session are all
-    // personal — always the logged-in speaker's own answer, never a
-    // co-presenter's.
+    // claim-ticket, rsvp-training, rsvp-dinner, confirm-session and
+    // save-meet-the-experts are all personal — always the logged-in
+    // speaker's own answer, never a co-presenter's.
     if (actionType === 'claim-ticket') {
         if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
         await services.speakers.markTicketClaimed(speaker.sessionizeId, user.email)
@@ -95,20 +131,13 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ dinnerRsvped: true })
     }
 
-    if (actionType !== 'save-profile') {
-        return data({ error: 'Unknown action' }, { status: 400 })
+    if (actionType === 'save-meet-the-experts') {
+        if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
+        await services.speakers.saveMeetTheExpertsSlots(speaker.sessionizeId, parseMeetTheExpertsForm(formData), user.email)
+        return data({ meetTheExpertsSaved: true })
     }
 
-    // Either speaker on a shared session can fill this in for the other —
-    // anyone outside that set gets a 404, same as a direct profile-route hit.
-    const allowedIds = await services.speakers.getCoPresenterIds(speaker.sessionizeId)
-    if (!allowedIds.includes(targetSessionizeId)) {
-        throw new Response('Not Found', { status: 404 })
-    }
-
-    await services.speakers.saveProfile(targetSessionizeId, parseSpeakerProfileForm(formData), user.email)
-
-    return data({ savedFor: targetSessionizeId })
+    return data({ error: 'Unknown action' }, { status: 400 })
 }
 
 export default function SpeakerPortalDashboard() {
@@ -116,9 +145,10 @@ export default function SpeakerPortalDashboard() {
     const actionData = useActionData<typeof action>()
     const [openModal, setOpenModal] = useState<ChecklistModalKey | null>(null)
 
-    const savedFor = actionData && 'savedFor' in actionData ? actionData.savedFor : null
+    const sessionDetailsJustSaved = Boolean(actionData && 'sessionDetailsSaved' in actionData)
     const trainingJustResponded = Boolean(actionData && 'trainingRsvped' in actionData)
     const dinnerJustResponded = Boolean(actionData && 'dinnerRsvped' in actionData)
+    const meetTheExpertsJustResponded = Boolean(actionData && 'meetTheExpertsSaved' in actionData)
 
     return (
         <>
@@ -143,9 +173,8 @@ export default function SpeakerPortalDashboard() {
                 open={openModal === 'sessionDetails'}
                 onOpenChange={(open) => setOpenModal(open ? 'sessionDetails' : null)}
                 activeSessionizeId={view.sessionizeId}
-                presenters={view.presenters}
-                justSavedFor={savedFor}
-                meetTheExpertsSlots={view.meetTheExpertsSlots}
+                sessions={view.sessionDetailsSections}
+                justSaved={sessionDetailsJustSaved}
             />
 
             <SpeakerTrainingModal
@@ -166,6 +195,20 @@ export default function SpeakerPortalDashboard() {
                 calendarUrl={view.dinnerCalendarUrl ?? undefined}
                 currentResponse={view.dinnerResponse}
                 justResponded={dinnerJustResponded}
+            />
+
+            <SpeakerMeetTheExpertsModal
+                open={openModal === 'meetTheExperts'}
+                onOpenChange={(open) => setOpenModal(open ? 'meetTheExperts' : null)}
+                sessionizeId={view.sessionizeId}
+                slots={view.meetTheExpertsSlots}
+                selectedSlotIds={view.meetTheExpertsSelectedSlotIds}
+                hasResponded={view.meetTheExpertsResponded}
+                justResponded={meetTheExpertsJustResponded}
+                bio={view.meetTheExpertsBio}
+                bioUseSessionizeBio={view.meetTheExpertsBioUseSessionizeBio}
+                bioCustomText={view.meetTheExpertsBioCustomText}
+                sessionDetailsIntroText={view.sessionDetailsIntroText}
             />
 
             <SpeakerWorkspaceView sessionizeId={view.sessionizeId} sessions={view.sessions} infoPackUrl={view.infoPackUrl} />

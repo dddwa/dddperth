@@ -1,6 +1,7 @@
 import type {
     PresentationDetail,
     QuestionsPreference,
+    SessionDetails,
     SpeakerListEntry,
     SpeakerProfile,
     SpeakerRecord,
@@ -43,14 +44,8 @@ interface SpeakerSessionRow {
 interface SpeakerProfileRow {
     sessionize_id: string
     name_phonetic_spelling: string | null
-    questions_preference: string | null
-    questions_preference_other: string | null
-    presentation_details_json: string | null
-    presentation_details_other: string | null
-    opt_out_of_recording: number
     introduction_use_sessionize_bio: number
     introduction_custom_text: string | null
-    anything_else: string | null
     dietary_requirements: string | null
     rsvp_speakers_dinner: string | null
     rsvp_speaker_training_json: string | null
@@ -58,11 +53,26 @@ interface SpeakerProfileRow {
     register_meet_the_experts: string | null
     register_meet_the_experts_other: string | null
     register_meet_the_experts_slots_json: string | null
+    register_meet_the_experts_responded_at: number | null
+    meet_the_experts_bio_use_sessionize_bio: number
+    meet_the_experts_bio_custom_text: string | null
     completed_at: number | null
     updated_at: number
     updated_by: string
     ticket_claimed_at: number | null
     session_confirmed_reported_at: number | null
+}
+
+interface SessionDetailsRow {
+    sessionize_session_id: string
+    questions_preference: string | null
+    questions_preference_other: string | null
+    presentation_details_json: string | null
+    presentation_details_other: string | null
+    opt_out_of_recording: number
+    anything_else: string | null
+    updated_at: number
+    updated_by: string
 }
 
 interface SyncRunRow {
@@ -131,14 +141,8 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
     return {
         sessionizeId: row.sessionize_id,
         namePhoneticSpelling: row.name_phonetic_spelling ?? undefined,
-        questionsPreference: (row.questions_preference as QuestionsPreference | null) ?? undefined,
-        questionsPreferenceOther: row.questions_preference_other ?? undefined,
-        presentationDetails: parseJsonArray(row.presentation_details_json) as PresentationDetail[],
-        presentationDetailsOther: row.presentation_details_other ?? undefined,
-        optOutOfRecording: row.opt_out_of_recording === 1,
         introductionUseSessionizeBio: row.introduction_use_sessionize_bio === 1,
         introductionCustomText: row.introduction_custom_text ?? undefined,
-        anythingElse: row.anything_else ?? undefined,
         dietaryRequirements: row.dietary_requirements ?? undefined,
         rsvpSpeakersDinner: (row.rsvp_speakers_dinner as YesNoMaybe | null) ?? undefined,
         rsvpSpeakerTraining: parseJsonArray(row.rsvp_speaker_training_json) as SpeakerTrainingSession[],
@@ -146,11 +150,28 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
         registerMeetTheExperts: (row.register_meet_the_experts as YesNoMaybeOther | null) ?? undefined,
         registerMeetTheExpertsOther: row.register_meet_the_experts_other ?? undefined,
         registerMeetTheExpertsSlots: parseJsonArray(row.register_meet_the_experts_slots_json),
+        registerMeetTheExpertsRespondedAt: row.register_meet_the_experts_responded_at ?? undefined,
+        meetTheExpertsBioUseSessionizeBio: row.meet_the_experts_bio_use_sessionize_bio === 1,
+        meetTheExpertsBioCustomText: row.meet_the_experts_bio_custom_text ?? undefined,
         completedAt: row.completed_at ?? undefined,
         updatedAt: row.updated_at,
         updatedBy: row.updated_by,
         ticketClaimedAt: row.ticket_claimed_at ?? undefined,
         sessionConfirmedReportedAt: row.session_confirmed_reported_at ?? undefined,
+    }
+}
+
+function toSessionDetails(row: SessionDetailsRow): SessionDetails {
+    return {
+        sessionizeSessionId: row.sessionize_session_id,
+        questionsPreference: (row.questions_preference as QuestionsPreference | null) ?? undefined,
+        questionsPreferenceOther: row.questions_preference_other ?? undefined,
+        presentationDetails: parseJsonArray(row.presentation_details_json) as PresentationDetail[],
+        presentationDetailsOther: row.presentation_details_other ?? undefined,
+        optOutOfRecording: row.opt_out_of_recording === 1,
+        anythingElse: row.anything_else ?? undefined,
+        updatedAt: row.updated_at,
+        updatedBy: row.updated_by,
     }
 }
 
@@ -235,6 +256,14 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             return row ? toProfile(row) : null
         },
 
+        async getSessionDetails(sessionizeSessionId) {
+            const row = await db
+                .prepare(`SELECT * FROM session_details WHERE sessionize_session_id = ?`)
+                .bind(sessionizeSessionId)
+                .first<SessionDetailsRow>()
+            return row ? toSessionDetails(row) : null
+        },
+
         async getCoPresenterIds(sessionizeId) {
             const result = await db
                 .prepare(
@@ -249,6 +278,17 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             const ids = new Set((result.results ?? []).map((r) => r.id))
             ids.add(sessionizeId) // a speaker on no shared session is still their own co-presenter set
             return [...ids]
+        },
+
+        async isSpeakerOnSession(sessionizeId, sessionizeSessionId) {
+            const row = await db
+                .prepare(
+                    `SELECT 1 FROM speaker_sessions
+                     WHERE sessionize_speaker_id = ? AND sessionize_session_id = ? LIMIT 1`,
+                )
+                .bind(sessionizeId, sessionizeSessionId)
+                .first()
+            return row !== null
         },
 
         async getWorkspace(sessionizeId) {
@@ -279,14 +319,18 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     })),
                 )
 
-                workspace.sessions.push({ session: toSession(sessionRow), presenters })
+                workspace.sessions.push({
+                    session: toSession(sessionRow),
+                    sessionDetails: await this.getSessionDetails(sessionRow.sessionize_session_id),
+                    presenters,
+                })
             }
 
             return workspace
         },
 
         async listSpeakers(year) {
-            const [speakers, contacts, sessions, profiles] = await Promise.all([
+            const [speakers, contacts, sessions, profiles, sessionDetailsRows] = await Promise.all([
                 db.prepare(`SELECT * FROM speakers WHERE year = ? ORDER BY full_name`).bind(year).all<SpeakerRow>(),
                 db
                     .prepare(
@@ -309,6 +353,15 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     )
                     .bind(year)
                     .all<SpeakerProfileRow>(),
+                db
+                    .prepare(
+                        `SELECT DISTINCT sd.sessionize_session_id, sd.questions_preference
+                         FROM session_details sd
+                         JOIN speaker_sessions ss ON ss.sessionize_session_id = sd.sessionize_session_id
+                         JOIN speakers s ON s.sessionize_id = ss.sessionize_speaker_id WHERE s.year = ?`,
+                    )
+                    .bind(year)
+                    .all<{ sessionize_session_id: string; questions_preference: string | null }>(),
             ])
 
             const contactsBySpeaker = new Map<string, string[]>()
@@ -324,15 +377,25 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 sessionsBySpeaker.set(s.sessionize_speaker_id, list)
             }
             const profileBySpeaker = new Map((profiles.results ?? []).map((p) => [p.sessionize_id, toProfile(p)]))
+            const sessionDetailsCompleteById = new Map(
+                (sessionDetailsRows.results ?? []).map((r) => [r.sessionize_session_id, Boolean(r.questions_preference)]),
+            )
 
-            return (speakers.results ?? []).map(
-                (row): SpeakerListEntry => ({
+            return (speakers.results ?? []).map((row): SpeakerListEntry => {
+                const speakerSessions = sessionsBySpeaker.get(row.sessionize_id) ?? []
+                return {
                     ...toSpeaker(row),
                     contacts: contactsBySpeaker.get(row.sessionize_id) ?? [],
-                    sessions: sessionsBySpeaker.get(row.sessionize_id) ?? [],
+                    sessions: speakerSessions,
                     profile: profileBySpeaker.get(row.sessionize_id) ?? null,
-                }),
-            )
+                    sessionDetailsComplete: Object.fromEntries(
+                        speakerSessions.map((s) => [
+                            s.sessionizeSessionId,
+                            sessionDetailsCompleteById.get(s.sessionizeSessionId) ?? false,
+                        ]),
+                    ),
+                }
+            })
         },
 
         async getAllSpeakersForSync() {
@@ -355,53 +418,92 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
 
         async saveProfile(sessionizeId, details, updatedBy) {
             // Deliberately doesn't touch rsvp_speakers_dinner /
-            // rsvp_speaker_training_json / rsvp_speaker_training_responded_at
-            // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp
-            // now, so a session-details save can never clobber an RSVP already
-            // on file.
+            // rsvp_speaker_training_json / rsvp_speaker_training_responded_at /
+            // register_meet_the_experts_slots_json / register_meet_the_experts_responded_at
+            // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp /
+            // saveMeetTheExpertsSlots now, so a session-details save can never
+            // clobber an RSVP already on file.
             await db
                 .prepare(
                     `INSERT INTO speaker_profiles
-                         (sessionize_id, name_phonetic_spelling, questions_preference, questions_preference_other,
-                          presentation_details_json, presentation_details_other, opt_out_of_recording,
-                          introduction_use_sessionize_bio, introduction_custom_text, anything_else,
-                          dietary_requirements, register_meet_the_experts, register_meet_the_experts_other,
-                          register_meet_the_experts_slots_json, updated_at, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
+                         (sessionize_id, name_phonetic_spelling, introduction_use_sessionize_bio,
+                          introduction_custom_text, dietary_requirements, register_meet_the_experts,
+                          register_meet_the_experts_other, updated_at, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
                      ON CONFLICT(sessionize_id) DO UPDATE SET
                          name_phonetic_spelling = excluded.name_phonetic_spelling,
-                         questions_preference = excluded.questions_preference,
-                         questions_preference_other = excluded.questions_preference_other,
-                         presentation_details_json = excluded.presentation_details_json,
-                         presentation_details_other = excluded.presentation_details_other,
-                         opt_out_of_recording = excluded.opt_out_of_recording,
                          introduction_use_sessionize_bio = excluded.introduction_use_sessionize_bio,
                          introduction_custom_text = excluded.introduction_custom_text,
-                         anything_else = excluded.anything_else,
                          dietary_requirements = excluded.dietary_requirements,
                          register_meet_the_experts = excluded.register_meet_the_experts,
                          register_meet_the_experts_other = excluded.register_meet_the_experts_other,
-                         register_meet_the_experts_slots_json = excluded.register_meet_the_experts_slots_json,
                          updated_at = excluded.updated_at,
                          updated_by = excluded.updated_by`,
                 )
                 .bind(
                     sessionizeId,
                     details.namePhoneticSpelling ?? null,
+                    details.introductionUseSessionizeBio ? 1 : 0,
+                    details.introductionCustomText ?? null,
+                    details.dietaryRequirements ?? null,
+                    details.registerMeetTheExperts ?? null,
+                    details.registerMeetTheExpertsOther ?? null,
+                    updatedBy,
+                )
+                .run()
+        },
+
+        async saveSessionDetails(sessionizeSessionId, details, updatedBy) {
+            await db
+                .prepare(
+                    `INSERT INTO session_details
+                         (sessionize_session_id, questions_preference, questions_preference_other,
+                          presentation_details_json, presentation_details_other, opt_out_of_recording,
+                          anything_else, updated_at, updated_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
+                     ON CONFLICT(sessionize_session_id) DO UPDATE SET
+                         questions_preference = excluded.questions_preference,
+                         questions_preference_other = excluded.questions_preference_other,
+                         presentation_details_json = excluded.presentation_details_json,
+                         presentation_details_other = excluded.presentation_details_other,
+                         opt_out_of_recording = excluded.opt_out_of_recording,
+                         anything_else = excluded.anything_else,
+                         updated_at = excluded.updated_at,
+                         updated_by = excluded.updated_by`,
+                )
+                .bind(
+                    sessionizeSessionId,
                     details.questionsPreference ?? null,
                     details.questionsPreferenceOther ?? null,
                     details.presentationDetails.length > 0 ? JSON.stringify(details.presentationDetails) : null,
                     details.presentationDetailsOther ?? null,
                     details.optOutOfRecording ? 1 : 0,
-                    details.introductionUseSessionizeBio ? 1 : 0,
-                    details.introductionCustomText ?? null,
                     details.anythingElse ?? null,
-                    details.dietaryRequirements ?? null,
-                    details.registerMeetTheExperts ?? null,
-                    details.registerMeetTheExpertsOther ?? null,
-                    details.registerMeetTheExpertsSlots.length > 0
-                        ? JSON.stringify(details.registerMeetTheExpertsSlots)
-                        : null,
+                    updatedBy,
+                )
+                .run()
+        },
+
+        async saveMeetTheExpertsSlots(sessionizeId, details, updatedBy) {
+            await db
+                .prepare(
+                    `INSERT INTO speaker_profiles
+                         (sessionize_id, register_meet_the_experts_slots_json,
+                          register_meet_the_experts_responded_at,
+                          meet_the_experts_bio_use_sessionize_bio, meet_the_experts_bio_custom_text,
+                          updated_at, updated_by)
+                     VALUES (?, ?, unixepoch(), ?, ?, unixepoch(), ?)
+                     ON CONFLICT(sessionize_id) DO UPDATE SET
+                         register_meet_the_experts_slots_json = excluded.register_meet_the_experts_slots_json,
+                         register_meet_the_experts_responded_at = excluded.register_meet_the_experts_responded_at,
+                         meet_the_experts_bio_use_sessionize_bio = excluded.meet_the_experts_bio_use_sessionize_bio,
+                         meet_the_experts_bio_custom_text = excluded.meet_the_experts_bio_custom_text`,
+                )
+                .bind(
+                    sessionizeId,
+                    details.slots.length > 0 ? JSON.stringify(details.slots) : null,
+                    details.bioUseSessionizeBio ? 1 : 0,
+                    details.bioCustomText ?? null,
                     updatedBy,
                 )
                 .run()

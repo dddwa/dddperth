@@ -63,25 +63,36 @@ export const SPEAKER_TRAINING_SESSION_OPTIONS = ['Session 1', 'Session 2', 'Sess
 export type SpeakerTrainingSession = (typeof SPEAKER_TRAINING_SESSION_OPTIONS)[number]
 
 /** Extra info a speaker (or a co-presenter, on their behalf) submits through
- * the portal — everything that isn't sourced from Sessionize. */
+ * the portal — everything that isn't sourced from Sessionize. Per-presenter
+ * only; the questions/presentation-format/recording/anything-else fields
+ * that apply to the whole session live on `SessionDetails` instead, shared
+ * by every presenter on that session. */
 export interface SpeakerProfile {
     sessionizeId: string
     namePhoneticSpelling?: string
-    questionsPreference?: QuestionsPreference
-    questionsPreferenceOther?: string
-    presentationDetails: PresentationDetail[]
-    presentationDetailsOther?: string
-    optOutOfRecording: boolean
     /** True = use their Sessionize bio as-is; false = use introductionCustomText. */
     introductionUseSessionizeBio: boolean
     introductionCustomText?: string
-    anythingElse?: string
     dietaryRequirements?: string
     registerMeetTheExperts?: YesNoMaybeOther
     registerMeetTheExpertsOther?: string
     /** Which configured Meet-the-Experts time-block ids they want to register
-     * for — only meaningful when registerMeetTheExperts is Yes/Maybe/Other. */
+     * for — only meaningful when registerMeetTheExperts is Yes/Maybe/Other.
+     * Saved through its own dedicated modal, see `saveMeetTheExpertsSlots`. */
     registerMeetTheExpertsSlots: string[]
+    /** Stamped every time the Meet-the-Experts slot selection is submitted
+     * (even with zero slots selected — "none work for me" is still a
+     * completed answer). Same idiom as rsvpSpeakerTrainingRespondedAt. Only
+     * meaningful once registerMeetTheExperts is Yes/Maybe/Other — that's what
+     * makes the checklist item appear at all. */
+    registerMeetTheExpertsRespondedAt?: number
+    /** True = use their Sessionize bio as-is; false = use
+     * meetTheExpertsBioCustomText. Same idiom as introductionUseSessionizeBio
+     * but scoped to Meet the Experts — often not the same text as the
+     * on-stage intro. Saved through the Meet the Experts modal, see
+     * `saveMeetTheExpertsSlots`. */
+    meetTheExpertsBioUseSessionizeBio: boolean
+    meetTheExpertsBioCustomText?: string
     /** RSVP'd through its own dedicated modal, not the main session-details
      * form — see `saveSpeakerDinnerRsvp`. */
     rsvpSpeakersDinner?: YesNoMaybe
@@ -110,9 +121,9 @@ export interface SpeakerProfile {
 
 /** Everything the session-details modal's `save-profile` action accepts —
  * same shape as `SpeakerProfile` minus the fields the store computes itself
- * and the two RSVPs, which are saved through their own dedicated actions
- * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp`) so that submitting
- * this form can never clobber an RSVP already on file. */
+ * and the RSVPs, which are saved through their own dedicated actions
+ * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp` / `saveMeetTheExpertsSlots`)
+ * so that submitting this form can never clobber an RSVP already on file. */
 export type SpeakerProfileInput = Omit<
     SpeakerProfile,
     | 'sessionizeId'
@@ -123,12 +134,39 @@ export type SpeakerProfileInput = Omit<
     | 'rsvpSpeakersDinner'
     | 'rsvpSpeakerTraining'
     | 'rsvpSpeakerTrainingRespondedAt'
+    | 'registerMeetTheExpertsSlots'
+    | 'registerMeetTheExpertsRespondedAt'
+    | 'meetTheExpertsBioUseSessionizeBio'
+    | 'meetTheExpertsBioCustomText'
 >
+
+/** The questions/presentation-format/recording/anything-else fields that
+ * apply to a whole session — shared by every presenter on it, filled in once
+ * via the session-details modal's session-level form. */
+export interface SessionDetails {
+    sessionizeSessionId: string
+    questionsPreference?: QuestionsPreference
+    questionsPreferenceOther?: string
+    presentationDetails: PresentationDetail[]
+    presentationDetailsOther?: string
+    optOutOfRecording: boolean
+    anythingElse?: string
+    updatedAt: number
+    /** Email of whoever last submitted it — may be any presenter on the session. */
+    updatedBy: string
+}
+
+export type SessionDetailsInput = Omit<SessionDetails, 'sessionizeSessionId' | 'updatedAt' | 'updatedBy'>
 
 export interface SpeakerListEntry extends SpeakerRecord {
     contacts: string[]
     sessions: SpeakerSession[]
     profile: SpeakerProfile | null
+    /** Whether each session's shared session-level details (see
+     * `SessionDetails`) are filled in, keyed by sessionizeSessionId — just
+     * enough for the admin follow-up list to reuse `speakerChecklist`
+     * without hydrating full `SessionDetails` rows. */
+    sessionDetailsComplete: Record<string, boolean>
 }
 
 /** A speaker + all their co-presenters on shared sessions, for the dashboard. */
@@ -136,6 +174,7 @@ export interface SpeakerWorkspace {
     speaker: SpeakerRecord
     sessions: Array<{
         session: SpeakerSession
+        sessionDetails: SessionDetails | null
         /** Every speaker on this session, including the logged-in one. */
         presenters: Array<{ speaker: SpeakerRecord; profile: SpeakerProfile | null }>
     }>
@@ -206,13 +245,21 @@ export interface SpeakersStore {
 
     getProfile(sessionizeId: string): Promise<SpeakerProfile | null>
 
+    getSessionDetails(sessionizeSessionId: string): Promise<SessionDetails | null>
+
     /** Every sessionize id sharing a session with the given speaker,
      * including the speaker themselves — the co-presenter edit-authorization
      * primitive. */
     getCoPresenterIds(sessionizeId: string): Promise<string[]>
 
-    /** Everything the dashboard needs: the speaker's sessions, each with
-     * every co-presenter's Sessionize info + profile. */
+    /** True when the speaker presents on the given session — the
+     * session-details-form edit-authorization primitive, same idiom as
+     * `getCoPresenterIds` but for the session-level form. */
+    isSpeakerOnSession(sessionizeId: string, sessionizeSessionId: string): Promise<boolean>
+
+    /** Everything the dashboard needs: the speaker's sessions, each with its
+     * shared session-level details and every co-presenter's Sessionize
+     * info + profile. */
     getWorkspace(sessionizeId: string): Promise<SpeakerWorkspace | null>
 
     /** Admin view: every speaker for the year (active and departed), with
@@ -225,6 +272,21 @@ export interface SpeakersStore {
     getAllSpeakerSessions(): Promise<Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>>
 
     saveProfile(sessionizeId: string, details: SpeakerProfileInput, updatedBy: string): Promise<void>
+
+    /** Shared by every presenter on the session — any of them may submit it
+     * on the group's behalf. */
+    saveSessionDetails(sessionizeSessionId: string, details: SessionDetailsInput, updatedBy: string): Promise<void>
+
+    /** Meet-the-Experts slot selection + bio, from its own dedicated modal.
+     * Same idiom as saveSpeakerTrainingRsvp for the slots — overwrites the
+     * selection and re-stamps registerMeetTheExpertsRespondedAt every call,
+     * since an empty selection ("none work for me") is still a valid,
+     * deliberate answer. */
+    saveMeetTheExpertsSlots(
+        sessionizeId: string,
+        details: { slots: string[]; bioUseSessionizeBio: boolean; bioCustomText?: string },
+        updatedBy: string,
+    ): Promise<void>
 
     /** Stamps completed_at if not already set. Returns true when this call
      * did the stamping (i.e. the profile just became complete). */

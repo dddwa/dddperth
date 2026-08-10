@@ -5,11 +5,11 @@ import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-contex
 import type { ReminderEvent } from '~/components/speaker-reminder-banner'
 import type { TrainingSessionView } from '~/components/speaker-training-modal'
 import { buildCalendarDataUrl } from './calendar.server'
-import { speakerChecklist, upcomingRsvpedEvents, type SpeakerChecklistItem } from './checklist'
+import { speakerChecklist, upcomingRsvpedEvents, type SpeakerChecklistItem, type SpeakerSessionChecklistInput } from './checklist'
 import {
-    collectPresenters,
+    toSessionDetailsSections,
     toWorkspaceView,
-    type SpeakerPresenterProfile,
+    type SpeakerSessionDetailsSection,
     type SpeakerWorkspaceSessionView,
 } from './workspace-view.server'
 import type { SpeakerWorkspace, YesNoMaybe } from '../services/speakers-store'
@@ -17,15 +17,15 @@ import type { SpeakerWorkspace, YesNoMaybe } from '../services/speakers-store'
 /**
  * Everything both the speaker's own `/speaker-portal` and the admin
  * `/admin/speakers/$sessionizeId` preview need to render the dashboard —
- * countdown, reminder banner, checklist, and the 3 modals' data. One builder
+ * countdown, reminder banner, checklist, and the 4 modals' data. One builder
  * so the two pages can never drift, same idiom as `toWorkspaceView` /
- * `collectPresenters` / `parseSpeakerProfileForm`.
+ * `toSessionDetailsSections` / `parseSpeakerProfileForm`.
  */
 export interface SpeakerDashboardView {
     sessionizeId: string
     sessions: SpeakerWorkspaceSessionView[]
     infoPackUrl?: string
-    presenters: SpeakerPresenterProfile[]
+    sessionDetailsSections: SpeakerSessionDetailsSection[]
 
     checklist: SpeakerChecklistItem[]
     ticketClaimUrl?: string
@@ -45,6 +45,15 @@ export interface SpeakerDashboardView {
     dinnerResponse: YesNoMaybe | undefined
 
     meetTheExpertsSlots: Array<{ id: string; label: string }>
+    meetTheExpertsResponded: boolean
+    meetTheExpertsSelectedSlotIds: string[]
+    /** Sessionize bio — the Meet the Experts modal's read-only bio default. */
+    meetTheExpertsBio?: string
+    meetTheExpertsBioUseSessionizeBio: boolean
+    meetTheExpertsBioCustomText?: string
+    /** Their custom on-stage intro from the session-details form, if any —
+     * seeds the Meet the Experts bio the first time it's unlocked. */
+    sessionDetailsIntroText?: string
 }
 
 export function buildSpeakerDashboardView(
@@ -58,20 +67,18 @@ export function buildSpeakerDashboardView(
     const conferenceDate = conferenceDateIso ? DateTime.fromISO(conferenceDateIso, { zone: timezone }) : null
 
     const checklistConfig = conferenceManifest.speakerPortal?.checklist
-    const presenters = collectPresenters(workspace)
-    const ownProfile = presenters.find((p) => p.sessionizeId === targetSessionizeId)?.profile ?? null
+    const sessionDetailsSections = toSessionDetailsSections(workspace)
+    const ownProfile =
+        workspace.sessions
+            .flatMap(({ presenters }) => presenters)
+            .find((p) => p.speaker.sessionizeId === targetSessionizeId)?.profile ?? null
 
-    const checklist = speakerChecklist(
-        ownProfile,
-        workspace.sessions.map(({ session }) => ({ status: session.status, isConfirmed: session.isConfirmed })),
-        {
-            sessionDetails: checklistConfig?.sessionDetailsDueDate,
-            ticketClaim: checklistConfig?.ticketClaimDueDate,
-            speakerTraining: checklistConfig?.speakerTrainingDueDate,
-            speakerDinner: checklistConfig?.speakerDinnerDueDate,
-        },
-        now,
-    )
+    const checklistSessions: SpeakerSessionChecklistInput[] = workspace.sessions.map(({ session, sessionDetails }) => ({
+        status: session.status,
+        isConfirmed: session.isConfirmed,
+        sessionDetailsComplete: Boolean(sessionDetails?.questionsPreference),
+    }))
+    const checklist = speakerChecklist(ownProfile, checklistSessions, now)
 
     const reminders = upcomingRsvpedEvents(
         ownProfile,
@@ -102,7 +109,7 @@ export function buildSpeakerDashboardView(
     return {
         ...toWorkspaceView(workspace),
         infoPackUrl: conferenceManifest.speakerPortal?.infoPackUrl,
-        presenters,
+        sessionDetailsSections,
 
         checklist,
         ticketClaimUrl: checklistConfig?.ticketClaimUrl,
@@ -129,6 +136,12 @@ export function buildSpeakerDashboardView(
         dinnerResponse: ownProfile?.rsvpSpeakersDinner,
 
         meetTheExpertsSlots: checklistConfig?.meetTheExpertsSlots ?? [],
+        meetTheExpertsResponded: Boolean(ownProfile?.registerMeetTheExpertsRespondedAt),
+        meetTheExpertsSelectedSlotIds: ownProfile?.registerMeetTheExpertsSlots ?? [],
+        meetTheExpertsBio: workspace.speaker.bio,
+        meetTheExpertsBioUseSessionizeBio: ownProfile?.meetTheExpertsBioUseSessionizeBio ?? true,
+        meetTheExpertsBioCustomText: ownProfile?.meetTheExpertsBioCustomText,
+        sessionDetailsIntroText: ownProfile?.introductionCustomText,
     }
 }
 

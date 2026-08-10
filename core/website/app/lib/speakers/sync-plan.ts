@@ -20,7 +20,9 @@ export interface SyncSourceSession {
     generalTopic?: string
     /** Sessionize "Talk Topics" — multi-select. */
     talkTopics: string[]
-    /** Null/undefined for waitlisted speakers with no fixed slot yet. */
+    /** Null/undefined until the agenda is published — accepted sessions always
+     * have a slot, it just isn't exposed via the API beforehand. Waitlisted
+     * sessions (backup speakers) never get one. */
     startsAt?: string
     endsAt?: string
     roomName?: string

@@ -360,10 +360,6 @@ export interface MeetTheExpertsSlotConfig {
 export interface SpeakerPortalChecklistConfig {
     /** External link where a speaker claims/registers their complimentary ticket. */
     ticketClaimUrl?: string
-    sessionDetailsDueDate?: DateTime
-    ticketClaimDueDate?: DateTime
-    speakerTrainingDueDate?: DateTime
-    speakerDinnerDueDate?: DateTime
     /** The training sessions offered — rendered as checkboxes in the RSVP
      * modal and used to generate calendar invites. Omit to hide the whole
      * training-RSVP checklist item. */

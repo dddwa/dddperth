@@ -203,6 +203,13 @@ export function createD1AuthService(args: {
             await db.prepare('DELETE FROM auth_sessions WHERE id = ?').bind(sessionId).run()
             logAuthEvent({ event: 'session.destroyed' })
         },
+
+        async getLastLoginTimes() {
+            const result = await db
+                .prepare('SELECT email, MAX(created_at) AS last_login FROM auth_sessions GROUP BY email')
+                .all<{ email: string; last_login: number }>()
+            return Object.fromEntries((result.results ?? []).map((r) => [r.email, r.last_login]))
+        },
     }
 }
 

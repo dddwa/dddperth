@@ -1,5 +1,5 @@
-import type { SpeakerWorkspaceSessionView } from '~/lib/speakers/workspace-view.server'
 import { AdminCard } from '~/components/admin-card'
+import type { SpeakerWorkspaceSessionView } from '~/lib/speakers/workspace-view.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 /**
@@ -12,10 +12,15 @@ export function SpeakerWorkspaceView({
     sessionizeId,
     sessions,
     infoPackUrl,
+    isAdminView,
 }: {
     sessionizeId: string
     sessions: SpeakerWorkspaceSessionView[]
     infoPackUrl?: string
+    /** True when rendered as the admin's read-only preview — skips the
+     * reassurance copy explaining why a slot isn't showing, since admins
+     * already know accepted sessions always have one. */
+    isAdminView?: boolean
 }) {
     return (
         <Box maxW="4xl" mx="auto">
@@ -59,12 +64,6 @@ export function SpeakerWorkspaceView({
                             {session.status}
                         </styled.span>
                     </Flex>
-
-                    <styled.p fontSize="sm" color="admin.700" mb="3">
-                        {session.slot
-                            ? `${session.slot}${session.roomName ? ` — ${session.roomName}` : ''}`
-                            : "You're on the waitlist for this session — no fixed slot yet. We'll let you know if a spot opens up."}
-                    </styled.p>
 
                     <Flex wrap="wrap" gap="2" mb="4">
                         {session.format && <MetaBadge>{session.format}</MetaBadge>}

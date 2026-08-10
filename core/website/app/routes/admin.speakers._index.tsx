@@ -6,8 +6,15 @@ import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
+import { formatRelativeTime } from '~/lib/format-relative-time'
+import { recordException } from '~/lib/record-exception'
+import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
 import { computeContactImportPlan, parseSpeakerContactsCsv } from '~/lib/speakers/contact-import'
-import { getServices } from '~/remix-app-load-context'
+import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
+import { FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
+import { buildRsvpHeadcount, type RsvpHeadcount } from '~/lib/speakers/rsvp-summary'
+import { getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.speakers._index'
 
@@ -16,7 +23,31 @@ interface SessionTableRow {
     title: string
     hasSlot: boolean
     isConfirmed: boolean
-    presenters: Array<{ sessionizeId: string; fullName: string; hasProfile: boolean }>
+    presenters: Array<{
+        sessionizeId: string
+        fullName: string
+        hasProfile: boolean
+        /** Session-level `isConfirmed` from the Sessionize sync, OR the
+         * speaker's own self-report — same definition the checklist uses. */
+        confirmed: boolean
+        trainingResponded: boolean
+        trainingSessionCount: number
+        /** undefined = hasn't RSVP'd at all yet. 'No' is still a real answer,
+         * distinct from not having responded. */
+        dinnerResponse: string | undefined
+        /** "Today" / "3 days ago" / etc — the most recent login across all of
+         * this speaker's contact emails. Null if they've never logged in. */
+        lastLoginLabel: string | null
+    }>
+}
+
+/** Most recent login across every contact email a speaker has — a speaker
+ * may have more than one contact, any of whom logging in counts. */
+function latestLoginFor(contacts: string[], lastLoginTimes: Record<string, number>): number | undefined {
+    const times = contacts
+        .map((email) => lastLoginTimes[email.toLowerCase()])
+        .filter((t): t is number => t !== undefined)
+    return times.length > 0 ? Math.max(...times) : undefined
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -32,13 +63,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             waitlistedSessions: [],
             lastRun: null,
             syncAvailable: false,
+            rsvpHeadcount: null,
+            followUps: [],
         })
     }
 
-    const [speakers, lastRun] = await Promise.all([
+    const [speakers, lastRun, lastLoginTimes] = await Promise.all([
         services.speakers.listSpeakers(portalConfig.year),
         services.speakers.getLatestSyncRun(),
+        services.auth.getLastLoginTimes(),
     ])
+
+    const now = getDateTimeProvider(context).nowDate()
 
     // Statuses that sync in are now the real Accepted/Waitlisted decisions
     // (see conference/config/speaker-portal.ts), so a speaker going inactive
@@ -64,11 +100,33 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 sessionizeId: speaker.sessionizeId,
                 fullName: speaker.fullName,
                 hasProfile: speaker.profile !== null,
+                confirmed: session.isConfirmed || Boolean(speaker.profile?.sessionConfirmedReportedAt),
+                trainingResponded: Boolean(speaker.profile?.rsvpSpeakerTrainingRespondedAt),
+                trainingSessionCount: speaker.profile?.rsvpSpeakerTraining.length ?? 0,
+                dinnerResponse: speaker.profile?.rsvpSpeakersDinner,
+                lastLoginLabel: formatRelativeTime(latestLoginFor(speaker.contacts, lastLoginTimes), now),
             })
         }
     }
 
     const allSessions = [...sessionsById.values()].sort((a, b) => a.title.localeCompare(b.title))
+
+    const activeSpeakers = speakers.filter((s) => s.active)
+    const rsvpHeadcount = buildRsvpHeadcount(
+        activeSpeakers.map((s) => s.profile),
+        portalConfig.checklist?.speakerTrainingSessions?.map((s) => ({ id: s.id, title: s.title })) ?? [],
+    )
+    const followUps = SPEAKER_CHECKLIST_ITEMS.map((definition) => {
+        const dueDateIso = definition.dueDate?.toISO() ?? undefined
+        return {
+            key: definition.key,
+            label: definition.label,
+            count: speakersMissingChecklistItem(speakers, definition.key, now).length,
+            dueDateIso,
+            remainingLabel: dueDateRemainingLabel(dueDateIso, now),
+            urgency: urgencyFor(dueDateIso, false, now),
+        }
+    })
 
     return data({
         configured: true as const,
@@ -77,6 +135,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         waitlistedSessions: allSessions.filter((s) => s.status !== 'Accepted'),
         lastRun,
         syncAvailable: services.speakerSync.isConfigured(),
+        rsvpHeadcount,
+        followUps,
     })
 }
 
@@ -140,6 +200,50 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ _action: actionName, imported: plan.rows })
     }
 
+    if (actionName === 'follow-up') {
+        const portalConfig = conferenceManifest.speakerPortal
+        if (!portalConfig) {
+            return data({ _action: actionName, error: 'Speaker portal not configured' }, { status: 400 })
+        }
+
+        const itemKey = formData.get('itemKey')
+        const definition = SPEAKER_CHECKLIST_ITEMS.find(
+            (d): d is ChecklistItemDefinition => d.key === itemKey,
+        )
+        if (!definition) {
+            return data({ _action: actionName, error: 'Unknown checklist item' }, { status: 400 })
+        }
+
+        const speakers = await services.speakers.listSpeakers(portalConfig.year)
+        const now = getDateTimeProvider(context).nowDate()
+        const targets = speakersMissingChecklistItem(speakers, definition.key, now)
+        const portalUrl = new URL('/speaker-portal', getConfig(context).webUrl).toString()
+        const conferenceName = conferenceManifest.public.name
+        const template = FOLLOW_UP_EMAIL_TEMPLATES[definition.key]
+
+        let emailsSent = 0
+        for (const target of targets) {
+            const vars = { firstName: target.fullName.split(' ')[0], portalUrl, conferenceName }
+            for (const email of target.contacts) {
+                try {
+                    await services.email.send({
+                        to: email,
+                        subject: template.subject,
+                        text: template.text(vars),
+                        html: template.html(vars),
+                    })
+                    emailsSent += 1
+                } catch (error) {
+                    // One bad address shouldn't stop the rest of the blast —
+                    // log it and keep going.
+                    recordException(error)
+                }
+            }
+        }
+
+        return data({ _action: actionName, itemKey: definition.key, speakersCount: targets.length, emailsSent })
+    }
+
     return data({ _action: 'unknown' as const, error: 'Unknown action' }, { status: 400 })
 }
 
@@ -154,6 +258,17 @@ function formatRunTime(unixSeconds: number, timezone: string): string {
     return DateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
         locale: 'en-AU',
     })
+}
+
+const URGENCY_TEXT_COLOR = {
+    normal: 'admin.600',
+    upcoming: 'status.warning.fg',
+    overdue: 'status.danger.fg',
+} as const satisfies Record<ChecklistUrgency, string>
+
+function dueDateLabel(dueDateIso: string | undefined): string | null {
+    if (!dueDateIso) return null
+    return `Due ${DateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
 }
 
 export default function AdminSpeakers() {
@@ -177,10 +292,16 @@ export default function AdminSpeakers() {
         )
     }
 
-    const { acceptedSessions, waitlistedSessions, lastRun, syncAvailable, year } = loaderData
+    const { acceptedSessions, waitlistedSessions, lastRun, syncAvailable, year, rsvpHeadcount, followUps } = loaderData
 
     return (
         <AdminLayout heading={`Speakers (${year})`}>
+            {rsvpHeadcount && <RsvpHeadcountCard headcount={rsvpHeadcount} />}
+
+            {followUps.length > 0 && (
+                <FollowUpCard followUps={followUps} actionData={actionData} navigation={navigation} />
+            )}
+
             <AdminCard>
                 <Flex justify="space-between" align="center" flexWrap="wrap" gap="4" mb="4">
                     <Box>
@@ -203,7 +324,14 @@ export default function AdminSpeakers() {
                         </styled.p>
                     </Box>
                     <Flex gap="2" align="center">
-                        <Button asChild variant="outline">
+                        <Button
+                            asChild
+                            variant="outline"
+                            color="admin.900"
+                            borderColor="admin.400"
+                            bg="white"
+                            _hover={{ bg: 'admin.100' }}
+                        >
                             <a href="/admin/speakers/export">Export sessions + photos</a>
                         </Button>
                         <Form method="post">
@@ -222,12 +350,12 @@ export default function AdminSpeakers() {
                     </Box>
                 )}
                 {actionData?._action === 'sync-now' && 'error' in actionData && (
-                    <Box p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                    <Box role="alert" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
                         {actionData.error}
                     </Box>
                 )}
                 {actionData?._action === 'sync-now' && 'synced' in actionData && (
-                    <Box p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                    <Box role="status" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
                         Sync complete.
                     </Box>
                 )}
@@ -253,13 +381,13 @@ export default function AdminSpeakers() {
                 </Form>
 
                 {actionData?._action === 'import-contacts' && 'error' in actionData && (
-                    <Box mt="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                    <Box role="alert" mt="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
                         {actionData.error}
                     </Box>
                 )}
                 {actionData?._action === 'import-contacts' && 'imported' in actionData && (
                     <Box mt="4">
-                        <styled.p fontSize="sm" color="admin.700" mb="2">
+                        <styled.p role="status" fontSize="sm" color="admin.700" mb="2">
                             Processed {actionData.imported.length} row{actionData.imported.length === 1 ? '' : 's'}.
                         </styled.p>
                         {actionData.imported.length > 0 && (
@@ -308,9 +436,186 @@ export default function AdminSpeakers() {
     )
 }
 
-/** One row per session — co-presenters share a row so it's clear at a
- * glance who's on a shared talk, rather than duplicating the session across
- * one row per speaker. */
+/** Icon-only status cell — the emoji is decorative, the actual state is
+ * conveyed through a visually-hidden label so screen readers get the full
+ * picture without the table turning into a wall of text. */
+function StatusIcon({ ok, label }: { ok: boolean; label: string }) {
+    return (
+        <styled.span title={label}>
+            <span aria-hidden="true">{ok ? '✅' : '❌'}</span>
+            <styled.span srOnly>{label}</styled.span>
+        </styled.span>
+    )
+}
+
+function trainingStatusLabel(responded: boolean, sessionCount: number): string {
+    if (!responded) return 'Training RSVP: not yet responded'
+    return sessionCount > 0 ? `Training RSVP: attending ${sessionCount}` : 'Training RSVP: not attending any'
+}
+
+function dinnerStatusLabel(response: string | undefined): string {
+    return response ? `Dinner RSVP: ${response}` : 'Dinner RSVP: not yet responded'
+}
+
+function StatTile({ label, value, muted }: { label: string; value: number; muted?: boolean }) {
+    return (
+        <Box p="3" borderRadius="md" bg={muted ? 'admin.50' : 'admin.100'} minW="28">
+            <styled.span display="block" fontSize="2xl" fontWeight="bold" color="admin.900">
+                {value}
+            </styled.span>
+            <styled.span display="block" fontSize="xs" color="admin.600">
+                {label}
+            </styled.span>
+        </Box>
+    )
+}
+
+/** One button per checklist item — emails every active speaker who hasn't
+ * completed it yet (see the `follow-up` action, which reuses
+ * `speakersMissingChecklistItem`/`speakerChecklist` so this can never drift
+ * from what the speaker's own dashboard considers done). */
+function FollowUpCard({
+    followUps,
+    actionData,
+    navigation,
+}: {
+    followUps: Array<{
+        key: string
+        label: string
+        count: number
+        dueDateIso: string | undefined
+        remainingLabel: string | null
+        urgency: ChecklistUrgency
+    }>
+    actionData: ReturnType<typeof useActionData<typeof action>>
+    navigation: ReturnType<typeof useNavigation>
+}) {
+    return (
+        <AdminCard>
+            <styled.h2 fontSize="xl" fontWeight="semibold" mb="1">
+                Follow up
+            </styled.h2>
+            <styled.p fontSize="sm" color="admin.600" mb="4">
+                Email every active speaker who hasn't completed a checklist item yet.
+            </styled.p>
+
+            {actionData?._action === 'follow-up' && 'error' in actionData && (
+                <Box role="alert" mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                    {actionData.error}
+                </Box>
+            )}
+            {actionData?._action === 'follow-up' && 'emailsSent' in actionData && (
+                <Box role="status" mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                    {actionData.emailsSent > 0
+                        ? `Sent ${actionData.emailsSent} email${actionData.emailsSent === 1 ? '' : 's'} to ${actionData.speakersCount} speaker${actionData.speakersCount === 1 ? '' : 's'}.`
+                        : "Nobody to email — either everyone's done, or nobody outstanding has a contact on file."}
+                </Box>
+            )}
+
+            <Flex direction="column" gap="2">
+                {followUps.map((item) => {
+                    const isSubmittingThis =
+                        navigation.state === 'submitting' &&
+                        navigation.formData?.get('_action') === 'follow-up' &&
+                        navigation.formData?.get('itemKey') === item.key
+                    return (
+                        <Form key={item.key} method="post">
+                            <input type="hidden" name="_action" value="follow-up" />
+                            <input type="hidden" name="itemKey" value={item.key} />
+                            <Flex
+                                justify="space-between"
+                                align="center"
+                                gap="3"
+                                p="3"
+                                bg="admin.100"
+                                borderRadius="md"
+                                flexWrap="wrap"
+                            >
+                                <Box>
+                                    <styled.span display="block" fontSize="sm" color="admin.900">
+                                        {item.label} — <styled.strong>{item.count}</styled.strong> outstanding
+                                    </styled.span>
+                                    {dueDateLabel(item.dueDateIso) && (
+                                        <styled.span
+                                            display="block"
+                                            fontSize="xs"
+                                            fontWeight={item.urgency === 'normal' ? 'normal' : 'semibold'}
+                                            color={URGENCY_TEXT_COLOR[item.urgency]}
+                                        >
+                                            {dueDateLabel(item.dueDateIso)}
+                                            {item.remainingLabel ? ` — ${item.remainingLabel}` : ''}
+                                        </styled.span>
+                                    )}
+                                </Box>
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    color="admin.900"
+                                    borderColor="admin.400"
+                                    bg="white"
+                                    _hover={{ bg: 'admin.100' }}
+                                    disabled={item.count === 0 || isSubmittingThis}
+                                >
+                                    {isSubmittingThis ? 'Sending…' : `Follow up: ${item.label}`}
+                                </Button>
+                            </Flex>
+                        </Form>
+                    )
+                })}
+            </Flex>
+        </AdminCard>
+    )
+}
+
+/** RSVP headcount summary at the top of the speakers list — how many active
+ * speakers have committed to each training session and the dinner, with
+ * "not attending" (a completed RSVP that says so) broken out separately from
+ * "hasn't responded yet" so admins can tell the two apart at a glance. */
+function RsvpHeadcountCard({ headcount }: { headcount: RsvpHeadcount }) {
+    return (
+        <AdminCard>
+            <styled.h2 fontSize="xl" fontWeight="semibold" mb="1">
+                RSVP headcount
+            </styled.h2>
+            <styled.p fontSize="sm" color="admin.600" mb="4">
+                Out of {headcount.totalSpeakers} active speaker{headcount.totalSpeakers === 1 ? '' : 's'}.
+            </styled.p>
+
+            {headcount.training.sessions.length > 0 && (
+                <Box mb="6">
+                    <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700" mb="2">
+                        Speaker training
+                    </styled.h3>
+                    <Flex gap="3" flexWrap="wrap">
+                        {headcount.training.sessions.map((session) => (
+                            <StatTile key={session.id} label={session.title} value={session.attendingCount} />
+                        ))}
+                        <StatTile label="Not attending any" value={headcount.training.notAttendingAnyCount} />
+                        <StatTile label="Not yet responded" value={headcount.training.notRespondedCount} muted />
+                    </Flex>
+                </Box>
+            )}
+
+            <Box>
+                <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700" mb="2">
+                    Speaker dinner
+                </styled.h3>
+                <Flex gap="3" flexWrap="wrap">
+                    <StatTile label="Yes" value={headcount.dinner.yesCount} />
+                    <StatTile label="Maybe" value={headcount.dinner.maybeCount} />
+                    <StatTile label="Not attending" value={headcount.dinner.noCount} />
+                    <StatTile label="Not yet responded" value={headcount.dinner.notRespondedCount} muted />
+                </Flex>
+            </Box>
+        </AdminCard>
+    )
+}
+
+/** One row per presenter — co-presenters on a shared session get consecutive
+ * rows with the session's title/confirmation cell row-spanned across them,
+ * so it's clear at a glance who's on a shared talk without repeating the
+ * session details, while each presenter's own training/dinner RSVP status
+ * stays on their own row. */
 function SessionsTable({
     heading,
     emptyMessage,
@@ -335,53 +640,71 @@ function SessionsTable({
                         <styled.thead>
                             <styled.tr textAlign="left" color="admin.600" borderBottom="admin-subtle">
                                 <styled.th py="2" pr="4">Session</styled.th>
-                                <styled.th py="2" pr="4">Speakers</styled.th>
+                                <styled.th py="2" pr="4">Speaker</styled.th>
+                                <styled.th py="2" pr="4">Training</styled.th>
+                                <styled.th py="2" pr="4">Dinner</styled.th>
+                                <styled.th py="2" pr="4">Last login</styled.th>
+                                <styled.th py="2" pr="4">Impersonate</styled.th>
                             </styled.tr>
                         </styled.thead>
                         <styled.tbody>
-                            {sessions.map((session) => (
-                                <styled.tr
-                                    key={session.sessionizeSessionId}
-                                    borderBottom="admin-subtle"
-                                    color="admin.900"
-                                >
-                                    <styled.td py="2" pr="4">
-                                        {session.title}
-                                        {session.isConfirmed && (
-                                            <styled.span aria-label="Confirmed in Sessionize" title="Confirmed in Sessionize">
-                                                {' '}
-                                                ✅
-                                            </styled.span>
+                            {sessions.map((session) => {
+                                const confirmed = session.presenters.some((p) => p.confirmed)
+                                return session.presenters.map((presenter, index) => (
+                                    <styled.tr
+                                        key={presenter.sessionizeId}
+                                        borderBottom="admin-subtle"
+                                        color="admin.900"
+                                    >
+                                        {index === 0 && (
+                                            <styled.td py="2" pr="4" rowSpan={session.presenters.length} verticalAlign="top">
+                                                {session.title}{' '}
+                                                <StatusIcon
+                                                    ok={confirmed}
+                                                    label={confirmed ? 'Session confirmed' : 'Session not yet confirmed'}
+                                                />
+                                            </styled.td>
                                         )}
-                                        {!session.hasSlot && (
-                                            <styled.span color="admin.600" fontSize="xs">
-                                                {' '}
-                                                (no slot yet)
-                                            </styled.span>
-                                        )}
-                                    </styled.td>
-                                    <styled.td py="2" pr="4">
-                                        <Flex direction="column" gap="1">
-                                            {session.presenters.map((presenter) => (
-                                                <Flex key={presenter.sessionizeId} align="center" gap="2">
-                                                    <styled.span>{presenter.fullName}</styled.span>
-                                                    <styled.span fontSize="xs" color="admin.600">
-                                                        {presenter.hasProfile ? '✅ Submitted' : '— No profile'}
-                                                    </styled.span>
-                                                    <AppLink
-                                                        to={`/admin/speakers/${presenter.sessionizeId}`}
-                                                        color="admin.700"
-                                                        textDecoration="underline"
-                                                        fontSize="xs"
-                                                    >
-                                                        View as speaker
-                                                    </AppLink>
-                                                </Flex>
-                                            ))}
-                                        </Flex>
-                                    </styled.td>
-                                </styled.tr>
-                            ))}
+                                        <styled.td py="2" pr="4">
+                                            <Flex align="center" gap="2" flexWrap="wrap">
+                                                <styled.span>{presenter.fullName}</styled.span>
+                                                <StatusIcon
+                                                    ok={presenter.hasProfile}
+                                                    label={
+                                                        presenter.hasProfile
+                                                            ? 'Session details submitted'
+                                                            : 'Session details not submitted'
+                                                    }
+                                                />
+                                            </Flex>
+                                        </styled.td>
+                                        <styled.td py="2" pr="4">
+                                            <StatusIcon
+                                                ok={presenter.trainingResponded}
+                                                label={trainingStatusLabel(
+                                                    presenter.trainingResponded,
+                                                    presenter.trainingSessionCount,
+                                                )}
+                                            />
+                                        </styled.td>
+                                        <styled.td py="2" pr="4">
+                                            <StatusIcon
+                                                ok={Boolean(presenter.dinnerResponse)}
+                                                label={dinnerStatusLabel(presenter.dinnerResponse)}
+                                            />
+                                        </styled.td>
+                                        <styled.td py="2" pr="4" color={presenter.lastLoginLabel ? 'admin.700' : 'admin.400'}>
+                                            {presenter.lastLoginLabel ?? 'Never'}
+                                        </styled.td>
+                                        <styled.td py="2" pr="4">
+                                            <AppLink to={`/admin/speakers/${presenter.sessionizeId}`} title="View as speaker">
+                                                <span aria-hidden="true">🕵️‍♀️</span>
+                                                <styled.span srOnly>View as speaker</styled.span>
+                                            </AppLink>
+                                        </styled.td>
+                                    </styled.tr>
+                                ))
+                            })}
                         </styled.tbody>
                     </styled.table>
                 </Box>

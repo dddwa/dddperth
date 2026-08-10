@@ -15,6 +15,7 @@ function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
         contacts: [],
         sessions: [],
         profile: null,
+        sessionDetailsComplete: {},
         ...overrides,
     }
 }
