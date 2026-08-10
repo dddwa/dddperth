@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-    computeSpeakerSyncPlan,
-    type SyncSourceSession,
-    type SyncSourceSpeakerContact,
-    type SyncSourceSpeakerInfo,
-} from './sync-plan'
+import { computeSpeakerSyncPlan, type SyncSourceSession, type SyncSourceSpeakerInfo } from './sync-plan'
 
 function session(overrides: Partial<SyncSourceSession> & { sessionizeSessionId: string }): SyncSourceSession {
     return {
@@ -19,29 +14,24 @@ function session(overrides: Partial<SyncSourceSession> & { sessionizeSessionId: 
 function baseArgs(overrides: {
     sessions?: SyncSourceSession[]
     speakerInfo?: SyncSourceSpeakerInfo[]
-    jiraContacts?: SyncSourceSpeakerContact[]
     currentSpeakers?: Array<{ sessionizeId: string; active: boolean }>
     currentSpeakerSessions?: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
-    currentContacts?: Array<{ email: string; sessionizeId: string }>
 }) {
     return {
         year: '2026',
         sessions: overrides.sessions ?? [],
         speakerInfo: overrides.speakerInfo ?? [],
-        jiraContacts: overrides.jiraContacts ?? [],
         currentSpeakers: overrides.currentSpeakers ?? [],
         currentSpeakerSessions: overrides.currentSpeakerSessions ?? [],
-        currentContacts: overrides.currentContacts ?? [],
     }
 }
 
 describe('computeSpeakerSyncPlan', () => {
-    it('upserts a new speaker with a matched Jira issue and grants access', () => {
+    it('upserts a speaker appearing on an accepted/waitlisted session', () => {
         const plan = computeSpeakerSyncPlan(
             baseArgs({
                 sessions: [session({ sessionizeSessionId: 'SESS-1', speakerIds: ['SPK-1'] })],
                 speakerInfo: [{ sessionizeId: 'SPK-1', fullName: 'Ada Lovelace' }],
-                jiraContacts: [{ issueKey: 'SPK-101', sessionizeId: 'SPK-1', email: 'ada@example.com' }],
             }),
         )
 
@@ -54,23 +44,9 @@ describe('computeSpeakerSyncPlan', () => {
                 bio: undefined,
                 profilePictureUrl: undefined,
                 links: [],
-                jiraIssueKey: 'SPK-101',
             },
         ])
-        expect(plan.contactAdds).toEqual([{ email: 'ada@example.com', sessionizeId: 'SPK-1' }])
         expect(plan.deactivateSessionizeIds).toEqual([])
-    })
-
-    it('upserts a speaker without a Jira issue but grants no access', () => {
-        const plan = computeSpeakerSyncPlan(
-            baseArgs({
-                sessions: [session({ sessionizeSessionId: 'SESS-1', speakerIds: ['SPK-1'] })],
-                speakerInfo: [{ sessionizeId: 'SPK-1', fullName: 'Ada Lovelace' }],
-            }),
-        )
-
-        expect(plan.upserts[0].jiraIssueKey).toBeUndefined()
-        expect(plan.contactAdds).toEqual([])
     })
 
     it('falls back to the sessionize id as the name when speaker info is missing', () => {
@@ -216,30 +192,5 @@ describe('computeSpeakerSyncPlan', () => {
             }),
         )
         expect(plan.sessionRemovals).toEqual([])
-    })
-
-    it('removes contacts dropped from the Jira field', () => {
-        const plan = computeSpeakerSyncPlan(
-            baseArgs({
-                sessions: [session({ sessionizeSessionId: 'SESS-1', speakerIds: ['SPK-1'] })],
-                jiraContacts: [{ issueKey: 'SPK-101', sessionizeId: 'SPK-1', email: 'keep@example.com' }],
-                currentContacts: [
-                    { email: 'keep@example.com', sessionizeId: 'SPK-1' },
-                    { email: 'gone@example.com', sessionizeId: 'SPK-1' },
-                ],
-            }),
-        )
-        expect(plan.contactAdds).toEqual([])
-        expect(plan.contactRemoves).toEqual([{ email: 'gone@example.com', sessionizeId: 'SPK-1' }])
-    })
-
-    it('removes contacts of a speaker no longer accepted/waitlisted', () => {
-        const plan = computeSpeakerSyncPlan(
-            baseArgs({
-                sessions: [],
-                currentContacts: [{ email: 'old@example.com', sessionizeId: 'SPK-1' }],
-            }),
-        )
-        expect(plan.contactRemoves).toEqual([{ email: 'old@example.com', sessionizeId: 'SPK-1' }])
     })
 })

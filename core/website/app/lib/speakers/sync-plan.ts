@@ -1,9 +1,9 @@
 import type { SpeakerLink, SpeakerSyncPlan } from '../services/speakers-store'
 
 /**
- * Pure sync planning: Sessionize sessions + Jira speaker issues in, diff
- * against current D1 state, plan out. No I/O — the D1/Sessionize/Jira
- * plumbing lives in the sync service. Unit tests in sync-plan.test.ts.
+ * Pure sync planning: Sessionize sessions in, diff against current D1
+ * state, plan out. No I/O — the D1/Sessionize plumbing lives in the sync
+ * service. Unit tests in sync-plan.test.ts.
  */
 
 /** A session as parsed from Sessionize, already filtered to the statuses
@@ -40,43 +40,29 @@ export interface SyncSourceSpeakerInfo {
     links?: SpeakerLink[]
 }
 
-/** A speaker's Jira issue, matched via the sessionize id custom field. */
-export interface SyncSourceSpeakerContact {
-    issueKey: string
-    sessionizeId: string
-    email: string
-}
-
 /**
- * Diffs the Sessionize + Jira source against current D1 state:
+ * Diffs the Sessionize source against current D1 state:
  *   - every speaker id appearing on an accepted/waitlisted session upserts
- *     (reactivating soft-deleted ones); their Jira issue key/email attach
- *     when a matching Jira issue exists, but a speaker still upserts (and
- *     gets a `speakers`/`speaker_sessions` row) even without one — they
- *     just get no `speaker_contacts` row, so no portal access, until the
- *     Jira side is set up
+ *     (reactivating soft-deleted ones), getting a `speakers`/
+ *     `speaker_sessions` row
  *   - active speakers missing from the accepted/waitlisted set deactivate
  *     (soft delete)
  *   - (speaker, session) pairs are upserted/removed to match the source
  *     exactly, independent of the speaker's active flag
- *   - contact pairs are set-diffed in both directions; removals are hard
- *     deletes so a departed contact can't regain access when their speaker
- *     reappears in a later year
+ *
+ * Contact emails (who may log in as a given speaker) are never touched
+ * here — they're admin-managed directly in D1, out of the sync's reach.
  */
 export function computeSpeakerSyncPlan(args: {
     year: string
     sessions: SyncSourceSession[]
     speakerInfo: SyncSourceSpeakerInfo[]
-    jiraContacts: SyncSourceSpeakerContact[]
     currentSpeakers: Array<{ sessionizeId: string; active: boolean }>
     currentSpeakerSessions: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
-    currentContacts: Array<{ email: string; sessionizeId: string }>
 }): SpeakerSyncPlan {
-    const { year, sessions, speakerInfo, jiraContacts, currentSpeakers, currentSpeakerSessions, currentContacts } =
-        args
+    const { year, sessions, speakerInfo, currentSpeakers, currentSpeakerSessions } = args
 
     const infoById = new Map(speakerInfo.map((s) => [s.sessionizeId, s]))
-    const jiraById = new Map(jiraContacts.map((c) => [c.sessionizeId, c]))
 
     const activeSpeakerIds = new Set<string>()
     for (const session of sessions) {
@@ -85,7 +71,6 @@ export function computeSpeakerSyncPlan(args: {
 
     const upserts = [...activeSpeakerIds].map((sessionizeId) => {
         const info = infoById.get(sessionizeId)
-        const jira = jiraById.get(sessionizeId)
         return {
             sessionizeId,
             year,
@@ -94,7 +79,6 @@ export function computeSpeakerSyncPlan(args: {
             bio: info?.bio,
             profilePictureUrl: info?.profilePictureUrl,
             links: info?.links ?? [],
-            jiraIssueKey: jira?.issueKey,
         }
     })
 
@@ -124,19 +108,5 @@ export function computeSpeakerSyncPlan(args: {
         .filter((s) => !sourceSessionPairs.has(`${s.sessionizeSpeakerId} ${s.sessionizeSessionId}`))
         .map((s) => ({ sessionizeSpeakerId: s.sessionizeSpeakerId, sessionizeSessionId: s.sessionizeSessionId }))
 
-    // Only speakers matched to a Jira issue with an email get portal access.
-    const currentPairs = new Set(currentContacts.map((c) => `${c.email} ${c.sessionizeId}`))
-    const sourcePairs = new Set<string>()
-    const contactAdds: Array<{ email: string; sessionizeId: string }> = []
-    for (const speakerId of activeSpeakerIds) {
-        const jira = jiraById.get(speakerId)
-        if (!jira) continue
-        const pair = `${jira.email} ${speakerId}`
-        sourcePairs.add(pair)
-        if (!currentPairs.has(pair)) contactAdds.push({ email: jira.email, sessionizeId: speakerId })
-    }
-
-    const contactRemoves = currentContacts.filter((c) => !sourcePairs.has(`${c.email} ${c.sessionizeId}`))
-
-    return { upserts, deactivateSessionizeIds, sessionUpserts, sessionRemovals, contactAdds, contactRemoves }
+    return { upserts, deactivateSessionizeIds, sessionUpserts, sessionRemovals }
 }

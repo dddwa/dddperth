@@ -39,8 +39,9 @@ export default {
     },
 
     // Hourly sponsor + speaker sync (see triggers.crons in the production
-    // wrangler config). Each no-ops when the fork has no corresponding
-    // manifest entry or the Jira secrets aren't set.
+    // wrangler config). Sponsor sync no-ops without a manifest entry or Jira
+    // secrets; speaker sync no-ops without a manifest entry or a configured
+    // Sessionize endpoint for that year.
     async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
         const config = buildAppConfigFromEnv(env)
         const services = buildCloudflareServices(config, env)

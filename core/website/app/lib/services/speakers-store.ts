@@ -1,9 +1,9 @@
 /**
- * Speaker portal storage. Speaker records, their sessions, and contact
- * emails are synced from Sessionize + the conference's Jira speakers
- * project; profiles hold the extra info a speaker (or a co-presenter)
- * submits through the portal. See `speakerPortal` on the conference
- * manifest.
+ * Speaker portal storage. Speaker records and their sessions are synced from
+ * Sessionize; contact emails (who may log in as a given speaker) are added
+ * and removed by an admin at /admin/speakers; profiles hold the extra info a
+ * speaker (or a co-presenter) submits through the portal. See
+ * `speakerPortal` on the conference manifest.
  */
 
 export interface SpeakerLink {
@@ -21,8 +21,6 @@ export interface SpeakerRecord {
     bio?: string
     profilePictureUrl?: string
     links: SpeakerLink[]
-    /** Set once a Jira speaker issue is matched via the sessionize id field. */
-    jiraIssueKey?: string
     active: boolean
 }
 
@@ -58,7 +56,7 @@ export type YesNoMaybe = (typeof YES_NO_MAYBE_OPTIONS)[number]
 export const YES_NO_MAYBE_OTHER_OPTIONS = ['Yes', 'No', 'Maybe', 'Other'] as const
 export type YesNoMaybeOther = (typeof YES_NO_MAYBE_OTHER_OPTIONS)[number]
 
-export const SPEAKER_TRAINING_SESSION_OPTIONS = ['Session 1', 'Session 2', 'Session 3'] as const
+export const SPEAKER_TRAINING_SESSION_OPTIONS = ['Session 1', 'Session 2', 'Session 3', 'Not attending'] as const
 export type SpeakerTrainingSession = (typeof SPEAKER_TRAINING_SESSION_OPTIONS)[number]
 
 /** Extra info a speaker (or a co-presenter, on their behalf) submits through
@@ -85,11 +83,17 @@ export interface SpeakerProfile {
     updatedAt?: number
     /** Email of whoever submitted it — may be a co-presenter, not the subject. */
     updatedBy?: string
+    /** Self-reported from the dashboard checklist — set the first time the
+     * speaker marks their complimentary ticket as claimed; never unset. */
+    ticketClaimedAt?: number
 }
 
 /** Everything `saveProfile` accepts — same shape as `SpeakerProfile` minus
  * the fields the store computes itself. */
-export type SpeakerProfileInput = Omit<SpeakerProfile, 'sessionizeId' | 'completedAt' | 'updatedAt' | 'updatedBy'>
+export type SpeakerProfileInput = Omit<
+    SpeakerProfile,
+    'sessionizeId' | 'completedAt' | 'updatedAt' | 'updatedBy' | 'ticketClaimedAt'
+>
 
 export interface SpeakerListEntry extends SpeakerRecord {
     contacts: string[]
@@ -107,8 +111,10 @@ export interface SpeakerWorkspace {
     }>
 }
 
-/** Result of diffing Sessionize + Jira sources against current D1 state.
- * Computed by the pure `computeSpeakerSyncPlan()` in lib/speakers/sync-plan.ts. */
+/** Result of diffing Sessionize against current D1 state. Computed by the
+ * pure `computeSpeakerSyncPlan()` in lib/speakers/sync-plan.ts. Contacts
+ * aren't part of this — they're admin-managed directly in D1, independent
+ * of the sync. */
 export interface SpeakerSyncPlan {
     upserts: Array<{
         sessionizeId: string
@@ -118,7 +124,6 @@ export interface SpeakerSyncPlan {
         bio?: string
         profilePictureUrl?: string
         links: SpeakerLink[]
-        jiraIssueKey?: string
     }>
     deactivateSessionizeIds: string[]
     sessionUpserts: Array<{
@@ -137,8 +142,6 @@ export interface SpeakerSyncPlan {
     }>
     /** Session rows for speakers no longer accepted/waitlisted — removed outright. */
     sessionRemovals: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
-    contactAdds: Array<{ email: string; sessionizeId: string }>
-    contactRemoves: Array<{ email: string; sessionizeId: string }>
 }
 
 export interface SpeakerSyncRun {
@@ -149,8 +152,6 @@ export interface SpeakerSyncRun {
     status: 'running' | 'ok' | 'error'
     speakersUpserted?: number
     speakersDeactivated?: number
-    contactsAdded?: number
-    contactsRemoved?: number
     error?: string
 }
 
@@ -165,6 +166,13 @@ export interface SpeakersStore {
 
     getSpeaker(sessionizeId: string): Promise<SpeakerRecord | null>
     getContactEmails(sessionizeId: string): Promise<string[]>
+
+    /** Admin-managed: grants portal access to `email` for this speaker.
+     * Idempotent. */
+    addContact(sessionizeId: string, email: string): Promise<void>
+    /** Admin-managed: revokes portal access. Idempotent. */
+    removeContact(sessionizeId: string, email: string): Promise<void>
+
     getProfile(sessionizeId: string): Promise<SpeakerProfile | null>
 
     /** Every sessionize id sharing a session with the given speaker,
@@ -180,10 +188,9 @@ export interface SpeakersStore {
      * contacts, sessions and profile attached. */
     listSpeakers(year: string): Promise<SpeakerListEntry[]>
 
-    /** Sync inputs: every speaker/contact/session row regardless of year, so
-     * the planner can deactivate/remove anything no longer in the source. */
+    /** Sync inputs: every speaker/session row regardless of year, so the
+     * planner can deactivate/remove anything no longer in the source. */
     getAllSpeakersForSync(): Promise<Array<{ sessionizeId: string; active: boolean }>>
-    getAllContacts(): Promise<Array<{ email: string; sessionizeId: string }>>
     getAllSpeakerSessions(): Promise<Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>>
 
     saveProfile(sessionizeId: string, details: SpeakerProfileInput, updatedBy: string): Promise<void>
@@ -192,20 +199,20 @@ export interface SpeakersStore {
      * did the stamping (i.e. the profile just became complete). */
     markProfileCompleted(sessionizeId: string): Promise<boolean>
 
+    /** Self-reported ticket claim for the dashboard checklist. Idempotent —
+     * stamps ticket_claimed_at only the first time it's called, creating the
+     * profile row if the speaker hasn't saved one yet. */
+    markTicketClaimed(sessionizeId: string, updatedBy: string): Promise<void>
+
     applySyncPlan(plan: SpeakerSyncPlan): Promise<{
         speakersUpserted: number
         speakersDeactivated: number
-        contactsAdded: number
-        contactsRemoved: number
     }>
 
     startSyncRun(trigger: 'cron' | 'manual'): Promise<number>
     finishSyncRun(
         id: number,
-        result: Pick<
-            SpeakerSyncRun,
-            'status' | 'speakersUpserted' | 'speakersDeactivated' | 'contactsAdded' | 'contactsRemoved' | 'error'
-        >,
+        result: Pick<SpeakerSyncRun, 'status' | 'speakersUpserted' | 'speakersDeactivated' | 'error'>,
     ): Promise<void>
     getLatestSyncRun(): Promise<SpeakerSyncRun | null>
 }

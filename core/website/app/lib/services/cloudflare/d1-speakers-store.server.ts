@@ -21,7 +21,6 @@ interface SpeakerRow {
     bio: string | null
     profile_picture_url: string | null
     links_json: string | null
-    jira_issue_key: string | null
     active: number
 }
 
@@ -59,6 +58,7 @@ interface SpeakerProfileRow {
     completed_at: number | null
     updated_at: number
     updated_by: string
+    ticket_claimed_at: number | null
 }
 
 interface SyncRunRow {
@@ -69,8 +69,6 @@ interface SyncRunRow {
     status: string
     speakers_upserted: number | null
     speakers_deactivated: number | null
-    contacts_added: number | null
-    contacts_removed: number | null
     error: string | null
 }
 
@@ -104,7 +102,6 @@ function toSpeaker(row: SpeakerRow): SpeakerRecord {
         bio: row.bio ?? undefined,
         profilePictureUrl: row.profile_picture_url ?? undefined,
         links,
-        jiraIssueKey: row.jira_issue_key ?? undefined,
         active: row.active === 1,
     }
 }
@@ -145,6 +142,7 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
         completedAt: row.completed_at ?? undefined,
         updatedAt: row.updated_at,
         updatedBy: row.updated_by,
+        ticketClaimedAt: row.ticket_claimed_at ?? undefined,
     }
 }
 
@@ -157,8 +155,6 @@ function toSyncRun(row: SyncRunRow): SpeakerSyncRun {
         status: row.status as SpeakerSyncRun['status'],
         speakersUpserted: row.speakers_upserted ?? undefined,
         speakersDeactivated: row.speakers_deactivated ?? undefined,
-        contactsAdded: row.contacts_added ?? undefined,
-        contactsRemoved: row.contacts_removed ?? undefined,
         error: row.error ?? undefined,
     }
 }
@@ -204,6 +200,23 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 .bind(sessionizeId)
                 .all<{ email: string }>()
             return (result.results ?? []).map((r) => r.email)
+        },
+
+        async addContact(sessionizeId, email) {
+            await db
+                .prepare(
+                    `INSERT OR IGNORE INTO speaker_contacts (email, sessionize_id, created_at)
+                     VALUES (?, ?, unixepoch())`,
+                )
+                .bind(email.toLowerCase(), sessionizeId)
+                .run()
+        },
+
+        async removeContact(sessionizeId, email) {
+            await db
+                .prepare(`DELETE FROM speaker_contacts WHERE email = ? AND sessionize_id = ?`)
+                .bind(email.toLowerCase(), sessionizeId)
+                .run()
         },
 
         async getProfile(sessionizeId) {
@@ -322,14 +335,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             return (result.results ?? []).map((r) => ({ sessionizeId: r.sessionize_id, active: r.active === 1 }))
         },
 
-        async getAllContacts() {
-            const result = await db.prepare(`SELECT email, sessionize_id FROM speaker_contacts`).all<{
-                email: string
-                sessionize_id: string
-            }>()
-            return (result.results ?? []).map((r) => ({ email: r.email, sessionizeId: r.sessionize_id }))
-        },
-
         async getAllSpeakerSessions() {
             const result = await db
                 .prepare(`SELECT sessionize_speaker_id, sessionize_session_id FROM speaker_sessions`)
@@ -400,6 +405,22 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             return (result.meta.changes ?? 0) > 0
         },
 
+        async markTicketClaimed(sessionizeId, updatedBy) {
+            // No profile row may exist yet — insert a bare one (satisfying
+            // the NOT NULL audit columns) or, if it does, only set the
+            // timestamp the first time, leaving the rest of the row (and its
+            // updated_at/updated_by audit trail) untouched.
+            await db
+                .prepare(
+                    `INSERT INTO speaker_profiles (sessionize_id, ticket_claimed_at, updated_at, updated_by)
+                     VALUES (?, unixepoch(), unixepoch(), ?)
+                     ON CONFLICT(sessionize_id) DO UPDATE SET
+                         ticket_claimed_at = COALESCE(speaker_profiles.ticket_claimed_at, unixepoch())`,
+                )
+                .bind(sessionizeId, updatedBy)
+                .run()
+        },
+
         async applySyncPlan(plan) {
             const statements: D1PreparedStatement[] = []
 
@@ -409,8 +430,8 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                         .prepare(
                             `INSERT INTO speakers
                                  (sessionize_id, year, full_name, tag_line, bio, profile_picture_url, links_json,
-                                  jira_issue_key, active, created_at, updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
+                                  active, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
                              ON CONFLICT(sessionize_id) DO UPDATE SET
                                  year = excluded.year,
                                  full_name = excluded.full_name,
@@ -418,7 +439,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                                  bio = excluded.bio,
                                  profile_picture_url = excluded.profile_picture_url,
                                  links_json = excluded.links_json,
-                                 jira_issue_key = excluded.jira_issue_key,
                                  active = 1,
                                  updated_at = excluded.updated_at`,
                         )
@@ -430,7 +450,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                             s.bio ?? null,
                             s.profilePictureUrl ?? null,
                             s.links.length > 0 ? JSON.stringify(s.links) : null,
-                            s.jiraIssueKey ?? null,
                         ),
                 )
             }
@@ -489,24 +508,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                         .bind(r.sessionizeSpeakerId, r.sessionizeSessionId),
                 )
             }
-            for (const c of plan.contactAdds) {
-                statements.push(
-                    db
-                        .prepare(
-                            `INSERT OR IGNORE INTO speaker_contacts (email, sessionize_id, created_at)
-                             VALUES (?, ?, unixepoch())`,
-                        )
-                        .bind(c.email.toLowerCase(), c.sessionizeId),
-                )
-            }
-            for (const c of plan.contactRemoves) {
-                statements.push(
-                    db
-                        .prepare(`DELETE FROM speaker_contacts WHERE email = ? AND sessionize_id = ?`)
-                        .bind(c.email.toLowerCase(), c.sessionizeId),
-                )
-            }
-
             if (statements.length > 0) {
                 await db.batch(statements)
             }
@@ -514,8 +515,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             return {
                 speakersUpserted: plan.upserts.length,
                 speakersDeactivated: plan.deactivateSessionizeIds.length,
-                contactsAdded: plan.contactAdds.length,
-                contactsRemoved: plan.contactRemoves.length,
             }
         },
 
@@ -539,8 +538,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                          status = ?,
                          speakers_upserted = ?,
                          speakers_deactivated = ?,
-                         contacts_added = ?,
-                         contacts_removed = ?,
                          error = ?
                      WHERE id = ?`,
                 )
@@ -548,8 +545,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     result.status,
                     result.speakersUpserted ?? null,
                     result.speakersDeactivated ?? null,
-                    result.contactsAdded ?? null,
-                    result.contactsRemoved ?? null,
                     result.error ?? null,
                     id,
                 )

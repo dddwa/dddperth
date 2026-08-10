@@ -86,7 +86,7 @@ export function SpeakerProfileForm({
         navigation.state === 'submitting' && navigation.formData?.get('targetSessionizeId') === sessionizeId
 
     return (
-        <AdminCard>
+        <AdminCard id={`session-details-${sessionizeId}`}>
             <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
                 {fullName}'s info
             </styled.h2>
@@ -258,7 +258,7 @@ export function SpeakerProfileForm({
                     </select>
                 </Box>
 
-                <Box mb="5">
+                <Box id={`speaker-training-${sessionizeId}`} mb="5">
                     <styled.span display="block" className={fieldLabelClass} mb="2">
                         RSVP — Speaker training
                     </styled.span>

@@ -15,6 +15,7 @@
  * making them optional + having a sensible default in core.
  */
 
+import type { DateTime } from 'luxon'
 import type { ConferenceConfig } from './types'
 
 /**
@@ -290,60 +291,11 @@ export interface SponsorPortalConfig {
 }
 
 /**
- * Jira wiring for the speaker portal. Speaker issues are created and
- * maintained manually (same convention as sponsor issues) — this app only
- * ever searches and updates them, never creates one. Credentials are NOT
- * here; they're the same host secrets the sponsor portal uses
- * (`JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
- */
-export interface SpeakerPortalJiraConfig {
-    /** Jira site, e.g. "https://dddperth.atlassian.net" */
-    baseUrl: string
-    /** Speakers project key, e.g. "SPK" */
-    projectKey: string
-    /**
-     * JQL selecting this year's speaker issues. `{year}` is substituted with
-     * `SpeakerPortalConfig.year`.
-     */
-    jql: string
-    /**
-     * Custom field ids on the speaker issue type. Only `sessionizeId` and
-     * `email` are required — sync needs those to grant portal access at
-     * all. The rest are write-back targets for the extra-info form; omit
-     * any the committee hasn't created a Jira field for yet and the push
-     * just skips that one (same pattern as the sponsor portal's optional
-     * `quote`/`socials` fields).
-     */
-    fields: {
-        /** Text field holding the Sessionize speaker id — the join key sync matches issues on. */
-        sessionizeId: string
-        /** Text field holding the speaker's email, granting portal access. */
-        email: string
-        namePhoneticSpelling?: string
-        /** Whether/how they'll take audience questions, e.g. "Yes, moderated" or "Other: <text>". */
-        questionsPreference?: string
-        /** Comma-joined presentation format needs, e.g. "Video, Live Demo, Other: <text>". */
-        presentationDetails?: string
-        /** "Yes"/"No" — opted out of recording. */
-        optOutOfRecording?: string
-        /** "Use Sessionize bio" or the speaker's custom introduction text. */
-        introduction?: string
-        anythingElse?: string
-        dietaryRequirements?: string
-        /** "Yes"/"No"/"Maybe" — speakers dinner RSVP. */
-        rsvpSpeakersDinner?: string
-        /** Comma-joined chosen training sessions, e.g. "Session 1, Session 3". */
-        rsvpSpeakerTraining?: string
-        /** "Yes"/"No"/"Maybe" or "Other: <text>" — Meet the Experts registration. */
-        registerMeetTheExperts?: string
-    }
-}
-
-/**
  * Speaker self-service portal. When set, /speaker-portal routes come alive
- * for anyone with an accepted or waitlisted Sessionize session whose
- * Sessionize speaker id is also matched to a Jira speaker issue (for their
- * email). Omit for forks without a speaker portal — the routes 404 and the
+ * for anyone with an accepted or waitlisted Sessionize session whose email
+ * has been added as a contact for that speaker (via /admin/speakers — a
+ * manual, admin-managed allowlist; there is no external sync for it). Omit
+ * for forks without a speaker portal — the routes 404 and the Sessionize
  * sync never runs.
  */
 export interface SpeakerPortalConfig {
@@ -351,7 +303,6 @@ export interface SpeakerPortalConfig {
     year: string
     /** Sessionize session statuses that grant portal access, e.g. ['Accepted', 'Waitlisted']. */
     portalAccessStatuses: string[]
-    jira: SpeakerPortalJiraConfig
     /** Static link to a speaker info pack, rendered as a download on the dashboard. Omit to hide it. */
     infoPackUrl?: string
     /**
@@ -367,6 +318,21 @@ export interface SpeakerPortalConfig {
         generalTopic: string
         talkTopics: string
     }
+    /**
+     * Outstanding-items checklist shown at the top of the speaker dashboard
+     * (session details, ticket claim, training RSVP). Omit a due date to show
+     * that item without one; omit `ticketClaimUrl` to show the ticket-claim
+     * item as plain text instead of a link.
+     */
+    checklist?: SpeakerPortalChecklistConfig
+}
+
+export interface SpeakerPortalChecklistConfig {
+    /** External link where a speaker claims/registers their complimentary ticket. */
+    ticketClaimUrl?: string
+    sessionDetailsDueDate?: DateTime
+    ticketClaimDueDate?: DateTime
+    speakerTrainingDueDate?: DateTime
 }
 
 /**

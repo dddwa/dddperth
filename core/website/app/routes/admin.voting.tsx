@@ -367,81 +367,100 @@ export default function AdminVoting() {
 
             {underrepresentedGroups.availableGroups.length > 0 && (
                 <AdminCard mb="6">
-                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
-                        Underrepresented Groups Configuration
-                    </styled.h2>
+                    <styled.details>
+                        <styled.summary
+                            fontSize="xl"
+                            fontWeight="semibold"
+                            cursor="pointer"
+                            listStyle="none"
+                            _marker={{ display: 'none' }}
+                        >
+                            Underrepresented Groups Configuration
+                        </styled.summary>
 
-                    {underrepresentedGroups.error && (
-                        <styled.p color="status.danger.fg" mb="4">
-                            Error: {underrepresentedGroups.error}
-                        </styled.p>
-                    )}
+                        <Box mt="4">
+                            {underrepresentedGroups.error && (
+                                <styled.p color="status.danger.fg" mb="4">
+                                    Error: {underrepresentedGroups.error}
+                                </styled.p>
+                            )}
 
-                    {actionData?.success && actionData?.message && (
-                        <styled.p color="status.success.fg" mb="4">
-                            {actionData.message}
-                        </styled.p>
-                    )}
+                            {actionData?.success && actionData?.message && (
+                                <styled.p color="status.success.fg" mb="4">
+                                    {actionData.message}
+                                </styled.p>
+                            )}
 
-                    {actionData?.success === false && actionData?.error && (
-                        <styled.p color="status.danger.fg" mb="4">
-                            Error: {actionData.error}
-                        </styled.p>
-                    )}
+                            {actionData?.success === false && actionData?.error && (
+                                <styled.p color="status.danger.fg" mb="4">
+                                    Error: {actionData.error}
+                                </styled.p>
+                            )}
 
-                    <Form method="post">
-                        <input type="hidden" name="intent" value="update_underrepresented_groups" />
+                            <Form method="post">
+                                <input type="hidden" name="intent" value="update_underrepresented_groups" />
 
-                        <Box mb="4">
-                            <styled.p fontSize="sm" fontWeight="medium" mb="3">
-                                Available Groups ({underrepresentedGroups.availableGroups.length} found):
-                            </styled.p>
+                                <Box mb="4">
+                                    <styled.p fontSize="sm" fontWeight="medium" mb="3">
+                                        Available Groups ({underrepresentedGroups.availableGroups.length} found):
+                                    </styled.p>
 
-                            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap="2">
-                                {underrepresentedGroups.availableGroups.map((group) => {
-                                    const isSelected = underrepresentedGroups.selectedGroups.includes(group)
-                                    const fieldName = `group_${encodeURIComponent(group)}`
+                                    <Box
+                                        display="grid"
+                                        gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))"
+                                        gap="2"
+                                    >
+                                        {underrepresentedGroups.availableGroups.map((group) => {
+                                            const isSelected = underrepresentedGroups.selectedGroups.includes(group)
+                                            const fieldName = `group_${encodeURIComponent(group)}`
 
-                                    return (
-                                        <Flex
-                                            key={group}
-                                            alignItems="center"
-                                            gap="2"
-                                            p="2"
-                                            borderRadius="md"
-                                            _hover={{ bg: 'admin.100' }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                id={fieldName}
-                                                name={fieldName}
-                                                defaultChecked={isSelected}
-                                            />
-                                            <styled.label htmlFor={fieldName} fontSize="sm" cursor="pointer" flex="1">
-                                                {group}
-                                            </styled.label>
-                                        </Flex>
-                                    )
-                                })}
-                            </Box>
+                                            return (
+                                                <Flex
+                                                    key={group}
+                                                    alignItems="center"
+                                                    gap="2"
+                                                    p="2"
+                                                    borderRadius="md"
+                                                    _hover={{ bg: 'admin.100' }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        id={fieldName}
+                                                        name={fieldName}
+                                                        defaultChecked={isSelected}
+                                                    />
+                                                    <styled.label
+                                                        htmlFor={fieldName}
+                                                        fontSize="sm"
+                                                        cursor="pointer"
+                                                        flex="1"
+                                                    >
+                                                        {group}
+                                                    </styled.label>
+                                                </Flex>
+                                            )
+                                        })}
+                                    </Box>
+                                </Box>
+
+                                <Flex gap="4" alignItems="center">
+                                    <Button
+                                        type="submit"
+                                        disabled={navigation.state === 'submitting'}
+                                        variant="solid"
+                                        size="sm"
+                                    >
+                                        {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
+                                    </Button>
+
+                                    <styled.span fontSize="sm" color="admin.600">
+                                        {underrepresentedGroups.selectedGroups.length} of{' '}
+                                        {underrepresentedGroups.availableGroups.length} groups selected
+                                    </styled.span>
+                                </Flex>
+                            </Form>
                         </Box>
-
-                        <Flex gap="4" alignItems="center">
-                            <Button
-                                type="submit"
-                                disabled={navigation.state === 'submitting'}
-                                variant="solid"
-                                size="sm"
-                            >
-                                {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
-                            </Button>
-
-                            <styled.span fontSize="sm" color="admin.600">
-                                {underrepresentedGroups.selectedGroups.length} of{' '}
-                                {underrepresentedGroups.availableGroups.length} groups selected
-                            </styled.span>
-                        </Flex>
-                    </Form>
+                    </styled.details>
                 </AdminCard>
             )}
 

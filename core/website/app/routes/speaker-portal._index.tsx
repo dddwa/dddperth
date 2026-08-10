@@ -1,8 +1,10 @@
 import { conferenceManifest } from '@conference/manifest'
 import { data, useActionData, useLoaderData } from 'react-router'
+import { SpeakerChecklistCard } from '~/components/speaker-checklist-card'
 import { SpeakerProfileForm } from '~/components/speaker-profile-form'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
+import { speakerChecklist } from '~/lib/speakers/checklist'
 import {
     PRESENTATION_DETAIL_OPTIONS,
     QUESTIONS_PREFERENCE_OPTIONS,
@@ -41,6 +43,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     }
 
+    const checklistConfig = conferenceManifest.speakerPortal?.checklist
+
     return {
         ...toWorkspaceView(workspace),
         infoPackUrl: conferenceManifest.speakerPortal?.infoPackUrl,
@@ -49,6 +53,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             fullName,
             profile,
         })),
+        checklist: speakerChecklist(presentersById.get(speaker.sessionizeId)?.profile ?? null, {
+            sessionDetails: checklistConfig?.sessionDetailsDueDate,
+            ticketClaim: checklistConfig?.ticketClaimDueDate,
+            speakerTraining: checklistConfig?.speakerTrainingDueDate,
+        }),
+        ticketClaimUrl: checklistConfig?.ticketClaimUrl,
+        // The checklist's session-details/training items link to the
+        // presenter's own card below — only there once they have a session.
+        hasOwnProfileForm: presentersById.has(speaker.sessionizeId),
     }
 }
 
@@ -71,7 +84,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     const services = getServices(context)
 
     const formData = await request.formData()
-    if (formData.get('_action') !== 'save-profile') {
+    const actionType = formData.get('_action')
+
+    if (actionType === 'claim-ticket') {
+        // Personal, unlike the profile form — always the logged-in speaker's
+        // own ticket, never a co-presenter's.
+        await services.speakers.markTicketClaimed(speaker.sessionizeId, user.email)
+        return data({ ticketClaimed: true })
+    }
+
+    if (actionType !== 'save-profile') {
         return data({ error: 'Unknown action' }, { status: 400 })
     }
 
@@ -120,19 +142,24 @@ export async function action({ request, context }: Route.ActionArgs) {
         user.email,
     )
 
-    // Best-effort — never blocks the save, never throws (see jira-speaker-sync.server.ts).
-    await services.speakerSync.pushProfileWriteback(targetSessionizeId)
-
     return data({ savedFor: targetSessionizeId })
 }
 
 export default function SpeakerPortalDashboard() {
-    const { sessionizeId, sessions, infoPackUrl, presenters } = useLoaderData<typeof loader>()
+    const { sessionizeId, sessions, infoPackUrl, presenters, checklist, ticketClaimUrl, hasOwnProfileForm } =
+        useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
     const savedFor = actionData && 'savedFor' in actionData ? actionData.savedFor : null
 
     return (
         <>
+            <SpeakerChecklistCard
+                sessionizeId={sessionizeId}
+                checklist={checklist}
+                ticketClaimUrl={ticketClaimUrl}
+                hasOwnProfileForm={hasOwnProfileForm}
+            />
+
             <SpeakerWorkspaceView sessionizeId={sessionizeId} sessions={sessions} infoPackUrl={infoPackUrl} />
 
             {presenters.length > 0 && (
