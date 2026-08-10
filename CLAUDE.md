@@ -201,6 +201,13 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
   `continue-on-error` from that step so the suite becomes a real merge gate.
 - When you fix a page's accessibility, check whether it's also covered by `core/website/e2e/a11y.spec.ts`'s route
   list — if not, and it's a key public route, add it rather than assuming the existing coverage extends to it.
+- **Visual regression**: `nx e2e-visual website` (`core/website/e2e/visual.spec.ts`) screenshots the same key
+  routes across 3 browser engines x 3 viewport widths (mobile/tablet/desktop) and compares them against committed
+  baselines in `core/website/e2e/__screenshots__/`. It exists to prove a11y markup changes (landmarks, heading
+  levels, element type swaps like `div`→`button`) don't change how a page actually looks. Also wired into
+  `.github/workflows/pr.yml` as the `visual-regression` job, non-blocking for the same cross-environment-flakiness
+  reason as `a11y-e2e`. Update baselines deliberately with `--update-snapshots` when a change is meant to look
+  different, and review the resulting diff like any other code change.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

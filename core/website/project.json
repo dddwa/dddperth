@@ -149,7 +149,26 @@
             ],
             "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
             "options": {
-                "command": "playwright test",
+                "command": "playwright test --project=chromium",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
+        },
+        "e2e-visual": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test e2e/visual.spec.ts",
                 "cwd": "core/website"
             },
             "dependsOn": ["setup"]
