@@ -73,6 +73,7 @@ export function Header({
                     {/* Hamburger (mobile/tablet only) */}
                     <Box gridArea="menu" display={{ base: 'flex', lg: 'none' }}>
                         <MenuButton
+                            id="navigation"
                             onClick={() => setDrawerOpen(true)}
                             aria-label="Open navigation menu"
                             aria-expanded={drawerOpen}
@@ -265,16 +266,19 @@ function insertVenueBeforeAbout(items: typeof conferenceManifest.nav) {
 }
 
 function MenuButton({
+    id,
     onClick,
     'aria-label': ariaLabel,
     'aria-expanded': ariaExpanded,
 }: {
+    id?: string
     onClick: () => void
     'aria-label': string
     'aria-expanded': boolean
 }) {
     return (
         <styled.button
+            id={id}
             type="button"
             onClick={onClick}
             aria-label={ariaLabel}
