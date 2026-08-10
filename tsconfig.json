@@ -1,7 +1,8 @@
 {
     "files": [],
     "compilerOptions": {
-        "disableSourceOfProjectReferenceRedirect": true
+        "disableSourceOfProjectReferenceRedirect": true,
+        "ignoreDeprecations": "6.0"
     },
     "references": [
         {

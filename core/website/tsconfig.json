@@ -29,6 +29,8 @@
             "@conference/*": ["../../conference/*"]
         },
         "noEmit": true,
-        "rootDirs": [".", "./.react-router/types"]
+        "rootDirs": [".", "./.react-router/types"],
+        "noUncheckedSideEffectImports": false,
+        "ignoreDeprecations": "6.0"
     }
 }

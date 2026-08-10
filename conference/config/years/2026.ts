@@ -16,7 +16,7 @@ export const conference2026: ConferenceYear = {
         kind: 'sessionize',
         sessionizeEndpoint: undefined,
         allSessionsEndpoint: undefined,
-        underrepresentedGroupsQuestionId: undefined,
+        underrepresentedGroupsQuestionId: 131373,
     },
 
     conferenceDate: DateTime.fromISO('2026-10-03T09:00:00', {
