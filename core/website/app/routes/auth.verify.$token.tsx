@@ -31,15 +31,22 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // shouldn't be able to plant an open redirect via a malformed
     // redirect_to column. Defence in depth.
     let redirectTo = sanitiseRedirect(result.redirectTo)
+    const services = getServices(context)
 
-    // The default destination is /admin, but sponsor contacts who logged in
-    // without an explicit destination belong in their portal. Explicit
-    // redirects are honoured either way — requireAdmin bounces non-admins.
-    if (redirectTo === '/admin' && !(await getServices(context).auth.isAdminEmail(result.email))) {
-        redirectTo = '/portal'
+    // The default destination is /admin, but sponsor/speaker contacts who
+    // logged in without an explicit destination belong in their own portal.
+    // Explicit redirects are honoured either way — requireAdmin/
+    // requireSponsorContact/requireSpeaker each bounce a wrong-role session
+    // to the right place regardless.
+    if (redirectTo === '/admin' && !(await services.auth.isAdminEmail(result.email))) {
+        redirectTo = (await services.sponsors.isSponsorContact(result.email))
+            ? '/portal'
+            : (await services.speakers.isSpeakerContact(result.email))
+              ? '/speaker-portal'
+              : '/portal'
     }
 
-    return await createUserSession(request.headers, getServices(context), { email: result.email, name: null }, redirectTo)
+    return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)
 }
 
 export default function Verify() {

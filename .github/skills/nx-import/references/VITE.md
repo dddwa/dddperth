@@ -125,9 +125,13 @@ Add `"jsx": "react-jsx"` — in `tsconfig.base.json` for single-framework worksp
 ### React ESLint Config
 
 ```js
-import nx from '@nx/eslint-plugin'
-import baseConfig from '../../eslint.config.mjs'
-export default [...baseConfig, ...nx.configs['flat/react'], { files: ['**/*.ts', '**/*.tsx'], rules: {} }]
+import nx from '@nx/eslint-plugin';
+import baseConfig from '../../eslint.config.mjs';
+export default [
+  ...baseConfig,
+  ...nx.configs['flat/react'],
+  { files: ['**/*.ts', '**/*.tsx'], rules: {} },
+];
 ```
 
 ### React Version Conflicts
@@ -163,9 +167,9 @@ Vue SFC files need a type declaration. Usually exists in each project's `src/` a
 
 ```ts
 declare module '*.vue' {
-    import { defineComponent } from 'vue'
-    const component: ReturnType<typeof defineComponent>
-    export default component
+  import { defineComponent } from 'vue';
+  const component: ReturnType<typeof defineComponent>;
+  export default component;
 }
 ```
 
@@ -186,22 +190,22 @@ Both `@nx/js/typescript` and `@nx/vite/plugin` auto-detect `vue-tsc` when instal
 ### Vue ESLint Config Pattern
 
 ```js
-import vue from 'eslint-plugin-vue'
-import vueParser from 'vue-eslint-parser'
-import tsParser from '@typescript-eslint/parser'
-import baseConfig from '../../eslint.config.mjs'
+import vue from 'eslint-plugin-vue';
+import vueParser from 'vue-eslint-parser';
+import tsParser from '@typescript-eslint/parser';
+import baseConfig from '../../eslint.config.mjs';
 export default [
-    ...baseConfig,
-    ...vue.configs['flat/recommended'],
-    {
-        files: ['**/*.vue'],
-        languageOptions: { parser: vueParser, parserOptions: { parser: tsParser } },
-    },
-    {
-        files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.vue'],
-        rules: { 'vue/multi-word-component-names': 'off' },
-    },
-]
+  ...baseConfig,
+  ...vue.configs['flat/recommended'],
+  {
+    files: ['**/*.vue'],
+    languageOptions: { parser: vueParser, parserOptions: { parser: tsParser } },
+  },
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
+];
 ```
 
 **Important**: `vue-eslint-parser` override must come **AFTER** base config — `flat/typescript` sets the TS parser globally without a `files` filter, breaking `.vue` parsing.
@@ -228,17 +232,17 @@ When both frameworks coexist, several settings become per-project.
 
 ```json
 {
-    "plugins": [
-        { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
-        {
-            "plugin": "@nx/vite/plugin",
-            "options": {
-                "buildTargetName": "build",
-                "typecheckTargetName": "typecheck",
-                "testTargetName": "test"
-            }
-        }
-    ]
+  "plugins": [
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "typecheckTargetName": "typecheck",
+        "testTargetName": "test"
+      }
+    }
+  ]
 }
 ```
 
@@ -375,19 +379,19 @@ See SKILL.md for generic multi-import (name collisions, dep refs). Vite-specific
 - Dest: CNW ts preset (Nx 22.5.1), npm workspaces, `packages/*`
 - Import: whole-repo for each, sequential into `packages/<name>`
 - Pre-import fixes:
-    1. Removed `packages/.gitkeep` and committed
-    2. `git init && git add . && git commit` in Vite app (no git at all)
-    3. `git add . && git commit` in TanStack app (git init'd but no commits)
+  1. Removed `packages/.gitkeep` and committed
+  2. `git init && git add . && git commit` in Vite app (no git at all)
+  3. `git add . && git commit` in TanStack app (git init'd but no commits)
 - Import: `npm exec nx -- import <source> packages/<name> --source=. --ref=main --no-interactive`
-    - Next.js import auto-installed `@nx/eslint`, `@nx/next`
-    - React Router 7 import auto-installed `@nx/vite`, `@nx/react`, `@nx/docker` (Dockerfile present)
-    - TanStack import auto-installed `@nx/vitest`
+  - Next.js import auto-installed `@nx/eslint`, `@nx/next`
+  - React Router 7 import auto-installed `@nx/vite`, `@nx/react`, `@nx/docker` (Dockerfile present)
+  - TanStack import auto-installed `@nx/vitest`
 - Post-import fixes:
-    1. Removed stale `node_modules/`, `package-lock.json`, `.gitignore` from each package
-    2. Removed Nx-rewritten scripts from `board-games-nextjs/package.json` (had `"build": "nx next:build"`, etc.)
-    3. Updated root `tsconfig.base.json`: `nodenext` → `bundler`, added `dom`/`dom.iterable` to lib, added `jsx: react-jsx`
-    4. Added `build` to dest root `.gitignore` (CRA and React Router 7 output there)
-    5. Fixed `noEmit` → `composite + emitDeclarationOnly` in: `board-games-vite/tsconfig.app.json`, `board-games-vite/tsconfig.node.json`, `board-games-react-router/tsconfig.json`, `board-games-tanstack/tsconfig.json`
-    6. Fixed `tsBuildInfoFile` paths from `./node_modules/.tmp/...` to `./dist/...`
-    7. Installed root `@types/react`, `@types/react-dom`, `@types/node`
+  1. Removed stale `node_modules/`, `package-lock.json`, `.gitignore` from each package
+  2. Removed Nx-rewritten scripts from `board-games-nextjs/package.json` (had `"build": "nx next:build"`, etc.)
+  3. Updated root `tsconfig.base.json`: `nodenext` → `bundler`, added `dom`/`dom.iterable` to lib, added `jsx: react-jsx`
+  4. Added `build` to dest root `.gitignore` (CRA and React Router 7 output there)
+  5. Fixed `noEmit` → `composite + emitDeclarationOnly` in: `board-games-vite/tsconfig.app.json`, `board-games-vite/tsconfig.node.json`, `board-games-react-router/tsconfig.json`, `board-games-tanstack/tsconfig.json`
+  6. Fixed `tsBuildInfoFile` paths from `./node_modules/.tmp/...` to `./dist/...`
+  7. Installed root `@types/react`, `@types/react-dom`, `@types/node`
 - All targets green: `build` for all 5 projects; `typecheck` for Vite/React Router/TanStack; `next:build` for Next.js

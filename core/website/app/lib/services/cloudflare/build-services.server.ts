@@ -7,12 +7,14 @@ import { createD1AgendaPlanningStore } from './d1-agenda-planning-store.server'
 import { createD1AnnouncementsStore } from './d1-announcements-store.server'
 import { createD1AuthService } from './d1-auth-service.server'
 import { createD1NotificationLog } from './d1-notification-log.server'
+import { createD1SpeakersStore } from './d1-speakers-store.server'
 import { createD1SponsorsStore } from './d1-sponsors-store.server'
 import { createD1VotingStore } from './d1-voting-store.server'
 import { createJiraSponsorSyncService } from './jira-sponsor-sync.server'
 import { createMdxContentService } from './mdx-content-service.server'
 import { createR2AssetStorage } from './r2-asset-storage.server'
 import { createResendEmailService } from './resend-email-service.server'
+import { createSessionizeSpeakerSyncService } from './sessionize-speaker-sync.server'
 import { createTitoTicketsService } from './tito-tickets-service.server'
 
 /**
@@ -30,6 +32,7 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         : createConsoleEmailService()
 
     const sponsors = createD1SponsorsStore(db)
+    const speakers = createD1SpeakersStore(db)
     const notifications = createD1NotificationLog(db)
     const assets = createR2AssetStorage(env.SPONSOR_ASSETS)
 
@@ -39,12 +42,14 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         announcements: createD1AnnouncementsStore(db),
         content: createMdxContentService(),
         tickets: createTitoTicketsService(config),
-        auth: createD1AuthService({ config, db, email, sponsors }),
+        auth: createD1AuthService({ config, db, email, sponsors, speakers }),
         email,
         sessions: createCookieSessionStorages(config),
         sponsors,
         assets,
         sponsorSync: createJiraSponsorSyncService({ config, sponsors, assets, email, notifications }),
         notifications,
+        speakers,
+        speakerSync: createSessionizeSpeakerSyncService({ config, speakers }),
     }
 }

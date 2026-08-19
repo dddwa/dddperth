@@ -3,6 +3,7 @@ import { logAuthEvent } from '../../auth/log.server'
 import type { AppConfig } from '../app-config'
 import type { AuthService } from '../auth-service'
 import type { EmailService } from '../email-service'
+import type { SpeakersStore } from '../speakers-store'
 import type { SponsorsStore } from '../sponsors-store'
 import type { User } from '../../session-types'
 
@@ -24,14 +25,16 @@ export function createD1AuthService(args: {
     db: D1Database
     email: EmailService
     sponsors: SponsorsStore
+    speakers: SpeakersStore
 }): AuthService {
-    const { config, db, email, sponsors } = args
+    const { config, db, email, sponsors, speakers } = args
 
     return {
         async isAllowed(emailAddress) {
             const normalised = emailAddress.trim().toLowerCase()
             if (await this.isAdminEmail(normalised)) return true
-            return sponsors.isSponsorContact(normalised)
+            if (await sponsors.isSponsorContact(normalised)) return true
+            return speakers.isSpeakerContact(normalised)
         },
 
         async isAdminEmail(emailAddress) {
@@ -199,6 +202,13 @@ export function createD1AuthService(args: {
         async destroySession(sessionId) {
             await db.prepare('DELETE FROM auth_sessions WHERE id = ?').bind(sessionId).run()
             logAuthEvent({ event: 'session.destroyed' })
+        },
+
+        async getLastLoginTimes() {
+            const result = await db
+                .prepare('SELECT email, MAX(created_at) AS last_login FROM auth_sessions GROUP BY email')
+                .all<{ email: string; last_login: number }>()
+            return Object.fromEntries((result.results ?? []).map((r) => [r.email, r.last_login]))
         },
     }
 }

@@ -15,6 +15,7 @@
  * making them optional + having a sensible default in core.
  */
 
+import type { DateTime } from 'luxon'
 import type { ConferenceConfig } from './types'
 
 /**
@@ -290,6 +291,88 @@ export interface SponsorPortalConfig {
 }
 
 /**
+ * Speaker self-service portal. When set, /speaker-portal routes come alive
+ * for anyone with an accepted or waitlisted Sessionize session whose email
+ * has been added as a contact for that speaker (via /admin/speakers — a
+ * manual, admin-managed allowlist; there is no external sync for it). Omit
+ * for forks without a speaker portal — the routes 404 and the Sessionize
+ * sync never runs.
+ */
+export interface SpeakerPortalConfig {
+    /** Conference year the portal is collecting speaker info for, e.g. "2026". */
+    year: string
+    /** Sessionize session statuses that grant portal access, e.g. ['Accepted', 'Waitlisted']. */
+    portalAccessStatuses: string[]
+    /** Static link to a speaker info pack, rendered as a download on the dashboard. Omit to hide it. */
+    infoPackUrl?: string
+    /**
+     * Sessionize category *names* (as configured for this event in
+     * Sessionize, under Event → Categories) that map to the dashboard's
+     * format/level/general topic/talk topics fields. Category names aren't
+     * stable across events/forks, so this is fork-configurable rather than
+     * hardcoded in core.
+     */
+    sessionizeCategoryNames: {
+        format: string
+        level: string
+        generalTopic: string
+        talkTopics: string
+    }
+    /**
+     * Outstanding-items checklist shown at the top of the speaker dashboard
+     * (session details, ticket claim, training RSVP). Omit a due date to show
+     * that item without one; omit `ticketClaimUrl` to show the ticket-claim
+     * item as plain text instead of a link.
+     */
+    checklist?: SpeakerPortalChecklistConfig
+    /**
+     * Notified by email when a speaker self-reports confirming their session
+     * in Sessionize (the checklist's "I've already confirmed it" button).
+     * Omit to skip sending — the self-report still completes the checklist
+     * item either way.
+     */
+    sessionConfirmationNotifyEmail?: string
+}
+
+/** One configured speaker-training session. `id` should match one of the
+ * app's `SPEAKER_TRAINING_SESSION_OPTIONS` values (e.g. "Session 1") — kept
+ * as a plain string here since this package doesn't depend on the website
+ * app's types. */
+export interface SpeakerTrainingSessionConfig {
+    id: string
+    title: string
+    dateTime: DateTime
+    endDateTime: DateTime
+}
+
+export interface SpeakerDinnerConfig {
+    dateTime: DateTime
+    endDateTime: DateTime
+    location?: string
+}
+
+/** One configured Meet-the-Experts time block. */
+export interface MeetTheExpertsSlotConfig {
+    id: string
+    label: string
+}
+
+export interface SpeakerPortalChecklistConfig {
+    /** External link where a speaker claims/registers their complimentary ticket. */
+    ticketClaimUrl?: string
+    /** The training sessions offered — rendered as checkboxes in the RSVP
+     * modal and used to generate calendar invites. Omit to hide the whole
+     * training-RSVP checklist item. */
+    speakerTrainingSessions?: SpeakerTrainingSessionConfig[]
+    /** The speaker dinner — rendered in its own RSVP modal. Omit to hide the
+     * checklist item entirely. */
+    speakerDinner?: SpeakerDinnerConfig
+    /** Meet-the-Experts time blocks, shown as checkboxes in the session-
+     * details form once the speaker opts in (Yes/Maybe/Other). */
+    meetTheExpertsSlots?: MeetTheExpertsSlotConfig[]
+}
+
+/**
  * Runtime manifest — the bits the app needs at request time.
  *
  * Importable from anywhere (server or client) without bundler hazards.
@@ -309,6 +392,8 @@ export interface ConferenceManifest {
     mobileApp?: MobileApp
     /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
     sponsorPortal?: SponsorPortalConfig
+    /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
+    speakerPortal?: SpeakerPortalConfig
 }
 
 /**

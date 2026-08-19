@@ -38,23 +38,31 @@ export default {
         }
     },
 
-    // Hourly sponsor sync (see triggers.crons in the production wrangler
-    // config). No-ops when the fork has no sponsorPortal manifest entry or
-    // the Jira secrets aren't set.
+    // Hourly sponsor + speaker sync (see triggers.crons in the production
+    // wrangler config). Sponsor sync no-ops without a manifest entry or Jira
+    // secrets; speaker sync no-ops without a manifest entry or a configured
+    // Sessionize endpoint for that year.
     async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
         const config = buildAppConfigFromEnv(env)
         const services = buildCloudflareServices(config, env)
 
-        if (!services.sponsorSync.isConfigured()) {
+        if (services.sponsorSync.isConfigured()) {
+            ctx.waitUntil(
+                services.sponsorSync
+                    .syncNow('cron')
+                    .then(() => services.sponsorSync.retryPendingWritebacks())
+                    .catch((error) => console.error('Scheduled sponsor sync failed:', error)),
+            )
+        } else {
             console.log('Scheduled run: sponsor sync not configured, skipping')
-            return
         }
 
-        ctx.waitUntil(
-            services.sponsorSync
-                .syncNow('cron')
-                .then(() => services.sponsorSync.retryPendingWritebacks())
-                .catch((error) => console.error('Scheduled sponsor sync failed:', error)),
-        )
+        if (services.speakerSync.isConfigured()) {
+            ctx.waitUntil(
+                services.speakerSync.syncNow('cron').catch((error) => console.error('Scheduled speaker sync failed:', error)),
+            )
+        } else {
+            console.log('Scheduled run: speaker sync not configured, skipping')
+        }
     },
 } satisfies ExportedHandler<CloudflareEnv>
