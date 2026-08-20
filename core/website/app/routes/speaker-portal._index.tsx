@@ -12,7 +12,7 @@ import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
 import { requireSpeaker } from '~/lib/auth.server'
 import { recordException } from '~/lib/record-exception'
 import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
-import { parseMeetTheExpertsForm, parseSessionDetailsForm, parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
+import { emptyToUndefined, parseMeetTheExpertsForm, parseSessionDetailsForm, parseSpeakerProfileForm } from '~/lib/speakers/profile-form.server'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, YES_NO_MAYBE_OPTIONS, type SpeakerTrainingSession, type YesNoMaybe } from '~/lib/services/speakers-store'
 import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/speaker-portal._index'
@@ -127,7 +127,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
         const response = oneOf<YesNoMaybe>(formData.get('rsvpSpeakersDinner'), YES_NO_MAYBE_OPTIONS)
         if (!response) return data({ error: 'Missing RSVP response' }, { status: 400 })
-        await services.speakers.saveSpeakerDinnerRsvp(speaker.sessionizeId, response, user.email)
+        const dietaryRequirements = emptyToUndefined(formData.get('dietaryRequirements'))
+        await services.speakers.saveSpeakerDinnerRsvp(speaker.sessionizeId, response, dietaryRequirements, user.email)
         return data({ dinnerRsvped: true })
     }
 
@@ -194,6 +195,7 @@ export default function SpeakerPortalDashboard() {
                 dateLabel={view.dinnerDateLabel ?? ''}
                 calendarUrl={view.dinnerCalendarUrl ?? undefined}
                 currentResponse={view.dinnerResponse}
+                currentDietaryRequirements={view.dinnerDietaryRequirements}
                 justResponded={dinnerJustResponded}
             />
 

@@ -9,10 +9,9 @@ import type { SpeakerProfile } from '../services/speakers-store'
 
 /** Session details = the session-level Q&A preference (shared by every
  * presenter on the session — see `SpeakerSessionChecklistInput`) plus the
- * viewer's own introduction. Doesn't require every optional field (dietary
- * requirements, "anything else", etc) — just enough that the organisers
- * aren't missing the essentials. A speaker with no sessions has nothing to
- * fill in yet. */
+ * viewer's own introduction. Doesn't require every optional field ("anything
+ * else", etc) — just enough that the organisers aren't missing the
+ * essentials. A speaker with no sessions has nothing to fill in yet. */
 export function isSessionDetailsComplete(
     profile: SpeakerProfile | null,
     sessions: SpeakerSessionChecklistInput[],

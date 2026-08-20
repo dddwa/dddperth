@@ -33,6 +33,9 @@ jobs:
             - name: Generate types (PandaCSS + React Router)
               run: pnpm run setup
 
+            - name: Validate D1 migrations apply cleanly
+              run: pnpm nx d1-migrate-local website
+
             - name: Type Check
               run: pnpm tsc -b
 

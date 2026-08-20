@@ -1,3 +1,14 @@
+import { conferenceManifest } from '@conference/manifest'
+import { recordException } from '../../record-exception'
+import { getConfSessions, getConfSpeakers } from '../../sessionize.server'
+import {
+    resolveSpeakerPortalSessionizeEndpoint,
+    toPortalSession,
+    toPortalSpeaker,
+    type PortalSessionContent,
+    type PortalSpeakerContent,
+} from '../../speakers/map-sessionize'
+import type { AppConfig } from '../app-config'
 import type {
     PresentationDetail,
     QuestionsPreference,
@@ -17,28 +28,24 @@ import type {
 interface SpeakerRow {
     sessionize_id: string
     year: string
-    full_name: string
-    tag_line: string | null
-    bio: string | null
-    profile_picture_url: string | null
-    links_json: string | null
     active: number
 }
 
 interface SpeakerSessionRow {
     sessionize_speaker_id: string
     sessionize_session_id: string
-    session_title: string
-    description: string | null
-    format: string | null
-    level: string | null
-    general_topic: string | null
-    talk_topics_json: string | null
-    starts_at: string | null
-    ends_at: string | null
-    room_name: string | null
-    status: string
-    is_confirmed: number
+}
+
+/** Used when a linked id isn't found in the live Sessionize payload — either
+ * Sessionize is unreachable, or the id was removed there since the last
+ * hourly sync caught up. Keeps the portal's checklist/RSVP flows usable
+ * instead of erroring the whole page out. */
+function placeholderSpeaker(sessionizeId: string): PortalSpeakerContent {
+    return { fullName: sessionizeId, links: [] }
+}
+
+function placeholderSession(sessionizeSessionId: string): PortalSessionContent {
+    return { sessionTitle: sessionizeSessionId, talkTopics: [], status: 'Unknown', isConfirmed: false }
 }
 
 interface SpeakerProfileRow {
@@ -98,42 +105,63 @@ function parseJsonArray(json: string | null): string[] {
     }
 }
 
-function toSpeaker(row: SpeakerRow): SpeakerRecord {
-    let links: SpeakerRecord['links'] = []
-    if (row.links_json) {
-        try {
-            const value: unknown = JSON.parse(row.links_json)
-            if (Array.isArray(value)) links = value as SpeakerRecord['links']
-        } catch {
-            // Corrupt JSON shouldn't take the profile page down.
-        }
-    }
+function toSpeaker(row: SpeakerRow, content: PortalSpeakerContent): SpeakerRecord {
     return {
         sessionizeId: row.sessionize_id,
         year: row.year,
-        fullName: row.full_name,
-        tagLine: row.tag_line ?? undefined,
-        bio: row.bio ?? undefined,
-        profilePictureUrl: row.profile_picture_url ?? undefined,
-        links,
+        fullName: content.fullName,
+        tagLine: content.tagLine,
+        bio: content.bio,
+        profilePictureUrl: content.profilePictureUrl,
+        links: content.links,
         active: row.active === 1,
     }
 }
 
-function toSession(row: SpeakerSessionRow): SpeakerSession {
+function toSession(row: SpeakerSessionRow, content: PortalSessionContent): SpeakerSession {
     return {
         sessionizeSessionId: row.sessionize_session_id,
-        sessionTitle: row.session_title,
-        description: row.description ?? undefined,
-        format: row.format ?? undefined,
-        level: row.level ?? undefined,
-        generalTopic: row.general_topic ?? undefined,
-        talkTopics: parseJsonArray(row.talk_topics_json),
-        startsAt: row.starts_at ?? undefined,
-        endsAt: row.ends_at ?? undefined,
-        roomName: row.room_name ?? undefined,
-        status: row.status,
-        isConfirmed: row.is_confirmed === 1,
+        sessionTitle: content.sessionTitle,
+        description: content.description,
+        format: content.format,
+        level: content.level,
+        generalTopic: content.generalTopic,
+        talkTopics: content.talkTopics,
+        startsAt: content.startsAt,
+        endsAt: content.endsAt,
+        roomName: content.roomName,
+        status: content.status,
+        isConfirmed: content.isConfirmed,
+    }
+}
+
+/** Every speaker/session's live Sessionize content, keyed by id — fetched
+ * once per store call and merged with D1 rows by the caller. Reuses
+ * sessionize.server.ts's own 5-minute cache, so this rarely hits the network.
+ * Falls back to an empty map (every id resolves to a placeholder) rather
+ * than throwing, so a Sessionize outage degrades the portal's display
+ * content instead of breaking its checklist/RSVP flows outright. */
+async function fetchLiveContent(
+    config: AppConfig,
+): Promise<{ speakers: Map<string, PortalSpeakerContent>; sessions: Map<string, PortalSessionContent> }> {
+    const empty = { speakers: new Map<string, PortalSpeakerContent>(), sessions: new Map<string, PortalSessionContent>() }
+
+    const sessionizeEndpoint = resolveSpeakerPortalSessionizeEndpoint(config)
+    const categoryNames = conferenceManifest.speakerPortal?.sessionizeCategoryNames
+    if (!sessionizeEndpoint || !categoryNames) return empty
+
+    try {
+        const [speakers, sessions] = await Promise.all([
+            getConfSpeakers({ sessionizeEndpoint }),
+            getConfSessions({ sessionizeEndpoint }),
+        ])
+        return {
+            speakers: new Map(speakers.map((s) => [s.id, toPortalSpeaker(s)])),
+            sessions: new Map(sessions.map((s) => [s.id, toPortalSession(s, categoryNames)])),
+        }
+    } catch (error) {
+        recordException(error)
+        return empty
     }
 }
 
@@ -188,7 +216,9 @@ function toSyncRun(row: SyncRunRow): SpeakerSyncRun {
     }
 }
 
-export function createD1SpeakersStore(db: D1Database): SpeakersStore {
+export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig }): SpeakersStore {
+    const { db, config } = args
+
     return {
         async isSpeakerContact(email) {
             const row = await db
@@ -212,7 +242,9 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 )
                 .bind(email.toLowerCase())
                 .first<SpeakerRow>()
-            return row ? toSpeaker(row) : null
+            if (!row) return null
+            const live = await fetchLiveContent(config)
+            return toSpeaker(row, live.speakers.get(row.sessionize_id) ?? placeholderSpeaker(row.sessionize_id))
         },
 
         async getSpeaker(sessionizeId) {
@@ -220,7 +252,9 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 .prepare(`SELECT * FROM speakers WHERE sessionize_id = ?`)
                 .bind(sessionizeId)
                 .first<SpeakerRow>()
-            return row ? toSpeaker(row) : null
+            if (!row) return null
+            const live = await fetchLiveContent(config)
+            return toSpeaker(row, live.speakers.get(sessionizeId) ?? placeholderSpeaker(sessionizeId))
         },
 
         async getContactEmails(sessionizeId) {
@@ -292,17 +326,31 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
         },
 
         async getWorkspace(sessionizeId) {
-            const speaker = await this.getSpeaker(sessionizeId)
-            if (!speaker) return null
+            const speakerRow = await db
+                .prepare(`SELECT * FROM speakers WHERE sessionize_id = ?`)
+                .bind(sessionizeId)
+                .first<SpeakerRow>()
+            if (!speakerRow) return null
 
             const mySessions = await db
-                .prepare(`SELECT * FROM speaker_sessions WHERE sessionize_speaker_id = ? ORDER BY starts_at`)
+                .prepare(`SELECT * FROM speaker_sessions WHERE sessionize_speaker_id = ?`)
                 .bind(sessionizeId)
                 .all<SpeakerSessionRow>()
 
+            const live = await fetchLiveContent(config)
+            const speaker = toSpeaker(speakerRow, live.speakers.get(sessionizeId) ?? placeholderSpeaker(sessionizeId))
+
+            // Sort by live start time now that it isn't a D1 column to `ORDER BY`
+            // — undefined (waitlisted, no slot yet) sorts first, same as before.
+            const sessionRows = [...(mySessions.results ?? [])].sort((a, b) => {
+                const aStarts = live.sessions.get(a.sessionize_session_id)?.startsAt ?? ''
+                const bStarts = live.sessions.get(b.sessionize_session_id)?.startsAt ?? ''
+                return aStarts.localeCompare(bStarts)
+            })
+
             const workspace: SpeakerWorkspace = { speaker, sessions: [] }
 
-            for (const sessionRow of mySessions.results ?? []) {
+            for (const sessionRow of sessionRows) {
                 const presenterRows = await db
                     .prepare(
                         `SELECT sp.* FROM speaker_sessions ss
@@ -314,13 +362,17 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
 
                 const presenters = await Promise.all(
                     (presenterRows.results ?? []).map(async (row) => ({
-                        speaker: toSpeaker(row),
+                        speaker: toSpeaker(row, live.speakers.get(row.sessionize_id) ?? placeholderSpeaker(row.sessionize_id)),
                         profile: await this.getProfile(row.sessionize_id),
                     })),
                 )
 
                 workspace.sessions.push({
-                    session: toSession(sessionRow),
+                    session: toSession(
+                        sessionRow,
+                        live.sessions.get(sessionRow.sessionize_session_id) ??
+                            placeholderSession(sessionRow.sessionize_session_id),
+                    ),
                     sessionDetails: await this.getSessionDetails(sessionRow.sessionize_session_id),
                     presenters,
                 })
@@ -330,8 +382,8 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
         },
 
         async listSpeakers(year) {
-            const [speakers, contacts, sessions, profiles, sessionDetailsRows] = await Promise.all([
-                db.prepare(`SELECT * FROM speakers WHERE year = ? ORDER BY full_name`).bind(year).all<SpeakerRow>(),
+            const [speakersResult, contacts, sessions, profiles, sessionDetailsRows, live] = await Promise.all([
+                db.prepare(`SELECT * FROM speakers WHERE year = ?`).bind(year).all<SpeakerRow>(),
                 db
                     .prepare(
                         `SELECT c.email, c.sessionize_id FROM speaker_contacts c
@@ -362,6 +414,7 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     )
                     .bind(year)
                     .all<{ sessionize_session_id: string; questions_preference: string | null }>(),
+                fetchLiveContent(config),
             ])
 
             const contactsBySpeaker = new Map<string, string[]>()
@@ -373,7 +426,7 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
             const sessionsBySpeaker = new Map<string, SpeakerSession[]>()
             for (const s of sessions.results ?? []) {
                 const list = sessionsBySpeaker.get(s.sessionize_speaker_id) ?? []
-                list.push(toSession(s))
+                list.push(toSession(s, live.sessions.get(s.sessionize_session_id) ?? placeholderSession(s.sessionize_session_id)))
                 sessionsBySpeaker.set(s.sessionize_speaker_id, list)
             }
             const profileBySpeaker = new Map((profiles.results ?? []).map((p) => [p.sessionize_id, toProfile(p)]))
@@ -381,10 +434,10 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 (sessionDetailsRows.results ?? []).map((r) => [r.sessionize_session_id, Boolean(r.questions_preference)]),
             )
 
-            return (speakers.results ?? []).map((row): SpeakerListEntry => {
+            const entries = (speakersResult.results ?? []).map((row): SpeakerListEntry => {
                 const speakerSessions = sessionsBySpeaker.get(row.sessionize_id) ?? []
                 return {
-                    ...toSpeaker(row),
+                    ...toSpeaker(row, live.speakers.get(row.sessionize_id) ?? placeholderSpeaker(row.sessionize_id)),
                     contacts: contactsBySpeaker.get(row.sessionize_id) ?? [],
                     sessions: speakerSessions,
                     profile: profileBySpeaker.get(row.sessionize_id) ?? null,
@@ -396,6 +449,11 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     ),
                 }
             })
+
+            // Was `ORDER BY full_name` in SQL — full_name is no longer a D1
+            // column, so sort the live-merged list instead.
+            entries.sort((a, b) => a.fullName.localeCompare(b.fullName))
+            return entries
         },
 
         async getAllSpeakersForSync() {
@@ -417,7 +475,7 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
         },
 
         async saveProfile(sessionizeId, details, updatedBy) {
-            // Deliberately doesn't touch rsvp_speakers_dinner /
+            // Deliberately doesn't touch dietary_requirements / rsvp_speakers_dinner /
             // rsvp_speaker_training_json / rsvp_speaker_training_responded_at /
             // register_meet_the_experts_slots_json / register_meet_the_experts_responded_at
             // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp /
@@ -427,14 +485,13 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 .prepare(
                     `INSERT INTO speaker_profiles
                          (sessionize_id, name_phonetic_spelling, introduction_use_sessionize_bio,
-                          introduction_custom_text, dietary_requirements, register_meet_the_experts,
+                          introduction_custom_text, register_meet_the_experts,
                           register_meet_the_experts_other, updated_at, updated_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), ?)
+                     VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?)
                      ON CONFLICT(sessionize_id) DO UPDATE SET
                          name_phonetic_spelling = excluded.name_phonetic_spelling,
                          introduction_use_sessionize_bio = excluded.introduction_use_sessionize_bio,
                          introduction_custom_text = excluded.introduction_custom_text,
-                         dietary_requirements = excluded.dietary_requirements,
                          register_meet_the_experts = excluded.register_meet_the_experts,
                          register_meet_the_experts_other = excluded.register_meet_the_experts_other,
                          updated_at = excluded.updated_at,
@@ -445,7 +502,6 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                     details.namePhoneticSpelling ?? null,
                     details.introductionUseSessionizeBio ? 1 : 0,
                     details.introductionCustomText ?? null,
-                    details.dietaryRequirements ?? null,
                     details.registerMeetTheExperts ?? null,
                     details.registerMeetTheExpertsOther ?? null,
                     updatedBy,
@@ -554,15 +610,17 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 .run()
         },
 
-        async saveSpeakerDinnerRsvp(sessionizeId, response, updatedBy) {
+        async saveSpeakerDinnerRsvp(sessionizeId, response, dietaryRequirements, updatedBy) {
             await db
                 .prepare(
-                    `INSERT INTO speaker_profiles (sessionize_id, rsvp_speakers_dinner, updated_at, updated_by)
-                     VALUES (?, ?, unixepoch(), ?)
+                    `INSERT INTO speaker_profiles
+                         (sessionize_id, rsvp_speakers_dinner, dietary_requirements, updated_at, updated_by)
+                     VALUES (?, ?, ?, unixepoch(), ?)
                      ON CONFLICT(sessionize_id) DO UPDATE SET
-                         rsvp_speakers_dinner = excluded.rsvp_speakers_dinner`,
+                         rsvp_speakers_dinner = excluded.rsvp_speakers_dinner,
+                         dietary_requirements = excluded.dietary_requirements`,
                 )
-                .bind(sessionizeId, response, updatedBy)
+                .bind(sessionizeId, response, dietaryRequirements ?? null, updatedBy)
                 .run()
         },
 
@@ -595,29 +653,14 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 statements.push(
                     db
                         .prepare(
-                            `INSERT INTO speakers
-                                 (sessionize_id, year, full_name, tag_line, bio, profile_picture_url, links_json,
-                                  active, created_at, updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
+                            `INSERT INTO speakers (sessionize_id, year, active, created_at, updated_at)
+                             VALUES (?, ?, 1, unixepoch(), unixepoch())
                              ON CONFLICT(sessionize_id) DO UPDATE SET
                                  year = excluded.year,
-                                 full_name = excluded.full_name,
-                                 tag_line = excluded.tag_line,
-                                 bio = excluded.bio,
-                                 profile_picture_url = excluded.profile_picture_url,
-                                 links_json = excluded.links_json,
                                  active = 1,
                                  updated_at = excluded.updated_at`,
                         )
-                        .bind(
-                            s.sessionizeId,
-                            s.year,
-                            s.fullName,
-                            s.tagLine ?? null,
-                            s.bio ?? null,
-                            s.profilePictureUrl ?? null,
-                            s.links.length > 0 ? JSON.stringify(s.links) : null,
-                        ),
+                        .bind(s.sessionizeId, s.year),
                 )
             }
             for (const sessionizeId of plan.deactivateSessionizeIds) {
@@ -631,40 +674,12 @@ export function createD1SpeakersStore(db: D1Database): SpeakersStore {
                 statements.push(
                     db
                         .prepare(
-                            `INSERT INTO speaker_sessions
-                                 (sessionize_speaker_id, sessionize_session_id, session_title, description, format,
-                                  level, general_topic, talk_topics_json, starts_at, ends_at, room_name, status,
-                                  is_confirmed, updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())
+                            `INSERT INTO speaker_sessions (sessionize_speaker_id, sessionize_session_id, updated_at)
+                             VALUES (?, ?, unixepoch())
                              ON CONFLICT(sessionize_speaker_id, sessionize_session_id) DO UPDATE SET
-                                 session_title = excluded.session_title,
-                                 description = excluded.description,
-                                 format = excluded.format,
-                                 level = excluded.level,
-                                 general_topic = excluded.general_topic,
-                                 talk_topics_json = excluded.talk_topics_json,
-                                 starts_at = excluded.starts_at,
-                                 ends_at = excluded.ends_at,
-                                 room_name = excluded.room_name,
-                                 status = excluded.status,
-                                 is_confirmed = excluded.is_confirmed,
                                  updated_at = excluded.updated_at`,
                         )
-                        .bind(
-                            s.sessionizeSpeakerId,
-                            s.sessionizeSessionId,
-                            s.sessionTitle,
-                            s.description ?? null,
-                            s.format ?? null,
-                            s.level ?? null,
-                            s.generalTopic ?? null,
-                            s.talkTopics.length > 0 ? JSON.stringify(s.talkTopics) : null,
-                            s.startsAt ?? null,
-                            s.endsAt ?? null,
-                            s.roomName ?? null,
-                            s.status,
-                            s.isConfirmed ? 1 : 0,
-                        ),
+                        .bind(s.sessionizeSpeakerId, s.sessionizeSessionId),
                 )
             }
             for (const r of plan.sessionRemovals) {

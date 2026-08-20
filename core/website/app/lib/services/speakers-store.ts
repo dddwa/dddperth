@@ -73,6 +73,8 @@ export interface SpeakerProfile {
     /** True = use their Sessionize bio as-is; false = use introductionCustomText. */
     introductionUseSessionizeBio: boolean
     introductionCustomText?: string
+    /** RSVP'd through its own dedicated modal, not the main session-details
+     * form — see `saveSpeakerDinnerRsvp`. */
     dietaryRequirements?: string
     registerMeetTheExperts?: YesNoMaybeOther
     registerMeetTheExpertsOther?: string
@@ -120,7 +122,8 @@ export interface SpeakerProfile {
 }
 
 /** Everything the session-details modal's `save-profile` action accepts —
- * same shape as `SpeakerProfile` minus the fields the store computes itself
+ * same shape as `SpeakerProfile` minus the fields the store computes itself,
+ * dietary requirements (asked as part of the speaker dinner RSVP instead),
  * and the RSVPs, which are saved through their own dedicated actions
  * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp` / `saveMeetTheExpertsSlots`)
  * so that submitting this form can never clobber an RSVP already on file. */
@@ -131,6 +134,7 @@ export type SpeakerProfileInput = Omit<
     | 'updatedAt'
     | 'updatedBy'
     | 'ticketClaimedAt'
+    | 'dietaryRequirements'
     | 'rsvpSpeakersDinner'
     | 'rsvpSpeakerTraining'
     | 'rsvpSpeakerTrainingRespondedAt'
@@ -181,35 +185,14 @@ export interface SpeakerWorkspace {
 }
 
 /** Result of diffing Sessionize against current D1 state. Computed by the
- * pure `computeSpeakerSyncPlan()` in lib/speakers/sync-plan.ts. Contacts
- * aren't part of this — they're admin-managed directly in D1, independent
- * of the sync. */
+ * pure `computeSpeakerSyncPlan()` in lib/speakers/sync-plan.ts. Only ids and
+ * linkage — Sessionize content (name, bio, session title, etc.) is read live
+ * at request time instead of synced in. Contacts aren't part of this either
+ * — they're admin-managed directly in D1, independent of the sync. */
 export interface SpeakerSyncPlan {
-    upserts: Array<{
-        sessionizeId: string
-        year: string
-        fullName: string
-        tagLine?: string
-        bio?: string
-        profilePictureUrl?: string
-        links: SpeakerLink[]
-    }>
+    upserts: Array<{ sessionizeId: string; year: string }>
     deactivateSessionizeIds: string[]
-    sessionUpserts: Array<{
-        sessionizeSpeakerId: string
-        sessionizeSessionId: string
-        sessionTitle: string
-        description?: string
-        format?: string
-        level?: string
-        generalTopic?: string
-        talkTopics: string[]
-        startsAt?: string
-        endsAt?: string
-        roomName?: string
-        status: string
-        isConfirmed: boolean
-    }>
+    sessionUpserts: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
     /** Session rows for speakers no longer accepted/waitlisted — removed outright. */
     sessionRemovals: Array<{ sessionizeSpeakerId: string; sessionizeSessionId: string }>
 }
@@ -307,9 +290,16 @@ export interface SpeakersStore {
         updatedBy: string,
     ): Promise<void>
 
-    /** Speaker-dinner RSVP, from its own modal. Same idiom as
-     * saveSpeakerTrainingRsvp — only touches rsvp_speakers_dinner. */
-    saveSpeakerDinnerRsvp(sessionizeId: string, response: YesNoMaybe, updatedBy: string): Promise<void>
+    /** Speaker-dinner RSVP, from its own modal — also where dietary
+     * requirements are asked, since that's only relevant if they're
+     * attending. Same idiom as saveSpeakerTrainingRsvp — only touches
+     * rsvp_speakers_dinner and dietary_requirements. */
+    saveSpeakerDinnerRsvp(
+        sessionizeId: string,
+        response: YesNoMaybe,
+        dietaryRequirements: string | undefined,
+        updatedBy: string,
+    ): Promise<void>
 
     /** Self-reported "I've already confirmed it" from the checklist.
      * Idempotent — stamps `sessionConfirmedReportedAt` only the first time,
