@@ -33,56 +33,58 @@ export default function Blog() {
     const featuredPosts = data.posts.filter((post) => post.featured)
 
     return (
-        <main tabIndex={-1}>
+        // No <main> here — `_layout.tsx` already provides the page's single
+        // `<main id="main">` landmark; a nested <main> would be invalid and
+        // would confuse the skip-to-content target.
+        <div>
+            <h1>{data.conferenceName} Blog</h1>
             <div>
                 <div>
-                    <div>
-                        <Link to={latestPost.slug} prefetch="intent">
-                            <div>
-                                {latestPost.image ? <img src={latestPost.image} alt={latestPost.imageAlt} /> : null}
-                            </div>
-                            <p>{latestPost.dateDisplay}</p>
-                            <p>{latestPost.title}</p>
-                            <p>{latestPost.summary}</p>
-                        </Link>
-                    </div>
-                    <div>
-                        {posts.map((post) => (
-                            <div key={post.slug}>
-                                <Link to={post.slug} prefetch="intent">
-                                    <div>
-                                        <img src={post.image} alt={post.imageAlt} />
-                                    </div>
-                                    <p>{post.dateDisplay}</p>
-                                    <p>{post.title}</p>
-                                    <p>{post.summary}</p>
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
+                    <Link to={latestPost.slug} prefetch="intent">
+                        <div>
+                            {latestPost.image ? <img src={latestPost.image} alt={latestPost.imageAlt} /> : null}
+                        </div>
+                        <p>{latestPost.dateDisplay}</p>
+                        <p>{latestPost.title}</p>
+                        <p>{latestPost.summary}</p>
+                    </Link>
                 </div>
                 <div>
-                    {featuredPosts.length ? (
-                        <>
-                            <h3>Featured Articles</h3>
-                            <div>
-                                {featuredPosts.map((post, index, array) => (
-                                    <React.Fragment key={post.slug}>
-                                        <div>
-                                            <div>
-                                                <Link to={post.slug} prefetch="intent">
-                                                    {post.title}
-                                                </Link>
-                                            </div>
-                                        </div>
-                                        {index !== array.length - 1 && <hr />}
-                                    </React.Fragment>
-                                ))}
-                            </div>
-                        </>
-                    ) : null}
+                    {posts.map((post) => (
+                        <div key={post.slug}>
+                            <Link to={post.slug} prefetch="intent">
+                                <div>
+                                    <img src={post.image} alt={post.imageAlt} />
+                                </div>
+                                <p>{post.dateDisplay}</p>
+                                <p>{post.title}</p>
+                                <p>{post.summary}</p>
+                            </Link>
+                        </div>
+                    ))}
                 </div>
             </div>
-        </main>
+            <div>
+                {featuredPosts.length ? (
+                    <>
+                        <h2>Featured Articles</h2>
+                        <div>
+                            {featuredPosts.map((post, index, array) => (
+                                <React.Fragment key={post.slug}>
+                                    <div>
+                                        <div>
+                                            <Link to={post.slug} prefetch="intent">
+                                                {post.title}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    {index !== array.length - 1 && <hr />}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </>
+                ) : null}
+            </div>
+        </div>
     )
 }

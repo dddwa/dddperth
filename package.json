@@ -13,6 +13,7 @@
         "prepare2": "pnpm run setup",
         "setup": "nx run-many --target setup --all",
         "start": "nx dev website",
+        "install-browsers": "pnpm --filter website exec playwright install --with-deps chromium",
         "sponsor:add": "node scripts/add-sponsor.mjs",
         "jira:auth": "node scripts/jira-auth.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",

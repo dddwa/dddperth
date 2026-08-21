@@ -265,11 +265,18 @@ function VotingPageWithSession({
     return (
         <Container py="12" maxW="6xl">
             <VStack gap="8">
+                {/* Visually-hidden live region: announces vote submission and
+                    errors to screen reader users, since the visual feedback
+                    (card highlight, button disable) has no text equivalent and
+                    the surrounding content updates without a page navigation. */}
+                <styled.div srOnly aria-live="polite" role="status">
+                    {voteSubmitted ? 'Vote recorded.' : error && localIndex < pairs.length ? error : ''}
+                </styled.div>
                 <SponsorAcknowledgement prefix="Voting brought to you by" sponsors={data.votingSponsors} />
                 <VStack gap="4">
-                    <styled.h2 fontSize="2xl" color="text.primary">
+                    <styled.h1 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?
-                    </styled.h2>
+                    </styled.h1>
                     {/* A voter who has crossed into round 2 has seen every talk
                         once — let them know they can stop, without turning
                         voting into a progress-bar chore with concrete counts */}
@@ -405,9 +412,9 @@ function VotingMessage({
     return (
         <Container py="12">
             <VStack gap="6">
-                <styled.h2 fontSize="2xl" color="text.primary">
+                <styled.h1 fontSize="2xl" color="text.primary">
                     {message}
-                </styled.h2>
+                </styled.h1>
                 {error && (
                     <styled.p fontSize="lg" color="text.muted" textAlign="center">
                         {error}

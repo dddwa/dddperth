@@ -48,7 +48,15 @@ export function Header({
           ]
 
     return (
-        <styled.header position="relative" bgColor="surface.header" w="full" display="flex" zIndex="banner" py="4">
+        <styled.header
+            id="header"
+            position="relative"
+            bgColor="surface.header"
+            w="full"
+            display="flex"
+            zIndex="banner"
+            py="4"
+        >
             <HeaderContainer>
                 <Grid
                     gridTemplateAreas={{
@@ -65,6 +73,7 @@ export function Header({
                     {/* Hamburger (mobile/tablet only) */}
                     <Box gridArea="menu" display={{ base: 'flex', lg: 'none' }}>
                         <MenuButton
+                            id="navigation"
                             onClick={() => setDrawerOpen(true)}
                             aria-label="Open navigation menu"
                             aria-expanded={drawerOpen}
@@ -90,7 +99,8 @@ export function Header({
                     </Box>
 
                     {/* Desktop Navigation */}
-                    <Flex
+                    <styled.nav
+                        aria-label="Primary"
                         gridArea="nav"
                         display={{ base: 'none', lg: 'flex' }}
                         alignItems="center"
@@ -107,7 +117,7 @@ export function Header({
                                 {item.label}
                             </AppLink>
                         ))}
-                    </Flex>
+                    </styled.nav>
 
                     {/* CTAs — rightmost is the primary pill, others are square */}
                     {/* Below 460px, secondaries hide; only the primary pill stays in the header */}
@@ -219,8 +229,10 @@ export function Header({
                                     ))}
                                 </Flex>
                             ) : null}
-                            <Flex
-                                direction="column"
+                            <styled.nav
+                                aria-label="Mobile"
+                                display="flex"
+                                flexDirection="column"
                                 gap="5"
                                 px="5"
                                 py="6"
@@ -237,7 +249,7 @@ export function Header({
                                         {item.label}
                                     </AppLink>
                                 ))}
-                            </Flex>
+                            </styled.nav>
                         </Drawer.Content>
                     </Drawer.Positioner>
                 </Portal>
@@ -254,16 +266,19 @@ function insertVenueBeforeAbout(items: typeof conferenceManifest.nav) {
 }
 
 function MenuButton({
+    id,
     onClick,
     'aria-label': ariaLabel,
     'aria-expanded': ariaExpanded,
 }: {
+    id?: string
     onClick: () => void
     'aria-label': string
     'aria-expanded': boolean
 }) {
     return (
         <styled.button
+            id={id}
             type="button"
             onClick={onClick}
             aria-label={ariaLabel}

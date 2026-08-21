@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
 import { css } from '~/styled-system/css'
-import { Box, Divider, Flex, Grid, styled } from '~/styled-system/jsx'
+import { Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
 
@@ -17,7 +17,7 @@ export const Footer = () => (
     // strip is the single curated sponsor surface, and duplicating it in
     // the footer competed visually on long pages. The /sponsors and
     // /sponsorship nav links below give discovery without the noise.
-    <Box mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
+    <styled.footer mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
         <Divider color="border.subtle" mb="6" />
         <Grid
             gridTemplateColumns="1fr"
@@ -118,5 +118,5 @@ export const Footer = () => (
                 </Flex>
             </Flex>
         </Grid>
-    </Box>
+    </styled.footer>
 )

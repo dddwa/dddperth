@@ -124,6 +124,44 @@ export default [
     {
         settings: {
             react: { version: 'detect' },
+            // eslint-plugin-jsx-a11y only recognises lowercase JSX tags
+            // (`<div>`, `<button>`, ...) out of the box. This codebase renders
+            // almost everything through PandaCSS's styled-system (`<Box>`,
+            // `<Flex>`, `<Grid>`, `<Container>`, ...), which are just `<div>`s
+            // under the hood — without this mapping, jsx-a11y silently skips
+            // every element written that way, including real bugs like an
+            // onClick handler on a `<Box>` with no keyboard equivalent.
+            'jsx-a11y': {
+                components: {
+                    Box: 'div',
+                    Flex: 'div',
+                    Grid: 'div',
+                    Container: 'div',
+                    VStack: 'div',
+                    HStack: 'div',
+                    Divider: 'hr',
+                },
+            },
+        },
+    },
+    {
+        files: ['**/*.tsx', '**/*.jsx'],
+        rules: {
+            // Not part of jsx-a11y's `recommended` config, but a live,
+            // non-deprecated rule worth enforcing here: catches an
+            // aria-hidden element that's still keyboard-focusable (a real
+            // keyboard trap for screen reader + keyboard users).
+            //
+            // `prefer-tag-over-role` was also tried here but produced only
+            // false positives against deliberate patterns already in this
+            // codebase — role="rowheader"/"columnheader" on a CSS-grid-based
+            // schedule (not a real <table>, so <th> isn't available),
+            // role="img" on labelled inline <svg> icons, and role="status"
+            // on a live region (a standard, well-supported pattern; the
+            // suggested <output> alternative has different, form-associated
+            // semantics). Left out rather than forcing those into worse
+            // markup just to satisfy the rule.
+            'jsx-a11y/no-aria-hidden-on-focusable': 'error',
         },
     },
     {
