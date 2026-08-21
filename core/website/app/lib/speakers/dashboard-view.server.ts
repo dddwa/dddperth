@@ -43,6 +43,7 @@ export interface SpeakerDashboardView {
     dinnerDateLabel: string | null
     dinnerCalendarUrl: string | null
     dinnerResponse: YesNoMaybe | undefined
+    dinnerDietaryRequirements: string | undefined
 
     meetTheExpertsSlots: Array<{ id: string; label: string }>
     meetTheExpertsResponded: boolean
@@ -134,6 +135,7 @@ export function buildSpeakerDashboardView(
               })
             : null,
         dinnerResponse: ownProfile?.rsvpSpeakersDinner,
+        dinnerDietaryRequirements: ownProfile?.dietaryRequirements,
 
         meetTheExpertsSlots: checklistConfig?.meetTheExpertsSlots ?? [],
         meetTheExpertsResponded: Boolean(ownProfile?.registerMeetTheExpertsRespondedAt),

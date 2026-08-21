@@ -9,7 +9,7 @@ import {
     type YesNoMaybeOther,
 } from '../services/speakers-store'
 
-function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
+export function emptyToUndefined(value: FormDataEntryValue | null): string | undefined {
     if (typeof value !== 'string') return undefined
     const trimmed = value.trim()
     return trimmed.length > 0 ? trimmed : undefined
@@ -66,7 +66,6 @@ export function parseSpeakerProfileForm(formData: FormData, sessionizeId: string
         namePhoneticSpelling: emptyToUndefined(formData.get(`namePhoneticSpelling-${sessionizeId}`)),
         introductionUseSessionizeBio: formData.get(`introductionSource-${sessionizeId}`) !== 'custom',
         introductionCustomText: emptyToUndefined(formData.get(`introductionCustomText-${sessionizeId}`)),
-        dietaryRequirements: emptyToUndefined(formData.get(`dietaryRequirements-${sessionizeId}`)),
         registerMeetTheExperts: oneOf<YesNoMaybeOther>(
             formData.get(`registerMeetTheExperts-${sessionizeId}`),
             YES_NO_MAYBE_OTHER_OPTIONS,

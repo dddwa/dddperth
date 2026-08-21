@@ -32,7 +32,7 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         : createConsoleEmailService()
 
     const sponsors = createD1SponsorsStore(db)
-    const speakers = createD1SpeakersStore(db)
+    const speakers = createD1SpeakersStore({ db, config })
     const notifications = createD1NotificationLog(db)
     const assets = createR2AssetStorage(env.SPONSOR_ASSETS)
 

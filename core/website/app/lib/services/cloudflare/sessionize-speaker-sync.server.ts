@@ -1,8 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
-import type { sessionSchema } from '@ddd/conference-config'
-import type { z } from 'zod'
-import { getYearConfig } from '../../get-year-config.server'
-import { getConfSessions, getConfSpeakers } from '../../sessionize.server'
+import { resolveSpeakerPortalSessionizeEndpoint } from '../../speakers/map-sessionize'
+import { getConfSessions } from '../../sessionize.server'
 import { computeSpeakerSyncPlan, type SyncSourceSession } from '../../speakers/sync-plan'
 import type { AppConfig } from '../app-config'
 import type { SpeakerSyncService } from '../speaker-sync-service'
@@ -14,42 +12,20 @@ import type { SpeakersStore } from '../speakers-store'
  */
 const STALE_RUN_SECONDS = 5 * 60
 
-type Session = z.infer<typeof sessionSchema>
-
-/** All category-item names under the category matching `categoryName`
- * (case-sensitive, matched on Sessionize's own category name). Empty array
- * if the category doesn't exist on this session — a category set up after
- * some sessions were submitted shouldn't break the sync. */
-function categoryValues(session: Session, categoryName: string): string[] {
-    const category = session.categories.find((c) => c.name === categoryName)
-    return category ? category.categoryItems.map((item) => item.name) : []
-}
-
-/** Single-select convenience — first value, if any. */
-function categoryValue(session: Session, categoryName: string): string | undefined {
-    return categoryValues(session, categoryName)[0]
-}
-
 export function createSessionizeSpeakerSyncService(args: { config: AppConfig; speakers: SpeakersStore }): SpeakerSyncService {
     const { config, speakers } = args
     const portalConfig = conferenceManifest.speakerPortal
 
-    function sessionizeEndpointFor(year: string): string | undefined {
-        const yearConfig = getYearConfig(year, config)
-        if (yearConfig.kind !== 'conference' || yearConfig.sessions?.kind !== 'sessionize') return undefined
-        return yearConfig.sessions.sessionizeEndpoint
-    }
-
     return {
         isConfigured() {
-            return Boolean(portalConfig && sessionizeEndpointFor(portalConfig.year))
+            return Boolean(portalConfig && resolveSpeakerPortalSessionizeEndpoint(config))
         },
 
         async syncNow(trigger) {
             if (!portalConfig) {
                 return { ok: false, reason: 'not-configured' }
             }
-            const sessionizeEndpoint = sessionizeEndpointFor(portalConfig.year)
+            const sessionizeEndpoint = resolveSpeakerPortalSessionizeEndpoint(config)
             if (!sessionizeEndpoint) {
                 return { ok: false, reason: 'not-configured' }
             }
@@ -61,46 +37,23 @@ export function createSessionizeSpeakerSyncService(args: { config: AppConfig; sp
 
             const runId = await speakers.startSyncRun(trigger)
             try {
-                const [allSessions, allSpeakers, currentSpeakers, currentSpeakerSessions] = await Promise.all([
+                const [allSessions, currentSpeakers, currentSpeakerSessions] = await Promise.all([
                     getConfSessions({ sessionizeEndpoint }),
-                    getConfSpeakers({ sessionizeEndpoint }),
                     speakers.getAllSpeakersForSync(),
                     speakers.getAllSpeakerSessions(),
                 ])
 
-                const { format, level, generalTopic, talkTopics } = portalConfig.sessionizeCategoryNames
                 const accessStatuses = new Set(portalConfig.portalAccessStatuses)
                 const sessions: SyncSourceSession[] = allSessions
                     .filter((s) => s.status && accessStatuses.has(s.status))
                     .map((s) => ({
                         sessionizeSessionId: s.id,
-                        sessionTitle: s.title,
-                        description: s.description ?? undefined,
-                        format: categoryValue(s, format),
-                        level: categoryValue(s, level),
-                        generalTopic: categoryValue(s, generalTopic),
-                        talkTopics: categoryValues(s, talkTopics),
-                        startsAt: s.startsAt ?? undefined,
-                        endsAt: s.endsAt ?? undefined,
-                        roomName: s.room ?? undefined,
-                        status: s.status ?? 'Unknown',
-                        isConfirmed: s.isConfirmed,
                         speakerIds: s.speakers.map((sp) => sp.id),
                     }))
-
-                const speakerInfo = allSpeakers.map((s) => ({
-                    sessionizeId: s.id,
-                    fullName: s.fullName,
-                    tagLine: s.tagLine,
-                    bio: s.bio ?? undefined,
-                    profilePictureUrl: s.profilePicture ?? undefined,
-                    links: s.links,
-                }))
 
                 const plan = computeSpeakerSyncPlan({
                     year: portalConfig.year,
                     sessions,
-                    speakerInfo,
                     currentSpeakers,
                     currentSpeakerSessions,
                 })

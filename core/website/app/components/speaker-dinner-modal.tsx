@@ -12,8 +12,32 @@ const radioRowClass = css({
     color: 'admin.800',
 })
 
+const inputClass = css({
+    mt: '1',
+    w: 'full',
+    px: '3',
+    py: '2',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'admin.400',
+    borderRadius: 'md',
+    fontSize: 'sm',
+    bg: 'white',
+    color: 'admin.900',
+    _placeholder: { color: 'admin.400' },
+    _focus: { outline: 'none', borderColor: 'indigo.7', boxShadow: 'focus-ring' },
+})
+
+const fieldLabelClass = css({
+    display: 'block',
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'admin.700',
+})
+
 /**
- * "RSVP for the speaker dinner" modal — Yes/No/Maybe, submits to
+ * "RSVP for the speaker dinner" modal — Yes/No/Maybe plus dietary
+ * requirements (only relevant if they're attending), submits to
  * `rsvp-dinner`. Shows an "add to calendar" link once answered Yes or Maybe.
  */
 export function SpeakerDinnerModal({
@@ -23,6 +47,7 @@ export function SpeakerDinnerModal({
     dateLabel,
     calendarUrl,
     currentResponse,
+    currentDietaryRequirements,
     justResponded,
 }: {
     open: boolean
@@ -31,6 +56,7 @@ export function SpeakerDinnerModal({
     dateLabel: string
     calendarUrl?: string
     currentResponse?: YesNoMaybe
+    currentDietaryRequirements?: string
     justResponded: boolean
 }) {
     const navigation = useNavigation()
@@ -64,6 +90,20 @@ export function SpeakerDinnerModal({
                         </label>
                     ))}
                 </Flex>
+
+                <Box mb="5">
+                    <label htmlFor={`dietary-${sessionizeId}`} className={fieldLabelClass}>
+                        Dietary requirements
+                    </label>
+                    <input
+                        id={`dietary-${sessionizeId}`}
+                        name="dietaryRequirements"
+                        type="text"
+                        defaultValue={currentDietaryRequirements ?? ''}
+                        className={inputClass}
+                    />
+                </Box>
+
                 <Flex justify="flex-end">
                     <styled.button
                         type="submit"

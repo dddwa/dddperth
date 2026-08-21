@@ -133,19 +133,6 @@ export function SpeakerProfileForm({
                 )}
             </Box>
 
-            <Box mb="5">
-                <label htmlFor={`dietary-${sessionizeId}`} className={fieldLabelClass}>
-                    Dietary requirements
-                </label>
-                <input
-                    id={`dietary-${sessionizeId}`}
-                    name={`dietaryRequirements-${sessionizeId}`}
-                    type="text"
-                    defaultValue={profile?.dietaryRequirements ?? ''}
-                    className={inputClass}
-                />
-            </Box>
-
             <Box mb="6">
                 <label htmlFor={`meetExperts-${sessionizeId}`} className={fieldLabelClass}>
                     Would you be interested in being a part of our Meet the Experts sessions?
