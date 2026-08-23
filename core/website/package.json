@@ -40,7 +40,9 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.10.2",
         "@cloudflare/vite-plugin": "^1.51.0",
+        "@playwright/test": "^1.55.1",
         "@testing-library/dom": "^10.4.1",
         "@testing-library/react": "^16.3.2",
         "jsdom": "^29.1.1",

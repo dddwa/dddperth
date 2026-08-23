@@ -135,6 +135,44 @@
                 "cwd": "core/website"
             }
         },
+        "e2e": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test", "@axe-core/playwright"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test --project=chromium",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
+        },
+        "e2e-visual": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test e2e/visual.spec.ts",
+                "cwd": "core/website"
+            },
+            "dependsOn": ["setup"]
+        },
         "deploy": {
             "executor": "nx:run-commands",
             "options": {

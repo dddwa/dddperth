@@ -59,6 +59,11 @@ vitest.config.*.timestamp*
 docs/prompts
 .playwright-mcp
 
+# Playwright e2e output
+playwright-report/
+test-results/
+blob-report/
+
 .claude/worktrees
 .claude/settings.local.json
 

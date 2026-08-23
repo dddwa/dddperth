@@ -89,8 +89,20 @@ export default function Agenda() {
 
     const isLatestConference = conferences.every((c) => c.year <= year)
 
+    // The visible page title lives in <title> (via `meta`); this page had no
+    // <h1> at all, which breaks heading-based navigation for screen reader
+    // users. `srOnly` keeps it out of the (already-established) visual design
+    // while giving AT users a real entry point that matches the page's
+    // purpose.
+    const pageHeading = (
+        <styled.h1 srOnly>
+            {conferenceManifest.public.name} {year} Agenda
+        </styled.h1>
+    )
+
     return cancelledMessage ? (
         <PageLayout>
+            {pageHeading}
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceManifest.public.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
@@ -105,6 +117,7 @@ export default function Agenda() {
         </PageLayout>
     ) : !schedule ? (
         <PageLayout>
+            {pageHeading}
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceManifest.public.name} {year} agenda has not been{' '}
@@ -118,6 +131,7 @@ export default function Agenda() {
         </PageLayout>
     ) : (
         <PageLayout>
+            {pageHeading}
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
                 <Box
