@@ -17,7 +17,8 @@
         "sponsor:add": "node scripts/add-sponsor.mjs",
         "jira:auth": "node scripts/jira-auth.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",
-        "provision:cloudflare": "node scripts/provision-cloudflare.mjs"
+        "provision:cloudflare": "node scripts/provision-cloudflare.mjs",
+        "vr": "node scripts/visual-regression.mjs"
     },
     "private": true,
     "devDependencies": {

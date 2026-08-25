@@ -149,7 +149,7 @@
             ],
             "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
             "options": {
-                "command": "playwright test --project=chromium",
+                "command": "playwright test --project=chromium --project=chromium-light",
                 "cwd": "core/website"
             },
             "dependsOn": ["setup"]

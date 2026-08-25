@@ -48,8 +48,19 @@ export default function Sponsors() {
     const { year, sponsors, conferences, cancelledMessage, stillAcceptingSponsors } = useLoaderData<typeof loader>()
     const isLatestConference = conferences.every((c) => c.year <= year)
 
+    // The populated branch below renders a visible <h1>; the cancelled and
+    // "not announced yet" branches had none at all, so those states gave
+    // screen reader users no heading-level entry point. Mirrors the same
+    // srOnly pattern used on the agenda page for its empty states.
+    const pageHeading = (
+        <styled.h1 srOnly>
+            {conferenceManifest.public.name} {year} Sponsors
+        </styled.h1>
+    )
+
     return cancelledMessage ? (
         <PageLayout minHeight="100vh">
+            {pageHeading}
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceManifest.public.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
@@ -63,6 +74,7 @@ export default function Sponsors() {
         </PageLayout>
     ) : !sponsors || Object.keys(sponsors).length === 0 ? (
         <PageLayout minHeight="100vh">
+            {pageHeading}
             <Box color="text.primary" textAlign="center" mt="10" mb="8">
                 <styled.p fontSize="3xl">
                     {conferenceManifest.public.name} {year} sponsor information has not been{' '}

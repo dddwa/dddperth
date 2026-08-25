@@ -1,0 +1,1104 @@
+[
+  {
+    "groupId": null,
+    "groupName": "All",
+    "isDefault": false,
+    "sessions": [
+      {
+        "id": "2000001",
+        "title": "Fixture Talk 01: AppSec in Practice",
+        "description": "A synthetic abstract for fixture talk 01. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Fixture Speaker 01"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Security"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "AppSec"
+              },
+              {
+                "id": 41,
+                "name": "Threat Modelling"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000002",
+        "title": "Fixture Talk 02: Design Systems in Practice",
+        "description": "A synthetic abstract for fixture talk 02. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "name": "Fixture Speaker 02"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design, UX & Product"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000003",
+        "title": "Fixture Talk 03: Career Growth in Practice",
+        "description": "A synthetic abstract for fixture talk 03. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers people, career & culture with a focus on career growth.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "name": "Fixture Speaker 03"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "No experience necessary"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "People, Career & Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Career Growth"
+              },
+              {
+                "id": 41,
+                "name": "Team Health"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000004",
+        "title": "Fixture Talk 04: Data Pipelines in Practice",
+        "description": "A synthetic abstract for fixture talk 04. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers data & analytics with a focus on data pipelines.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000004",
+            "name": "Fixture Speaker 04"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Data & Analytics"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Data Pipelines"
+              },
+              {
+                "id": 41,
+                "name": "Analytics"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000005",
+        "title": "Fixture Talk 05: Ethics in Practice",
+        "description": "A synthetic abstract for fixture talk 05. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers industry, ethics & society with a focus on ethics.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000005",
+            "name": "Fixture Speaker 05"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Industry, Ethics & Society"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Sustainability"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000006",
+        "title": "Fixture Talk 06: Applied AI in Practice",
+        "description": "A synthetic abstract for fixture talk 06. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000006",
+            "name": "Fixture Speaker 06"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "No experience necessary"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "AI and ML"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "Agents & RAG"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000007",
+        "title": "Fixture Talk 07: AppSec in Practice",
+        "description": "A synthetic abstract for fixture talk 07. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000007",
+            "name": "Fixture Speaker 07"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Security"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "AppSec"
+              },
+              {
+                "id": 41,
+                "name": "Threat Modelling"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000008",
+        "title": "Fixture Talk 08: Design Systems in Practice",
+        "description": "A synthetic abstract for fixture talk 08. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000008",
+            "name": "Fixture Speaker 08"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design, UX & Product"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000009",
+        "title": "Fixture Talk 09: Career Growth in Practice",
+        "description": "A synthetic abstract for fixture talk 09. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers people, career & culture with a focus on career growth.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000009",
+            "name": "Fixture Speaker 09"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "No experience necessary"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "People, Career & Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Career Growth"
+              },
+              {
+                "id": 41,
+                "name": "Team Health"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000010",
+        "title": "Fixture Talk 10: Data Pipelines in Practice",
+        "description": "A synthetic abstract for fixture talk 10. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers data & analytics with a focus on data pipelines.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000010",
+            "name": "Fixture Speaker 10"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Data & Analytics"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Data Pipelines"
+              },
+              {
+                "id": 41,
+                "name": "Analytics"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000011",
+        "title": "Fixture Talk 11: Ethics in Practice",
+        "description": "A synthetic abstract for fixture talk 11. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers industry, ethics & society with a focus on ethics.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000011",
+            "name": "Fixture Speaker 11"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Industry, Ethics & Society"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Sustainability"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000012",
+        "title": "Fixture Talk 12: Applied AI in Practice",
+        "description": "A synthetic abstract for fixture talk 12. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000012",
+            "name": "Fixture Speaker 12"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "No experience necessary"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "AI and ML"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "Agents & RAG"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000090",
+        "title": "Fixture Talk 90: Applied AI in Practice",
+        "description": "A synthetic abstract for fixture talk 90. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000090",
+            "name": "Fixture Speaker 90"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "Keynote"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "No experience necessary"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "AI and ML"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "Agents & RAG"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000091",
+        "title": "Fixture Talk 91: AppSec in Practice",
+        "description": "A synthetic abstract for fixture talk 91. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": true,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000091",
+            "name": "Fixture Speaker 91"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Security"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "AppSec"
+              },
+              {
+                "id": 41,
+                "name": "Threat Modelling"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "2000092",
+        "title": "Fixture Talk 92: Design Systems in Practice",
+        "description": "A synthetic abstract for fixture talk 92. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000092",
+            "name": "Fixture Speaker 92"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design, UX & Product"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      }
+    ]
+  }
+]

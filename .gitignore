@@ -75,6 +75,12 @@ website/.wrangler/
 website/.dev.vars
 conference/wrangler/.dev.vars
 
+# Generated fresh by e2e/start-dev-server.mjs on every test run. The e2e
+# wrangler config (conference/wrangler/e2e/e2e.jsonc) IS committed; only its
+# generated vars and local miniflare state are ignored.
+conference/wrangler/e2e/.dev.vars
+conference/wrangler/e2e/.wrangler/
+
 qa
 
 .nx/self-healing

@@ -8,6 +8,11 @@ import baseConfig from '../eslint.config.mjs'
 const __dirname = import.meta.dirname
 
 export default [
+    {
+        // Plain node script that boots the e2e dev server; not part of the
+        // TypeScript project, so the type-aware rules can't parse it.
+        ignores: ['e2e/start-dev-server.mjs'],
+    },
     ...baseConfig,
     {
         ignores: [

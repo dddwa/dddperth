@@ -114,7 +114,10 @@ export default function BlogPost() {
                             <div>
                                 <div>
                                     {/* <div>{frontmatter.date}</div> */}
-                                    <div>{frontmatter.title}</div>
+                                    {/* The post title is the page's heading — it was a bare
+                                        <div>, leaving blog posts with no <h1> at all and no
+                                        heading-level entry point for screen reader users. */}
+                                    <h1>{frontmatter.title}</h1>
                                 </div>
                                 <div>
                                     {blogAuthors.map((author) => (
