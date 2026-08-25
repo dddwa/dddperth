@@ -18,6 +18,56 @@ describe('Sessionize e2e fixtures', () => {
         expect(() => gridSmartSchema.parse(read('grid-smart.json'))).not.toThrow()
     })
 
+    it('speakers.json matches speakersSchema', async () => {
+        // The talk detail template resolves names, bios and photos from this
+        // view. It was missing, which is why that page reached the live API.
+        const { speakersSchema } = await import('./sessionize.server')
+        expect(() => speakersSchema.parse(read('speakers.json'))).not.toThrow()
+    })
+
+    it('speakers.json covers every speaker the session fixtures reference', () => {
+        // A referenced-but-absent speaker renders a talk page with a missing
+        // byline, which is exactly the sort of gap that sends the template
+        // looking at the real API.
+        const sessions = read('all-sessions.json') as Array<{
+            sessions: Array<{ speakers: Array<{ id: string }> }>
+        }>
+        const speakers = read('speakers.json') as Array<{ id: string }>
+        const known = new Set(speakers.map((s) => s.id))
+
+        const referenced = new Set(
+            sessions.flatMap((g) => g.sessions.flatMap((session) => session.speakers.map((sp) => sp.id))),
+        )
+        expect([...referenced].filter((id) => !known.has(id))).toEqual([])
+    })
+
+    it('the pinned e2e talk id exists in the Sessions view with a speaker', async () => {
+        // The talk detail route reads the `Sessions` view (getConfSessions),
+        // while the agenda reads `GridSmart` — and the two fixture files have
+        // entirely disjoint session ids. Pinning FIXTURE_TALK_ID to an id that
+        // only exists in GridSmart 404s the detail page, which is easy to miss
+        // because the agenda still looks right.
+        const { FIXTURE_TALK_ID } = await import('../../e2e/routes')
+        const groups = read('all-sessions.json') as Array<{
+            sessions: Array<{ id: string; description: string | null; speakers: Array<{ id: string }> }>
+        }>
+        const session = groups.flatMap((g) => g.sessions).find((s) => s.id === FIXTURE_TALK_ID)
+
+        expect(session, `FIXTURE_TALK_ID ${FIXTURE_TALK_ID} is not in all-sessions.json`).toBeDefined()
+        expect(session?.description, 'pinned talk has no description to render').toBeTruthy()
+        expect(session?.speakers.length, 'pinned talk has no speaker to render').toBeGreaterThan(0)
+    })
+
+    it('no fixture points at a live host', () => {
+        // Fixtures must be self-contained: a real image or API URL would make
+        // baselines depend on a third party staying online, and would leak
+        // real production content into the suite.
+        for (const file of ['grid-smart.json', 'all-sessions.json', 'speakers.json']) {
+            const raw = readFileSync(join(fixtures, file), 'utf8')
+            expect(raw, `${file} references a live host`).not.toMatch(/https?:\/\/(?!localhost|127\.0\.0\.1)/)
+        }
+    })
+
     it('all-sessions.json matches the all-sessions shape', () => {
         const parsed = read('all-sessions.json') as Array<{ sessions: unknown[] }>
         expect(Array.isArray(parsed)).toBe(true)

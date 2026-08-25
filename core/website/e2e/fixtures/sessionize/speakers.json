@@ -1,0 +1,287 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "firstName": "Fixture",
+    "lastName": "Speaker 01",
+    "fullName": "Fixture Speaker 01",
+    "bio": "Fixture Speaker 01 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 11e594f4",
+    "sessions": [
+      {
+        "id": 2000001,
+        "name": "Fixture Talk 01: AppSec in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "firstName": "Fixture",
+    "lastName": "Speaker 02",
+    "fullName": "Fixture Speaker 02",
+    "bio": "Fixture Speaker 02 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker e79acd97",
+    "sessions": [
+      {
+        "id": 2000002,
+        "name": "Fixture Talk 02: Design Systems in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000003",
+    "firstName": "Fixture",
+    "lastName": "Speaker 03",
+    "fullName": "Fixture Speaker 03",
+    "bio": "Fixture Speaker 03 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 993224b4",
+    "sessions": [
+      {
+        "id": 2000003,
+        "name": "Fixture Talk 03: Career Growth in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000004",
+    "firstName": "Fixture",
+    "lastName": "Speaker 04",
+    "fullName": "Fixture Speaker 04",
+    "bio": "Fixture Speaker 04 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 008bf60b",
+    "sessions": [
+      {
+        "id": 2000004,
+        "name": "Fixture Talk 04: Data Pipelines in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000005",
+    "firstName": "Fixture",
+    "lastName": "Speaker 05",
+    "fullName": "Fixture Speaker 05",
+    "bio": "Fixture Speaker 05 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 3303f939",
+    "sessions": [
+      {
+        "id": 2000005,
+        "name": "Fixture Talk 05: Ethics in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000006",
+    "firstName": "Fixture",
+    "lastName": "Speaker 06",
+    "fullName": "Fixture Speaker 06",
+    "bio": "Fixture Speaker 06 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker a8353ed0",
+    "sessions": [
+      {
+        "id": 2000006,
+        "name": "Fixture Talk 06: Applied AI in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000007",
+    "firstName": "Fixture",
+    "lastName": "Speaker 07",
+    "fullName": "Fixture Speaker 07",
+    "bio": "Fixture Speaker 07 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 6b7be926",
+    "sessions": [
+      {
+        "id": 2000007,
+        "name": "Fixture Talk 07: AppSec in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000008",
+    "firstName": "Fixture",
+    "lastName": "Speaker 08",
+    "fullName": "Fixture Speaker 08",
+    "bio": "Fixture Speaker 08 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker fe9eeff5",
+    "sessions": [
+      {
+        "id": 2000008,
+        "name": "Fixture Talk 08: Design Systems in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000009",
+    "firstName": "Fixture",
+    "lastName": "Speaker 09",
+    "fullName": "Fixture Speaker 09",
+    "bio": "Fixture Speaker 09 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker f3e028aa",
+    "sessions": [
+      {
+        "id": 2000009,
+        "name": "Fixture Talk 09: Career Growth in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000010",
+    "firstName": "Fixture",
+    "lastName": "Speaker 10",
+    "fullName": "Fixture Speaker 10",
+    "bio": "Fixture Speaker 10 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 85d027de",
+    "sessions": [
+      {
+        "id": 2000010,
+        "name": "Fixture Talk 10: Data Pipelines in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000011",
+    "firstName": "Fixture",
+    "lastName": "Speaker 11",
+    "fullName": "Fixture Speaker 11",
+    "bio": "Fixture Speaker 11 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker dd7df116",
+    "sessions": [
+      {
+        "id": 2000011,
+        "name": "Fixture Talk 11: Ethics in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000012",
+    "firstName": "Fixture",
+    "lastName": "Speaker 12",
+    "fullName": "Fixture Speaker 12",
+    "bio": "Fixture Speaker 12 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 5ba39b7c",
+    "sessions": [
+      {
+        "id": 2000012,
+        "name": "Fixture Talk 12: Applied AI in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000090",
+    "firstName": "Fixture",
+    "lastName": "Speaker 90",
+    "fullName": "Fixture Speaker 90",
+    "bio": "Fixture Speaker 90 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker aeeca552",
+    "sessions": [
+      {
+        "id": 2000090,
+        "name": "Fixture Talk 90: Applied AI in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000091",
+    "firstName": "Fixture",
+    "lastName": "Speaker 91",
+    "fullName": "Fixture Speaker 91",
+    "bio": "Fixture Speaker 91 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 5fb4179b",
+    "sessions": [
+      {
+        "id": 2000091,
+        "name": "Fixture Talk 91: AppSec in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000092",
+    "firstName": "Fixture",
+    "lastName": "Speaker 92",
+    "fullName": "Fixture Speaker 92",
+    "bio": "Fixture Speaker 92 is a synthetic speaker used only by the e2e fixtures.",
+    "profilePicture": null,
+    "tagLine": "Fixture speaker 6d6f1a3f",
+    "sessions": [
+      {
+        "id": 2000092,
+        "name": "Fixture Talk 92: Design Systems in Practice"
+      }
+    ],
+    "isTopSpeaker": false,
+    "links": [],
+    "questionAnswers": [],
+    "categories": []
+  }
+]

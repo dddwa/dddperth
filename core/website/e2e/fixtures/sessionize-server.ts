@@ -12,15 +12,21 @@ import { fileURLToPath } from 'node:url'
  * browser-originated requests, and its Node interceptors can't be installed
  * inside workerd — so neither half of MSW can reach these fetches.
  *
- * The app already supports pointing a year at a different endpoint via
- * `SESSIONIZE_<YYYY>_SESSIONS` / `SESSIONIZE_<YYYY>_ALL_SESSIONS`
- * (`build-config.server.ts` → `get-year-config.server.tsx`), which is the
- * seam the real deployment uses. Pointing that at localhost gives full
- * control of the response with no interception layer, no extra dependency,
- * and no divergence between how tests and production resolve the endpoint.
+ * The worker installs a dev-only `fetch` interceptor
+ * (`app/lib/sessionize-fixture-fetch.server.ts`) that rewrites any
+ * `sessionize.com` request to this server. That is host-based, so it covers
+ * every year and every view at once.
+ *
+ * It deliberately replaced the earlier approach of repointing the app's
+ * per-year `SESSIONIZE_<YYYY>_*` endpoint overrides. That seam exists, but
+ * only 2026 leaves its endpoints `undefined` for env injection — every other
+ * year hardcodes its Sessionize URL in `conference/config/years/<year>.ts`,
+ * so there was no override to set and those requests silently reached the
+ * live API.
  *
  * Sessionize's URL shape is `<endpoint>/view/<View>`, so one server answers
- * both `/view/GridSmart` (agenda) and `/view/Sessions` (voting).
+ * `/view/GridSmart` (agenda), `/view/Sessions` (voting) and `/view/Speakers`
+ * (talk detail).
  */
 
 const fixturesDir = dirname(fileURLToPath(import.meta.url))
@@ -28,6 +34,9 @@ const fixturesDir = dirname(fileURLToPath(import.meta.url))
 const VIEWS: Record<string, string> = {
     GridSmart: 'sessionize/grid-smart.json',
     Sessions: 'sessionize/all-sessions.json',
+    // The talk detail template resolves speaker names, bios and photos from
+    // this view. Without it, that page fell back to the live API.
+    Speakers: 'sessionize/speakers.json',
 }
 
 export interface SessionizeFixtureServer {
@@ -36,10 +45,10 @@ export interface SessionizeFixtureServer {
 }
 
 /**
- * Fixed port, because the app resolves Sessionize endpoints from
- * `conference/wrangler/.dev.vars` (the Cloudflare Vite plugin does not read
- * `process.env` — verified), so the URL has to be written to that file
- * before the dev server boots. A fixed port keeps that file stable.
+ * Fixed port, because the fixture URL is passed to the worker as a Worker var
+ * written to the e2e `.dev.vars` before the dev server boots (the Cloudflare
+ * Vite plugin reads that file at boot and does not read `process.env` —
+ * verified). A fixed port keeps that file stable.
  */
 export const SESSIONIZE_FIXTURE_PORT = Number(process.env.SESSIONIZE_FIXTURE_PORT ?? 3899)
 

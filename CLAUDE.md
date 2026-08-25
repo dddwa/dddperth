@@ -209,15 +209,30 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
   exit; a `kill -9` skipped the restore and left `SESSIONIZE_*` pointing at a dead port.) The one thing
   deliberately *shared* is the local D1 database, so `nx d1-migrate-local` covers it — isolating it would mean a
   new env key in every fork's build-manifest `d1DatabaseName`.
-- **Sessionize is never contacted from tests.** `core/website/e2e/start-dev-server.mjs` starts a small fixture
-  server (`e2e/fixtures/sessionize/`) and points `SESSIONIZE_2026_*` at it *before* booting Vite. Two ordering
-  facts make the wrapper necessary, both verified: the Cloudflare Vite plugin reads Worker vars from `.dev.vars`
-  at boot and ignores `process.env`, and Playwright starts `webServer` **before** `globalSetup` — so this cannot
-  be done in `globalSetup`. `pnpm vr` goes through the same wrapper, so visual baselines are captured from
-  fixture data rather than whatever is in the developer's `.dev.vars`.
-  - **Not MSW**: every Sessionize call happens inside the Cloudflare Worker, so MSW's service worker never sees
-    it and its Node interceptors can't run in workerd. Repointing the endpoint uses the same config seam the
-    real deployment uses, with no extra dependency.
+- **Sessionize is never contacted from tests.** Two mechanisms, doing different jobs — both are needed:
+  1. **Interception.** The worker installs a dev-only `fetch` interceptor
+     (`app/lib/sessionize-fixture-fetch.server.ts`) that answers any `sessionize.com` request from
+     `e2e/fixtures/sessionize/`. It matches on *hostname*, so it covers every year and every view, including
+     years added later. An unknown Sessionize view throws rather than falling through to the network.
+  2. **Configuration.** `SESSIONIZE_2026_*` is still set, because the voting loader checks
+     `allSessionsEndpoint` is present *before* fetching anything — interception alone leaves `/voting`
+     rendering its "not configured" state.
+  Both are written by `core/website/e2e/start-dev-server.mjs` *before* Vite boots. Two ordering facts make the
+  wrapper necessary, both verified: the Cloudflare Vite plugin reads Worker vars from `.dev.vars` at boot and
+  ignores `process.env`, and Playwright starts `webServer` **before** `globalSetup`. `pnpm vr` goes through the
+  same wrapper, so visual baselines come from fixture data.
+  - **Why interception, not just endpoint overrides.** The app supports per-year `SESSIONIZE_<YYYY>_*`
+    overrides, and the suite originally relied only on those. That seam is real but partial, and the gap is
+    silent: **only 2026 leaves its endpoints `undefined` for env injection. 2021-2025 hardcode their Sessionize
+    URLs** in `conference/config/years/<year>.ts`, so there was no override to set and those requests went to
+    the live API. `/agenda/2025` and its talk-detail baselines were screenshots of live production data,
+    including a real speaker's name and photograph, re-fetched on every run. Verified fixed: zero outbound
+    connections from `workerd` while loading every Sessionize-backed year.
+  - **Not MSW** — and this was checked, not assumed. `msw/native` exists and intercepts `fetch` natively, but
+    the Worker runs in a **separate `workerd` process** (a standalone C++ V8 binary), not in Vite's Node
+    process. MSW's Node interceptors patch `http`/`https`/undici *inside a Node process*, and there is no Node
+    in that call path, so nothing installed in Vite reaches the worker. Patching `globalThis.fetch` inside the
+    worker is the same idea reduced to what workerd supports.
   - Fixtures are synthetic — they were derived from a live response for **unannounced** CFP submissions, so
     every speaker and talk title is replaced. `app/lib/sessionize-fixtures.test.ts` validates them against the
     production Zod schemas (so a Sessionize schema change fails loudly in unit tests), asserts they still cover
@@ -267,12 +282,19 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
   shared route list across 3 browser engines x 3 viewport widths and compares against committed baselines in
   `core/website/e2e/__screenshots__/` (63 = 7 routes x 9 combinations), to prove a11y markup changes (landmarks,
   heading levels, element type swaps like `div`→`button`) don't change how a page actually looks.
-  - **Captures are scoped and masked** (both configured in `e2e/routes.ts`). `visualScope` clips a route's capture
-    to a selector — `#main` for every route except `/`, which stays full-page so the shared header/nav/footer
-    chrome keeps visual coverage somewhere. `VISUAL_MASK_SELECTORS` paints over `[data-sponsor-grid]`. Both exist
-    because `maxDiffPixelRatio` is a *ratio*: a 10,000px-tall capture absorbs several times more real regression
-    before it trips than a 2,000px one, and sponsor artwork changes for commercial rather than code reasons.
-    Masking rather than hiding keeps layout intact, so the space a sponsor grid occupies is still compared.
+  - **Captures are scoped** via `visualScope` in `e2e/routes.ts` — `#main` for every route except `/`, which
+    stays full-page so the shared header/nav/footer chrome keeps visual coverage somewhere. This matters because
+    `maxDiffPixelRatio` is a *ratio*: a 10,000px-tall capture absorbs several times more real regression before
+    it trips than a 2,000px one.
+  - **Masking is deliberately unused.** `VISUAL_MASK_SELECTORS` exists but is empty. Masking paints a solid
+    block over a region, so it only suits something small and genuinely non-deterministic (a live clock, a
+    random avatar). It was briefly applied to sponsor logo grids and turned the largest, most content-rich part
+    of `/agenda` into two big opaque rectangles — the baseline then proved almost nothing. **Prefer
+    `visualScope` (choose what to include) over masking (paint over what to exclude).**
+  - **Screenshot assertions carry an explicit 30s timeout.** WebKit is markedly slower at element screenshots
+    of tall elements — `#main` on the talk detail page took ~4.5s against Playwright's 5s default, so that test
+    passed or failed depending on machine load. The element is stable (identical bounding box across repeated
+    reads); the timeout was capture cost, not layout instability.
   - **It runs in a pinned Docker container** (`mcr.microsoft.com/playwright:v<version>-noble`), both locally via
     `pnpm vr` and in the `visual-regression` CI job. This is load-bearing, not ceremony: the site loads Ubuntu
     from Google Fonts, so a macOS dev box (no Ubuntu installed, webfont often not fetched) renders text in

@@ -2,19 +2,26 @@
  * Shared route list for the a11y, focus-visible and visual suites.
  *
  * **Every conference-scoped route here is pinned to an explicit past year.**
- * That is deliberate: the "current" conference is whichever year has the
- * latest `conferenceDate` in `conference/config/years-index.ts`, so the
- * unpinned `/agenda` and `/sponsors` routes change what they render as
- * config and dates move — they'd flip from "not announced yet" to a full
- * agenda the moment `agendaPublishedDateTime` passes, and again when a new
- * year is added. Pinned years render identically today and in two years,
- * with no Sessionize credentials, no date override and no network access,
- * because their agendas and sponsor lists are committed `session-data`
- * fixtures under `conference/config/years/`.
+ * The "current" conference is whichever year has the latest `conferenceDate`
+ * in `conference/config/years-index.ts`, so unpinned `/agenda` and
+ * `/sponsors` change what they render as dates pass and years are added —
+ * they flip from "not announced yet" to a full agenda the moment
+ * `agendaPublishedDateTime` passes. Pinned years render identically today and
+ * in two years.
  *
- * Testing the *current* year's empty states was tried and dropped: those
- * routes are a moving target, and an empty state that silently becomes a
- * populated one turns a passing assertion into a meaningless one.
+ * Sessionize is never contacted. The worker installs a dev-only `fetch`
+ * interceptor (`app/lib/sessionize-fixture-fetch.server.ts`) that answers any
+ * `sessionize.com` request from `e2e/fixtures/sessionize/`. It matches on
+ * hostname, so it covers every year including ones added later.
+ *
+ * That interception is load-bearing, and it replaced something subtler that
+ * was broken: the suite previously relied on repointing the app's per-year
+ * `SESSIONIZE_<YYYY>_*` endpoint overrides, but only 2026 leaves its
+ * endpoints `undefined` for env injection. 2021-2025 hardcode their
+ * Sessionize URLs in `conference/config/years/<year>.ts`, so there was no
+ * override to set and those requests went to the live API — which meant the
+ * agenda and talk-detail baselines were screenshots of live production data,
+ * including a real speaker's name and photograph.
  *
  * One route per template — this list is a regression net, not an
  * exhaustive crawl. Adding a second year of the same template costs a
@@ -47,14 +54,23 @@ export interface E2eRoute {
 }
 
 /**
- * The pinned fixture year. 2025 has the richest committed agenda (multiple
- * rooms, sponsors, a full day of sessions) and, being past, its config is
- * effectively frozen.
+ * The pinned fixture year. 2025 is past, so its config is frozen, and its
+ * agenda now renders from the committed Sessionize fixtures rather than the
+ * live API (see the note above).
  */
 export const FIXTURE_YEAR = '2025'
 
-/** A session id and blog slug from committed content in this repo. */
-export const FIXTURE_TALK_ID = '1000132'
+/**
+ * A session id from `e2e/fixtures/sessionize/all-sessions.json` — the
+ * `Sessions` view, which is what the talk detail route reads (`getConfSessions`).
+ * Chosen because it has both a description and a speaker, so the detail
+ * template renders fully populated. Because the fetch interceptor answers
+ * every Sessionize request from those fixtures, this resolves to synthetic
+ * content and can never change under the suite.
+ */
+export const FIXTURE_TALK_ID = '2000001'
+
+/** A blog slug from committed content in this repo. */
 export const FIXTURE_BLOG_SLUG = '2023-02-14-chairperson-report-for-2022'
 
 export const ROUTES: E2eRoute[] = [
@@ -75,20 +91,17 @@ export const ROUTES: E2eRoute[] = [
 /**
  * Regions masked out of every visual baseline.
  *
- * Sponsor logo grids are third-party artwork that changes for commercial
- * reasons rather than code reasons, and on `/agenda` they render *inside*
- * `#main` (below the schedule), so `visualScope` alone can't exclude them.
- * They are also the tallest block on several pages, which is what dilutes
- * `maxDiffPixelRatio` most.
+ * Deliberately empty. Masking paints a solid block over a region, so it only
+ * makes sense for something small and genuinely volatile. It was briefly used
+ * for sponsor logo grids, which turned the largest and most content-rich part
+ * of `/agenda` into two big opaque rectangles — the baseline then proved
+ * almost nothing about the page.
  *
- * Masking rather than hiding is deliberate: `display: none` would reflow
- * everything below it, so the baseline would stop reflecting the real page.
- * A mask paints over the region and leaves layout untouched.
- *
- * The trade-off is explicit: sponsor *layout* still counts (the box occupies
- * its real space), sponsor *artwork* no longer does.
+ * Prefer `visualScope` (choose what to *include*) over masking (paint over
+ * what to exclude). Reach for a mask only for a genuinely non-deterministic
+ * element — a live clock, a random avatar — and keep it small.
  */
-export const VISUAL_MASK_SELECTORS = ['[data-sponsor-grid]']
+export const VISUAL_MASK_SELECTORS: string[] = []
 
 /**
  * Routes that need the dev date override cookie to render their real

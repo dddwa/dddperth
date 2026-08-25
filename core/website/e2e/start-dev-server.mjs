@@ -17,11 +17,11 @@
  *
  * What isolation buys:
  *   - `pnpm start` (port 3800) and the suites (port 3801) run side by side.
- *   - Sessionize always resolves to the committed fixtures, so no test run
- *     ever touches the real API — this is still a wrapper rather than
- *     Playwright's `globalSetup` because Playwright starts `webServer`
- *     *before* `globalSetup` runs, and the Cloudflare plugin reads Worker
- *     vars at boot and ignores `process.env` (both verified).
+ *   - Sessionize always resolves to the committed fixtures, for every year,
+ *     so no test run ever touches the real API — this is still a wrapper
+ *     rather than Playwright's `globalSetup` because Playwright starts
+ *     `webServer` *before* `globalSetup` runs, and the Cloudflare plugin reads
+ *     Worker vars at boot and ignores `process.env` (both verified).
  *   - `E2E_DATE_OVERRIDE` is scoped here, so the `__devDateOverride` cookie
  *     is inert during ordinary local dev and can't shadow the admin date
  *     override in the UI.
@@ -56,8 +56,20 @@ writeFileSync(
         // Enables the __devDateOverride cookie. Scoped to this file so the
         // cookie does nothing during ordinary local dev.
         'E2E_DATE_OVERRIDE=true',
-        `SESSIONIZE_2026_SESSIONS=${fixtureServer.url}`,
-        `SESSIONIZE_2026_ALL_SESSIONS=${fixtureServer.url}`,
+        // Interception: the worker rewrites any sessionize.com request to the
+        // fixtures (app/lib/sessionize-fixture-fetch.server.ts). Host-based, so
+        // it covers every year — including 2021-2025, which hardcode their
+        // Sessionize URLs in config and therefore have no env override to set.
+        // Without this they reached the live API.
+        `SESSIONIZE_FIXTURE_URL=${fixtureServer.url}`,
+        // Configuration: 2026 leaves its endpoints undefined for env injection,
+        // and the voting loader checks `allSessionsEndpoint` is set *before*
+        // fetching anything — so interception alone leaves /voting rendering
+        // its "not configured" state. These two do different jobs; both are
+        // needed. The value only has to be a Sessionize URL for the
+        // interceptor to catch it.
+        `SESSIONIZE_2026_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
+        `SESSIONIZE_2026_ALL_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
         '',
     ].join('\n'),
 )

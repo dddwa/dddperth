@@ -3,6 +3,7 @@ import type { CloudflareEnv } from '../app/remix-app-load-context'
 import { getLoadContext } from '../app/entry.server'
 import { buildAppConfigFromEnv } from '../app/lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from '../app/lib/services/cloudflare/build-services.server'
+import { getFixtureBaseUrl, installSessionizeFixtureFetch } from '../app/lib/sessionize-fixture-fetch.server'
 
 const requestHandler = createRequestHandler(
     () => import('virtual:react-router/server-build'),
@@ -11,6 +12,17 @@ const requestHandler = createRequestHandler(
 
 export default {
     async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
+        // Dev-only: point every Sessionize request at the committed fixtures.
+        // `import.meta.env.DEV` is statically replaced at build time, so this
+        // and the import above are dead-code-eliminated from production (there
+        // is a test asserting the built worker contains no trace of it). The
+        // fixture URL only exists when `e2e/start-dev-server.mjs` set it, so
+        // ordinary `pnpm start` still talks to the real Sessionize.
+        if (import.meta.env.DEV) {
+            const fixtureBaseUrl = getFixtureBaseUrl(env as unknown as Record<string, unknown>)
+            if (fixtureBaseUrl) installSessionizeFixtureFetch(fixtureBaseUrl)
+        }
+
         const url = new URL(request.url)
 
         // Handle trailing slash redirects (match Express behavior)

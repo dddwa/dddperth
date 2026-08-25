@@ -28,6 +28,14 @@ export interface CloudflareEnv {
      * see the note in `load-context.server.ts`.
      */
     E2E_DATE_OVERRIDE?: string
+
+    /**
+     * Base URL of the e2e Sessionize fixture server. Set only by
+     * `e2e/start-dev-server.mjs`. When present (and only in a dev build), the
+     * worker rewrites every `sessionize.com` fetch to this host — see
+     * `app/lib/sessionize-fixture-fetch.server.ts`.
+     */
+    SESSIONIZE_FIXTURE_URL?: string
     /** Resend API key. Optional locally — if absent, magic links are logged to the console. */
     RESEND_API_KEY?: string
     /** From-address for outgoing magic-link emails. */

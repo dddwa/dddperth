@@ -52,13 +52,7 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
     }
 
     return (
-        // `data-sponsor-grid` is a hook for the visual regression suite, which
-        // masks sponsor artwork out of its baselines (see
-        // VISUAL_MASK_SELECTORS in e2e/routes.ts). Sponsor logos change for
-        // commercial reasons rather than code reasons, and this is the tallest
-        // block on several pages. Layout is still captured; only the artwork
-        // inside is painted over.
-        <Flex data-sponsor-grid flexDirection="column" alignItems="flex-start" marginY="16">
+        <Flex flexDirection="column" alignItems="flex-start" marginY="16">
             <styled.h2 fontSize="4xl" textAlign="center" color="text.primary">
                 {year} Sponsors
             </styled.h2>
@@ -119,8 +113,6 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
         <Flex
             as="nav"
             aria-label="Sponsor tiers"
-            // See the note on SponsorSection's `data-sponsor-grid` above.
-            data-sponsor-grid
             width="full"
             flexDirection="column"
             gap="4"
