@@ -52,7 +52,16 @@ for (const route of ROUTES) {
             // selector stops matching — a scoped baseline that quietly
             // becomes empty would agree with itself forever.
             await expect(target, `visualScope "${route.visualScope}" matched no element`).toHaveCount(1)
-            await expect(target).toHaveScreenshot(name, { mask })
+            // Explicit timeout, well above Playwright's 5s default for
+            // assertions. Element screenshots of tall elements are markedly
+            // slower in WebKit than in Chromium/Firefox: `#main` on the talk
+            // detail page is ~4000px and takes ~4.5s to capture there, which
+            // sat close enough to the default that the same page passed or
+            // failed depending on machine load. Measured, not guessed — the
+            // element itself is stable (identical bounding box across repeated
+            // reads), so "waiting for element to be stable" timing out was
+            // capture cost, not layout instability.
+            await expect(target).toHaveScreenshot(name, { mask, timeout: 30_000 })
             return
         }
 
@@ -67,7 +76,7 @@ for (const route of ROUTES) {
             innerHeight: window.innerHeight,
         }))
 
-        await expect(page).toHaveScreenshot(name, { fullPage: true, mask })
+        await expect(page).toHaveScreenshot(name, { fullPage: true, mask, timeout: 30_000 })
 
         if (scrollHeight > innerHeight + 1) {
             const buffer = await page.screenshot({ fullPage: true })
