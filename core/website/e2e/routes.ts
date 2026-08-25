@@ -61,14 +61,14 @@ export interface E2eRoute {
 export const FIXTURE_YEAR = '2025'
 
 /**
- * A session id from `e2e/fixtures/sessionize/all-sessions.json` — the
- * `Sessions` view, which is what the talk detail route reads (`getConfSessions`).
- * Chosen because it has both a description and a speaker, so the detail
- * template renders fully populated. Because the fetch interceptor answers
+ * A session id from `e2e/fixtures/sessionize/`. The fixtures' two views
+ * (GridSmart for the agenda, Sessions for talk detail) share one id space, so
+ * this resolves to the same talk in both — "Fixture Talk 02", which has a
+ * description and a speaker, so the detail template renders fully populated. Because the fetch interceptor answers
  * every Sessionize request from those fixtures, this resolves to synthetic
  * content and can never change under the suite.
  */
-export const FIXTURE_TALK_ID = '2000001'
+export const FIXTURE_TALK_ID = '1240238'
 
 /** A blog slug from committed content in this repo. */
 export const FIXTURE_BLOG_SLUG = '2023-02-14-chairperson-report-for-2022'

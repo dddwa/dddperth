@@ -57,7 +57,56 @@
                 "name": "Fixture Speaker 01"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "Keynote"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Design"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Design Systems"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Accessibility"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -98,7 +147,56 @@
                 "name": "Fixture Speaker 02"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Career"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Career Growth"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Mentoring"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -139,7 +237,56 @@
                 "name": "Fixture Speaker 03"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Data"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Data Pipelines"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Streaming"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -180,7 +327,56 @@
                 "name": "Fixture Speaker 04"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Culture"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Ethics"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Teams"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -221,7 +417,56 @@
                 "name": "Fixture Speaker 05"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "AI"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Applied AI"
+                  },
+                  {
+                    "id": 41,
+                    "name": "LLMs"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -262,7 +507,56 @@
                 "name": "Fixture Speaker 06"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Security"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "AppSec"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Threat Modelling"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84523,
             "room": "River Room 1 (Lv 3)",
             "liveUrl": null,
@@ -346,7 +640,56 @@
                 "name": "Fixture Speaker 07"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Design"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Design Systems"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Accessibility"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84527,
             "room": "River Room 2 (Lv 3)",
             "liveUrl": null,
@@ -369,7 +712,56 @@
                 "name": "Fixture Speaker 08"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Career"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Career Growth"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Mentoring"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84527,
             "room": "River Room 2 (Lv 3)",
             "liveUrl": null,
@@ -396,7 +788,56 @@
                 "name": "Fixture Speaker 10"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Data"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Data Pipelines"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Streaming"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84527,
             "room": "River Room 2 (Lv 3)",
             "liveUrl": null,
@@ -419,7 +860,56 @@
                 "name": "Fixture Speaker 11"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Culture"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Ethics"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Teams"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84527,
             "room": "River Room 2 (Lv 3)",
             "liveUrl": null,
@@ -442,7 +932,56 @@
                 "name": "Fixture Speaker 12"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "AI"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Applied AI"
+                  },
+                  {
+                    "id": 41,
+                    "name": "LLMs"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84527,
             "room": "River Room 2 (Lv 3)",
             "liveUrl": null,
@@ -472,7 +1011,56 @@
                 "name": "Fixture Speaker 13"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Security"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "AppSec"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Threat Modelling"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84524,
             "room": "River Room 3 (Lv 3)",
             "liveUrl": null,
@@ -499,7 +1087,56 @@
                 "name": "Fixture Speaker 15"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Design"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Design Systems"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Accessibility"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84524,
             "room": "River Room 3 (Lv 3)",
             "liveUrl": null,
@@ -526,7 +1163,56 @@
                 "name": "Fixture Speaker 17"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Career"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Career Growth"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Mentoring"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84524,
             "room": "River Room 3 (Lv 3)",
             "liveUrl": null,
@@ -549,7 +1235,56 @@
                 "name": "Fixture Speaker 18"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Data"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Data Pipelines"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Streaming"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84524,
             "room": "River Room 3 (Lv 3)",
             "liveUrl": null,
@@ -572,7 +1307,56 @@
                 "name": "Fixture Speaker 19"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Culture"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Ethics"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Teams"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84524,
             "room": "River Room 3 (Lv 3)",
             "liveUrl": null,
@@ -602,7 +1386,56 @@
                 "name": "Fixture Speaker 20"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "AI"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Applied AI"
+                  },
+                  {
+                    "id": 41,
+                    "name": "LLMs"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84525,
             "room": "Cygnet room (Lv 2)",
             "liveUrl": null,
@@ -625,7 +1458,56 @@
                 "name": "Fixture Speaker 21"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Security"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "AppSec"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Threat Modelling"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84525,
             "room": "Cygnet room (Lv 2)",
             "liveUrl": null,
@@ -648,7 +1530,56 @@
                 "name": "Fixture Speaker 22"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Design"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Design Systems"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Accessibility"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84525,
             "room": "Cygnet room (Lv 2)",
             "liveUrl": null,
@@ -671,7 +1602,56 @@
                 "name": "Fixture Speaker 23"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Career"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Career Growth"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Mentoring"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84525,
             "room": "Cygnet room (Lv 2)",
             "liveUrl": null,
@@ -694,7 +1674,56 @@
                 "name": "Fixture Speaker 24"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Data"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Data Pipelines"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Streaming"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84525,
             "room": "Cygnet room (Lv 2)",
             "liveUrl": null,
@@ -724,7 +1753,56 @@
                 "name": "Fixture Speaker 25"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Culture"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Ethics"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Teams"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84526,
             "room": "Black Swan (Lv 2)",
             "liveUrl": null,
@@ -747,7 +1825,56 @@
                 "name": "Fixture Speaker 26"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly advanced"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "AI"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Applied AI"
+                  },
+                  {
+                    "id": 41,
+                    "name": "LLMs"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84526,
             "room": "Black Swan (Lv 2)",
             "liveUrl": null,
@@ -770,7 +1897,56 @@
                 "name": "Fixture Speaker 27"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly beginner"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Security"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "AppSec"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Threat Modelling"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84526,
             "room": "Black Swan (Lv 2)",
             "liveUrl": null,
@@ -793,7 +1969,56 @@
                 "name": "Fixture Speaker 28"
               }
             ],
-            "categories": [],
+            "categories": [
+              {
+                "id": 1,
+                "name": "Session format",
+                "categoryItems": [
+                  {
+                    "id": 10,
+                    "name": "45 mins"
+                  }
+                ],
+                "sort": 0
+              },
+              {
+                "id": 2,
+                "name": "Level",
+                "categoryItems": [
+                  {
+                    "id": 20,
+                    "name": "Mostly intermediate"
+                  }
+                ],
+                "sort": 1
+              },
+              {
+                "id": 3,
+                "name": "General Topic Category",
+                "categoryItems": [
+                  {
+                    "id": 30,
+                    "name": "Design"
+                  }
+                ],
+                "sort": 2
+              },
+              {
+                "id": 4,
+                "name": "Talk Topics",
+                "categoryItems": [
+                  {
+                    "id": 40,
+                    "name": "Design Systems"
+                  },
+                  {
+                    "id": 41,
+                    "name": "Accessibility"
+                  }
+                ],
+                "sort": 3
+              }
+            ],
             "roomId": 84526,
             "room": "Black Swan (Lv 2)",
             "liveUrl": null,

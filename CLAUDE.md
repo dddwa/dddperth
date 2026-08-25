@@ -237,6 +237,14 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
     every speaker and talk title is replaced. `app/lib/sessionize-fixtures.test.ts` validates them against the
     production Zod schemas (so a Sessionize schema change fails loudly in unit tests), asserts they still cover
     the keynote/plenum/service sessions the voting filter must exclude, and asserts no real names crept back in.
+  - **The three fixture files share one id space, and a test enforces it.** Sessionize's `GridSmart` (scheduled
+    agenda), `Sessions` (submission list) and `Speakers` are three views of *one* event, so a session id must
+    mean the same talk in every view and every referenced speaker must exist. They were originally generated
+    independently and had **entirely disjoint session ids**, so the agenda and the talk-detail page showed
+    unrelated talks, and a talk id valid in one view 404'd in the other — visible only if you clicked through.
+    `grid-smart.json` is the source of truth; `all-sessions.json` is a projection of it (same ids, titles,
+    descriptions and speakers; unscheduled, with `questionAnswers`), and `speakers.json` covers every speaker
+    either view references. If you regenerate one, regenerate all three.
   - This is what makes the live voting flow testable: with fixtures plus the date override, `/voting` renders
     real comparison cards, so `e2e/voting.spec.ts` covers `TalkOptionCard` end-to-end.
 - **Dev-only date override**: `app/lib/dates/dev-date-time-provider.server.ts` reads an unsigned

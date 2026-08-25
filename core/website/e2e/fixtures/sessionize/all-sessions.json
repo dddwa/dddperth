@@ -2,20 +2,20 @@
   {
     "groupId": null,
     "groupName": "All",
-    "isDefault": false,
+    "isDefault": true,
     "sessions": [
       {
-        "id": "2000001",
-        "title": "Fixture Talk 01: AppSec in Practice",
-        "description": "A synthetic abstract for fixture talk 01. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
+        "id": "1231798",
+        "title": "Fixture Talk 12",
+        "description": "Synthetic abstract 12 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
         "isPlenumSession": false,
         "speakers": [
           {
-            "id": "00000000-0000-4000-8000-000000000001",
-            "name": "Fixture Speaker 01"
+            "id": "00000000-0000-4000-8000-000000000013",
+            "name": "Fixture Speaker 13"
           }
         ],
         "categories": [
@@ -36,7 +36,7 @@
             "categoryItems": [
               {
                 "id": 20,
-                "name": "Mostly intermediate"
+                "name": "Mostly beginner"
               }
             ],
             "sort": 1
@@ -78,9 +78,82 @@
         "questionAnswers": []
       },
       {
-        "id": "2000002",
-        "title": "Fixture Talk 02: Design Systems in Practice",
-        "description": "A synthetic abstract for fixture talk 02. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "id": "1232680",
+        "title": "Fixture Talk 06",
+        "description": "Synthetic abstract 06 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000006",
+            "name": "Fixture Speaker 06"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly beginner"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Security"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "AppSec"
+              },
+              {
+                "id": 41,
+                "name": "Threat Modelling"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1240238",
+        "title": "Fixture Talk 02",
+        "description": "Synthetic abstract 02 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
@@ -120,80 +193,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Design, UX & Product"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Design Systems"
-              },
-              {
-                "id": 41,
-                "name": "Accessibility"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000003",
-        "title": "Fixture Talk 03: Career Growth in Practice",
-        "description": "A synthetic abstract for fixture talk 03. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers people, career & culture with a focus on career growth.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": false,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000003",
-            "name": "Fixture Speaker 03"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "45 mins"
-              }
-            ],
-            "sort": 0
-          },
-          {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "No experience necessary"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "People, Career & Culture"
+                "name": "Career"
               }
             ],
             "sort": 2
@@ -208,7 +208,7 @@
               },
               {
                 "id": 41,
-                "name": "Team Health"
+                "name": "Mentoring"
               }
             ],
             "sort": 3
@@ -224,82 +224,9 @@
         "questionAnswers": []
       },
       {
-        "id": "2000004",
-        "title": "Fixture Talk 04: Data Pipelines in Practice",
-        "description": "A synthetic abstract for fixture talk 04. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers data & analytics with a focus on data pipelines.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": false,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000004",
-            "name": "Fixture Speaker 04"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "45 mins"
-              }
-            ],
-            "sort": 0
-          },
-          {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "Mostly intermediate"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "Data & Analytics"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Data Pipelines"
-              },
-              {
-                "id": 41,
-                "name": "Analytics"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000005",
-        "title": "Fixture Talk 05: Ethics in Practice",
-        "description": "A synthetic abstract for fixture talk 05. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers industry, ethics & society with a focus on ethics.",
+        "id": "1242790",
+        "title": "Fixture Talk 05",
+        "description": "Synthetic abstract 05 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
@@ -339,7 +266,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Industry, Ethics & Society"
+                "name": "AI"
               }
             ],
             "sort": 2
@@ -350,11 +277,11 @@
             "categoryItems": [
               {
                 "id": 40,
-                "name": "Ethics"
+                "name": "Applied AI"
               },
               {
                 "id": 41,
-                "name": "Sustainability"
+                "name": "LLMs"
               }
             ],
             "sort": 3
@@ -370,17 +297,17 @@
         "questionAnswers": []
       },
       {
-        "id": "2000006",
-        "title": "Fixture Talk 06: Applied AI in Practice",
-        "description": "A synthetic abstract for fixture talk 06. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
+        "id": "1245540",
+        "title": "Fixture Talk 21",
+        "description": "Synthetic abstract 21 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
         "isPlenumSession": false,
         "speakers": [
           {
-            "id": "00000000-0000-4000-8000-000000000006",
-            "name": "Fixture Speaker 06"
+            "id": "00000000-0000-4000-8000-000000000024",
+            "name": "Fixture Speaker 24"
           }
         ],
         "categories": [
@@ -401,7 +328,7 @@
             "categoryItems": [
               {
                 "id": 20,
-                "name": "No experience necessary"
+                "name": "Mostly beginner"
               }
             ],
             "sort": 1
@@ -412,7 +339,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "AI and ML"
+                "name": "Data"
               }
             ],
             "sort": 2
@@ -423,11 +350,84 @@
             "categoryItems": [
               {
                 "id": 40,
-                "name": "Applied AI"
+                "name": "Data Pipelines"
               },
               {
                 "id": 41,
-                "name": "Agents & RAG"
+                "name": "Streaming"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "1258207",
+        "title": "Fixture Talk 15",
+        "description": "Synthetic abstract 15 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000018",
+            "name": "Fixture Speaker 18"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly beginner"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Data"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Data Pipelines"
+              },
+              {
+                "id": 41,
+                "name": "Streaming"
               }
             ],
             "sort": 3
@@ -443,9 +443,893 @@
         "questionAnswers": []
       },
       {
-        "id": "2000007",
-        "title": "Fixture Talk 07: AppSec in Practice",
-        "description": "A synthetic abstract for fixture talk 07. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
+        "id": "1261542",
+        "title": "Fixture Talk 23",
+        "description": "Synthetic abstract 23 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000026",
+            "name": "Fixture Speaker 26"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "AI"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "LLMs"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "1269744",
+        "title": "Fixture Talk 16",
+        "description": "Synthetic abstract 16 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000019",
+            "name": "Fixture Speaker 19"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Teams"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1269920",
+        "title": "Fixture Talk 11",
+        "description": "Synthetic abstract 11 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000012",
+            "name": "Fixture Speaker 12"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "AI"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "LLMs"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1270736",
+        "title": "Fixture Talk 13",
+        "description": "Synthetic abstract 13 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000014",
+            "name": "Fixture Speaker 14"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000015",
+            "name": "Fixture Speaker 15"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1271640",
+        "title": "Fixture Talk 03",
+        "description": "Synthetic abstract 03 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000003",
+            "name": "Fixture Speaker 03"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly beginner"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Data"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Data Pipelines"
+              },
+              {
+                "id": 41,
+                "name": "Streaming"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1273177",
+        "title": "Fixture Talk 24",
+        "description": "Synthetic abstract 24 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000027",
+            "name": "Fixture Speaker 27"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly beginner"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Security"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "AppSec"
+              },
+              {
+                "id": 41,
+                "name": "Threat Modelling"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1273544",
+        "title": "Fixture Talk 04",
+        "description": "Synthetic abstract 04 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000004",
+            "name": "Fixture Speaker 04"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Teams"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1274379",
+        "title": "Fixture Talk 09",
+        "description": "Synthetic abstract 09 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000009",
+            "name": "Fixture Speaker 09"
+          },
+          {
+            "id": "00000000-0000-4000-8000-000000000010",
+            "name": "Fixture Speaker 10"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly beginner"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Data"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Data Pipelines"
+              },
+              {
+                "id": 41,
+                "name": "Streaming"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1274814",
+        "title": "Fixture Talk 22",
+        "description": "Synthetic abstract 22 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000025",
+            "name": "Fixture Speaker 25"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Teams"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1274860",
+        "title": "Fixture Talk 10",
+        "description": "Synthetic abstract 10 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000011",
+            "name": "Fixture Speaker 11"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Culture"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Ethics"
+              },
+              {
+                "id": 41,
+                "name": "Teams"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1274888",
+        "title": "Fixture Talk 20",
+        "description": "Synthetic abstract 20 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000023",
+            "name": "Fixture Speaker 23"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly advanced"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Career"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Career Growth"
+              },
+              {
+                "id": 41,
+                "name": "Mentoring"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1274981",
+        "title": "Fixture Talk 25",
+        "description": "Synthetic abstract 25 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000028",
+            "name": "Fixture Speaker 28"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1275071",
+        "title": "Fixture Talk 07",
+        "description": "Synthetic abstract 07 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
@@ -485,7 +1369,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Security"
+                "name": "Design"
               }
             ],
             "sort": 2
@@ -496,11 +1380,11 @@
             "categoryItems": [
               {
                 "id": 40,
-                "name": "AppSec"
+                "name": "Design Systems"
               },
               {
                 "id": 41,
-                "name": "Threat Modelling"
+                "name": "Accessibility"
               }
             ],
             "sort": 3
@@ -516,9 +1400,9 @@
         "questionAnswers": []
       },
       {
-        "id": "2000008",
-        "title": "Fixture Talk 08: Design Systems in Practice",
-        "description": "A synthetic abstract for fixture talk 08. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "id": "1275236",
+        "title": "Fixture Talk 08",
+        "description": "Synthetic abstract 08 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
@@ -558,80 +1442,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Design, UX & Product"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Design Systems"
-              },
-              {
-                "id": 41,
-                "name": "Accessibility"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000009",
-        "title": "Fixture Talk 09: Career Growth in Practice",
-        "description": "A synthetic abstract for fixture talk 09. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers people, career & culture with a focus on career growth.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": false,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000009",
-            "name": "Fixture Speaker 09"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "45 mins"
-              }
-            ],
-            "sort": 0
-          },
-          {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "No experience necessary"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "People, Career & Culture"
+                "name": "Career"
               }
             ],
             "sort": 2
@@ -646,7 +1457,7 @@
               },
               {
                 "id": 41,
-                "name": "Team Health"
+                "name": "Mentoring"
               }
             ],
             "sort": 3
@@ -662,90 +1473,21 @@
         "questionAnswers": []
       },
       {
-        "id": "2000010",
-        "title": "Fixture Talk 10: Data Pipelines in Practice",
-        "description": "A synthetic abstract for fixture talk 10. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers data & analytics with a focus on data pipelines.",
+        "id": "1275351",
+        "title": "Fixture Talk 14",
+        "description": "Synthetic abstract 14 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
         "isPlenumSession": false,
         "speakers": [
           {
-            "id": "00000000-0000-4000-8000-000000000010",
-            "name": "Fixture Speaker 10"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "45 mins"
-              }
-            ],
-            "sort": 0
+            "id": "00000000-0000-4000-8000-000000000016",
+            "name": "Fixture Speaker 16"
           },
           {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "Mostly intermediate"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "Data & Analytics"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Data Pipelines"
-              },
-              {
-                "id": 41,
-                "name": "Analytics"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000011",
-        "title": "Fixture Talk 11: Ethics in Practice",
-        "description": "A synthetic abstract for fixture talk 11. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers industry, ethics & society with a focus on ethics.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": false,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000011",
-            "name": "Fixture Speaker 11"
+            "id": "00000000-0000-4000-8000-000000000017",
+            "name": "Fixture Speaker 17"
           }
         ],
         "categories": [
@@ -777,7 +1519,7 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Industry, Ethics & Society"
+                "name": "Career"
               }
             ],
             "sort": 2
@@ -788,11 +1530,11 @@
             "categoryItems": [
               {
                 "id": 40,
-                "name": "Ethics"
+                "name": "Career Growth"
               },
               {
                 "id": 41,
-                "name": "Sustainability"
+                "name": "Mentoring"
               }
             ],
             "sort": 3
@@ -808,17 +1550,17 @@
         "questionAnswers": []
       },
       {
-        "id": "2000012",
-        "title": "Fixture Talk 12: Applied AI in Practice",
-        "description": "A synthetic abstract for fixture talk 12. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
+        "id": "1275355",
+        "title": "Fixture Talk 18",
+        "description": "Synthetic abstract 18 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
         "isServiceSession": false,
         "isPlenumSession": false,
         "speakers": [
           {
-            "id": "00000000-0000-4000-8000-000000000012",
-            "name": "Fixture Speaker 12"
+            "id": "00000000-0000-4000-8000-000000000021",
+            "name": "Fixture Speaker 21"
           }
         ],
         "categories": [
@@ -839,153 +1581,7 @@
             "categoryItems": [
               {
                 "id": 20,
-                "name": "No experience necessary"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "AI and ML"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Applied AI"
-              },
-              {
-                "id": 41,
-                "name": "Agents & RAG"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000090",
-        "title": "Fixture Talk 90: Applied AI in Practice",
-        "description": "A synthetic abstract for fixture talk 90. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers ai and ml with a focus on applied ai.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": false,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000090",
-            "name": "Fixture Speaker 90"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "Keynote"
-              }
-            ],
-            "sort": 0
-          },
-          {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "No experience necessary"
-              }
-            ],
-            "sort": 1
-          },
-          {
-            "id": 3,
-            "name": "General Topic Category",
-            "categoryItems": [
-              {
-                "id": 30,
-                "name": "AI and ML"
-              }
-            ],
-            "sort": 2
-          },
-          {
-            "id": 4,
-            "name": "Talk Topics",
-            "categoryItems": [
-              {
-                "id": 40,
-                "name": "Applied AI"
-              },
-              {
-                "id": 41,
-                "name": "Agents & RAG"
-              }
-            ],
-            "sort": 3
-          }
-        ],
-        "roomId": null,
-        "room": null,
-        "liveUrl": null,
-        "recordingUrl": null,
-        "status": "Accepted",
-        "isInformed": true,
-        "isConfirmed": true,
-        "questionAnswers": []
-      },
-      {
-        "id": "2000091",
-        "title": "Fixture Talk 91: AppSec in Practice",
-        "description": "A synthetic abstract for fixture talk 91. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers security with a focus on appsec.",
-        "startsAt": null,
-        "endsAt": null,
-        "isServiceSession": false,
-        "isPlenumSession": true,
-        "speakers": [
-          {
-            "id": "00000000-0000-4000-8000-000000000091",
-            "name": "Fixture Speaker 91"
-          }
-        ],
-        "categories": [
-          {
-            "id": 1,
-            "name": "Session format",
-            "categoryItems": [
-              {
-                "id": 10,
-                "name": "45 mins"
-              }
-            ],
-            "sort": 0
-          },
-          {
-            "id": 2,
-            "name": "Level",
-            "categoryItems": [
-              {
-                "id": 20,
-                "name": "Mostly intermediate"
+                "name": "Mostly beginner"
               }
             ],
             "sort": 1
@@ -1027,17 +1623,17 @@
         "questionAnswers": []
       },
       {
-        "id": "2000092",
-        "title": "Fixture Talk 92: Design Systems in Practice",
-        "description": "A synthetic abstract for fixture talk 92. It is long enough to exercise the card layout and text wrapping that the voting comparison view relies on, without reproducing any real submission. Covers design, ux & product with a focus on design systems.",
+        "id": "1275363",
+        "title": "Fixture Talk 17",
+        "description": "Synthetic abstract 17 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
         "startsAt": null,
         "endsAt": null,
-        "isServiceSession": true,
+        "isServiceSession": false,
         "isPlenumSession": false,
         "speakers": [
           {
-            "id": "00000000-0000-4000-8000-000000000092",
-            "name": "Fixture Speaker 92"
+            "id": "00000000-0000-4000-8000-000000000020",
+            "name": "Fixture Speaker 20"
           }
         ],
         "categories": [
@@ -1069,7 +1665,80 @@
             "categoryItems": [
               {
                 "id": 30,
-                "name": "Design, UX & Product"
+                "name": "AI"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Applied AI"
+              },
+              {
+                "id": 41,
+                "name": "LLMs"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "1275367",
+        "title": "Fixture Talk 19",
+        "description": "Synthetic abstract 19 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": false,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000022",
+            "name": "Fixture Speaker 22"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "45 mins"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design"
               }
             ],
             "sort": 2
@@ -1097,6 +1766,269 @@
         "status": "Accepted",
         "isInformed": true,
         "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "1276730",
+        "title": "Fixture Talk 01",
+        "description": "Synthetic abstract 01 for the agenda fixture. Long enough to exercise grid cell layout and text wrapping without reproducing a real submission.",
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": false,
+        "isPlenumSession": true,
+        "speakers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "name": "Fixture Speaker 01"
+          }
+        ],
+        "categories": [
+          {
+            "id": 1,
+            "name": "Session format",
+            "categoryItems": [
+              {
+                "id": 10,
+                "name": "Keynote"
+              }
+            ],
+            "sort": 0
+          },
+          {
+            "id": 2,
+            "name": "Level",
+            "categoryItems": [
+              {
+                "id": 20,
+                "name": "Mostly intermediate"
+              }
+            ],
+            "sort": 1
+          },
+          {
+            "id": 3,
+            "name": "General Topic Category",
+            "categoryItems": [
+              {
+                "id": 30,
+                "name": "Design"
+              }
+            ],
+            "sort": 2
+          },
+          {
+            "id": 4,
+            "name": "Talk Topics",
+            "categoryItems": [
+              {
+                "id": 40,
+                "name": "Design Systems"
+              },
+              {
+                "id": 41,
+                "name": "Accessibility"
+              }
+            ],
+            "sort": 3
+          }
+        ],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": "Accepted",
+        "isInformed": true,
+        "isConfirmed": true,
+        "questionAnswers": []
+      },
+      {
+        "id": "00dec223-77e9-47b1-9648-ef828eed3ae2",
+        "title": "Afternoon Tea",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "1d9bfe96-0b12-44dd-bab1-ae8243eb3be9",
+        "title": "Locknote",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "5485b325-64ce-4d01-94f2-795c3c6ffb11",
+        "title": "Registration",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "6556ec30-4061-4926-8753-699554f13c98",
+        "title": "Welcome and Housekeeping",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "780f7fe0-1c49-4b2a-a4ed-3ef803b4ff03",
+        "title": "Lunch",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "8fd66a05-b397-40c6-9d7a-93c1c27a5ce4",
+        "title": "Morning Tea",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "9552fc05-4320-4ca2-8846-7df0ac9712ce",
+        "title": "Wrap Up and Prize Draw",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "b76ded0e-0d33-45f2-8510-ef304d840d32",
+        "title": "Changeover",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "d7beecb0-63ec-498f-91cb-617b63ddf90b",
+        "title": "Changeover",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
+        "questionAnswers": []
+      },
+      {
+        "id": "dc2a886e-2f4a-4659-94c1-c7c00afc32c8",
+        "title": "Changeover",
+        "description": null,
+        "startsAt": null,
+        "endsAt": null,
+        "isServiceSession": true,
+        "isPlenumSession": true,
+        "speakers": [],
+        "categories": [],
+        "roomId": null,
+        "room": null,
+        "liveUrl": null,
+        "recordingUrl": null,
+        "status": null,
+        "isInformed": false,
+        "isConfirmed": false,
         "questionAnswers": []
       }
     ]

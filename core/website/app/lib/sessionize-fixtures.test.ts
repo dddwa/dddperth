@@ -41,21 +41,30 @@ describe('Sessionize e2e fixtures', () => {
         expect([...referenced].filter((id) => !known.has(id))).toEqual([])
     })
 
-    it('the pinned e2e talk id exists in the Sessions view with a speaker', async () => {
-        // The talk detail route reads the `Sessions` view (getConfSessions),
-        // while the agenda reads `GridSmart` — and the two fixture files have
-        // entirely disjoint session ids. Pinning FIXTURE_TALK_ID to an id that
-        // only exists in GridSmart 404s the detail page, which is easy to miss
-        // because the agenda still looks right.
+    it('the pinned e2e talk id renders fully in both views', async () => {
+        // The talk detail route reads the `Sessions` view (getConfSessions)
+        // while the agenda reads `GridSmart`, and the e2e suite links from one
+        // to the other — so the pinned id has to be valid in both, with content
+        // to render. An id present in only one view 404s the detail page while
+        // the agenda still looks correct, which is easy to miss.
         const { FIXTURE_TALK_ID } = await import('../../e2e/routes')
-        const groups = read('all-sessions.json') as Array<{
-            sessions: Array<{ id: string; description: string | null; speakers: Array<{ id: string }> }>
-        }>
-        const session = groups.flatMap((g) => g.sessions).find((s) => s.id === FIXTURE_TALK_ID)
 
-        expect(session, `FIXTURE_TALK_ID ${FIXTURE_TALK_ID} is not in all-sessions.json`).toBeDefined()
-        expect(session?.description, 'pinned talk has no description to render').toBeTruthy()
-        expect(session?.speakers.length, 'pinned talk has no speaker to render').toBeGreaterThan(0)
+        const sessionsView = (read('all-sessions.json') as Array<{
+            sessions: Array<{ id: string; description: string | null; speakers: Array<{ id: string }> }>
+        }>)
+            .flatMap((g) => g.sessions)
+            .find((s) => s.id === FIXTURE_TALK_ID)
+
+        const gridView = (read('grid-smart.json') as Array<{
+            rooms: Array<{ sessions: Array<{ id: string }> }>
+        }>)
+            .flatMap((d) => d.rooms.flatMap((r) => r.sessions))
+            .find((s) => s.id === FIXTURE_TALK_ID)
+
+        expect(sessionsView, `FIXTURE_TALK_ID ${FIXTURE_TALK_ID} is not in all-sessions.json`).toBeDefined()
+        expect(gridView, `FIXTURE_TALK_ID ${FIXTURE_TALK_ID} is not in grid-smart.json`).toBeDefined()
+        expect(sessionsView?.description, 'pinned talk has no description to render').toBeTruthy()
+        expect(sessionsView?.speakers.length, 'pinned talk has no speaker to render').toBeGreaterThan(0)
     })
 
     it('no fixture points at a live host', () => {
@@ -105,12 +114,54 @@ describe('Sessionize e2e fixtures', () => {
         // 2026 CFP submissions. Every speaker and talk title is synthetic;
         // this asserts the naming convention holds so a future regeneration
         // can't quietly reintroduce real data.
-        const raw = readFileSync(join(fixtures, 'grid-smart.json'), 'utf8')
-        const speakerNames = [...raw.matchAll(/"name":\s*"([^"]+)"/g)].map((m) => m[1])
-        const suspicious = speakerNames.filter(
-            (n) => /^[A-Z][a-z]+ [A-Z]/.test(n) && !n.startsWith('Fixture '),
+        //
+        // Read speaker names structurally rather than grepping every `"name"`
+        // field: category names ("General Topic Category", "Design Systems")
+        // also live under that key, and an allowlist big enough to clear them
+        // would be wide enough to let a real name through.
+        const named: string[] = []
+
+        for (const file of ['grid-smart.json', 'all-sessions.json']) {
+            const doc = read(file) as Array<{
+                rooms?: Array<{ sessions: Array<{ speakers?: Array<{ name: string }> }> }>
+                sessions?: Array<{ speakers?: Array<{ name: string }> }>
+            }>
+            for (const group of doc) {
+                const sessions = group.rooms ? group.rooms.flatMap((r) => r.sessions) : (group.sessions ?? [])
+                for (const session of sessions) {
+                    for (const speaker of session.speakers ?? []) named.push(speaker.name)
+                }
+            }
+        }
+
+        const speakers = read('speakers.json') as Array<{ firstName: string; lastName: string; fullName: string }>
+        for (const speaker of speakers) named.push(speaker.fullName)
+
+        expect(named.length, 'no speaker names found — did the fixture shape change?').toBeGreaterThan(0)
+        expect(named.filter((n) => !n.startsWith('Fixture Speaker '))).toEqual([])
+    })
+
+    it('grid-smart and all-sessions describe the same sessions', () => {
+        // Sessionize's GridSmart (scheduled agenda) and Sessions (submission
+        // list) are two views of ONE event, so an id must mean the same talk in
+        // both. They previously had entirely disjoint id spaces, which meant the
+        // agenda and the talk-detail page showed unrelated talks and a talk id
+        // valid in one view 404'd in the other.
+        const grid = read('grid-smart.json') as Array<{
+            rooms: Array<{ sessions: Array<{ id: string; title: string }> }>
+        }>
+        const sessionsView = read('all-sessions.json') as Array<{
+            sessions: Array<{ id: string; title: string }>
+        }>
+
+        const gridById = new Map(
+            grid.flatMap((d) => d.rooms.flatMap((r) => r.sessions)).map((s) => [s.id, s.title]),
         )
-        // Room names ("River Room 1") are legitimately non-fixture strings.
-        expect(suspicious.filter((n) => !/room|level|lv \d/i.test(n))).toEqual([])
+        const viewById = new Map(sessionsView.flatMap((g) => g.sessions).map((s) => [s.id, s.title]))
+
+        expect([...gridById.keys()].sort()).toEqual([...viewById.keys()].sort())
+        for (const [id, title] of gridById) {
+            expect(viewById.get(id), `session ${id} has a different title in each view`).toBe(title)
+        }
     })
 })
