@@ -179,6 +179,27 @@ export async function loader({ context }: Route.LoaderArgs) {
 - Environment variables for local dev go in `conference/wrangler/.dev.vars` (the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root)
 - Local D1 data stored in `core/website/.wrangler/state/`
 
+## Search indexing
+
+Helpers live in `core/website/app/lib/seo.ts`; `core/website/e2e/seo.spec.ts` covers all of this.
+
+- **`noIndexMeta()`** — export it as a route's `meta` to keep the page out of search results
+  (`export const meta = noIndexMeta`). Applied to `/admin`, `/portal`, `/speaker-portal`, `/auth/login`,
+  `/auth/verify/:token`, `/voting` and `/share`.
+  - **A child route's `meta` replaces its parent's entirely** in React Router — it does not merge. That makes
+    `export const meta = noIndexMeta` self-contained for a private page (there's nothing worth sharing), but if a
+    page needs both, spread the tags: `[...noIndexMeta(), { title }]`. It also means it's easy to *accidentally*
+    drop a public page's title/OG tags by adding a `meta` export, which is why the suite asserts key public
+    routes stay indexable as well as asserting private ones don't.
+- **`noIndex: true` in MDX frontmatter** — keeps a content page out of both search results and `sitemap.xml`.
+  Both halves are needed: listing a page in the sitemap while its own meta says `noindex` sends crawlers a
+  contradiction.
+- **`noindex` and `robots.txt` do different jobs, and one defeats the other.** A `Disallow` stops a crawler
+  *fetching* the page — so it never sees the `noindex` tag, and the URL can still be indexed from inbound links
+  alone (listed with no description). `DISALLOWED_CRAWL_PATHS` is therefore deliberately short: auth-gated trees
+  and `/api/`, where crawling is pure waste. Pages a human might land on and link to (`/voting`, `/auth/login`)
+  stay crawlable *on purpose* so their `noindex` can be read and honoured.
+
 ## Accessibility
 
 All UI work must meet **WCAG 2.1 AA**, including hover and focus states (not just default appearance) — this

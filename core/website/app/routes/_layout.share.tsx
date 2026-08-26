@@ -5,6 +5,7 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConferenceState } from '~/remix-app-load-context'
 import { Divider, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.share'
+import { noIndexMeta } from '~/lib/seo'
 
 export function loader({ context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(getConferenceState(context).conference.year)
@@ -103,6 +104,9 @@ function stashedRegistrationSlug(): string | undefined {
         return undefined
     }
 }
+
+/** Not indexed: a share/redirect helper, not a destination. */
+export const meta = noIndexMeta
 
 export default function Share() {
     const { conferenceName, sharecastUrl } = useLoaderData<typeof loader>()

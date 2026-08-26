@@ -80,7 +80,11 @@ export const ROUTES: E2eRoute[] = [
     // landmarks, nav markup). Scoping every route to `#main` would leave that
     // chrome with no visual coverage at all.
     { name: 'home', path: '/' },
-    { name: 'about (MDX content page)', path: '/about', visualScope: '#main' },
+    // A frozen fixture page rather than a real one (`/about` was used before):
+    // an editorial copy change should not fail a visual baseline that exists to
+    // cover the content *template*. It is `noIndex: true`, so it stays out of
+    // search results and out of sitemap.xml.
+    { name: 'content page (MDX template)', path: '/e2e-content-fixture', visualScope: '#main' },
     { name: 'agenda', path: `/agenda/${FIXTURE_YEAR}`, visualScope: '#main' },
     { name: 'talk detail', path: `/agenda/${FIXTURE_YEAR}/talk/${FIXTURE_TALK_ID}`, visualScope: '#main' },
     { name: 'sponsors', path: `/sponsors/${FIXTURE_YEAR}`, visualScope: '#main' },

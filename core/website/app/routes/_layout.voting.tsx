@@ -15,6 +15,7 @@ import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
+import { noIndexMeta } from '~/lib/seo'
 
 // Constants
 const FETCH_TIMEOUT = 10000 // 10 seconds
@@ -89,6 +90,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         votingSponsors,
     }
 }
+
+/** Not indexed: voting pairs are per-session and transient; the page is meaningless out of context. */
+export const meta = noIndexMeta
 
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()

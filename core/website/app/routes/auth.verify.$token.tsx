@@ -4,6 +4,7 @@ import { sanitiseRedirect } from '~/lib/auth/validation'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.verify.$token'
+import { noIndexMeta } from '~/lib/seo'
 
 /**
  * GET renders a "Click to sign in" page only — it never consumes the token.
@@ -48,6 +49,9 @@ export async function action({ request, context, params }: Route.ActionArgs) {
 
     return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)
 }
+
+/** Not indexed: magic-link URLs are single-use and must never be indexed. */
+export const meta = noIndexMeta
 
 export default function Verify() {
     const [searchParams] = useSearchParams()
