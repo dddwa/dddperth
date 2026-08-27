@@ -72,11 +72,13 @@ function ChecklistActionButton({
     action,
     sessionizeId,
     ticketClaimUrl,
+    backupSessionIds,
     onOpenModal,
 }: {
     action: ChecklistItemAction
     sessionizeId: string
     ticketClaimUrl?: string
+    backupSessionIds: string[]
     onOpenModal: (key: ChecklistModalKey) => void
 }) {
     if ('kind' in action) {
@@ -84,6 +86,23 @@ function ChecklistActionButton({
             <button type="button" onClick={() => onOpenModal(action.modalKey)} className={actionLinkClass}>
                 {action.buttonLabel}
             </button>
+        )
+    }
+
+    // Session-level, not speaker-level — submits acceptance for every one of
+    // the viewer's own outstanding backup sessions at once (a dual-speaker
+    // session only needs one presenter to accept it; see markBackupAccepted).
+    if (action.action === 'accept-backup') {
+        return (
+            <Form method="post">
+                <input type="hidden" name="_action" value="accept-backup" />
+                {backupSessionIds.map((id) => (
+                    <input key={id} type="hidden" name="sessionizeSessionId" value={id} />
+                ))}
+                <button type="submit" className={claimButtonClass} disabled={backupSessionIds.length === 0}>
+                    {action.label}
+                </button>
+            </Form>
         )
     }
 
@@ -115,11 +134,13 @@ function ChecklistAction({
     item,
     sessionizeId,
     ticketClaimUrl,
+    backupSessionIds,
     onOpenModal,
 }: {
     item: SpeakerChecklistItem
     sessionizeId: string
     ticketClaimUrl?: string
+    backupSessionIds: string[]
     onOpenModal: (key: ChecklistModalKey) => void
 }) {
     if (item.done) return null
@@ -135,6 +156,7 @@ function ChecklistAction({
                     action={action}
                     sessionizeId={sessionizeId}
                     ticketClaimUrl={ticketClaimUrl}
+                    backupSessionIds={backupSessionIds}
                     onOpenModal={onOpenModal}
                 />
             ))}
@@ -153,12 +175,16 @@ export function SpeakerChecklistCard({
     sessionizeId,
     checklist,
     ticketClaimUrl,
+    backupSessionIds = [],
     onOpenModal,
     alwaysEditable = false,
 }: {
     sessionizeId: string
     checklist: SpeakerChecklistItem[]
     ticketClaimUrl?: string
+    /** The viewer's own sessions still needing backup-speaker acceptance —
+     * see `SpeakerDashboardView.backupSessionIds`. */
+    backupSessionIds?: string[]
     onOpenModal: (key: ChecklistModalKey) => void
     /** Lets a completed modal-based item be reopened even past its due
      * date — set by the admin preview, where an organiser acting on a
@@ -220,6 +246,7 @@ export function SpeakerChecklistCard({
                                     item={item}
                                     sessionizeId={sessionizeId}
                                     ticketClaimUrl={ticketClaimUrl}
+                                    backupSessionIds={backupSessionIds}
                                     onOpenModal={onOpenModal}
                                 />
                             </Flex>

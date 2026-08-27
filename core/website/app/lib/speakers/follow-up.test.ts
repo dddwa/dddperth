@@ -16,6 +16,8 @@ function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
         sessions: [],
         profile: null,
         sessionDetailsComplete: {},
+        meetTheExpertsResponded: false,
+        sessionBackupAccepted: {},
         ...overrides,
     }
 }
@@ -31,8 +33,6 @@ describe('speakersMissingChecklistItem', () => {
             profile: {
                 sessionizeId: 'spk-1',
                 introductionUseSessionizeBio: true,
-                registerMeetTheExpertsSlots: [],
-                meetTheExpertsBioUseSessionizeBio: true,
                 rsvpSpeakerTraining: [],
                 rsvpSpeakerTrainingRespondedAt: 1700000000,
             },
@@ -54,6 +54,7 @@ describe('speakersMissingChecklistItem', () => {
                     talkTopics: [],
                     status: 'Accepted',
                     isConfirmed: true,
+                    foundInSessionize: true,
                 },
             ],
         })
@@ -67,6 +68,7 @@ describe('speakersMissingChecklistItem', () => {
                     talkTopics: [],
                     status: 'Accepted',
                     isConfirmed: false,
+                    foundInSessionize: true,
                 },
             ],
         })

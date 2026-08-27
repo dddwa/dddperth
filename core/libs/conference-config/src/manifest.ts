@@ -332,6 +332,17 @@ export interface SpeakerPortalConfig {
      * item either way.
      */
     sessionConfirmationNotifyEmail?: string
+    /**
+     * The speaker-facing team's shared inbox. Used two ways on the admin
+     * speakers list's follow-up items: as the destination for the "Send test
+     * email" button (sends the real template there instead of to actual
+     * speakers, so an admin can preview copy/rendering before a real send),
+     * and as the Reply-To on every follow-up email actually sent to
+     * speakers, so replies land with the team rather than the noreply
+     * From: address. Omit to hide the test-email button and skip setting
+     * Reply-To.
+     */
+    speakerEmailAddress?: string
 }
 
 /** One configured speaker-training session. `id` should match one of the
@@ -351,12 +362,6 @@ export interface SpeakerDinnerConfig {
     location?: string
 }
 
-/** One configured Meet-the-Experts time block. */
-export interface MeetTheExpertsSlotConfig {
-    id: string
-    label: string
-}
-
 export interface SpeakerPortalChecklistConfig {
     /** External link where a speaker claims/registers their complimentary ticket. */
     ticketClaimUrl?: string
@@ -367,9 +372,21 @@ export interface SpeakerPortalChecklistConfig {
     /** The speaker dinner — rendered in its own RSVP modal. Omit to hide the
      * checklist item entirely. */
     speakerDinner?: SpeakerDinnerConfig
-    /** Meet-the-Experts time blocks, shown as checkboxes in the session-
-     * details form once the speaker opts in (Yes/Maybe/Other). */
-    meetTheExpertsSlots?: MeetTheExpertsSlotConfig[]
+}
+
+/** One configured Meet-the-Experts time block. */
+export interface MeetTheExpertsSlotConfig {
+    id: string
+    label: string
+}
+
+/**
+ * Meet-the-Experts config — shared by the speaker and sponsor portals, since
+ * either a speaker or a sponsor can register a person for a time slot. Omit
+ * (or an empty `slots` array) to hide the feature in both portals.
+ */
+export interface MeetTheExpertsConfig {
+    slots: MeetTheExpertsSlotConfig[]
 }
 
 /**
@@ -394,6 +411,9 @@ export interface ConferenceManifest {
     sponsorPortal?: SponsorPortalConfig
     /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
     speakerPortal?: SpeakerPortalConfig
+    /** Meet-the-Experts time slots — shared by the speaker and sponsor
+     * portals. Omit to hide the feature entirely. */
+    meetTheExperts?: MeetTheExpertsConfig
 }
 
 /**

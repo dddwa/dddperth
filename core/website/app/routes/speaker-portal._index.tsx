@@ -21,12 +21,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const { speaker } = await requireSpeaker(request, context)
     const services = getServices(context)
 
-    const workspace = await services.speakers.getWorkspace(speaker.sessionizeId)
+    const [workspace, meetTheExpertsRegistration] = await Promise.all([
+        services.speakers.getWorkspace(speaker.sessionizeId),
+        services.meetTheExperts.getRegistration('speaker', speaker.sessionizeId),
+    ])
     if (!workspace) {
         throw new Response('Not Found', { status: 404 })
     }
 
-    return buildSpeakerDashboardView(context, workspace, speaker.sessionizeId)
+    return buildSpeakerDashboardView(context, workspace, speaker.sessionizeId, meetTheExpertsRegistration)
 }
 
 function oneOf<T extends string>(value: FormDataEntryValue | null, options: readonly T[]): T | undefined {
@@ -76,6 +79,21 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         return data({ sessionDetailsSaved: true })
+    }
+
+    // Session-level, not speaker-level — a dual-speaker session only needs
+    // one presenter to accept it. Handled before the targetSessionizeId
+    // guard below, since this form submits sessionizeSessionId(s) instead.
+    if (actionType === 'accept-backup') {
+        const sessionIds = formData.getAll('sessionizeSessionId').filter((v): v is string => typeof v === 'string')
+        for (const id of sessionIds) {
+            const onSession = await services.speakers.isSpeakerOnSession(speaker.sessionizeId, id)
+            if (!onSession) throw new Response('Not Found', { status: 404 })
+        }
+        for (const id of sessionIds) {
+            await services.speakers.markBackupAccepted(id, user.email)
+        }
+        return data({ backupAccepted: true })
     }
 
     const targetSessionizeId = formData.get('targetSessionizeId')
@@ -134,7 +152,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (actionType === 'save-meet-the-experts') {
         if (targetSessionizeId !== speaker.sessionizeId) throw new Response('Not Found', { status: 404 })
-        await services.speakers.saveMeetTheExpertsSlots(speaker.sessionizeId, parseMeetTheExpertsForm(formData), user.email)
+        const { slots, bioUseSessionizeBio, bioCustomText } = parseMeetTheExpertsForm(formData)
+        await services.meetTheExperts.saveRegistration(
+            'speaker',
+            speaker.sessionizeId,
+            { slots, bioUseDefault: bioUseSessionizeBio, bioCustomText },
+            user.email,
+        )
         return data({ meetTheExpertsSaved: true })
     }
 
@@ -167,6 +191,7 @@ export default function SpeakerPortalDashboard() {
                 sessionizeId={view.sessionizeId}
                 checklist={view.checklist}
                 ticketClaimUrl={view.ticketClaimUrl}
+                backupSessionIds={view.backupSessionIds}
                 onOpenModal={setOpenModal}
             />
 

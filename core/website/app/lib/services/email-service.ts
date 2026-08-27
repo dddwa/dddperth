@@ -22,6 +22,8 @@ export interface EmailMessage {
     text: string
     /** Per-message override of the configured from-address (rare; keep undefined for normal use). */
     from?: string
+    /** Reply-To address, e.g. a team inbox so replies don't land at a noreply From:. */
+    replyTo?: string
     /**
      * Attachments are part of the surface so future calendar-invite and
      * ticket-confirmation flows don't require an interface change.

@@ -45,6 +45,12 @@ export interface SpeakerSession {
     /** Sessionize's "Owner Confirmed" flag — session-level, set once the
      * session owner confirms their acceptance in Sessionize. */
     isConfirmed: boolean
+    /** False when this session id wasn't in Sessionize's live payload at
+     * all — the fields above are then just a placeholder (raw id as the
+     * title). For a session D1 still has linkage for, that means Sessionize
+     * no longer lists it — most likely declined/withdrawn since the sync
+     * last saw it. */
+    foundInSessionize: boolean
 }
 
 export const QUESTIONS_PREFERENCE_OPTIONS = ['Yes', 'No', 'Yes, moderated', 'Undecided', 'Other'] as const
@@ -76,25 +82,12 @@ export interface SpeakerProfile {
     /** RSVP'd through its own dedicated modal, not the main session-details
      * form — see `saveSpeakerDinnerRsvp`. */
     dietaryRequirements?: string
+    /** Preliminary opt-in — only once this is Yes/Maybe/Other does the
+     * meetTheExperts checklist item appear at all, opening the dedicated
+     * registration modal. The actual registration (slots + bio) lives in
+     * `MeetTheExpertsStore`, not here — see `services.meetTheExperts`. */
     registerMeetTheExperts?: YesNoMaybeOther
     registerMeetTheExpertsOther?: string
-    /** Which configured Meet-the-Experts time-block ids they want to register
-     * for — only meaningful when registerMeetTheExperts is Yes/Maybe/Other.
-     * Saved through its own dedicated modal, see `saveMeetTheExpertsSlots`. */
-    registerMeetTheExpertsSlots: string[]
-    /** Stamped every time the Meet-the-Experts slot selection is submitted
-     * (even with zero slots selected — "none work for me" is still a
-     * completed answer). Same idiom as rsvpSpeakerTrainingRespondedAt. Only
-     * meaningful once registerMeetTheExperts is Yes/Maybe/Other — that's what
-     * makes the checklist item appear at all. */
-    registerMeetTheExpertsRespondedAt?: number
-    /** True = use their Sessionize bio as-is; false = use
-     * meetTheExpertsBioCustomText. Same idiom as introductionUseSessionizeBio
-     * but scoped to Meet the Experts — often not the same text as the
-     * on-stage intro. Saved through the Meet the Experts modal, see
-     * `saveMeetTheExpertsSlots`. */
-    meetTheExpertsBioUseSessionizeBio: boolean
-    meetTheExpertsBioCustomText?: string
     /** RSVP'd through its own dedicated modal, not the main session-details
      * form — see `saveSpeakerDinnerRsvp`. */
     rsvpSpeakersDinner?: YesNoMaybe
@@ -125,8 +118,9 @@ export interface SpeakerProfile {
  * same shape as `SpeakerProfile` minus the fields the store computes itself,
  * dietary requirements (asked as part of the speaker dinner RSVP instead),
  * and the RSVPs, which are saved through their own dedicated actions
- * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp` / `saveMeetTheExpertsSlots`)
- * so that submitting this form can never clobber an RSVP already on file. */
+ * (`saveSpeakerTrainingRsvp` / `saveSpeakerDinnerRsvp` /
+ * `services.meetTheExperts.saveRegistration`) so that submitting this form
+ * can never clobber an RSVP already on file. */
 export type SpeakerProfileInput = Omit<
     SpeakerProfile,
     | 'sessionizeId'
@@ -138,10 +132,6 @@ export type SpeakerProfileInput = Omit<
     | 'rsvpSpeakersDinner'
     | 'rsvpSpeakerTraining'
     | 'rsvpSpeakerTrainingRespondedAt'
-    | 'registerMeetTheExpertsSlots'
-    | 'registerMeetTheExpertsRespondedAt'
-    | 'meetTheExpertsBioUseSessionizeBio'
-    | 'meetTheExpertsBioCustomText'
 >
 
 /** The questions/presentation-format/recording/anything-else fields that
@@ -171,6 +161,15 @@ export interface SpeakerListEntry extends SpeakerRecord {
      * enough for the admin follow-up list to reuse `speakerChecklist`
      * without hydrating full `SessionDetails` rows. */
     sessionDetailsComplete: Record<string, boolean>
+    /** Whether a Meet-the-Experts registration (see `MeetTheExpertsStore`)
+     * is on file for this speaker — same "just enough for `speakerChecklist`"
+     * idiom as `sessionDetailsComplete`. */
+    meetTheExpertsResponded: boolean
+    /** Whether each session has had its backup-speaker acceptance self-
+     * reported by any presenter — session-level, keyed by
+     * sessionizeSessionId, same "just enough for `speakerChecklist`" idiom
+     * as `sessionDetailsComplete`. */
+    sessionBackupAccepted: Record<string, boolean>
 }
 
 /** A speaker + all their co-presenters on shared sessions, for the dashboard. */
@@ -179,6 +178,10 @@ export interface SpeakerWorkspace {
     sessions: Array<{
         session: SpeakerSession
         sessionDetails: SessionDetails | null
+        /** Self-reported "I accept being a backup speaker" for this session
+         * — session-level, shared by every presenter; see
+         * `markBackupAccepted`. Only meaningful for a non-Accepted session. */
+        backupAccepted: boolean
         /** Every speaker on this session, including the logged-in one. */
         presenters: Array<{ speaker: SpeakerRecord; profile: SpeakerProfile | null }>
     }>
@@ -260,17 +263,6 @@ export interface SpeakersStore {
      * on the group's behalf. */
     saveSessionDetails(sessionizeSessionId: string, details: SessionDetailsInput, updatedBy: string): Promise<void>
 
-    /** Meet-the-Experts slot selection + bio, from its own dedicated modal.
-     * Same idiom as saveSpeakerTrainingRsvp for the slots — overwrites the
-     * selection and re-stamps registerMeetTheExpertsRespondedAt every call,
-     * since an empty selection ("none work for me") is still a valid,
-     * deliberate answer. */
-    saveMeetTheExpertsSlots(
-        sessionizeId: string,
-        details: { slots: string[]; bioUseSessionizeBio: boolean; bioCustomText?: string },
-        updatedBy: string,
-    ): Promise<void>
-
     /** Stamps completed_at if not already set. Returns true when this call
      * did the stamping (i.e. the profile just became complete). */
     markProfileCompleted(sessionizeId: string): Promise<boolean>
@@ -307,6 +299,12 @@ export interface SpeakersStore {
      * true only when this call did the stamping, so the caller knows
      * whether to send the notification email. */
     markSessionConfirmed(sessionizeId: string, updatedBy: string): Promise<boolean>
+
+    /** Self-reported "I accept being a backup speaker" from the checklist —
+     * session-level: any presenter on the session may submit it on the
+     * whole session's behalf, same idiom as `saveSessionDetails`. Idempotent
+     * — stamps the acceptance only the first time for a given session. */
+    markBackupAccepted(sessionizeSessionId: string, updatedBy: string): Promise<void>
 
     applySyncPlan(plan: SpeakerSyncPlan): Promise<{
         speakersUpserted: number

@@ -38,8 +38,10 @@ export interface MeetTheExpertsFormInput {
 /**
  * Parses the "Meet the Experts" modal's combined form (slot checkboxes +
  * the "use Sessionize bio or write a custom one" bio field, same idiom as
- * the session-details introduction) into what `saveMeetTheExpertsSlots`
- * accepts. Shared by the speaker's own action and the admin preview's.
+ * the session-details introduction) into what
+ * `services.meetTheExperts.saveRegistration` accepts (`bioUseSessionizeBio`
+ * maps onto its generic `bioUseDefault`). Shared by the speaker's own action
+ * and the admin preview's.
  */
 export function parseMeetTheExpertsForm(formData: FormData): MeetTheExpertsFormInput {
     return {

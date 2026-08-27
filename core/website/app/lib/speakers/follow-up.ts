@@ -27,8 +27,11 @@ export function speakersMissingChecklistItem(
                 status: session.status,
                 isConfirmed: session.isConfirmed,
                 sessionDetailsComplete: speaker.sessionDetailsComplete[session.sessionizeSessionId] ?? false,
+                backupAccepted: speaker.sessionBackupAccepted[session.sessionizeSessionId] ?? false,
             }))
-            const item = speakerChecklist(speaker.profile, sessions, now).find((i) => i.key === itemKey)
+            const item = speakerChecklist(speaker.profile, sessions, speaker.meetTheExpertsResponded, now).find(
+                (i) => i.key === itemKey,
+            )
             return item ? !item.done : false
         })
         .map((speaker) => ({ sessionizeId: speaker.sessionizeId, fullName: speaker.fullName, contacts: speaker.contacts }))

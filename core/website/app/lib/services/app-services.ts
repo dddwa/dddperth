@@ -4,6 +4,8 @@ import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { MeetTheExpertsSchedulingStore } from './meet-the-experts-scheduling-store'
+import type { MeetTheExpertsStore } from './meet-the-experts-store'
 import type { NotificationLog } from './notification-log'
 import type { SessionStorages } from './session-storages'
 import type { SpeakerSyncService } from './speaker-sync-service'
@@ -35,4 +37,6 @@ export interface AppServices {
     notifications: NotificationLog
     speakers: SpeakersStore
     speakerSync: SpeakerSyncService
+    meetTheExperts: MeetTheExpertsStore
+    meetTheExpertsScheduling: MeetTheExpertsSchedulingStore
 }

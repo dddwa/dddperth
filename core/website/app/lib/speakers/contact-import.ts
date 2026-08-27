@@ -1,12 +1,14 @@
 /**
- * CSV import for speaker portal access. Sessionize's "flattened accepted
- * sessions" export has one row per (session, speaker) pair — Session Id +
- * Speaker Id + Email is everything needed to grant portal access; speaker
- * bio/sessions/links etc. are already sourced from the Sessionize API sync
- * (see sync-plan.ts) so this only ever reads the three columns above (plus
- * name, for display). No I/O — parsing and planning are pure so both can be
- * unit tested; the D1 write lives in the route action.
+ * CSV/Excel import for speaker portal access. Sessionize's "flattened
+ * accepted sessions" export has one row per (session, speaker) pair —
+ * Session Id + Speaker Id + Email is everything needed to grant portal
+ * access; speaker bio/sessions/links etc. are already sourced from the
+ * Sessionize API sync (see sync-plan.ts) so this only ever reads the three
+ * columns above (plus name, for display). No I/O — parsing and planning are
+ * pure so both can be unit tested; the D1 write lives in the route action.
  */
+
+import { read as readWorkbook, utils as sheetUtils } from 'xlsx'
 
 export interface CsvSpeakerRow {
     sessionizeId: string
@@ -87,7 +89,24 @@ export function parseCsv(text: string): string[][] {
  * export is sourced from the API instead. Throws if the required columns
  * aren't present (wrong export, or a hand-edited file missing a header). */
 export function parseSpeakerContactsCsv(csvText: string): CsvSpeakerRow[] {
-    const rows = parseCsv(csvText)
+    return speakerContactsFromTable(parseCsv(csvText))
+}
+
+/** Same export, saved as Excel instead of CSV — reads the first sheet only.
+ * Numbers/dates are read as their displayed text (not raw serial values) so
+ * a Speaker Id or Session Id typed as a number still comes through as the
+ * same string a CSV export would have produced. */
+export function parseSpeakerContactsExcel(fileBuffer: ArrayBuffer): CsvSpeakerRow[] {
+    const workbook = readWorkbook(fileBuffer, { type: 'array' })
+    const firstSheetName = workbook.SheetNames[0]
+    if (!firstSheetName) return []
+
+    const sheet = workbook.Sheets[firstSheetName]
+    const rows = sheetUtils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, defval: '' })
+    return speakerContactsFromTable(rows)
+}
+
+function speakerContactsFromTable(rows: string[][]): CsvSpeakerRow[] {
     if (rows.length === 0) return []
 
     const header = rows[0].map((h) => h.trim())
@@ -101,7 +120,7 @@ export function parseSpeakerContactsCsv(csvText: string): CsvSpeakerRow[] {
     const idxLastName = indexOf('LastName')
 
     if (idxSessionizeId === -1 || idxEmail === -1) {
-        throw new Error('CSV is missing the required "Speaker Id" and/or "Email" columns')
+        throw new Error('File is missing the required "Speaker Id" and/or "Email" columns')
     }
 
     const dataRows = rows.slice(1)

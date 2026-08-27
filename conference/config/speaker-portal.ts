@@ -52,16 +52,7 @@ export const speakerPortal: SpeakerPortalConfig = {
             dateTime: DateTime.fromISO('2026-10-02T18:00:00', { zone: 'Australia/Perth' }),
             endDateTime: DateTime.fromISO('2026-10-02T20:00:00', { zone: 'Australia/Perth' }),
         },
-        // TODO: confirm exact Meet-the-Experts slot boundaries — placeholder
-        // six ~55-min blocks spanning the stated 10:30am-4pm window.
-        meetTheExpertsSlots: [
-            { id: 'slot-1', label: '10:30am – 11:25am' },
-            { id: 'slot-2', label: '11:25am – 12:20pm' },
-            { id: 'slot-3', label: '12:20pm – 1:15pm' },
-            { id: 'slot-4', label: '1:15pm – 2:10pm' },
-            { id: 'slot-5', label: '2:10pm – 3:05pm' },
-            { id: 'slot-6', label: '3:05pm – 4:00pm' },
-        ],
     },
     sessionConfirmationNotifyEmail: 'speakers@dddperth.com',
+    speakerEmailAddress: 'speakers@dddperth.com',
 }

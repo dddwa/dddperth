@@ -30,6 +30,7 @@ export type {
     DeploymentConfig,
     HomepageContentSlots,
     MobileApp,
+    MeetTheExpertsConfig,
     MeetTheExpertsSlotConfig,
     NavConfig,
     NavItem,

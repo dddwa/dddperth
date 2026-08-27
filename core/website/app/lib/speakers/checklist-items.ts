@@ -34,14 +34,21 @@ export interface OpenModalAction {
  */
 export interface ExternalLinkAction {
     href?: string
-    action?: 'confirm-session' | 'claim-ticket'
+    action?: 'confirm-session' | 'claim-ticket' | 'accept-backup'
     label: string
 }
 
 export type ChecklistItemAction = OpenModalAction | ExternalLinkAction
 
 export interface ChecklistItemDefinition {
-    key: 'confirmSession' | 'sessionDetails' | 'claimTicket' | 'speakerTraining' | 'speakerDinner' | 'meetTheExperts'
+    key:
+        | 'confirmSession'
+        | 'sessionDetails'
+        | 'claimTicket'
+        | 'speakerTraining'
+        | 'speakerDinner'
+        | 'meetTheExperts'
+        | 'acceptBackupSpeaker'
     label: string
     /** Omit for no due date. */
     dueDate?: DateTime
@@ -57,6 +64,14 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
             { href: 'https://sessionize.com/app/speaker', label: 'Open Sessionize ↗' },
             { action: 'confirm-session', label: "I've already confirmed it" },
         ],
+    },
+    {
+        // Only shown instead of confirmSession, for a speaker with no
+        // Accepted session — see `isBackupSpeaker` in checklist.ts.
+        key: 'acceptBackupSpeaker',
+        label: 'Accept being a backup speaker',
+        dueDate: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
+        actions: [{ action: 'accept-backup', label: 'I accept being a backup speaker' }],
     },
     {
         key: 'sessionDetails',
