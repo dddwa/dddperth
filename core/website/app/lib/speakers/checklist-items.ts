@@ -85,7 +85,7 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         dueDate: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Australia/Perth' }),
         actions: [
             // href omitted — falls back to the dynamic ticketClaimUrl prop.
-            { label: 'Claim your ticket ↗', href: 'https://ti.to/dddperth/2026/with/speaker' },
+            { label: 'Claim your ticket ↗', href: 'https://ti.to/dddperth/2026/with/fmf7yvt0fqg' },
             { action: 'claim-ticket', label: "I've claimed it" },
         ],
     },
