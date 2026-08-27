@@ -16,6 +16,8 @@ function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
         sessions: [],
         profile: null,
         sessionDetailsComplete: {},
+        meetTheExpertsResponded: false,
+        sessionBackupAccepted: {},
         ...overrides,
     }
 }
@@ -34,6 +36,7 @@ describe('buildSessionExport', () => {
                         talkTopics: [],
                         status: 'Accepted',
                         isConfirmed: false,
+                        foundInSessionize: true,
                     },
                 ],
             }),
@@ -50,6 +53,7 @@ describe('buildSessionExport', () => {
                         talkTopics: [],
                         status: 'Accepted',
                         isConfirmed: false,
+                        foundInSessionize: true,
                     },
                 ],
             }),
@@ -80,6 +84,7 @@ describe('buildSessionExport', () => {
                         talkTopics: [],
                         status: 'Waitlisted',
                         isConfirmed: false,
+                        foundInSessionize: true,
                     },
                 ],
             }),
@@ -92,7 +97,7 @@ describe('buildSessionExport', () => {
         const speakers: SpeakerListEntry[] = [
             speaker({
                 active: false,
-                sessions: [{ sessionizeSessionId: 'sess-1', sessionTitle: 'Gone', talkTopics: [], status: 'Accepted', isConfirmed: false }],
+                sessions: [{ sessionizeSessionId: 'sess-1', sessionTitle: 'Gone', talkTopics: [], status: 'Accepted', isConfirmed: false, foundInSessionize: true }],
             }),
         ]
 
@@ -103,11 +108,11 @@ describe('buildSessionExport', () => {
         const speakers: SpeakerListEntry[] = [
             speaker({
                 sessionizeId: 'spk-1',
-                sessions: [{ sessionizeSessionId: 'sess-b', sessionTitle: 'Zebra talk', talkTopics: [], status: 'Accepted', isConfirmed: false }],
+                sessions: [{ sessionizeSessionId: 'sess-b', sessionTitle: 'Zebra talk', talkTopics: [], status: 'Accepted', isConfirmed: false, foundInSessionize: true }],
             }),
             speaker({
                 sessionizeId: 'spk-2',
-                sessions: [{ sessionizeSessionId: 'sess-a', sessionTitle: 'Aardvark talk', talkTopics: [], status: 'Accepted', isConfirmed: false }],
+                sessions: [{ sessionizeSessionId: 'sess-a', sessionTitle: 'Aardvark talk', talkTopics: [], status: 'Accepted', isConfirmed: false, foundInSessionize: true }],
             }),
         ]
 
@@ -123,6 +128,7 @@ describe('collectPhotoSpeakers', () => {
             talkTopics: [],
             status: 'Accepted',
             isConfirmed: false,
+                        foundInSessionize: true,
         }
         const speakers: SpeakerListEntry[] = [
             speaker({ sessionizeId: 'spk-1', fullName: 'Ada Lovelace', sessions: [inSession] }),
@@ -139,8 +145,8 @@ describe('collectPhotoSpeakers', () => {
         const shared = speaker({
             sessionizeId: 'spk-1',
             sessions: [
-                { sessionizeSessionId: 'sess-1', sessionTitle: 'Talk One', talkTopics: [], status: 'Accepted', isConfirmed: false },
-                { sessionizeSessionId: 'sess-2', sessionTitle: 'Talk Two', talkTopics: [], status: 'Accepted', isConfirmed: false },
+                { sessionizeSessionId: 'sess-1', sessionTitle: 'Talk One', talkTopics: [], status: 'Accepted', isConfirmed: false, foundInSessionize: true },
+                { sessionizeSessionId: 'sess-2', sessionTitle: 'Talk Two', talkTopics: [], status: 'Accepted', isConfirmed: false, foundInSessionize: true },
             ],
         })
         const sessions = buildSessionExport([shared])

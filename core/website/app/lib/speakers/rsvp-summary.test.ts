@@ -6,9 +6,7 @@ function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
     return {
         sessionizeId: 'sp-1',
         introductionUseSessionizeBio: true,
-        registerMeetTheExpertsSlots: [],
         rsvpSpeakerTraining: [],
-        meetTheExpertsBioUseSessionizeBio: true,
         ...overrides,
     }
 }

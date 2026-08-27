@@ -12,6 +12,7 @@ import {
     type SpeakerSessionDetailsSection,
     type SpeakerWorkspaceSessionView,
 } from './workspace-view.server'
+import type { MeetTheExpertsRegistration } from '../services/meet-the-experts-store'
 import type { SpeakerWorkspace, YesNoMaybe } from '../services/speakers-store'
 
 /**
@@ -29,6 +30,11 @@ export interface SpeakerDashboardView {
 
     checklist: SpeakerChecklistItem[]
     ticketClaimUrl?: string
+    /** The viewer's own sessions still needing backup-speaker acceptance —
+     * feeds the checklist's "I accept being a backup speaker" button, which
+     * submits acceptance for all of them at once (session-level, shared by
+     * co-presenters — see `markBackupAccepted`). */
+    backupSessionIds: string[]
 
     conferenceName: string
     conferenceDateLabel: string | null
@@ -61,6 +67,7 @@ export function buildSpeakerDashboardView(
     context: { get<T>(context: RouterContext<T>): T },
     workspace: SpeakerWorkspace,
     targetSessionizeId: string,
+    meetTheExpertsRegistration: MeetTheExpertsRegistration | null,
 ): SpeakerDashboardView {
     const now = getDateTimeProvider(context).nowDate()
     const conferenceDateIso = getConferenceState(context).conference.date
@@ -74,12 +81,16 @@ export function buildSpeakerDashboardView(
             .flatMap(({ presenters }) => presenters)
             .find((p) => p.speaker.sessionizeId === targetSessionizeId)?.profile ?? null
 
-    const checklistSessions: SpeakerSessionChecklistInput[] = workspace.sessions.map(({ session, sessionDetails }) => ({
+    const checklistSessions: SpeakerSessionChecklistInput[] = workspace.sessions.map(({ session, sessionDetails, backupAccepted }) => ({
         status: session.status,
         isConfirmed: session.isConfirmed,
         sessionDetailsComplete: Boolean(sessionDetails?.questionsPreference),
+        backupAccepted,
     }))
-    const checklist = speakerChecklist(ownProfile, checklistSessions, now)
+    const checklist = speakerChecklist(ownProfile, checklistSessions, Boolean(meetTheExpertsRegistration), now)
+    const backupSessionIds = workspace.sessions
+        .filter(({ session, backupAccepted }) => session.status !== 'Accepted' && !backupAccepted)
+        .map(({ session }) => session.sessionizeSessionId)
 
     const reminders = upcomingRsvpedEvents(
         ownProfile,
@@ -114,6 +125,7 @@ export function buildSpeakerDashboardView(
 
         checklist,
         ticketClaimUrl: checklistConfig?.ticketClaimUrl,
+        backupSessionIds,
 
         conferenceName: conferenceManifest.public.name,
         conferenceDateLabel: conferenceDate?.toLocaleString(DateTime.DATE_HUGE, { locale: 'en-AU' }) ?? null,
@@ -137,12 +149,12 @@ export function buildSpeakerDashboardView(
         dinnerResponse: ownProfile?.rsvpSpeakersDinner,
         dinnerDietaryRequirements: ownProfile?.dietaryRequirements,
 
-        meetTheExpertsSlots: checklistConfig?.meetTheExpertsSlots ?? [],
-        meetTheExpertsResponded: Boolean(ownProfile?.registerMeetTheExpertsRespondedAt),
-        meetTheExpertsSelectedSlotIds: ownProfile?.registerMeetTheExpertsSlots ?? [],
+        meetTheExpertsSlots: conferenceManifest.meetTheExperts?.slots ?? [],
+        meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
+        meetTheExpertsSelectedSlotIds: meetTheExpertsRegistration?.slots ?? [],
         meetTheExpertsBio: workspace.speaker.bio,
-        meetTheExpertsBioUseSessionizeBio: ownProfile?.meetTheExpertsBioUseSessionizeBio ?? true,
-        meetTheExpertsBioCustomText: ownProfile?.meetTheExpertsBioCustomText,
+        meetTheExpertsBioUseSessionizeBio: meetTheExpertsRegistration?.bioUseDefault ?? true,
+        meetTheExpertsBioCustomText: meetTheExpertsRegistration?.bioCustomText,
         sessionDetailsIntroText: ownProfile?.introductionCustomText,
     }
 }

@@ -87,12 +87,18 @@ export function toPortalSession(session: Session, categoryNames: PortalCategoryN
 }
 
 /** The Sessionize endpoint configured for the speaker portal's year, if any
- * — same resolution the sync service uses. */
+ * — same resolution the sync service uses. Prefers `allSessionsEndpoint`
+ * over the plain `sessionizeEndpoint`: the portal grants access on
+ * Accepted *and* Waitlisted sessions (see `portalAccessStatuses`), but
+ * Sessionize's plain "Sessions" view stops listing non-Accepted sessions
+ * once the event's agenda is published — same reason admin/voting pages
+ * use `allSessionsEndpoint` instead. Falls back to `sessionizeEndpoint` for
+ * years/forks that haven't configured the all-statuses endpoint. */
 export function resolveSpeakerPortalSessionizeEndpoint(config: AppConfig): string | undefined {
     const portalConfig = conferenceManifest.speakerPortal
     if (!portalConfig) return undefined
 
     const yearConfig = getYearConfig(portalConfig.year, config)
     if (yearConfig.kind !== 'conference' || yearConfig.sessions?.kind !== 'sessionize') return undefined
-    return yearConfig.sessions.sessionizeEndpoint
+    return yearConfig.sessions.allSessionsEndpoint ?? yearConfig.sessions.sessionizeEndpoint
 }

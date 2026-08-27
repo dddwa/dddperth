@@ -59,10 +59,6 @@ interface SpeakerProfileRow {
     rsvp_speaker_training_responded_at: number | null
     register_meet_the_experts: string | null
     register_meet_the_experts_other: string | null
-    register_meet_the_experts_slots_json: string | null
-    register_meet_the_experts_responded_at: number | null
-    meet_the_experts_bio_use_sessionize_bio: number
-    meet_the_experts_bio_custom_text: string | null
     completed_at: number | null
     updated_at: number
     updated_by: string
@@ -118,7 +114,7 @@ function toSpeaker(row: SpeakerRow, content: PortalSpeakerContent): SpeakerRecor
     }
 }
 
-function toSession(row: SpeakerSessionRow, content: PortalSessionContent): SpeakerSession {
+function toSession(row: SpeakerSessionRow, content: PortalSessionContent, foundInSessionize: boolean): SpeakerSession {
     return {
         sessionizeSessionId: row.sessionize_session_id,
         sessionTitle: content.sessionTitle,
@@ -132,6 +128,7 @@ function toSession(row: SpeakerSessionRow, content: PortalSessionContent): Speak
         roomName: content.roomName,
         status: content.status,
         isConfirmed: content.isConfirmed,
+        foundInSessionize,
     }
 }
 
@@ -177,10 +174,6 @@ function toProfile(row: SpeakerProfileRow): SpeakerProfile {
         rsvpSpeakerTrainingRespondedAt: row.rsvp_speaker_training_responded_at ?? undefined,
         registerMeetTheExperts: (row.register_meet_the_experts as YesNoMaybeOther | null) ?? undefined,
         registerMeetTheExpertsOther: row.register_meet_the_experts_other ?? undefined,
-        registerMeetTheExpertsSlots: parseJsonArray(row.register_meet_the_experts_slots_json),
-        registerMeetTheExpertsRespondedAt: row.register_meet_the_experts_responded_at ?? undefined,
-        meetTheExpertsBioUseSessionizeBio: row.meet_the_experts_bio_use_sessionize_bio === 1,
-        meetTheExpertsBioCustomText: row.meet_the_experts_bio_custom_text ?? undefined,
         completedAt: row.completed_at ?? undefined,
         updatedAt: row.updated_at,
         updatedBy: row.updated_by,
@@ -367,13 +360,20 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                     })),
                 )
 
+                const backupAcceptanceRow = await db
+                    .prepare(`SELECT 1 FROM session_backup_acceptance WHERE sessionize_session_id = ?`)
+                    .bind(sessionRow.sessionize_session_id)
+                    .first()
+
                 workspace.sessions.push({
                     session: toSession(
                         sessionRow,
                         live.sessions.get(sessionRow.sessionize_session_id) ??
                             placeholderSession(sessionRow.sessionize_session_id),
+                        live.sessions.has(sessionRow.sessionize_session_id),
                     ),
                     sessionDetails: await this.getSessionDetails(sessionRow.sessionize_session_id),
+                    backupAccepted: backupAcceptanceRow !== null,
                     presenters,
                 })
             }
@@ -382,7 +382,16 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
         },
 
         async listSpeakers(year) {
-            const [speakersResult, contacts, sessions, profiles, sessionDetailsRows, live] = await Promise.all([
+            const [
+                speakersResult,
+                contacts,
+                sessions,
+                profiles,
+                sessionDetailsRows,
+                meetTheExpertsRows,
+                backupAcceptanceRows,
+                live,
+            ] = await Promise.all([
                 db.prepare(`SELECT * FROM speakers WHERE year = ?`).bind(year).all<SpeakerRow>(),
                 db
                     .prepare(
@@ -414,6 +423,22 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                     )
                     .bind(year)
                     .all<{ sessionize_session_id: string; questions_preference: string | null }>(),
+                db
+                    .prepare(
+                        `SELECT m.registrant_id FROM meet_the_experts_registrations m
+                         JOIN speakers s ON s.sessionize_id = m.registrant_id
+                         WHERE m.registrant_type = 'speaker' AND s.year = ?`,
+                    )
+                    .bind(year)
+                    .all<{ registrant_id: string }>(),
+                db
+                    .prepare(
+                        `SELECT sba.sessionize_session_id FROM session_backup_acceptance sba
+                         JOIN speaker_sessions ss ON ss.sessionize_session_id = sba.sessionize_session_id
+                         JOIN speakers s ON s.sessionize_id = ss.sessionize_speaker_id WHERE s.year = ?`,
+                    )
+                    .bind(year)
+                    .all<{ sessionize_session_id: string }>(),
                 fetchLiveContent(config),
             ])
 
@@ -426,13 +451,21 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
             const sessionsBySpeaker = new Map<string, SpeakerSession[]>()
             for (const s of sessions.results ?? []) {
                 const list = sessionsBySpeaker.get(s.sessionize_speaker_id) ?? []
-                list.push(toSession(s, live.sessions.get(s.sessionize_session_id) ?? placeholderSession(s.sessionize_session_id)))
+                list.push(
+                    toSession(
+                        s,
+                        live.sessions.get(s.sessionize_session_id) ?? placeholderSession(s.sessionize_session_id),
+                        live.sessions.has(s.sessionize_session_id),
+                    ),
+                )
                 sessionsBySpeaker.set(s.sessionize_speaker_id, list)
             }
             const profileBySpeaker = new Map((profiles.results ?? []).map((p) => [p.sessionize_id, toProfile(p)]))
             const sessionDetailsCompleteById = new Map(
                 (sessionDetailsRows.results ?? []).map((r) => [r.sessionize_session_id, Boolean(r.questions_preference)]),
             )
+            const meetTheExpertsRespondedBySpeaker = new Set((meetTheExpertsRows.results ?? []).map((r) => r.registrant_id))
+            const backupAcceptedSessionIds = new Set((backupAcceptanceRows.results ?? []).map((r) => r.sessionize_session_id))
 
             const entries = (speakersResult.results ?? []).map((row): SpeakerListEntry => {
                 const speakerSessions = sessionsBySpeaker.get(row.sessionize_id) ?? []
@@ -446,6 +479,10 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                             s.sessionizeSessionId,
                             sessionDetailsCompleteById.get(s.sessionizeSessionId) ?? false,
                         ]),
+                    ),
+                    meetTheExpertsResponded: meetTheExpertsRespondedBySpeaker.has(row.sessionize_id),
+                    sessionBackupAccepted: Object.fromEntries(
+                        speakerSessions.map((s) => [s.sessionizeSessionId, backupAcceptedSessionIds.has(s.sessionizeSessionId)]),
                     ),
                 }
             })
@@ -476,11 +513,12 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
 
         async saveProfile(sessionizeId, details, updatedBy) {
             // Deliberately doesn't touch dietary_requirements / rsvp_speakers_dinner /
-            // rsvp_speaker_training_json / rsvp_speaker_training_responded_at /
-            // register_meet_the_experts_slots_json / register_meet_the_experts_responded_at
-            // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp /
-            // saveMeetTheExpertsSlots now, so a session-details save can never
-            // clobber an RSVP already on file.
+            // rsvp_speaker_training_json / rsvp_speaker_training_responded_at
+            // — those are owned by saveSpeakerDinnerRsvp / saveSpeakerTrainingRsvp
+            // now, so a session-details save can never clobber an RSVP already
+            // on file. Meet-the-Experts registration lives in
+            // meet_the_experts_registrations, a separate table entirely — see
+            // services.meetTheExperts.
             await db
                 .prepare(
                     `INSERT INTO speaker_profiles
@@ -535,31 +573,6 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                     details.presentationDetailsOther ?? null,
                     details.optOutOfRecording ? 1 : 0,
                     details.anythingElse ?? null,
-                    updatedBy,
-                )
-                .run()
-        },
-
-        async saveMeetTheExpertsSlots(sessionizeId, details, updatedBy) {
-            await db
-                .prepare(
-                    `INSERT INTO speaker_profiles
-                         (sessionize_id, register_meet_the_experts_slots_json,
-                          register_meet_the_experts_responded_at,
-                          meet_the_experts_bio_use_sessionize_bio, meet_the_experts_bio_custom_text,
-                          updated_at, updated_by)
-                     VALUES (?, ?, unixepoch(), ?, ?, unixepoch(), ?)
-                     ON CONFLICT(sessionize_id) DO UPDATE SET
-                         register_meet_the_experts_slots_json = excluded.register_meet_the_experts_slots_json,
-                         register_meet_the_experts_responded_at = excluded.register_meet_the_experts_responded_at,
-                         meet_the_experts_bio_use_sessionize_bio = excluded.meet_the_experts_bio_use_sessionize_bio,
-                         meet_the_experts_bio_custom_text = excluded.meet_the_experts_bio_custom_text`,
-                )
-                .bind(
-                    sessionizeId,
-                    details.slots.length > 0 ? JSON.stringify(details.slots) : null,
-                    details.bioUseSessionizeBio ? 1 : 0,
-                    details.bioCustomText ?? null,
                     updatedBy,
                 )
                 .run()
@@ -644,6 +657,21 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                 .bind(sessionizeId, updatedBy)
                 .run()
             return true
+        },
+
+        async markBackupAccepted(sessionizeSessionId, updatedBy) {
+            // Session-level, not speaker-level — set once per session, never
+            // unset, so a dual-speaker session only needs one presenter to
+            // accept it. DO NOTHING on conflict since there's nothing else
+            // on the row to update; the first acceptance wins.
+            await db
+                .prepare(
+                    `INSERT INTO session_backup_acceptance (sessionize_session_id, accepted_at, accepted_by)
+                     VALUES (?, unixepoch(), ?)
+                     ON CONFLICT(sessionize_session_id) DO NOTHING`,
+                )
+                .bind(sessionizeSessionId, updatedBy)
+                .run()
         },
 
         async applySyncPlan(plan) {

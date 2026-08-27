@@ -1,16 +1,18 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
+import { useEffect, useState } from 'react'
+import { data, Form, useActionData, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
+import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
 import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
-import { computeContactImportPlan, parseSpeakerContactsCsv } from '~/lib/speakers/contact-import'
+import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
 import { FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
 import { buildRsvpHeadcount, type RsvpHeadcount } from '~/lib/speakers/rsvp-summary'
@@ -23,6 +25,10 @@ interface SessionTableRow {
     title: string
     hasSlot: boolean
     isConfirmed: boolean
+    /** Self-reported "I accept being a backup speaker" — session-level
+     * (shared by every presenter, so only one of them needs to accept), only
+     * relevant for a waitlisted session but populated regardless of status. */
+    backupAccepted: boolean
     presenters: Array<{
         sessionizeId: string
         fullName: string
@@ -65,6 +71,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             syncAvailable: false,
             rsvpHeadcount: null,
             followUps: [],
+            speakerEmailAddress: undefined,
         })
     }
 
@@ -81,7 +88,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // means they're genuinely out — no need to keep showing them here.
     // Grouped by session rather than by speaker so co-presenters share one
     // row, and split by status rather than showing it inline per row.
-    const sessionsById = new Map<string, SessionTableRow & { status: string }>()
+    const sessionsById = new Map<string, SessionTableRow & { status: string; foundInSessionize: boolean }>()
     for (const speaker of speakers.filter((s) => s.active)) {
         for (const session of speaker.sessions) {
             let row = sessionsById.get(session.sessionizeSessionId)
@@ -92,6 +99,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                     status: session.status,
                     hasSlot: Boolean(session.startsAt),
                     isConfirmed: session.isConfirmed,
+                    backupAccepted: speaker.sessionBackupAccepted[session.sessionizeSessionId] ?? false,
+                    foundInSessionize: session.foundInSessionize,
                     presenters: [],
                 }
                 sessionsById.set(session.sessionizeSessionId, row)
@@ -132,16 +141,21 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         configured: true as const,
         year: portalConfig.year,
         acceptedSessions: allSessions.filter((s) => s.status === 'Accepted'),
-        waitlistedSessions: allSessions.filter((s) => s.status !== 'Accepted'),
+        // A waitlisted session id Sessionize no longer lists at all (as
+        // opposed to one that's just not synced yet) most likely means it's
+        // been declined/withdrawn since — nothing useful to show an admin,
+        // so drop it instead of a row of raw ids.
+        waitlistedSessions: allSessions.filter((s) => s.status !== 'Accepted' && s.foundInSessionize),
         lastRun,
         syncAvailable: services.speakerSync.isConfigured(),
         rsvpHeadcount,
         followUps,
+        speakerEmailAddress: portalConfig.speakerEmailAddress,
     })
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-    await requireAdmin(request, context)
+    const { email } = await requireAdmin(request, context)
     const services = getServices(context)
 
     const formData = await request.formData()
@@ -170,15 +184,19 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         const file = formData.get('csv')
         if (!(file instanceof File) || file.size === 0) {
-            return data({ _action: actionName, error: 'Choose a CSV file to upload' }, { status: 400 })
+            return data({ _action: actionName, error: 'Choose a CSV or Excel file to upload' }, { status: 400 })
         }
+
+        const isExcel = /\.xlsx?$/i.test(file.name) || EXCEL_MIME_TYPES.has(file.type)
 
         let rows
         try {
-            rows = parseSpeakerContactsCsv(await file.text())
+            rows = isExcel
+                ? parseSpeakerContactsExcel(await file.arrayBuffer())
+                : parseSpeakerContactsCsv(await file.text())
         } catch (error) {
             return data(
-                { _action: actionName, error: error instanceof Error ? error.message : 'Could not parse CSV' },
+                { _action: actionName, error: error instanceof Error ? error.message : 'Could not parse file' },
                 { status: 400 },
             )
         }
@@ -200,25 +218,27 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ _action: actionName, imported: plan.rows })
     }
 
+    if (actionName === 'accept-backup') {
+        const sessionizeSessionId = formData.get('sessionizeSessionId')
+        if (typeof sessionizeSessionId !== 'string' || !sessionizeSessionId) {
+            return data({ _action: actionName, error: 'Missing session' }, { status: 400 })
+        }
+        await services.speakers.markBackupAccepted(sessionizeSessionId, email)
+        return data({ _action: actionName, sessionizeSessionId })
+    }
+
     if (actionName === 'follow-up') {
         const portalConfig = conferenceManifest.speakerPortal
         if (!portalConfig) {
             return data({ _action: actionName, error: 'Speaker portal not configured' }, { status: 400 })
         }
 
-        const itemKey = formData.get('itemKey')
-        const definition = SPEAKER_CHECKLIST_ITEMS.find(
-            (d): d is ChecklistItemDefinition => d.key === itemKey,
-        )
+        const definition = requireChecklistDefinition(formData.get('itemKey'))
         if (!definition) {
             return data({ _action: actionName, error: 'Unknown checklist item' }, { status: 400 })
         }
 
-        const speakers = await services.speakers.listSpeakers(portalConfig.year)
-        const now = getDateTimeProvider(context).nowDate()
-        const targets = speakersMissingChecklistItem(speakers, definition.key, now)
-        const portalUrl = new URL('/speaker-portal', getConfig(context).webUrl).toString()
-        const conferenceName = conferenceManifest.public.name
+        const { targets, portalUrl, conferenceName } = await loadFollowUpTargets(services, context, portalConfig, definition.key)
         const template = FOLLOW_UP_EMAIL_TEMPLATES[definition.key]
 
         let emailsSent = 0
@@ -228,6 +248,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                 try {
                     await services.email.send({
                         to: email,
+                        replyTo: portalConfig.speakerEmailAddress,
                         subject: template.subject,
                         text: template.text(vars),
                         html: template.html(vars),
@@ -244,8 +265,103 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ _action: actionName, itemKey: definition.key, speakersCount: targets.length, emailsSent })
     }
 
+    if (actionName === 'follow-up-test') {
+        const portalConfig = conferenceManifest.speakerPortal
+        if (!portalConfig) {
+            return data({ _action: actionName, error: 'Speaker portal not configured' }, { status: 400 })
+        }
+
+        const speakerEmailAddress = portalConfig.speakerEmailAddress
+        if (!speakerEmailAddress) {
+            return data({ _action: actionName, error: 'No speaker email address configured for this conference' }, { status: 400 })
+        }
+
+        const definition = requireChecklistDefinition(formData.get('itemKey'))
+        if (!definition) {
+            return data({ _action: actionName, error: 'Unknown checklist item' }, { status: 400 })
+        }
+
+        const { targets, portalUrl, conferenceName } = await loadFollowUpTargets(services, context, portalConfig, definition.key)
+        const template = FOLLOW_UP_EMAIL_TEMPLATES[definition.key]
+        const vars = { firstName: 'there', portalUrl, conferenceName }
+        const recipientEmails = targets.flatMap((target) => target.contacts)
+
+        // The real send only ever goes to `speakerEmailAddress` — this list is
+        // logged so an admin can sanity-check who a live send would reach
+        // without actually emailing any of them.
+        console.log(
+            `[follow-up test email] ${definition.label}: would send to ${recipientEmails.length} address(es): ${recipientEmails.join(', ') || '(none)'}`,
+        )
+
+        await services.email.send({
+            to: speakerEmailAddress,
+            replyTo: speakerEmailAddress,
+            subject: template.subject,
+            text: template.text(vars),
+            html: template.html(vars),
+        })
+
+        return data({
+            _action: actionName,
+            itemKey: definition.key,
+            speakerEmailAddress,
+            recipientCount: recipientEmails.length,
+        })
+    }
+
+    if (actionName === 'follow-up-manual') {
+        const portalConfig = conferenceManifest.speakerPortal
+        if (!portalConfig) {
+            return data({ _action: actionName, error: 'Speaker portal not configured' }, { status: 400 })
+        }
+
+        const definition = requireChecklistDefinition(formData.get('itemKey'))
+        if (!definition) {
+            return data({ _action: actionName, error: 'Unknown checklist item' }, { status: 400 })
+        }
+
+        const { targets, portalUrl, conferenceName } = await loadFollowUpTargets(services, context, portalConfig, definition.key)
+        const template = FOLLOW_UP_EMAIL_TEMPLATES[definition.key]
+        const vars = { firstName: 'there', portalUrl, conferenceName }
+        const recipientEmails = targets.flatMap((target) => target.contacts)
+
+        return data({
+            _action: actionName,
+            itemKey: definition.key,
+            subject: template.subject,
+            emailText: template.text(vars),
+            emailAddresses: recipientEmails.join(', '),
+        })
+    }
+
     return data({ _action: 'unknown' as const, error: 'Unknown action' }, { status: 400 })
 }
+
+function requireChecklistDefinition(itemKey: FormDataEntryValue | null): ChecklistItemDefinition | undefined {
+    return SPEAKER_CHECKLIST_ITEMS.find((d): d is ChecklistItemDefinition => d.key === itemKey)
+}
+
+/** Shared setup for all three follow-up actions (real send, test send,
+ * manual-copy preview) — the audience and template variables (other than
+ * `firstName`) never differ between them. */
+async function loadFollowUpTargets(
+    services: ReturnType<typeof getServices>,
+    context: Route.ActionArgs['context'],
+    portalConfig: NonNullable<typeof conferenceManifest.speakerPortal>,
+    itemKey: ChecklistItemDefinition['key'],
+) {
+    const speakers = await services.speakers.listSpeakers(portalConfig.year)
+    const now = getDateTimeProvider(context).nowDate()
+    const targets = speakersMissingChecklistItem(speakers, itemKey, now)
+    const portalUrl = new URL('/speaker-portal', getConfig(context).webUrl).toString()
+    const conferenceName = conferenceManifest.public.name
+    return { targets, portalUrl, conferenceName }
+}
+
+const EXCEL_MIME_TYPES = new Set([
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+])
 
 const IMPORT_STATUS_LABEL: Record<string, string> = {
     granted: '✅ Granted',
@@ -292,14 +408,20 @@ export default function AdminSpeakers() {
         )
     }
 
-    const { acceptedSessions, waitlistedSessions, lastRun, syncAvailable, year, rsvpHeadcount, followUps } = loaderData
+    const { acceptedSessions, waitlistedSessions, lastRun, syncAvailable, year, rsvpHeadcount, followUps, speakerEmailAddress } =
+        loaderData
 
     return (
         <AdminLayout heading={`Speakers (${year})`}>
             {rsvpHeadcount && <RsvpHeadcountCard headcount={rsvpHeadcount} />}
 
             {followUps.length > 0 && (
-                <FollowUpCard followUps={followUps} actionData={actionData} navigation={navigation} />
+                <FollowUpCard
+                    followUps={followUps}
+                    actionData={actionData}
+                    navigation={navigation}
+                    speakerEmailAddress={speakerEmailAddress}
+                />
             )}
 
             <AdminCard>
@@ -334,6 +456,16 @@ export default function AdminSpeakers() {
                         >
                             <a href="/admin/speakers/export">Export sessions + photos</a>
                         </Button>
+                        <Button
+                            asChild
+                            variant="outline"
+                            color="admin.900"
+                            borderColor="admin.400"
+                            bg="white"
+                            _hover={{ bg: 'admin.100' }}
+                        >
+                            <a href="/admin/speakers/experts">Meet the Experts seating</a>
+                        </Button>
                         <Form method="post">
                             <input type="hidden" name="_action" value="sync-now" />
                             <Button type="submit" disabled={isSyncing || !syncAvailable}>
@@ -363,17 +495,24 @@ export default function AdminSpeakers() {
 
             <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
-                    Import portal access from CSV
+                    Import portal access from CSV or Excel
                 </styled.h2>
                 <styled.p fontSize="sm" color="admin.600" mb="4">
-                    Upload Sessionize's "flattened accepted sessions" export to grant portal access in bulk. Only
-                    Speaker Id, Session Id and Email are used — everything else comes from the Sessionize sync above.
-                    Re-uploading the same file is safe; existing access is never removed.
+                    Upload Sessionize's "flattened accepted sessions" export (CSV or Excel, first sheet only) to
+                    grant portal access in bulk. Only Speaker Id, Session Id and Email are used — everything else
+                    comes from the Sessionize sync above. Re-uploading the same file is safe; existing access is
+                    never removed.
                 </styled.p>
                 <Form method="post" encType="multipart/form-data">
                     <input type="hidden" name="_action" value="import-contacts" />
                     <Flex gap="2" align="center" flexWrap="wrap">
-                        <styled.input type="file" name="csv" accept=".csv,text/csv" required fontSize="sm" />
+                        <styled.input
+                            type="file"
+                            name="csv"
+                            accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            required
+                            fontSize="sm"
+                        />
                         <Button type="submit" disabled={isImporting}>
                             {isImporting ? 'Importing…' : 'Import'}
                         </Button>
@@ -431,6 +570,8 @@ export default function AdminSpeakers() {
                 heading="Backup"
                 emptyMessage="No waitlisted sessions synced yet."
                 sessions={waitlistedSessions}
+                showBackupAccepted
+                navigation={navigation}
             />
         </AdminLayout>
     )
@@ -470,14 +611,23 @@ function StatTile({ label, value, muted }: { label: string; value: number; muted
     )
 }
 
-/** One button per checklist item — emails every active speaker who hasn't
- * completed it yet (see the `follow-up` action, which reuses
- * `speakersMissingChecklistItem`/`speakerChecklist` so this can never drift
- * from what the speaker's own dashboard considers done). */
+/** One row per checklist item, each with three actions:
+ * - "Follow up" emails every active speaker who hasn't completed it yet (see
+ *   the `follow-up` action, which reuses
+ *   `speakersMissingChecklistItem`/`speakerChecklist` so this can never
+ *   drift from what the speaker's own dashboard considers done).
+ * - "Send test email" (`follow-up-test`) sends the same template to a fixed
+ *   inbox instead of real speakers, so wording/rendering can be checked
+ *   before a real send — it also logs the real recipient list to the
+ *   console for a sanity check.
+ * - "Send manual email" (`follow-up-manual`) doesn't send anything; it
+ *   fetches the rendered text and recipient list so they can be copy/pasted
+ *   into an external mail client. */
 function FollowUpCard({
     followUps,
     actionData,
     navigation,
+    speakerEmailAddress,
 }: {
     followUps: Array<{
         key: string
@@ -489,6 +639,7 @@ function FollowUpCard({
     }>
     actionData: ReturnType<typeof useActionData<typeof action>>
     navigation: ReturnType<typeof useNavigation>
+    speakerEmailAddress: string | undefined
 }) {
     return (
         <AdminCard>
@@ -511,6 +662,18 @@ function FollowUpCard({
                         : "Nobody to email — either everyone's done, or nobody outstanding has a contact on file."}
                 </Box>
             )}
+            {actionData?._action === 'follow-up-test' && 'error' in actionData && (
+                <Box role="alert" mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                    {actionData.error}
+                </Box>
+            )}
+            {actionData?._action === 'follow-up-test' && 'speakerEmailAddress' in actionData && (
+                <Box role="status" mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
+                    Test email sent to {actionData.speakerEmailAddress}. A real send would reach{' '}
+                    {actionData.recipientCount} address{actionData.recipientCount === 1 ? '' : 'es'} — see the
+                    server console for the full list.
+                </Box>
+            )}
 
             <Flex direction="column" gap="2">
                 {followUps.map((item) => {
@@ -518,52 +681,192 @@ function FollowUpCard({
                         navigation.state === 'submitting' &&
                         navigation.formData?.get('_action') === 'follow-up' &&
                         navigation.formData?.get('itemKey') === item.key
+                    const isSendingTest =
+                        navigation.state === 'submitting' &&
+                        navigation.formData?.get('_action') === 'follow-up-test' &&
+                        navigation.formData?.get('itemKey') === item.key
                     return (
-                        <Form key={item.key} method="post">
-                            <input type="hidden" name="_action" value="follow-up" />
-                            <input type="hidden" name="itemKey" value={item.key} />
-                            <Flex
-                                justify="space-between"
-                                align="center"
-                                gap="3"
-                                p="3"
-                                bg="admin.100"
-                                borderRadius="md"
-                                flexWrap="wrap"
-                            >
-                                <Box>
-                                    <styled.span display="block" fontSize="sm" color="admin.900">
-                                        {item.label} — <styled.strong>{item.count}</styled.strong> outstanding
+                        <Flex
+                            key={item.key}
+                            justify="space-between"
+                            align="center"
+                            gap="3"
+                            p="3"
+                            bg="admin.100"
+                            borderRadius="md"
+                            flexWrap="wrap"
+                        >
+                            <Box>
+                                <styled.span display="block" fontSize="sm" color="admin.900">
+                                    {item.label} — <styled.strong>{item.count}</styled.strong> outstanding
+                                </styled.span>
+                                {dueDateLabel(item.dueDateIso) && (
+                                    <styled.span
+                                        display="block"
+                                        fontSize="xs"
+                                        fontWeight={item.urgency === 'normal' ? 'normal' : 'semibold'}
+                                        color={URGENCY_TEXT_COLOR[item.urgency]}
+                                    >
+                                        {dueDateLabel(item.dueDateIso)}
+                                        {item.remainingLabel ? ` — ${item.remainingLabel}` : ''}
                                     </styled.span>
-                                    {dueDateLabel(item.dueDateIso) && (
-                                        <styled.span
-                                            display="block"
-                                            fontSize="xs"
-                                            fontWeight={item.urgency === 'normal' ? 'normal' : 'semibold'}
-                                            color={URGENCY_TEXT_COLOR[item.urgency]}
+                                )}
+                            </Box>
+                            <Flex gap="2" flexWrap="wrap">
+                                <Form method="post">
+                                    <input type="hidden" name="_action" value="follow-up" />
+                                    <input type="hidden" name="itemKey" value={item.key} />
+                                    <Button
+                                        type="submit"
+                                        variant="outline"
+                                        color="admin.900"
+                                        borderColor="admin.400"
+                                        bg="white"
+                                        _hover={{ bg: 'admin.100' }}
+                                        disabled={item.count === 0 || isSubmittingThis}
+                                    >
+                                        {isSubmittingThis ? 'Sending…' : `Follow up`}
+                                    </Button>
+                                </Form>
+                                {speakerEmailAddress && (
+                                    <Form method="post">
+                                        <input type="hidden" name="_action" value="follow-up-test" />
+                                        <input type="hidden" name="itemKey" value={item.key} />
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            color="admin.900"
+                                            borderColor="admin.400"
+                                            bg="white"
+                                            _hover={{ bg: 'admin.100' }}
+                                            disabled={isSendingTest}
+                                            title={`Sends to ${speakerEmailAddress}`}
                                         >
-                                            {dueDateLabel(item.dueDateIso)}
-                                            {item.remainingLabel ? ` — ${item.remainingLabel}` : ''}
-                                        </styled.span>
-                                    )}
-                                </Box>
-                                <Button
-                                    type="submit"
-                                    variant="outline"
-                                    color="admin.900"
-                                    borderColor="admin.400"
-                                    bg="white"
-                                    _hover={{ bg: 'admin.100' }}
-                                    disabled={item.count === 0 || isSubmittingThis}
-                                >
-                                    {isSubmittingThis ? 'Sending…' : `Follow up: ${item.label}`}
-                                </Button>
+                                            {isSendingTest ? 'Sending…' : 'Send test'}
+                                        </Button>
+                                    </Form>
+                                )}
+                                <ManualEmailButton itemKey={item.key} label={item.label} />
                             </Flex>
-                        </Form>
+                        </Flex>
                     )
                 })}
             </Flex>
         </AdminCard>
+    )
+}
+
+/** Fetches the rendered follow-up text + recipient list without sending
+ * anything (`follow-up-manual`), then shows both in read-only fields sized
+ * for a quick select-all/copy into an external mail client (Outlook, Gmail,
+ * etc. — wherever the admin actually sends manual follow-ups from). */
+function ManualEmailButton({ itemKey, label }: { itemKey: string; label: string }) {
+    const fetcher = useFetcher<typeof action>()
+    const [open, setOpen] = useState(false)
+    const isLoading = fetcher.state !== 'idle'
+    const result = fetcher.data
+
+    // This fetcher only ever submits `follow-up-manual` for this one item, so
+    // any response it receives is this button's own — open the modal as soon
+    // as it lands rather than requiring a second click.
+    useEffect(() => {
+        if (result) setOpen(true)
+    }, [result])
+
+    return (
+        <>
+            <fetcher.Form method="post">
+                <input type="hidden" name="_action" value="follow-up-manual" />
+                <input type="hidden" name="itemKey" value={itemKey} />
+                <Button
+                    type="submit"
+                    variant="outline"
+                    color="admin.900"
+                    borderColor="admin.400"
+                    bg="white"
+                    _hover={{ bg: 'admin.100' }}
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Preparing…' : 'Manual Email'}
+                </Button>
+            </fetcher.Form>
+
+            <SpeakerModal title={`Manual email — ${label}`} open={open && Boolean(result)} onOpenChange={setOpen}>
+                {result && 'error' in result && (
+                    <Box role="alert" mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                        {result.error}
+                    </Box>
+                )}
+                {result && 'emailText' in result && (
+                    <Flex direction="column" gap="4">
+                        <Box>
+                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
+                                Subject
+                            </styled.label>
+                            <styled.input
+                                readOnly
+                                value={result.subject}
+                                onFocus={(e) => e.currentTarget.select()}
+                                w="full"
+                                px="3"
+                                py="2"
+                                borderWidth="1px"
+                                borderStyle="solid"
+                                borderColor="admin.400"
+                                borderRadius="md"
+                                fontSize="sm"
+                                bg="admin.50"
+                                color="admin.900"
+                            />
+                        </Box>
+                        <Box>
+                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
+                                Email text
+                            </styled.label>
+                            <styled.textarea
+                                readOnly
+                                value={result.emailText}
+                                onFocus={(e) => e.currentTarget.select()}
+                                w="full"
+                                rows={10}
+                                px="3"
+                                py="2"
+                                borderWidth="1px"
+                                borderStyle="solid"
+                                borderColor="admin.400"
+                                borderRadius="md"
+                                fontSize="sm"
+                                bg="admin.50"
+                                color="admin.900"
+                                fontFamily="mono"
+                            />
+                        </Box>
+                        <Box>
+                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
+                                Recipients ({result.emailAddresses ? result.emailAddresses.split(', ').length : 0})
+                            </styled.label>
+                            <styled.textarea
+                                readOnly
+                                value={result.emailAddresses}
+                                onFocus={(e) => e.currentTarget.select()}
+                                w="full"
+                                rows={3}
+                                px="3"
+                                py="2"
+                                borderWidth="1px"
+                                borderStyle="solid"
+                                borderColor="admin.400"
+                                borderRadius="md"
+                                fontSize="sm"
+                                bg="admin.50"
+                                color="admin.900"
+                                fontFamily="mono"
+                            />
+                        </Box>
+                    </Flex>
+                )}
+            </SpeakerModal>
+        </>
     )
 }
 
@@ -620,10 +923,19 @@ function SessionsTable({
     heading,
     emptyMessage,
     sessions,
+    showBackupAccepted = false,
+    navigation,
 }: {
     heading: string
     emptyMessage: string
     sessions: SessionTableRow[]
+    /** Adds a "Backup accepted" indicator + quick self-report button next to
+     * the session title, so an admin doesn't have to open the per-speaker
+     * preview just to mark a waitlisted session as accepted. Session-level —
+     * one control per session, not per presenter, since a dual-speaker
+     * session only needs one presenter to accept it. */
+    showBackupAccepted?: boolean
+    navigation?: ReturnType<typeof useNavigation>
 }) {
     return (
         <AdminCard>
@@ -650,6 +962,10 @@ function SessionsTable({
                         <styled.tbody>
                             {sessions.map((session) => {
                                 const confirmed = session.presenters.some((p) => p.confirmed)
+                                const isSubmittingThis =
+                                    navigation?.state === 'submitting' &&
+                                    navigation.formData?.get('_action') === 'accept-backup' &&
+                                    navigation.formData?.get('sessionizeSessionId') === session.sessionizeSessionId
                                 return session.presenters.map((presenter, index) => (
                                     <styled.tr
                                         key={presenter.sessionizeId}
@@ -658,11 +974,42 @@ function SessionsTable({
                                     >
                                         {index === 0 && (
                                             <styled.td py="2" pr="4" rowSpan={session.presenters.length} verticalAlign="top">
-                                                {session.title}{' '}
-                                                <StatusIcon
-                                                    ok={confirmed}
-                                                    label={confirmed ? 'Session confirmed' : 'Session not yet confirmed'}
-                                                />
+                                                <Flex direction="column" align="flex-start" gap="1">
+                                                    <Box>
+                                                        {session.title}{' '}
+                                                        {!showBackupAccepted && (
+                                                            <StatusIcon
+                                                                ok={confirmed}
+                                                                label={confirmed ? 'Session confirmed' : 'Session not yet confirmed'}
+                                                            />
+                                                        )}
+                                                    </Box>
+                                                    {showBackupAccepted &&
+                                                        (session.backupAccepted ? (
+                                                            <StatusIcon ok label="Backup speaker accepted" />
+                                                        ) : (
+                                                            <Form method="post">
+                                                                <input type="hidden" name="_action" value="accept-backup" />
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="sessionizeSessionId"
+                                                                    value={session.sessionizeSessionId}
+                                                                />
+                                                                <Button
+                                                                    type="submit"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    color="admin.900"
+                                                                    borderColor="admin.400"
+                                                                    bg="white"
+                                                                    _hover={{ bg: 'admin.100' }}
+                                                                    disabled={isSubmittingThis}
+                                                                >
+                                                                    {isSubmittingThis ? 'Marking…' : 'Accept'}
+                                                                </Button>
+                                                            </Form>
+                                                        ))}
+                                                </Flex>
                                             </styled.td>
                                         )}
                                         <styled.td py="2" pr="4">

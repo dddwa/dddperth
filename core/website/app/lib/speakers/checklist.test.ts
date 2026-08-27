@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
 import {
     dueDateRemainingLabel,
+    isBackupAccepted,
+    isBackupSpeaker,
     isMeetTheExpertsApplicable,
     isMeetTheExpertsRegistrationComplete,
     isSessionConfirmed,
@@ -24,14 +26,12 @@ function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
         sessionizeId: 'spk-1',
         introductionUseSessionizeBio: true,
         rsvpSpeakerTraining: [],
-        registerMeetTheExpertsSlots: [],
-        meetTheExpertsBioUseSessionizeBio: true,
         ...overrides,
     }
 }
 
 function session(overrides: Partial<SpeakerSessionChecklistInput> = {}): SpeakerSessionChecklistInput {
-    return { status: 'Accepted', isConfirmed: false, sessionDetailsComplete: true, ...overrides }
+    return { status: 'Accepted', isConfirmed: false, sessionDetailsComplete: true, backupAccepted: false, ...overrides }
 }
 
 describe('isSessionDetailsComplete', () => {
@@ -67,14 +67,9 @@ describe('isMeetTheExpertsApplicable', () => {
 })
 
 describe('isMeetTheExpertsRegistrationComplete', () => {
-    it('is done once the slot-selection modal has been submitted at all, even with zero slots selected', () => {
-        expect(isMeetTheExpertsRegistrationComplete(profile({ registerMeetTheExperts: 'Yes' }))).toBe(false)
-        expect(
-            isMeetTheExpertsRegistrationComplete(
-                profile({ registerMeetTheExperts: 'Yes', registerMeetTheExpertsRespondedAt: 1700000000 }),
-            ),
-        ).toBe(true)
-        expect(isMeetTheExpertsRegistrationComplete(null)).toBe(false)
+    it('is done once the registration has been submitted at all, even with zero slots selected', () => {
+        expect(isMeetTheExpertsRegistrationComplete(undefined)).toBe(false)
+        expect(isMeetTheExpertsRegistrationComplete(1700000000)).toBe(true)
     })
 })
 
@@ -128,25 +123,97 @@ describe('isSessionConfirmed', () => {
     })
 })
 
+describe('isBackupSpeaker', () => {
+    it('is false with no sessions at all', () => {
+        expect(isBackupSpeaker([])).toBe(false)
+    })
+
+    it('is true when every session is non-Accepted', () => {
+        expect(isBackupSpeaker([session({ status: 'Waitlisted' })])).toBe(true)
+    })
+
+    it('is false once at least one session is Accepted', () => {
+        expect(isBackupSpeaker([session({ status: 'Accepted' })])).toBe(false)
+        expect(isBackupSpeaker([session({ status: 'Accepted' }), session({ status: 'Waitlisted' })])).toBe(false)
+    })
+})
+
+describe('isBackupAccepted', () => {
+    it('is not done with no backup sessions at all', () => {
+        expect(isBackupAccepted([])).toBe(false)
+        expect(isBackupAccepted([session({ status: 'Accepted' })])).toBe(false)
+    })
+
+    it('is done once every non-Accepted session has been accepted', () => {
+        expect(isBackupAccepted([session({ status: 'Waitlisted', backupAccepted: false })])).toBe(false)
+        expect(isBackupAccepted([session({ status: 'Waitlisted', backupAccepted: true })])).toBe(true)
+        expect(
+            isBackupAccepted([
+                session({ status: 'Waitlisted', backupAccepted: true }),
+                session({ status: 'Waitlisted', backupAccepted: false }),
+            ]),
+        ).toBe(false)
+    })
+
+    it('counts a co-presenter accepting on a shared session — session-level, not speaker-level', () => {
+        // backupAccepted is set on the session itself regardless of which
+        // presenter submitted it, so this speaker's own view of a session a
+        // co-presenter already accepted just reads true.
+        expect(isBackupAccepted([session({ status: 'Waitlisted', backupAccepted: true })])).toBe(true)
+    })
+})
+
 describe('speakerChecklist', () => {
     it('handles a missing profile — everything outstanding', () => {
-        expect(speakerChecklist(null, [], NOW).every((i) => !i.done)).toBe(true)
+        expect(speakerChecklist(null, [], false, NOW).every((i) => !i.done)).toBe(true)
     })
 
     it('omits meetTheExperts until the speaker opts in', () => {
-        expect(speakerChecklist(null, [], NOW).some((i) => i.key === 'meetTheExperts')).toBe(false)
-        expect(speakerChecklist(profile({ registerMeetTheExperts: 'No' }), [], NOW).some((i) => i.key === 'meetTheExperts')).toBe(
-            false,
-        )
+        expect(speakerChecklist(null, [], false, NOW).some((i) => i.key === 'meetTheExperts')).toBe(false)
         expect(
-            speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], NOW).some((i) => i.key === 'meetTheExperts'),
+            speakerChecklist(profile({ registerMeetTheExperts: 'No' }), [], false, NOW).some((i) => i.key === 'meetTheExperts'),
+        ).toBe(false)
+        expect(
+            speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW).some((i) => i.key === 'meetTheExperts'),
         ).toBe(true)
     })
 
+    it('reflects the passed-in meetTheExpertsResponded flag, not profile data', () => {
+        const withProfile = profile({ registerMeetTheExperts: 'Yes' })
+        expect(
+            speakerChecklist(withProfile, [], false, NOW).find((i) => i.key === 'meetTheExperts')?.done,
+        ).toBe(false)
+        expect(
+            speakerChecklist(withProfile, [], true, NOW).find((i) => i.key === 'meetTheExperts')?.done,
+        ).toBe(true)
+    })
+
+    it('swaps confirmSession for acceptBackupSpeaker when the speaker has no Accepted session', () => {
+        const notBackup = speakerChecklist(profile(), [session({ status: 'Accepted' })], false, NOW)
+        expect(notBackup.some((i) => i.key === 'confirmSession')).toBe(true)
+        expect(notBackup.some((i) => i.key === 'acceptBackupSpeaker')).toBe(false)
+
+        const backup = speakerChecklist(profile(), [session({ status: 'Waitlisted' })], false, NOW)
+        expect(backup.some((i) => i.key === 'confirmSession')).toBe(false)
+        expect(backup.some((i) => i.key === 'acceptBackupSpeaker')).toBe(true)
+
+        const acceptedItem = backup.find((i) => i.key === 'acceptBackupSpeaker')
+        expect(acceptedItem?.done).toBe(false)
+        const done = speakerChecklist(
+            profile(),
+            [session({ status: 'Waitlisted', backupAccepted: true })],
+            false,
+            NOW,
+        )
+        expect(done.find((i) => i.key === 'acceptBackupSpeaker')?.done).toBe(true)
+    })
+
     it("carries each item's configured due date through as an ISO string", () => {
-        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], NOW)
+        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW)
         for (const definition of SPEAKER_CHECKLIST_ITEMS) {
-            expect(items.find((i) => i.key === definition.key)?.dueDateIso).toBe(definition.dueDate?.toISO())
+            const item = items.find((i) => i.key === definition.key)
+            if (!item) continue // filtered out in this scenario, e.g. acceptBackupSpeaker (not a backup speaker)
+            expect(item.dueDateIso).toBe(definition.dueDate?.toISO())
         }
     })
 
@@ -156,18 +223,17 @@ describe('speakerChecklist', () => {
             rsvpSpeakersDinner: 'Yes',
             ticketClaimedAt: 1700000000,
             registerMeetTheExperts: 'Yes',
-            registerMeetTheExpertsRespondedAt: 1700000000,
         })
         const sessions: SpeakerSessionChecklistInput[] = [session({ status: 'Accepted', isConfirmed: true })]
-        expect(speakerChecklist(complete, sessions, NOW).every((i) => i.done)).toBe(true)
+        expect(speakerChecklist(complete, sessions, true, NOW).every((i) => i.done)).toBe(true)
     })
 
     it('flags isPastDue only once an item\'s own due date has actually passed', () => {
-        expect(speakerChecklist(null, [], NOW).every((i) => !i.isPastDue)).toBe(true)
+        expect(speakerChecklist(null, [], false, NOW).every((i) => !i.isPastDue)).toBe(true)
 
         const confirmSessionDueDate = SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === 'confirmSession')?.dueDate
         if (!confirmSessionDueDate) throw new Error('confirmSession is expected to have a due date')
-        const items = speakerChecklist(null, [], confirmSessionDueDate.plus({ minutes: 1 }))
+        const items = speakerChecklist(null, [], false, confirmSessionDueDate.plus({ minutes: 1 }))
         expect(items.find((i) => i.key === 'confirmSession')?.isPastDue).toBe(true)
         // sessionDetails is due later than confirmSession, so it isn't past due yet.
         expect(items.find((i) => i.key === 'sessionDetails')?.isPastDue).toBe(false)

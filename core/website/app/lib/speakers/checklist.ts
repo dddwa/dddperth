@@ -31,11 +31,14 @@ export function isMeetTheExpertsApplicable(profile: SpeakerProfile | null): bool
     return profile?.registerMeetTheExperts === 'Yes' || profile?.registerMeetTheExperts === 'Maybe' || profile?.registerMeetTheExperts === 'Other'
 }
 
-/** Done once the Meet-the-Experts slot-selection modal has been submitted at
- * all — same idiom as `isSpeakerTrainingRsvpComplete`: an empty slot
- * selection ("none work for me") is still a deliberate, complete answer. */
-export function isMeetTheExpertsRegistrationComplete(profile: SpeakerProfile | null): boolean {
-    return Boolean(profile?.registerMeetTheExpertsRespondedAt)
+/** Done once the Meet-the-Experts registration (see `MeetTheExpertsStore`)
+ * has been submitted at all — same idiom as `isSpeakerTrainingRsvpComplete`:
+ * an empty slot selection ("none work for me") is still a deliberate,
+ * complete answer. Takes the registration's `respondedAt` directly rather
+ * than a `SpeakerProfile`, since the registration now lives in its own
+ * table. */
+export function isMeetTheExpertsRegistrationComplete(respondedAt: number | undefined): boolean {
+    return Boolean(respondedAt)
 }
 
 /** Done once the training RSVP modal has been submitted at all — an empty
@@ -51,6 +54,23 @@ export function isSpeakerDinnerRsvpComplete(profile: SpeakerProfile | null): boo
 
 export function isTicketClaimed(profile: SpeakerProfile | null): boolean {
     return Boolean(profile?.ticketClaimedAt)
+}
+
+/** A backup speaker has sessions, but none of them Accepted (e.g. all
+ * Waitlisted) — nothing to confirm in Sessionize, so `confirmSession` is
+ * filtered out in favour of `acceptBackupSpeaker`; see `speakerChecklist`.
+ * A speaker with no sessions at all isn't "backup", just not yet synced. */
+export function isBackupSpeaker(sessions: SpeakerSessionChecklistInput[]): boolean {
+    return sessions.length > 0 && sessions.every((s) => s.status !== 'Accepted')
+}
+
+/** Done once every non-Accepted (backup) session has had its acceptance
+ * self-reported — session-level and shared by every presenter (see
+ * `backupAccepted` on `SpeakerSessionChecklistInput`), so a co-presenter
+ * accepting on a dual-speaker session counts too. */
+export function isBackupAccepted(sessions: SpeakerSessionChecklistInput[]): boolean {
+    const backupSessions = sessions.filter((s) => s.status !== 'Accepted')
+    return backupSessions.length > 0 && backupSessions.every((s) => s.backupAccepted)
 }
 
 export type ChecklistUrgency = 'normal' | 'upcoming' | 'overdue'
@@ -89,6 +109,10 @@ export interface SpeakerSessionChecklistInput {
     status: string
     isConfirmed: boolean
     sessionDetailsComplete: boolean
+    /** Self-reported "I accept being a backup speaker" for this session —
+     * session-level, set by any presenter on it. Only meaningful for a
+     * non-Accepted session; see `isBackupAccepted`. */
+    backupAccepted: boolean
 }
 
 /** Done once every Accepted session is confirmed in Sessionize (synced), or
@@ -116,9 +140,11 @@ export interface SpeakerChecklistItem {
 
 /** One "is it done" predicate per item key — kept in code (rather than
  * checklist-items.ts) since it depends on real profile/session data. Every
- * key in `SPEAKER_CHECKLIST_ITEMS` must have an entry here. */
+ * key except `meetTheExperts` (special-cased in `speakerChecklist`, since its
+ * completion comes from a `MeetTheExpertsRegistration`, not `profile`/
+ * `sessions`) must have an entry here. */
 const CHECKLIST_DONE_PREDICATES: Record<
-    ChecklistItemDefinition['key'],
+    Exclude<ChecklistItemDefinition['key'], 'meetTheExperts'>,
     (profile: SpeakerProfile | null, sessions: SpeakerSessionChecklistInput[]) => boolean
 > = {
     confirmSession: (profile, sessions) => isSessionConfirmed(profile, sessions),
@@ -126,18 +152,28 @@ const CHECKLIST_DONE_PREDICATES: Record<
     claimTicket: (profile) => isTicketClaimed(profile),
     speakerTraining: (profile) => isSpeakerTrainingRsvpComplete(profile),
     speakerDinner: (profile) => isSpeakerDinnerRsvpComplete(profile),
-    meetTheExperts: (profile) => isMeetTheExpertsRegistrationComplete(profile),
+    acceptBackupSpeaker: (_profile, sessions) => isBackupAccepted(sessions),
 }
 
 export function speakerChecklist(
     profile: SpeakerProfile | null,
     sessions: SpeakerSessionChecklistInput[],
+    meetTheExpertsResponded: boolean,
     now: DateTime = DateTime.now(),
 ): SpeakerChecklistItem[] {
-    return SPEAKER_CHECKLIST_ITEMS.filter(
-        (definition) => definition.key !== 'meetTheExperts' || isMeetTheExpertsApplicable(profile),
-    ).map((definition) => {
-        const done = CHECKLIST_DONE_PREDICATES[definition.key](profile, sessions)
+    const backup = isBackupSpeaker(sessions)
+    return SPEAKER_CHECKLIST_ITEMS.filter((definition) => {
+        if (definition.key === 'meetTheExperts') return isMeetTheExpertsApplicable(profile)
+        // A backup speaker has no Accepted session to confirm — they get
+        // acceptBackupSpeaker instead of confirmSession.
+        if (definition.key === 'confirmSession') return !backup
+        if (definition.key === 'acceptBackupSpeaker') return backup
+        return true
+    }).map((definition) => {
+        const done =
+            definition.key === 'meetTheExperts'
+                ? isMeetTheExpertsRegistrationComplete(meetTheExpertsResponded ? 1 : undefined)
+                : CHECKLIST_DONE_PREDICATES[definition.key](profile, sessions)
         const dueDateIso = definition.dueDate?.toISO() ?? undefined
         const isPastDue = Boolean(dueDateIso && DateTime.fromISO(dueDateIso) < now)
         return {

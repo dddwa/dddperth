@@ -13,6 +13,7 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
+import { meetTheExperts } from './config/meet-the-experts'
 import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
 import { speakerPortal } from './config/speaker-portal'
@@ -49,4 +50,5 @@ export const conferenceManifest: ConferenceManifest = {
     },
     sponsorPortal,
     speakerPortal,
+    meetTheExperts,
 }

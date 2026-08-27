@@ -1,5 +1,12 @@
+import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import { describe, expect, it } from 'vitest'
-import { computeContactImportPlan, parseCsv, parseSpeakerContactsCsv, type CsvSpeakerRow } from './contact-import'
+import {
+    computeContactImportPlan,
+    parseCsv,
+    parseSpeakerContactsCsv,
+    parseSpeakerContactsExcel,
+    type CsvSpeakerRow,
+} from './contact-import'
 
 describe('parseCsv', () => {
     it('splits simple rows', () => {
@@ -125,6 +132,62 @@ describe('parseSpeakerContactsCsv', () => {
 
     it('returns an empty array for an empty file', () => {
         expect(parseSpeakerContactsCsv('')).toEqual([])
+    })
+})
+
+function xlsxBuffer(rows: unknown[][]): ArrayBuffer {
+    const workbook = sheetUtils.book_new()
+    const sheet = sheetUtils.aoa_to_sheet(rows)
+    sheetUtils.book_append_sheet(workbook, sheet, 'Sheet1')
+    return writeWorkbook(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+}
+
+describe('parseSpeakerContactsExcel', () => {
+    it('extracts the same fields as the CSV import, including a numeric-typed Session Id', () => {
+        const buffer = xlsxBuffer([
+            ['Session Id', 'Title', 'Speaker Id', 'FirstName', 'LastName', 'Email'],
+            [1231798, 'A great talk', 'spk-1', 'Ada', 'Lovelace', 'ada@example.com'],
+        ])
+
+        expect(parseSpeakerContactsExcel(buffer)).toEqual([
+            {
+                sessionizeId: 'spk-1',
+                sessionId: '1231798',
+                email: 'ada@example.com',
+                sessionTitle: 'A great talk',
+                fullName: 'Ada Lovelace',
+            },
+        ])
+    })
+
+    it('only reads the first sheet', () => {
+        const workbook = sheetUtils.book_new()
+        sheetUtils.book_append_sheet(
+            workbook,
+            sheetUtils.aoa_to_sheet([
+                ['Speaker Id', 'Email'],
+                ['spk-1', 'ada@example.com'],
+            ]),
+            'First',
+        )
+        sheetUtils.book_append_sheet(
+            workbook,
+            sheetUtils.aoa_to_sheet([
+                ['Speaker Id', 'Email'],
+                ['spk-2', 'other@example.com'],
+            ]),
+            'Second',
+        )
+        const buffer = writeWorkbook(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+
+        expect(parseSpeakerContactsExcel(buffer)).toEqual([
+            { sessionizeId: 'spk-1', sessionId: '', email: 'ada@example.com', sessionTitle: '', fullName: '' },
+        ])
+    })
+
+    it('throws when the required columns are missing', () => {
+        const buffer = xlsxBuffer([['Title', 'Description'], ['A', 'B']])
+        expect(() => parseSpeakerContactsExcel(buffer)).toThrow(/Speaker Id/)
     })
 })
 

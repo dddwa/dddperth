@@ -32,14 +32,17 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     await requireAdmin(request, context)
     const services = getServices(context)
 
-    const workspace = await services.speakers.getWorkspace(params.sessionizeId)
+    const [workspace, meetTheExpertsRegistration] = await Promise.all([
+        services.speakers.getWorkspace(params.sessionizeId),
+        services.meetTheExperts.getRegistration('speaker', params.sessionizeId),
+    ])
     if (!workspace) {
         throw new Response('Not Found', { status: 404 })
     }
 
     return {
         fullName: workspace.speaker.fullName,
-        ...buildSpeakerDashboardView(context, workspace, params.sessionizeId),
+        ...buildSpeakerDashboardView(context, workspace, params.sessionizeId, meetTheExpertsRegistration),
     }
 }
 
@@ -78,6 +81,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         return data({ sessionDetailsSaved: true })
+    }
+
+    // Session-level, not speaker-level — a dual-speaker session only needs
+    // one presenter to accept it. Handled before the targetSessionizeId
+    // guard below, since this form submits sessionizeSessionId(s) instead.
+    // No ownership check needed — an admin is already fully trusted.
+    if (actionType === 'accept-backup') {
+        const sessionIds = formData.getAll('sessionizeSessionId').filter((v): v is string => typeof v === 'string')
+        for (const id of sessionIds) {
+            await services.speakers.markBackupAccepted(id, email)
+        }
+        return data({ backupAccepted: true })
     }
 
     const targetSessionizeId = formData.get('targetSessionizeId')
@@ -130,7 +145,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (actionType === 'save-meet-the-experts') {
-        await services.speakers.saveMeetTheExpertsSlots(targetSessionizeId, parseMeetTheExpertsForm(formData), email)
+        const { slots, bioUseSessionizeBio, bioCustomText } = parseMeetTheExpertsForm(formData)
+        await services.meetTheExperts.saveRegistration(
+            'speaker',
+            targetSessionizeId,
+            { slots, bioUseDefault: bioUseSessionizeBio, bioCustomText },
+            email,
+        )
         return data({ meetTheExpertsSaved: true })
     }
 
@@ -173,6 +194,7 @@ export default function AdminSpeakerPreview() {
                 sessionizeId={view.sessionizeId}
                 checklist={view.checklist}
                 ticketClaimUrl={view.ticketClaimUrl}
+                backupSessionIds={view.backupSessionIds}
                 onOpenModal={setOpenModal}
                 alwaysEditable
             />

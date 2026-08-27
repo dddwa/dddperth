@@ -118,4 +118,20 @@ ${conferenceName} team`,
 <p>Please <a href="${portalUrl}">log in to the speaker portal</a> to choose your times.</p>
 <p>Thanks,<br/>${conferenceName} team</p>`,
     },
+
+    acceptBackupSpeaker: {
+        subject: 'Please confirm you accept being a backup speaker',
+        text: ({ firstName, portalUrl, conferenceName }) => `Hi ${firstName},
+
+Just a friendly reminder that we still need you to confirm you accept being a backup speaker for ${conferenceName}.
+
+Log in to the speaker portal to sort it out: ${portalUrl}
+
+Thanks,
+${conferenceName} team`,
+        html: ({ firstName, portalUrl, conferenceName }) => `<p>Hi ${firstName},</p>
+<p>Just a friendly reminder that we still need you to confirm you accept being a backup speaker for ${conferenceName}.</p>
+<p>Please <a href="${portalUrl}">log in to the speaker portal</a> to sort it out.</p>
+<p>Thanks,<br/>${conferenceName} team</p>`,
+    },
 }
