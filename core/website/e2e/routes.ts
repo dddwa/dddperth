@@ -86,7 +86,14 @@ export const ROUTES: E2eRoute[] = [
     // search results and out of sitemap.xml.
     { name: 'content page (MDX template)', path: '/e2e-content-fixture', visualScope: '#main' },
     { name: 'agenda', path: `/agenda/${FIXTURE_YEAR}`, visualScope: '#main' },
-    { name: 'talk detail', path: `/agenda/${FIXTURE_YEAR}/talk/${FIXTURE_TALK_ID}`, visualScope: '#main' },
+    {
+        name: 'talk detail',
+        path: `/agenda/${FIXTURE_YEAR}/talk/${FIXTURE_TALK_ID}`,
+        // Sponsor rendering has its own route baseline. Keep this capture on
+        // the talk content so a missing time, room, abstract or speaker cannot
+        // be diluted by several thousand pixels of sponsor cards below it.
+        visualScope: '#talk-detail-content',
+    },
     { name: 'sponsors', path: `/sponsors/${FIXTURE_YEAR}`, visualScope: '#main' },
     { name: 'blog index', path: '/blog', visualScope: '#main' },
     { name: 'blog post', path: `/blog/${FIXTURE_BLOG_SLUG}`, visualScope: '#main' },

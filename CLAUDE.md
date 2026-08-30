@@ -264,8 +264,10 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
     independently and had **entirely disjoint session ids**, so the agenda and the talk-detail page showed
     unrelated talks, and a talk id valid in one view 404'd in the other — visible only if you clicked through.
     `grid-smart.json` is the source of truth; `all-sessions.json` is a projection of it (same ids, titles,
-    descriptions and speakers; unscheduled, with `questionAnswers`), and `speakers.json` covers every speaker
-    either view references. If you regenerate one, regenerate all three.
+    descriptions, speakers **and schedule** — `startsAt`/`endsAt`/`roomId`/`room` must match GridSmart, plus
+    `questionAnswers`), and `speakers.json` covers every speaker either view references. If you regenerate one,
+    regenerate all three. The talk-detail page reads its time and room from the `Sessions` view, so leaving
+    those null there renders a talk with no time or room even though the agenda grid looks right.
   - This is what makes the live voting flow testable: with fixtures plus the date override, `/voting` renders
     real comparison cards, so `e2e/voting.spec.ts` covers `TalkOptionCard` end-to-end.
 - **Dev-only date override**: `app/lib/dates/dev-date-time-provider.server.ts` reads an unsigned

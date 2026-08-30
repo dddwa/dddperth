@@ -6,8 +6,8 @@ import type { DateTimeProvider } from './date-time-provider.server'
  * Dev-only date override, read from an unsigned `__devDateOverride` cookie.
  *
  * **This file is dead code in any production build.** Its only caller
- * (`load-context.server.ts`) guards the call with `import.meta.env.DEV`,
- * which Vite statically replaces with `false` when building — so the branch,
+ * (`load-context.server.ts`) guards the call with a production-mode check,
+ * which Vite statically folds away when building — so the branch,
  * this import, and this module are dropped by dead-code elimination. There
  * is a test (`dev-date-override.test.ts`) asserting the built worker
  * contains no trace of the cookie name, so this can't silently start

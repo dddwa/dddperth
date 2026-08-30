@@ -13,43 +13,32 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
     const cardId = title.replace(/\s+/g, '-').toLowerCase()
 
     return (
-        // NOTE ON COLOURS: this card renders the same in both themes, so every
-        // colour on it comes from a *theme-invariant* token scale.
+        // COLOURS: this card looks the same in both themes, so every colour on
+        // it comes from a theme-invariant token scale — `admin.50`-`admin.900`
+        // and `status.*`, which are defined identically in
+        // `conference/theme/perth.theme.ts` and `perth-light.theme.ts`. The
+        // admin scale runs light-to-dark, so the card reads as a light card
+        // either way: a voting comparison is a focused reading task and the
+        // pair should look the same whichever theme the visitor chose.
         //
-        // `admin.50`-`admin.900` and `status.*` are defined identically in
-        // `conference/theme/perth.theme.ts` and `perth-light.theme.ts`, so they
-        // resolve to the same value under either theme. The admin scale runs
-        // light-to-dark (50 is near-white, 900 near-black), so this card reads
-        // as a light card in both — deliberately, since a voting comparison is
-        // a focused reading task and the pair should look identical whichever
-        // theme the visitor has chosen.
+        // Do NOT use the theme-reactive scales (`gray.*`, `indigo.*`, `text.*`,
+        // `interactive.*`) here — they invert with the theme while this
+        // surface does not, which puts light text on a near-white card (or the
+        // reverse). `talk-option-card.theme-invariant.test.ts` enforces this
+        // statically; `e2e/voting.spec.ts` scans the rendered card with axe in
+        // both themes. If the card ever becomes theme-reactive, move the whole
+        // set to reactive tokens together — never a mix — and delete that test
+        // along with this note.
         //
-        // The theme-reactive scales (`gray.*`, `indigo.*`, `text.*`,
-        // `interactive.*`) must NOT be used here: they invert with the theme
-        // while these tokens do not, and that mismatch is what broke this card.
-        // `gray.7` resolved *light* against the near-white surface under the
-        // light theme (1.6:1) and `indigo.1` resolved *near-black* under the
-        // dark theme (3.03:1 behind `indigo.8` text). Both were caught by the
-        // axe scan of the live voting flow, which only became renderable once
-        // the Sessionize fixtures landed.
-        //
-        // `talk-option-card.theme-invariant.test.ts` enforces all of this: it
-        // asserts each token really is identical across themes and that no
-        // reactive scale or raw hex creeps back in. If this card ever becomes
-        // theme-reactive, move the whole set to reactive tokens together —
-        // never a mix — and delete that test with this note.
-        //
-        // A native <button> (rather than a div+onClick) so the card is
-        // keyboard-focusable and operable with Enter/Space out of the box —
-        // it previously offered a mouse-only hover affordance (cursor,
-        // lift-and-glow) with no keyboard equivalent and no focus style.
+        // A native <button> rather than a div+onClick, so the card is
+        // keyboard-focusable and operable with Enter/Space out of the box.
         <styled.button
             type="button"
             // `aria-disabled` rather than `disabled`: the voting page drops
             // `onClick` for ~200ms after a vote to prevent double-submits, and
-            // a `disabled` button leaves the tab order — a keyboard user
-            // focused on this card would silently lose their place mid-flow.
-            // aria-disabled keeps it focusable and announced as unavailable.
+            // a `disabled` button leaves the tab order — a keyboard user would
+            // silently lose their place mid-flow. `aria-disabled` keeps the
+            // card focusable while announcing it as unavailable.
             aria-disabled={!onClick}
             onClick={onClick}
             appearance="none"
@@ -75,13 +64,10 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                       }
                     : undefined
             }
-            // `admin.900`, not `interactive.focus`: the focus colour is
-            // theme-reactive, so on a forced-light surface the dark theme's
-            // variant could land low-contrast against this background.
-            // `[...]` is Panda's arbitrary-value escape hatch, needed because
-            // `outline` is a composite shorthand with no matching token type.
-            // `token(...)` still resolves through the design system, so this is
-            // not a hardcoded colour.
+            // `admin.900`, not the theme-reactive `interactive.focus`. `[...]`
+            // is Panda's arbitrary-value escape hatch, needed because `outline`
+            // is a composite shorthand with no matching token type; `token(...)`
+            // still resolves through the design system.
             _focusVisible={{
                 outline: '[3px solid token(colors.admin.900)]',
                 outlineOffset: '[2px]',
@@ -89,9 +75,8 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
             _disabled={{ cursor: 'default' }}
         >
             <VStack gap="4">
-                {/* A <button> can only contain phrasing content, so this stays
-                    a styled paragraph rather than a heading element (which
-                    would be invalid nested inside the button). */}
+                {/* A <button> may only contain phrasing content, so this is a
+                    styled paragraph rather than a heading. */}
                 <styled.p fontSize="xl" color="admin.900" fontWeight="bold" textAlign="center">
                     {title}
                 </styled.p>
@@ -119,12 +104,8 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                             key={`${cardId}-tag-${index}-${tag}`}
                             px="3"
                             py="1"
-                            // `status.info.*`, not `indigo.*`: the indigo scale
-                            // inverts under the dark theme (see the note above)
-                            // while this card's surface does not, so the pale
-                            // chip background went near-black behind dark text.
-                            // The status scale is theme-invariant; same
-                            // blue-tinted chip, 9.5:1 in both themes.
+                            // `status.info.*`, not the theme-reactive `indigo.*`:
+                            // same blue-tinted chip, 9.5:1 in both themes.
                             bg="status.info.bg"
                             color="status.info.fg"
                             borderRadius="full"

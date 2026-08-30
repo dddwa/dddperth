@@ -5,8 +5,8 @@ This repository uses [Nx](https://nx.dev) to manage the mono repo and keep every
 ## Quick Start
 
 ```bash
-# Enable corepack (for pnpm)
-corepack enable pnpm
+# Install the repository's Node and pnpm versions
+mise install
 
 # Install dependencies
 pnpm i

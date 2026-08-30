@@ -1,27 +1,19 @@
 /**
  * Guards the colour contract of `TalkOptionCard`.
  *
- * The card forces a light surface in BOTH themes, so every colour on it must
- * come from a theme-invariant token scale. Mixing a forced-light background
- * with theme-reactive tokens is what broke it: `gray.7` resolved *light*
- * under the light theme (1.6:1 on white), and `indigo.1` resolved
- * *near-black* under the dark theme (3.03:1 behind `indigo.8` text).
+ * The card renders as a light surface in both themes, so every colour on it
+ * must come from a theme-invariant token scale — mixing a fixed background
+ * with theme-reactive tokens produces contrast failures in one theme or the
+ * other.
  *
- * A comment in the component can't stop that regressing, so this test does:
+ * Real contrast is checked live by the axe scan in `e2e/voting.spec.ts`,
+ * which runs under both the `chromium` (dark) and `chromium-light` projects.
+ * This test is the cheap static guard beneath it: it fails in milliseconds if
+ * a token stops being invariant or a reactive scale creeps back into the
+ * component, without needing a browser.
  *
- *  1. Every colour token the card uses resolves to the same value under the
- *     base token block and under `.dark` — i.e. genuinely invariant, not
- *     merely invariant-looking today.
- *  2. The card's source references no theme-reactive colour scale, and no
- *     raw hex literal (an earlier fix hardcoded nine of them, which is
- *     invariant but drops the card out of the design system).
- *
- * If a future change makes the card's surface theme-reactive, delete this
- * file along with the note in the component — the whole set moves to
- * reactive tokens together.
- *
- * Note this reads the *generated* `styled-system/styles.css`, so it needs
- * `pnpm run setup` (panda codegen) to have run — which CI does before tests.
+ * Reads the *generated* `styled-system/styles.css`, so it needs panda codegen
+ * (`pnpm run setup`) to have run — which CI does before tests.
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -68,23 +60,21 @@ describe('TalkOptionCard colour contract', () => {
     it.each(INVARIANT_TOKENS)('%s resolves identically in light and dark', (token) => {
         const base = readVar(baseBlock, token)
         // A missing base value means the token was renamed or dropped — fail
-        // loudly rather than silently comparing undefined to undefined.
+        // loudly rather than comparing undefined to undefined.
         expect(base, `${token} is not defined in the base token block`).toBeDefined()
 
         // `.dark` need not redefine every token; not overriding it is the
-        // strongest form of invariance. Only an override that *differs* is a
-        // problem.
+        // strongest form of invariance. Only a *differing* override is a problem.
         const dark = readVar(darkBlock, token)
         if (dark !== undefined) {
             expect(
                 dark,
-                `${token} is overridden under .dark — it is not safe on this card's forced-light surface`,
+                `${token} is overridden under .dark — it is not safe on this card's fixed light surface`,
             ).toBe(base)
         }
     })
 
     it('uses no theme-reactive colour scale', () => {
-        // These invert with the theme while the card's background does not.
         const reactive = /(?:bg|color|borderColor|outline)="(?:gray|indigo|slate|text|interactive|brand|surface)\./g
         expect(cardSource.match(reactive) ?? []).toEqual([])
     })

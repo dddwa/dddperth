@@ -123,6 +123,9 @@
                 "default",
                 "^production",
                 {
+                    "dependentTasksOutputFiles": "**/build/server/**/*.js"
+                },
+                {
                     "externalDependencies": ["vitest"]
                 },
                 {
@@ -133,7 +136,8 @@
             "options": {
                 "command": "vitest run",
                 "cwd": "core/website"
-            }
+            },
+            "dependsOn": ["build"]
         },
         "e2e": {
             "executor": "nx:run-commands",

@@ -49,15 +49,19 @@ describe('Sessionize e2e fixtures', () => {
         // the agenda still looks correct, which is easy to miss.
         const { FIXTURE_TALK_ID } = await import('../../e2e/routes')
 
-        const sessionsView = (read('all-sessions.json') as Array<{
-            sessions: Array<{ id: string; description: string | null; speakers: Array<{ id: string }> }>
-        }>)
+        const sessionsView = (
+            read('all-sessions.json') as Array<{
+                sessions: Array<{ id: string; description: string | null; speakers: Array<{ id: string }> }>
+            }>
+        )
             .flatMap((g) => g.sessions)
             .find((s) => s.id === FIXTURE_TALK_ID)
 
-        const gridView = (read('grid-smart.json') as Array<{
-            rooms: Array<{ sessions: Array<{ id: string }> }>
-        }>)
+        const gridView = (
+            read('grid-smart.json') as Array<{
+                rooms: Array<{ sessions: Array<{ id: string }> }>
+            }>
+        )
             .flatMap((d) => d.rooms.flatMap((r) => r.sessions))
             .find((s) => s.id === FIXTURE_TALK_ID)
 
@@ -141,27 +145,40 @@ describe('Sessionize e2e fixtures', () => {
         expect(named.filter((n) => !n.startsWith('Fixture Speaker '))).toEqual([])
     })
 
-    it('grid-smart and all-sessions describe the same sessions', () => {
+    it('grid-smart and all-sessions describe the same scheduled sessions', () => {
         // Sessionize's GridSmart (scheduled agenda) and Sessions (submission
         // list) are two views of ONE event, so an id must mean the same talk in
         // both. They previously had entirely disjoint id spaces, which meant the
         // agenda and the talk-detail page showed unrelated talks and a talk id
         // valid in one view 404'd in the other.
+        interface FixtureSession {
+            id: string
+            title: string
+            startsAt: string | null
+            endsAt: string | null
+            roomId: number | null
+            room: string | null
+        }
+
         const grid = read('grid-smart.json') as Array<{
-            rooms: Array<{ sessions: Array<{ id: string; title: string }> }>
+            rooms: Array<{ sessions: FixtureSession[] }>
         }>
         const sessionsView = read('all-sessions.json') as Array<{
-            sessions: Array<{ id: string; title: string }>
+            sessions: FixtureSession[]
         }>
 
-        const gridById = new Map(
-            grid.flatMap((d) => d.rooms.flatMap((r) => r.sessions)).map((s) => [s.id, s.title]),
-        )
-        const viewById = new Map(sessionsView.flatMap((g) => g.sessions).map((s) => [s.id, s.title]))
+        const gridById = new Map(grid.flatMap((d) => d.rooms.flatMap((r) => r.sessions)).map((s) => [s.id, s]))
+        const viewById = new Map(sessionsView.flatMap((g) => g.sessions).map((s) => [s.id, s]))
 
         expect([...gridById.keys()].sort()).toEqual([...viewById.keys()].sort())
-        for (const [id, title] of gridById) {
-            expect(viewById.get(id), `session ${id} has a different title in each view`).toBe(title)
+        for (const [id, gridSession] of gridById) {
+            expect(viewById.get(id), `session ${id} differs between GridSmart and Sessions`).toMatchObject({
+                title: gridSession.title,
+                startsAt: gridSession.startsAt,
+                endsAt: gridSession.endsAt,
+                roomId: gridSession.roomId,
+                room: gridSession.room,
+            })
         }
     })
 })

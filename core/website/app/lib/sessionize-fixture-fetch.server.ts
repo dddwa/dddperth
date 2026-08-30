@@ -3,8 +3,8 @@
  * committed fixtures in `e2e/fixtures/sessionize/`.
  *
  * **This file is dead code in any production build.** Its only caller
- * (`workers/app.ts`) guards the call with `import.meta.env.DEV`, which Vite
- * statically replaces with `false` when building, so the branch, the import
+ * (`workers/app.ts`) guards the call with a production-mode check, which Vite
+ * statically folds away when building, so the branch, the import
  * and this module are dropped by dead-code elimination. `sessionize-fixture-
  * fetch.test.ts` greps the built worker and fails if any of it ships.
  *

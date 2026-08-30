@@ -3,7 +3,6 @@ import { RouterContextProvider } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
 import { getCurrentConferenceState } from './lib/conference-state.server'
 import { AdminDateTimeProvider } from './lib/dates/admin-date-time-provider.server'
-import { DevDateTimeProvider } from './lib/dates/dev-date-time-provider.server'
 import { buildAppConfigFromEnv } from './lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from './lib/services/cloudflare/build-services.server'
 import {
@@ -33,9 +32,12 @@ export async function getLoadContext({
     //
     // Two guards, and both matter:
     //
-    // 1. `import.meta.env.DEV` is statically replaced with `false` at build
-    //    time, so this branch — and the DevDateTimeProvider import above —
-    //    are removed by dead-code elimination in any production build.
+    // 1. `import.meta.env.MODE` is statically replaced with `"production"` in
+    //    a production build, so this branch and its dynamic import are removed
+    //    by dead-code elimination. `import.meta.env.DEV` folds correctly here
+    //    too (verified); `MODE` is preferred only because it states the intent
+    //    — "not a production build" — without relying on how a given Vite
+    //    version derives `DEV` in the Cloudflare SSR environment.
     //    Verified by `app/lib/dates/dev-date-override.test.ts`, which greps
     //    the built worker for the cookie name. Keep this statically
     //    evaluable: a runtime `env` lookup would ship the seam.
@@ -51,8 +53,10 @@ export async function getLoadContext({
     // auth + D1 round-trip that `AdminDateTimeProvider.create` performs on
     // every request. That's also why this is gated rather than reordered.
     const devDateTimeProvider =
-        import.meta.env.DEV && env.E2E_DATE_OVERRIDE === 'true'
-            ? DevDateTimeProvider.fromRequest(request.headers)
+        import.meta.env.MODE !== 'production' && env.E2E_DATE_OVERRIDE === 'true'
+            ? (await import('./lib/dates/dev-date-time-provider.server')).DevDateTimeProvider.fromRequest(
+                  request.headers,
+              )
             : null
 
     const dateTimeProvider = devDateTimeProvider ?? (await AdminDateTimeProvider.create(request.headers, services))
