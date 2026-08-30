@@ -26,12 +26,10 @@ export interface OpenModalAction {
 
 /**
  * A single link or "self-report" button rendered for a checklist item.
- * Set `href` for a link (omit to fall back to the dynamic `ticketClaimUrl`
- * prop passed into the card at render time — only meaningful when `action`
- * is also unset); set `action` for a button that posts `_action=<action>`.
- * Note: can have a href or an action, not both — an item wanting both (e.g.
- * a Sessionize link plus a separate confirm button) lists two of these in
- * `actions` rather than combining them on one.
+ * Set `href` for a static link; set `action` for a button that posts
+ * `_action=<action>`. Note: can have a href or an action, not both — an item
+ * wanting both (e.g. a Sessionize link plus a separate confirm button) lists
+ * two of these in `actions` rather than combining them on one.
  */
 export interface ExternalLinkAction {
     href?: string
@@ -39,7 +37,20 @@ export interface ExternalLinkAction {
     label: string
 }
 
-export type ChecklistItemAction = OpenModalAction | ExternalLinkAction
+/**
+ * A link whose URL is conference-specific and so comes from config rather
+ * than from core — currently only the ticket claim URL
+ * (`speakerPortal.checklist.ticketClaimUrl`). Rendered as a link when that
+ * config value is set, and omitted entirely when it isn't: a fork with no
+ * claim URL configured simply can't have its speakers claim a ticket, so
+ * there's nothing useful to show.
+ */
+export interface ConfiguredLinkAction {
+    configuredHref: 'ticketClaimUrl'
+    label: string
+}
+
+export type ChecklistItemAction = OpenModalAction | ExternalLinkAction | ConfiguredLinkAction
 
 export type ChecklistItemKey =
     | 'confirmSession'
@@ -92,8 +103,7 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         key: 'claimTicket',
         label: 'Claim your speaker ticket',
         actions: [
-            // href omitted — falls back to the dynamic ticketClaimUrl prop.
-            { label: 'Claim your ticket ↗' },
+            { configuredHref: 'ticketClaimUrl', label: 'Claim your ticket ↗' },
             { action: 'claim-ticket', label: "I've claimed it" },
         ],
     },

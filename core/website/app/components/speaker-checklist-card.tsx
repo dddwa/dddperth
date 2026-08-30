@@ -66,8 +66,8 @@ function editModalKeyFor(item: SpeakerChecklistItem, alwaysEditable: boolean): C
 }
 
 /** Renders one entry from an item's `actions` list — a modal trigger, a
- * plain link (falling back to the dynamic `ticketClaimUrl` prop when the
- * action has no `href` of its own), or a "self-report" button. */
+ * static link, a config-supplied link (rendered only when that config value
+ * is set), or a "self-report" button. */
 function ChecklistActionButton({
     action,
     sessionizeId,
@@ -86,6 +86,18 @@ function ChecklistActionButton({
             <button type="button" onClick={() => onOpenModal(action.modalKey)} className={actionLinkClass}>
                 {action.buttonLabel}
             </button>
+        )
+    }
+
+    // Conference-specific URL from config. Nothing to link to when the fork
+    // hasn't configured one, so the action is dropped rather than rendered
+    // dead — a fork with no claim URL can't have its speakers claim tickets.
+    if ('configuredHref' in action) {
+        if (!ticketClaimUrl) return null
+        return (
+            <styled.a href={ticketClaimUrl} target="_blank" rel="noreferrer" className={actionLinkClass}>
+                {action.label}
+            </styled.a>
         )
     }
 
@@ -118,10 +130,9 @@ function ChecklistActionButton({
         )
     }
 
-    const href = action.href ?? ticketClaimUrl
-    if (!href) return null
+    if (!action.href) return null
     return (
-        <styled.a href={href} target="_blank" rel="noreferrer" className={actionLinkClass}>
+        <styled.a href={action.href} target="_blank" rel="noreferrer" className={actionLinkClass}>
             {action.label}
         </styled.a>
     )

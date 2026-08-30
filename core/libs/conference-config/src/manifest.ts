@@ -321,8 +321,9 @@ export interface SpeakerPortalConfig {
     /**
      * Outstanding-items checklist shown at the top of the speaker dashboard
      * (session details, ticket claim, training RSVP). Omit a due date to show
-     * that item without one; omit `ticketClaimUrl` to show the ticket-claim
-     * item as plain text instead of a link.
+     * that item without one; omit `ticketClaimUrl` to drop the claim link
+     * (speakers then have no way to claim a ticket, which is the correct
+     * behaviour for a fork that doesn't offer one).
      */
     checklist?: SpeakerPortalChecklistConfig
     /**
@@ -376,7 +377,9 @@ export interface SpeakerDinnerConfig {
 export type SpeakerChecklistDueDates = Record<string, DateTime>
 
 export interface SpeakerPortalChecklistConfig {
-    /** External link where a speaker claims/registers their complimentary ticket. */
+    /** External link where a speaker claims/registers their complimentary
+     * ticket. The only source for that link — omit it and the claim action
+     * isn't rendered at all. */
     ticketClaimUrl?: string
     /** When each checklist item is due. Omit to show every item undated. */
     dueDates?: SpeakerChecklistDueDates
