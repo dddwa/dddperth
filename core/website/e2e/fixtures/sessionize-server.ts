@@ -1,10 +1,17 @@
-import { readFileSync } from 'node:fs'
 import { createServer, type Server } from 'node:http'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { VIEW_PROJECTIONS } from './sessionize/projections.ts'
 
 /**
- * A tiny HTTP server that serves the committed Sessionize fixtures.
+ * A tiny HTTP server that serves the Sessionize fixtures.
+ *
+ * The three views it serves are projected in-process from the typed model in
+ * `sessionize/model.ts` — there are no fixture files. Sessionize returns three
+ * overlapping views of one event, and maintaining them as three hand-edited
+ * JSON documents meant nothing kept them consistent: they drifted into
+ * entirely disjoint session id spaces, and every talk disagreed with itself
+ * between GridSmart's two groupings. Projecting them from one model makes that
+ * class of bug unrepresentable rather than merely tested for. See the header
+ * of `sessionize/model.ts`.
  *
  * Why not MSW: every Sessionize call happens inside the Cloudflare Worker
  * (`app/lib/sessionize.server.ts`, reached via loaders and
@@ -29,16 +36,6 @@ import { fileURLToPath } from 'node:url'
  * (talk detail).
  */
 
-const fixturesDir = dirname(fileURLToPath(import.meta.url))
-
-const VIEWS: Record<string, string> = {
-    GridSmart: 'sessionize/grid-smart.json',
-    Sessions: 'sessionize/all-sessions.json',
-    // The talk detail template resolves speaker names, bios and photos from
-    // this view. Without it, that page fell back to the live API.
-    Speakers: 'sessionize/speakers.json',
-}
-
 export interface SessionizeFixtureServer {
     url: string
     close: () => Promise<void>
@@ -55,8 +52,11 @@ export const SESSIONIZE_FIXTURE_PORT = Number(process.env.SESSIONIZE_FIXTURE_POR
 export async function startSessionizeFixtureServer(
     port = SESSIONIZE_FIXTURE_PORT,
 ): Promise<SessionizeFixtureServer> {
+    // Projected once at startup rather than per request: the views are pure
+    // functions of the model, and serialising 160KB on every agenda load would
+    // show up in test runtime for no benefit.
     const payloads = new Map<string, string>(
-        Object.entries(VIEWS).map(([view, file]) => [view, readFileSync(join(fixturesDir, file), 'utf8')]),
+        Object.entries(VIEW_PROJECTIONS).map(([view, project]) => [view, JSON.stringify(project())]),
     )
 
     const server: Server = createServer((req, res) => {
@@ -66,7 +66,7 @@ export async function startSessionizeFixtureServer(
 
         if (!body) {
             res.writeHead(404, { 'content-type': 'application/json' })
-            res.end(JSON.stringify({ error: `No fixture for ${req.url}`, available: Object.keys(VIEWS) }))
+            res.end(JSON.stringify({ error: `No fixture for ${req.url}`, available: Object.keys(VIEW_PROJECTIONS) }))
             return
         }
 

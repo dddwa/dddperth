@@ -258,16 +258,30 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
     every speaker and talk title is replaced. `app/lib/sessionize-fixtures.test.ts` validates them against the
     production Zod schemas (so a Sessionize schema change fails loudly in unit tests), asserts they still cover
     the keynote/plenum/service sessions the voting filter must exclude, and asserts no real names crept back in.
-  - **The three fixture files share one id space, and a test enforces it.** Sessionize's `GridSmart` (scheduled
-    agenda), `Sessions` (submission list) and `Speakers` are three views of *one* event, so a session id must
-    mean the same talk in every view and every referenced speaker must exist. They were originally generated
-    independently and had **entirely disjoint session ids**, so the agenda and the talk-detail page showed
-    unrelated talks, and a talk id valid in one view 404'd in the other — visible only if you clicked through.
-    `grid-smart.json` is the source of truth; `all-sessions.json` is a projection of it (same ids, titles,
-    descriptions, speakers **and schedule** — `startsAt`/`endsAt`/`roomId`/`room` must match GridSmart, plus
-    `questionAnswers`), and `speakers.json` covers every speaker either view references. If you regenerate one,
-    regenerate all three. The talk-detail page reads its time and room from the `Sessions` view, so leaving
-    those null there renders a talk with no time or room even though the agenda grid looks right.
+  - **There are no fixture *files*. One typed model, projected into the three views.**
+    `e2e/fixtures/sessionize/model.ts` holds the fixture once, normalised — rooms, a category taxonomy,
+    speakers and a timetable — and `projections.ts` derives `GridSmart`, `Sessions` and `Speakers` from it with
+    typed `.map`s. The fixture server projects them in-process at startup and serves them over HTTP; nothing is
+    written to disk, so there is nothing to regenerate and nothing that can go stale.
+    - **Why.** Sessionize's three views are three views of *one* event, so a session id must mean the same talk
+      in every view, every referenced speaker must exist, and `GridSmart` repeats each session **twice** (once
+      under its room, once under its time slot). Maintained as three hand-edited JSON documents, none of that
+      was enforced, and all of it drifted: the files started with **entirely disjoint session ids** (the agenda
+      and talk-detail page showed unrelated talks, and a talk id valid in one view 404'd in the other); after
+      those were hand-reconciled, **all 25 talks still disagreed with themselves** between GridSmart's two
+      groupings, where the time-slot copy carried `categories: []` while the room copy was populated; and one
+      category-item id meant `"Keynote"` on one session and `"45 mins"` on the other 24, which is not a shape
+      the real API can produce. Projecting from one model makes each of those unrepresentable rather than
+      merely tested for.
+    - **What this means for editing.** Change `model.ts` — add a talk, move a session, add a speaker — and
+      every view updates consistently. A talk referencing a room or speaker that doesn't exist is a *type*
+      error. The talk-detail page reads its time and room from the `Sessions` view while the agenda reads
+      `GridSmart`, and both now come from the same fields, so a talk can't render with no time or room while
+      the agenda grid looks right.
+    - The projections' return types are the app's own inferred Zod types, so a Sessionize schema change breaks
+      them at **compile** time. `app/lib/sessionize-fixtures.test.ts` keeps only what the model can't
+      guarantee: schema conformance, coverage of the cases the app branches on (service/plenum/keynote for the
+      voting filter, single- vs multi-speaker talks), and that no real names crept back in.
   - This is what makes the live voting flow testable: with fixtures plus the date override, `/voting` renders
     real comparison cards, so `e2e/voting.spec.ts` covers `TalkOptionCard` end-to-end.
 - **Dev-only date override**: `app/lib/dates/dev-date-time-provider.server.ts` reads an unsigned
@@ -291,8 +305,10 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
   year has the latest `conferenceDate` in `conference/config/years-index.ts`, so unpinned `/agenda` and
   `/sponsors` change what they render as dates pass and new years are added — they flip from "not announced yet"
   to a full agenda the moment `agendaPublishedDateTime` passes. Pinned years (`/agenda/2025`, `/sponsors/2025`)
-  render identically today and in two years, with no Sessionize credentials, date override or network access,
-  because their agendas and sponsor lists are committed `session-data` fixtures under `conference/config/years/`.
+  render identically today and in two years, with no Sessionize credentials, date override or network access:
+  their sponsor lists are frozen in `conference/config/years/`, and their agendas come from the Sessionize
+  fixtures (2025 is Sessionize-backed like every year, which is exactly why the fetch interception above has to
+  be host-based rather than relying on per-year endpoint overrides).
   **When adding coverage for a template, pin it to a past year.** `/voting` is deliberately not covered for this
   reason — it has no year param, so it's inherently a moving target; `VotingMessage` and `TalkOptionCard` are
   covered by unit tests instead.

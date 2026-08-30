@@ -91,8 +91,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 }
 
-/** Not indexed: voting pairs are per-session and transient; the page is meaningless out of context. */
-export const meta = noIndexMeta
+/**
+ * Not indexed: voting pairs are per-session and transient; the page is
+ * meaningless out of context.
+ *
+ * The title is spread back in deliberately. A child's `meta` *replaces* the
+ * root layout's rather than merging, so `export const meta = noIndexMeta`
+ * alone left the page with no `<title>` at all — a WCAG 2.4.2 failure, and one
+ * axe flags on every scan of this route.
+ */
+export const meta = () => [
+    ...noIndexMeta(),
+    { title: `Vote for talks | ${conferenceManifest.public.name}` },
+]
 
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
