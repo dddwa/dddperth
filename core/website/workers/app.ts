@@ -4,13 +4,25 @@ import { getLoadContext } from '../app/entry.server'
 import { buildAppConfigFromEnv } from '../app/lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from '../app/lib/services/cloudflare/build-services.server'
 
-const requestHandler = createRequestHandler(
-    () => import('virtual:react-router/server-build'),
-    import.meta.env.MODE,
-)
+const requestHandler = createRequestHandler(() => import('virtual:react-router/server-build'), import.meta.env.MODE)
 
 export default {
     async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
+        // Dev-only: point every Sessionize request at the committed fixtures.
+        // `import.meta.env.MODE` is statically replaced with `"production"`
+        // in a production build, so this and the dynamic import are removed
+        // (there is a test asserting the built worker contains no trace of
+        // it). `import.meta.env.DEV` folds correctly here too; `MODE` is
+        // preferred only because it states the intent directly. The
+        // fixture URL only exists when `e2e/start-dev-server.mjs` set it, so
+        // ordinary `pnpm start` still talks to the real Sessionize.
+        if (import.meta.env.MODE !== 'production') {
+            const { getFixtureBaseUrl, installSessionizeFixtureFetch } =
+                await import('../app/lib/sessionize-fixture-fetch.server')
+            const fixtureBaseUrl = getFixtureBaseUrl(env as unknown as Record<string, unknown>)
+            if (fixtureBaseUrl) installSessionizeFixtureFetch(fixtureBaseUrl)
+        }
+
         const url = new URL(request.url)
 
         // Handle trailing slash redirects (match Express behavior)
@@ -59,7 +71,9 @@ export default {
 
         if (services.speakerSync.isConfigured()) {
             ctx.waitUntil(
-                services.speakerSync.syncNow('cron').catch((error) => console.error('Scheduled speaker sync failed:', error)),
+                services.speakerSync
+                    .syncNow('cron')
+                    .catch((error) => console.error('Scheduled speaker sync failed:', error)),
             )
         } else {
             console.log('Scheduled run: speaker sync not configured, skipping')

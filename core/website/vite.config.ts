@@ -68,6 +68,15 @@ export default defineConfig({
         hmr: {
             port: 3805,
         },
+        // Opt-in extra Host header allow-list, used by the containerised
+        // visual regression run (`pnpm vr`), where Playwright runs inside
+        // Docker and reaches this server as `host.docker.internal`. Vite
+        // answers unknown Host headers with a 403 "Blocked request" page —
+        // which a screenshot test will happily capture as if it were the
+        // site. Unset in normal dev, so behaviour there is unchanged.
+        ...(process.env.VITE_EXTRA_ALLOWED_HOSTS
+            ? { allowedHosts: process.env.VITE_EXTRA_ALLOWED_HOSTS.split(',').map((h) => h.trim()) }
+            : {}),
         fs: {
             // Vite's root is core/website/ in a fork (or website/ in ddd-core
             // standalone). @conference/* aliases point outside that root, so
@@ -80,11 +89,25 @@ export default defineConfig({
     plugins: [
         // wrangler config lives in /conference/wrangler/ for forks (two
         // levels up from core/website/). ddd-core standalone uses
-        // /conference-stub/wrangler/. Path is fixed at build time; if it
-        // ever needs to vary per env, switch to an env-var-driven path.
+        // /conference-stub/wrangler/.
+        //
+        // `WRANGLER_CONFIG` overrides which config in that directory is used.
+        // The e2e and visual suites set it to `e2e.jsonc`, which has its own
+        // `.dev.vars.e2e` pointing Sessionize at the committed fixtures. That
+        // keeps test runs completely off the developer's `local.jsonc` /
+        // `.dev.vars` — those files are never read or written by a test run,
+        // so an interrupted suite can't leave them broken, and a dev server
+        // and a test server can run side by side.
         cloudflare({
             viteEnvironment: { name: 'ssr' },
-            configPath: path.resolve(import.meta.dirname, '..', '..', 'conference', 'wrangler', 'local.jsonc'),
+            configPath: path.resolve(
+                import.meta.dirname,
+                '..',
+                '..',
+                'conference',
+                'wrangler',
+                process.env.WRANGLER_CONFIG ?? 'local.jsonc',
+            ),
         }),
         reactRouter(),
         safeRoutes({

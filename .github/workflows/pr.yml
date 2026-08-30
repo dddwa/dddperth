@@ -24,7 +24,7 @@ jobs:
             - name: Install Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: 26
                   cache: 'pnpm'
 
             - name: Install dependencies
@@ -61,7 +61,7 @@ jobs:
             - name: Install Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: 26
                   cache: 'pnpm'
 
             - name: Install dependencies
@@ -76,19 +76,11 @@ jobs:
             - name: Apply local D1 migrations
               run: pnpm nx d1-migrate-local website
 
-            # No real secrets are available to (or needed by) this job — it
-            # only exercises public routes. Placeholder values are enough for
-            # the app to boot; SESSIONIZE_* is deliberately left unset so the
-            # agenda/voting pages render their existing graceful
-            # "not configured" states instead of depending on a live
-            # Sessionize account during CI.
-            - name: Write placeholder dev vars
-              run: |
-                  cat > conference/wrangler/.dev.vars <<'EOF'
-                  SESSION_SECRET=ci-placeholder-secret-not-used-in-production
-                  WEB_URL=http://localhost:3800
-                  EOF
-
+            # No dev-vars step: `e2e/start-dev-server.mjs` generates its own
+            # `conference/wrangler/e2e/.dev.vars` (placeholder secret, and
+            # SESSIONIZE_* pointed at the committed fixtures) before booting
+            # Vite. No real secrets are available to, or needed by, this job.
+            #
             # This is the accessibility backlog gate described in
             # core/website/A11Y_BACKLOG.md and the "Accessibility" section of
             # CLAUDE.md. It is intentionally non-blocking (continue-on-error)
@@ -117,7 +109,32 @@ jobs:
                   echo "::warning::Accessibility e2e suite reported failures — see the Playwright report artifact and core/website/A11Y_BACKLOG.md. Not blocking merge yet (see comment on the previous step)."
 
     visual-regression:
+        # Runs INSIDE the pinned Playwright image, not on the bare runner.
+        # Screenshots only compare meaningfully when the renderer and the
+        # fonts both match. This app loads Ubuntu from Google Fonts, so a
+        # macOS dev box (no Ubuntu installed, webfont often not fetched)
+        # renders text in Helvetica while the bare ubuntu-latest runner
+        # renders it in Ubuntu — different metrics, different wrapping, page
+        # heights off by tens to hundreds of pixels. That produced 3-20%
+        # pixel diffs against a 2% tolerance: real reflow, not anti-aliasing.
+        #
+        # The image tag must track the @playwright/test version in
+        # core/website/package.json. `pnpm vr` runs the identical image
+        # locally, so baselines are generated and verified in one environment.
         runs-on: ubuntu-latest
+        container:
+            image: mcr.microsoft.com/playwright:v1.62.1-noble
+            # The image runs as root; without this, pnpm's store and the
+            # bind-mounted workspace end up with mismatched ownership.
+            options: --user root
+        env:
+            # Firefox refuses to start when $HOME is owned by another user,
+            # and Actions sets HOME=/github/home (owned by the image's
+            # `pwuser`) while `--user root` runs us as root. Chromium and
+            # WebKit don't care; Firefox fails every test with
+            # "Running Nightly as root in a regular user's session is not
+            # supported". This is Playwright's documented workaround.
+            HOME: /root
         timeout-minutes: 15
 
         steps:
@@ -132,7 +149,7 @@ jobs:
             - name: Install Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: 26
                   cache: 'pnpm'
 
             - name: Install dependencies
@@ -141,41 +158,21 @@ jobs:
             - name: Generate types (PandaCSS + React Router)
               run: pnpm run setup
 
-            - name: Install Playwright browsers
-              run: pnpm --filter website exec playwright install --with-deps chromium firefox webkit
-
             - name: Apply local D1 migrations
               run: pnpm nx d1-migrate-local website
 
-            - name: Write placeholder dev vars
-              run: |
-                  cat > conference/wrangler/.dev.vars <<'EOF'
-                  SESSION_SECRET=ci-placeholder-secret-not-used-in-production
-                  WEB_URL=http://localhost:3800
-                  EOF
-
-            # Committed baselines (core/website/e2e/__screenshots__/) were
-            # generated locally, not on this exact runner image — font
-            # rendering/anti-aliasing can differ just enough between machines
-            # to produce a false-positive diff even with maxDiffPixelRatio
-            # tolerance. Non-blocking until this suite has run clean on this
-            # runner at least once; re-run `nx e2e-visual website
-            # --update-snapshots` from a GitHub Actions run (not a local
-            # machine) if this keeps flagging on every PR.
+            # Browsers are already in the image, so no `playwright install`
+            # step. Dev vars are generated by e2e/start-dev-server.mjs, which
+            # `pnpm nx e2e-visual` starts. This is a real merge gate: a diff here means the rendered
+            # output changed, and either the change is wrong or the baselines
+            # need regenerating with `pnpm vr --update-snapshots`.
             - name: Run visual regression suite (3 browsers x 3 viewports)
-              id: visual
-              continue-on-error: true
               run: pnpm nx e2e-visual website
 
             - name: Upload Playwright report
-              if: always() && steps.visual.outcome == 'failure'
+              if: failure()
               uses: actions/upload-artifact@v4
               with:
                   name: visual-regression-report
                   path: core/website/playwright-report/
                   retention-days: 14
-
-            - name: Flag non-blocking visual regressions
-              if: steps.visual.outcome == 'failure'
-              run: |
-                  echo "::warning::Visual regression suite reported differences from the committed baselines — see the Playwright report artifact. Not blocking merge yet (see comment on the previous step)."

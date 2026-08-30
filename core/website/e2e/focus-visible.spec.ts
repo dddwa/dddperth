@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+import { FIXTURE_YEAR } from './routes'
 
 /**
  * axe's ruleset only catches a handful of focus-related issues (mostly
@@ -44,9 +45,10 @@ test('tabbing through the homepage header shows a visible focus indicator at eve
         const result = await focusedElementHasVisibleIndicator(page)
         if (!result) continue
         checked.push({ tag: result.tag, visible: result.visible })
-        expect(result.visible, `Expected a visible focus indicator on ${result.tag}#${result.id}.${result.className}`).toBe(
-            true,
-        )
+        expect(
+            result.visible,
+            `Expected a visible focus indicator on ${result.tag}#${result.id}.${result.className}`,
+        ).toBe(true)
     }
 
     // Sanity check the loop actually exercised real interactive elements
@@ -54,30 +56,36 @@ test('tabbing through the homepage header shows a visible focus indicator at eve
     expect(checked.length).toBeGreaterThan(0)
 })
 
-test('the TalkOptionCard voting buttons are keyboard-focusable with a visible outline', async ({ page }) => {
-    await page.goto('/voting')
+/**
+ * Agenda talk links are the densest set of interactive controls on the
+ * site, and the agenda grid is a custom CSS-grid (not a real <table>), so
+ * its keyboard story is worth asserting directly. Uses a committed
+ * `session-data` fixture year, so this runs everywhere without Sessionize.
+ */
+test('agenda talk links are keyboard-focusable with a visible indicator', async ({ page }) => {
+    await page.goto(`/agenda/${FIXTURE_YEAR}`)
     await page.waitForLoadState('networkidle').catch(() => {})
 
-    // The comparison cards render only once talk pairs are available; if
-    // voting isn't open or Sessionize isn't configured in this environment,
-    // there's nothing to check here — that state is covered by the axe scan
-    // in a11y.spec.ts instead.
-    const optionButtons = page.getByRole('button', { name: /option 1|option 2/i })
-    const count = await optionButtons.count()
-    test.skip(count === 0, 'No talk comparison cards rendered (voting closed or not configured in this environment)')
+    const talkLinks = page.locator(`a[href*="/agenda/${FIXTURE_YEAR}/talk/"]`)
+    // The fixture year genuinely has talks; if this is 0 the fixture broke
+    // rather than the environment being unconfigured, so fail rather than skip.
+    expect(await talkLinks.count()).toBeGreaterThan(0)
 
-    // Real keyboard Tab navigation (not `.focus()` — script-triggered focus
-    // doesn't reliably trigger `:focus-visible` in Chromium) until we land on
-    // one of the "OPTION 1"/"OPTION 2" buttons.
-    let landedOnOption = false
-    for (let i = 0; i < 40 && !landedOnOption; i++) {
+    const first = talkLinks.first()
+    await first.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+
+    // Walk the keyboard focus forward until it lands on a talk link. Bounded,
+    // and asserted afterwards, so a tab-order regression fails loudly.
+    let landed = false
+    for (let i = 0; i < 120 && !landed; i++) {
         await page.keyboard.press('Tab')
-        landedOnOption = await page.evaluate(
-            () => document.activeElement?.textContent?.trim().toUpperCase().startsWith('OPTION') ?? false,
-        )
+        landed = await page.evaluate((year) => {
+            const el = document.activeElement as HTMLAnchorElement | null
+            return !!el && el.tagName === 'A' && (el.getAttribute('href') ?? '').includes(`/agenda/${year}/talk/`)
+        }, FIXTURE_YEAR)
     }
-    expect(landedOnOption, 'Could not reach an OPTION button via Tab within 40 stops').toBe(true)
 
+    expect(landed, 'Could not reach an agenda talk link via Tab within 120 stops').toBe(true)
     const result = await focusedElementHasVisibleIndicator(page)
-    expect(result?.visible).toBe(true)
+    expect(result?.visible, `Expected a visible focus indicator on the focused talk link`).toBe(true)
 })

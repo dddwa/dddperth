@@ -15,6 +15,7 @@ import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
 import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
+import { noIndexMeta } from '~/lib/seo'
 
 // Constants
 const FETCH_TIMEOUT = 10000 // 10 seconds
@@ -90,6 +91,20 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 }
 
+/**
+ * Not indexed: voting pairs are per-session and transient; the page is
+ * meaningless out of context.
+ *
+ * The title is spread back in deliberately. A child's `meta` *replaces* the
+ * root layout's rather than merging, so `export const meta = noIndexMeta`
+ * alone left the page with no `<title>` at all — a WCAG 2.4.2 failure, and one
+ * axe flags on every scan of this route.
+ */
+export const meta = () => [
+    ...noIndexMeta(),
+    { title: `Vote for talks | ${conferenceManifest.public.name}` },
+]
+
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
 
@@ -124,6 +139,12 @@ function VotingPageWithSession({
 
     const [error, setError] = useState<string | null>(null)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
+    // Screen-reader announcement text, deliberately held in its own state.
+    // `voteSubmitted` drives the *visual* feedback and is cleared after 200ms
+    // to advance to the next pair — far too short for a polite live region,
+    // which debounces on the order of a few hundred ms and would usually
+    // announce nothing at all. This holds the message long enough to be read.
+    const [announcement, setAnnouncement] = useState('')
     const [isFetching, setIsFetching] = useState(false)
     const [isExhausted, setIsExhausted] = useState(false)
 
@@ -173,6 +194,7 @@ function VotingPageWithSession({
 
         // Show vote feedback
         setVoteSubmitted(vote)
+        setAnnouncement(vote === 'skip' ? 'Talk skipped. Loading the next pair.' : 'Vote recorded. Loading the next pair.')
 
         // Submit vote (fire and forget)
         void submitVote(currentPair, vote)
@@ -182,6 +204,11 @@ function VotingPageWithSession({
             setLocalIndex((prev) => prev + 1)
             setVoteSubmitted(null)
         }, 200)
+
+        // Clear the announcement well after a screen reader has had time to
+        // read it, so the region is empty before the next vote writes to it
+        // (an unchanged live region is not re-announced).
+        setTimeout(() => setAnnouncement(''), 3000)
     }
 
     function handleRetry() {
@@ -270,7 +297,7 @@ function VotingPageWithSession({
                     (card highlight, button disable) has no text equivalent and
                     the surrounding content updates without a page navigation. */}
                 <styled.div srOnly aria-live="polite" role="status">
-                    {voteSubmitted ? 'Vote recorded.' : error && localIndex < pairs.length ? error : ''}
+                    {error && localIndex < pairs.length ? error : announcement}
                 </styled.div>
                 <SponsorAcknowledgement prefix="Voting brought to you by" sponsors={data.votingSponsors} />
                 <VStack gap="4">

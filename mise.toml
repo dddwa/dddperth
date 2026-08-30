@@ -1,0 +1,5 @@
+[tools]
+# Match the Node major used by every GitHub Actions workflow.
+node = "26"
+# Keep this in sync with the root package.json packageManager field.
+pnpm = "11.24.0"

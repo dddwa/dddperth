@@ -4,6 +4,7 @@ import { AppLink } from '~/components/app-link'
 import { requireSpeaker } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/speaker-portal'
+import { noIndexMeta } from '~/lib/seo'
 
 /**
  * Speaker portal shell. Only reachable when the fork has `speakerPortal` in
@@ -25,6 +26,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         conferenceName: conferenceManifest.public.name,
     }
 }
+
+/** Not indexed: the speaker portal is auth-gated and contains personal data. */
+export const meta = noIndexMeta
 
 export default function SpeakerPortalLayout() {
     const { user, speaker, year, conferenceName } = useLoaderData<typeof loader>()

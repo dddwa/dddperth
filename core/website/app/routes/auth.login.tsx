@@ -5,6 +5,7 @@ import { recordException } from '~/lib/record-exception'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
+import { noIndexMeta } from '~/lib/seo'
 
 const REDIRECT_PARAM = 'redirectTo'
 
@@ -48,6 +49,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     return data({ sent: true as const, email })
 }
+
+/** Not indexed: a sign-in form has no search value and should not rank for the brand. */
+export const meta = noIndexMeta
 
 export default function Login() {
     const { canSendEmail } = useLoaderData<typeof loader>()

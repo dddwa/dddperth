@@ -19,6 +19,23 @@ export interface CloudflareEnv {
 
     /** "true" turns on the staging-wide auth gate. Anything else leaves only `/admin` gated. */
     WEBSITE_AUTH_REQUIRED?: string
+
+    /**
+     * "true" enables the dev-only `__devDateOverride` cookie. Set only by
+     * `e2e/start-dev-server.mjs` via the e2e-only `.dev.vars.e2e`, so a stale
+     * cookie can't hijack the admin date override during ordinary local dev.
+     * Read behind `import.meta.env.DEV` so it never reaches production —
+     * see the note in `load-context.server.ts`.
+     */
+    E2E_DATE_OVERRIDE?: string
+
+    /**
+     * Base URL of the e2e Sessionize fixture server. Set only by
+     * `e2e/start-dev-server.mjs`. When present (and only in a dev build), the
+     * worker rewrites every `sessionize.com` fetch to this host — see
+     * `app/lib/sessionize-fixture-fetch.server.ts`.
+     */
+    SESSIONIZE_FIXTURE_URL?: string
     /** Resend API key. Optional locally — if absent, magic links are logged to the console. */
     RESEND_API_KEY?: string
     /** From-address for outgoing magic-link emails. */

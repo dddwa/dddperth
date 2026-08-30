@@ -95,47 +95,51 @@ export default function Agenda() {
             p="4"
         >
             <Box maxWidth="[1200px]" color="text.secondary" mx="auto" p="1" fontSize="sm">
-                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
-                    Back to {year} Agenda
-                </AppLink>
-                <styled.h1 fontSize="lg" pb="3">
-                    {session.title}
-                </styled.h1>
-                <styled.span
-                    display="none"
-                    md={{
-                        display: 'block',
-                    }}
-                    color="text.secondary"
-                    textWrap="nowrap"
-                    pb="3"
-                >
-                    🕓 {sessionStart} - {sessionEnd}
-                </styled.span>
-                <styled.span display="block" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" pb="3">
-                    📍 {session.room}
-                </styled.span>
-                <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
-                <styled.div>{session.description}</styled.div>
-                {session?.speakers?.length ? (
-                    <styled.div display="block" color="text.secondary">
-                        {talkSpeakers.map((speaker) => (
-                            <styled.div key={speaker.id} display="flex" alignItems="center">
-                                {speaker.profilePicture ? (
-                                    <styled.img
-                                        src={speaker.profilePicture}
-                                        alt={speaker.fullName}
-                                        width="[120px]"
-                                        height="[120px]"
-                                        borderRightRadius="[50%]"
-                                        mr="2"
-                                    />
-                                ) : null}
-                                {speaker.fullName}
-                            </styled.div>
-                        ))}
-                    </styled.div>
-                ) : null}
+                <Box id="talk-detail-content">
+                    <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
+                        Back to {year} Agenda
+                    </AppLink>
+                    <styled.h1 fontSize="lg" pb="3">
+                        {session.title}
+                    </styled.h1>
+                    {sessionStart && sessionEnd ? (
+                        <styled.span display="block" color="text.secondary" textWrap="nowrap" pb="3">
+                            🕓 {sessionStart} - {sessionEnd}
+                        </styled.span>
+                    ) : null}
+                    {session.room ? (
+                        <styled.span
+                            display="block"
+                            color="text.secondary"
+                            textOverflow="ellipsis"
+                            textWrap="nowrap"
+                            pb="3"
+                        >
+                            📍 {session.room}
+                        </styled.span>
+                    ) : null}
+                    <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
+                    <styled.div>{session.description}</styled.div>
+                    {session?.speakers?.length ? (
+                        <styled.div display="block" color="text.secondary">
+                            {talkSpeakers.map((speaker) => (
+                                <styled.div key={speaker.id} display="flex" alignItems="center">
+                                    {speaker.profilePicture ? (
+                                        <styled.img
+                                            src={speaker.profilePicture}
+                                            alt={speaker.fullName}
+                                            width="[120px]"
+                                            height="[120px]"
+                                            borderRightRadius="[50%]"
+                                            mr="2"
+                                        />
+                                    ) : null}
+                                    {speaker.fullName}
+                                </styled.div>
+                            ))}
+                        </styled.div>
+                    ) : null}
+                </Box>
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>

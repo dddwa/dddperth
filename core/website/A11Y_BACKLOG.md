@@ -7,16 +7,53 @@ meant to be turned into a GitHub issue (or several) for follow-up; it is not its
 Items are grouped by page/area, roughly in priority order (public-facing first). Each entry lists the file,
 the relevant WCAG criterion/rule where known, a short description, and a suggested fix.
 
-Fixes already made on this branch (landmarks, heading order, skip link, `TalkOptionCard` keyboard support, the
-voting page live region, and jsx-a11y lint tightening) are **not** repeated here — see the branch's commit history
-for those.
+Fixes already made (landmarks, heading order, skip link, `TalkOptionCard` keyboard support, the voting page live
+region, and jsx-a11y lint tightening) are **not** repeated here — see the commit history for those.
+
+## Fixed in the `a11y/e2e-seams` follow-up
+
+Recorded here because these were found *by* widening the automated coverage, and the entries below explain why
+they weren't caught the first time:
+
+- **Agenda grid: orphaned ARIA table roles** (`_layout.agenda.($year).tsx`) — `role="rowheader"` /
+  `role="columnheader"` on a flat CSS grid with no `role="row"`/`role="grid"` ancestor. Axe rates this
+  `aria-required-parent`, **critical**: it tells a screen reader it's in a table, then gives it no row/column
+  structure to navigate. Roles removed (the `aria-label`s are kept). Missed originally because the only agenda
+  route under test was the current year, which renders an empty "not announced yet" state.
+- **Sponsors empty/cancelled states had no `<h1>`** (`_layout.sponsors.($year).tsx`) — the populated branch had
+  one, the two empty branches didn't. Same `srOnly` heading pattern as the agenda page.
+- **Blog posts had no `<h1>`** (`_layout.blog.$slug.tsx`) — the post title was a bare `<div>`. Missed originally
+  because `/blog/:slug` was not in the route list.
+- **Skip-link breakpoint mismatch** (`skip-to-content.tsx`) — the "Skip to Navigation" variants swapped at `md`
+  (768px) while the header's hamburger/desktop-nav swap happens at `lg` (1024px), so 768–1023px pointed at
+  `#header` while the nav was still collapsed in the closed drawer. Now `lg` in both places, asserted across
+  five widths in `e2e/a11y.spec.ts`.
+- **Voting live region announced nothing** (`_layout.voting.tsx`) — the message was tied to `voteSubmitted`,
+  which is cleared after 200ms; a polite live region generally won't announce something that appears and
+  disappears that fast. Now held in its own state for ~3s.
+- **Route list pinned to a fixture year.** An earlier draft of this work also scanned the unpinned `/agenda`,
+  `/sponsors` and `/voting`, tagged as "empty state" coverage. That was wrong: those routes track the current
+  conference, so they'd flip to populated the moment `agendaPublishedDateTime` passed (which it does the day
+  this was written) or a new year landed — turning the empty-state assertions and their visual baselines into
+  silent no-ops. Every conference-scoped route is now pinned to 2025.
+- **`TalkOptionCard` mixed theme tokens with a theme-invariant surface.** The card forces `bg="white"` in both
+  themes, but its text and pills used theme-reactive tokens, so it failed contrast in *both* directions:
+  `indigo.1` resolved near-black behind `indigo.8` pill text under the dark theme (3.03:1), and `gray.7`
+  description text resolved *light* on the white card under the light theme (~1.6:1). Both are now literal
+  values, with a comment on the component explaining that the surface and its colours must change together.
+  Neither was findable before — the card only renders in the live voting flow, which needed the date override
+  *and* the Sessionize fixtures to reach.
+- **`TalkOptionCard` dropped out of the tab order** — it used `disabled` while a vote was in flight, silently
+  losing keyboard focus. Now `aria-disabled` (Panda's `_disabled` condition already matches
+  `[aria-disabled=true]`, so the styling is unchanged).
 
 ## Blog (`/blog`, `/blog/:slug`)
 
 The blog index in particular is a known work-in-progress page — it renders as unstyled, unlabelled `<div>`/`<p>`
 markup (no PandaCSS styling at all), unlike every other route in the app. The automated a11y e2e suite
-(`core/website/e2e/a11y.spec.ts`) currently fails on `/blog` for exactly this reason; that failure is expected
-until the page gets its real design.
+(`core/website/e2e/a11y.spec.ts`) currently fails on **both** `/blog` and `/blog/:slug` for exactly this reason
+(`color-contrast` and `image-alt`); those two failures are expected until the pages get their real design, and
+they are the only remaining failures in the suite. Everything else passes in both themes.
 
 - **File:** `core/website/app/routes/_layout.blog._index.tsx`
   **WCAG:** 1.4.3 Contrast (Minimum)
@@ -105,11 +142,33 @@ reviewed beyond a structural skim (`admin.tsx`'s layout already has a `<nav>` + 
 
 ## Test coverage gaps (for the e2e suite itself)
 
-- The axe scan in `core/website/e2e/a11y.spec.ts` currently covers: home, agenda, sponsors, blog index, voting,
-  and one representative MDX content page (`/about`). It does **not** cover: individual blog posts
-  (`/blog/:slug`), the talk detail page (`/agenda/:year/talk/:sessionId`), the sponsor portal, or any admin route.
-  Extending the route list is the highest-leverage next step once the known `/blog` failures above are fixed —
-  otherwise a real regression on an uncovered route would ship silently.
-- The focus-visible check in `core/website/e2e/focus-visible.spec.ts` only exercises the homepage header and the
-  voting page's option buttons. It's a spot-check, not exhaustive coverage of every interactive component (forms,
-  admin controls, the mobile drawer, the multi-select filter dropdown on `/agenda`).
+- The axe scan in `core/website/e2e/a11y.spec.ts` covers one route per public template (see
+  `core/website/e2e/routes.ts`): home, `/about`, agenda, a talk detail page, sponsors, blog index and a blog
+  post — the conference-scoped ones pinned to the 2025 fixture year. It runs under both the dark and light
+  themes.
+  Still **not** covered: `/voting` (see below), the sponsor portal, the speaker portal, or any admin route.
+- **`/voting` is not covered at all, in either state.** Two separate reasons:
+  1. The route has no year param, so it always reflects the *current* conference — an inherently moving target,
+     unlike every other route in the suite, which is pinned to a past fixture year. Its rendered state changes
+     as `talkVotingDates` pass and new years are added, so an assertion written today quietly stops meaning what
+     it meant.
+  2. The *live* flow (the part worth testing) needs both an in-window `talkVotingDates` **and** a live Sessionize
+     `allSessionsEndpoint`. Unlike the agenda, there's no committed fixture path for it.
+
+  `TalkOptionCard`'s keyboard/AT contract is covered by unit tests
+  (`core/website/app/components/talk-option-card.test.tsx`) instead — which is why the earlier e2e attempt at
+  this silently skipped on every run.
+
+  **Partly addressed.** A dev-only date override now exists — an unsigned `__devDateOverride` cookie read only
+  under `import.meta.env.DEV` (`app/lib/dates/dev-date-time-provider.server.ts`), dead-code-eliminated from
+  production builds and tested to stay that way. `e2e/date-states.spec.ts` uses it to scan the CFP-open,
+  voting-open and agenda-published homepage states, which previously required an admin login to reach.
+
+  **Now closed.** Committed Sessionize fixtures (`e2e/fixtures/sessionize/`) are served by
+  `e2e/start-dev-server.mjs`, so the live voting flow renders real comparison cards in tests. `e2e/voting.spec.ts`
+  covers `TalkOptionCard` end-to-end — keyboard activation, focus indicator, the live region — which previously
+  had unit tests only.
+- The focus-visible check in `core/website/e2e/focus-visible.spec.ts` exercises the homepage header and the
+  agenda's talk links (the densest interactive surface on the site, and a custom CSS grid rather than a real
+  `<table>`). It's a spot-check, not exhaustive coverage of every interactive component (forms, admin controls,
+  the mobile drawer, the multi-select filter dropdown on `/agenda`).

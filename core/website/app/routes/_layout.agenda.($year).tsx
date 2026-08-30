@@ -198,7 +198,13 @@ export default function Agenda() {
                                     fontSize={{ base: 'sm', md: 'md' }}
                                     fontWeight="semibold"
                                     color="text.secondary"
-                                    role="rowheader"
+                                    // No `role="rowheader"` here: the schedule is a flat CSS
+                                    // grid, not a table/grid structure — the roles have no
+                                    // `role="row"`/`role="grid"` ancestors, which axe flags as
+                                    // a critical `aria-required-parent` violation. Orphaned
+                                    // table roles tell a screen reader it's in a table and
+                                    // then give it no row/column context to navigate, which is
+                                    // worse than the plain heading this already is.
                                     aria-label={`Time slot starting at ${startTime12}`}
                                 >
                                     {startTime12}
@@ -250,7 +256,10 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
         <Flex
             key={room.id}
             style={{ '--room-column': `room-${room.id}` } as React.CSSProperties}
-            role="columnheader"
+            // See the note on the time-slot heading above: `role="columnheader"`
+            // without a `role="row"`/`role="grid"` ancestor is an orphaned table
+            // role (critical `aria-required-parent`). The aria-label is kept —
+            // it still usefully names the room and its sponsor.
             aria-label={`${room.name}${roomSponsor ? `, sponsored by ${roomSponsor.name}` : ''}`}
             justifyContent="center"
             alignItems="center"
