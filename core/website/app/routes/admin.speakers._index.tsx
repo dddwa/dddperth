@@ -11,7 +11,7 @@ import { requireAdmin } from '~/lib/auth.server'
 import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
-import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
 import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
 import { FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
@@ -126,7 +126,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         portalConfig.checklist?.speakerTrainingSessions?.map((s) => ({ id: s.id, title: s.title })) ?? [],
     )
     const followUps = SPEAKER_CHECKLIST_ITEMS.map((definition) => {
-        const dueDateIso = definition.dueDate?.toISO() ?? undefined
+        const dueDateIso = checklistDueDate(definition.key)?.toISO() ?? undefined
         return {
             key: definition.key,
             label: definition.label,

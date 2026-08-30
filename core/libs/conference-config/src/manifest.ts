@@ -362,9 +362,24 @@ export interface SpeakerDinnerConfig {
     location?: string
 }
 
+/**
+ * Per-item checklist due dates, keyed by the checklist item's key (e.g.
+ * `claimTicket`, `speakerDinner`) — see `SPEAKER_CHECKLIST_ITEMS` in
+ * core/website/app/lib/speakers/checklist-items.ts for the available keys.
+ * Kept as a plain string index here since this package doesn't depend on the
+ * website app's types, matching `SpeakerTrainingSessionConfig.id`.
+ *
+ * Due dates are a per-conference, per-year calendar, so they live in the
+ * fork's config rather than in core. Omit an item's entry (or the whole map)
+ * to show that item with no due date.
+ */
+export type SpeakerChecklistDueDates = Record<string, DateTime>
+
 export interface SpeakerPortalChecklistConfig {
     /** External link where a speaker claims/registers their complimentary ticket. */
     ticketClaimUrl?: string
+    /** When each checklist item is due. Omit to show every item undated. */
+    dueDates?: SpeakerChecklistDueDates
     /** The training sessions offered — rendered as checkboxes in the RSVP
      * modal and used to generate calendar invites. Omit to hide the whole
      * training-RSVP checklist item. */

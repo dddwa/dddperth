@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import type { DateTime } from 'luxon'
+import { conferenceManifest } from '@conference/manifest'
 
 /**
  * Declarative list of the speaker dashboard checklist items — one place to
@@ -40,26 +41,36 @@ export interface ExternalLinkAction {
 
 export type ChecklistItemAction = OpenModalAction | ExternalLinkAction
 
+export type ChecklistItemKey =
+    | 'confirmSession'
+    | 'sessionDetails'
+    | 'claimTicket'
+    | 'speakerTraining'
+    | 'speakerDinner'
+    | 'meetTheExperts'
+    | 'acceptBackupSpeaker'
+
 export interface ChecklistItemDefinition {
-    key:
-        | 'confirmSession'
-        | 'sessionDetails'
-        | 'claimTicket'
-        | 'speakerTraining'
-        | 'speakerDinner'
-        | 'meetTheExperts'
-        | 'acceptBackupSpeaker'
+    key: ChecklistItemKey
     label: string
-    /** Omit for no due date. */
-    dueDate?: DateTime
     actions: ChecklistItemAction[]
+}
+
+/**
+ * A checklist item's due date, from the fork's
+ * `speakerPortal.checklist.dueDates` config. Due dates are a per-conference,
+ * per-year calendar, so core holds the item definitions (label, actions,
+ * ordering) and the fork owns the dates. Returns undefined for an item with
+ * no configured date, which renders it undated.
+ */
+export function checklistDueDate(key: ChecklistItemKey): DateTime | undefined {
+    return conferenceManifest.speakerPortal?.checklist?.dueDates?.[key]
 }
 
 export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     {
         key: 'confirmSession',
         label: 'Confirm your session in Sessionize',
-        dueDate: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
         actions: [
             { href: 'https://sessionize.com/app/speaker', label: 'Open Sessionize ↗' },
             { action: 'confirm-session', label: "I've already confirmed it" },
@@ -70,35 +81,30 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         // Accepted session — see `isBackupSpeaker` in checklist.ts.
         key: 'acceptBackupSpeaker',
         label: 'Accept being a backup speaker',
-        dueDate: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
         actions: [{ action: 'accept-backup', label: 'I accept being a backup speaker' }],
     },
     {
         key: 'sessionDetails',
         label: 'Fill in your session details',
-        dueDate: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'sessionDetails', buttonLabel: 'Fill in now' }],
     },
     {
         key: 'claimTicket',
         label: 'Claim your speaker ticket',
-        dueDate: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Australia/Perth' }),
         actions: [
             // href omitted — falls back to the dynamic ticketClaimUrl prop.
-            { label: 'Claim your ticket ↗', href: 'https://ti.to/dddperth/2026/with/fmf7yvt0fqg' },
+            { label: 'Claim your ticket ↗' },
             { action: 'claim-ticket', label: "I've claimed it" },
         ],
     },
     {
         key: 'speakerTraining',
         label: 'RSVP for speaker training',
-        dueDate: DateTime.fromISO('2026-08-28T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'speakerTraining', buttonLabel: 'RSVP now' }],
     },
     {
         key: 'speakerDinner',
         label: 'RSVP for the speaker dinner',
-        dueDate: DateTime.fromISO('2026-09-25T17:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'speakerDinner', buttonLabel: 'RSVP now' }],
     },
     {
@@ -107,7 +113,6 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         // item out of the list entirely otherwise.
         key: 'meetTheExperts',
         label: 'Register for Meet the Experts',
-        dueDate: DateTime.fromISO('2026-09-18T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'meetTheExperts', buttonLabel: 'Register' }],
     },
 ]
