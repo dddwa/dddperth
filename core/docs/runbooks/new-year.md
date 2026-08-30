@@ -103,6 +103,24 @@ Values come from the Sessionize event admin page → API:
 - `_SESSIONS` is the bare endpoint: `https://sessionize.com/api/v2/<event-id>`
 - `_ALL_SESSIONS` appends the all-sessions view: `https://sessionize.com/api/v2/<event-id>/view/All`
 
+Once the speaker portal opens, also set the Tito speaker ticket claim link:
+
+```bash
+pnpm wrangler secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> --env staging
+pnpm wrangler secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> --env production
+```
+
+The value is the Tito "with" link for the speaker release, e.g.
+`https://ti.to/<account>/<year>/with/<token>`. A secret rather than config
+because that token is the only thing gating a free ticket. Until it's set,
+the dashboard doesn't render the claim action. Delete it once every speaker
+has claimed:
+
+```bash
+pnpm wrangler secret delete SPEAKER_TICKET_CLAIM_URL_<YEAR> --env staging
+pnpm wrangler secret delete SPEAKER_TICKET_CLAIM_URL_<YEAR> --env production
+```
+
 ### e. Cut over from the previous year
 
 Once the new year's secrets are set in all environments, the previous year's API URLs become public (the agenda is published, sessions are no longer secret). To clean up:

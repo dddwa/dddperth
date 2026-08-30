@@ -89,9 +89,7 @@ function ChecklistActionButton({
         )
     }
 
-    // Conference-specific URL from config. Nothing to link to when the fork
-    // hasn't configured one, so the action is dropped rather than rendered
-    // dead — a fork with no claim URL can't have its speakers claim tickets.
+    // Dropped rather than rendered dead when the URL isn't configured.
     if ('configuredHref' in action) {
         if (!ticketClaimUrl) return null
         return (

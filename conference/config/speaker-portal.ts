@@ -25,13 +25,8 @@ export const speakerPortal: SpeakerPortalConfig = {
     },
     // Training session dates/times and the dinner below are confirmed.
     checklist: {
-        // The live speaker claim link. This is the URL that was previously
-        // hardcoded in core's checklist item, so moving it here keeps the
-        // link speakers actually get unchanged. Replace it when Tito issues
-        // a new one, and drop the whole field once claiming has closed.
-        ticketClaimUrl: 'https://ti.to/dddperth/2026/with/fmf7yvt0fqg',
-        // Due dates for DDD Perth 2026. Core holds the checklist item
-        // definitions (label, actions, ordering); the calendar is ours.
+        // Ticket claim link is a secret, SPEAKER_TICKET_CLAIM_URL_<YEAR> —
+        // see core/docs/runbooks/new-year.md.
         dueDates: {
             confirmSession: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
             acceptBackupSpeaker: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),

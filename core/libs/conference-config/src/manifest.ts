@@ -321,9 +321,8 @@ export interface SpeakerPortalConfig {
     /**
      * Outstanding-items checklist shown at the top of the speaker dashboard
      * (session details, ticket claim, training RSVP). Omit a due date to show
-     * that item without one; omit `ticketClaimUrl` to drop the claim link
-     * (speakers then have no way to claim a ticket, which is the correct
-     * behaviour for a fork that doesn't offer one).
+     * that item without one. The ticket claim URL is deliberately not here —
+     * it's a secret, `SPEAKER_TICKET_CLAIM_URL_<YEAR>`.
      */
     checklist?: SpeakerPortalChecklistConfig
     /**
@@ -364,23 +363,15 @@ export interface SpeakerDinnerConfig {
 }
 
 /**
- * Per-item checklist due dates, keyed by the checklist item's key (e.g.
- * `claimTicket`, `speakerDinner`) — see `SPEAKER_CHECKLIST_ITEMS` in
- * core/website/app/lib/speakers/checklist-items.ts for the available keys.
- * Kept as a plain string index here since this package doesn't depend on the
- * website app's types, matching `SpeakerTrainingSessionConfig.id`.
- *
- * Due dates are a per-conference, per-year calendar, so they live in the
- * fork's config rather than in core. Omit an item's entry (or the whole map)
- * to show that item with no due date.
+ * Checklist due dates keyed by item key (e.g. `claimTicket`) — see
+ * `SPEAKER_CHECKLIST_ITEMS` in core/website/app/lib/speakers/checklist-items.ts.
+ * A plain string index because this package can't depend on the website app's
+ * types, matching `SpeakerTrainingSessionConfig.id`. Omit an entry to show
+ * that item undated.
  */
 export type SpeakerChecklistDueDates = Record<string, DateTime>
 
 export interface SpeakerPortalChecklistConfig {
-    /** External link where a speaker claims/registers their complimentary
-     * ticket. The only source for that link — omit it and the claim action
-     * isn't rendered at all. */
-    ticketClaimUrl?: string
     /** When each checklist item is due. Omit to show every item undated. */
     dueDates?: SpeakerChecklistDueDates
     /** The training sessions offered — rendered as checkboxes in the RSVP

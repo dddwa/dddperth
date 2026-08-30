@@ -1,16 +1,9 @@
 // @vitest-environment jsdom
 /**
  * The ticket-claim link is the one checklist action whose URL core doesn't
- * own — it comes from the fork's `speakerPortal.checklist.ticketClaimUrl`.
- *
- * That URL used to be hardcoded in core alongside a `?? ticketClaimUrl`
- * fallback in the card, which meant the hardcoded value silently won and the
- * config value was dead code. Now the action declares
- * `configuredHref: 'ticketClaimUrl'` and there is exactly one source.
- *
- * These assertions lock in the contract that replaced the fallback: the link
- * renders from config when set, and the action disappears when it isn't —
- * rather than rendering a dead link to nowhere.
+ * own — it comes from the `SPEAKER_TICKET_CLAIM_URL_<YEAR>` secret. It
+ * renders when supplied and disappears when not, rather than becoming a dead
+ * link.
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { createRoutesStub } from 'react-router'
@@ -57,16 +50,13 @@ describe('SpeakerChecklistCard ticket claim link', () => {
     it('omits the claim link entirely when no URL is configured', () => {
         renderCard(undefined)
 
-        // A fork with no claim URL simply can't offer ticket claiming, so
-        // there should be no link at all — not a dead one.
         expect(screen.queryByRole('link', { name: /claim your ticket/i })).toBeNull()
     })
 
     it("still offers the self-report button when there's no claim link", () => {
         renderCard(undefined)
 
-        // The "I've claimed it" action posts to the server and is unrelated
-        // to the external URL, so dropping the link must not drop it too.
+        // Posts to the server, so it's unaffected by the missing URL.
         expect(screen.getByRole('button', { name: /i've claimed it/i })).toBeTruthy()
     })
 })

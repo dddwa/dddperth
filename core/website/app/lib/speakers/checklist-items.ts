@@ -38,12 +38,9 @@ export interface ExternalLinkAction {
 }
 
 /**
- * A link whose URL is conference-specific and so comes from config rather
- * than from core — currently only the ticket claim URL
- * (`speakerPortal.checklist.ticketClaimUrl`). Rendered as a link when that
- * config value is set, and omitted entirely when it isn't: a fork with no
- * claim URL configured simply can't have its speakers claim a ticket, so
- * there's nothing useful to show.
+ * A link whose URL comes from deployment config rather than core — currently
+ * only the ticket claim URL, from `SPEAKER_TICKET_CLAIM_URL_<YEAR>`. Omitted
+ * entirely when unset: without a claim URL there's nothing to link to.
  */
 export interface ConfiguredLinkAction {
     configuredHref: 'ticketClaimUrl'
@@ -68,11 +65,9 @@ export interface ChecklistItemDefinition {
 }
 
 /**
- * A checklist item's due date, from the fork's
- * `speakerPortal.checklist.dueDates` config. Due dates are a per-conference,
- * per-year calendar, so core holds the item definitions (label, actions,
- * ordering) and the fork owns the dates. Returns undefined for an item with
- * no configured date, which renders it undated.
+ * A checklist item's due date, from `speakerPortal.checklist.dueDates`. Core
+ * owns the item definitions, the fork owns the calendar. Undefined renders
+ * the item undated.
  */
 export function checklistDueDate(key: ChecklistItemKey): DateTime | undefined {
     return conferenceManifest.speakerPortal?.checklist?.dueDates?.[key]

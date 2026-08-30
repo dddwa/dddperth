@@ -73,6 +73,13 @@ export interface CloudflareEnv {
 
     SESSIONIZE_2026_SESSIONS: string
     SESSIONIZE_2026_ALL_SESSIONS?: string
+
+    /**
+     * The Tito speaker ticket claim link. A secret, not config — holding the
+     * URL is what claims a free ticket. Year-scoped like `SESSIONIZE_<YYYY>_*`
+     * so a stale link can't outlive its event. Unset hides the claim action.
+     */
+    SPEAKER_TICKET_CLAIM_URL_2026?: string
 }
 
 /**
