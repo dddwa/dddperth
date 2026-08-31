@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { RouterContext } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
-import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConfig, getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
 import type { ReminderEvent } from '~/components/speaker-reminder-banner'
 import type { TrainingSessionView } from '~/components/speaker-training-modal'
 import { buildCalendarDataUrl } from './calendar.server'
@@ -61,6 +61,17 @@ export interface SpeakerDashboardView {
     /** Their custom on-stage intro from the session-details form, if any —
      * seeds the Meet the Experts bio the first time it's unlocked. */
     sessionDetailsIntroText?: string
+}
+
+/**
+ * The speaker ticket claim URL for the current year, from
+ * `SPEAKER_TICKET_CLAIM_URL_<YYYY>`. A secret rather than config because the
+ * link is unguessable by design — holding it is what claims a free ticket.
+ * Undefined drops the claim action.
+ */
+function ticketClaimUrlFor(context: { get<T>(context: RouterContext<T>): T }): string | undefined {
+    const year = getConferenceState(context).conference.year
+    return getConfig(context).speakerTicketClaimUrls[year]
 }
 
 export function buildSpeakerDashboardView(
@@ -124,7 +135,7 @@ export function buildSpeakerDashboardView(
         sessionDetailsSections,
 
         checklist,
-        ticketClaimUrl: checklistConfig?.ticketClaimUrl,
+        ticketClaimUrl: ticketClaimUrlFor(context),
         backupSessionIds,
 
         conferenceName: conferenceManifest.public.name,

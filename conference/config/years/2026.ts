@@ -10,6 +10,9 @@ export const conference2026: ConferenceYear = {
 
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2026',
 
+    // New event ID each year — update for 2027.
+    sessionizeOrganizerEventId: '24207',
+
     // Endpoints are injected from env (SESSIONIZE_2026_SESSIONS / SESSIONIZE_2026_ALL_SESSIONS)
     // by getYearConfig. Kept private because the unpublished agenda would otherwise leak.
     sessions: {

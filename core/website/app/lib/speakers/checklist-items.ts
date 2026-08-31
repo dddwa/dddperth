@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import type { DateTime } from 'luxon'
+import { conferenceManifest } from '@conference/manifest'
 
 /**
  * Declarative list of the speaker dashboard checklist items — one place to
@@ -25,12 +26,10 @@ export interface OpenModalAction {
 
 /**
  * A single link or "self-report" button rendered for a checklist item.
- * Set `href` for a link (omit to fall back to the dynamic `ticketClaimUrl`
- * prop passed into the card at render time — only meaningful when `action`
- * is also unset); set `action` for a button that posts `_action=<action>`.
- * Note: can have a href or an action, not both — an item wanting both (e.g.
- * a Sessionize link plus a separate confirm button) lists two of these in
- * `actions` rather than combining them on one.
+ * Set `href` for a static link; set `action` for a button that posts
+ * `_action=<action>`. Note: can have a href or an action, not both — an item
+ * wanting both (e.g. a Sessionize link plus a separate confirm button) lists
+ * two of these in `actions` rather than combining them on one.
  */
 export interface ExternalLinkAction {
     href?: string
@@ -38,28 +37,46 @@ export interface ExternalLinkAction {
     label: string
 }
 
-export type ChecklistItemAction = OpenModalAction | ExternalLinkAction
+/**
+ * A link whose URL comes from deployment config rather than core — currently
+ * only the ticket claim URL, from `SPEAKER_TICKET_CLAIM_URL_<YEAR>`. Omitted
+ * entirely when unset: without a claim URL there's nothing to link to.
+ */
+export interface ConfiguredLinkAction {
+    configuredHref: 'ticketClaimUrl'
+    label: string
+}
+
+export type ChecklistItemAction = OpenModalAction | ExternalLinkAction | ConfiguredLinkAction
+
+export type ChecklistItemKey =
+    | 'confirmSession'
+    | 'sessionDetails'
+    | 'claimTicket'
+    | 'speakerTraining'
+    | 'speakerDinner'
+    | 'meetTheExperts'
+    | 'acceptBackupSpeaker'
 
 export interface ChecklistItemDefinition {
-    key:
-        | 'confirmSession'
-        | 'sessionDetails'
-        | 'claimTicket'
-        | 'speakerTraining'
-        | 'speakerDinner'
-        | 'meetTheExperts'
-        | 'acceptBackupSpeaker'
+    key: ChecklistItemKey
     label: string
-    /** Omit for no due date. */
-    dueDate?: DateTime
     actions: ChecklistItemAction[]
+}
+
+/**
+ * A checklist item's due date, from `speakerPortal.checklist.dueDates`. Core
+ * owns the item definitions, the fork owns the calendar. Undefined renders
+ * the item undated.
+ */
+export function checklistDueDate(key: ChecklistItemKey): DateTime | undefined {
+    return conferenceManifest.speakerPortal?.checklist?.dueDates?.[key]
 }
 
 export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     {
         key: 'confirmSession',
         label: 'Confirm your session in Sessionize',
-        dueDate: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
         actions: [
             { href: 'https://sessionize.com/app/speaker', label: 'Open Sessionize ↗' },
             { action: 'confirm-session', label: "I've already confirmed it" },
@@ -70,35 +87,29 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         // Accepted session — see `isBackupSpeaker` in checklist.ts.
         key: 'acceptBackupSpeaker',
         label: 'Accept being a backup speaker',
-        dueDate: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
         actions: [{ action: 'accept-backup', label: 'I accept being a backup speaker' }],
     },
     {
         key: 'sessionDetails',
         label: 'Fill in your session details',
-        dueDate: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'sessionDetails', buttonLabel: 'Fill in now' }],
     },
     {
         key: 'claimTicket',
         label: 'Claim your speaker ticket',
-        dueDate: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Australia/Perth' }),
         actions: [
-            // href omitted — falls back to the dynamic ticketClaimUrl prop.
-            { label: 'Claim your ticket ↗', href: 'https://ti.to/dddperth/2026/with/fmf7yvt0fqg' },
+            { configuredHref: 'ticketClaimUrl', label: 'Claim your ticket ↗' },
             { action: 'claim-ticket', label: "I've claimed it" },
         ],
     },
     {
         key: 'speakerTraining',
         label: 'RSVP for speaker training',
-        dueDate: DateTime.fromISO('2026-08-28T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'speakerTraining', buttonLabel: 'RSVP now' }],
     },
     {
         key: 'speakerDinner',
         label: 'RSVP for the speaker dinner',
-        dueDate: DateTime.fromISO('2026-09-25T17:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'speakerDinner', buttonLabel: 'RSVP now' }],
     },
     {
@@ -107,7 +118,6 @@ export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
         // item out of the list entirely otherwise.
         key: 'meetTheExperts',
         label: 'Register for Meet the Experts',
-        dueDate: DateTime.fromISO('2026-09-18T22:00:00', { zone: 'Australia/Perth' }),
         actions: [{ kind: 'openModal', modalKey: 'meetTheExperts', buttonLabel: 'Register' }],
     },
 ]

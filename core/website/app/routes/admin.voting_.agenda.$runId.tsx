@@ -19,11 +19,6 @@ import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { ColorToken } from '~/styled-system/tokens'
 import type { Route } from './+types/admin.voting_.agenda.$runId'
 
-// DDD Perth's Sessionize organizer/event ID, used to deep-link talks into the
-// Sessionize back office. Sessionize mints a new numeric event ID per year —
-// update this when wiring up the agenda tool for a new conference year.
-const SESSIONIZE_ORGANIZER_EVENT_ID = '24207'
-
 const SESSION_FORMAT_CATEGORY = 'Session format'
 const LEVEL_CATEGORY = 'Level'
 const GENERAL_TOPIC_CATEGORY = 'General Topic Category'
@@ -264,7 +259,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     // visibility and the server-side check can't drift apart.
     const planningIsEmpty = isPlanningStateEmpty(planning)
 
-    return { runId, runDetails, agendaTalks, planning, planningIsEmpty }
+    return {
+        runId,
+        runDetails,
+        agendaTalks,
+        planning,
+        planningIsEmpty,
+        sessionizeOrganizerEventId: yearConfig.sessionizeOrganizerEventId,
+    }
 }
 
 /**
@@ -1187,7 +1189,8 @@ function LocalPlanningImport({ runId, planningIsEmpty }: { runId: string; planni
 }
 
 export default function VotingAgenda() {
-    const { runId, runDetails, agendaTalks, planning, planningIsEmpty } = useLoaderData<typeof loader>()
+    const { runId, runDetails, agendaTalks, planning, planningIsEmpty, sessionizeOrganizerEventId } =
+        useLoaderData<typeof loader>()
     const revalidator = useRevalidator()
 
     // Planning decisions now live in D1 so the whole organizer team shares
@@ -2511,18 +2514,20 @@ export default function VotingAgenda() {
                                             </styled.p>
                                         )}
 
-                                        <styled.a
-                                            href={`https://sessionize.com/app/organizer/session/${SESSIONIZE_ORGANIZER_EVENT_ID}/${selectedTalk.talkId}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            display="inline-block"
-                                            fontSize="sm"
-                                            color="prose.link"
-                                            textDecoration="underline"
-                                            mb="6"
-                                        >
-                                            View on Sessionize ↗
-                                        </styled.a>
+                                        {sessionizeOrganizerEventId && (
+                                            <styled.a
+                                                href={`https://sessionize.com/app/organizer/session/${sessionizeOrganizerEventId}/${selectedTalk.talkId}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                display="inline-block"
+                                                fontSize="sm"
+                                                color="prose.link"
+                                                textDecoration="underline"
+                                                mb="6"
+                                            >
+                                                View on Sessionize ↗
+                                            </styled.a>
+                                        )}
 
                                         <styled.h3 fontSize="md" fontWeight="semibold" mb="3">
                                             Speakers

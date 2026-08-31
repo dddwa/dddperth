@@ -23,11 +23,19 @@ export const speakerPortal: SpeakerPortalConfig = {
         generalTopic: 'General Topic Category',
         talkTopics: 'Talk Topics',
     },
-    // Checklist due dates live in
-    // core/website/app/lib/speakers/checklist-items.ts; training session
-    // dates/times and the dinner below are confirmed.
+    // Training session dates/times and the dinner below are confirmed.
     checklist: {
-        ticketClaimUrl: 'https://ti.to/dddperth/2026/with/speaker',
+        // Ticket claim link is a secret, SPEAKER_TICKET_CLAIM_URL_<YEAR> —
+        // see core/docs/runbooks/new-year.md.
+        dueDates: {
+            confirmSession: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
+            acceptBackupSpeaker: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
+            sessionDetails: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Australia/Perth' }),
+            claimTicket: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Australia/Perth' }),
+            speakerTraining: DateTime.fromISO('2026-08-28T22:00:00', { zone: 'Australia/Perth' }),
+            speakerDinner: DateTime.fromISO('2026-09-25T17:00:00', { zone: 'Australia/Perth' }),
+            meetTheExperts: DateTime.fromISO('2026-09-18T22:00:00', { zone: 'Australia/Perth' }),
+        },
         speakerTrainingSessions: [
             {
                 id: 'Session 1',

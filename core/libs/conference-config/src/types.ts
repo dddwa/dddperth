@@ -110,6 +110,13 @@ export interface ConferenceYear {
 
     sessionizeUrl: string | undefined
 
+    /**
+     * Numeric Sessionize event ID, used by the admin agenda planner to
+     * deep-link talks into the Sessionize back office — take it from the URL
+     * in Sessionize's organizer view. Omit to render talks without the link.
+     */
+    sessionizeOrganizerEventId?: string
+
     ticketInfo: TicketInfo | undefined
 
     /**

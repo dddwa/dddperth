@@ -321,8 +321,8 @@ export interface SpeakerPortalConfig {
     /**
      * Outstanding-items checklist shown at the top of the speaker dashboard
      * (session details, ticket claim, training RSVP). Omit a due date to show
-     * that item without one; omit `ticketClaimUrl` to show the ticket-claim
-     * item as plain text instead of a link.
+     * that item without one. The ticket claim URL is deliberately not here —
+     * it's a secret, `SPEAKER_TICKET_CLAIM_URL_<YEAR>`.
      */
     checklist?: SpeakerPortalChecklistConfig
     /**
@@ -362,9 +362,18 @@ export interface SpeakerDinnerConfig {
     location?: string
 }
 
+/**
+ * Checklist due dates keyed by item key (e.g. `claimTicket`) — see
+ * `SPEAKER_CHECKLIST_ITEMS` in core/website/app/lib/speakers/checklist-items.ts.
+ * A plain string index because this package can't depend on the website app's
+ * types, matching `SpeakerTrainingSessionConfig.id`. Omit an entry to show
+ * that item undated.
+ */
+export type SpeakerChecklistDueDates = Record<string, DateTime>
+
 export interface SpeakerPortalChecklistConfig {
-    /** External link where a speaker claims/registers their complimentary ticket. */
-    ticketClaimUrl?: string
+    /** When each checklist item is due. Omit to show every item undated. */
+    dueDates?: SpeakerChecklistDueDates
     /** The training sessions offered — rendered as checkboxes in the RSVP
      * modal and used to generate calendar invites. Omit to hide the whole
      * training-RSVP checklist item. */

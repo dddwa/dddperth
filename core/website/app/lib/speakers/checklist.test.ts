@@ -17,7 +17,7 @@ import {
     urgencyFor,
     type SpeakerSessionChecklistInput,
 } from './checklist'
-import { SPEAKER_CHECKLIST_ITEMS } from './checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate } from './checklist-items'
 
 const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
 
@@ -213,7 +213,7 @@ describe('speakerChecklist', () => {
         for (const definition of SPEAKER_CHECKLIST_ITEMS) {
             const item = items.find((i) => i.key === definition.key)
             if (!item) continue // filtered out in this scenario, e.g. acceptBackupSpeaker (not a backup speaker)
-            expect(item.dueDateIso).toBe(definition.dueDate?.toISO())
+            expect(item.dueDateIso).toBe(checklistDueDate(definition.key)?.toISO())
         }
     })
 
@@ -231,7 +231,7 @@ describe('speakerChecklist', () => {
     it('flags isPastDue only once an item\'s own due date has actually passed', () => {
         expect(speakerChecklist(null, [], false, NOW).every((i) => !i.isPastDue)).toBe(true)
 
-        const confirmSessionDueDate = SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === 'confirmSession')?.dueDate
+        const confirmSessionDueDate = checklistDueDate('confirmSession')
         if (!confirmSessionDueDate) throw new Error('confirmSession is expected to have a due date')
         const items = speakerChecklist(null, [], false, confirmSessionDueDate.plus({ minutes: 1 }))
         expect(items.find((i) => i.key === 'confirmSession')?.isPastDue).toBe(true)
