@@ -8,14 +8,17 @@ There is no role / handle list in code. Anyone whose email is in the `auth_allow
 
 To add an admin in any environment:
 
+Run from the repo root (`nx wrangler website --` runs the locally-installed
+wrangler with the right cwd; `-c` is relative to `core/website`):
+
 ```bash
 # Local
-pnpm wrangler d1 execute dddperth-voting-local --local --command \
+pnpm nx wrangler website -- d1 execute dddperth-voting-local --local --command \
   "INSERT INTO auth_allowlist (email, name, added_at) VALUES ('person@example.com', 'Person Name', unixepoch())"
 
 # Staging / production — same command, drop --local and add the matching config:
-pnpm wrangler d1 execute dddperth-voting-staging -c wrangler.staging.jsonc --remote --command "..."
-pnpm wrangler d1 execute dddperth-voting-prod    -c wrangler.production.jsonc --remote --command "..."
+pnpm nx wrangler website -- d1 execute dddperth-voting-staging -c ../../conference/wrangler/staging.jsonc --remote --command "..."
+pnpm nx wrangler website -- d1 execute dddperth-voting-prod -c ../../conference/wrangler/production.jsonc --remote --command "..."
 ```
 
 To revoke access, delete the row.

@@ -42,11 +42,11 @@ WEB_URL=http://localhost:3800
 Admin login uses **magic links**. Locally, leave `RESEND_API_KEY` empty — the dev server prints the magic-link URL to the console instead of sending email. Add yourself to the `auth_allowlist` D1 table to log in (the initial migration seeds `jake@ginnivan.net`):
 
 ```bash
-pnpm wrangler d1 execute dddperth-voting-local --local --command \
+pnpm nx wrangler website -- d1 execute dddperth-voting-local --local --command \
   "INSERT INTO auth_allowlist (email, name, added_at) VALUES ('you@example.com', 'You', unixepoch())"
 ```
 
-The full list of recognised variables is the `CloudflareEnv` interface in `website/app/remix-app-load-context.ts`. See [`core/docs/deploy.md`](./core/docs/deploy.md) (in ddd-core) for what each one does and which are needed in production.
+The full list of recognised variables is the `CloudflareEnv` interface in `core/website/app/remix-app-load-context.ts`. See [`core/docs/deploy.md`](./core/docs/deploy.md) (in ddd-core) for what each one does and which are needed in production.
 
 ### Nx Commands
 
@@ -73,11 +73,10 @@ pnpm nx deploy-production website # Production
 
 ### D1 Database
 
-Local D1 data is stored in `website/.wrangler/state/`. To inspect data:
+Local D1 data is stored in `core/website/.wrangler/state/`. To inspect data:
 
 ```bash
-cd website
-pnpm wrangler d1 execute dddperth-voting-local --local --command "SELECT * FROM voting_sessions"
+pnpm nx wrangler website -- d1 execute dddperth-voting-local --local --command "SELECT * FROM voting_sessions"
 ```
 
 ## Deployment
