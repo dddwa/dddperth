@@ -9,6 +9,7 @@ export type {
     ConferenceVenue,
     ConferenceYear,
     DateTimeRange,
+    MinorSponsorTier,
     SessionData,
     SessionizeConferenceSessions,
     Sponsor,

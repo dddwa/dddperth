@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -13,14 +13,25 @@ import { describe, expect, it } from 'vitest'
 describe('Playwright container image pin', () => {
     const websiteRoot = join(__dirname, '..', '..')
 
-    it('matches the image tag used by the visual-regression CI job', () => {
+    /**
+     * CI workflows are fork-owned — `ddd-core` ships no `.github/workflows/`,
+     * so there is no pin to check when running standalone. A fork runs from
+     * `core/website/` with the workflows two levels up.
+     */
+    const workflowPath = [
+        join(websiteRoot, '..', '..', '.github', 'workflows', 'pr.yml'),
+        join(websiteRoot, '..', '.github', 'workflows', 'pr.yml'),
+    ].find((candidate) => existsSync(candidate))
+
+    it.skipIf(!workflowPath)('matches the image tag used by the visual-regression CI job', () => {
+        // Non-null: skipIf above guarantees this ran only when the path resolved.
         const version = (
             JSON.parse(
                 readFileSync(join(websiteRoot, 'node_modules/@playwright/test/package.json'), 'utf8'),
             ) as { version: string }
         ).version
 
-        const workflow = readFileSync(join(websiteRoot, '../../.github/workflows/pr.yml'), 'utf8')
+        const workflow = readFileSync(workflowPath as string, 'utf8')
         const match = /image:\s*mcr\.microsoft\.com\/playwright:v([\d.]+)-noble/.exec(workflow)
 
         expect(match, 'no Playwright image pin found in .github/workflows/pr.yml').toBeTruthy()

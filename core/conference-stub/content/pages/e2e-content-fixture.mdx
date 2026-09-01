@@ -1,0 +1,74 @@
+---
+title: 'Content Template Fixture'
+summary: 'A frozen page used by the visual regression suite to exercise the MDX content template. Not real content — do not edit to say anything meaningful.'
+noIndex: true
+---
+
+**This page is a test fixture.** It exists so the visual regression suite can
+screenshot the MDX content template without depending on real editorial copy.
+`/about` was used for that before, which meant any wording change to a genuine
+page failed an unrelated visual baseline.
+
+Treat the content below as frozen. Changing it will fail the visual suite —
+which is the point, but it should only ever happen deliberately, when the
+content *template* changes rather than when someone edits a real page.
+
+## Headings and prose
+
+This paragraph exercises ordinary body copy, wrapping behaviour and the
+line-height the template applies to long-form text. It runs on for a couple of
+sentences so that the rendered block is tall enough to show a genuine
+difference if the type scale, measure or spacing ever shifts.
+
+### A third-level heading
+
+Content pages nest to at least three levels, so all three need to be covered
+for heading scale and spacing regressions.
+
+## Inline formatting
+
+Body text mixes **bold**, *italic*, `inline code`, and
+[a link to the agenda](/agenda). Each of these is styled separately, so all
+four appear together here.
+
+## Lists
+
+An unordered list:
+
+- First item, short.
+- Second item, deliberately longer so it wraps onto a second line at narrower
+  viewport widths and exercises list-item indentation.
+- Third item.
+
+An ordered list:
+
+1. Step one.
+2. Step two.
+3. Step three.
+
+## Blockquote
+
+> A blockquote, used occasionally in content pages for emphasis or for quoting
+> a speaker. It has its own border, padding and colour treatment.
+
+## Code block
+
+```ts
+// Fenced code blocks get syntax highlighting and their own surface colour.
+export function greet(name: string): string {
+    return `Hello, ${name}`
+}
+```
+
+## Table
+
+| Column | Description                        |
+| ------ | ---------------------------------- |
+| One    | Tables have borders and cell padding |
+| Two    | and alternate row treatment          |
+| Three  | across at least three rows           |
+
+## Final section
+
+A closing paragraph so the page ends with body copy rather than a table, which
+keeps the bottom margin of the content area in the screenshot.

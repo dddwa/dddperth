@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
-import type { Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import type { MinorSponsorTier, Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
 import { SponsorLogo } from '~/components/sponsor-logo'
@@ -26,11 +26,66 @@ const sponsorStyles = {
     community: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     coffeeCart: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     quietRoom: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
+    venue: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
+    prize: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     keynotes: { gradientFrom: 'sponsor.community', logoSize: 'sm' },
 } as const
 
 function getSponsorStyle(category: keyof typeof sponsorStyles) {
     return sponsorStyles[category]
+}
+
+/**
+ * Order the minor tiers render in, and their default headings. A fork
+ * renames any of them via `public.sponsorTierLabels` rather than us baking
+ * regional wording ("SA Sponsors", "WA Sponsors") into core.
+ */
+const MINOR_TIERS: { tier: MinorSponsorTier; defaultLabel: string }[] = [
+    { tier: 'community', defaultLabel: 'Community' },
+    { tier: 'coffeeCart', defaultLabel: 'Coffee Cart' },
+    { tier: 'quietRoom', defaultLabel: 'Quiet Room' },
+    { tier: 'venue', defaultLabel: 'Venue' },
+    { tier: 'prize', defaultLabel: 'Prize' },
+    { tier: 'keynotes', defaultLabel: 'Keynotes' },
+]
+
+function minorTierLabel(tier: MinorSponsorTier, defaultLabel: string) {
+    return conferenceManifest.public.sponsorTierLabels?.[tier] ?? defaultLabel
+}
+
+/**
+ * Caption under a sponsor logo card. Reads the tier's label rather than its
+ * key, so camelCase categories don't leak into the UI as "CoffeeCart Sponsor".
+ * Labels are free text from the fork manifest, so don't tack "Sponsor" onto
+ * one that already says it ("SA Sponsors" shouldn't become "SA Sponsors
+ * Sponsor").
+ */
+function sponsorCaption(category: keyof typeof sponsorStyles) {
+    const minor = MINOR_TIERS.find(({ tier }) => tier === category)
+    const label = minor
+        ? minorTierLabel(minor.tier, minor.defaultLabel)
+        : category.charAt(0).toUpperCase() + category.slice(1)
+
+    return /sponsors?$/i.test(label) ? label : `${label} Sponsor`
+}
+
+/**
+ * Minor tiers pool under one "Other Sponsors" heading by default; a fork with
+ * enough of them opts into a heading each via
+ * `features.separateOtherSponsorTiers`. Empty tiers drop out either way —
+ * `SponsorGroup` renders nothing when every group it's given is empty.
+ */
+function minorSponsorGroups(sponsors: YearSponsors) {
+    const groups = MINOR_TIERS.map(({ tier }) => ({ sponsors: sponsors[tier], category: tier }))
+
+    if (!conferenceManifest.public.features?.separateOtherSponsorTiers) {
+        return [{ title: 'Other Sponsors', sponsorGroups: groups }]
+    }
+
+    return MINOR_TIERS.filter(({ tier }) => (sponsors[tier]?.length ?? 0) > 0).map(({ tier, defaultLabel }) => ({
+        title: minorTierLabel(tier, defaultLabel),
+        sponsorGroups: [{ sponsors: sponsors[tier], category: tier }],
+    }))
 }
 
 export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | undefined; year: Year }) {
@@ -62,15 +117,9 @@ export function SponsorSection({ sponsors, year }: { sponsors: YearSponsors | un
             <SponsorGroup title="Bronze" sponsorGroups={[{ sponsors: sponsors.bronze, category: 'bronze' }]} />
             <SponsorGroup title="Room" sponsorGroups={[{ sponsors: sponsors.room, category: 'room' }]} />
             <SponsorGroup title="Digital" sponsorGroups={[{ sponsors: sponsors.digital, category: 'digital' }]} />
-            <SponsorGroup
-                title="Other Sponsors"
-                sponsorGroups={[
-                    { sponsors: sponsors.community, category: 'community' },
-                    { sponsors: sponsors.coffeeCart, category: 'coffeeCart' },
-                    { sponsors: sponsors.quietRoom, category: 'quietRoom' },
-                    { sponsors: sponsors.keynotes, category: 'keynotes' },
-                ]}
-            />
+            {minorSponsorGroups(sponsors).map((group) => (
+                <SponsorGroup key={group.title} title={group.title} sponsorGroups={group.sponsorGroups} />
+            ))}
         </Flex>
     )
 }
@@ -95,16 +144,13 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
         { title: 'Bronze', sponsors: sponsors.bronze ?? [], logoHeight: 20 },
         { title: 'Room', sponsors: sponsors.room ?? [], logoHeight: 20 },
         { title: 'Digital', sponsors: sponsors.digital ?? [], logoHeight: 20 },
-        {
-            title: 'Other Sponsors',
-            sponsors: [
-                ...(sponsors.community ?? []),
-                ...(sponsors.coffeeCart ?? []),
-                ...(sponsors.quietRoom ?? []),
-                ...(sponsors.keynotes ?? []),
-            ],
+        // Same grouping as SponsorSection so every jump link resolves — both
+        // sides derive their anchor from the group title.
+        ...minorSponsorGroups(sponsors).map((group) => ({
+            title: group.title,
+            sponsors: group.sponsorGroups.flatMap((g) => g.sponsors ?? []),
             logoHeight: 20,
-        },
+        })),
     ].filter((g) => g.sponsors.length > 0)
 
     if (groups.length === 0) return null
@@ -210,7 +256,7 @@ function SponsorCta({ year }: { year: Year }) {
         >
             <Flex flexDirection="column" gap="1" alignItems="center">
                 <styled.p fontSize={{ base: 'lg', md: 'xl' }} fontWeight="semibold" color="text.primary">
-                    {year} sponsors not announced yet
+                    We&apos;re still accepting sponsors for {year}
                 </styled.p>
                 <styled.p fontSize={{ base: 'sm', md: 'md' }} color="text.secondary" maxWidth="[60ch]">
                     Want your logo here? {conferenceManifest.public.name} runs on the generosity of our sponsors —
@@ -453,7 +499,7 @@ function SponsorComponent({
                 objectFit="contain"
             />
             <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.secondary">
-                {category.charAt(0).toUpperCase() + category.slice(1)} Sponsor
+                {sponsorCaption(category)}
             </styled.h5>
         </styled.a>
     )

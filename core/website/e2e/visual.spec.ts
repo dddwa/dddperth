@@ -6,14 +6,20 @@ import { ROUTES, VISUAL_MASK_SELECTORS } from './routes'
  * in playwright.config.ts (3 browser engines x 3 viewport widths — see
  * that file for why axe/focus-visible don't also run under this matrix).
  *
- * Baseline images live in `e2e/__screenshots__/` and are committed to the
- * repo. This suite exists specifically to prove the WCAG 2.1 AA fixes in
- * this branch (landmarks, heading-level changes, the TalkOptionCard
- * div-to-button conversion, nav/skip-link changes, etc.) didn't change how
- * any page actually looks — a11y markup changes should be invisible to a
- * sighted user. Update baselines deliberately (`pnpm vr --update-snapshots`)
- * whenever a real visual change is intended, and review the diff like any
- * other code change.
+ * This suite proves that a11y markup changes (landmarks, heading levels,
+ * div-to-button conversions, nav/skip-link changes) don't alter how a page
+ * actually looks — such changes should be invisible to a sighted user.
+ * Update baselines deliberately (`pnpm vr --update-snapshots`) whenever a
+ * real visual change is intended, and review the diff like any other code
+ * change.
+ *
+ * **Baselines are per-conference.** The ones committed here are of
+ * conference-stub (DevConf Example) and guard core's own templates. A fork
+ * renders different content, sponsors, theme and copy, so it regenerates the
+ * whole set against its own conference — `pnpm vr --update-snapshots`, in the
+ * container, never on the host — and points `FIXTURE_BLOG_SLUG` in
+ * `routes.ts` at one of its own posts. Expect a `/pull-upstream` that changes
+ * a template to need a regeneration on both sides.
  *
  * Two things narrow what each baseline covers, both configured per-route in
  * `routes.ts`:

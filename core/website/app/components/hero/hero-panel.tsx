@@ -2,6 +2,7 @@ import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
 import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
@@ -20,7 +21,13 @@ const DRIFT_MASK = {
     WebkitMaskImage: 'linear-gradient(to bottom, black 0, black 55%, transparent 95%)',
 } as const
 
-export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
+export function HomepageHeroPanel({
+    conferenceDate,
+    venue,
+}: {
+    conferenceDate: string | undefined
+    venue: ConferenceVenue | undefined
+}) {
     const { scrollY } = useScroll()
     const parallaxScale = useParallaxScale()
 
@@ -71,7 +78,7 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                                 locale: 'en-AU',
                             })}
                         </styled.span>
-                        <styled.span>Optus Stadium, Perth</styled.span>
+                        {venue ? <styled.span>{venue.name}</styled.span> : null}
                     </styled.p>
                 ) : null}
                 <styled.h1

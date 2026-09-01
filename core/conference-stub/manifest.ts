@@ -21,6 +21,7 @@ import type { ConferenceManifest } from '@ddd/conference-config'
 import { nav } from './config/nav'
 import { conferenceConfigPublic } from './config/public'
 import { socials } from './config/socials'
+import { speakerPortal } from './config/speaker-portal'
 import { conferenceConfig } from './config/years-index'
 
 // Year keys this stub knows about. Re-exported so consumers can constrain
@@ -30,6 +31,7 @@ export type ConferenceYears = keyof typeof conferenceConfig.conferences
 export const conferenceManifest: ConferenceManifest = {
     public: conferenceConfigPublic,
     socials,
+    speakerPortal,
     brand: {
         legalName: 'DevConf Example Inc.',
         contactEmail: 'info@example.test',

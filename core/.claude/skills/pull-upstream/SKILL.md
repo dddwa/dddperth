@@ -53,6 +53,18 @@ If `git log` is empty, the fork is already up to date — print that and exit.
 
 ### 4. Run the subtree pull
 
+First check the `ours` merge driver is configured:
+
+```bash
+git config --get merge.ours.driver
+```
+
+If that prints nothing, run `git config merge.ours.driver true` before
+pulling. `ours` is *not* a built-in low-level merge driver, so without it the
+`merge=ours` rules in `.gitattributes` are silently ignored and
+`core/conference-stub/**` and `core/nx.json` conflict anyway. The setting
+lives in `.git/config` and isn't committed, so a fresh clone always needs it.
+
 ```bash
 git subtree pull --prefix=core ddd-core main --squash
 ```
@@ -67,7 +79,7 @@ git status --short | grep '^UU\|^AA\|^DD' || echo "No conflicts"
 
 For each conflict:
 
-- **Inside `core/conference-stub/`**: the `.gitattributes` `merge=ours` rule should auto-resolve these. If one slips through, take ours (the fork's empty/unchanged version). The stub is irrelevant in a fork.
+- **Inside `core/conference-stub/`, or `core/nx.json`**: the `.gitattributes` `merge=ours` rule auto-resolves these *provided `merge.ours.driver` is set* (see step 4). If one slips through, take ours — the fork's unchanged version for the stub, and the deletion for `nx.json`. The stub is irrelevant in a fork.
 - **Elsewhere inside `core/`**: this means the fork has edited core directly. Show the conflicting paths to the user with a clear explanation:
   > These files are inside `core/` but the fork has local edits to them.
   > That's the antipattern this layout is meant to prevent. The right fix is
@@ -103,13 +115,51 @@ errors and explain:
 > need new fields. Look at `core/libs/conference-config/src/manifest.ts` and
 > `core/website/themes/base.theme.ts` for the new shape.
 
+### 6b. Verify the subtree split trailer survived
+
+```bash
+git log --format=%B origin/main..HEAD | grep "git-subtree-split" | head -1
+```
+
+This must print a `git-subtree-split: <sha>` line matching the upstream commit
+just pulled. `git subtree pull --squash` writes it onto the squash commit, and
+the *next* pull scans history for the most recent one to find its starting
+point. Upstream's individual commits never exist in the fork, so this trailer
+is the only record of where the fork last synced to.
+
+Also check `main`, which is where the damage accumulates:
+
+```bash
+git log --format=%B origin/main | grep -c "git-subtree-split"
+```
+
+Expect one occurrence per pull that has landed, plus one for the original
+subtree add. Fewer means a pull was squash-merged and `main` has lost its sync
+point — see step 7.
+
 ### 7. Report
 
 Summarise:
 - Number of upstream commits pulled
 - Whether there were conflicts (and where)
 - Whether the build passed
-- Suggested next step: `git push` to share the upstream pull with the team
+- That the `git-subtree-split` trailer is present (step 6b)
+- Suggested next step: push the branch and open a PR
+
+**If the fork reviews changes via PR, tell the user — in the report and in the
+PR description — that this PR must NOT be squash-merged.** Use "Create a merge
+commit" or "Rebase and merge".
+
+A GitHub squash merge rewrites the commit message and destroys the
+`git-subtree-split` trailer. Git then falls back to the oldest surviving one
+(usually the original subtree add) and replays that entire range on every
+subsequent pull. The replayed range grows as upstream moves on, and replaying
+already-applied changes onto a diverged tree is how spurious conflicts get
+manufactured.
+
+If it has already been squashed, the recovery is to re-run the pull on a fresh
+branch off `main` and merge *that* with a real merge commit — the pull writes a
+correct trailer.
 
 ## What this skill must NOT do
 

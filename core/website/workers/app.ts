@@ -39,6 +39,18 @@ export default {
             const newHeaders = new Headers(response.headers)
             newHeaders.set('Strict-Transport-Security', `max-age=${60 * 60 * 24 * 365 * 100}`)
 
+            // React Router's production server build prepends the default "/"
+            // basename to $path()-derived redirect targets, yielding a
+            // protocol-relative "//path" Location (e.g. "//agenda/2025") that
+            // browsers resolve to a bogus host. The app never emits
+            // protocol-relative redirects, so collapse a leading run of slashes
+            // back to a single "/". (Only reproduces in the built Worker, not
+            // the Vite dev server, which is why it slips past local testing.)
+            const location = newHeaders.get('Location')
+            if (location && location.startsWith('//')) {
+                newHeaders.set('Location', '/' + location.replace(/^\/+/, ''))
+            }
+
             return new Response(response.body, {
                 status: response.status,
                 statusText: response.statusText,

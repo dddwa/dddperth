@@ -27,7 +27,7 @@ const mdxImage = cva({
              * width — `maxWidth`, not `width`, so a small image isn't
              * upscaled and blurred.
              */
-            full: { maxWidth: 'full' },
+            full: { display: 'block', maxWidth: 'full', shadow: 'sm', my: '6' },
             /**
              * Headshot, e.g. the team page. Narrows on small screens; the
              * fixed inline `150px` it replaces could not respond at all.
