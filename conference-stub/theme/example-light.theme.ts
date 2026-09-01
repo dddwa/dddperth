@@ -22,7 +22,10 @@ export const exampleLightTheme = defineTheme({
             hero: { value: '#f1f5f9', description: 'Hero section background — soft slate' },
             heroAlt: { value: '#e2e8f0', description: 'Hero gradient end — pale slate' },
             header: { value: '#ffffff', description: 'Header background — white' },
-            footer: { value: '#0f172a', description: 'Footer background — deep slate (stays dark for contrast)' },
+            // Light like the body, rather than a dark strip. A dark footer
+            // in a light theme has to invert every token that lands on it —
+            // `text.highlight` links were dark teal on deep slate (3.26:1).
+            footer: { value: '#f1f5f9', description: 'Footer background — soft slate, same family as body' },
             drawer: { value: '#020617', description: 'Mobile drawer — near-black so overlay reads cleanly' },
             card: { value: '#ffffff', description: 'Card/panel background — white' },
             cardAlt: { value: '#f1f5f9', description: 'Alternate card background — soft slate' },
@@ -40,7 +43,11 @@ export const exampleLightTheme = defineTheme({
         border: {
             default: { value: '#e2e8f0', description: 'Default border — pale slate' },
             subtle: { value: '#0f766e1a', description: 'Subtle border — teal at ~10% opacity' },
-            emphasis: { value: '#94a3b8', description: 'Emphasized border — slate' },
+            // Dark, not light — the mirror of the dark theme's choice, and for
+            // the same reason: core uses this as the agenda room-header
+            // *background* with `surface.hero` as its text. Light-on-light
+            // gave 2.34:1.
+            emphasis: { value: '#475569', description: 'Emphasized border — dark slate; also a header background' },
             sponsor: { value: '#e2e8f0', description: 'Sponsor tile border — pale slate' },
         },
 
@@ -64,7 +71,11 @@ export const exampleLightTheme = defineTheme({
 
         interactive: {
             highlight: { value: '#0f766e', description: 'Hover/highlight — dark teal' },
-            active: { value: '#0d9488', description: 'Active/pressed — mid teal' },
+            // Darker than `highlight` so the two states stay distinguishable,
+            // and dark enough to be link text: core uses this as a *colour*
+            // for sponsor links on white/soft-slate cards, where mid teal
+            // managed only 3.74:1.
+            active: { value: '#115e59', description: 'Active/pressed — deep teal' },
             focus: { value: '#14b8a6', description: 'Focus ring — brand teal' },
         },
 

@@ -1,8 +1,10 @@
 import { data, Form, useNavigation, useSearchParams } from 'react-router'
 import { createUserSession } from '~/lib/auth.server'
 import { sanitiseRedirect } from '~/lib/auth/validation'
+import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.verify.$token'
+import { noIndexMeta } from '~/lib/seo'
 
 /**
  * GET renders a "Click to sign in" page only — it never consumes the token.
@@ -17,7 +19,7 @@ export async function action({ request, context, params }: Route.ActionArgs) {
         return data({ error: 'Missing sign-in token.' as const }, { status: 400 })
     }
 
-    const result = await context.services.auth.consumeMagicLink(token)
+    const result = await getServices(context).auth.consumeMagicLink(token)
     if (!result) {
         return data(
             { error: 'This sign-in link is invalid or has expired. Request a new one.' as const },
@@ -29,13 +31,27 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // future code path that issues tokens (e.g. an admin-driven invite)
     // shouldn't be able to plant an open redirect via a malformed
     // redirect_to column. Defence in depth.
-    return await createUserSession(
-        request.headers,
-        context.services,
-        { email: result.email, name: null },
-        sanitiseRedirect(result.redirectTo),
-    )
+    let redirectTo = sanitiseRedirect(result.redirectTo)
+    const services = getServices(context)
+
+    // The default destination is /admin, but sponsor/speaker contacts who
+    // logged in without an explicit destination belong in their own portal.
+    // Explicit redirects are honoured either way — requireAdmin/
+    // requireSponsorContact/requireSpeaker each bounce a wrong-role session
+    // to the right place regardless.
+    if (redirectTo === '/admin' && !(await services.auth.isAdminEmail(result.email))) {
+        redirectTo = (await services.sponsors.isSponsorContact(result.email))
+            ? '/portal'
+            : (await services.speakers.isSpeakerContact(result.email))
+              ? '/speaker-portal'
+              : '/portal'
+    }
+
+    return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)
 }
+
+/** Not indexed: magic-link URLs are single-use and must never be indexed. */
+export const meta = noIndexMeta
 
 export default function Verify() {
     const [searchParams] = useSearchParams()
@@ -46,10 +62,10 @@ export default function Verify() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
-                <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Confirm sign-in
                 </styled.h1>
-                <styled.p mb="6" color="gray.9">
+                <styled.p mb="6" color="admin.700">
                     Click the button to finish signing in.
                 </styled.p>
                 {error && (
@@ -71,7 +87,7 @@ export default function Verify() {
                         type="submit"
                         disabled={isSubmitting}
                         bg="admin.900"
-                        color="text.primary"
+                        color="admin.50"
                         border="none"
                         py="3"
                         px="6"
@@ -80,7 +96,7 @@ export default function Verify() {
                         fontWeight="medium"
                         cursor="pointer"
                         _hover={{ bg: 'admin.800' }}
-                        _disabled={{ bg: 'gray.8', cursor: 'not-allowed', opacity: 0.7 }}
+                        _disabled={{ bg: 'admin.400', cursor: 'not-allowed', opacity: 0.7 }}
                     >
                         {isSubmitting ? 'Signing in…' : 'Sign in'}
                     </styled.button>
@@ -94,10 +110,10 @@ export function ErrorBoundary() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
-                <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Sign-in failed
                 </styled.h1>
-                <styled.p color="gray.9">
+                <styled.p color="admin.700">
                     The sign-in link couldn't be used. Please request a new one from the{' '}
                     <styled.a href="/auth/login" color="admin.900" textDecoration="underline">
                         login page

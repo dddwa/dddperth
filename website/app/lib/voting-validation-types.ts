@@ -120,6 +120,16 @@ export interface StartValidationResponseError {
 }
 export type StartValidationResponse = StartValidationResponseSuccess | StartValidationResponseError
 
+export interface ValidationChunkResult {
+    done: boolean
+    processedSessions: number
+    totalSessions: number
+}
+
+export type ProcessValidationChunkResponse =
+    | ({ success: true; runId: string } & ValidationChunkResult)
+    | { success: false; runId?: string; error: string }
+
 export interface ValidationRunProgress {
     runId: string
     status: 'running' | 'completed' | 'incomplete'

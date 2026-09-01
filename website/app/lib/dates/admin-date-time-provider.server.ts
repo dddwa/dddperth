@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { conferenceManifest } from '@conference/manifest'
-import { getUser, isAdmin } from '../auth.server'
+import { getUser, isAdminUser } from '../auth.server'
 import type { AppServices } from '../services/app-services'
 import type { DateTimeProvider } from './date-time-provider.server'
 import { SystemDateTimeProvider } from './system-date-time-provider.server'
@@ -13,7 +13,7 @@ export class AdminDateTimeProvider implements DateTimeProvider {
         const provider = new AdminDateTimeProvider()
 
         const user = await getUser(requestHeaders, services)
-        if (!user || !isAdmin(user)) {
+        if (!(await isAdminUser(user, services))) {
             return provider
         }
 

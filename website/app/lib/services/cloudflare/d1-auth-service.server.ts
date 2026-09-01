@@ -3,6 +3,8 @@ import { logAuthEvent } from '../../auth/log.server'
 import type { AppConfig } from '../app-config'
 import type { AuthService } from '../auth-service'
 import type { EmailService } from '../email-service'
+import type { SpeakersStore } from '../speakers-store'
+import type { SponsorsStore } from '../sponsors-store'
 import type { User } from '../../session-types'
 
 const conferenceName = conferenceManifest.public.name
@@ -18,11 +20,24 @@ const SESSION_TOUCH_INTERVAL_SECONDS = 60 * 60 // refresh last_seen_at at most o
  */
 const MAX_OUTSTANDING_TOKENS_PER_EMAIL = 3
 
-export function createD1AuthService(args: { config: AppConfig; db: D1Database; email: EmailService }): AuthService {
-    const { config, db, email } = args
+export function createD1AuthService(args: {
+    config: AppConfig
+    db: D1Database
+    email: EmailService
+    sponsors: SponsorsStore
+    speakers: SpeakersStore
+}): AuthService {
+    const { config, db, email, sponsors, speakers } = args
 
     return {
         async isAllowed(emailAddress) {
+            const normalised = emailAddress.trim().toLowerCase()
+            if (await this.isAdminEmail(normalised)) return true
+            if (await sponsors.isSponsorContact(normalised)) return true
+            return speakers.isSpeakerContact(normalised)
+        },
+
+        async isAdminEmail(emailAddress) {
             const normalised = emailAddress.trim().toLowerCase()
             const row = await db
                 .prepare('SELECT 1 FROM auth_allowlist WHERE email = ? LIMIT 1')
@@ -35,7 +50,7 @@ export function createD1AuthService(args: { config: AppConfig; db: D1Database; e
             const normalised = emailAddress.trim().toLowerCase()
 
             // Belt-and-braces: the route also calls isAllowed() before
-            // calling us. Don't issue a token for an unallowlisted address.
+            // calling us. Don't issue a token for an address that can't log in.
             const allowed = await this.isAllowed(normalised)
             logAuthEvent({ event: 'login.requested', email: normalised, allowed })
             if (!allowed) return
@@ -75,7 +90,7 @@ export function createD1AuthService(args: { config: AppConfig; db: D1Database; e
             try {
                 await email.send({
                     to: normalised,
-                    subject: `Sign in to ${conferenceName} admin`,
+                    subject: `Sign in to ${conferenceName}`,
                     html: renderMagicLinkHtml(verifyUrl, requestUrl),
                     text: renderMagicLinkText(verifyUrl, requestUrl),
                 })
@@ -188,6 +203,13 @@ export function createD1AuthService(args: { config: AppConfig; db: D1Database; e
             await db.prepare('DELETE FROM auth_sessions WHERE id = ?').bind(sessionId).run()
             logAuthEvent({ event: 'session.destroyed' })
         },
+
+        async getLastLoginTimes() {
+            const result = await db
+                .prepare('SELECT email, MAX(created_at) AS last_login FROM auth_sessions GROUP BY email')
+                .all<{ email: string; last_login: number }>()
+            return Object.fromEntries((result.results ?? []).map((r) => [r.email, r.last_login]))
+        },
     }
 }
 
@@ -221,7 +243,7 @@ function renderMagicLinkHtml(verifyUrl: string, requestUrl: string): string {
     return `<!DOCTYPE html>
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #111; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to ${escapeHtml(conferenceName)} admin</h1>
+  <h1 style="font-size: 20px; margin-bottom: 16px;">Sign in to ${escapeHtml(conferenceName)}</h1>
   <p>Click the button below to confirm your sign-in. This link expires in 15 minutes.</p>
   <p style="margin: 24px 0;">
     <a href="${safeVerify}" style="display: inline-block; background: #4338ca; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">Confirm sign-in</a>
@@ -243,7 +265,7 @@ function escapeHtml(s: string): string {
 }
 
 function renderMagicLinkText(verifyUrl: string, requestUrl: string): string {
-    return `Sign in to ${conferenceName} admin
+    return `Sign in to ${conferenceName}
 
 Click to confirm: ${verifyUrl}
 

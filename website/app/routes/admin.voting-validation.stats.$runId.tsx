@@ -1,19 +1,17 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
+import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
-import type {
-    EloResultImport,
-    TalkResult,
-    TalkStatisticsWithDetailsResponse,
-} from '~/lib/voting-validation-types'
+import type { EloResultImport, TalkResult, TalkStatisticsWithDetailsResponse } from '~/lib/voting-validation-types'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting-validation.stats.$runId'
 
@@ -21,26 +19,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
     const { runId } = params
-    const conferenceState = context.conferenceState
-    const year = conferenceState.conference.year
-
-    const yearConfig = getYearConfig(year, context.config)
-
-    if (yearConfig.kind === 'cancelled') {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-
-    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.sessionizeEndpoint) {
-        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
-    }
-    const sessionizeEndpoint = yearConfig.sessions.sessionizeEndpoint
-
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     let runDetails = null
+    let runYear: string | null = null
     try {
         const runEntity = await voting.getValidationRunById(runId)
         if (runEntity) {
+            runYear = runEntity.year
             runDetails = {
                 startedAt: runEntity.startedAt,
                 completedAt: runEntity.completedAt,
@@ -54,6 +40,21 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     } catch (error: any) {
         console.error('Error getting run details:', error)
     }
+
+    const year = runYear ?? getConferenceState(context).conference.year
+    const yearConfig = getYearConfig(year, getConfig(context))
+
+    if (yearConfig.kind === 'cancelled') {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+
+    // Validation runs cover every submitted talk, so enrichment uses the
+    // all-sessions endpoint — the published-agenda endpoint may not exist yet
+    // (it is only configured once the agenda goes public).
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
+        throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
+    }
+    const sessionizeEndpoint = yearConfig.sessions.allSessionsEndpoint
 
     const stats = await voting.getTalkStatistics(runId)
 
@@ -213,57 +214,84 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     return response
 }
 
+/**
+ * Accepts result files from both generations of the ELO ranking tool: the
+ * original format (rank/wins/totalVotes/…) and the Monte Carlo tool's output,
+ * whose exponential_rank is its final ranking. Win/loss percentages are
+ * derived for the latter since it doesn't emit them.
+ */
+const eloResultSchema = z.union([
+    z.object({
+        id: z.string(),
+        rank: z.number(),
+        wins: z.number(),
+        totalVotes: z.number(),
+        losses: z.number(),
+        winPct: z.number(),
+        lossPct: z.number(),
+    }),
+    z
+        .object({
+            id: z.string(),
+            exponential_rank: z.number(),
+            total_wins: z.number(),
+            total_losses: z.number(),
+        })
+        .transform(({ id, exponential_rank, total_wins, total_losses }): EloResultImport => {
+            const totalVotes = total_wins + total_losses
+            return {
+                id,
+                rank: exponential_rank,
+                wins: total_wins,
+                totalVotes,
+                losses: total_losses,
+                winPct: totalVotes > 0 ? total_wins / totalVotes : 0,
+                lossPct: totalVotes > 0 ? total_losses / totalVotes : 0,
+            }
+        }),
+])
+
+const eloResultsFileSchema = z.array(eloResultSchema).min(1)
+
 export async function action({ request, params, context }: Route.ActionArgs) {
     await requireAdmin(request, context)
 
     const { runId } = params
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     const formData = await request.formData()
     const intent = formData.get('intent')
 
     if (intent === 'upload') {
-        const file = formData.get('file') as File
-        if (!file || file.size === 0) {
-            throw new Error('No file uploaded')
+        const file = formData.get('file')
+        if (!(file instanceof File) || file.size === 0) {
+            return { success: false as const, error: 'No file uploaded' }
         }
 
         const content = await file.text()
-        let results: EloResultImport[]
+        let json: unknown
         try {
-            results = JSON.parse(content)
-        } catch (error) {
-            throw new Error('Invalid JSON format in the uploaded file')
+            json = JSON.parse(content)
+        } catch {
+            return { success: false as const, error: 'The uploaded file is not valid JSON' }
         }
 
-        // Validate the format
-        if (!Array.isArray(results) || results.length === 0) {
-            throw new Error('Invalid file format: expected an array of results')
-        }
-
-        // Validate each result has required fields
-        for (const result of results) {
-            if (
-                typeof result.id !== 'string' ||
-                typeof result.rank !== 'number' ||
-                typeof result.wins !== 'number' ||
-                typeof result.totalVotes !== 'number' ||
-                typeof result.losses !== 'number' ||
-                typeof result.winPct !== 'number' ||
-                typeof result.lossPct !== 'number'
-            ) {
-                throw new Error(
-                    'Invalid result format: missing required fields (id, rank, wins, totalVotes, losses, winPct, lossPct)',
-                )
+        const parsed = eloResultsFileSchema.safeParse(json)
+        if (!parsed.success) {
+            return {
+                success: false as const,
+                error:
+                    'The uploaded file does not match a supported ELO results format — expected an array of entries with either ' +
+                    'id/rank/wins/totalVotes/losses/winPct/lossPct or id/exponential_rank/total_wins/total_losses',
             }
         }
 
-        await voting.saveTalkResults(runId, results)
+        await voting.saveTalkResults(runId, parsed.data)
 
-        return { success: true }
+        return { success: true as const }
     }
 
-    throw new Error('Invalid intent')
+    return { success: false as const, error: 'Invalid intent' }
 }
 
 type SortField = 'title' | 'seen' | 'win'
@@ -271,18 +299,27 @@ type SortDirection = 'asc' | 'desc'
 type VersionFilter = 'aggregated' | 'v1' | 'v2' | 'v3' | 'v4' | 'v5'
 
 export default function VotingValidationStats() {
-    const { runId, talks, runDetails, fairnessMetrics, talkResults, sessionizeTalks, talkToSpeakerIds, speakerToUnderrepresented } = useLoaderData<typeof loader>()
+    const {
+        runId,
+        talks,
+        runDetails,
+        fairnessMetrics,
+        talkResults,
+        sessionizeTalks,
+        talkToSpeakerIds,
+        speakerToUnderrepresented,
+    } = useLoaderData<typeof loader>()
     const [sortField, setSortField] = useState<SortField>('win')
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
     const [versionFilter, setVersionFilter] = useState<VersionFilter>('aggregated')
-    const uploadFetcher = useFetcher()
+    const uploadFetcher = useFetcher<typeof action>()
 
     // Helper function to check if a talk has speakers from underrepresented groups
     const hasSpeakerFromUnderrepresentedGroup = (talkId: string): boolean => {
         const speakerIds = talkToSpeakerIds[talkId]
         if (!speakerIds) return false
-        
-        return speakerIds.some(speakerId => speakerToUnderrepresented[speakerId] === true)
+
+        return speakerIds.some((speakerId) => speakerToUnderrepresented[speakerId] === true)
     }
 
     // Get stats for the selected version
@@ -381,17 +418,18 @@ export default function VotingValidationStats() {
                             <>
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
-                                    {DateTime.fromISO(runDetails.startedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    {DateTime.fromISO(runDetails.startedAt, {
+                                        zone: conferenceManifest.public.timezone,
+                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
                                 {runDetails.completedAt && (
                                     <styled.p fontSize="sm" color="admin.600" mb="1">
                                         Completed:{' '}
-                                        {DateTime.fromISO(runDetails.completedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                            DateTime.DATETIME_SHORT,
-                                            { locale: 'en-AU' },
-                                        )}
+                                        {DateTime.fromISO(runDetails.completedAt, {
+                                            zone: conferenceManifest.public.timezone,
+                                        }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                                     </styled.p>
                                 )}
                                 <styled.p fontSize="sm" color="admin.600">
@@ -488,6 +526,11 @@ export default function VotingValidationStats() {
                                     {uploadFetcher.state !== 'idle' ? 'Uploading...' : 'Import Results'}
                                 </Button>
                             </Flex>
+                            {uploadFetcher.state === 'idle' && uploadFetcher.data && !uploadFetcher.data.success ? (
+                                <styled.p fontSize="sm" color="status.danger.fg" mt="2" maxW="[400px]">
+                                    {uploadFetcher.data.error}
+                                </styled.p>
+                            ) : null}
                         </uploadFetcher.Form>
 
                         <AppLink
@@ -500,7 +543,7 @@ export default function VotingValidationStats() {
                             borderRadius="md"
                             fontSize="sm"
                             fontWeight="medium"
-                            _hover={{ bg: "admin.800" }}
+                            _hover={{ bg: 'admin.800' }}
                         >
                             ← Back to Voting Admin
                         </AppLink>
@@ -518,12 +561,7 @@ export default function VotingValidationStats() {
                         <styled.table width="full" fontSize="sm">
                             <thead>
                                 <tr>
-                                    <styled.th
-                                        textAlign="center"
-                                        p="2"
-                                        border="admin-emphasis"
-                                        width="[60px]"
-                                    >
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[60px]">
                                         Rank
                                     </styled.th>
                                     <styled.th textAlign="left" p="2" border="admin-emphasis">
@@ -532,36 +570,16 @@ export default function VotingValidationStats() {
                                     <styled.th textAlign="left" p="2" border="admin-emphasis">
                                         Speaker(s)
                                     </styled.th>
-                                    <styled.th
-                                        textAlign="center"
-                                        p="2"
-                                        border="admin-emphasis"
-                                        width="[80px]"
-                                    >
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
                                         Wins
                                     </styled.th>
-                                    <styled.th
-                                        textAlign="center"
-                                        p="2"
-                                        border="admin-emphasis"
-                                        width="[80px]"
-                                    >
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
                                         Losses
                                     </styled.th>
-                                    <styled.th
-                                        textAlign="center"
-                                        p="2"
-                                        border="admin-emphasis"
-                                        width="[80px]"
-                                    >
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
                                         Total
                                     </styled.th>
-                                    <styled.th
-                                        textAlign="center"
-                                        p="2"
-                                        border="admin-emphasis"
-                                        width="[80px]"
-                                    >
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
                                         Win %
                                     </styled.th>
                                 </tr>
@@ -573,112 +591,102 @@ export default function VotingValidationStats() {
                                         if (a.rank !== b.rank) {
                                             return a.rank - b.rank
                                         }
-                                        
+
                                         // Secondary sort (tie-breaker): underrepresented group status (true first)
                                         const aHasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(a.talkId)
                                         const bHasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(b.talkId)
-                                        
+
                                         if (aHasUnderrepresented && !bHasUnderrepresented) return -1
                                         if (!aHasUnderrepresented && bHasUnderrepresented) return 1
-                                        
+
                                         // Tertiary sort: by talkId for consistent ordering
                                         return a.talkId.localeCompare(b.talkId)
                                     })
                                     .map((result) => {
-                                    const sessionizeTalk = sessionizeTalks?.find((talk) => talk.id === result.talkId)
-                                    const hasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(result.talkId)
-                                    return (
-                                        <tr key={result.talkId}>
-                                            <styled.td
-                                                textAlign="center"
-                                                p="2"
-                                                border="admin-subtle"
-                                                fontWeight="semibold"
-                                                bg={result.rank <= 3 ? 'status.warning.bg' : 'transparent'}
-                                            >
-                                                #{result.rank}
-                                            </styled.td>
-                                            <styled.td
-                                                p="2"
-                                                border="admin-subtle"
-                                                maxW="[400px]"
-                                            >
-                                                <styled.div
-                                                    overflow="hidden"
-                                                    textOverflow="ellipsis"
-                                                    whiteSpace="nowrap"
-                                                    title={sessionizeTalk?.title || result.talkId}
-                                                    fontWeight="medium"
+                                        const sessionizeTalk = sessionizeTalks?.find(
+                                            (talk) => talk.id === result.talkId,
+                                        )
+                                        const hasUnderrepresented = hasSpeakerFromUnderrepresentedGroup(result.talkId)
+                                        return (
+                                            <tr key={result.talkId}>
+                                                <styled.td
+                                                    textAlign="center"
+                                                    p="2"
+                                                    border="admin-subtle"
+                                                    fontWeight="semibold"
+                                                    bg={result.rank <= 3 ? 'status.warning.bg' : 'transparent'}
                                                 >
-                                                    {sessionizeTalk?.title || `Talk ${result.talkId}`}
-                                                </styled.div>
-                                            </styled.td>
-                                            <styled.td
-                                                p="2"
-                                                border="admin-subtle"
-                                                fontSize="xs"
-                                                color="admin.600"
-                                            >
-                                                {sessionizeTalk?.speakers.map((speaker) => speaker.name).join(', ') ||
-                                                    'Unknown Speaker'}
-                                                {hasUnderrepresented && (
-                                                    <styled.span
-                                                        ml="2"
-                                                        px="2"
-                                                        py="1"
-                                                        bg="status.info.bg"
-                                                        color="status.info.fg"
-                                                        borderRadius="sm"
-                                                        fontSize="xs"
+                                                    #{result.rank}
+                                                </styled.td>
+                                                <styled.td p="2" border="admin-subtle" maxW="[400px]">
+                                                    <styled.div
+                                                        overflow="hidden"
+                                                        textOverflow="ellipsis"
+                                                        whiteSpace="nowrap"
+                                                        title={sessionizeTalk?.title || result.talkId}
                                                         fontWeight="medium"
-                                                        title="Speaker from underrepresented group"
                                                     >
-                                                        URG
-                                                    </styled.span>
-                                                )}
-                                            </styled.td>
-                                            <styled.td
-                                                textAlign="center"
-                                                p="2"
-                                                border="admin-subtle"
-                                                color="status.success.fg"
-                                            >
-                                                {result.wins}
-                                            </styled.td>
-                                            <styled.td
-                                                textAlign="center"
-                                                p="2"
-                                                border="admin-subtle"
-                                                color="status.danger.fg"
-                                            >
-                                                {result.losses}
-                                            </styled.td>
-                                            <styled.td
-                                                textAlign="center"
-                                                p="2"
-                                                border="admin-subtle"
-                                            >
-                                                {result.totalVotes}
-                                            </styled.td>
-                                            <styled.td
-                                                textAlign="center"
-                                                p="2"
-                                                border="admin-subtle"
-                                                fontWeight="semibold"
-                                                color={result.winPct > 50 ? 'status.success.fg' : 'text.primary'}
-                                            >
-                                                {(result.winPct * 100).toFixed(1)}%
-                                            </styled.td>
-                                        </tr>
-                                    )
-                                })}
+                                                        {sessionizeTalk?.title || `Talk ${result.talkId}`}
+                                                    </styled.div>
+                                                </styled.td>
+                                                <styled.td p="2" border="admin-subtle" fontSize="xs" color="admin.600">
+                                                    {sessionizeTalk?.speakers
+                                                        .map((speaker) => speaker.name)
+                                                        .join(', ') || 'Unknown Speaker'}
+                                                    {hasUnderrepresented && (
+                                                        <styled.span
+                                                            ml="2"
+                                                            px="2"
+                                                            py="1"
+                                                            bg="status.info.bg"
+                                                            color="status.info.fg"
+                                                            borderRadius="sm"
+                                                            fontSize="xs"
+                                                            fontWeight="medium"
+                                                            title="Speaker from underrepresented group"
+                                                        >
+                                                            URG
+                                                        </styled.span>
+                                                    )}
+                                                </styled.td>
+                                                <styled.td
+                                                    textAlign="center"
+                                                    p="2"
+                                                    border="admin-subtle"
+                                                    color="status.success.fg"
+                                                >
+                                                    {result.wins}
+                                                </styled.td>
+                                                <styled.td
+                                                    textAlign="center"
+                                                    p="2"
+                                                    border="admin-subtle"
+                                                    color="status.danger.fg"
+                                                >
+                                                    {result.losses}
+                                                </styled.td>
+                                                <styled.td textAlign="center" p="2" border="admin-subtle">
+                                                    {result.totalVotes}
+                                                </styled.td>
+                                                <styled.td
+                                                    textAlign="center"
+                                                    p="2"
+                                                    border="admin-subtle"
+                                                    fontWeight="semibold"
+                                                    color={result.winPct > 50 ? 'status.success.fg' : 'text.primary'}
+                                                >
+                                                    {(result.winPct * 100).toFixed(1)}%
+                                                </styled.td>
+                                            </tr>
+                                        )
+                                    })}
                             </tbody>
                         </styled.table>
                     </Box>
 
                     <styled.p fontSize="sm" color="admin.600" mt="4">
-                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted.
-                        For talks with the same rank, speakers from underrepresented groups (URG) are prioritized.
+                        Showing {talkResults.length} talks ranked by ELO calculation. Top 3 talks are highlighted. For
+                        talks with the same rank, speakers from underrepresented groups (URG) are prioritized.
                     </styled.p>
                 </AdminCard>
             )}
@@ -774,7 +782,9 @@ export default function VotingValidationStats() {
                                     fontSize="lg"
                                     fontWeight="medium"
                                     color={
-                                        fairnessMetrics[versionFilter].isDistributionUniform ? 'status.success.fg' : 'status.danger.fg'
+                                        fairnessMetrics[versionFilter].isDistributionUniform
+                                            ? 'status.success.fg'
+                                            : 'status.danger.fg'
                                     }
                                 >
                                     {fairnessMetrics[versionFilter].isDistributionUniform ? 'Uniform' : 'Non-uniform'}
@@ -910,32 +920,16 @@ export default function VotingValidationStats() {
                                         >
                                             {stats.timesSeen}
                                         </styled.td>
-                                        <styled.td
-                                            textAlign="center"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.td textAlign="center" p="2" border="admin-subtle">
                                             {stats.votedFor}
                                         </styled.td>
-                                        <styled.td
-                                            textAlign="center"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.td textAlign="center" p="2" border="admin-subtle">
                                             {stats.votedAgainst}
                                         </styled.td>
-                                        <styled.td
-                                            textAlign="center"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.td textAlign="center" p="2" border="admin-subtle">
                                             {stats.skipped}
                                         </styled.td>
-                                        <styled.td
-                                            textAlign="center"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.td textAlign="center" p="2" border="admin-subtle">
                                             <styled.span
                                                 fontWeight={stats.winRate > 50 ? 'semibold' : 'normal'}
                                                 color={stats.winRate > 50 ? 'status.success.fg' : 'text.primary'}

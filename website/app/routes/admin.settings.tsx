@@ -1,28 +1,29 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.settings'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
-    const adminDateTimeSessionStorage = context.services.sessions.adminDateTime
+    const adminDateTimeSessionStorage = getServices(context).sessions.adminDateTime
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
     const overrideDate = session.get('adminDateOverride')
 
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
-    const year = context.conferenceState.conference.year
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const year = getConferenceState(context).conference.year
 
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
-    const currentAnnouncement = await context.services.announcements.getCurrent(year)
+    const currentAnnouncement = await getServices(context).announcements.getCurrent(year)
 
     return data({
         overrideDate,
@@ -39,19 +40,19 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
     const action = formData.get('_action')
-    const adminDateTimeSessionStorage = context.services.sessions.adminDateTime
+    const adminDateTimeSessionStorage = getServices(context).sessions.adminDateTime
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
-    const year = context.conferenceState.conference.year
+    const year = getConferenceState(context).conference.year
 
     if (action === 'updateAnnouncement') {
         const message = formData.get('announcement') as string
         if (!message || message.trim() === '') {
             return data({ error: 'Announcement message is required' }, { status: 400 })
         }
-        await context.services.announcements.upsert(year, message.trim())
+        await getServices(context).announcements.upsert(year, message.trim())
         return redirect('/admin/settings')
     } else if (action === 'clearAnnouncement') {
-        await context.services.announcements.clear(year)
+        await getServices(context).announcements.clear(year)
         return redirect('/admin/settings')
     } else if (action === 'setDate') {
         const dateStr = formData.get('date') as string
@@ -233,7 +234,7 @@ export default function AdminSettings() {
                                 fontWeight="bold"
                                 cursor="pointer"
                                 boxShadow="sm"
-                                _hover={{ bg: "status.danger.emphasis" }}
+                                _hover={{ bg: 'status.danger.emphasis' }}
                                 title="Clear the current date/time override"
                             >
                                 Clear Override
@@ -270,16 +271,17 @@ export default function AdminSettings() {
                             {announcement.message}
                         </styled.p>
                         <styled.p color="status.success.emphasis" fontSize="xs">
-                            Last updated: {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                            Last updated:{' '}
+                            {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, {
+                                zone: conferenceManifest.public.timezone,
+                            }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
                 )}
 
                 {(!announcement || !announcement.isActive) && (
                     <Box mb="6" p="4" bg="admin.100" borderRadius="md" fontSize="sm">
-                        <styled.p color="admin.700">
-                            No active announcement
-                        </styled.p>
+                        <styled.p color="admin.700">No active announcement</styled.p>
                     </Box>
                 )}
 
@@ -287,7 +289,7 @@ export default function AdminSettings() {
                     <styled.h3 fontSize="lg" fontWeight="medium" mb="4">
                         Update Announcement
                     </styled.h3>
-                    
+
                     <Box mb="4">
                         <styled.label
                             htmlFor="announcement"
@@ -337,7 +339,7 @@ export default function AdminSettings() {
                                 fontWeight="bold"
                                 cursor="pointer"
                                 boxShadow="sm"
-                                _hover={{ bg: "status.danger.emphasis" }}
+                                _hover={{ bg: 'status.danger.emphasis' }}
                                 title="Clear the current announcement"
                             >
                                 Clear Announcement
@@ -393,9 +395,7 @@ function QuickJumpButton({
     dateISO: string | undefined
     timezone: string
 }) {
-    const date = dateISO
-        ? DateTime.fromISO(dateISO, { zone: timezone })
-        : DateTime.now().setZone(timezone)
+    const date = dateISO ? DateTime.fromISO(dateISO, { zone: timezone }) : DateTime.now().setZone(timezone)
 
     return (
         <Form method="post">

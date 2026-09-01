@@ -52,9 +52,24 @@
                 "cwd": "website"
             }
         },
+        "setup-cf-types": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm exec wrangler types -c ../conference-stub/wrangler/local.jsonc",
+                "cwd": "website"
+            }
+        },
         "setup": {
             "executor": "nx:noop",
-            "dependsOn": ["setup-panda", "setup-react-router"]
+            "dependsOn": ["setup-panda", "setup-react-router", "setup-safe-routes", "setup-cf-types"]
+        },
+        "typecheck": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "tsc --noEmit",
+                "cwd": "website"
+            },
+            "dependsOn": ["setup"]
         },
         "dev": {
             "executor": "nx:run-commands",
@@ -67,6 +82,20 @@
             "executor": "nx:run-commands",
             "options": {
                 "command": "wrangler dev -c ../conference-stub/wrangler/local.jsonc",
+                "cwd": "website",
+                "tty": true
+            }
+        },
+        "wrangler": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    {
+                        "command": "pnpm exec wrangler",
+                        "forwardAllArgs": true
+                    }
+                ],
+                "parallel": false,
                 "cwd": "website",
                 "tty": true
             }
@@ -94,6 +123,9 @@
                 "default",
                 "^production",
                 {
+                    "dependentTasksOutputFiles": "**/build/server/**/*.js"
+                },
+                {
                     "externalDependencies": ["vitest"]
                 },
                 {
@@ -104,7 +136,46 @@
             "options": {
                 "command": "vitest run",
                 "cwd": "website"
-            }
+            },
+            "dependsOn": ["build"]
+        },
+        "e2e": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test", "@axe-core/playwright"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test --project=chromium --project=chromium-light",
+                "cwd": "website"
+            },
+            "dependsOn": ["setup"]
+        },
+        "e2e-visual": {
+            "executor": "nx:run-commands",
+            "inputs": [
+                "default",
+                "^production",
+                {
+                    "externalDependencies": ["@playwright/test"]
+                },
+                {
+                    "env": "CI"
+                }
+            ],
+            "outputs": ["{projectRoot}/playwright-report", "{projectRoot}/test-results"],
+            "options": {
+                "command": "playwright test e2e/visual.spec.ts",
+                "cwd": "website"
+            },
+            "dependsOn": ["setup"]
         },
         "deploy": {
             "executor": "nx:run-commands",

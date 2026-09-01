@@ -3,6 +3,7 @@ import type {
     FairnessMetrics,
     TalkResult,
     TalkStatistics,
+    ValidationChunkResult,
     ValidationRunIndex,
     VoteResult,
 } from '../voting-validation-types'
@@ -35,8 +36,6 @@ export interface VotingStore {
 
     // ---------- Validation lifecycle ----------
     canStartValidation(): Promise<{ canStart: boolean; reason?: string; currentRunId?: string }>
-    markValidationStarted(runId: string): Promise<void>
-    markValidationCompleted(runId: string): Promise<void>
 
     // ---------- Validation runs ----------
     getValidationRunStatus(): Promise<{ isRunning: boolean; currentRunId?: string }>
@@ -44,7 +43,17 @@ export interface VotingStore {
     getValidationRunById(runId: string): Promise<ValidationRunIndex | null>
 
     // ---------- Validation execution ----------
-    runValidation(year: string, talks: TalkVotingData[]): Promise<string>
+    // Validation is processed in resumable chunks driven by the admin UI: a
+    // Workers request can't outlive its response long enough to process every
+    // session in one go (ctx.waitUntil is capped ~30s), so each chunk call
+    // advances the run's cursor and the final chunk computes the statistics.
+    startValidationRun(runId: string, year: string): Promise<{ totalSessions: number }>
+    processValidationChunk(
+        runId: string,
+        year: string,
+        talks: TalkVotingData[],
+        chunkSize: number,
+    ): Promise<ValidationChunkResult>
 
     // ---------- Validation results ----------
     getTalkStatistics(runId: string): Promise<TalkStatistics[]>

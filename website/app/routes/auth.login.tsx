@@ -2,19 +2,21 @@ import { data, Form, redirect, useActionData, useLoaderData, useNavigation, useS
 import { getUser } from '~/lib/auth.server'
 import { isValidEmail, sanitiseRedirect } from '~/lib/auth/validation'
 import { recordException } from '~/lib/record-exception'
+import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
+import { noIndexMeta } from '~/lib/seo'
 
 const REDIRECT_PARAM = 'redirectTo'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const user = await getUser(request.headers, context.services)
+    const user = await getUser(request.headers, getServices(context))
     if (user) {
         const url = new URL(request.url)
         const redirectTo = sanitiseRedirect(url.searchParams.get(REDIRECT_PARAM))
         throw redirect(redirectTo)
     }
-    return data({ canSendEmail: context.services.email.canSend() })
+    return data({ canSendEmail: getServices(context).email.canSend() })
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -33,7 +35,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         // sendMagicLink checks the allowlist itself and is a no-op for
         // unallowlisted addresses. We always respond with "check your inbox"
         // either way, so the form can't be used to probe who has access.
-        await context.services.auth.sendMagicLink({
+        await getServices(context).auth.sendMagicLink({
             email,
             redirectTo,
             requestUrl: new URL(request.url).origin,
@@ -48,6 +50,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ sent: true as const, email })
 }
 
+/** Not indexed: a sign-in form has no search value and should not rank for the brand. */
+export const meta = noIndexMeta
+
 export default function Login() {
     const { canSendEmail } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
@@ -60,15 +65,24 @@ export default function Login() {
         return (
             <Flex minH="screen" align="center" justify="center" bg="surface.body">
                 <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
-                    <styled.h1 mb="4" color="surface.body" fontSize="2xl" fontWeight="bold">
+                    <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                         Check your inbox
                     </styled.h1>
-                    <styled.p color="gray.9">
-                        If <styled.strong>{actionData.email}</styled.strong> is on the allowlist, a sign-in link is on
-                        its way. The link expires in 15 minutes.
+                    <styled.p color="admin.700">
+                        If <styled.strong>{actionData.email}</styled.strong> has access, a sign-in link is on its way.
+                        The link expires in 15 minutes.
                     </styled.p>
                     {!canSendEmail && (
-                        <Box mt="4" p="3" bg="status.info.bg" border="default" borderColor="status.info.border" borderRadius="md" color="status.info.fg" fontSize="sm">
+                        <Box
+                            mt="4"
+                            p="3"
+                            bg="status.info.bg"
+                            border="default"
+                            borderColor="status.info.border"
+                            borderRadius="md"
+                            color="status.info.fg"
+                            fontSize="sm"
+                        >
                             Email isn't configured in this environment. Check the server console for the magic link.
                         </Box>
                     )}
@@ -82,7 +96,7 @@ export default function Login() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" maxW="[440px]" w="full">
-                <styled.h1 mb="6" color="surface.body" fontSize="2xl" fontWeight="bold" textAlign="center">
+                <styled.h1 mb="6" color="admin.900" fontSize="2xl" fontWeight="bold" textAlign="center">
                     Sign in
                 </styled.h1>
 
@@ -101,12 +115,12 @@ export default function Login() {
                     </Box>
                 )}
 
-                <styled.p mb="6" color="gray.9" textAlign="center">
+                <styled.p mb="6" color="admin.700" textAlign="center">
                     Enter your email and we'll send you a one-time sign-in link.
                 </styled.p>
                 <Form method="post">
                     <input type="hidden" name={REDIRECT_PARAM} value={redirectTo} />
-                    <styled.label display="block" mb="2" fontSize="sm" fontWeight="medium" color="gray.10">
+                    <styled.label display="block" mb="2" fontSize="sm" fontWeight="medium" color="admin.800">
                         Email
                         <styled.input
                             type="email"
@@ -131,7 +145,7 @@ export default function Login() {
                         type="submit"
                         disabled={isSubmitting}
                         bg="admin.900"
-                        color="text.primary"
+                        color="admin.50"
                         border="none"
                         py="3"
                         px="6"
@@ -142,7 +156,7 @@ export default function Login() {
                         w="full"
                         mt="4"
                         _hover={{ bg: 'admin.800' }}
-                        _disabled={{ bg: 'gray.8', cursor: 'not-allowed', opacity: 0.7 }}
+                        _disabled={{ bg: 'admin.400', cursor: 'not-allowed', opacity: 0.7 }}
                     >
                         {isSubmitting ? 'Sending sign-in link…' : 'Send sign-in link'}
                     </styled.button>
@@ -151,4 +165,3 @@ export default function Login() {
         </Flex>
     )
 }
-

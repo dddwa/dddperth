@@ -1,6 +1,6 @@
 import * as isbotModule from 'isbot'
 import { renderToReadableStream } from 'react-dom/server'
-import type { AppLoadContext, EntryContext } from 'react-router'
+import type { EntryContext, RouterContextProvider } from 'react-router'
 import { ServerRouter } from 'react-router'
 
 export { getLoadContext } from './load-context.server'
@@ -12,7 +12,7 @@ export default async function handleRequest(
     responseStatusCode: number,
     responseHeaders: Headers,
     reactRouterContext: EntryContext,
-    _loadContext: AppLoadContext,
+    _loadContext: RouterContextProvider,
 ) {
     const isBot = isBotRequest(request.headers.get('user-agent'))
 

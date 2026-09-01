@@ -28,7 +28,7 @@ export function Hero({
 }) {
     return (
         <Box overflowX="hidden" position="relative">
-            <HomepageHeroPanel conferenceDate={conferenceDate} />
+            <HomepageHeroPanel conferenceDate={conferenceDate} venue={conferenceState.conference.venue} />
             <Box
                 position="relative"
                 zIndex="docked"
@@ -49,12 +49,12 @@ export function Hero({
                         <Flex
                             className={`paragraph-wrapper`}
                             direction="column"
-                            fontSize={{ base: 'xl', md: '2xl' }}
+                            fontSize={{ base: 'lg', md: 'xl' }}
                             fontWeight="medium"
                             color="text.primary"
                             gap="4"
                             pt="6"
-                            maxWidth="3xl"
+                            maxWidth="4xl"
                         >
                             <HeroBlurb conferenceState={conferenceState} />
                             <p>
@@ -71,7 +71,7 @@ export function Hero({
                         </Flex>
 
                         <ImportantDates currentDate={currentDate} importantDates={importantDates} />
-                        <Workshops />
+                        {!conferenceManifest.public.features?.hideWorkshops && <Workshops />}
                         <HeroSponsorStrip sponsors={sponsors} currentYear={currentYear} />
                     </Flex>
                 </HeaderContainer>

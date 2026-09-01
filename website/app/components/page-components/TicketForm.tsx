@@ -3,7 +3,10 @@ import { Spinner } from '~/components/ui/spinner'
 import type { TicketSalesState } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 
-const TITO_SCRIPT_SRC = 'https://js.tito.io/v2'
+// `test_mode` lets fake orders through
+const TITO_SCRIPT_SRC = import.meta.env.DEV
+    ? 'https://js.tito.io/v2/with/development_mode,test_mode'
+    : 'https://js.tito.io/v2'
 
 declare global {
     interface Window {
@@ -121,6 +124,11 @@ function TitoMount({ accountId, eventId }: { accountId: string; eventId: string 
         `
         host.appendChild(mountPoint)
         window.tito('widget.mount', { el: `#${mountPoint.id}`, event: `${accountId}/${eventId}` })
+        window.tito('on:registration:finished', (data: { slug?: string } & Record<string, unknown>) => {
+            if (data?.slug) {
+                localStorage.setItem('tito:registration', JSON.stringify({ slug: data.slug }))
+            }
+        })
 
         // Tito's widget.mount lazy-loads a chunk and then resolves the el via
         // document.querySelector. If we're torn down before that resolution
@@ -148,4 +156,3 @@ function getTitoOrphanContainer(): HTMLDivElement {
     }
     return container
 }
-

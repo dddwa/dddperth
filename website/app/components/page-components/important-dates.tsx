@@ -395,7 +395,15 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
 }
 
 function formatEventDateTime(dateTime: DateTime) {
-    return `${dateTime.weekdayLong} ${dateTime.toFormat('LLL dd')}, ${dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}`
+    const datePart = `${dateTime.weekdayLong} ${dateTime.toFormat('LLL dd')}`
+    // A midnight (00:00:00) time means "this whole day", not a specific time —
+    // show the date alone rather than a meaningless "12:00 am".
+    const isMidnight =
+        dateTime.hour === 0 && dateTime.minute === 0 && dateTime.second === 0 && dateTime.millisecond === 0
+    if (isMidnight) {
+        return datePart
+    }
+    return `${datePart}, ${dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}`
 }
 
 function EventInfo({

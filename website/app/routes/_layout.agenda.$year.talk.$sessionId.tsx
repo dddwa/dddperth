@@ -1,3 +1,4 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
@@ -5,23 +6,23 @@ import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { SponsorLogo } from '~/components/sponsor-logo'
-import { conferenceManifest } from '@conference/manifest'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
+import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(year, context.config)
+    const yearConfig = getYearConfig(year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
         return redirect($path('/agenda/:year?', { year: undefined }))
     }
 
-    const now = context.dateTimeProvider.nowDate()
+    const now = getDateTimeProvider(context).nowDate()
     const agendaPublished =
         (yearConfig.agendaPublishedDateTime ? now >= yearConfig.agendaPublishedDateTime : false) ||
         (!!yearConfig.conferenceDate && now >= yearConfig.conferenceDate)
@@ -94,47 +95,51 @@ export default function Agenda() {
             p="4"
         >
             <Box maxWidth="[1200px]" color="text.secondary" mx="auto" p="1" fontSize="sm">
-                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
-                    Back to {year} Agenda
-                </AppLink>
-                <styled.h2 fontSize="lg" pb="3">
-                    {session.title}
-                </styled.h2>
-                <styled.span
-                    display="none"
-                    md={{
-                        display: 'block',
-                    }}
-                    color="text.secondary"
-                    textWrap="nowrap"
-                    pb="3"
-                >
-                    🕓 {sessionStart} - {sessionEnd}
-                </styled.span>
-                <styled.span display="block" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" pb="3">
-                    📍 {session.room}
-                </styled.span>
-                <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
-                <styled.div>{session.description}</styled.div>
-                {session?.speakers?.length ? (
-                    <styled.div display="block" color="text.secondary">
-                        {talkSpeakers.map((speaker) => (
-                            <styled.div key={speaker.id} display="flex" alignItems="center">
-                                {speaker.profilePicture ? (
-                                    <styled.img
-                                        src={speaker.profilePicture}
-                                        alt={speaker.fullName}
-                                        width="[120px]"
-                                        height="[120px]"
-                                        borderRightRadius="[50%]"
-                                        mr="2"
-                                    />
-                                ) : null}
-                                {speaker.fullName}
-                            </styled.div>
-                        ))}
-                    </styled.div>
-                ) : null}
+                <Box id="talk-detail-content">
+                    <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
+                        Back to {year} Agenda
+                    </AppLink>
+                    <styled.h1 fontSize="lg" pb="3">
+                        {session.title}
+                    </styled.h1>
+                    {sessionStart && sessionEnd ? (
+                        <styled.span display="block" color="text.secondary" textWrap="nowrap" pb="3">
+                            🕓 {sessionStart} - {sessionEnd}
+                        </styled.span>
+                    ) : null}
+                    {session.room ? (
+                        <styled.span
+                            display="block"
+                            color="text.secondary"
+                            textOverflow="ellipsis"
+                            textWrap="nowrap"
+                            pb="3"
+                        >
+                            📍 {session.room}
+                        </styled.span>
+                    ) : null}
+                    <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
+                    <styled.div>{session.description}</styled.div>
+                    {session?.speakers?.length ? (
+                        <styled.div display="block" color="text.secondary">
+                            {talkSpeakers.map((speaker) => (
+                                <styled.div key={speaker.id} display="flex" alignItems="center">
+                                    {speaker.profilePicture ? (
+                                        <styled.img
+                                            src={speaker.profilePicture}
+                                            alt={speaker.fullName}
+                                            width="[120px]"
+                                            height="[120px]"
+                                            borderRightRadius="[50%]"
+                                            mr="2"
+                                        />
+                                    ) : null}
+                                    {speaker.fullName}
+                                </styled.div>
+                            ))}
+                        </styled.div>
+                    ) : null}
+                </Box>
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>

@@ -14,6 +14,13 @@ const DEFAULT_REDIRECT = '/admin'
  *   - absolute URLs `https://...`
  *   - anything that isn't a leading-slash path
  *
+ * Also normalises React Router data-request URLs: a session that expires
+ * during client-side navigation throws the login redirect from a
+ * `<path>.data?_routes=…` fetch, and redirecting back to that literal URL
+ * after sign-in renders the data endpoint as a page ("Content not found").
+ * Strip the `.data` suffix and `_routes` param so the user lands on the
+ * actual page.
+ *
  * Called both at issue time (by the login route) and again at consume time
  * (defence in depth — the token's stored redirect_to could in theory be
  * planted by a future code path that forgets to sanitise).
@@ -21,7 +28,20 @@ const DEFAULT_REDIRECT = '/admin'
 export function sanitiseRedirect(value: string | null | undefined): string {
     if (!value) return DEFAULT_REDIRECT
     if (!value.startsWith('/') || value.startsWith('//')) return DEFAULT_REDIRECT
-    return value
+
+    const url = new URL(value, 'http://sanitise.invalid')
+
+    let pathname = url.pathname
+    if (pathname === '/_root.data') {
+        // The data URL for the root path is `/_root.data`, not `/.data`.
+        pathname = '/'
+    } else if (pathname.endsWith('.data')) {
+        pathname = pathname.slice(0, -'.data'.length) || '/'
+    }
+
+    url.searchParams.delete('_routes')
+    const search = url.searchParams.toString()
+    return `${pathname}${search ? `?${search}` : ''}`
 }
 
 /**

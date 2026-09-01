@@ -1,5 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { CloudflareEnv } from '../../../remix-app-load-context'
+import { parseExpiryDate } from '../../sponsors/token-expiry'
 import type { AppConfig } from '../app-config'
 
 /**
@@ -19,10 +20,40 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
             resendApiKey: env.RESEND_API_KEY,
         },
         sessionizeOverrides: collectSessionizeOverrides(env),
+        speakerTicketClaimUrls: collectSpeakerTicketClaimUrls(env),
         tito: {
             securityToken: env.TITO_SECURITY_TOKEN,
+            apiToken: env.TITO_API_TOKEN,
+        },
+        jira: {
+            apiEmail: env.JIRA_API_EMAIL,
+            apiToken: env.JIRA_API_TOKEN,
+            apiBaseUrl: env.JIRA_API_BASE_URL || undefined,
+            writebackEnabled: env.JIRA_WRITEBACK_ENABLED === 'true',
+            stub: env.JIRA_STUB === 'true',
+            syncJqlOverride: env.JIRA_SYNC_JQL,
+            tokenExpiresAt: parseExpiryDate(env.JIRA_TOKEN_EXPIRES),
         },
     }
+}
+
+/**
+ * Collects per-year speaker ticket claim URLs keyed by the 4-digit year.
+ * Bindings follow the pattern `SPEAKER_TICKET_CLAIM_URL_<YYYY>`.
+ */
+function collectSpeakerTicketClaimUrls(env: CloudflareEnv): Record<string, string> {
+    const result: Record<string, string> = {}
+
+    for (const [key, value] of Object.entries(env as unknown as Record<string, unknown>)) {
+        if (typeof value !== 'string' || value.length === 0) continue
+
+        const match = /^SPEAKER_TICKET_CLAIM_URL_(\d{4})$/.exec(key)
+        if (match) {
+            result[match[1]] = value
+        }
+    }
+
+    return result
 }
 
 /**

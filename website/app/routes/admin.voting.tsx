@@ -1,26 +1,54 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { useEffect } from 'react'
-import { Form, useActionData, useLoaderData, useNavigation, useRevalidator } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Form, useActionData, useFetcher, useLoaderData, useNavigation, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { recordException } from '~/lib/record-exception'
 import { getUnderrepresentedGroups } from '~/lib/sessionize.server'
-import type { StartValidationResponse } from '~/lib/voting-validation-types'
+import type { TalkVotingData } from '~/lib/voting-types'
+import type { ProcessValidationChunkResponse, StartValidationResponse } from '~/lib/voting-validation-types'
 import { getSessionsForVoting } from '~/lib/voting.server'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.voting'
+
+/**
+ * Sessions processed per chunk request. Sized so a chunk (one D1 read plus a
+ * few batched writes per session) completes in a couple of seconds — the run
+ * is driven by the admin page submitting chunks back-to-back, since a single
+ * Workers invocation can't stay alive long enough to process everything.
+ */
+const VALIDATION_CHUNK_SIZE = 25
+
+/**
+ * A running run whose last progress is fresher than this is assumed to still
+ * have a live driving page (chunks update it every few seconds), so Resume is
+ * not offered. A second concurrent driver would be harmless — chunk
+ * processing is idempotent — but it double-counts the progress counters.
+ */
+const RUN_DRIVERLESS_AFTER_MS = 60 * 1000
+
+/** A run with no progress for this long has lost its driving page. */
+const RUN_STALLED_AFTER_MS = 5 * 60 * 1000
+
+/**
+ * After this long without progress the run is considered dead and stops
+ * disabling the Start button — mirrors the server-side canStartValidation
+ * staleness threshold.
+ */
+const RUN_DEAD_AFTER_MS = 30 * 60 * 1000
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
-    const conferenceState = context.conferenceState
+    const conferenceState = getConferenceState(context)
     const year = conferenceState.conference.year
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     // Get the voting session counter
     let sessionCount = 0
@@ -37,6 +65,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }>,
         isRunning: false as boolean,
         currentRunId: undefined as string | undefined,
+        resumableRunId: undefined as string | undefined,
+        stalledMinutes: 0,
     }
 
     try {
@@ -50,20 +80,30 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const runs = await voting.getValidationRuns(5)
         const status = await voting.getValidationRunStatus()
 
+        const mappedRuns = runs.map((run) => ({
+            runId: run.runId,
+            status: run.status,
+            startedAt: run.startedAt,
+            completedAt: run.completedAt,
+            lastUpdatedAt: run.lastUpdatedAt,
+            totalSessions: run.totalSessions,
+            processedSessions: run.processedSessions,
+            percentComplete:
+                run.totalSessions > 0 ? Math.round((run.processedSessions / run.totalSessions) * 100) : 0,
+        }))
+
+        // A run whose driving page went away stays status 'running' forever;
+        // offer it for resume once it stops looking actively driven, and once
+        // it's been dead for long enough stop letting it disable Start.
+        const runningRun = mappedRuns.find((run) => run.status === 'running')
+        const msSinceUpdate = runningRun ? Date.now() - new Date(runningRun.lastUpdatedAt).getTime() : 0
+
         validationRuns = {
-            runs: runs.map((run) => ({
-                runId: run.runId,
-                status: run.status,
-                startedAt: run.startedAt,
-                completedAt: run.completedAt,
-                lastUpdatedAt: run.lastUpdatedAt,
-                totalSessions: run.totalSessions,
-                processedSessions: run.processedSessions,
-                percentComplete:
-                    run.totalSessions > 0 ? Math.round((run.processedSessions / run.totalSessions) * 100) : 0,
-            })),
+            runs: mappedRuns,
             currentRunId: status.currentRunId,
-            isRunning: status.isRunning,
+            isRunning: status.isRunning && runningRun !== undefined && msSinceUpdate < RUN_DEAD_AFTER_MS,
+            resumableRunId: runningRun && msSinceUpdate >= RUN_DRIVERLESS_AFTER_MS ? runningRun.runId : undefined,
+            stalledMinutes: Math.floor(msSinceUpdate / 60000),
         }
     } catch (error: any) {
         console.error('Error getting validation runs:', error)
@@ -81,7 +121,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const yearConfig = getYearConfig(year, context.config)
+        const yearConfig = getYearConfig(year, getConfig(context))
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
@@ -118,20 +158,47 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 }
 
+async function loadTalksForValidation(
+    context: Route.ActionArgs['context'],
+): Promise<{ talks: TalkVotingData[] } | { error: string }> {
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+
+    if (yearConfig.kind === 'cancelled') {
+        return { error: 'Conference cancelled this year' }
+    }
+
+    if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
+        return {
+            error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
+        }
+    }
+
+    const talks = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
+
+    if (talks.length === 0) {
+        return { error: 'No talks available for validation' }
+    }
+
+    return { talks }
+}
+
 export async function action({
     request,
     context,
 }: Route.ActionArgs): Promise<
-    { success: true; message: string } | { success: false; error: string } | StartValidationResponse
+    | { success: true; message: string }
+    | { success: false; error: string }
+    | StartValidationResponse
+    | ProcessValidationChunkResponse
 > {
     await requireAdmin(request, context)
 
     const formData = await request.formData()
     const intent = formData.get('intent')
 
-    const conferenceState = context.conferenceState
+    const conferenceState = getConferenceState(context)
     const year = conferenceState.conference.year
-    const voting = context.services.voting
+    const voting = getServices(context).voting
 
     if (intent === 'update_underrepresented_groups') {
         try {
@@ -153,6 +220,28 @@ export async function action({
         }
     }
 
+    if (intent === 'process_validation_chunk') {
+        const runId = formData.get('runId')
+
+        if (typeof runId !== 'string' || runId.length === 0) {
+            return { success: false, error: 'Missing validation run id' }
+        }
+
+        try {
+            const talksResult = await loadTalksForValidation(context)
+            if ('error' in talksResult) {
+                return { success: false, runId, error: talksResult.error }
+            }
+
+            const chunk = await voting.processValidationChunk(runId, year, talksResult.talks, VALIDATION_CHUNK_SIZE)
+            return { success: true, runId, ...chunk }
+        } catch (error: any) {
+            console.error('Error processing validation chunk:', error)
+            recordException(error)
+            return { success: false, runId, error: 'Failed to process validation chunk' }
+        }
+    }
+
     try {
         const canStart = await voting.canStartValidation()
 
@@ -165,39 +254,17 @@ export async function action({
             return response
         }
 
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
-
-        if (yearConfig.kind === 'cancelled') {
-            return {
-                success: false,
-                error: 'Conference cancelled this year',
-            }
+        const talksResult = await loadTalksForValidation(context)
+        if ('error' in talksResult) {
+            return { success: false, error: talksResult.error }
         }
 
-        if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
-            return {
-                success: false,
-                error: 'Sessionize endpoint not configured. Please ensure the all sessions env var for the current conference year is set.',
-            }
-        }
-
-        const talks = await getSessionsForVoting(yearConfig.sessions.allSessionsEndpoint)
-
-        if (talks.length === 0) {
-            return {
-                success: false,
-                error: 'No talks available for validation',
-            }
-        }
-
+        // Only the run row and global lock are created here; the sessions are
+        // processed by the page submitting process_validation_chunk requests,
+        // because this Worker invocation can't outlive its response for long
+        // enough to do the work itself.
         const runId = crypto.randomUUID()
-        await voting.markValidationStarted(runId)
-
-        // Start the validation process in the background
-        voting.runValidation(year, talks).catch((error) => {
-            recordException(error)
-            console.error('Validation process error:', error)
-        })
+        await voting.startValidationRun(runId, year)
 
         const response: StartValidationResponse = {
             success: true,
@@ -222,7 +289,43 @@ export default function AdminVoting() {
     const navigation = useNavigation()
     const actionData = useActionData<typeof action>()
 
+    // The validation run is processed by this page submitting chunk requests
+    // back-to-back. drivingRunId is set while this tab is the driver.
+    const chunkFetcher = useFetcher<ProcessValidationChunkResponse>()
+    const [drivingRunId, setDrivingRunId] = useState<string | null>(null)
+    const handledChunkResponse = useRef<ProcessValidationChunkResponse | null>(null)
+
+    // Starting a run makes this tab its driver
+    useEffect(() => {
+        if (actionData?.success && 'runId' in actionData) {
+            setDrivingRunId(actionData.runId)
+        }
+    }, [actionData])
+
+    // Submit the next chunk whenever the previous one finishes. Stops on
+    // completion or on the first error — never auto-retries; the Resume
+    // button is the retry path.
+    useEffect(() => {
+        if (!drivingRunId || chunkFetcher.state !== 'idle') return
+
+        const data = chunkFetcher.data
+        // Errors are terminal even when their runId is missing or mismatched —
+        // an error that never satisfied the runId check would otherwise be
+        // resubmitted forever.
+        if (data && data !== handledChunkResponse.current && (!data.success || data.runId === drivingRunId)) {
+            handledChunkResponse.current = data
+            if (!data.success || data.done) {
+                setDrivingRunId(null)
+                void revalidator.revalidate()
+                return
+            }
+        }
+
+        void chunkFetcher.submit({ intent: 'process_validation_chunk', runId: drivingRunId }, { method: 'post' })
+    }, [drivingRunId, chunkFetcher, revalidator])
+
     // Refresh validation runs every 5 seconds if a validation is running
+    // (keeps progress current when another tab is driving the run)
     useEffect(() => {
         if (validationRuns.isRunning) {
             const interval = setInterval(() => {
@@ -232,6 +335,15 @@ export default function AdminVoting() {
             return () => clearInterval(interval)
         }
     }, [validationRuns.isRunning, revalidator])
+
+    const chunkError = chunkFetcher.data && !chunkFetcher.data.success ? chunkFetcher.data.error : null
+    // The loader only offers Resume once a run looks driverless, so a run this
+    // tab just errored on (its progress is only seconds old) uses the failed
+    // chunk's runId as the resume target instead.
+    const chunkErrorRunId = chunkFetcher.data && !chunkFetcher.data.success ? chunkFetcher.data.runId : undefined
+    const resumeRunId = validationRuns.resumableRunId ?? chunkErrorRunId
+    const showResume = resumeRunId !== undefined && drivingRunId === null
+    const isStalled = showResume && validationRuns.stalledMinutes * 60000 >= RUN_STALLED_AFTER_MS
 
     return (
         <AdminLayout heading="Voting Administration">
@@ -265,12 +377,11 @@ export default function AdminVoting() {
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
-                                {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                    DateTime.DATETIME_SHORT,
-                                    {
-                                        locale: 'en-AU',
-                                    },
-                                )}
+                                {DateTime.fromISO(conferenceState.talkVoting.closes, {
+                                    zone: conferenceManifest.public.timezone,
+                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    locale: 'en-AU',
+                                })}
                             </styled.p>
                         </Box>
                     )}
@@ -282,12 +393,11 @@ export default function AdminVoting() {
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.opens, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                        DateTime.DATETIME_SHORT,
-                                        {
-                                            locale: 'en-AU',
-                                        },
-                                    )}
+                                    {DateTime.fromISO(conferenceState.talkVoting.opens, {
+                                        zone: conferenceManifest.public.timezone,
+                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                        locale: 'en-AU',
+                                    })}
                                 </styled.p>
                             </Box>
                             <Box flex="1">
@@ -295,12 +405,11 @@ export default function AdminVoting() {
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                        DateTime.DATETIME_SHORT,
-                                        {
-                                            locale: 'en-AU',
-                                        },
-                                    )}
+                                    {DateTime.fromISO(conferenceState.talkVoting.closes, {
+                                        zone: conferenceManifest.public.timezone,
+                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                        locale: 'en-AU',
+                                    })}
                                 </styled.p>
                             </Box>
                         </>
@@ -366,81 +475,100 @@ export default function AdminVoting() {
 
             {underrepresentedGroups.availableGroups.length > 0 && (
                 <AdminCard mb="6">
-                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
-                        Underrepresented Groups Configuration
-                    </styled.h2>
+                    <styled.details>
+                        <styled.summary
+                            fontSize="xl"
+                            fontWeight="semibold"
+                            cursor="pointer"
+                            listStyle="none"
+                            _marker={{ display: 'none' }}
+                        >
+                            Underrepresented Groups Configuration
+                        </styled.summary>
 
-                    {underrepresentedGroups.error && (
-                        <styled.p color="status.danger.fg" mb="4">
-                            Error: {underrepresentedGroups.error}
-                        </styled.p>
-                    )}
+                        <Box mt="4">
+                            {underrepresentedGroups.error && (
+                                <styled.p color="status.danger.fg" mb="4">
+                                    Error: {underrepresentedGroups.error}
+                                </styled.p>
+                            )}
 
-                    {actionData?.success && actionData?.message && (
-                        <styled.p color="status.success.fg" mb="4">
-                            {actionData.message}
-                        </styled.p>
-                    )}
+                            {actionData?.success && 'message' in actionData && actionData.message && (
+                                <styled.p color="status.success.fg" mb="4">
+                                    {actionData.message}
+                                </styled.p>
+                            )}
 
-                    {actionData?.success === false && actionData?.error && (
-                        <styled.p color="status.danger.fg" mb="4">
-                            Error: {actionData.error}
-                        </styled.p>
-                    )}
+                            {actionData?.success === false && actionData?.error && (
+                                <styled.p color="status.danger.fg" mb="4">
+                                    Error: {actionData.error}
+                                </styled.p>
+                            )}
 
-                    <Form method="post">
-                        <input type="hidden" name="intent" value="update_underrepresented_groups" />
+                            <Form method="post">
+                                <input type="hidden" name="intent" value="update_underrepresented_groups" />
 
-                        <Box mb="4">
-                            <styled.p fontSize="sm" fontWeight="medium" mb="3">
-                                Available Groups ({underrepresentedGroups.availableGroups.length} found):
-                            </styled.p>
+                                <Box mb="4">
+                                    <styled.p fontSize="sm" fontWeight="medium" mb="3">
+                                        Available Groups ({underrepresentedGroups.availableGroups.length} found):
+                                    </styled.p>
 
-                            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))" gap="2">
-                                {underrepresentedGroups.availableGroups.map((group) => {
-                                    const isSelected = underrepresentedGroups.selectedGroups.includes(group)
-                                    const fieldName = `group_${encodeURIComponent(group)}`
+                                    <Box
+                                        display="grid"
+                                        gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))"
+                                        gap="2"
+                                    >
+                                        {underrepresentedGroups.availableGroups.map((group) => {
+                                            const isSelected = underrepresentedGroups.selectedGroups.includes(group)
+                                            const fieldName = `group_${encodeURIComponent(group)}`
 
-                                    return (
-                                        <Flex
-                                            key={group}
-                                            alignItems="center"
-                                            gap="2"
-                                            p="2"
-                                            borderRadius="md"
-                                            _hover={{ bg: 'admin.100' }}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                id={fieldName}
-                                                name={fieldName}
-                                                defaultChecked={isSelected}
-                                            />
-                                            <styled.label htmlFor={fieldName} fontSize="sm" cursor="pointer" flex="1">
-                                                {group}
-                                            </styled.label>
-                                        </Flex>
-                                    )
-                                })}
-                            </Box>
+                                            return (
+                                                <Flex
+                                                    key={group}
+                                                    alignItems="center"
+                                                    gap="2"
+                                                    p="2"
+                                                    borderRadius="md"
+                                                    _hover={{ bg: 'admin.100' }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        id={fieldName}
+                                                        name={fieldName}
+                                                        defaultChecked={isSelected}
+                                                    />
+                                                    <styled.label
+                                                        htmlFor={fieldName}
+                                                        fontSize="sm"
+                                                        cursor="pointer"
+                                                        flex="1"
+                                                    >
+                                                        {group}
+                                                    </styled.label>
+                                                </Flex>
+                                            )
+                                        })}
+                                    </Box>
+                                </Box>
+
+                                <Flex gap="4" alignItems="center">
+                                    <Button
+                                        type="submit"
+                                        disabled={navigation.state === 'submitting'}
+                                        variant="solid"
+                                        size="sm"
+                                    >
+                                        {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
+                                    </Button>
+
+                                    <styled.span fontSize="sm" color="admin.600">
+                                        {underrepresentedGroups.selectedGroups.length} of{' '}
+                                        {underrepresentedGroups.availableGroups.length} groups selected
+                                    </styled.span>
+                                </Flex>
+                            </Form>
                         </Box>
-
-                        <Flex gap="4" alignItems="center">
-                            <Button
-                                type="submit"
-                                disabled={navigation.state === 'submitting'}
-                                variant="solid"
-                                size="sm"
-                            >
-                                {navigation.state === 'submitting' ? 'Saving...' : 'Save Selection'}
-                            </Button>
-
-                            <styled.span fontSize="sm" color="admin.600">
-                                {underrepresentedGroups.selectedGroups.length} of{' '}
-                                {underrepresentedGroups.availableGroups.length} groups selected
-                            </styled.span>
-                        </Flex>
-                    </Form>
+                    </styled.details>
                 </AdminCard>
             )}
 
@@ -450,11 +578,12 @@ export default function AdminVoting() {
                 </styled.h2>
 
                 <styled.p color="admin.600" mb="4">
-                    Run validation to calculate statistics for all talks based on voting data. This process analyzes how
-                    many times each talk has been seen and voted for.
+                    Run validation to calculate statistics for all talks based on voting data. The run is processed in
+                    chunks by this page — keep it open until the run completes. If the page is closed mid-run, come back
+                    and click Resume Validation to continue from where it stopped.
                 </styled.p>
 
-                <Flex gap="4" mb="6">
+                <Flex gap="4" mb="6" flexWrap="wrap">
                     <Form method="post">
                         <Button
                             type="submit"
@@ -466,6 +595,23 @@ export default function AdminVoting() {
                         </Button>
                     </Form>
 
+                    {showResume && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDrivingRunId(resumeRunId ?? null)}
+                        >
+                            Resume Validation
+                        </Button>
+                    )}
+
+                    {drivingRunId !== null && (
+                        <styled.span color="admin.600" alignSelf="center">
+                            Processing in this tab…
+                        </styled.span>
+                    )}
+
                     {validationRuns.isRunning && validationRuns.runs[0]?.status === 'running' && (
                         <styled.span color="admin.600" alignSelf="center">
                             Progress: {validationRuns.runs[0].percentComplete}% (
@@ -473,6 +619,19 @@ export default function AdminVoting() {
                         </styled.span>
                     )}
                 </Flex>
+
+                {isStalled && (
+                    <styled.p color="status.danger.fg" mb="4">
+                        No progress for {validationRuns.stalledMinutes} minutes — the run has lost the page that was
+                        processing it. Click Resume Validation to continue from where it stopped.
+                    </styled.p>
+                )}
+
+                {chunkError && drivingRunId === null ? (
+                    <styled.p color="status.danger.fg" mb="4">
+                        Validation processing stopped: {chunkError} — click Resume Validation to retry.
+                    </styled.p>
+                ) : null}
 
                 {!actionData?.success && actionData?.error ? (
                     <styled.p color="status.danger.fg" mb="4">
@@ -490,32 +649,16 @@ export default function AdminVoting() {
                             <styled.table width="full" fontSize="sm">
                                 <thead>
                                     <tr>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Started
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Status
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Progress
                                         </styled.th>
-                                        <styled.th
-                                            textAlign="left"
-                                            p="2"
-                                            border="admin-subtle"
-                                        >
+                                        <styled.th textAlign="left" p="2" border="admin-subtle">
                                             Actions
                                         </styled.th>
                                     </tr>
@@ -524,12 +667,11 @@ export default function AdminVoting() {
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
                                             <styled.td p="2" border="admin-subtle">
-                                                {DateTime.fromISO(run.startedAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                                                    DateTime.DATETIME_SHORT,
-                                                    {
-                                                        locale: 'en-AU',
-                                                    },
-                                                )}
+                                                {DateTime.fromISO(run.startedAt, {
+                                                    zone: conferenceManifest.public.timezone,
+                                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                                    locale: 'en-AU',
+                                                })}
                                             </styled.td>
                                             <styled.td p="2" border="admin-subtle">
                                                 <styled.span
@@ -560,14 +702,24 @@ export default function AdminVoting() {
                                                 {run.processedSessions}/{run.totalSessions} ({run.percentComplete}%)
                                             </styled.td>
                                             <styled.td p="2" border="admin-subtle">
-                                                <AppLink
-                                                    to={`/admin/voting-validation/stats/${run.runId}`}
-                                                    fontSize="sm"
-                                                    color="indigo.7"
-                                                    _hover={{ textDecoration: 'underline' }}
-                                                >
-                                                    View Stats
-                                                </AppLink>
+                                                <Flex gap="3">
+                                                    <AppLink
+                                                        to={`/admin/voting-validation/stats/${run.runId}`}
+                                                        fontSize="sm"
+                                                        color="indigo.7"
+                                                        _hover={{ textDecoration: 'underline' }}
+                                                    >
+                                                        View Stats
+                                                    </AppLink>
+                                                    <AppLink
+                                                        to={`/admin/voting/agenda/${run.runId}`}
+                                                        fontSize="sm"
+                                                        color="indigo.7"
+                                                        _hover={{ textDecoration: 'underline' }}
+                                                    >
+                                                        Plan Agenda
+                                                    </AppLink>
+                                                </Flex>
                                             </styled.td>
                                         </tr>
                                     ))}

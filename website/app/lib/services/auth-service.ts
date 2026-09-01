@@ -9,8 +9,17 @@ import type { User } from '../session-types'
  * their own storage and email provider.
  */
 export interface AuthService {
-    /** True when `email` is in the allowlist (case-insensitive). */
+    /**
+     * True when `email` may log in (case-insensitive): on the admin
+     * allowlist, a contact of an active sponsor, or a contact of an active
+     * speaker. Checked at magic-link issue time — what the login grants
+     * access to is decided per request by `requireAdmin` /
+     * `requireSponsorContact` / `requireSpeaker`.
+     */
     isAllowed(email: string): Promise<boolean>
+
+    /** True when `email` is on the admin allowlist. The strict admin gate. */
+    isAdminEmail(email: string): Promise<boolean>
 
     /**
      * Issues a one-time login token and emails the magic link. The raw token
@@ -42,4 +51,11 @@ export interface AuthService {
 
     /** Deletes the session row. Idempotent. */
     destroySession(sessionId: string): Promise<void>
+
+    /** Most recent login (session creation) time for every email that has
+     * ever logged in, as unix seconds, keyed by lowercased email. Emails
+     * that have never logged in are simply absent — distinct from a login
+     * time of 0. Powers "last login" columns in admin views (e.g. the
+     * speakers table); callers filter down to the emails they care about. */
+    getLastLoginTimes(): Promise<Record<string, number>>
 }

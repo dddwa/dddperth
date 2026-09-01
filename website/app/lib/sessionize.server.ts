@@ -12,7 +12,7 @@ const NO_CACHE = process.env.NO_CACHE != null ? process.env.NO_CACHE === 'true' 
 const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 5, // 5 mins
+    ttl: 1000 * 60 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
@@ -21,7 +21,7 @@ const scheduleCache = new LRUCache<string, z.infer<typeof gridSmartSchema>>({
 const sessionsCache = new LRUCache<string, SessionsList>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 5, // 5 mins
+    ttl: 1000 * 60 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },
@@ -29,7 +29,7 @@ const sessionsCache = new LRUCache<string, SessionsList>({
 const speakersCache = new LRUCache<string, z.infer<typeof speakersSchema>>({
     max: 250,
     maxSize: 1024 * 1024 * 12, // 12 mb
-    ttl: 1000 * 5, // 5 mins
+    ttl: 1000 * 60 * 5, // 5 mins
     sizeCalculation(value, key) {
         return JSON.stringify(value).length + (key ? key.length : 0)
     },

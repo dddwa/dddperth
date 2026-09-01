@@ -1,19 +1,21 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TalkOptionCard } from '~/components/TalkOptionCard'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
-import { getYearConfig } from '~/lib/get-year-config.server'
 import type { Sponsor } from '~/lib/conference-state-client-safe'
+import { getYearConfig } from '~/lib/get-year-config.server'
 import type { VotingApiResponse, VotingBatchData } from '~/lib/voting-api-types'
 import { isVotingBatchResponse, isVotingErrorResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import type { TalkPair } from '~/lib/voting.server'
 import { getSessionsForVoting, getVotingSession } from '~/lib/voting.server'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Container, Flex, HStack, styled, VStack } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.voting'
+import { noIndexMeta } from '~/lib/seo'
 
 // Constants
 const FETCH_TIMEOUT = 10000 // 10 seconds
@@ -21,7 +23,7 @@ const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
 const CLIENT_VERSION = CURRENT_CLIENT_VERSION
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })
@@ -30,14 +32,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Platinum sponsors are surfaced as a single-line acknowledgement on the
     // active voting view. Top tier only keeps the line short and reserves
     // this high-engagement surface as a premium perk.
-    const votingSponsors: Sponsor[] = context.conferenceState.conference.sponsors.platinum ?? []
+    const votingSponsors: Sponsor[] = getConferenceState(context).conference.sponsors.platinum ?? []
 
     if (
-        context.conferenceState.talkVoting.state === 'not-open-yet' ||
-        context.conferenceState.talkVoting.state === 'closed'
+        getConferenceState(context).talkVoting.state === 'not-open-yet' ||
+        getConferenceState(context).talkVoting.state === 'closed'
     ) {
         return {
-            talkVoting: context.conferenceState.talkVoting,
+            talkVoting: getConferenceState(context).talkVoting,
             votingSession: {
                 sessionId: null,
                 votingProgress: 0,
@@ -53,7 +55,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Check if Sessionize endpoint is configured
     if (yearConfig.sessions?.kind !== 'sessionize' || !yearConfig.sessions.allSessionsEndpoint) {
         return {
-            talkVoting: context.conferenceState.talkVoting,
+            talkVoting: getConferenceState(context).talkVoting,
             votingSession: {
                 sessionId: null,
                 votingProgress: 0,
@@ -69,18 +71,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const allSessionsEndpoint = yearConfig.sessions.allSessionsEndpoint
     // This will create a session and redirect
-    const votingSession = await getVotingSession(
-        request,
-        context,
-        context.conferenceState.conference.year,
-        () => getSessionsForVoting(allSessionsEndpoint),
+    const votingSession = await getVotingSession(request, context, getConferenceState(context).conference.year, () =>
+        getSessionsForVoting(allSessionsEndpoint),
     )
 
     // Calculate actual voting progress based on session state
     const votingProgress = votingSession.roundNumber * votingSession.maxPairsPerRound + votingSession.currentIndex
 
     return {
-        talkVoting: context.conferenceState.talkVoting,
+        talkVoting: getConferenceState(context).talkVoting,
         votingSession: {
             sessionId: votingSession.sessionId,
             currentRound: votingSession.roundNumber,
@@ -91,6 +90,20 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         votingSponsors,
     }
 }
+
+/**
+ * Not indexed: voting pairs are per-session and transient; the page is
+ * meaningless out of context.
+ *
+ * The title is spread back in deliberately. A child's `meta` *replaces* the
+ * root layout's rather than merging, so `export const meta = noIndexMeta`
+ * alone left the page with no `<title>` at all — a WCAG 2.4.2 failure, and one
+ * axe flags on every scan of this route.
+ */
+export const meta = () => [
+    ...noIndexMeta(),
+    { title: `Vote for talks | ${conferenceManifest.public.name}` },
+]
 
 export default function VotingPage() {
     const data = useLoaderData<typeof loader>()
@@ -103,7 +116,6 @@ export default function VotingPage() {
                         sessionId={votingSession.sessionId}
                         currentRound={votingSession.currentRound}
                         currentIndex={votingSession.currentIndex}
-                        totalPairs={votingSession.totalPairs}
                     />
                 )}
             </Await>
@@ -115,12 +127,10 @@ function VotingPageWithSession({
     sessionId,
     currentRound,
     currentIndex,
-    totalPairs,
 }: {
     sessionId: string | null
     currentRound: number
     currentIndex: number
-    totalPairs: number
 }) {
     const data = useLoaderData<typeof loader>()
 
@@ -129,12 +139,22 @@ function VotingPageWithSession({
 
     const [error, setError] = useState<string | null>(null)
     const [voteSubmitted, setVoteSubmitted] = useState<'A' | 'B' | 'skip' | null>(null)
+    // Screen-reader announcement text, deliberately held in its own state.
+    // `voteSubmitted` drives the *visual* feedback and is cleared after 200ms
+    // to advance to the next pair — far too short for a polite live region,
+    // which debounces on the order of a few hundred ms and would usually
+    // announce nothing at all. This holds the message long enough to be read.
+    const [announcement, setAnnouncement] = useState('')
     const [isFetching, setIsFetching] = useState(false)
     const [isExhausted, setIsExhausted] = useState(false)
 
-    // Load initial batch
+    // Load initial batch. The ref makes this fire once per mount — without it
+    // a failed load flips isFetching back to false and re-triggers the effect,
+    // auto-retrying forever and clearing the error before the user can see it.
+    const initialLoadStarted = useRef(false)
     useEffect(() => {
-        if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0) {
+        if (sessionId && data.talkVoting.state === 'open' && pairs.length === 0 && !initialLoadStarted.current) {
+            initialLoadStarted.current = true
             void loadInitialBatch(
                 currentRound,
                 currentIndex,
@@ -152,11 +172,21 @@ function VotingPageWithSession({
         // Don't prefetch if we haven't loaded any pairs yet
         if (pairs.length === 0) return
 
+        // A failed prefetch parks here until the user reaches the end of the
+        // loaded pairs and hits Try Again — auto-retrying on every state
+        // change would loop against a persistent failure.
+        if (error) return
+
+        // Once the server reports exhaustion there is nothing left to fetch —
+        // without this guard the effect refetches in a tight loop until the
+        // voter reaches the end of the loaded pairs.
+        if (isExhausted) return
+
         const remainingPairs = pairs.length - localIndex
         if (remainingPairs <= PREFETCH_THRESHOLD) {
             void loadMorePairs(pairs, isFetching, setIsFetching, setError, setPairs, setIsExhausted)
         }
-    }, [localIndex, pairs, isFetching])
+    }, [localIndex, pairs, isFetching, error, isExhausted])
 
     async function handleVote(vote: 'A' | 'B' | 'skip') {
         const currentPair = pairs[localIndex]
@@ -164,6 +194,7 @@ function VotingPageWithSession({
 
         // Show vote feedback
         setVoteSubmitted(vote)
+        setAnnouncement(vote === 'skip' ? 'Talk skipped. Loading the next pair.' : 'Vote recorded. Loading the next pair.')
 
         // Submit vote (fire and forget)
         void submitVote(currentPair, vote)
@@ -173,6 +204,11 @@ function VotingPageWithSession({
             setLocalIndex((prev) => prev + 1)
             setVoteSubmitted(null)
         }, 200)
+
+        // Clear the announcement well after a screen reader has had time to
+        // read it, so the region is empty before the next vote writes to it
+        // (an unchanged live region is not re-announced).
+        setTimeout(() => setAnnouncement(''), 3000)
     }
 
     function handleRetry() {
@@ -199,13 +235,13 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                              DateTime.DATETIME_SHORT,
-                              { locale: 'en-AU' },
-                          )} and closes ${DateTime.fromISO(data.talkVoting.closes, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                              DateTime.DATETIME_SHORT,
-                              { locale: 'en-AU' },
-                          )}`
+                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, {
+                              zone: conferenceManifest.public.timezone,
+                          }).toLocaleString(DateTime.DATETIME_SHORT, {
+                              locale: 'en-AU',
+                          })} and closes ${DateTime.fromISO(data.talkVoting.closes, {
+                              zone: conferenceManifest.public.timezone,
+                          }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
                         : 'Voting is not available for this conference'
                 }
             />
@@ -228,7 +264,10 @@ function VotingPageWithSession({
         return <VotingMessage message="Talk Voting" details="No talk comparisons are available right now." />
     }
 
-    if (error) {
+    // Only block on an error once there is nothing left to vote on — a failed
+    // background prefetch shouldn't interrupt voting through the pairs we
+    // already have.
+    if (error && localIndex >= pairs.length) {
         return (
             <VotingMessage message="Talk Voting" error={error} cta={<Button onClick={handleRetry}>Try Again</Button>} />
         )
@@ -237,17 +276,6 @@ function VotingPageWithSession({
     if (localIndex >= pairs.length && pairs.length > 0) {
         if (isExhausted) {
             return <VotingMessage message="Talk Voting" details="No more talk comparisons are available right now." />
-        }
-
-        // If we've run out of pairs and not currently fetching, show loading or error
-        if (error && !isFetching) {
-            return (
-                <VotingMessage
-                    message="Failed to load more talks"
-                    error={error}
-                    cta={<Button onClick={handleRetry}>Retry</Button>}
-                />
-            )
         }
 
         // Otherwise, show loading
@@ -264,17 +292,27 @@ function VotingPageWithSession({
     return (
         <Container py="12" maxW="6xl">
             <VStack gap="8">
-                <SponsorAcknowledgement
-                    prefix="Voting brought to you by"
-                    sponsors={data.votingSponsors}
-                />
+                {/* Visually-hidden live region: announces vote submission and
+                    errors to screen reader users, since the visual feedback
+                    (card highlight, button disable) has no text equivalent and
+                    the surrounding content updates without a page navigation. */}
+                <styled.div srOnly aria-live="polite" role="status">
+                    {error && localIndex < pairs.length ? error : announcement}
+                </styled.div>
+                <SponsorAcknowledgement prefix="Voting brought to you by" sponsors={data.votingSponsors} />
                 <VStack gap="4">
-                    <styled.h2 fontSize="2xl" color="text.primary">
+                    <styled.h1 fontSize="2xl" color="text.primary">
                         Which talk would you prefer to see?
-                    </styled.h2>
-                    <styled.p fontSize="sm" color="text.muted">
-                        Round {currentPair.roundNumber + 1} · Pair {currentPair.index + 1} of {totalPairs}
-                    </styled.p>
+                    </styled.h1>
+                    {/* A voter who has crossed into round 2 has seen every talk
+                        once — let them know they can stop, without turning
+                        voting into a progress-bar chore with concrete counts */}
+                    {currentPair.roundNumber >= 1 && (
+                        <styled.p fontSize="sm" color="text.muted" textAlign="center">
+                            You've seen every talk now, so feel free to stop here — or keep going and you'll get fresh
+                            match-ups. Every vote counts!
+                        </styled.p>
+                    )}
                 </VStack>
 
                 <HStack justify="center" gap="4">
@@ -401,9 +439,9 @@ function VotingMessage({
     return (
         <Container py="12">
             <VStack gap="6">
-                <styled.h2 fontSize="2xl" color="text.primary">
+                <styled.h1 fontSize="2xl" color="text.primary">
                     {message}
-                </styled.h2>
+                </styled.h1>
                 {error && (
                     <styled.p fontSize="lg" color="text.muted" textAlign="center">
                         {error}

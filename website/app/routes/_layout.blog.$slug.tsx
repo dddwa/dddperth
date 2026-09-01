@@ -1,11 +1,15 @@
+import { conferenceManifest } from '@conference/manifest'
 import { useRef } from 'react'
 import { data, useLoaderData } from 'react-router'
 import invariant from 'tiny-invariant'
-import { conferenceManifest } from '@conference/manifest'
 import type { BlogAuthor } from '~/lib/authors.server'
+import { ContentPageLayout } from '~/components/page-layout'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { useMdxPage } from '~/lib/mdx'
+import { getConferenceState, getServices } from '~/remix-app-load-context'
+import { Box, Flex, styled } from '~/styled-system/jsx'
+import { prose } from '~/styled-system/recipes'
 import type { Route } from './+types/_layout.blog.$slug'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -14,7 +18,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
-    const post = await context.services.content.getPage(slug, 'blog')
+    const post = await getServices(context).content.getPage(slug, 'blog')
     if (!post) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
@@ -24,7 +28,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             siteUrl,
             frontmatter: post.frontmatter,
             slug: post.slug,
-            conferenceState: context.conferenceState,
+            conferenceState: getConferenceState(context),
             blogAuthors: getValidAuthorNames(post.frontmatter.authors ?? [])
                 .map(getAuthor)
                 .filter((a): a is BlogAuthor => !!a),
@@ -39,7 +43,7 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 }
 
 export function meta(args: Route.MetaArgs) {
-    const { data, params } = args
+    const { loaderData: data, params } = args
     const { slug } = params
     invariant(!!slug, 'Expected slug param')
 
@@ -99,46 +103,66 @@ export default function BlogPost() {
     const Component = useMdxPage(slug, 'blog', conferenceState)
 
     return (
-        <>
+        <ContentPageLayout>
             {frontmatter.draft ? (
-                <div>🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨</div>
+                <Box
+                    bg="status.warning.bg"
+                    color="status.warning.fg"
+                    borderWidth="1px"
+                    borderColor="status.warning.border"
+                    p="4"
+                    mb="6"
+                    rounded="md"
+                >
+                    🚨 This is a draft, please do not share this page until it&apos;s officially published 🚨
+                </Box>
             ) : null}
-            <div>
-                <div>
-                    <div>
-                        <div>
-                            <div>
-                                <img src={frontmatter.image} alt={frontmatter.imageAlt} />
-                            </div>
-                            <div>
-                                <div>
-                                    {/* <div>{frontmatter.date}</div> */}
-                                    <div>{frontmatter.title}</div>
-                                </div>
-                                <div>
-                                    {blogAuthors.map((author) => (
-                                        <div key={author.name}>
-                                            <div>
-                                                <img src={author.avatar} alt="" />
-                                            </div>
-                                            <div>
-                                                <div>{author.name}</div>
-                                                <div>{author.title}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <div ref={mdRef} className="md-prose">
-                                <Component />
-                            </div>
-                            <hr />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
+            <styled.article maxW="4xl" mx="auto" color="text.primary">
+                {frontmatter.image ? (
+                    <styled.img
+                        src={frontmatter.image}
+                        alt={frontmatter.imageAlt ?? ''}
+                        width="full"
+                        maxH="[32rem]"
+                        objectFit="cover"
+                        rounded="xl"
+                        mb="6"
+                    />
+                ) : null}
+
+                {/* The post title is the page's heading — it was a bare div,
+                    leaving blog posts with no heading-level entry point. */}
+                <styled.h1 fontSize={{ base: '3xl', md: '4xl' }} lineHeight="tight" mb="5">
+                    {frontmatter.title}
+                </styled.h1>
+
+                {blogAuthors.length > 0 ? (
+                    <Flex gap="5" flexWrap="wrap" mb="8">
+                        {blogAuthors.map((author) => (
+                            <Flex key={author.name} alignItems="center" gap="3">
+                                <styled.img
+                                    src={author.avatar}
+                                    alt=""
+                                    width="12"
+                                    height="12"
+                                    objectFit="cover"
+                                    rounded="full"
+                                />
+                                <Box>
+                                    <styled.p fontWeight="semibold">{author.name}</styled.p>
+                                    <styled.p color="text.muted" fontSize="sm">
+                                        {author.title}
+                                    </styled.p>
+                                </Box>
+                            </Flex>
+                        ))}
+                    </Flex>
+                ) : null}
+
+                <Box ref={mdRef} className={prose({ size: 'lg' })}>
+                    <Component />
+                </Box>
+            </styled.article>
+        </ContentPageLayout>
     )
 }

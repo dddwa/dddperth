@@ -15,7 +15,8 @@
  * making them optional + having a sensible default in core.
  */
 
-import type { ConferenceConfig } from './types'
+import type { DateTime } from 'luxon'
+import type { ConferenceConfig, MinorSponsorTier } from './types'
 
 /**
  * Public, client-safe conference identity. Anything in here may render in
@@ -36,6 +37,16 @@ export interface ConferenceConfigPublic {
      * until they want a feature on.
      */
     features?: ConferenceFeatures
+    /**
+     * Rename sponsor tier headings for this conference. Any tier left out
+     * keeps its core default. Regional wording belongs here rather than in
+     * components — DDD Adelaide renders `community` as "SA Sponsors", where
+     * another fork would want "WA Sponsors" or plain "Community".
+     *
+     * Only takes effect for tiers rendered under their own heading, i.e.
+     * with `features.separateOtherSponsorTiers` on.
+     */
+    sponsorTierLabels?: Partial<Record<MinorSponsorTier, string>>
 }
 
 /**
@@ -49,6 +60,30 @@ export interface ConferenceFeatures {
      * for small lineups.
      */
     sponsorOverview?: boolean
+
+    /**
+     * Redirect `/sponsors/<year>` to `/agenda/<year>` for every year except the
+     * current/upcoming one. For forks that don't import historical sponsors,
+     * past-year sponsor pages are empty, so send visitors to that year's agenda
+     * instead. The current year's sponsors page is unaffected.
+     */
+    redirectPastSponsorsToAgenda?: boolean
+
+    /**
+     * Hide the homepage "Workshops" section. The section ships on by default
+     * (it renders a "Coming soon!" placeholder); a fork that isn't running
+     * workshops in a given year can set this to drop the section entirely.
+     */
+    hideWorkshops?: boolean
+
+    /**
+     * Give each minor sponsor tier (community, coffee cart, quiet room,
+     * venue, prize, keynotes) its own heading instead of pooling them under
+     * a single "Other Sponsors" block. Worth turning on once a fork has
+     * enough of them that the pooled strip stops communicating who paid for
+     * what. Pair with `public.sponsorTierLabels` to control the wording.
+     */
+    separateOtherSponsorTiers?: boolean
 }
 
 /**
@@ -60,6 +95,7 @@ export interface Socials {
     Facebook?: string
     Instagram?: string
     Linkedin?: string
+    Bluesky?: string
     GitHub?: string
     Youtube?: string
     Flickr?: string
@@ -143,6 +179,18 @@ export interface ContentPaths {
     blogDir: string
     /** Absolute path to the blog authors.yml */
     blogAuthorsFile: string
+    /**
+     * Absolute path to a folder of fork-owned static assets (sponsor logos,
+     * team photos, PDFs). Served at the site root alongside core's
+     * website/public/ — a file at `<publicDir>/images/sponsors/x.svg` is
+     * reachable at `/images/sponsors/x.svg`. On name collisions the
+     * conference file wins. Optional: omit if the fork has no static assets.
+     *
+     * Core references two of these files by URL, so every conference should
+     * supply them: `/favicon.svg` (root.tsx icon link + structured data) and
+     * `/images/logo.png` (og:image / twitter:image meta tags).
+     */
+    publicDir?: string
 }
 
 /**
@@ -203,6 +251,189 @@ export interface MobileApp {
 }
 
 /**
+ * Jira wiring for the sponsor portal sync. All values are fork-owned config
+ * — field ids and option ids differ per Jira site, so nothing here can live
+ * in core. Credentials are NOT here; they're host secrets (wrangler
+ * `JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
+ */
+export interface SponsorPortalJiraConfig {
+    /** Jira site, e.g. "https://dddperth.atlassian.net" */
+    baseUrl: string
+    /** Sponsors project key, e.g. "SPN" */
+    projectKey: string
+    /**
+     * JQL selecting this year's sponsor issues. `{year}` is substituted with
+     * `SponsorPortalConfig.year`, e.g.
+     * `project = SPN AND issuetype = Sponsor AND labels = "{year}"`.
+     */
+    jql: string
+    /** Custom field ids on the sponsor issue type. */
+    fields: {
+        /** Text field holding the company display name (falls back to issue summary). */
+        companyName: string
+        /**
+         * URL field with the company website. Sponsor-owned: prefills the
+         * portal, and portal saves push the sponsor's value back.
+         */
+        website: string
+        /** Text field holding comma/semicolon-separated contact emails. */
+        contactEmail: string
+        /**
+         * Optional second text field of comma/semicolon-separated emails,
+         * merged with `contactEmail` (deduplicated) when granting portal
+         * access. Lets the committee keep the primary contact separate from
+         * extra portal logins. Omit if the field doesn't exist.
+         */
+        additionalContactEmails?: string
+        /** Single-select holding the sponsorship tier. */
+        tier: string
+        /** Multi-checkbox "tasks" field the portal writes completion into. */
+        sponsorTasks: string
+        /**
+         * Paragraph field the sponsor's quote/blurb is pushed into on every
+         * portal save (sponsor-owned — the portal's value overrides Jira's).
+         * Omit if the field doesn't exist; the push is skipped.
+         */
+        quote?: string
+        /**
+         * URL fields the sponsor's social links are pushed into, keyed by
+         * portal platform (`linkedin`, `twitter`, `instagram`, `facebook`,
+         * `youtube`). Sponsor-owned like `quote`; platforms without a
+         * field id are skipped.
+         */
+        socials?: Record<string, string>
+    }
+    /** Option id on `fields.sponsorTasks` flipped when a profile completes. */
+    assetsTaskOptionId: string
+    /**
+     * Raw Jira tier option value → `YearSponsors` category key (e.g.
+     * `{ Coffee: 'coffeeCart' }`). Unmapped values still sync and display
+     * raw — new Jira options must not break the portal.
+     */
+    tierMap: Record<string, string>
+}
+
+/**
+ * Sponsor self-service portal. When set, /portal routes come alive, sponsor
+ * contacts can log in via the same magic-link flow as admins, and sponsor
+ * records sync from Jira. Omit for forks without a sponsor portal — /portal
+ * returns 404 and the sync never runs.
+ */
+export interface SponsorPortalConfig {
+    /** Conference year the portal is collecting assets for, e.g. "2026". */
+    year: string
+    jira: SponsorPortalJiraConfig
+}
+
+/**
+ * Speaker self-service portal. When set, /speaker-portal routes come alive
+ * for anyone with an accepted or waitlisted Sessionize session whose email
+ * has been added as a contact for that speaker (via /admin/speakers — a
+ * manual, admin-managed allowlist; there is no external sync for it). Omit
+ * for forks without a speaker portal — the routes 404 and the Sessionize
+ * sync never runs.
+ */
+export interface SpeakerPortalConfig {
+    /** Conference year the portal is collecting speaker info for, e.g. "2026". */
+    year: string
+    /** Sessionize session statuses that grant portal access, e.g. ['Accepted', 'Waitlisted']. */
+    portalAccessStatuses: string[]
+    /** Static link to a speaker info pack, rendered as a download on the dashboard. Omit to hide it. */
+    infoPackUrl?: string
+    /**
+     * Sessionize category *names* (as configured for this event in
+     * Sessionize, under Event → Categories) that map to the dashboard's
+     * format/level/general topic/talk topics fields. Category names aren't
+     * stable across events/forks, so this is fork-configurable rather than
+     * hardcoded in core.
+     */
+    sessionizeCategoryNames: {
+        format: string
+        level: string
+        generalTopic: string
+        talkTopics: string
+    }
+    /**
+     * Outstanding-items checklist shown at the top of the speaker dashboard
+     * (session details, ticket claim, training RSVP). Omit a due date to show
+     * that item without one. The ticket claim URL is deliberately not here —
+     * it's a secret, `SPEAKER_TICKET_CLAIM_URL_<YEAR>`.
+     */
+    checklist?: SpeakerPortalChecklistConfig
+    /**
+     * Notified by email when a speaker self-reports confirming their session
+     * in Sessionize (the checklist's "I've already confirmed it" button).
+     * Omit to skip sending — the self-report still completes the checklist
+     * item either way.
+     */
+    sessionConfirmationNotifyEmail?: string
+    /**
+     * The speaker-facing team's shared inbox. Used two ways on the admin
+     * speakers list's follow-up items: as the destination for the "Send test
+     * email" button (sends the real template there instead of to actual
+     * speakers, so an admin can preview copy/rendering before a real send),
+     * and as the Reply-To on every follow-up email actually sent to
+     * speakers, so replies land with the team rather than the noreply
+     * From: address. Omit to hide the test-email button and skip setting
+     * Reply-To.
+     */
+    speakerEmailAddress?: string
+}
+
+/** One configured speaker-training session. `id` should match one of the
+ * app's `SPEAKER_TRAINING_SESSION_OPTIONS` values (e.g. "Session 1") — kept
+ * as a plain string here since this package doesn't depend on the website
+ * app's types. */
+export interface SpeakerTrainingSessionConfig {
+    id: string
+    title: string
+    dateTime: DateTime
+    endDateTime: DateTime
+}
+
+export interface SpeakerDinnerConfig {
+    dateTime: DateTime
+    endDateTime: DateTime
+    location?: string
+}
+
+/**
+ * Checklist due dates keyed by item key (e.g. `claimTicket`) — see
+ * `SPEAKER_CHECKLIST_ITEMS` in core/website/app/lib/speakers/checklist-items.ts.
+ * A plain string index because this package can't depend on the website app's
+ * types, matching `SpeakerTrainingSessionConfig.id`. Omit an entry to show
+ * that item undated.
+ */
+export type SpeakerChecklistDueDates = Record<string, DateTime>
+
+export interface SpeakerPortalChecklistConfig {
+    /** When each checklist item is due. Omit to show every item undated. */
+    dueDates?: SpeakerChecklistDueDates
+    /** The training sessions offered — rendered as checkboxes in the RSVP
+     * modal and used to generate calendar invites. Omit to hide the whole
+     * training-RSVP checklist item. */
+    speakerTrainingSessions?: SpeakerTrainingSessionConfig[]
+    /** The speaker dinner — rendered in its own RSVP modal. Omit to hide the
+     * checklist item entirely. */
+    speakerDinner?: SpeakerDinnerConfig
+}
+
+/** One configured Meet-the-Experts time block. */
+export interface MeetTheExpertsSlotConfig {
+    id: string
+    label: string
+}
+
+/**
+ * Meet-the-Experts config — shared by the speaker and sponsor portals, since
+ * either a speaker or a sponsor can register a person for a time slot. Omit
+ * (or an empty `slots` array) to hide the feature in both portals.
+ */
+export interface MeetTheExpertsConfig {
+    slots: MeetTheExpertsSlotConfig[]
+}
+
+/**
  * Runtime manifest — the bits the app needs at request time.
  *
  * Importable from anywhere (server or client) without bundler hazards.
@@ -220,6 +451,13 @@ export interface ConferenceManifest {
     homepage?: HomepageContentSlots
     /** Mobile app config. Omit for forks without an app — /app returns 404 then. */
     mobileApp?: MobileApp
+    /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
+    sponsorPortal?: SponsorPortalConfig
+    /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
+    speakerPortal?: SpeakerPortalConfig
+    /** Meet-the-Experts time slots — shared by the speaker and sponsor
+     * portals. Omit to hide the feature entirely. */
+    meetTheExperts?: MeetTheExpertsConfig
 }
 
 /**

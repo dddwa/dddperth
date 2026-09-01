@@ -3,11 +3,12 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import type { VoteErrorResponse, VoteSuccessResponse } from '~/lib/voting-api-types'
 import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import { recordVoteInTable } from '~/lib/voting.server'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/api.voting.vote'
 
 export async function action({ request, context }: Route.ActionArgs) {
     try {
-        if (context.conferenceState.talkVoting.state !== 'open') {
+        if (getConferenceState(context).talkVoting.state !== 'open') {
             const errorResponse: VoteErrorResponse = { error: 'Voting is not open' }
             return data(errorResponse, { status: 403 })
         }
@@ -65,7 +66,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 400 })
         }
 
-        const votingStorageSession = await context.services.sessions.voting.getSession(
+        const votingStorageSession = await getServices(context).sessions.voting.getSession(
             request.headers.get('Cookie'),
         )
         const sessionId = votingStorageSession.get('sessionId')
@@ -75,7 +76,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 401 })
         }
 
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+        const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
         if (
             yearConfig.kind === 'cancelled' ||
             yearConfig.sessions?.kind !== 'sessionize' ||
@@ -86,9 +87,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         await recordVoteInTable(
-            context.services,
+            getServices(context),
             sessionId,
-            context.conferenceState.conference.year,
+            getConferenceState(context).conference.year,
             roundNumber,
             indexInRound,
             vote,

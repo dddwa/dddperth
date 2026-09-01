@@ -1,6 +1,7 @@
 import { data, isRouteErrorResponse, redirect } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import type { VotingBatchResponse, VotingErrorResponse } from '~/lib/voting-api-types'
+import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
 import {
     extractSessionIds,
     getSessionsForVoting,
@@ -8,24 +9,24 @@ import {
     getVotingSession,
     hasSessionsChanged,
 } from '~/lib/voting.server'
-import { CURRENT_CLIENT_VERSION } from '~/lib/voting-version-constants'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/api.voting.batch'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     try {
-        const yearConfig = getYearConfig(context.conferenceState.conference.year, context.config)
+        const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
 
         if (yearConfig.kind === 'cancelled') {
             const errorResponse: VotingErrorResponse = { error: 'Conference cancelled this year' }
             return data(errorResponse, { status: 404 })
         }
 
-        if (context.conferenceState.talkVoting.state === 'not-open-yet') {
+        if (getConferenceState(context).talkVoting.state === 'not-open-yet') {
             const errorResponse: VotingErrorResponse = { error: 'Voting not open yet', state: 'not-open-yet' }
             return data(errorResponse, { status: 403 })
         }
 
-        if (context.conferenceState.talkVoting.state === 'closed') {
+        if (getConferenceState(context).talkVoting.state === 'closed') {
             const errorResponse: VotingErrorResponse = { error: 'Voting has closed', state: 'closed' }
             return data(errorResponse, { status: 403 })
         }
@@ -37,7 +38,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
 
         // Get session ID from cookie
-        const votingStorage = context.services.sessions.voting
+        const votingStorage = getServices(context).sessions.voting
         const votingStorageSession = await votingStorage.getSession(request.headers.get('Cookie'))
         const sessionId = votingStorageSession.get('sessionId')
 
@@ -51,11 +52,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         // which needs it, and then we redirect, or we need the sessions to generate the batch
         const sessions = await getSessionsForVoting(allSessionsEndpoint)
 
-        const userSession = await getVotingSession(
-            request,
-            context,
-            context.conferenceState.conference.year,
-            () => Promise.resolve(sessions),
+        const userSession = await getVotingSession(request, context, getConferenceState(context).conference.year, () =>
+            Promise.resolve(sessions),
         )
 
         // Check for client version compatibility
@@ -112,7 +110,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const successResponse: VotingBatchResponse = {
             batch,
             sessionId,
-            votingState: context.conferenceState.talkVoting.state,
+            votingState: getConferenceState(context).talkVoting.state,
         }
 
         return data(successResponse)

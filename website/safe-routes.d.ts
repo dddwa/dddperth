@@ -30,6 +30,26 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
+    "/admin/speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers._index.js').SearchParams>,
+    },
+    "/admin/speakers/:sessionizeId": {
+      params: {'sessionizeId': string | number},
+      query: ExportedQuery<import('app/routes/admin.speakers.$sessionizeId.js').SearchParams>,
+    },
+    "/admin/speakers/experts": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.experts.js').SearchParams>,
+    },
+    "/admin/speakers/export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.export.js').SearchParams>,
+    },
+    "/admin/sponsors": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -42,6 +62,10 @@ declare module "safe-routes" {
       params: {'runId': string | number},
       query: ExportedQuery<import('app/routes/admin.voting-validation.stats.$runId.download.js').SearchParams>,
     },
+    "/admin/voting/agenda/:runId": {
+      params: {'runId': string | number},
+      query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId.js').SearchParams>,
+    },
     "/agenda/:year?": {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.($year).js').SearchParams>,
@@ -53,6 +77,10 @@ declare module "safe-routes" {
     "/api/theme": {
       params: never,
       query: ExportedQuery<import('app/routes/api.theme.js').SearchParams>,
+    },
+    "/api/tito-registration": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.tito-registration.js').SearchParams>,
     },
     "/api/voting/batch": {
       params: never,
@@ -114,13 +142,33 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/blog.rss[.xml].js').SearchParams>,
     },
+    "/portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
+    },
+    "/portal/logo/:issueKey": {
+      params: {'issueKey': string | number},
+      query: ExportedQuery<import('app/routes/portal.logo.$issueKey.js').SearchParams>,
+    },
+    "/portal/profile": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal.profile.js').SearchParams>,
+    },
     "/robots.txt": {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
     },
+    "/share": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
+    },
     "/sitemap.xml": {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml].js').SearchParams>,
+    },
+    "/speaker-portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/speaker-portal._index.js').SearchParams>,
     },
     "/sponsors/:year?": {
       params: {'year'?: string | number},
@@ -141,6 +189,7 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
+            | 'routes/api.tito-registration'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
             | 'routes/auth.verify.$token'
@@ -149,6 +198,8 @@ declare module "safe-routes" {
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
+            | 'routes/speaker-portal'
+            | 'routes/speaker-portal._index'
             | 'routes/app-content.$'
             | 'routes/sitemap[.xml]'
             | 'routes/[robots.txt]'
@@ -164,13 +215,25 @@ declare module "safe-routes" {
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
+            | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
+            | 'routes/portal'
+            | 'routes/portal.logo.$issueKey'
+            | 'routes/portal.profile'
+            | 'routes/portal._index'
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
+            | 'routes/admin.speakers'
+            | 'routes/admin.speakers.$sessionizeId'
+            | 'routes/admin.speakers.experts'
+            | 'routes/admin.speakers._index'
+            | 'routes/admin.speakers.export'
+            | 'routes/admin.sponsors'
             | 'routes/admin.content'
             | 'routes/admin._index'
             | 'routes/admin.voting';

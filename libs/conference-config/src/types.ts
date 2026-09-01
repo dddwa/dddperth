@@ -26,6 +26,17 @@ export interface Sponsor {
     quote?: string
 }
 
+/**
+ * Tiers rendered outside the headline platinum/gold/silver/bronze ladder —
+ * sponsors who fund a specific thing rather than buying a tier.
+ *
+ * By default these all render together under one "Other Sponsors" heading.
+ * A fork with enough of them to be worth separating can set
+ * `features.separateOtherSponsorTiers` to give each its own heading, and
+ * rename any of them via `public.sponsorTierLabels`.
+ */
+export type MinorSponsorTier = 'community' | 'coffeeCart' | 'quietRoom' | 'venue' | 'prize' | 'keynotes'
+
 export interface YearSponsors {
     platinum?: Sponsor[]
     gold?: Sponsor[]
@@ -35,6 +46,10 @@ export interface YearSponsors {
     community?: Sponsor[]
     coffeeCart?: Sponsor[]
     quietRoom?: Sponsor[]
+    /** Whoever provides the venue. */
+    venue?: Sponsor[]
+    /** Whoever puts up prizes for the draw. */
+    prize?: Sponsor[]
 
     keynotes?: Sponsor[]
     room?: Array<Sponsor & { roomName: string }>
@@ -110,7 +125,30 @@ export interface ConferenceYear {
 
     sessionizeUrl: string | undefined
 
+    /**
+     * Numeric Sessionize event ID, used by the admin agenda planner to
+     * deep-link talks into the Sessionize back office — take it from the URL
+     * in Sessionize's organizer view. Omit to render talks without the link.
+     */
+    sessionizeOrganizerEventId?: string
+
     ticketInfo: TicketInfo | undefined
+
+    /**
+     * Sharecast "I'm attending" share-image generator for this year.
+     * When unset the /share page tells visitors sharing isn't available this year.
+     */
+    sharecast?: {
+        /** Sharecast instance URL, e.g. https://ddd-2026.sharecast.io/ */
+        url: string
+        /**
+         * Which Tito ticket releases count as attendees on the /share picker, matched
+         * case-insensitively against the start of the release title (e.g. 'General Attendee'
+         * matches 'General Attendee (Early Release)'). Filters out add-ons like sponsorships
+         * or childcare tickets. Unset → every ticket on a registration is shown.
+         */
+        releaseTitlePrefixes?: string[]
+    }
 
     conferenceDate: DateTime | undefined
     agendaPublishedDateTime: DateTime | undefined
