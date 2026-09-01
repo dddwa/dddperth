@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Spinner } from '~/components/ui/spinner'
 import type { TicketSalesState } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
+import { NewTabHint } from '../new-tab-hint'
 
 // `test_mode` lets fake orders through
 const TITO_SCRIPT_SRC = import.meta.env.DEV
@@ -85,6 +86,7 @@ export function TitoTicketForm({ accountId, eventId }: { eventId: string; accoun
                         textDecoration="underline"
                     >
                         ti.to/{accountId}/{eventId}
+                        <NewTabHint />
                     </styled.a>
                 </styled.p>
             </Flex>

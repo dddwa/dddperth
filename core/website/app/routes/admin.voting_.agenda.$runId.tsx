@@ -18,6 +18,7 @@ import { getConferenceState, getConfig, getServices } from '~/remix-app-load-con
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { ColorToken } from '~/styled-system/tokens'
 import type { Route } from './+types/admin.voting_.agenda.$runId'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 const SESSION_FORMAT_CATEGORY = 'Session format'
 const LEVEL_CATEGORY = 'Level'
@@ -2526,6 +2527,7 @@ export default function VotingAgenda() {
                                                 mb="6"
                                             >
                                                 View on Sessionize ↗
+                                                <NewTabHint />
                                             </styled.a>
                                         )}
 

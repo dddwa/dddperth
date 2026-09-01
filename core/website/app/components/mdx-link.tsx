@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { styled } from '~/styled-system/jsx'
+import { NewTabHint } from './new-tab-hint'
 
 const StyledLink = styled(Link)
 
@@ -27,6 +28,7 @@ export function MdxLink({ href, title, children }: MdxLinkProps) {
         return (
             <styled.a href={href} title={title} target="_blank" rel="noopener noreferrer">
                 {children}
+                <NewTabHint />
             </styled.a>
         )
     }

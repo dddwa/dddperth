@@ -25,6 +25,7 @@ import { Button } from '~/components/ui/button'
 import { conferenceManifest } from '@conference/manifest'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 type ContentType = 'page' | 'blog'
 
@@ -117,6 +118,7 @@ function wrapMdxComponent(
                                     rel="noopener noreferrer"
                                 >
                                     Submit a session via Sessionize
+                                    <NewTabHint />
                                 </a>
                             </Button>
                         </styled.div>
@@ -138,6 +140,7 @@ function wrapMdxComponent(
                         <Button asChild>
                             <a href="https://sessionize.com/app/speaker" target="_blank" rel="noopener noreferrer">
                                 Submit a session via Sessionize
+                                <NewTabHint />
                             </a>
                         </Button>
                     </styled.div>

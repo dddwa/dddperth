@@ -4,6 +4,7 @@ import { css } from '~/styled-system/css'
 import { Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
+import { newTabLabel } from '../new-tab-hint'
 
 const contactEmail = conferenceManifest.brand.contactEmail
 
@@ -96,7 +97,7 @@ export const Footer = () => (
                 <Flex direction="row" gap="1">
                     {socialsData.map((item) => (
                         <styled.a
-                            aria-label={`Visit us on ${item.title}`}
+                            aria-label={newTabLabel(`Visit us on ${item.title}`)}
                             key={item.link}
                             href={item.link}
                             target={`_blank`}

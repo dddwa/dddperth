@@ -13,6 +13,7 @@ import { ContentPageLayout } from '~/components/page-layout'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.app'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
@@ -81,6 +82,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 width="[200px]"
                                 objectFit="contain"
                             />
+                            <NewTabHint />
                         </styled.a>
 
                         <styled.a
@@ -98,6 +100,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 width="[200px]"
                                 objectFit="contain"
                             />
+                            <NewTabHint />
                         </styled.a>
                     </styled.div>
 

@@ -1,6 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { SponsorLogo } from '~/components/sponsor-logo'
 import { Box, Grid, styled } from '~/styled-system/jsx'
+import { newTabLabel } from '../new-tab-hint'
 
 export interface PastSponsorsGridProps {
     sponsors: { name: string; logoDarkMode: string; logoLightMode: string; website: string }[]
@@ -49,7 +50,7 @@ export function PastSponsorsGrid({
                         rounded="md"
                         padding="3"
                         _hover={{ borderColor: 'border.emphasis' }}
-                        aria-label={`Visit ${s.name}`}
+                        aria-label={newTabLabel(`Visit ${s.name}`)}
                     >
                         <SponsorLogo
                             logoUrlDarkMode={s.logoDarkMode}

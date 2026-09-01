@@ -31,6 +31,7 @@ import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { SystemStyleObject } from '~/styled-system/types'
 import { SponsorInlineLogo } from '../sponsor-inline-logo'
+import { newTabLabel } from '../new-tab-hint'
 
 /**
  * Cell dimensions per tier. Width caps stop wide wordmarks from sprawling;
@@ -61,7 +62,7 @@ function SponsorRow({ sponsors, cell, children }: {
                     alignItems="center"
                     justifyContent="center"
                     css={cell}
-                    aria-label={sponsor.name}
+                    aria-label={newTabLabel(sponsor.name)}
                     opacity={0.9}
                     transition="opacity"
                     _hover={{ opacity: 1 }}

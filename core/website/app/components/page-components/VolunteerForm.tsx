@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ConferenceState } from '~/lib/conference-state-client-safe'
+import { NewTabHint } from '../new-tab-hint'
 
 declare global {
     interface Window {
@@ -31,6 +32,7 @@ export function VolunteerForm({ conferenceState }: { conferenceState: Conference
                     rel="noopener noreferrer"
                 >
                     Register as a Volunteer
+                    <NewTabHint />
                 </a>
             </div>
         )

@@ -14,6 +14,7 @@ import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year, getConfig(context))
@@ -169,6 +170,7 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
                     maxWidth="[140px]"
                     objectFit="contain"
                 />
+                <NewTabHint />
             </styled.a>
         </Flex>
     )

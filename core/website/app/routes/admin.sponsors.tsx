@@ -9,6 +9,7 @@ import { isProfileComplete } from '~/lib/sponsors/profile'
 import { getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.sponsors'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
@@ -216,6 +217,7 @@ export default function AdminSponsors() {
                                                 textDecoration="underline"
                                             >
                                                 {sponsor.companyName}
+                                                <NewTabHint />
                                             </styled.a>{' '}
                                             <styled.span color="admin.600" fontSize="xs">
                                                 {sponsor.issueKey}

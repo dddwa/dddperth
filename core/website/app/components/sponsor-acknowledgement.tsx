@@ -18,6 +18,7 @@
 import type { Sponsor } from '~/lib/conference-state-client-safe'
 import { Box, styled } from '~/styled-system/jsx'
 import { SponsorInlineLogo } from './sponsor-inline-logo'
+import { newTabLabel } from './new-tab-hint'
 
 export interface SponsorAcknowledgementCta {
     href: string
@@ -59,7 +60,7 @@ export function SponsorAcknowledgement({ prefix, sponsors, cta }: SponsorAcknowl
                     rel="noopener noreferrer"
                     display="inline-flex"
                     alignItems="center"
-                    aria-label={sponsor.name}
+                    aria-label={newTabLabel(sponsor.name)}
                     _hover={{ opacity: 0.8 }}
                     transition="opacity"
                 >

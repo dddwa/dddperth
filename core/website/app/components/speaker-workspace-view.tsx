@@ -1,6 +1,7 @@
 import { AdminCard } from '~/components/admin-card'
 import type { SpeakerWorkspaceSessionView } from '~/lib/speakers/workspace-view.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { NewTabHint } from './new-tab-hint'
 
 /**
  * Renders a speaker's sessions/co-presenters/links — the dashboard content
@@ -31,6 +32,7 @@ export function SpeakerWorkspaceView({
                     </styled.h2>
                     <styled.a href={infoPackUrl} target="_blank" rel="noreferrer" textDecoration="underline" fontSize="sm">
                         Download the speaker info pack
+                        <NewTabHint />
                     </styled.a>
                 </AdminCard>
             )}
@@ -129,6 +131,7 @@ export function SpeakerWorkspaceView({
                                                     textDecoration="underline"
                                                 >
                                                     Twitter/X
+                                                    <NewTabHint />
                                                 </styled.a>
                                             )}
                                             {presenter.linkedInUrl && (
@@ -141,6 +144,7 @@ export function SpeakerWorkspaceView({
                                                     textDecoration="underline"
                                                 >
                                                     LinkedIn
+                                                    <NewTabHint />
                                                 </styled.a>
                                             )}
                                             {presenter.otherLinks.map((link) => (
@@ -154,6 +158,7 @@ export function SpeakerWorkspaceView({
                                                     textDecoration="underline"
                                                 >
                                                     {link.title}
+                                                    <NewTabHint />
                                                 </styled.a>
                                             ))}
                                         </Flex>

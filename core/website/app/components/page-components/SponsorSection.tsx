@@ -5,6 +5,7 @@ import type { MinorSponsorTier, Sponsor, Year, YearSponsors } from '~/lib/confer
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
 import { SponsorLogo } from '~/components/sponsor-logo'
+import { NewTabHint, newTabLabel } from '../new-tab-hint'
 
 // Quotes shorter than this fit comfortably within ~3 lines on desktop, so the
 // expand toggle would be noise. Tuned against the current 2025 sponsor copy.
@@ -389,7 +390,7 @@ export function SponsorQuoteCard({
                 justifyContent="center"
                 width={{ base: 'full', md: '[180px]' }}
                 height="[120px]"
-                aria-label={`Visit ${sponsor.name}`}
+                aria-label={newTabLabel(`Visit ${sponsor.name}`)}
             >
                 <SponsorLogo
                     logoUrlDarkMode={sponsor.logoUrlDarkMode}
@@ -450,6 +451,7 @@ export function SponsorQuoteCard({
                     _hover={{ color: 'white', textDecoration: 'underline' }}
                 >
                     Visit {sponsor.name} →
+                    <NewTabHint />
                 </styled.a>
             </Flex>
         </Flex>
@@ -501,6 +503,7 @@ function SponsorComponent({
             <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.secondary">
                 {sponsorCaption(category)}
             </styled.h5>
+            <NewTabHint />
         </styled.a>
     )
 }
