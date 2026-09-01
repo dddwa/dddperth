@@ -1,5 +1,6 @@
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
+import fs from 'node:fs'
 import path from 'node:path'
 import { safeRoutes } from 'safe-routes/vite'
 import svgr from 'vite-plugin-svgr'
@@ -13,6 +14,25 @@ import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
 // ddd-core standalone uses ../conference-stub/build-manifest.
 // eslint-disable-next-line @nx/enforce-module-boundaries -- relative path required at vite config load time
 import { conferenceBuildManifest } from '../../conference/build-manifest'
+
+
+/**
+ * Directory holding the wrangler configs, which differs by layout: a fork
+ * puts this project at `core/website/` with its own `conference/` two levels
+ * up, while `ddd-core` standalone runs from `website/` against
+ * `conference-stub/` one level up. Resolved by looking rather than assuming,
+ * so both shapes work from the same file.
+ */
+const wranglerDir = [
+    path.resolve(import.meta.dirname, '..', '..', 'conference', 'wrangler'),
+    path.resolve(import.meta.dirname, '..', 'conference-stub', 'wrangler'),
+].find((dir) => fs.existsSync(dir))
+
+if (!wranglerDir) {
+    throw new Error(
+        'No wrangler config directory found — expected ../../conference/wrangler (fork) or ../conference-stub/wrangler (ddd-core standalone).',
+    )
+}
 
 export default defineConfig({
     root: import.meta.dirname,
@@ -100,14 +120,7 @@ export default defineConfig({
         // and a test server can run side by side.
         cloudflare({
             viteEnvironment: { name: 'ssr' },
-            configPath: path.resolve(
-                import.meta.dirname,
-                '..',
-                '..',
-                'conference',
-                'wrangler',
-                process.env.WRANGLER_CONFIG ?? 'local.jsonc',
-            ),
+            configPath: path.join(wranglerDir, process.env.WRANGLER_CONFIG ?? 'local.jsonc'),
         }),
         reactRouter(),
         safeRoutes({

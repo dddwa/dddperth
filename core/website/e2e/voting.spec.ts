@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+import { DATE_DEPENDENT_ROUTES } from './routes'
 
 /**
  * Live voting flow coverage.
@@ -16,12 +17,12 @@ import { expect, test } from '@playwright/test'
  * assertions are stable and never touch the network.
  */
 
-const VOTING_OPEN = '2026-07-15T10:00:00'
+const VOTING_OPEN = DATE_DEPENDENT_ROUTES.votingOpen.date
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']
 
 test.beforeEach(async ({ context, baseURL }) => {
     await context.addCookies([
-        { name: '__devDateOverride', value: VOTING_OPEN, url: baseURL ?? 'http://localhost:3800' },
+        { name: '__devDateOverride', value: VOTING_OPEN as string, url: baseURL ?? 'http://localhost:3800' },
     ])
 })
 
@@ -31,6 +32,10 @@ async function gotoVoting(page: Page) {
     // The cards render once the first batch resolves.
     await expect(page.getByRole('heading', { name: /which talk would you prefer/i })).toBeVisible()
 }
+
+// Needs a voting window in the conference's own config to move the clock
+// into; conference-stub's current year deliberately leaves one unset.
+test.skip(!DATE_DEPENDENT_ROUTES.votingOpen.date, 'the current conference has no talkVotingDates configured')
 
 test('the live voting flow has no automatically-detectable WCAG 2.1 AA violations', async ({ page }) => {
     await gotoVoting(page)

@@ -45,7 +45,10 @@ export const exampleTheme = defineTheme({
         border: {
             default: { value: '#1e293b', description: 'Default border — mid slate' },
             subtle: { value: '#5eead433', description: 'Subtle border — teal at ~20% opacity' },
-            emphasis: { value: '#334155', description: 'Emphasized border — slate' },
+            // Light, not dark: core uses this as a *background* for the
+            // agenda's room headers, with `surface.hero` as the text on top
+            // (see RoomTitle). Dark slate here gave 1.95:1.
+            emphasis: { value: '#94a3b8', description: 'Emphasized border — light slate; also a header background' },
             sponsor: { value: '#1e293b', description: 'Sponsor tile border — mid slate' },
         },
 

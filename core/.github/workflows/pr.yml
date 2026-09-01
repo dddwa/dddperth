@@ -1,0 +1,177 @@
+name: Pull Request
+
+on:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
+              with:
+                  run_install: false
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 26
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm nx setup website
+
+            - name: Validate D1 migrations apply cleanly
+              run: pnpm nx d1-migrate-local website
+
+            - name: Type Check
+              run: pnpm tsc -b
+
+            - name: Lint
+              run: pnpm nx run-many --target=lint --all
+
+            - name: Test
+              run: pnpm nx test website
+
+            - name: Build
+              run: pnpm nx build website
+
+    a11y-e2e:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
+              with:
+                  run_install: false
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 26
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm nx setup website
+
+            - name: Install Playwright browsers
+              run: pnpm --filter website exec playwright install --with-deps chromium
+
+            - name: Apply local D1 migrations
+              run: pnpm nx d1-migrate-local website
+
+            # No dev-vars step: `e2e/start-dev-server.mjs` generates its own
+            # `conference-stub/wrangler/e2e/.dev.vars` (placeholder secret,
+            # SESSIONIZE_* pointed at the committed fixtures) before booting
+            # Vite. No real secrets are available to, or needed by, this job.
+            #
+            # A REAL GATE: the whole suite passes against conference-stub
+            # today, so a failure here is a genuine regression.
+            #
+            # 14 tests report as skipped, which is correct rather than
+            # tolerated: the date-driven states (CFP open, voting open,
+            # agenda published) need a window in the conference's own config
+            # for the __devDateOverride clock to land inside, and the stub's
+            # current year is deliberately a "save the date" skeleton with
+            # none. `DATE_DEPENDENT_ROUTES` and `STATES` express that with
+            # `undefined`, and the specs skip. A fork fills those in and runs
+            # all 75.
+            - name: Run e2e suite (axe + focus-visible + SEO)
+              run: pnpm nx e2e website
+
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report
+                  path: website/playwright-report/
+                  retention-days: 14
+
+    visual-regression:
+        # Runs INSIDE the pinned Playwright image, not on the bare runner.
+        # Screenshots only compare meaningfully when the renderer and the
+        # fonts both match. This app loads Ubuntu from Google Fonts, so a
+        # macOS dev box (no Ubuntu installed, webfont often not fetched)
+        # renders text in Helvetica while the bare ubuntu-latest runner
+        # renders it in Ubuntu — different metrics, different wrapping, page
+        # heights off by tens to hundreds of pixels. That produced 3-20%
+        # pixel diffs against a 2% tolerance: real reflow, not anti-aliasing.
+        #
+        # The image tag must track the @playwright/test version in
+        # website/package.json. `pnpm vr` runs the identical image locally,
+        # so baselines are generated and verified in one environment.
+        runs-on: ubuntu-latest
+        container:
+            image: mcr.microsoft.com/playwright:v1.62.1-noble
+            # The image runs as root; without this, pnpm's store and the
+            # bind-mounted workspace end up with mismatched ownership.
+            options: --user root
+        env:
+            # Firefox refuses to start when $HOME is owned by another user,
+            # and Actions sets HOME=/github/home (owned by the image's
+            # `pwuser`) while `--user root` runs us as root. Chromium and
+            # WebKit don't care; Firefox fails every test with
+            # "Running Nightly as root in a regular user's session is not
+            # supported". This is Playwright's documented workaround.
+            HOME: /root
+        timeout-minutes: 15
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
+              with:
+                  run_install: false
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 26
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate types (PandaCSS + React Router)
+              run: pnpm nx setup website
+
+            - name: Apply local D1 migrations
+              run: pnpm nx d1-migrate-local website
+
+            # Browsers are already in the image, so no `playwright install`
+            # step. Dev vars are generated by e2e/start-dev-server.mjs, which
+            # `pnpm nx e2e-visual` starts. This is a real merge gate: a diff
+            # here means the rendered output changed, and either the change is
+            # wrong or the baselines need regenerating with
+            # `pnpm vr --update-snapshots`.
+            - name: Run visual regression suite (3 browsers x 3 viewports)
+              run: pnpm nx e2e-visual website
+
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: visual-regression-report
+                  path: website/playwright-report/
+                  retention-days: 14

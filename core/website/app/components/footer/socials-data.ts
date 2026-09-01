@@ -5,6 +5,7 @@
 
 import { conferenceManifest } from '@conference/manifest'
 import type { ComponentType, SVGProps } from 'react'
+import BlueskyIcon from '~/images/social/bluesky-icon.svg?react'
 import EmailIcon from '~/images/social/email-icon.svg?react'
 import FacebookIcon from '~/images/social/facebook-icon.svg?react'
 import FlickrIcon from '~/images/social/flickr-icon.svg?react'
@@ -37,6 +38,9 @@ const rows: Array<SocialLink | null> = [
         : null,
     socials.Linkedin
         ? { title: 'LinkedIn', icon: LinkedInIcon, link: `https://www.linkedin.com/company/${socials.Linkedin}` }
+        : null,
+    socials.Bluesky
+        ? { title: 'Bluesky', icon: BlueskyIcon, link: `https://bsky.app/profile/${socials.Bluesky}` }
         : null,
     socials.Flickr ? { title: 'Flickr', icon: FlickrIcon, link: socials.Flickr } : null,
     socials.Blog ? { title: 'Medium', icon: MediumIcon, link: socials.Blog } : null,

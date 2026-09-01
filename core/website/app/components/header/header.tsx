@@ -176,7 +176,7 @@ export function Header({
                             // but a drawer overlay needs to read cleanly against any
                             // underlying surface, so it uses its own token).
                             bgColor="surface.drawer"
-                            color="text.on-brand"
+                            color="white"
                             display="flex"
                             flexDirection="column"
                             height="full"
@@ -190,7 +190,7 @@ export function Header({
                                 py="4"
                                 borderBottom="[1px solid token(colors.border.subtle)]"
                             >
-                                <Drawer.Title color="text.on-brand" fontSize="lg" fontWeight="semibold">
+                                <Drawer.Title color="white" fontSize="lg" fontWeight="semibold">
                                     Menu
                                 </Drawer.Title>
                                 <Drawer.CloseTrigger
@@ -200,7 +200,7 @@ export function Header({
                                     justifyContent="center"
                                     w="10"
                                     h="10"
-                                    color="text.on-brand"
+                                    color="white"
                                     bgColor="transparent"
                                     border="none"
                                     cursor="pointer"
@@ -243,7 +243,7 @@ export function Header({
                                     <AppLink
                                         key={item.to}
                                         to={item.to}
-                                        variant="primary"
+                                        variant="onDark"
                                         onClick={() => setDrawerOpen(false)}
                                     >
                                         {item.label}

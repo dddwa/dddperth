@@ -32,12 +32,39 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { startSessionizeFixtureServer, SESSIONIZE_FIXTURE_PORT } from './fixtures/sessionize-server.ts'
 
+/**
+ * Years given fixture Sessionize endpoints. Interception is host-based and
+ * already covers every year, but the app checks its *configured* endpoint
+ * before fetching — so a year whose config leaves the endpoint undefined
+ * renders "no agenda yet" regardless. Kept as literals rather than imported
+ * from `routes.ts`: this file runs under plain Node, which can't resolve the
+ * `@conference/*` TypeScript path aliases that module now depends on.
+ */
+const FIXTURE_ENDPOINT_YEARS = ['2025', '2026']
+
 const here = dirname(fileURLToPath(import.meta.url))
 const websiteDir = join(here, '..')
-const repoRoot = join(websiteDir, '..', '..')
 
-/** Own directory => own .dev.vars. Never the developer's. */
-const e2eWranglerDir = join(repoRoot, 'conference', 'wrangler', 'e2e')
+/**
+ * Own directory => own .dev.vars. Never the developer's.
+ *
+ * A fork runs this from `core/website/` against `conference/` two levels up;
+ * `ddd-core` standalone runs from `website/` against `conference-stub/` one
+ * level up. Resolved by looking, so the suite works in either layout.
+ */
+const e2eWranglerDir = [
+    join(websiteDir, '..', '..', 'conference', 'wrangler', 'e2e'),
+    join(websiteDir, '..', 'conference-stub', 'wrangler', 'e2e'),
+].find((dir) => existsSync(join(dir, '..')))
+
+if (!e2eWranglerDir) {
+    console.error(
+        '[e2e] No wrangler directory found. Expected ../../conference/wrangler (fork) or ' +
+            '../conference-stub/wrangler (ddd-core standalone), relative to the website project.',
+    )
+    process.exit(1)
+}
+
 const e2eDevVarsPath = join(e2eWranglerDir, '.dev.vars')
 
 /** Own port, so we can never collide with (or attach to) `pnpm start`. */
@@ -68,14 +95,16 @@ writeFileSync(
         // its "not configured" state. These two do different jobs; both are
         // needed. The value only has to be a Sessionize URL for the
         // interceptor to catch it.
-        `SESSIONIZE_2026_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
-        `SESSIONIZE_2026_ALL_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
+        ...FIXTURE_ENDPOINT_YEARS.flatMap((year) => [
+            `SESSIONIZE_${year}_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
+            `SESSIONIZE_${year}_ALL_SESSIONS=https://sessionize.com/api/v2/e2e-fixture`,
+        ]),
         '',
     ].join('\n'),
 )
 
 console.log(`[e2e] Sessionize fixtures on ${fixtureServer.url} (port ${SESSIONIZE_FIXTURE_PORT})`)
-console.log(`[e2e] dev server on :${port} using conference/wrangler/e2e/e2e.jsonc`)
+console.log(`[e2e] dev server on :${port} using ${join(e2eWranglerDir, 'e2e.jsonc')}`)
 
 // Invoke Vite's binary directly rather than via `pnpm vite`. Playwright's
 // `webServer` and the visual-regression script both spawn this without a
@@ -86,7 +115,9 @@ console.log(`[e2e] dev server on :${port} using conference/wrangler/e2e/e2e.json
 // both rather than assuming a layout.
 const viteBin = [
     join(websiteDir, 'node_modules', '.bin', 'vite'),
-    join(repoRoot, 'node_modules', '.bin', 'vite'),
+    // Workspace root: one level up in ddd-core standalone, two in a fork.
+    join(websiteDir, '..', 'node_modules', '.bin', 'vite'),
+    join(websiteDir, '..', '..', 'node_modules', '.bin', 'vite'),
 ].find((candidate) => existsSync(candidate))
 
 if (!viteBin) {

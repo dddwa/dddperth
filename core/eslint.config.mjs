@@ -39,7 +39,14 @@ export default [
                 'error',
                 {
                     enforceBuildableLibDependency: true,
-                    allow: [],
+                    // conference-stub's themes legitimately import the
+                    // defineTheme helper from website/themes/. It's a typed
+                    // identity function for theme config, not website runtime
+                    // code, but it lives there so the token contract and its
+                    // helper stay together. A fork needs the same exemption
+                    // one level deeper (core/website/...), so match both.
+                    // Remove once defineTheme moves to @ddd/conference-config.
+                    allow: ['^.*/website/themes/theme-builder$'],
                     depConstraints: [
                         {
                             sourceTag: '*',

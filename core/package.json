@@ -12,7 +12,8 @@
         "e2e": "nx run-many --target e2e --all",
         "setup": "nx run-many --target setup --all",
         "start": "nx dev website",
-        "install-browsers": "pnpm playwright install"
+        "install-browsers": "pnpm playwright install",
+        "vr": "node scripts/visual-regression.mjs"
     },
     "private": true,
     "devDependencies": {
@@ -27,10 +28,10 @@
         "@nx/workspace": "22.7.2",
         "@pandacss/dev": "^1.11.1",
         "@park-ui/cli": "^1.0.1",
-        "@playwright/test": "^1.60.0",
+        "@playwright/test": "^1.62.1",
         "@svitejs/changesets-changelog-github-compact": "^1.2.0",
         "@types/hast": "^3.0.4",
-        "@types/luxon": "^3.7.1",
+        "@types/luxon": "^3.7.5",
         "@types/mdx": "^2.0.13",
         "@types/node": "^25.8.0",
         "@types/react": "^19.2.14",
