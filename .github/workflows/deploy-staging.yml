@@ -105,7 +105,12 @@ jobs:
                   # pipefail so a wrangler/nx failure isn't masked by tee's exit code
                   set -o pipefail
                   output=$(pnpm nx deploy-staging website 2>&1 | tee /dev/stderr)
-                  url=$(echo "$output" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | head -n1)
+
+                  # `|| true`: staging deploys to the custom domain, so there is
+                  # normally no *.workers.dev URL to find and grep exits 1. With
+                  # pipefail and the runner's `set -e` that killed the step after
+                  # a successful deploy, and the fallback below never ran.
+                  url=$(echo "$output" | grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' | head -n1) || true
                   if [ -z "$url" ]; then
                     url="https://staging.dddperth.com"
                   fi
