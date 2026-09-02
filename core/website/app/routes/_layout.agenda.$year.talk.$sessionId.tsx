@@ -155,10 +155,8 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
     return (
         <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
             <styled.span>Room sponsored by</styled.span>
-            <styled.a
-                href={roomSponsor.website}
-                target="_blank"
-                rel="noopener noreferrer"
+            <AppLink unstyled
+                to={roomSponsor.website}
                 display="inline-flex"
                 alignItems="center"
             >
@@ -171,7 +169,7 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
                     objectFit="contain"
                 />
                 <NewTabHint />
-            </styled.a>
+            </AppLink>
         </Flex>
     )
 }

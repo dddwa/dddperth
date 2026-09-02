@@ -200,6 +200,32 @@ Helpers live in `core/website/app/lib/seo.ts`; `core/website/e2e/seo.spec.ts` co
   and `/api/`, where crawling is pure waste. Pages a human might land on and link to (`/voting`, `/auth/login`)
   stay crawlable *on purpose* so their `noindex` can be read and honoured.
 
+## Links
+
+**`AppLink` (`core/website/app/components/app-link.tsx`) is the only link component.** It takes a single `to`
+prop and picks its own element from the shape of that value at runtime:
+
+- internal path (`/agenda`, `#section`) → React Router `<Link>`;
+- external URL (`https://`, `//`) → `<a target="_blank" rel="noopener noreferrer">` plus an appended
+  "(opens in a new tab)" hint;
+- `mailto:`/`tel:` → plain `<a>`, same tab (the OS takes over, so no tab is opened to announce);
+- `download` set → plain `<a>`, no hint, whatever the URL shape.
+
+The branch lives in the component because almost every href here is a *runtime* value (`sponsor.website`,
+`action.href`), so "is this external?" isn't answerable by reading the JSX. Three copies of that check had already
+grown (`MdxLink`, `important-dates.tsx`, manual `NewTabHint` call sites) before this was consolidated; `MdxLink`
+no longer exists.
+
+- **`unstyled` is a real decision, not a style nit.** `AppLink` applies the `navLink` recipe by default, which
+  carries padding and sizing, and the ~44 pre-existing callers that pass no variant rely on that. Links that were
+  plain anchors before (MDX prose, CTAs, sponsor logos, important-dates) must pass `unstyled` or they gain
+  nav-link padding and reflow the page. **Both directions were caught by `pnpm vr`, not by review** — applying the
+  recipe everywhere failed 21 baselines, then making it opt-in failed 18 different ones.
+- **`aria-label` needs the hint folded into the label**, because it *replaces* element content when the
+  accessible name is computed — an `srOnly` span inside a labelled icon link is silently dropped. `AppLink`
+  handles this; call sites just pass a plain label.
+- Anchors that legitimately remain: skip links (`skip-to-content.tsx`), `.ics` and `?download=1` downloads.
+
 ## Accessibility
 
 All UI work must meet **WCAG 2.1 AA**, including hover and focus states (not just default appearance) — this

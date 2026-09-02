@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ConferenceState } from '~/lib/conference-state-client-safe'
-import { NewTabHint } from '../new-tab-hint'
+import { AppLink } from '../app-link'
 
 declare global {
     interface Window {
@@ -25,15 +25,12 @@ export function VolunteerForm({ conferenceState }: { conferenceState: Conference
     } else if (conferenceState.volunteering.form?.type === 'tito') {
         return (
             <div className="my-4">
-                <a
-                    href={conferenceState.volunteering.form.ticketUrl}
+                <AppLink unstyled
+                    to={conferenceState.volunteering.form.ticketUrl}
                     className="inline-block px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
-                    target="_blank"
-                    rel="noopener noreferrer"
                 >
                     Register as a Volunteer
-                    <NewTabHint />
-                </a>
+                </AppLink>
             </div>
         )
     }

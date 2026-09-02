@@ -63,6 +63,10 @@ they weren't caught the first time:
     which is what both axe and testing-library compute names with.
   - Axe cannot catch any of this — a link that opens a new tab unannounced is a valid link to every automated
     rule — which is why the coverage is unit tests rather than an added e2e scan.
+  - **Since folded into `AppLink`**, which is now the single link component: it picks `<Link>` vs `<a>` from the
+    shape of `to`, and applies the new-tab treatment (including the `aria-label` case) itself. Call sites no
+    longer decide, so a new external link cannot forget `rel="noopener"` or the hint. `NewTabHint`/`newTabLabel`
+    remain as the primitives `AppLink` is built from.
 
 - **Sign-in error wasn't announced** (`auth.login.tsx`, GitHub #134) — the `{error}` box is now `role="alert"`,
   and focus moves to it on render. Both halves are needed: the container isn't in the DOM before the error

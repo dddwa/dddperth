@@ -18,7 +18,6 @@ import { getConferenceState, getConfig, getServices } from '~/remix-app-load-con
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { ColorToken } from '~/styled-system/tokens'
 import type { Route } from './+types/admin.voting_.agenda.$runId'
-import { NewTabHint } from '~/components/new-tab-hint'
 
 const SESSION_FORMAT_CATEGORY = 'Session format'
 const LEVEL_CATEGORY = 'Level'
@@ -2516,10 +2515,8 @@ export default function VotingAgenda() {
                                         )}
 
                                         {sessionizeOrganizerEventId && (
-                                            <styled.a
-                                                href={`https://sessionize.com/app/organizer/session/${sessionizeOrganizerEventId}/${selectedTalk.talkId}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <AppLink unstyled
+                                                to={`https://sessionize.com/app/organizer/session/${sessionizeOrganizerEventId}/${selectedTalk.talkId}`}
                                                 display="inline-block"
                                                 fontSize="sm"
                                                 color="prose.link"
@@ -2527,8 +2524,7 @@ export default function VotingAgenda() {
                                                 mb="6"
                                             >
                                                 View on Sessionize ↗
-                                                <NewTabHint />
-                                            </styled.a>
+                                            </AppLink>
                                         )}
 
                                         <styled.h3 fontSize="md" fontWeight="semibold" mb="3">

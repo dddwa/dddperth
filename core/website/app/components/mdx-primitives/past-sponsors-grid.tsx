@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { SponsorLogo } from '~/components/sponsor-logo'
 import { Box, Grid, styled } from '~/styled-system/jsx'
-import { newTabLabel } from '../new-tab-hint'
+import { AppLink } from '../app-link'
 
 export interface PastSponsorsGridProps {
     sponsors: { name: string; logoDarkMode: string; logoLightMode: string; website: string }[]
@@ -35,11 +35,9 @@ export function PastSponsorsGrid({
                 gap="3"
             >
                 {sponsors.map((s) => (
-                    <styled.a
+                    <AppLink unstyled
                         key={s.name}
-                        href={s.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        to={s.website}
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
@@ -50,7 +48,7 @@ export function PastSponsorsGrid({
                         rounded="md"
                         padding="3"
                         _hover={{ borderColor: 'border.emphasis' }}
-                        aria-label={newTabLabel(`Visit ${s.name}`)}
+                        aria-label={`Visit ${s.name}`}
                     >
                         <SponsorLogo
                             logoUrlDarkMode={s.logoDarkMode}
@@ -60,7 +58,7 @@ export function PastSponsorsGrid({
                             maxHeight="full"
                             objectFit="contain"
                         />
-                    </styled.a>
+                    </AppLink>
                 ))}
             </Grid>
         </Box>

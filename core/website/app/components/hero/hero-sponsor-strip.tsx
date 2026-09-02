@@ -31,7 +31,6 @@ import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { SystemStyleObject } from '~/styled-system/types'
 import { SponsorInlineLogo } from '../sponsor-inline-logo'
-import { newTabLabel } from '../new-tab-hint'
 
 /**
  * Cell dimensions per tier. Width caps stop wide wordmarks from sprawling;
@@ -53,16 +52,14 @@ function SponsorRow({ sponsors, cell, children }: {
     return (
         <Flex flexWrap="wrap" alignItems="center" columnGap="8" rowGap="6">
             {sponsors.map((sponsor) => (
-                <styled.a
+                <AppLink unstyled
                     key={sponsor.name}
-                    href={sponsor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={sponsor.website}
                     display="inline-flex"
                     alignItems="center"
                     justifyContent="center"
                     css={cell}
-                    aria-label={newTabLabel(sponsor.name)}
+                    aria-label={sponsor.name}
                     opacity={0.9}
                     transition="opacity"
                     _hover={{ opacity: 1 }}
@@ -78,7 +75,7 @@ function SponsorRow({ sponsors, cell, children }: {
                         height="full"
                         maxWidth="full"
                     />
-                </styled.a>
+                </AppLink>
             ))}
             {children}
         </Flex>

@@ -13,7 +13,7 @@ import { ContentPageLayout } from '~/components/page-layout'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { Box, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.app'
-import { NewTabHint } from '~/components/new-tab-hint'
+import { AppLink } from '~/components/app-link'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
@@ -67,10 +67,8 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                         alignItems="center"
                         justifyContent="center"
                     >
-                        <styled.a
-                            href={iosUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <AppLink unstyled
+                            to={iosUrl}
                             display="inline-flex"
                             transition="transform"
                             _hover={{ transform: 'scale(1.05)' }}
@@ -82,13 +80,10 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 width="[200px]"
                                 objectFit="contain"
                             />
-                            <NewTabHint />
-                        </styled.a>
+                        </AppLink>
 
-                        <styled.a
-                            href={androidUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <AppLink unstyled
+                            to={androidUrl}
                             display="inline-flex"
                             transition="transform"
                             _hover={{ transform: 'scale(1.05)' }}
@@ -100,8 +95,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 width="[200px]"
                                 objectFit="contain"
                             />
-                            <NewTabHint />
-                        </styled.a>
+                        </AppLink>
                     </styled.div>
 
                     <styled.a
