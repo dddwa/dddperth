@@ -9,6 +9,9 @@
         "target": "ES2022",
         "strict": true,
         "isolatedModules": true,
+        // Relative imports carry explicit .ts extensions (the ESM form). Safe
+        // with `noEmit`: nothing is rewritten on the way out.
+        "allowImportingTsExtensions": true,
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,

@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
-import { pcecVenue } from '../venues/pcec'
+import { pcecVenue } from '../venues/pcec.ts'
 
 export const conference2017: ConferenceYear = {
     kind: 'conference',
