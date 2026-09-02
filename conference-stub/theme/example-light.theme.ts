@@ -7,7 +7,7 @@
  * light backgrounds.
  */
 
-import { defineTheme } from '../../website/themes/theme-builder'
+import { defineTheme } from '../../website/themes/theme-builder.ts'
 
 export const exampleLightTheme = defineTheme({
     colors: {

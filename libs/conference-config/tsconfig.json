@@ -3,8 +3,12 @@
     "include": ["src/**/*.ts"],
     "compilerOptions": {
         "lib": ["ES2022"],
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
+        // Extracted library: resolved as real Node ESM rather than through a
+        // bundler's lenient lookup, so imports must be fully specified. Bundlers
+        // understand this form too, and skipping the extension probing makes
+        // resolution cheaper.
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "target": "ES2022",
         "strict": true,
         "isolatedModules": true,

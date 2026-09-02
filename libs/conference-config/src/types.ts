@@ -1,6 +1,6 @@
 import type { DateTime } from 'luxon'
 import type { z } from 'zod'
-import type { gridSmartSchema } from './sessionize-schema'
+import type { gridSmartSchema } from './sessionize-schema.ts'
 
 export type Year = `${number}${number}${number}${number}`
 

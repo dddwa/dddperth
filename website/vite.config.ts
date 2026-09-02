@@ -2,18 +2,18 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
 import fs from 'node:fs'
 import path from 'node:path'
-import { safeRoutes } from 'safe-routes/vite'
+import { safeRoutes } from 'safe-routes/vite.js'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig } from 'vite'
-import { conferencePublicPlugin } from './vite-plugins/conference-public'
-import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
+import { conferencePublicPlugin } from './vite-plugins/conference-public.ts'
+import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles.ts'
 // Vite's config loader uses native Node ESM — it doesn't honour the
 // @conference/* tsconfig path alias the rest of the app uses. Use a
 // relative import here. Fork override: points at the fork's
 // /conference/build-manifest (two levels up from core/website/).
 // ddd-core standalone uses ../conference-stub/build-manifest.
 // eslint-disable-next-line @nx/enforce-module-boundaries -- relative path required at vite config load time
-import { conferenceBuildManifest } from '../conference-stub/build-manifest'
+import { conferenceBuildManifest } from '../conference-stub/build-manifest.ts'
 
 
 /**
