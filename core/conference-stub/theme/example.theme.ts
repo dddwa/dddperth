@@ -12,7 +12,7 @@
  * standalone build breaks.
  */
 
-import { defineTheme } from '../../website/themes/theme-builder'
+import { defineTheme } from '../../website/themes/theme-builder.ts'
 
 export const exampleTheme = defineTheme({
     colors: {

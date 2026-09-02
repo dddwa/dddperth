@@ -9,7 +9,7 @@
 
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
-import { exampleConventionCentre } from '../venues/example-convention-centre'
+import { exampleConventionCentre } from '../venues/example-convention-centre.ts'
 
 export const conference2025: ConferenceYear = {
     kind: 'conference',

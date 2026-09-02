@@ -1,7 +1,7 @@
 import type { ConferenceConfig } from '@ddd/conference-config'
-import { conference2024 } from './years/2024'
-import { conference2025 } from './years/2025'
-import { conference2026 } from './years/2026'
+import { conference2024 } from './years/2024.ts'
+import { conference2025 } from './years/2025.ts'
+import { conference2026 } from './years/2026.ts'
 
 // DevConf Example years. A real fork's years-index would list every year
 // they've held the conference plus the next planned one.

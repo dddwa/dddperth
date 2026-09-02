@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
-import { mercureHotelVenue } from '../venues/mercure-hotel'
+import { mercureHotelVenue } from '../venues/mercure-hotel.ts'
 
 export const conference2016: ConferenceYear = {
     kind: 'conference',

@@ -16,7 +16,7 @@
  */
 
 import type { DateTime } from 'luxon'
-import type { ConferenceConfig, MinorSponsorTier } from './types'
+import type { ConferenceConfig, MinorSponsorTier } from './types.ts'
 
 /**
  * Public, client-safe conference identity. Anything in here may render in
