@@ -31,7 +31,43 @@ export function NewTabHint() {
         <>
             {' '}
             <styled.span srOnly>{NEW_TAB_HINT}</styled.span>
+            <NewTabArrow />
         </>
+    )
+}
+
+
+/**
+ * The visible half of the new-tab affordance: a small ↗ after the link text.
+ *
+ * WCAG 3.2.5 is about warning *everyone*, not only screen reader users, so the
+ * `srOnly` hint alone left sighted users with no signal at all. This is the
+ * counterpart — same meaning, different channel.
+ *
+ * `aria-hidden` because the srOnly hint already says it in words: without this
+ * a screen reader would announce the glyph too ("north east arrow"), saying the
+ * same thing twice in one link name.
+ *
+ * Sized in `em` and coloured `currentColor` so it tracks whatever text it
+ * follows — these links live in prose, buttons, table cells and admin UI at
+ * different sizes, and a fixed px size looks wrong in most of them. The
+ * non-breaking space keeps the arrow from wrapping onto its own line, orphaned
+ * from the end of the link text.
+ */
+export function NewTabArrow() {
+    return (
+        <styled.span
+            aria-hidden="true"
+            fontSize="[0.85em]"
+            lineHeight="[1]"
+            whiteSpace="nowrap"
+            // Prose links are underlined, and the underline would otherwise run
+            // under the gap and the glyph, making the link look like it has a
+            // trailing space. The arrow is a marker, not part of the text.
+            textDecoration="none"
+        >
+            {'\u00a0'}↗
+        </styled.span>
     )
 }
 

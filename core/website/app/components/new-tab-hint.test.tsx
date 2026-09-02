@@ -15,7 +15,7 @@
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { NEW_TAB_HINT, NewTabHint, newTabLabel } from './new-tab-hint'
+import { NEW_TAB_HINT, NewTabArrow, NewTabHint, newTabLabel } from './new-tab-hint'
 
 afterEach(cleanup)
 
@@ -68,5 +68,28 @@ describe('newTabLabel', () => {
         )
 
         expect(screen.getByRole('link', { name: `Visit us on Twitter ${NEW_TAB_HINT}` })).toBeTruthy()
+    })
+})
+
+describe('NewTabArrow', () => {
+    it('is visible but contributes nothing to the accessible name', () => {
+        render(
+            <a href="https://example.com" target="_blank" rel="noopener noreferrer">
+                Docs
+                <NewTabHint />
+            </a>,
+        )
+
+        // The arrow is aria-hidden: the srOnly hint already says "opens in a new
+        // tab" in words, so announcing the glyph too would say it twice.
+        expect(screen.getByRole('link', { name: `Docs ${NEW_TAB_HINT}` })).toBeTruthy()
+    })
+
+    it('renders the glyph for sighted users', () => {
+        const { container } = render(<NewTabArrow />)
+
+        // WCAG 3.2.5 is about warning everyone, not only screen reader users.
+        expect(container.textContent).toContain('↗')
+        expect(container.querySelector('[aria-hidden="true"]')).toBeTruthy()
     })
 })

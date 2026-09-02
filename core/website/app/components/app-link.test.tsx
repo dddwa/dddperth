@@ -148,3 +148,38 @@ describe('AppLink navLink recipe', () => {
         expect(link.className).not.toMatch(/navLink/)
     })
 })
+
+describe('AppLink external arrow', () => {
+    it('shows ↗ on a text link', async () => {
+        renderLink(<AppLink to="https://example.com">Docs</AppLink>)
+
+        const link = await screen.findByRole('link', { name: `Docs ${NEW_TAB_HINT}` })
+        expect(link.textContent).toContain('↗')
+    })
+
+    it('shows no ↗ on an icon link, where it would sit beside a logo as noise', async () => {
+        renderLink(
+            <AppLink to="https://twitter.com/DDDPerth" aria-label="Visit us on Twitter">
+                <svg aria-hidden="true" />
+            </AppLink>,
+        )
+
+        // Still announced — the hint rides in the aria-label — just not drawn.
+        const link = screen.getByRole('link', { name: `Visit us on Twitter ${NEW_TAB_HINT}` })
+        expect(link.textContent).not.toContain('↗')
+    })
+
+    it('shows no ↗ on internal links or downloads', async () => {
+        renderLink(
+            <>
+                <AppLink to="/agenda">Agenda</AppLink>
+                <AppLink to="https://example.com/talk.ics" download="Talk.ics">
+                    Calendar
+                </AppLink>
+            </>,
+        )
+
+        expect((await screen.findByRole('link', { name: 'Agenda' })).textContent).not.toContain('↗')
+        expect(screen.getByRole('link', { name: 'Calendar' }).textContent).not.toContain('↗')
+    })
+})

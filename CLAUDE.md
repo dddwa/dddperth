@@ -224,6 +224,16 @@ no longer exists.
 - **`aria-label` needs the hint folded into the label**, because it *replaces* element content when the
   accessible name is computed — an `srOnly` span inside a labelled icon link is silently dropped. `AppLink`
   handles this; call sites just pass a plain label.
+- **External links also render a visible `↗`** — WCAG 3.2.5 is about warning everyone, not only screen reader
+  users, so the `srOnly` hint on its own left sighted users with no signal. It is `aria-hidden` (the hint already
+  says it in words, so announcing the glyph too would say it twice), sized in `em` off `currentColor` so it
+  tracks whatever text it follows, and `textDecoration="none"` so a prose link's underline doesn't run under it.
+  **Text links only**: icon and logo links (social icons, sponsor logos) get the announcement but no glyph, since
+  an arrow beside a logo is noise with no text baseline to sit on. Don't hand-type `↗` into link text — two such
+  links existed and now double up if reintroduced.
+- **The `/e2e-content-fixture` MDX page carries one external link on purpose**, so the visual baselines cover the
+  arrow. Without it the suite passed while rendering no external text link at all — the change was invisible to
+  the very suite meant to catch it.
 - Anchors that legitimately remain: skip links (`skip-to-content.tsx`), `.ics` and `?download=1` downloads.
 
 ## Accessibility

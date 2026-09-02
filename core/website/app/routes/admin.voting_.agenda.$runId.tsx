@@ -2523,7 +2523,7 @@ export default function VotingAgenda() {
                                                 textDecoration="underline"
                                                 mb="6"
                                             >
-                                                View on Sessionize ↗
+                                                View on Sessionize
                                             </AppLink>
                                         )}
 
