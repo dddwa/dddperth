@@ -46,7 +46,11 @@ export default [
                     // helper stay together. A fork needs the same exemption
                     // one level deeper (core/website/...), so match both.
                     // Remove once defineTheme moves to @ddd/conference-config.
-                    allow: ['^.*/website/themes/theme-builder$'],
+                    // The `.ts` is optional so the pattern matches whether or
+                    // not the import carries an explicit extension — anchoring
+                    // on the bare specifier alone silently stops matching the
+                    // moment one is added.
+                    allow: ['^.*/website/themes/theme-builder(\\.ts)?$'],
                     depConstraints: [
                         {
                             sourceTag: '*',
