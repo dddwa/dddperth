@@ -101,6 +101,13 @@ git commit --no-edit 2>/dev/null || true
 # Refresh dependencies — core may have added/removed packages.
 pnpm i
 
+# Copy core's skills up to `.claude/`, where Claude Code actually reads them.
+# The pull has just updated `core/.claude/skills/`, but the fork's own copies
+# are what get loaded, and nothing else updates them. Not left to `prepare`:
+# pnpm skips lifecycle scripts when an install is a no-op, which is exactly
+# what `pnpm i` does here when core changed no dependencies.
+pnpm sync-skills
+
 # Type-check + build to catch contract drift.
 pnpm nx build website
 ```

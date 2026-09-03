@@ -11,6 +11,8 @@
         "test": "nx run-many --target test --all",
         "e2e": "nx run-many --target e2e --all",
         "prepare2": "pnpm run setup",
+        "prepare": "node scripts/sync-core-skills.mjs",
+        "sync-skills": "node scripts/sync-core-skills.mjs",
         "setup": "nx run-many --target setup --all",
         "start": "nx dev website",
         "install-browsers": "pnpm --filter website exec playwright install --with-deps chromium",
