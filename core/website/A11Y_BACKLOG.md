@@ -47,6 +47,32 @@ they weren't caught the first time:
   losing keyboard focus. Now `aria-disabled` (Panda's `_disabled` condition already matches
   `[aria-disabled=true]`, so the styling is unchanged).
 
+## Fixed in the `a11y/new-tab-link-affordances` follow-up
+
+- **`target="_blank"` links gave no warning** (GitHub #137) — 23 link sites across the public pages, the speaker
+  and sponsor portals, and admin. Now go through one helper, `app/components/new-tab-hint.tsx`, which exists
+  because the two cases need opposite treatments and the difference is invisible in the markup:
+  - Links named by **visible text** get `<NewTabHint />`, an `srOnly` span appended inside the anchor.
+  - Links named by **`aria-label`** (social icons, sponsor logos) get `newTabLabel(name)`, because `aria-label`
+    replaces element content — a hidden span inside such a link is never announced. Getting this backwards
+    produces markup that looks right and says nothing, so `new-tab-hint.test.tsx` asserts the *computed
+    accessible name* in both directions, including the ignored-span case.
+  - The separating space is a text node **outside** the span. Accessible names concatenate each element's
+    contribution with its own surrounding whitespace trimmed, so a space *inside* the span is dropped and the
+    name comes out as "Register as a Volunteer(opens in a new tab)". Verified against dom-accessibility-api,
+    which is what both axe and testing-library compute names with.
+  - Axe cannot catch any of this — a link that opens a new tab unannounced is a valid link to every automated
+    rule — which is why the coverage is unit tests rather than an added e2e scan.
+  - **Since folded into `AppLink`**, which is now the single link component: it picks `<Link>` vs `<a>` from the
+    shape of `to`, and applies the new-tab treatment (including the `aria-label` case) itself. Call sites no
+    longer decide, so a new external link cannot forget `rel="noopener"` or the hint. `NewTabHint`/`newTabLabel`
+    remain as the primitives `AppLink` is built from.
+
+- **Sign-in error wasn't announced** (`auth.login.tsx`, GitHub #134) — the `{error}` box is now `role="alert"`,
+  and focus moves to it on render. Both halves are needed: the container isn't in the DOM before the error
+  exists, so there is no live region for AT to have been observing, and the error arrives with a fresh
+  server-rendered document where focus starts at the top of the page. Covered by `app/routes/auth.login.test.tsx`.
+
 ## Blog (`/blog`, `/blog/:slug`)
 
 The blog index in particular is a known work-in-progress page — it renders as unstyled, unlabelled `<div>`/`<p>`
@@ -87,14 +113,6 @@ they are the only remaining failures in the suite. Everything else passes in bot
 Deprioritised per the audit's stated ordering (public pages → speaker/sponsor portal → admin), and not covered by
 the automated e2e suite in this pass.
 
-- **File:** `core/website/app/routes/auth.login.tsx` (and the shared portal/admin auth flow more broadly)
-  **WCAG:** 4.1.3 Status Messages
-  **Description:** The login-error message (`{error}` box) is a plain `<Box>` with no `role="alert"` /
-  `aria-live`. Because the error only appears after a full page reload (server-rendered `action` error, not a
-  client-side toast), a screen reader user isn't necessarily informed that an error appeared unless they happen to
-  read down the page.
-  **Suggested fix:** Add `role="alert"` to the error container, or move focus to it on render.
-
 - **File:** `core/website/app/routes/portal.tsx`, `portal.profile.tsx`, `portal._index.tsx`
   **Description:** Not audited in this pass beyond a structural skim. Should get the same heading-order,
   landmark, and focus-visible review the public pages got here.
@@ -113,16 +131,6 @@ reviewed beyond a structural skim (`admin.tsx`'s layout already has a `<nav>` + 
   **Suggested fix:** Dedicated pass once the public-page backlog above is cleared.
 
 ## Cross-cutting / minor
-
-- **Files:** `core/website/app/components/footer/footer.tsx` (social icon links), `page-components/VolunteerForm.tsx`,
-  `page-components/TicketForm.tsx`, `routes/_layout.agenda.$year.talk.$sessionId.tsx` (room-sponsor link)
-  **WCAG:** 3.2.5 Change on Request (advisory, not a strict AA failure)
-  **Description:** Several `target="_blank"` links (social icons, "Register as a Volunteer", the Tito fallback
-  ticket link, room-sponsor logo links) don't indicate they open in a new tab, either visually or via accessible
-  name (e.g. "Visit us on X (opens in a new tab)").
-  **Suggested fix:** Low-effort, low-risk follow-up: append `(opens in a new tab)` to the relevant accessible
-  names. Left out of this pass to avoid a mechanical sweep across unrelated components; worth doing as its own
-  small PR.
 
 - **Files:** `core/website/app/components/page-components/TicketForm.tsx`, `VolunteerForm.tsx`
   **Description:** Both mount third-party widgets (Tito, SalesMate) via injected `<script>` tags into an opaque

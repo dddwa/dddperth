@@ -1,6 +1,7 @@
 import { AdminCard } from '~/components/admin-card'
 import type { SpeakerWorkspaceSessionView } from '~/lib/speakers/workspace-view.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { AppLink } from './app-link'
 
 /**
  * Renders a speaker's sessions/co-presenters/links — the dashboard content
@@ -29,9 +30,9 @@ export function SpeakerWorkspaceView({
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
                         Speaker info pack
                     </styled.h2>
-                    <styled.a href={infoPackUrl} target="_blank" rel="noreferrer" textDecoration="underline" fontSize="sm">
+                    <AppLink unstyled to={infoPackUrl} target="_blank" rel="noreferrer" textDecoration="underline" fontSize="sm">
                         Download the speaker info pack
-                    </styled.a>
+                    </AppLink>
                 </AdminCard>
             )}
 
@@ -120,41 +121,35 @@ export function SpeakerWorkspaceView({
                                     {(presenter.twitterUrl || presenter.linkedInUrl || presenter.otherLinks.length > 0) && (
                                         <Flex gap="3" mt="2" wrap="wrap">
                                             {presenter.twitterUrl && (
-                                                <styled.a
-                                                    href={presenter.twitterUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
+                                                <AppLink unstyled
+                                                    to={presenter.twitterUrl}
                                                     fontSize="xs"
                                                     color="admin.700"
                                                     textDecoration="underline"
                                                 >
                                                     Twitter/X
-                                                </styled.a>
+                                                </AppLink>
                                             )}
                                             {presenter.linkedInUrl && (
-                                                <styled.a
-                                                    href={presenter.linkedInUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
+                                                <AppLink unstyled
+                                                    to={presenter.linkedInUrl}
                                                     fontSize="xs"
                                                     color="admin.700"
                                                     textDecoration="underline"
                                                 >
                                                     LinkedIn
-                                                </styled.a>
+                                                </AppLink>
                                             )}
                                             {presenter.otherLinks.map((link) => (
-                                                <styled.a
+                                                <AppLink unstyled
                                                     key={link.url}
-                                                    href={link.url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
+                                                    to={link.url}
                                                     fontSize="xs"
                                                     color="admin.700"
                                                     textDecoration="underline"
                                                 >
                                                     {link.title}
-                                                </styled.a>
+                                                </AppLink>
                                             ))}
                                         </Flex>
                                     )}

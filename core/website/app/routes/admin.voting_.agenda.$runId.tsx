@@ -2515,18 +2515,16 @@ export default function VotingAgenda() {
                                         )}
 
                                         {sessionizeOrganizerEventId && (
-                                            <styled.a
-                                                href={`https://sessionize.com/app/organizer/session/${sessionizeOrganizerEventId}/${selectedTalk.talkId}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <AppLink unstyled
+                                                to={`https://sessionize.com/app/organizer/session/${sessionizeOrganizerEventId}/${selectedTalk.talkId}`}
                                                 display="inline-block"
                                                 fontSize="sm"
                                                 color="prose.link"
                                                 textDecoration="underline"
                                                 mb="6"
                                             >
-                                                View on Sessionize ↗
-                                            </styled.a>
+                                                View on Sessionize
+                                            </AppLink>
                                         )}
 
                                         <styled.h3 fontSize="md" fontWeight="semibold" mb="3">

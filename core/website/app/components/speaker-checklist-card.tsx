@@ -5,6 +5,7 @@ import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemAction, type ChecklistModalK
 import { AdminCard } from '~/components/admin-card'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { AppLink } from './app-link'
 
 export type { ChecklistModalKey } from '~/lib/speakers/checklist-items'
 
@@ -93,9 +94,9 @@ function ChecklistActionButton({
     if ('configuredHref' in action) {
         if (!ticketClaimUrl) return null
         return (
-            <styled.a href={ticketClaimUrl} target="_blank" rel="noreferrer" className={actionLinkClass}>
+            <AppLink unstyled to={ticketClaimUrl} target="_blank" rel="noreferrer" className={actionLinkClass}>
                 {action.label}
-            </styled.a>
+            </AppLink>
         )
     }
 
@@ -130,9 +131,9 @@ function ChecklistActionButton({
 
     if (!action.href) return null
     return (
-        <styled.a href={action.href} target="_blank" rel="noreferrer" className={actionLinkClass}>
+        <AppLink unstyled to={action.href} target="_blank" rel="noreferrer" className={actionLinkClass}>
             {action.label}
-        </styled.a>
+        </AppLink>
     )
 }
 

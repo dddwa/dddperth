@@ -5,6 +5,7 @@ import type { MinorSponsorTier, Sponsor, Year, YearSponsors } from '~/lib/confer
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
 import { SponsorLogo } from '~/components/sponsor-logo'
+import { AppLink } from '../app-link'
 
 // Quotes shorter than this fit comfortably within ~3 lines on desktop, so the
 // expand toggle would be noise. Tuned against the current 2025 sponsor copy.
@@ -379,10 +380,8 @@ export function SponsorQuoteCard({
             padding={{ base: '4', md: '6' }}
             boxShadow="md"
         >
-            <styled.a
-                href={sponsor.website}
-                target="_blank"
-                rel="noopener noreferrer"
+            <AppLink unstyled
+                to={sponsor.website}
                 flexShrink="0"
                 display="flex"
                 alignItems="center"
@@ -399,7 +398,7 @@ export function SponsorQuoteCard({
                     maxHeight="full"
                     objectFit="contain"
                 />
-            </styled.a>
+            </AppLink>
             <Flex flexDirection="column" gap="2" flex="1">
                 {quote.length > 0 ? (
                     <styled.blockquote
@@ -439,10 +438,8 @@ export function SponsorQuoteCard({
                         {expanded ? 'Show less ▴' : 'Read more ▾'}
                     </styled.button>
                 ) : null}
-                <styled.a
-                    href={sponsor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <AppLink unstyled
+                    to={sponsor.website}
                     color="interactive.active"
                     fontSize="sm"
                     fontWeight="semibold"
@@ -450,7 +447,7 @@ export function SponsorQuoteCard({
                     _hover={{ color: 'white', textDecoration: 'underline' }}
                 >
                     Visit {sponsor.name} →
-                </styled.a>
+                </AppLink>
             </Flex>
         </Flex>
     )
@@ -468,11 +465,9 @@ function SponsorComponent({
     const { gradientFrom } = getSponsorStyle(category)
 
     return (
-        <styled.a
+        <AppLink unstyled
             key={sponsor.name}
-            href={sponsor.website}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={sponsor.website}
             position="relative"
             display="flex"
             justifyContent="center"
@@ -501,6 +496,6 @@ function SponsorComponent({
             <styled.h5 position="absolute" left="3" bottom="3" fontSize="xs" color="text.secondary">
                 {sponsorCaption(category)}
             </styled.h5>
-        </styled.a>
+        </AppLink>
     )
 }
