@@ -40,7 +40,7 @@ A fork's layout:
   FORK_GUIDE.md         manual TODOs (Cloudflare account, D1 IDs, etc.)
 ```
 
-The workspace root is the **fork root**, not `core/`: `pnpm` and `pnpm nx` run from there. The fork-shape edits in step 6 (and any genuine bug fix) inside `core/` should be **upstreamed to ddd-core**, so they flow back cleanly on the next `/pull-upstream` rather than being a permanent local divergence.
+The workspace root is the **fork root**, not `core/`: `pnpm` and `pnpm nx` run from there. The fork-shape edits in step 6 (and any genuine bug fix) inside `core/` should be **upstreamed to ddd-core**, so they flow back cleanly on the next `/core-pull` rather than being a permanent local divergence.
 
 The skill does NOT publish anything, push to GitHub, deploy to Cloudflare, or run pnpm install in the new repo — those are the user's call.
 
@@ -113,7 +113,7 @@ else
 fi
 
 git subtree add --prefix=core "$DDD_CORE_SOURCE" main --squash
-git remote add ddd-core "$DDD_CORE_SOURCE"  # save for /pull-upstream
+git remote add ddd-core "$DDD_CORE_SOURCE"  # save for /core-pull
 ```
 
 ### 5. Seed /conference/ from the stub
@@ -220,7 +220,7 @@ rm core/nx.json
 
 Other in-core root configs (`core/eslint.config.mjs`, `core/tsconfig.base.json`, `core/package.json`, `core/pnpm-workspace.yaml`, `core/vitest.workspace.ts`, `core/tsconfig.json`) **must stay** — files inside `core/` reference them with relative paths (e.g. `core/website/eslint.config.mjs` does `import '../eslint.config.mjs'`).
 
-These edits happen inside `core/` but **don't conflict with future `git subtree pull`s** as long as core's upstream defaults don't change. If upstream ever moves the path aliases or renames project.json targets, the user will get a one-time merge conflict during `/pull-upstream` and fix it by re-applying these overrides. Step 7's `.gitattributes` keeps `core/nx.json` deleted across pulls.
+These edits happen inside `core/` but **don't conflict with future `git subtree pull`s** as long as core's upstream defaults don't change. If upstream ever moves the path aliases or renames project.json targets, the user will get a one-time merge conflict during `/core-pull` and fix it by re-applying these overrides. Step 7's `.gitattributes` keeps `core/nx.json` deleted across pulls.
 
 > An alternative would be a fork-root `tsconfig.json` that overrides the paths and a `vite.config.ts` shim that re-exports core's. That avoids touching `core/` files but adds indirection at fork root, and doesn't help with the project.json cwd or nx.json collision. The direct edits are simpler and the conflict surface is small.
 
@@ -291,7 +291,7 @@ git config merge.ours.driver true
 `binary` and `union` are). If `merge.ours.driver` is unset, git silently
 ignores the `merge=ours` attribute and falls back to a normal three-way
 merge, so the stub and `core/nx.json` conflict on every pull anyway — the
-failure is invisible until the first `/pull-upstream` that touches them.
+failure is invisible until the first `/core-pull` that touches them.
 
 This lives in `.git/config`, so it is **not committed**. Every fresh clone of
 the fork needs it again — call it out in the fork's `CLAUDE.md` setup steps.
@@ -334,10 +334,10 @@ core/package.json
 - Confirm the first year's dates, Sessionize URL/endpoint IDs, and Tito account/event in `conference/config/years/${FIRST_YEAR}.ts`
 - Theme refinement: the brand sed only moved the 3 base tokens — tune the derived shades and the light-theme accent in the theme files
 - Update `conference/content/pages/team.mdx` (committee) and `contact.mdx` (real contact details); finalise `_acknowledgement.mdx` with the committee if you enabled it
-- Dependency note: the fork-root `package.json` mirrors ddd-core's build-tooling devDeps; if a `/pull-upstream` changes `core/package.json`'s tooling, mirror it up
+- Dependency note: the fork-root `package.json` mirrors ddd-core's build-tooling devDeps; if a `/core-pull` changes `core/package.json`'s tooling, mirror it up
 - Set up Sessionize, Tito (or chosen ticketing), Cloudflare account, domain DNS
-- Subscribe to ddd-core updates: run `/pull-upstream` periodically
-- **Never squash-merge a `/pull-upstream` PR** — it destroys the
+- Subscribe to ddd-core updates: run `/core-pull` periodically
+- **Never squash-merge a `/core-pull` PR** — it destroys the
   `git-subtree-split` trailer that tells the next pull where it left off, after
   which every pull replays the whole range from the original subtree add. Use a
   merge commit or rebase. Worth stating in the fork's own `CLAUDE.md`.
@@ -360,7 +360,7 @@ Sometimes the fork repo already exists as a *flat* ddd-core clone — e.g. someo
 
 1. **Confirm it's safe to flatten.** `git fetch upstream && git diff --stat upstream/main HEAD` — if HEAD matches `upstream/main`, the root content is just ddd-core and nothing fork-specific is lost. If it differs, the repo has local commits; upstream or reconcile them first.
 2. **Tag a restore point:** `git tag pre-fork-restructure`.
-3. **Add the `ddd-core` remote** for `/pull-upstream`: `git remote add ddd-core <url>` (or reuse the existing `upstream`, which already points at ddd-core — subtree tracks by commit, not remote name).
+3. **Add the `ddd-core` remote** for `/core-pull`: `git remote add ddd-core <url>` (or reuse the existing `upstream`, which already points at ddd-core — subtree tracks by commit, not remote name).
 4. **Remove the flat ddd-core source from the root**, keeping `.git`, the workspace configs, and any fork-owned files: `git rm -r website libs conference-stub docs ARCHITECTURE.md README.md pnpm-lock.yaml` (and root `CLAUDE.md` if you'll write a fork-specific one), then commit. **Keep** `package.json`, `nx.json`, `pnpm-workspace.yaml`, `tsconfig*.json`, `eslint.config.mjs`, `vitest.workspace.ts`, `.gitignore`, `.npmrc`, `.prettier*`, `.editorconfig`, `.claude/` — you'll edit these in step 7 rather than `cp` them up from `core/`.
 5. **Embed core as a subtree:** `git subtree add --prefix=core upstream main --squash`. Because HEAD == upstream/main, `core/` ends up byte-identical to what was at the root.
 6. Follow steps 5–8 as normal. In step 7, **edit the kept root configs** instead of copying them up: rename `package.json`'s `name`, repoint `pnpm-workspace.yaml`, point `tsconfig.json` at `core/`, add the eslint allow rule, set `vitest.workspace.ts` to `['core/website']`, and (still per step 6) delete `core/nx.json`.

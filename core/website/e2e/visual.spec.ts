@@ -47,14 +47,23 @@ function snapshotName(name: string) {
  * `/e2e-content-fixture` is the probe because its "Important Dates" card
  * renders a `DaysLeftPill` counting down to the conference date; at the pinned
  * date that reads a fixed number, and at the live clock it reads today's.
+ *
+ * The card renders **one pill per configured date window**, not one overall:
+ * a fork with CFP, voting and agenda-published windows shows a countdown for
+ * each. So this asserts the conference-day countdown *is among* them rather
+ * than that it is the only one — the conference date is the single window
+ * every conference has, which is what makes `VISUAL_EXPECTED_DAYS_LEFT`
+ * meaningful across forks.
  */
 test('the visual suite renders at the pinned date, not the live clock', async ({ page }) => {
     await page.goto('/e2e-content-fixture')
     await expect(
-        page.locator('.countdown'),
+        page.getByText(`${VISUAL_EXPECTED_DAYS_LEFT} days left`).first(),
         'the __devDateOverride cookie did not apply — baselines would capture the live clock. ' +
-            'Check the cookie domain matches baseURL, and that its value needs no URL-encoding.',
-    ).toHaveText(`${VISUAL_EXPECTED_DAYS_LEFT} days left`)
+            'Check the cookie domain matches baseURL, and that its value needs no URL-encoding. ' +
+            `(Expected the conference-day countdown to read ${VISUAL_EXPECTED_DAYS_LEFT} days ` +
+            'at VISUAL_DATE — if the conference date moved, update both in e2e/routes.ts.)',
+    ).toBeVisible()
 })
 
 for (const route of ROUTES) {

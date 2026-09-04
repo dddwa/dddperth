@@ -96,12 +96,18 @@ export const FIXTURE_BLOG_SLUG = '2023-02-14-chairperson-report-for-2022'
  * A literal for the same reason the rest of this file uses literals: it is
  * read outside Vite, where `@conference/*` aliases don't resolve.
  *
+ * DDD Perth is 2026-10-03. 2026-06-08 is chosen for **clearance**: it is 20
+ * days from the nearest boundary of any window this conference configures
+ * (CFP closes 06-28, voting opens 07-13, ticket releases, agenda published
+ * 08-24). Sitting mid-window rather than near an edge means a small edit to
+ * this date can't silently flip the pinned render into a different state.
+ *
  * **Date-only, no time part.** The provider runs the cookie value through
  * `decodeURIComponent`, so an ISO datetime's colons must be percent-encoded to
  * survive the cookie header — and when they aren't, nothing errors: the cookie
  * is silently ignored and the page renders at the live clock.
  */
-export const VISUAL_DATE = '2026-07-09'
+export const VISUAL_DATE = '2026-06-08'
 
 /**
  * Days between `VISUAL_DATE` and the conference date, as the countdown pill
@@ -111,7 +117,7 @@ export const VISUAL_DATE = '2026-07-09'
  * Update alongside `VISUAL_DATE` (and your conference date). Getting it wrong
  * is safe — it fails loudly with both numbers in the message.
  */
-export const VISUAL_EXPECTED_DAYS_LEFT = 100
+export const VISUAL_EXPECTED_DAYS_LEFT = 117
 
 export const ROUTES: E2eRoute[] = [
     // `home` deliberately stays a full-page capture: it is the only route
