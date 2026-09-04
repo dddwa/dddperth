@@ -5,7 +5,6 @@ import { use } from 'react'
 import bundles from 'virtual:mdx-bundles'
 import type { Sponsor, Year } from './conference-state-client-safe'
 import { MdxImage } from '~/components/mdx-image'
-import { MdxLink } from '~/components/mdx-link'
 import {
     Bullet,
     Card,
@@ -25,6 +24,8 @@ import { Button } from '~/components/ui/button'
 import { conferenceManifest } from '@conference/manifest'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
+import { AppLink } from '~/components/app-link'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 type ContentType = 'page' | 'blog'
 
@@ -65,7 +66,11 @@ function wrapMdxComponent(
     ticketSponsors?: MdxSponsorContext,
 ) {
     const mdxComponents: MDXComponents = {
-        a: ({ ref, ...props }) => <MdxLink {...props} />,
+        // MDX emits `href`; AppLink takes `to` and decides internal vs
+        // external vs mailto from its shape. An <a> with no href in MDX is a
+        // content bug, but render it inert rather than crashing the page.
+        a: ({ ref, href, ...props }) =>
+            href ? <AppLink unstyled to={href} {...props} /> : <styled.a {...props} />,
         h1: ({ ref, ...props }) => <styled.h1 fontSize="3xl" {...props} />,
         h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
         h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
@@ -117,6 +122,7 @@ function wrapMdxComponent(
                                     rel="noopener noreferrer"
                                 >
                                     Submit a session via Sessionize
+                                    <NewTabHint />
                                 </a>
                             </Button>
                         </styled.div>
@@ -138,6 +144,7 @@ function wrapMdxComponent(
                         <Button asChild>
                             <a href="https://sessionize.com/app/speaker" target="_blank" rel="noopener noreferrer">
                                 Submit a session via Sessionize
+                                <NewTabHint />
                             </a>
                         </Button>
                     </styled.div>

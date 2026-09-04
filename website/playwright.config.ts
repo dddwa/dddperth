@@ -1,5 +1,6 @@
 import type { Project } from '@playwright/test'
 import { defineConfig, devices } from '@playwright/test'
+import { VISUAL_DATE } from './e2e/routes'
 
 /**
  * Accessibility (axe) + focus-visible e2e suite (`nx e2e website`). Scoped
@@ -48,6 +49,37 @@ const visualViewports: Array<{ name: string; width: number; height: number }> = 
     { name: 'tablet', width: 834, height: 1194 },
     { name: 'desktop', width: 1440, height: 900 },
 ]
+/**
+ * The visual suite renders at a **fixed** date, seeded through the same
+ * `__devDateOverride` cookie `date-states.spec.ts` uses. `VISUAL_DATE` and the
+ * countdown it implies live in `e2e/routes.ts` beside the other fork-owned
+ * fixtures, so a fork edits one file; see there for why it is pinned at all
+ * and why it carries no time part.
+ *
+ * Only the visual projects pin the date. The a11y projects deliberately do
+ * not: `date-states.spec.ts` sets its own per-test dates to scan the
+ * date-driven states, and a config-level default would fight that.
+ *
+ * Cookies are seeded per-project via `storageState`, which keys on a domain
+ * rather than a URL. That domain has to come from `baseURL`: under `pnpm vr`
+ * Playwright runs inside the container and reaches the host as
+ * `host.docker.internal`, so a hardcoded `localhost` would be dropped
+ * silently — the baselines would still render, just at the wrong date, which
+ * is the exact failure this pinning exists to prevent.
+ */
+const baseDomain = new URL(baseURL).hostname
+function visualCookie(name: string, value: string) {
+    return {
+        name,
+        value,
+        domain: baseDomain,
+        path: '/',
+        expires: -1,
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax' as const,
+    }
+}
 const visualProjects: Project[] = visualBrowsers.flatMap((browser) =>
     visualViewports.map((viewport) => ({
         name: `visual-${browser.name}-${viewport.name}`,
@@ -55,6 +87,10 @@ const visualProjects: Project[] = visualBrowsers.flatMap((browser) =>
         use: {
             ...browser.use,
             viewport: { width: viewport.width, height: viewport.height },
+            storageState: {
+                cookies: [visualCookie('__devDateOverride', VISUAL_DATE)],
+                origins: [],
+            },
         },
     })),
 )

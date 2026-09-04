@@ -72,9 +72,9 @@ export const Footer = () => (
                 <AppLink to="/volunteer" variant="chrome">
                     Work With Us
                 </AppLink>
-                <styled.a href={`mailto:${contactEmail}`} color="text.highlight" _hover={{ color: 'interactive.active' }}>
+                <AppLink unstyled to={`mailto:${contactEmail}`} color="text.highlight" _hover={{ color: 'interactive.active' }}>
                     {contactEmail}
-                </styled.a>
+                </AppLink>
             </Flex>
             <Flex direction="column" gap="4">
                 {/* <styled.p color="#C2C2FF" fontSize="2xl" lineHeight={1.2} textWrap="balance">
@@ -95,12 +95,10 @@ export const Footer = () => (
                 /> */}
                 <Flex direction="row" gap="1">
                     {socialsData.map((item) => (
-                        <styled.a
+                        <AppLink unstyled
                             aria-label={`Visit us on ${item.title}`}
                             key={item.link}
-                            href={item.link}
-                            target={`_blank`}
-                            rel={`nofollow noopener`}
+                            to={item.link}
                             display="flex"
                             justifyContent="flex-start"
                             alignItems="center"
@@ -113,7 +111,7 @@ export const Footer = () => (
                                     _hover: { color: 'interactive.active' },
                                 })}
                             />
-                        </styled.a>
+                        </AppLink>
                     ))}
                 </Flex>
             </Flex>

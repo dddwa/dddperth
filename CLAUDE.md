@@ -63,12 +63,13 @@ nx graph                           # workspace dependency graph
 
 ## Working with the fork ecosystem
 
-Two Claude Code skills are bundled in `.claude/skills/`:
+Three Claude Code skills are bundled in `.claude/skills/`:
 
 - **`/new-conference`** — scaffolds a sibling fork repo, embeds this repo as a `git subtree` under `core/`, copies `/conference-stub/` as the seed for the fork's `/conference/`, runs a substitution pass.
-- **`/pull-upstream`** — used from inside a fork to pull the latest ddd-core into `core/` via `git subtree pull`.
+- **`/core-pull`** — used from inside a fork to pull the latest ddd-core into `core/` via `git subtree pull`.
+- **`/core-push`** — used from inside a fork to upstream a change made in its `core/` back here, as a curated PR. Deliberately not a `git subtree push`: the fork's visual baselines and fork-shape config must not travel up.
 
-Read each skill's `SKILL.md` before changes that affect the cross-layer contract (manifest shape, theme shape, wrangler shape, path aliases). Anything you break in the contract will break every existing fork on their next `/pull-upstream`.
+Read each skill's `SKILL.md` before changes that affect the cross-layer contract (manifest shape, theme shape, wrangler shape, path aliases). Anything you break in the contract will break every existing fork on their next `/core-pull`.
 
 ## Key application patterns
 
@@ -91,6 +92,25 @@ export async function loader({ context }: Route.LoaderArgs) {
     const ctx = context.cloudflare.ctx
 }
 ```
+
+## Links
+
+**`AppLink` (`website/app/components/app-link.tsx`) is the only link component.** It takes a single `to` prop and picks its own element from the shape of that value at runtime:
+
+- internal path (`/agenda`, `#section`) → React Router `<Link>`;
+- external URL (`https://`, `//`) → `<a target="_blank" rel="noopener noreferrer">` plus an appended "(opens in a new tab)" hint and a visible `↗`;
+- `mailto:`/`tel:` → plain `<a>`, same tab (the OS takes over, so no tab is opened to announce);
+- `download` set → plain `<a>`, no hint, whatever the URL shape.
+
+The branch lives in the component because almost every href is a *runtime* value (`sponsor.website`, `action.href`), so "is this external?" isn't answerable by reading the JSX. Three copies of that check had grown (`MdxLink`, `important-dates.tsx`, manual hint call sites) before this was consolidated; `MdxLink` no longer exists.
+
+- **`unstyled` is a real decision, not a style nit.** `AppLink` applies the `navLink` recipe by default, which carries padding and sizing, and the callers that pass no variant rely on it. Links that were plain anchors before (MDX prose, CTAs, sponsor logos, important-dates) must pass `unstyled` or they gain nav-link padding and reflow the page. Both directions were caught by `pnpm vr`, not by review.
+- **`aria-label` needs the hint folded into the label**, because it *replaces* element content when the accessible name is computed — an `srOnly` span inside a labelled icon link is silently dropped. `AppLink` handles this; call sites pass a plain label.
+- **The separating space is a text node outside the hint span.** Accessible names concatenate each element's contribution with its own whitespace trimmed, so a space *inside* the span is dropped and the name comes out as `"Register as a Volunteer(opens in a new tab)"`. An NBSP doesn't survive either.
+- **The visible `↗` is text links only** — WCAG 3.2.5 is about warning everyone, not only screen reader users. It is `aria-hidden` (the hint already says it in words), sized in `em` off `currentColor`, and `textDecoration="none"` so a prose link's underline doesn't run under it. Icon and logo links get the announcement but no glyph. Don't hand-type `↗` into link text.
+- **`conference-stub/content/pages/e2e-content-fixture.mdx` carries one external link on purpose**, so the visual baselines cover the arrow. Without it the suite passed while rendering no external text link at all.
+- Anchors that legitimately remain: skip links (`skip-to-content.tsx`), `.ics` and `?download=1` downloads.
+
 
 ## Development notes
 

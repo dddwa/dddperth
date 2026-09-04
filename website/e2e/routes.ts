@@ -78,6 +78,41 @@ export const FIXTURE_TALK_ID = '1240238'
  */
 export const FIXTURE_BLOG_SLUG = '2024-01-15-welcome-to-the-stub'
 
+/**
+ * The date the **visual** suite renders at, seeded as a `__devDateOverride`
+ * cookie by the `visual-*` projects in `playwright.config.ts`.
+ *
+ * Without a pin these baselines rot on a timer rather than on a code change:
+ * content pages render an "Important Dates" card counting down to the
+ * conference date, so `/e2e-content-fixture` captured a live "N days left" —
+ * a fresh pixel diff every day, on all 9 of its baselines. It surfaced when a
+ * regeneration for an unrelated change silently folded in "46 days left" ->
+ * "44 days left".
+ *
+ * **Fork-owned, like `FIXTURE_BLOG_SLUG`.** Pick a date comfortably before
+ * your conference — far enough out that no date-driven window (CFP, voting,
+ * agenda-published) has opened, so the pinned render is the quiet "save the
+ * date" state rather than one that shifts as those windows are configured.
+ * A literal for the same reason the rest of this file uses literals: it is
+ * read outside Vite, where `@conference/*` aliases don't resolve.
+ *
+ * **Date-only, no time part.** The provider runs the cookie value through
+ * `decodeURIComponent`, so an ISO datetime's colons must be percent-encoded to
+ * survive the cookie header — and when they aren't, nothing errors: the cookie
+ * is silently ignored and the page renders at the live clock.
+ */
+export const VISUAL_DATE = '2026-07-09'
+
+/**
+ * Days between `VISUAL_DATE` and the conference date, as the countdown pill
+ * renders it. Asserted by `visual.spec.ts` so a cookie that fails to apply
+ * fails the run instead of quietly restoring the live-clock drift.
+ *
+ * Update alongside `VISUAL_DATE` (and your conference date). Getting it wrong
+ * is safe — it fails loudly with both numbers in the message.
+ */
+export const VISUAL_EXPECTED_DAYS_LEFT = 100
+
 export const ROUTES: E2eRoute[] = [
     // `home` deliberately stays a full-page capture: it is the only route
     // whose baseline covers the shared header, nav and footer chrome, and a

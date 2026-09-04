@@ -52,11 +52,9 @@ function SponsorRow({ sponsors, cell, children }: {
     return (
         <Flex flexWrap="wrap" alignItems="center" columnGap="8" rowGap="6">
             {sponsors.map((sponsor) => (
-                <styled.a
+                <AppLink unstyled
                     key={sponsor.name}
-                    href={sponsor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={sponsor.website}
                     display="inline-flex"
                     alignItems="center"
                     justifyContent="center"
@@ -77,7 +75,7 @@ function SponsorRow({ sponsors, cell, children }: {
                         height="full"
                         maxWidth="full"
                     />
-                </styled.a>
+                </AppLink>
             ))}
             {children}
         </Flex>

@@ -11,7 +11,7 @@
  * the fork's own /conference/manifest.ts.
  *
  * Adding a required field here is a breaking change for forks — they get a
- * TypeScript error on next `pull-upstream`. Add fields cautiously; prefer
+ * TypeScript error on next `core-pull`. Add fields cautiously; prefer
  * making them optional + having a sensible default in core.
  */
 

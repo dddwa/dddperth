@@ -1,17 +1,12 @@
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
-import { Link } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
 import type { ImportantDate, StandaloneImportantDate, StartEventImportantDate } from '~/lib/important-dates'
+import { AppLink } from '~/components/app-link'
 import { css } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
 
-const StyledLink = styled(Link)
 
-function isExternalHref(href: string | undefined): boolean {
-    if (!href) return false
-    return /^(https?:)?\/\//.test(href) || href.startsWith('mailto:')
-}
 
 const ImportantDateBox: FC<{
     currentDate: DateTime
@@ -275,18 +270,15 @@ function EventLink({
         gradientTo: highlighted ? 'gradient.cta-end' : 'white/5',
     } as const
 
-    if (eventHref && !isExternalHref(eventHref)) {
-        return (
-            <StyledLink to={eventHref} {...styleProps}>
-                {message}
-            </StyledLink>
-        )
+    // A missing href still renders the styled surface, just inert.
+    if (!eventHref) {
+        return <styled.div {...styleProps}>{message}</styled.div>
     }
 
     return (
-        <styled.a href={eventHref} {...styleProps}>
+        <AppLink unstyled to={eventHref} {...styleProps}>
             {message}
-        </styled.a>
+        </AppLink>
     )
 }
 
@@ -330,18 +322,10 @@ function EventCountdown({
         return <styled.button className={styles}>{countdownMessage}</styled.button>
     }
 
-    if (isExternalHref(eventHref)) {
-        return (
-            <styled.a href={eventHref} className={styles} cursor="pointer">
-                {countdownMessage}
-            </styled.a>
-        )
-    }
-
     return (
-        <StyledLink to={eventHref} className={styles} cursor="pointer">
+        <AppLink unstyled to={eventHref} className={styles} cursor="pointer">
             {countdownMessage}
-        </StyledLink>
+        </AppLink>
     )
 }
 
