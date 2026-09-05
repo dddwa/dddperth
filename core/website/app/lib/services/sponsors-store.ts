@@ -32,6 +32,12 @@ export interface SponsorProfile {
     websiteUrl?: string
     /** Platform → URL, e.g. { twitter: "https://…", linkedin: "https://…" }. */
     socials: Record<string, string>
+    /**
+     * Sponsor-supplied logistics keyed by `LOGISTICS_KEYS` (bump-in, equipment,
+     * raffle, screens, induction). Sponsor-owned like the rest of the profile:
+     * pushed into Jira on every save. Absent keys mean "not answered yet".
+     */
+    logistics?: Record<string, string>
     logo?: SponsorLogoMeta
     /** First time the completion criteria were met; never unset. */
     completedAt?: number
@@ -102,6 +108,13 @@ export interface SponsorsStore {
         updatedBy: string,
     ): Promise<void>
     saveLogo(issueKey: string, logo: Omit<SponsorLogoMeta, 'uploadedAt'>, updatedBy: string): Promise<void>
+
+    /**
+     * Replaces the sponsor's logistics answers wholesale. The portal always
+     * submits the full visible form, so a merge would strand a field the
+     * sponsor deliberately cleared.
+     */
+    saveLogistics(issueKey: string, logistics: Record<string, string>, updatedBy: string): Promise<void>
 
     /** Stamps completed_at if not already set. Returns true when this call
      * did the stamping (i.e. the profile just became complete). */

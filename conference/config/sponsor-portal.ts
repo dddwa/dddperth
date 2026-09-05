@@ -57,22 +57,29 @@ export const sponsorPortal: SponsorPortalConfig = {
                 facebook: 'customfield_10144',
                 youtube: 'customfield_10145',
             },
-            // Read-only, for the Optus Stadium exhibitor spreadsheet export
-            // (Admin → Sponsors → Export exhibitor list). Committee-owned:
-            // the portal never writes these.
-            exhibitor: {
-                contactName: 'customfield_10149',
-                contactPhone: 'customfield_10150',
-                contactEmail: 'customfield_10151',
+            // Sponsor-supplied logistics. Collected in /portal/logistics,
+            // pushed to Jira on every save, and read back by Admin → Sponsors
+            // → Export exhibitor list for the Optus Stadium form.
+            logistics: {
+                exhibitorContactName: 'customfield_10149',
+                exhibitorContactPhone: 'customfield_10150',
+                exhibitorContactEmail: 'customfield_10151',
                 bumpInSlot: 'customfield_10153',
                 bumpOutWindow: 'customfield_10154',
-                parking: 'customfield_10159',
+                bumpInAttendees: 'customfield_10155',
+                loadingDockAttendees: 'customfield_10152',
                 equipmentList: 'customfield_10156',
+                nonLaptopElectrical: 'customfield_10158',
                 trolleyOrForklift: 'customfield_10160',
                 loadingDockAssistance: 'customfield_10161',
-                // The venue's "Additional Notes" has no dedicated Jira field;
-                // the closest is the loading-dock attendee list, which is a
-                // different question — left unmapped rather than mismapped.
+                porterAssistance: 'customfield_10157',
+                parking: 'customfield_10159',
+                screenOrders: 'customfield_10162',
+                screenNotes: 'customfield_10163',
+                screenInvoicingEmail: 'customfield_10164',
+                rafflePrize: 'customfield_10095',
+                raffleLocation: 'customfield_10196',
+                socialQuote: 'customfield_10148',
             },
         },
         // "Asset Creation Status" → "Assets partially received, creation

@@ -17,11 +17,16 @@ export interface JiraClient {
     /** Adds a label without disturbing the issue's existing labels. */
     addLabel(issueKey: string, label: string): Promise<void>
     /**
-     * Committee-owned logistics for the venue's exhibitor spreadsheet, keyed
-     * by issue key. Read-only. Returns an empty map when the manifest has no
-     * `fields.exhibitor` mapping.
+     * Sponsor-supplied logistics per issue key, keyed by portal field name.
+     * Empty when the manifest has no `fields.logistics` mapping.
      */
     getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
+    /**
+     * Writes sponsor-supplied logistics back, converting each value to the
+     * shape its Jira field expects (select, multi-checkbox, rich text or
+     * plain string). Unmapped fields are skipped.
+     */
+    pushLogistics(issueKey: string, logistics: Record<string, string>): Promise<void>
     /** Posts a plain-text comment (shows in the activity feed, notifies watchers). */
     addComment(issueKey: string, text: string): Promise<void>
     /** Attaches a file to the issue (shows in the Attachments panel). */
@@ -30,19 +35,11 @@ export interface JiraClient {
     updateIssueFields(issueKey: string, fields: Record<string, unknown>): Promise<void>
 }
 
-/** Committee-owned logistics read from Jira for the venue spreadsheet. */
-export interface ExhibitorLogistics {
-    contactName?: string
-    contactPhone?: string
-    contactEmail?: string
-    bumpInSlot?: string
-    bumpOutWindow?: string
-    parking?: string
-    equipmentList?: string
-    trolleyOrForklift?: string
-    loadingDockAssistance?: string
-    additionalNotes?: string
-}
+/**
+ * Sponsor-supplied logistics read back from Jira, keyed by the portal's own
+ * field names (see LOGISTICS_KEYS) so callers never deal in customfield ids.
+ */
+export type ExhibitorLogistics = Record<string, string>
 
 /** Wraps plain text (possibly multi-line) into the ADF document that REST v3
  * requires for paragraph/rich-text fields. */
@@ -141,6 +138,37 @@ function fieldAsText(fields: Record<string, unknown>, fieldId: string | undefine
     }
 
     return undefined
+}
+
+/**
+ * Resolves a sponsor's answer to one of a select/checkbox field's allowed
+ * options, by id if we were given one and otherwise by case-insensitive
+ * value. Returns null when nothing matches: Jira rejects an unknown option
+ * outright, which would fail the whole save, so an unmatched answer is
+ * dropped rather than allowed to take the rest of the form down with it.
+ */
+function matchOption(allowedValues: unknown[] | undefined, answer: string): { id: string } | null {
+    if (!answer || !Array.isArray(allowedValues)) return null
+
+    for (const option of allowedValues) {
+        if (!option || typeof option !== 'object') continue
+        const { id, value } = option as { id?: unknown; value?: unknown }
+        // Jira ids come back as strings or numbers; anything else isn't an
+        // option we can reference.
+        if (typeof id !== 'string' && typeof id !== 'number') continue
+        const optionId = String(id)
+
+        if (optionId === answer) return { id: optionId }
+        if (typeof value === 'string' && value.trim().toLowerCase() === answer.toLowerCase()) {
+            return { id: optionId }
+        }
+    }
+    return null
+}
+
+/** Jira's rich-text fields need ADF; plain text fields reject it. */
+function isRichText(fieldMeta: { schema?: { type?: string; custom?: string } }): boolean {
+    return typeof fieldMeta.schema?.custom === 'string' && fieldMeta.schema.custom.includes('textarea')
 }
 
 const YEAR_LABEL = /^\d{4}$/
@@ -274,7 +302,7 @@ export function createJiraClient(args: {
 
         async getExhibitorLogistics() {
             const map = new Map<string, ExhibitorLogistics>()
-            const exhibitor = fields.exhibitor
+            const exhibitor = fields.logistics
             if (!exhibitor) return map
 
             const requestFields = Object.values(exhibitor).filter(
@@ -298,24 +326,73 @@ export function createJiraClient(args: {
 
                 for (const issue of page.issues ?? []) {
                     const issueFields = issue.fields ?? {}
-                    map.set(issue.key, {
-                        contactName: fieldAsText(issueFields, exhibitor.contactName),
-                        contactPhone: fieldAsText(issueFields, exhibitor.contactPhone),
-                        contactEmail: fieldAsText(issueFields, exhibitor.contactEmail),
-                        bumpInSlot: fieldAsText(issueFields, exhibitor.bumpInSlot),
-                        bumpOutWindow: fieldAsText(issueFields, exhibitor.bumpOutWindow),
-                        parking: fieldAsText(issueFields, exhibitor.parking),
-                        equipmentList: fieldAsText(issueFields, exhibitor.equipmentList),
-                        trolleyOrForklift: fieldAsText(issueFields, exhibitor.trolleyOrForklift),
-                        loadingDockAssistance: fieldAsText(issueFields, exhibitor.loadingDockAssistance),
-                        additionalNotes: fieldAsText(issueFields, exhibitor.additionalNotes),
-                    })
+                    const entry: ExhibitorLogistics = {}
+                    for (const [portalKey, fieldId] of Object.entries(exhibitor)) {
+                        const text = fieldAsText(issueFields, fieldId)
+                        if (text !== undefined) entry[portalKey] = text
+                    }
+                    map.set(issue.key, entry)
                 }
 
                 nextPageToken = page.isLast ? undefined : page.nextPageToken
             } while (nextPageToken)
 
             return map
+        },
+
+        async pushLogistics(issueKey, logistics) {
+            const mapping = fields.logistics
+            if (!mapping) return
+
+            const entries = Object.entries(mapping).filter(
+                (entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1] !== '',
+            )
+            if (entries.length === 0) return
+
+            // Jira rejects a plain string for a select or checkbox field, and
+            // the committee changes field types (the old "Sponsor Tasks"
+            // checkbox became single-selects). So ask this issue's edit
+            // metadata what each field actually is rather than assuming —
+            // one request, and it also tells us the valid option values.
+            const metaResponse = await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/editmeta`)
+            const meta = await parseJson<{
+                fields?: Record<
+                    string,
+                    { schema?: { type?: string; items?: string; custom?: string }; allowedValues?: unknown[] }
+                >
+            }>(metaResponse)
+
+            const payload: Record<string, unknown> = {}
+            for (const [portalKey, fieldId] of entries) {
+                const raw = logistics[portalKey]
+                const fieldMeta = meta.fields?.[fieldId]
+                // A field missing from editmeta isn't on this issue's screen
+                // (or we lack permission) — writing it would 400 the whole
+                // request and lose every other answer with it.
+                if (!fieldMeta) continue
+
+                const type = fieldMeta.schema?.type
+                const value = raw?.trim() ?? ''
+
+                if (type === 'option') {
+                    payload[fieldId] = value ? matchOption(fieldMeta.allowedValues, value) : null
+                } else if (type === 'array') {
+                    payload[fieldId] = value
+                        ? value
+                              .split(',')
+                              .map((part) => matchOption(fieldMeta.allowedValues, part.trim()))
+                              .filter((option) => option !== null)
+                        : []
+                } else if (type === 'string' && isRichText(fieldMeta)) {
+                    payload[fieldId] = value ? textToAdf(value) : null
+                } else {
+                    payload[fieldId] = value || null
+                }
+            }
+
+            if (Object.keys(payload).length > 0) {
+                await this.updateIssueFields(issueKey, payload)
+            }
         },
 
         async addLabel(issueKey, label) {

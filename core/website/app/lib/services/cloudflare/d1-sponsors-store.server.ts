@@ -23,6 +23,7 @@ interface SponsorProfileRow {
     blurb: string | null
     website_url: string | null
     socials_json: string | null
+    logistics_json: string | null
     logo_r2_key: string | null
     logo_filename: string | null
     logo_content_type: string | null
@@ -60,20 +61,23 @@ function toSponsor(row: SponsorRow): SponsorRecord {
     }
 }
 
-function toProfile(row: SponsorProfileRow): SponsorProfile {
-    let socials: Record<string, string> = {}
-    if (row.socials_json) {
-        try {
-            socials = JSON.parse(row.socials_json) as Record<string, string>
-        } catch {
-            // Corrupt JSON shouldn't take the profile page down.
-        }
+/** Corrupt JSON shouldn't take the profile page down — treat it as unset. */
+function parseJsonMap(raw: string | null): Record<string, string> {
+    if (!raw) return {}
+    try {
+        return JSON.parse(raw) as Record<string, string>
+    } catch {
+        return {}
     }
+}
+
+function toProfile(row: SponsorProfileRow): SponsorProfile {
     return {
         issueKey: row.issue_key,
         blurb: row.blurb ?? undefined,
         websiteUrl: row.website_url ?? undefined,
-        socials,
+        socials: parseJsonMap(row.socials_json),
+        logistics: parseJsonMap(row.logistics_json),
         logo:
             row.logo_r2_key && row.logo_content_type
                 ? {
@@ -218,6 +222,20 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                          updated_by = excluded.updated_by`,
                 )
                 .bind(issueKey, details.blurb, details.websiteUrl, JSON.stringify(details.socials), updatedBy)
+                .run()
+        },
+
+        async saveLogistics(issueKey, logistics, updatedBy) {
+            await db
+                .prepare(
+                    `INSERT INTO sponsor_profiles (issue_key, logistics_json, updated_at, updated_by)
+                     VALUES (?, ?, unixepoch(), ?)
+                     ON CONFLICT(issue_key) DO UPDATE SET
+                         logistics_json = excluded.logistics_json,
+                         updated_at = excluded.updated_at,
+                         updated_by = excluded.updated_by`,
+                )
+                .bind(issueKey, JSON.stringify(logistics), updatedBy)
                 .run()
         },
 

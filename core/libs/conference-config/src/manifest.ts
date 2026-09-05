@@ -309,27 +309,44 @@ export interface SponsorPortalJiraConfig {
          */
         socials?: Record<string, string>
         /**
-         * Committee-owned logistics fields, read (never written) to fill the
-         * venue's exhibitor spreadsheet from Admin → Sponsors. Every entry is
-         * optional: a fork without a venue form, or one whose Jira lacks a
-         * given field, simply exports that column blank. Nothing here feeds
-         * the portal — sponsors never see or edit these.
+         * Sponsor-supplied logistics: exhibition/bump-in, Optus screen
+         * orders, raffle prize, induction and the social quote.
+         *
+         * Sponsor-owned in both directions — the portal collects these and
+         * pushes them into Jira on every save (the portal's value wins), and
+         * the admin exhibitor-list export reads them back. Jira's own status
+         * options label each of these workstreams "… Pending (Sponsor)",
+         * which is what marks them sponsor-owned rather than committee-owned.
+         *
+         * Every entry is optional, keyed by the portal's field name: a fork
+         * without a venue form omits the block entirely, and a fork whose
+         * Jira lacks one field just skips that field in both directions.
          */
-        exhibitor?: {
-            contactName?: string
-            contactPhone?: string
-            contactEmail?: string
+        logistics?: {
+            exhibitorContactName?: string
+            exhibitorContactPhone?: string
+            exhibitorContactEmail?: string
             /** Single-select combining bump-in day and start time. */
             bumpInSlot?: string
             /** Single-select bump-out window. */
             bumpOutWindow?: string
-            /** Multi-checkbox: under-stadium drop-off/pick-up. */
-            parking?: string
+            bumpInAttendees?: string
+            /** Named individuals needing venue safety induction. */
+            loadingDockAttendees?: string
             equipmentList?: string
+            nonLaptopElectrical?: string
             /** Free text covering trolley *and* forklift in one field. */
             trolleyOrForklift?: string
             loadingDockAssistance?: string
-            additionalNotes?: string
+            porterAssistance?: string
+            /** Multi-checkbox: under-stadium drop-off/pick-up. */
+            parking?: string
+            screenOrders?: string
+            screenNotes?: string
+            screenInvoicingEmail?: string
+            rafflePrize?: string
+            raffleLocation?: string
+            socialQuote?: string
         }
     }
     /**

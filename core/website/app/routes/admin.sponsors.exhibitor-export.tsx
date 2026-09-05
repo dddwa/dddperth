@@ -49,10 +49,27 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const conferenceDate =
         conference && conference.kind === 'conference' ? conference.conferenceDate?.toJSDate() : undefined
 
-    const sources: ExhibitorSource[] = activeSponsors.map((sponsor) => ({
-        companyName: sponsor.companyName,
-        ...logistics.get(sponsor.issueKey),
-    }))
+    // Jira is the source of truth for logistics (the committee edits it
+    // directly too), but fall back to what the sponsor submitted in case a
+    // push hasn't landed yet.
+    const sources: ExhibitorSource[] = activeSponsors.map((sponsor) => {
+        const fromJira = logistics.get(sponsor.issueKey) ?? {}
+        const fromPortal = sponsor.profile?.logistics ?? {}
+        const pick = (key: string) => fromJira[key] || fromPortal[key] || undefined
+
+        return {
+            companyName: sponsor.companyName,
+            contactName: pick('exhibitorContactName'),
+            contactPhone: pick('exhibitorContactPhone'),
+            contactEmail: pick('exhibitorContactEmail'),
+            bumpInSlot: pick('bumpInSlot'),
+            bumpOutWindow: pick('bumpOutWindow'),
+            parking: pick('parking'),
+            equipmentList: pick('equipmentList'),
+            trolleyOrForklift: pick('trolleyOrForklift'),
+            loadingDockAssistance: pick('loadingDockAssistance'),
+        }
+    })
 
     const sheet = sheetUtils.aoa_to_sheet(
         buildExhibitorSheet({

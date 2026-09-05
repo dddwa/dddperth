@@ -48,4 +48,11 @@ export interface SponsorSyncService {
      * result here would be handed to the venue as if it were complete.
      */
     getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
+
+    /**
+     * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
+     * portal's values win. Best-effort like the other pushes — never blocks
+     * the sponsor's save.
+     */
+    pushLogistics(issueKey: string, logistics: Record<string, string>): Promise<void>
 }

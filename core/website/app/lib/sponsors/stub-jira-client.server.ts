@@ -56,6 +56,11 @@ export function createStubJiraClient(): JiraClient {
             console.log(`[jira-stub] setAssetsStatusOptionId(${issueKey}, ${optionId}) — no-op`)
         },
 
+        async pushLogistics(issueKey, logistics) {
+            const answered = Object.entries(logistics).filter(([, value]) => value.trim() !== '')
+            console.log(`[jira-stub] pushLogistics(${issueKey}, ${answered.length} answered fields) — no-op`)
+        },
+
         async addLabel(issueKey, label) {
             console.log(`[jira-stub] addLabel(${issueKey}, ${label}) — no-op`)
         },
@@ -64,22 +69,23 @@ export function createStubJiraClient(): JiraClient {
             // Enough shape to exercise the spreadsheet export locally: one
             // fully-populated exhibitor, one with only a contact, and one
             // absent entirely (the export must still emit its row).
-            return new Map([
+            return new Map<string, Record<string, string>>([
                 [
                     'SPN-101',
                     {
-                        contactName: 'Wile E. Coyote',
-                        contactPhone: '0400 000 000',
-                        contactEmail: 'logistics-acme@example.com',
+                        exhibitorContactName: 'Wile E. Coyote',
+                        exhibitorContactPhone: '0400 000 000',
+                        exhibitorContactEmail: 'logistics-acme@example.com',
                         bumpInSlot: 'Friday 1pm - 2pm',
                         bumpOutWindow: 'Saturday 5pm (after conference concludes)',
                         parking: 'For Bump In, For Bump Out',
                         equipmentList: '1x pop-up banner (5kg), 2x crates (20kg each)',
                         trolleyOrForklift: 'Trolley please',
                         loadingDockAssistance: 'Yes',
+                        rafflePrize: 'Mechanical keyboard (~$250)',
                     },
                 ],
-                ['SPN-102', { contactName: 'Hank Scorpio', contactEmail: 'logistics-globex@example.com' }],
+                ['SPN-102', { exhibitorContactName: 'Hank Scorpio', exhibitorContactEmail: 'globex@example.com' }],
             ])
         },
 

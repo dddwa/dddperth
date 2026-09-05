@@ -274,6 +274,18 @@ export function createJiraSponsorSyncService(args: {
             return client.getExhibitorLogistics()
         },
 
+        async pushLogistics(issueKey, logistics) {
+            if (!portalConfig || !client || !writebackEnabled) return
+            try {
+                await client.pushLogistics(issueKey, logistics)
+            } catch (error) {
+                console.error(
+                    `Sponsor push: logistics update on ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
+            }
+        },
+
         async retryPendingWritebacks() {
             if (!portalConfig || !client || !writebackEnabled) return
 
