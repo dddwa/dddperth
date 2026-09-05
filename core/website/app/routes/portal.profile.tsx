@@ -1,6 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
+import {
+    dropzoneClass,
+    FieldError,
+    fieldLabelClass,
+    inputClass,
+    PrimaryButton,
+} from '~/components/portal-form'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import {
@@ -37,7 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 /**
  * After any successful save, check whether the profile just became complete
- * and if so tick the Jira "Assets for Conference" checkbox. The flip is
+ * and if so advance the Jira assets status field. The write-back is
  * best-effort — on Jira failure it's marked pending and the hourly sync
  * retries; the sponsor's save never fails because Jira is down.
  */
@@ -110,86 +117,6 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     return data({ intent: 'unknown' as const, error: 'Unknown action' }, { status: 400 })
-}
-
-// Styles live in css() calls (not spread objects) so Panda's static
-// extraction sees them — a spread of a plain object generates no CSS.
-const inputClass = css({
-    mt: '1',
-    w: 'full',
-    px: '3',
-    py: '2',
-    // admin-subtle (admin.200) is for card edges and vanishes on white at
-    // input scale — form fields use the login page's admin.400 treatment.
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'admin.400',
-    borderRadius: 'md',
-    fontSize: 'sm',
-    bg: 'white',
-    color: 'admin.900',
-    _placeholder: { color: 'admin.400' },
-    _focus: { outline: 'none', borderColor: 'indigo.7', boxShadow: 'focus-ring' },
-})
-
-const fieldLabelClass = css({
-    display: 'block',
-    fontSize: 'sm',
-    fontWeight: 'medium',
-    color: 'admin.700',
-})
-
-const dropzoneClass = css({
-    display: 'block',
-    borderWidth: '1px',
-    borderStyle: 'dashed',
-    borderColor: 'admin.400',
-    borderRadius: 'lg',
-    bg: 'admin.50',
-    py: '8',
-    px: '4',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'colors',
-    _hover: { borderColor: 'indigo.7', bg: 'admin.100' },
-})
-
-/**
- * Portal chrome sits on white admin cards regardless of the site theme, so
- * buttons use the theme-invariant admin.* treatment (same as the auth
- * pages) rather than the theme-dependent Park UI button recipe — which
- * renders white-on-white here in the dark theme.
- */
-function PrimaryButton({ children, disabled }: { children: ReactNode; disabled?: boolean }) {
-    return (
-        <styled.button
-            type="submit"
-            disabled={disabled}
-            bg="admin.900"
-            color="white"
-            border="none"
-            py="2.5"
-            px="6"
-            borderRadius="md"
-            fontSize="sm"
-            fontWeight="semibold"
-            cursor="pointer"
-            transition="colors"
-            _hover={{ bg: 'admin.800' }}
-            _disabled={{ bg: 'admin.400', cursor: 'not-allowed', opacity: 0.8 }}
-        >
-            {children}
-        </styled.button>
-    )
-}
-
-function FieldError({ message }: { message?: string }) {
-    if (!message) return null
-    return (
-        <styled.p mt="1" fontSize="xs" color="status.danger.fg">
-            {message}
-        </styled.p>
-    )
 }
 
 export default function PortalProfile() {

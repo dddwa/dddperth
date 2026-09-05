@@ -52,6 +52,9 @@ export default function PortalLayout() {
                             <AppNavLink to="/portal/profile" variant="admin">
                                 Company profile
                             </AppNavLink>
+                            <AppNavLink to="/portal/logistics" variant="admin">
+                                Event logistics
+                            </AppNavLink>
                         </Flex>
                     </Flex>
                     <Flex align="center" gap="4">

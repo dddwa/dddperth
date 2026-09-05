@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { computeSyncPlan, parseContactEmails, type SyncSourceSponsor } from './sync-plan'
+import {
+    computeSyncPlan,
+    parseContactEmails,
+    planAssetsStatusWrite,
+    type SyncSourceSponsor,
+} from './sync-plan'
 
 describe('parseContactEmails', () => {
     it('splits on commas and semicolons', () => {
@@ -161,5 +166,31 @@ describe('computeSyncPlan', () => {
             { email: 'shared@example.com', issueKey: 'SPN-1' },
             { email: 'shared@example.com', issueKey: 'SPN-2' },
         ])
+    })
+})
+
+describe('planAssetsStatusWrite', () => {
+    const completeOptionId = '10202'
+    const pendingOptionIds = ['10201']
+    const plan = (current: string | undefined) =>
+        planAssetsStatusWrite({ current, completeOptionId, pendingOptionIds })
+
+    it('sets the status when the sponsor is still pending', () => {
+        expect(plan('10201')).toBe('set')
+    })
+
+    it('treats an unset field as pending — a fresh issue nobody has touched', () => {
+        expect(plan(undefined)).toBe('set')
+    })
+
+    it('does nothing when the completion value is already there', () => {
+        expect(plan(completeOptionId)).toBe('already-set')
+    })
+
+    it('never drags the committee backwards once they have advanced it', () => {
+        // "All Assets received" / "Asset Creation complete" — the portal has
+        // no business overwriting these with "partially received".
+        expect(plan('10203')).toBe('committee-advanced')
+        expect(plan('10204')).toBe('committee-advanced')
     })
 })

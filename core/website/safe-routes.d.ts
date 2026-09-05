@@ -50,6 +50,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
     },
+    "/admin/sponsors/exhibitor-export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.exhibitor-export.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -146,6 +150,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
     },
+    "/portal/logistics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal.logistics.js').SearchParams>,
+    },
     "/portal/logo/:issueKey": {
       params: {'issueKey': string | number},
       query: ExportedQuery<import('app/routes/portal.logo.$issueKey.js').SearchParams>,
@@ -220,6 +228,7 @@ declare module "safe-routes" {
             | 'routes/_layout.$'
             | 'routes/portal'
             | 'routes/portal.logo.$issueKey'
+            | 'routes/portal.logistics'
             | 'routes/portal.profile'
             | 'routes/portal._index'
             | 'routes/admin'
@@ -234,6 +243,7 @@ declare module "safe-routes" {
             | 'routes/admin.speakers._index'
             | 'routes/admin.speakers.export'
             | 'routes/admin.sponsors'
+            | 'routes/admin.sponsors.exhibitor-export'
             | 'routes/admin.content'
             | 'routes/admin._index'
             | 'routes/admin.voting';
