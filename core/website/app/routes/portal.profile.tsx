@@ -37,7 +37,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 /**
  * After any successful save, check whether the profile just became complete
- * and if so tick the Jira "Assets for Conference" checkbox. The flip is
+ * and if so advance the Jira assets status field. The write-back is
  * best-effort — on Jira failure it's marked pending and the hourly sync
  * retries; the sponsor's save never fails because Jira is down.
  */

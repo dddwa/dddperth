@@ -50,6 +50,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
     },
+    "/admin/sponsors/exhibitor-export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.exhibitor-export.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -234,6 +238,7 @@ declare module "safe-routes" {
             | 'routes/admin.speakers._index'
             | 'routes/admin.speakers.export'
             | 'routes/admin.sponsors'
+            | 'routes/admin.sponsors.exhibitor-export'
             | 'routes/admin.content'
             | 'routes/admin._index'
             | 'routes/admin.voting';

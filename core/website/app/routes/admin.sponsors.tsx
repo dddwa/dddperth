@@ -158,12 +158,24 @@ export default function AdminSponsors() {
                             )}
                         </styled.p>
                     </Box>
-                    <Form method="post">
-                        <input type="hidden" name="_action" value="sync-now" />
-                        <Button type="submit" disabled={isSyncing || !syncAvailable}>
-                            {isSyncing ? 'Syncing…' : 'Sync now'}
+                    <Flex gap="2" align="center">
+                        <Button
+                            asChild
+                            variant="outline"
+                            color="admin.900"
+                            borderColor="admin.400"
+                            bg="white"
+                            _hover={{ bg: 'admin.100' }}
+                        >
+                            <a href="/admin/sponsors/exhibitor-export">Export exhibitor list</a>
                         </Button>
-                    </Form>
+                        <Form method="post">
+                            <input type="hidden" name="_action" value="sync-now" />
+                            <Button type="submit" disabled={isSyncing || !syncAvailable}>
+                                {isSyncing ? 'Syncing…' : 'Sync now'}
+                            </Button>
+                        </Form>
+                    </Flex>
                 </Flex>
 
                 {!syncAvailable && (

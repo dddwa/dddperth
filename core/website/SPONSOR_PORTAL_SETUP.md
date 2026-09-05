@@ -2,8 +2,8 @@
 
 The sponsor portal lets sponsor contacts log in (same magic-link auth as `/admin`), upload their
 logo, and fill in blurb/website/socials. Sponsor records and contact emails sync **from** the
-conference's Jira project; when a sponsor completes their profile the portal ticks the
-"Assets for Conference" checkbox **back** onto their Jira issue. Uploaded assets live in R2 and
+conference's Jira project; when a sponsor completes their profile the portal advances the
+**Asset Creation Status** field **back** on their Jira issue. Uploaded assets live in R2 and
 reach the public website via the committee's import tool (`pnpm sponsor:add` → Portal Import tab) —
 the public site keeps rendering from the static year config.
 
@@ -23,13 +23,29 @@ sync never runs.
 ## Jira conventions (committee)
 
 - One **Sponsor** issue per sponsorship per year in the sponsors project (DDD Perth: `SPN`).
-- Label each issue with the conference year (e.g. `2026`) — the sync JQL filters on it.
+- **Year labels are maintained by the sync, not by hand.** The JQL matches issues labelled with
+  the current year *or* not yet labelled with any year, and the sync then stamps the current year
+  onto the unlabelled ones. So a sponsor issue created without a label is never silently missed,
+  and by the time the year is archived every issue carries its year — making the archive step a
+  bulk label edit. Tier labels (`Platinum`, `Gold`, …) sit alongside year labels and are ignored.
+  - Because JQL has no "label shaped like a year" predicate, this is expressed as *not labelled
+    with a past year* — `{pastYears}` in the JQL expands to the ten years before the configured
+    one. Set `writeYearLabel: false` to opt out and go back to labelling by hand.
+  - Label write-back is gated on `JIRA_WRITEBACK_ENABLED` like every other write, so **only
+    production stamps labels**; elsewhere the unlabelled arm of the JQL carries the load.
 - **Contact Email** holds comma/semicolon-separated addresses; those people get portal access.
 - **Additional Sponsor Portal Emails** (optional field) takes the same format and grants the
   same access — for extra logins that shouldn't sit in the primary contact field.
-- **Level of Sponsorship** is the tier shown in the portal (read-only for sponsors).
-- The portal ticks **Sponsor Tasks → "Assets for Conference"** when a profile completes
-  (logo + blurb + website).
+- **Level of Sponsorship** is the tier shown in the portal (read-only for sponsors). Sponsors on
+  the **Raffle Only** tier sync and appear in the admin/portal lists but map to no website
+  category, so they never render on the public sponsors page.
+- The portal advances **Asset Creation Status** when a profile completes (logo + blurb + website),
+  moving it to *"Assets partially received, creation underway"* — deliberately not *"All Assets
+  received"*, since the portal only collects the website logo and blurb while **Assets Required**
+  also covers screens, print, video and the treasure map.
+  - Each workstream has its **own single-select status field** (assets, social, exhibition,
+    raffle) rather than one multi-checkbox, because checkbox fields can't be filtered in JQL and
+    the committee filters boards by where each sponsor is up to.
 
 Field/option ids live in `conference/config/sponsor-portal.ts`; update them if the Jira custom
 fields are ever recreated.
@@ -225,13 +241,16 @@ being down never fails a sponsor's save.
   `app/lib/sponsors/profile.ts`.
 - The write-back happens **on the save that completes the profile** (the hourly cron / manual
   sync only retries flips that failed, e.g. Jira was down — the sponsor's save always succeeds
-  regardless). It does three things, all append-only snapshots so nothing in Jira is ever
-  overwritten and the portal stays the source of truth:
-    1. **Ticks "Assets for Conference"** on Sponsor Tasks — reads the current options first and
-       adds to them, never clobbering the committee's other ticks.
+  regardless). It does three things, the latter two append-only snapshots so the portal stays the
+  source of truth:
+    1. **Advances "Asset Creation Status"** to the configured completion option. Unlike the
+       append-only checkbox this replaced, a single-select is overwritten wholesale — so the
+       portal only moves it off the values listed in `assetsPendingOptionIds` ("Asset Information
+       Pending"). If the committee has already advanced the status, the portal logs it and leaves
+       theirs alone rather than dragging it backwards.
     2. **Attaches the logo file** to the issue.
     3. **Posts a comment** with what was submitted (blurb, website, socials, logo) — lands in the
        activity feed and notifies watchers.
-  Steps 2–3 are best-effort and fire exactly once per completion (guarded by the checkbox state,
+  Steps 2–3 are best-effort and fire exactly once per completion (guarded by the status value,
   so retries can't duplicate them). Later profile *updates* don't re-comment — change detection
   for the committee lives in the import tool's update tracking.

@@ -10,16 +10,38 @@ import { parseContactEmails } from './sync-plan'
 export interface JiraClient {
     /** This year's sponsor issues, parsed via the manifest's field mapping. */
     searchSponsorIssues(): Promise<SyncSourceSponsor[]>
-    /** Currently-ticked option ids on the issue's "Sponsor Tasks" checklist. */
-    getSponsorTaskOptionIds(issueKey: string): Promise<string[]>
-    /** Replaces the checklist's ticked options (callers pass existing + new). */
-    setSponsorTaskOptionIds(issueKey: string, optionIds: string[]): Promise<void>
+    /** Current option id on the issue's assets status single-select, if set. */
+    getAssetsStatusOptionId(issueKey: string): Promise<string | undefined>
+    /** Sets the assets status single-select to one option. */
+    setAssetsStatusOptionId(issueKey: string, optionId: string): Promise<void>
+    /** Adds a label without disturbing the issue's existing labels. */
+    addLabel(issueKey: string, label: string): Promise<void>
+    /**
+     * Committee-owned logistics for the venue's exhibitor spreadsheet, keyed
+     * by issue key. Read-only. Returns an empty map when the manifest has no
+     * `fields.exhibitor` mapping.
+     */
+    getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
     /** Posts a plain-text comment (shows in the activity feed, notifies watchers). */
     addComment(issueKey: string, text: string): Promise<void>
     /** Attaches a file to the issue (shows in the Attachments panel). */
     addAttachment(issueKey: string, filename: string, content: ArrayBuffer, contentType: string): Promise<void>
     /** Sets issue fields verbatim (used to push sponsor-owned values). */
     updateIssueFields(issueKey: string, fields: Record<string, unknown>): Promise<void>
+}
+
+/** Committee-owned logistics read from Jira for the venue spreadsheet. */
+export interface ExhibitorLogistics {
+    contactName?: string
+    contactPhone?: string
+    contactEmail?: string
+    bumpInSlot?: string
+    bumpOutWindow?: string
+    parking?: string
+    equipmentList?: string
+    trolleyOrForklift?: string
+    loadingDockAssistance?: string
+    additionalNotes?: string
 }
 
 /** Wraps plain text (possibly multi-line) into the ADF document that REST v3
@@ -63,6 +85,80 @@ function fieldOptionValue(fields: Record<string, unknown>, fieldId: string): str
     return undefined
 }
 
+/** Single-selects come back as `{ id: "10202", value: … }`. */
+function fieldOptionId(fields: Record<string, unknown>, fieldId: string): string | undefined {
+    const value = fields[fieldId]
+    if (value && typeof value === 'object' && 'id' in value) {
+        return String(value.id)
+    }
+    return undefined
+}
+
+/**
+ * Reads a field without knowing its type. The exhibitor logistics fields are
+ * a mix of plain text, single-selects, multi-checkboxes and rich text (Jira's
+ * ADF), and the committee can change a field's type — as they did when the
+ * checkbox "Sponsor Tasks" became per-workstream single-selects. Everything
+ * here lands in a spreadsheet cell as text, so read defensively rather than
+ * pinning each field to one shape.
+ */
+function fieldAsText(fields: Record<string, unknown>, fieldId: string | undefined): string | undefined {
+    if (!fieldId) return undefined
+    const value = fields[fieldId]
+    if (value === null || value === undefined) return undefined
+
+    if (typeof value === 'string') return value.trim() || undefined
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+
+    // Multi-checkbox / multi-select: join the ticked options.
+    if (Array.isArray(value)) {
+        const parts = value
+            .map((item) =>
+                item && typeof item === 'object' && 'value' in item ? String((item as { value: unknown }).value) : null,
+            )
+            .filter((part): part is string => part !== null && part.trim() !== '')
+        return parts.length > 0 ? parts.join(', ') : undefined
+    }
+
+    if (typeof value === 'object') {
+        // Single-select.
+        if ('value' in value && typeof value.value === 'string') {
+            return value.value.trim() || undefined
+        }
+        // Rich text (ADF): flatten every text node.
+        if ('type' in value && value.type === 'doc') {
+            const texts: string[] = []
+            const walk = (node: unknown): void => {
+                if (!node || typeof node !== 'object') return
+                const n = node as { text?: unknown; content?: unknown }
+                if (typeof n.text === 'string') texts.push(n.text)
+                if (Array.isArray(n.content)) n.content.forEach(walk)
+            }
+            walk(value)
+            const joined = texts.join(' ').trim()
+            return joined || undefined
+        }
+    }
+
+    return undefined
+}
+
+const YEAR_LABEL = /^\d{4}$/
+
+/**
+ * The years before `year`, as a quoted JQL list. Substituted into
+ * `{pastYears}` so the sync's "not labelled with a past year" arm doesn't
+ * need a hand-maintained list in fork config. Ten years back is plenty —
+ * the label only has to outlive the archive step.
+ */
+export function pastYearsList(year: string): string {
+    const current = Number(year)
+    if (!Number.isFinite(current)) return '"0000"'
+    const years: string[] = []
+    for (let y = current - 10; y < current; y++) years.push(`"${y}"`)
+    return years.join(', ')
+}
+
 export function createJiraClient(args: {
     portalConfig: SponsorPortalConfig
     apiEmail: string
@@ -104,10 +200,13 @@ export function createJiraClient(args: {
 
     return {
         async searchSponsorIssues() {
-            const jql = (jqlOverride ?? portalConfig.jira.jql).replaceAll('{year}', portalConfig.year)
+            const jql = (jqlOverride ?? portalConfig.jira.jql)
+                .replaceAll('{year}', portalConfig.year)
+                .replaceAll('{pastYears}', pastYearsList(portalConfig.year))
             const requestFields = [
                 'summary',
                 'status',
+                'labels',
                 fields.companyName,
                 fields.website,
                 fields.contactEmail,
@@ -130,12 +229,17 @@ export function createJiraClient(args: {
                     const summary = fieldString(issueFields, 'summary')
                     const status = issueFields.status as { name?: string } | undefined
 
+                    const labels = Array.isArray(issueFields.labels)
+                        ? issueFields.labels.filter((l): l is string => typeof l === 'string')
+                        : []
+
                     issues.push({
                         issueKey: issue.key,
                         companyName: fieldString(issueFields, fields.companyName) ?? summary ?? issue.key,
                         tier: fieldOptionValue(issueFields, fields.tier) ?? 'Unknown',
                         website: fieldString(issueFields, fields.website),
                         jiraStatus: typeof status?.name === 'string' ? status.name : undefined,
+                        hasYearLabel: labels.some((l) => YEAR_LABEL.test(l)),
                         contactEmails: parseContactEmails(
                             fieldString(issueFields, fields.contactEmail),
                             fields.additionalContactEmails
@@ -151,24 +255,75 @@ export function createJiraClient(args: {
             return issues
         },
 
-        async getSponsorTaskOptionIds(issueKey) {
+        async getAssetsStatusOptionId(issueKey) {
             const response = await jiraFetch(
-                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fields.sponsorTasks}`,
+                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fields.assetsStatus}`,
             )
             const body = await parseJson<{ fields?: Record<string, unknown> }>(response)
-            const value = body.fields?.[fields.sponsorTasks]
-            if (!Array.isArray(value)) return []
-            return value
-                .map((option) => (option && typeof option === 'object' && 'id' in option ? String(option.id) : null))
-                .filter((id): id is string => id !== null)
+            return fieldOptionId(body.fields ?? {}, fields.assetsStatus)
         },
 
-        async setSponsorTaskOptionIds(issueKey, optionIds) {
+        async setAssetsStatusOptionId(issueKey, optionId) {
             await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    fields: { [fields.sponsorTasks]: optionIds.map((id) => ({ id })) },
+                    fields: { [fields.assetsStatus]: { id: optionId } },
                 }),
+            })
+        },
+
+        async getExhibitorLogistics() {
+            const map = new Map<string, ExhibitorLogistics>()
+            const exhibitor = fields.exhibitor
+            if (!exhibitor) return map
+
+            const requestFields = Object.values(exhibitor).filter(
+                (id): id is string => typeof id === 'string' && id !== '',
+            )
+            if (requestFields.length === 0) return map
+
+            // Same result set as the sync, so the spreadsheet covers exactly
+            // the sponsors the portal knows about — no more, no less.
+            const jql = (jqlOverride ?? portalConfig.jira.jql)
+                .replaceAll('{year}', portalConfig.year)
+                .replaceAll('{pastYears}', pastYearsList(portalConfig.year))
+
+            let nextPageToken: string | undefined
+            do {
+                const response = await jiraFetch('/rest/api/3/search/jql', {
+                    method: 'POST',
+                    body: JSON.stringify({ jql, fields: requestFields, maxResults: 100, nextPageToken }),
+                })
+                const page = await parseJson<JiraSearchResponse>(response)
+
+                for (const issue of page.issues ?? []) {
+                    const issueFields = issue.fields ?? {}
+                    map.set(issue.key, {
+                        contactName: fieldAsText(issueFields, exhibitor.contactName),
+                        contactPhone: fieldAsText(issueFields, exhibitor.contactPhone),
+                        contactEmail: fieldAsText(issueFields, exhibitor.contactEmail),
+                        bumpInSlot: fieldAsText(issueFields, exhibitor.bumpInSlot),
+                        bumpOutWindow: fieldAsText(issueFields, exhibitor.bumpOutWindow),
+                        parking: fieldAsText(issueFields, exhibitor.parking),
+                        equipmentList: fieldAsText(issueFields, exhibitor.equipmentList),
+                        trolleyOrForklift: fieldAsText(issueFields, exhibitor.trolleyOrForklift),
+                        loadingDockAssistance: fieldAsText(issueFields, exhibitor.loadingDockAssistance),
+                        additionalNotes: fieldAsText(issueFields, exhibitor.additionalNotes),
+                    })
+                }
+
+                nextPageToken = page.isLast ? undefined : page.nextPageToken
+            } while (nextPageToken)
+
+            return map
+        },
+
+        async addLabel(issueKey, label) {
+            // `update` rather than `fields` — an additive op, so a label
+            // added in Jira between our read and this write isn't clobbered.
+            await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
+                method: 'PUT',
+                body: JSON.stringify({ update: { labels: [{ add: label }] } }),
             })
         },
 

@@ -124,7 +124,7 @@ export interface SponsorsStore {
     ): Promise<void>
     getLatestSyncRun(): Promise<SponsorSyncRun | null>
 
-    /** Issue keys owing a Jira "Assets for Conference" flip. */
+    /** Issue keys owing a Jira assets-status write-back. */
     getPendingWritebacks(): Promise<string[]>
     markAssetsTaskPending(issueKey: string): Promise<void>
     markAssetsTaskFlipped(issueKey: string): Promise<void>

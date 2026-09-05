@@ -20,6 +20,7 @@ export function createStubJiraClient(): JiraClient {
                     website: 'https://acme.example.com',
                     jiraStatus: 'Committed',
                     contactEmails: ['sponsor-acme@example.com', 'marketing-acme@example.com'],
+                    hasYearLabel: true,
                 },
                 {
                     issueKey: 'SPN-102',
@@ -27,25 +28,59 @@ export function createStubJiraClient(): JiraClient {
                     tier: 'Gold',
                     jiraStatus: 'Committed',
                     contactEmails: ['sponsor-globex@example.com'],
+                    hasYearLabel: true,
                 },
                 {
+                    // Deliberately unlabelled — exercises the year-label
+                    // stamping path locally (logs, doesn't write).
                     issueKey: 'SPN-103',
                     companyName: 'Initech',
                     tier: 'Digital',
                     website: 'https://initech.example.com',
                     jiraStatus: 'Invoiced',
                     contactEmails: ['sponsor-initech@example.com'],
+                    hasYearLabel: false,
                 },
             ]
         },
 
-        async getSponsorTaskOptionIds(issueKey) {
-            console.log(`[jira-stub] getSponsorTaskOptionIds(${issueKey}) -> []`)
-            return []
+        async getAssetsStatusOptionId(issueKey) {
+            // Undefined = status unset, which counts as "pending" — so the
+            // local flow takes the branch where the portal moves it, without
+            // core needing to know any fork's option ids.
+            console.log(`[jira-stub] getAssetsStatusOptionId(${issueKey}) -> undefined`)
+            return undefined
         },
 
-        async setSponsorTaskOptionIds(issueKey, optionIds) {
-            console.log(`[jira-stub] setSponsorTaskOptionIds(${issueKey}, [${optionIds.join(', ')}]) — no-op`)
+        async setAssetsStatusOptionId(issueKey, optionId) {
+            console.log(`[jira-stub] setAssetsStatusOptionId(${issueKey}, ${optionId}) — no-op`)
+        },
+
+        async addLabel(issueKey, label) {
+            console.log(`[jira-stub] addLabel(${issueKey}, ${label}) — no-op`)
+        },
+
+        async getExhibitorLogistics() {
+            // Enough shape to exercise the spreadsheet export locally: one
+            // fully-populated exhibitor, one with only a contact, and one
+            // absent entirely (the export must still emit its row).
+            return new Map([
+                [
+                    'SPN-101',
+                    {
+                        contactName: 'Wile E. Coyote',
+                        contactPhone: '0400 000 000',
+                        contactEmail: 'logistics-acme@example.com',
+                        bumpInSlot: 'Friday 1pm - 2pm',
+                        bumpOutWindow: 'Saturday 5pm (after conference concludes)',
+                        parking: 'For Bump In, For Bump Out',
+                        equipmentList: '1x pop-up banner (5kg), 2x crates (20kg each)',
+                        trolleyOrForklift: 'Trolley please',
+                        loadingDockAssistance: 'Yes',
+                    },
+                ],
+                ['SPN-102', { contactName: 'Hank Scorpio', contactEmail: 'logistics-globex@example.com' }],
+            ])
         },
 
         async addComment(issueKey, text) {
