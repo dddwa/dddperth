@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import { styled } from '~/styled-system/jsx'
+import { AppLink } from '../app-link'
 
 export interface CTAProps {
     href: string
@@ -9,20 +9,20 @@ export interface CTAProps {
 export function CTA({ href, variant = 'primary', children }: PropsWithChildren<CTAProps>) {
     if (variant === 'secondary') {
         return (
-            <styled.a
-                href={href}
+            <AppLink unstyled
+                to={href}
                 color="text.secondary"
                 fontSize="sm"
                 _hover={{ color: 'white', textDecoration: 'underline' }}
             >
                 {children}
-            </styled.a>
+            </AppLink>
         )
     }
 
     return (
-        <styled.a
-            href={href}
+        <AppLink unstyled
+            to={href}
             display="inline-flex"
             alignItems="center"
             bgColor="brand.primary"
@@ -34,6 +34,6 @@ export function CTA({ href, variant = 'primary', children }: PropsWithChildren<C
             _hover={{ bgColor: 'brand.secondary' }}
         >
             {children}
-        </styled.a>
+        </AppLink>
     )
 }

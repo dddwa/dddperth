@@ -2,6 +2,7 @@ import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
 import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
@@ -20,7 +21,13 @@ const DRIFT_MASK = {
     WebkitMaskImage: 'linear-gradient(to bottom, black 0, black 55%, transparent 95%)',
 } as const
 
-export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string | undefined }) {
+export function HomepageHeroPanel({
+    conferenceDate,
+    venue,
+}: {
+    conferenceDate: string | undefined
+    venue: ConferenceVenue | undefined
+}) {
     const { scrollY } = useScroll()
     const parallaxScale = useParallaxScale()
 
@@ -50,7 +57,11 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
         >
             <HeaderContainer>
                 {conferenceDate ? (
-                    <styled.h2
+                    // A kicker/byline above the h1, not a section heading — kept as
+                    // a <p> so the page's heading order starts cleanly at h1 below
+                    // (a screen-reader-visible h2 here, before the h1, previously
+                    // broke heading hierarchy for AT users navigating by heading).
+                    <styled.p
                         color="text.highlight"
                         fontSize={{ base: 'md', md: 'xl' }}
                         fontWeight={{ base: 'medium', md: 'semibold' }}
@@ -67,8 +78,8 @@ export function HomepageHeroPanel({ conferenceDate }: { conferenceDate: string |
                                 locale: 'en-AU',
                             })}
                         </styled.span>
-                        <styled.span>Optus Stadium, Perth</styled.span>
-                    </styled.h2>
+                        {venue ? <styled.span>{venue.name}</styled.span> : null}
+                    </styled.p>
                 ) : null}
                 <styled.h1
                     fontFamily="display"

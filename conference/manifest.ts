@@ -13,11 +13,13 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
-import { nav } from './config/nav'
-import { conferenceConfigPublic } from './config/public'
-import { socials } from './config/socials'
-import { sponsorPortal } from './config/sponsor-portal'
-import { conferenceConfig } from './config/years-index'
+import { meetTheExperts } from './config/meet-the-experts.ts'
+import { nav } from './config/nav.ts'
+import { conferenceConfigPublic } from './config/public.ts'
+import { speakerPortal } from './config/speaker-portal.ts'
+import { socials } from './config/socials.ts'
+import { sponsorPortal } from './config/sponsor-portal.ts'
+import { conferenceConfig } from './config/years-index.ts'
 
 // Year keys this fork knows about. Re-exported so consumers can constrain
 // types without depending on the years-index path.
@@ -47,4 +49,6 @@ export const conferenceManifest: ConferenceManifest = {
         androidBundleId: 'com.dddperth.conference',
     },
     sponsorPortal,
+    speakerPortal,
+    meetTheExperts,
 }

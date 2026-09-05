@@ -59,6 +59,11 @@ vitest.config.*.timestamp*
 docs/prompts
 .playwright-mcp
 
+# Playwright e2e output
+playwright-report/
+test-results/
+blob-report/
+
 .claude/worktrees
 .claude/settings.local.json
 
@@ -69,6 +74,12 @@ website/.wrangler/
 # (which conference/wrangler/.dev.vars resolves to via symlink).
 website/.dev.vars
 conference/wrangler/.dev.vars
+
+# Generated fresh by e2e/start-dev-server.mjs on every test run. The e2e
+# wrangler config (conference/wrangler/e2e/e2e.jsonc) IS committed; only its
+# generated vars and local miniflare state are ignored.
+conference/wrangler/e2e/.dev.vars
+conference/wrangler/e2e/.wrangler/
 
 qa
 

@@ -9,9 +9,9 @@
 
 import path from 'node:path'
 import type { ConferenceBuildManifest } from '@ddd/conference-config'
-import { conferenceManifest } from './manifest'
-import { dddPerthLightTheme } from './theme/perth-light.theme'
-import { dddPerthTheme } from './theme/perth.theme'
+import { conferenceManifest } from './manifest.ts'
+import { dddPerthLightTheme } from './theme/perth-light.theme.ts'
+import { dddPerthTheme } from './theme/perth.theme.ts'
 
 const conferenceDir = import.meta.dirname
 

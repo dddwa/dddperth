@@ -1,3 +1,4 @@
+import type { ExhibitorLogistics } from '../sponsors/jira-client.server'
 import type { SponsorSyncRun } from './sponsors-store'
 
 export type SyncOutcome =
@@ -19,7 +20,7 @@ export interface SponsorSyncService {
     syncNow(trigger: 'cron' | 'manual'): Promise<SyncOutcome>
 
     /**
-     * Ticks the Jira "Assets for Conference" checkbox for a completed
+     * Advances the Jira assets status field for a completed
      * profile. Read-then-write and idempotent. Failures mark the sponsor
      * pending so the next sync retries; never throws.
      */
@@ -36,4 +37,22 @@ export interface SponsorSyncService {
 
     /** Retries every owed write-back (sponsors with assets_task_pending). */
     retryPendingWritebacks(): Promise<void>
+
+    /**
+     * Committee-owned logistics (bump-in/out, equipment, parking) keyed by
+     * issue key, for the venue's exhibitor spreadsheet. Read live from Jira
+     * rather than D1 — none of it is synced, and the spreadsheet goes to the
+     * venue, so it should reflect the committee's latest edits.
+     *
+     * Throws if Jira is unreachable: unlike the write-backs, a silent partial
+     * result here would be handed to the venue as if it were complete.
+     */
+    getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
+
+    /**
+     * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
+     * portal's values win. Best-effort like the other pushes — never blocks
+     * the sponsor's save.
+     */
+    pushLogistics(issueKey: string, logistics: Record<string, string>): Promise<void>
 }

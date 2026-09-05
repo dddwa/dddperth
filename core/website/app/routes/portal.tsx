@@ -5,6 +5,7 @@ import { AppNavLink } from '~/components/app-nav-link'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/portal'
+import { noIndexMeta } from '~/lib/seo'
 
 /**
  * Sponsor portal shell. Only reachable when the fork has `sponsorPortal` in
@@ -30,6 +31,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 }
 
+/** Not indexed: the sponsor portal is auth-gated and contains commercial data. */
+export const meta = noIndexMeta
+
 export default function PortalLayout() {
     const { user, sponsor, year, conferenceName } = useLoaderData<typeof loader>()
 
@@ -47,6 +51,9 @@ export default function PortalLayout() {
                             </AppNavLink>
                             <AppNavLink to="/portal/profile" variant="admin">
                                 Company profile
+                            </AppNavLink>
+                            <AppNavLink to="/portal/logistics" variant="admin">
+                                Event logistics
                             </AppNavLink>
                         </Flex>
                     </Flex>

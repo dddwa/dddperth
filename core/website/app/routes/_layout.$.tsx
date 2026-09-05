@@ -19,6 +19,8 @@ import { prose } from '~/styled-system/recipes'
 import { ContentPageLayout, PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.$'
 import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
+import { noIndexMeta } from '~/lib/seo'
+import { AppLink } from '~/components/app-link'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
     const contentSlug = params['*']
@@ -115,6 +117,13 @@ export function meta(args: Route.MetaArgs) {
     const { siteUrl, frontmatter } = loaderData || {}
     if (!frontmatter) {
         return [{ title: `404 Not Found | ${conferenceManifest.public.name}` }]
+    }
+
+    // `noIndex: true` in frontmatter keeps a page out of search results. The
+    // social/OG tags below are pointless for a page nothing should link to, so
+    // return early rather than emitting them alongside a noindex directive.
+    if (frontmatter.noIndex) {
+        return [{ title: `${frontmatter.title} | ${conferenceManifest.public.name}` }, ...noIndexMeta()]
     }
 
     // Generate a description if summary isn't available
@@ -323,8 +332,9 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
             {primaryCta && (
                 <div style={{ textAlign: 'center' }}>
                     <Button asChild>
-                        <styled.a
-                            href={primaryCta.url}
+                        <AppLink
+                            unstyled
+                            to={primaryCta.url}
                             color="gradient.cta-start"
                             _hover={{ gradientTo: 'brand.secondary' }}
                             bgGradient="to-r"
@@ -335,8 +345,8 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                             py="2"
                             px="4"
                         >
-                            {primaryCta.title} ↗
-                        </styled.a>
+                            {primaryCta.title}
+                        </AppLink>
                     </Button>
                 </div>
             )}

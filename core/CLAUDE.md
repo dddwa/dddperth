@@ -99,7 +99,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 - pnpm is the package manager (enforced via corepack)
 - Build outputs: `website/build/`
 - Static assets: `website/public/` (core) + the conference layer's `public/` (declared via `content.publicDir` in the build manifest; overlaid onto the site root by the `conference-public` vite plugin)
-- Local env vars: `website/.dev.vars`
+- Local env vars: `<conference-dir>/wrangler/.dev.vars` (`conference-stub/wrangler/.dev.vars` standalone, `conference/wrangler/.dev.vars` in a fork) — the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root
 - Local D1 data: `website/.wrangler/state/`
 
 <!-- nx configuration start-->

@@ -4,11 +4,15 @@ import { AppNavLink } from '~/components/app-nav-link'
 import { requireAdmin } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin'
+import { noIndexMeta } from '~/lib/seo'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const user = await requireAdmin(request, context)
     return { user }
 }
+
+/** Not indexed: the admin area is auth-gated; every URL under it redirects to login. */
+export const meta = noIndexMeta
 
 export default function AdminLayout() {
     const { user } = useLoaderData<typeof loader>()
@@ -35,6 +39,9 @@ export default function AdminLayout() {
                             </AppNavLink>
                             <AppNavLink to="/admin/sponsors" variant="admin">
                                 Sponsors
+                            </AppNavLink>
+                            <AppNavLink to="/admin/speakers" variant="admin">
+                                Speakers
                             </AppNavLink>
                             <AppNavLink to="/admin/settings" variant="admin">
                                 Settings

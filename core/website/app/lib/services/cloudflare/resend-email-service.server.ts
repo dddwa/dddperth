@@ -23,6 +23,7 @@ export function createResendEmailService(args: { apiKey: string; defaultFrom: st
             const result = await resend.emails.send({
                 from: message.from ?? args.defaultFrom,
                 to: message.to,
+                replyTo: message.replyTo,
                 subject: message.subject,
                 html: message.html,
                 text: message.text,

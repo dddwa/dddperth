@@ -1,6 +1,6 @@
 import type { DateTime } from 'luxon'
 import type { z } from 'zod'
-import type { gridSmartSchema } from './sessionize-schema'
+import type { gridSmartSchema } from './sessionize-schema.ts'
 
 export type Year = `${number}${number}${number}${number}`
 
@@ -26,6 +26,17 @@ export interface Sponsor {
     quote?: string
 }
 
+/**
+ * Tiers rendered outside the headline platinum/gold/silver/bronze ladder —
+ * sponsors who fund a specific thing rather than buying a tier.
+ *
+ * By default these all render together under one "Other Sponsors" heading.
+ * A fork with enough of them to be worth separating can set
+ * `features.separateOtherSponsorTiers` to give each its own heading, and
+ * rename any of them via `public.sponsorTierLabels`.
+ */
+export type MinorSponsorTier = 'community' | 'coffeeCart' | 'quietRoom' | 'venue' | 'prize' | 'keynotes'
+
 export interface YearSponsors {
     platinum?: Sponsor[]
     gold?: Sponsor[]
@@ -35,6 +46,10 @@ export interface YearSponsors {
     community?: Sponsor[]
     coffeeCart?: Sponsor[]
     quietRoom?: Sponsor[]
+    /** Whoever provides the venue. */
+    venue?: Sponsor[]
+    /** Whoever puts up prizes for the draw. */
+    prize?: Sponsor[]
 
     keynotes?: Sponsor[]
     room?: Array<Sponsor & { roomName: string }>
@@ -109,6 +124,13 @@ export interface ConferenceYear {
     year: Year
 
     sessionizeUrl: string | undefined
+
+    /**
+     * Numeric Sessionize event ID, used by the admin agenda planner to
+     * deep-link talks into the Sessionize back office — take it from the URL
+     * in Sessionize's organizer view. Omit to render talks without the link.
+     */
+    sessionizeOrganizerEventId?: string
 
     ticketInfo: TicketInfo | undefined
 

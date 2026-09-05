@@ -2,3 +2,30 @@ packages:
     - 'website'
     - 'libs/*'
     - 'conference-stub'
+
+# pnpm 10+ reads its own settings from here, NOT from .npmrc. Moving any of
+# these back into .npmrc silently disables them (`pnpm config get` returns
+# undefined) rather than erroring.
+strictPeerDependencies: false
+autoInstallPeers: true
+
+# Supply-chain protection: refuse to install package versions younger than this
+# (minutes). Recent npm/pnpm compromises were typically detected and yanked
+# within hours, so a 3-day cooldown catches most of them. Bump higher (e.g.
+# 10080 for 7d) for more safety at the cost of slower access to legitimate
+# fixes. Override per-install with `--minimum-release-age=0`, or exclude
+# specific packages via `minimumReleaseAgeExclude` if a vetted dep blocks a
+# CI bump.
+minimumReleaseAge: 0
+
+# pnpm 11 refuses to run dependency build scripts unless they're listed here,
+# and errors on install until every entry is an explicit boolean. These are the
+# build-time toolchain packages (native binaries and codegen) that genuinely
+# need their install scripts; without them `nx`, `vite` and `workerd` don't run.
+allowBuilds:
+    '@swc/core': true
+    esbuild: true
+    msw: true
+    nx: true
+    sharp: true
+    workerd: true

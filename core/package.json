@@ -12,7 +12,8 @@
         "e2e": "nx run-many --target e2e --all",
         "setup": "nx run-many --target setup --all",
         "start": "nx dev website",
-        "install-browsers": "pnpm playwright install"
+        "install-browsers": "pnpm playwright install",
+        "vr": "node scripts/visual-regression.mjs"
     },
     "private": true,
     "devDependencies": {
@@ -27,10 +28,10 @@
         "@nx/workspace": "22.7.2",
         "@pandacss/dev": "^1.11.1",
         "@park-ui/cli": "^1.0.1",
-        "@playwright/test": "^1.60.0",
+        "@playwright/test": "^1.62.1",
         "@svitejs/changesets-changelog-github-compact": "^1.2.0",
         "@types/hast": "^3.0.4",
-        "@types/luxon": "^3.7.1",
+        "@types/luxon": "^3.7.5",
         "@types/mdx": "^2.0.13",
         "@types/node": "^25.8.0",
         "@types/react": "^19.2.14",
@@ -59,7 +60,7 @@
         "vite-tsconfig-paths": "^6.1.1",
         "vitest": "4.1.6"
     },
-    "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
+    "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000",
     "dependencies": {
         "@pandacss/preset-panda": "^1.11.1",
         "@react-router/dev": "^8.0.1",

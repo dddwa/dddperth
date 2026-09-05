@@ -9,6 +9,7 @@ import { isProfileComplete } from '~/lib/sponsors/profile'
 import { getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.sponsors'
+import { AppLink } from '~/components/app-link'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
@@ -157,12 +158,24 @@ export default function AdminSponsors() {
                             )}
                         </styled.p>
                     </Box>
-                    <Form method="post">
-                        <input type="hidden" name="_action" value="sync-now" />
-                        <Button type="submit" disabled={isSyncing || !syncAvailable}>
-                            {isSyncing ? 'Syncing…' : 'Sync now'}
+                    <Flex gap="2" align="center">
+                        <Button
+                            asChild
+                            variant="outline"
+                            color="admin.900"
+                            borderColor="admin.400"
+                            bg="white"
+                            _hover={{ bg: 'admin.100' }}
+                        >
+                            <a href="/admin/sponsors/exhibitor-export">Export exhibitor list</a>
                         </Button>
-                    </Form>
+                        <Form method="post">
+                            <input type="hidden" name="_action" value="sync-now" />
+                            <Button type="submit" disabled={isSyncing || !syncAvailable}>
+                                {isSyncing ? 'Syncing…' : 'Sync now'}
+                            </Button>
+                        </Form>
+                    </Flex>
                 </Flex>
 
                 {!syncAvailable && (
@@ -209,14 +222,12 @@ export default function AdminSponsors() {
                                 {sponsors.map((sponsor) => (
                                     <styled.tr key={sponsor.issueKey} borderBottom="admin-subtle" color="admin.900">
                                         <styled.td py="2" pr="4">
-                                            <styled.a
-                                                href={sponsor.jiraUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                            <AppLink unstyled
+                                                to={sponsor.jiraUrl}
                                                 textDecoration="underline"
                                             >
                                                 {sponsor.companyName}
-                                            </styled.a>{' '}
+                                            </AppLink>{' '}
                                             <styled.span color="admin.600" fontSize="xs">
                                                 {sponsor.issueKey}
                                                 {!sponsor.active && ' (departed)'}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Spinner } from '~/components/ui/spinner'
 import type { TicketSalesState } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
+import { AppLink } from '../app-link'
 
 // `test_mode` lets fake orders through
 const TITO_SCRIPT_SRC = import.meta.env.DEV
@@ -77,15 +78,13 @@ export function TitoTicketForm({ accountId, eventId }: { eventId: string; accoun
                 <styled.p fontWeight="semibold">Ticket form failed to load</styled.p>
                 <styled.p color="text.secondary" fontSize="sm">
                     You can buy tickets directly at{' '}
-                    <styled.a
-                        href={`https://ti.to/${accountId}/${eventId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <AppLink unstyled
+                        to={`https://ti.to/${accountId}/${eventId}`}
                         color="text.highlight"
                         textDecoration="underline"
                     >
                         ti.to/{accountId}/{eventId}
-                    </styled.a>
+                    </AppLink>
                 </styled.p>
             </Flex>
         )

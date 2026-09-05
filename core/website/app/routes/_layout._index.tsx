@@ -7,7 +7,6 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { Hero } from '../components/hero/hero'
-import { SkipToContent } from '../components/skip-to-content'
 import type { Route } from './+types/_layout._index'
 import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 
@@ -44,16 +43,13 @@ export default function Index() {
         useLoaderData<typeof loader>()
 
     return (
-        <>
-            <SkipToContent />
-            <Hero
-                currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
-                conferenceDate={conferenceDate}
-                importantDates={importantDates}
-                sponsors={heroSponsors}
-                currentYear={currentYear}
-                conferenceState={conferenceState}
-            />
-        </>
+        <Hero
+            currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
+            conferenceDate={conferenceDate}
+            importantDates={importantDates}
+            sponsors={heroSponsors}
+            currentYear={currentYear}
+            conferenceState={conferenceState}
+        />
     )
 }

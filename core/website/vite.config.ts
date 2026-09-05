@@ -1,18 +1,38 @@
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
+import fs from 'node:fs'
 import path from 'node:path'
-import { safeRoutes } from 'safe-routes/vite'
+import { safeRoutes } from 'safe-routes/vite.js'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig } from 'vite'
-import { conferencePublicPlugin } from './vite-plugins/conference-public'
-import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles'
+import { conferencePublicPlugin } from './vite-plugins/conference-public.ts'
+import { mdxBundlesPlugin } from './vite-plugins/mdx-bundles.ts'
 // Vite's config loader uses native Node ESM — it doesn't honour the
 // @conference/* tsconfig path alias the rest of the app uses. Use a
 // relative import here. Fork override: points at the fork's
 // /conference/build-manifest (two levels up from core/website/).
 // ddd-core standalone uses ../conference-stub/build-manifest.
 // eslint-disable-next-line @nx/enforce-module-boundaries -- relative path required at vite config load time
-import { conferenceBuildManifest } from '../../conference/build-manifest'
+import { conferenceBuildManifest } from '../../conference/build-manifest.ts'
+
+
+/**
+ * Directory holding the wrangler configs, which differs by layout: a fork
+ * puts this project at `core/website/` with its own `conference/` two levels
+ * up, while `ddd-core` standalone runs from `website/` against
+ * `conference-stub/` one level up. Resolved by looking rather than assuming,
+ * so both shapes work from the same file.
+ */
+const wranglerDir = [
+    path.resolve(import.meta.dirname, '..', '..', 'conference', 'wrangler'),
+    path.resolve(import.meta.dirname, '..', 'conference-stub', 'wrangler'),
+].find((dir) => fs.existsSync(dir))
+
+if (!wranglerDir) {
+    throw new Error(
+        'No wrangler config directory found — expected ../../conference/wrangler (fork) or ../conference-stub/wrangler (ddd-core standalone).',
+    )
+}
 
 export default defineConfig({
     root: import.meta.dirname,
@@ -68,6 +88,15 @@ export default defineConfig({
         hmr: {
             port: 3805,
         },
+        // Opt-in extra Host header allow-list, used by the containerised
+        // visual regression run (`pnpm vr`), where Playwright runs inside
+        // Docker and reaches this server as `host.docker.internal`. Vite
+        // answers unknown Host headers with a 403 "Blocked request" page —
+        // which a screenshot test will happily capture as if it were the
+        // site. Unset in normal dev, so behaviour there is unchanged.
+        ...(process.env.VITE_EXTRA_ALLOWED_HOSTS
+            ? { allowedHosts: process.env.VITE_EXTRA_ALLOWED_HOSTS.split(',').map((h) => h.trim()) }
+            : {}),
         fs: {
             // Vite's root is core/website/ in a fork (or website/ in ddd-core
             // standalone). @conference/* aliases point outside that root, so
@@ -80,11 +109,18 @@ export default defineConfig({
     plugins: [
         // wrangler config lives in /conference/wrangler/ for forks (two
         // levels up from core/website/). ddd-core standalone uses
-        // /conference-stub/wrangler/. Path is fixed at build time; if it
-        // ever needs to vary per env, switch to an env-var-driven path.
+        // /conference-stub/wrangler/.
+        //
+        // `WRANGLER_CONFIG` overrides which config in that directory is used.
+        // The e2e and visual suites set it to `e2e.jsonc`, which has its own
+        // `.dev.vars.e2e` pointing Sessionize at the committed fixtures. That
+        // keeps test runs completely off the developer's `local.jsonc` /
+        // `.dev.vars` — those files are never read or written by a test run,
+        // so an interrupted suite can't leave them broken, and a dev server
+        // and a test server can run side by side.
         cloudflare({
             viteEnvironment: { name: 'ssr' },
-            configPath: path.resolve(import.meta.dirname, '..', '..', 'conference', 'wrangler', 'local.jsonc'),
+            configPath: path.join(wranglerDir, process.env.WRANGLER_CONFIG ?? 'local.jsonc'),
         }),
         reactRouter(),
         safeRoutes({

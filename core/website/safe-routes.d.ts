@@ -30,9 +30,29 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
+    "/admin/speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers._index.js').SearchParams>,
+    },
+    "/admin/speakers/:sessionizeId": {
+      params: {'sessionizeId': string | number},
+      query: ExportedQuery<import('app/routes/admin.speakers.$sessionizeId.js').SearchParams>,
+    },
+    "/admin/speakers/experts": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.experts.js').SearchParams>,
+    },
+    "/admin/speakers/export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.export.js').SearchParams>,
+    },
     "/admin/sponsors": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
+    },
+    "/admin/sponsors/exhibitor-export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.exhibitor-export.js').SearchParams>,
     },
     "/admin/voting": {
       params: never,
@@ -130,6 +150,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
     },
+    "/portal/logistics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal.logistics.js').SearchParams>,
+    },
     "/portal/logo/:issueKey": {
       params: {'issueKey': string | number},
       query: ExportedQuery<import('app/routes/portal.logo.$issueKey.js').SearchParams>,
@@ -153,6 +177,10 @@ declare module "safe-routes" {
     "/sitemap.xml": {
       params: never,
       query: ExportedQuery<import('app/routes/sitemap[.xml].js').SearchParams>,
+    },
+    "/speaker-portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/speaker-portal._index.js').SearchParams>,
     },
     "/sponsors/:year?": {
       params: {'year'?: string | number},
@@ -182,6 +210,8 @@ declare module "safe-routes" {
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
+            | 'routes/speaker-portal'
+            | 'routes/speaker-portal._index'
             | 'routes/app-content.$'
             | 'routes/sitemap[.xml]'
             | 'routes/[robots.txt]'
@@ -203,6 +233,7 @@ declare module "safe-routes" {
             | 'routes/_layout.$'
             | 'routes/portal'
             | 'routes/portal.logo.$issueKey'
+            | 'routes/portal.logistics'
             | 'routes/portal.profile'
             | 'routes/portal._index'
             | 'routes/admin'
@@ -211,7 +242,13 @@ declare module "safe-routes" {
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
+            | 'routes/admin.speakers'
+            | 'routes/admin.speakers.$sessionizeId'
+            | 'routes/admin.speakers.experts'
+            | 'routes/admin.speakers._index'
+            | 'routes/admin.speakers.export'
             | 'routes/admin.sponsors'
+            | 'routes/admin.sponsors.exhibitor-export'
             | 'routes/admin.content'
             | 'routes/admin.voting'
             | 'routes/admin._index';

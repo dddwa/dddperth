@@ -7,6 +7,10 @@
         // `setup` target), so no @cloudflare/workers-types package is needed.
         "types": [],
         "isolatedModules": true,
+        // The e2e fixture modules are run directly by Node (via
+        // `e2e/start-dev-server.mjs`), which requires the `.ts` extension in
+        // relative imports. Safe with `noEmit`: nothing is rewritten.
+        "allowImportingTsExtensions": true,
         "esModuleInterop": true,
         "jsx": "react-jsx",
         "module": "ESNext",

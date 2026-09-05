@@ -5,7 +5,7 @@
  * This file is owned by upstream - downstream forks should not modify it.
  */
 
-import type { StatusColorGroup, ThemeDefinition, ThemeTokenValue } from './base.theme'
+import type { StatusColorGroup, ThemeDefinition, ThemeTokenValue } from './base.theme.ts'
 
 /**
  * Helper to create a theme definition with type safety

@@ -52,6 +52,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     return data(
         {
             year,
+            // Talk-detail pages are only worth linking for live Sessionize years
+            // (which fetch speaker profiles). Archived `session-data` years have no
+            // speaker store, so their talk titles render as plain text instead of
+            // linking to a sparse detail page.
+            linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
             conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
@@ -84,13 +89,25 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage } = useLoaderData<typeof loader>()
+    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks } = useLoaderData<typeof loader>()
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
     const isLatestConference = conferences.every((c) => c.year <= year)
 
+    // The visible page title lives in <title> (via `meta`); this page had no
+    // <h1> at all, which breaks heading-based navigation for screen reader
+    // users. `srOnly` keeps it out of the (already-established) visual design
+    // while giving AT users a real entry point that matches the page's
+    // purpose.
+    const pageHeading = (
+        <styled.h1 srOnly>
+            {conferenceManifest.public.name} {year} Agenda
+        </styled.h1>
+    )
+
     return cancelledMessage ? (
         <PageLayout>
+            {pageHeading}
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceManifest.public.name} {year} {isLatestConference ? 'is cancelled.' : 'was cancelled.'}
@@ -105,6 +122,7 @@ export default function Agenda() {
         </PageLayout>
     ) : !schedule ? (
         <PageLayout>
+            {pageHeading}
             <Box color="text.primary" textAlign="center" fontSize="3xl" mt="10">
                 <p>
                     {conferenceManifest.public.name} {year} agenda has not been{' '}
@@ -118,6 +136,7 @@ export default function Agenda() {
         </PageLayout>
     ) : (
         <PageLayout>
+            {pageHeading}
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
                 <Box
@@ -184,7 +203,13 @@ export default function Agenda() {
                                     fontSize={{ base: 'sm', md: 'md' }}
                                     fontWeight="semibold"
                                     color="text.secondary"
-                                    role="rowheader"
+                                    // No `role="rowheader"` here: the schedule is a flat CSS
+                                    // grid, not a table/grid structure — the roles have no
+                                    // `role="row"`/`role="grid"` ancestors, which axe flags as
+                                    // a critical `aria-required-parent` violation. Orphaned
+                                    // table roles tell a screen reader it's in a table and
+                                    // then give it no row/column context to navigate, which is
+                                    // worse than the plain heading this already is.
                                     aria-label={`Time slot starting at ${startTime12}`}
                                 >
                                     {startTime12}
@@ -213,6 +238,7 @@ export default function Agenda() {
                                             timeSlotSimple={timeSlotSimple}
                                             timeSlot={timeSlot}
                                             year={year}
+                                            linkTalks={linkTalks}
                                             startTime12={startTime12}
                                             timeSlotIndex={timeSlotIndex}
                                         />
@@ -236,7 +262,10 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
         <Flex
             key={room.id}
             style={{ '--room-column': `room-${room.id}` } as React.CSSProperties}
-            role="columnheader"
+            // See the note on the time-slot heading above: `role="columnheader"`
+            // without a `role="row"`/`role="grid"` ancestor is an orphaned table
+            // role (critical `aria-required-parent`). The aria-label is kept —
+            // it still usefully names the room and its sponsor.
             aria-label={`${room.name}${roomSponsor ? `, sponsored by ${roomSponsor.name}` : ''}`}
             justifyContent="center"
             alignItems="center"
@@ -300,6 +329,7 @@ function RoomTimeSlot({
     timeSlotSimple,
     timeSlot,
     year,
+    linkTalks,
     startTime12,
     timeSlotIndex,
 }: {
@@ -311,6 +341,7 @@ function RoomTimeSlot({
     timeSlotSimple: string
     timeSlot: z.infer<typeof timeSlotSchema>
     year: string
+    linkTalks: boolean
     startTime12: string
     timeSlotIndex: number
 }) {
@@ -341,7 +372,10 @@ function RoomTimeSlot({
         timeSlot.rooms.length === 1 &&
         earlierTimeSlots.filter((_ts) => {
             const slotEndTimes = _ts.rooms.map((r) => r.session.endsAt?.replace(/\d{4}-\d{2}-\d{2}T/, ''))
-            const maxEndTime = slotEndTimes.sort().at(-1)
+            // endsAt keeps seconds + offset (e.g. "08:45:00.000+10:30"); slotStart is
+            // bare "HH:MM". Compare like-for-like on HH:MM, otherwise the longer string
+            // sorts greater and every adjacent slot looks like an overlap.
+            const maxEndTime = slotEndTimes.sort().at(-1)?.slice(0, 5)
             if (maxEndTime && maxEndTime > timeSlot.slotStart) {
                 return true
             }
@@ -355,7 +389,8 @@ function RoomTimeSlot({
                 return false
             }
 
-            return ts.slotStart < endsAtTime
+            // Compare on HH:MM (endsAtTime carries seconds + offset).
+            return ts.slotStart < endsAtTime.slice(0, 5)
         })
 
     const hasConflictingEarlierSlots = conflictingEarlierTimeslots && conflictingEarlierTimeslots.length
@@ -374,7 +409,10 @@ function RoomTimeSlot({
 
     const gridColumn =
         timeSlot.rooms.length === 1 || (hasConflictingEarlierSlots && hasConflictingLaterSlots)
-            ? `room-${overrideRoomStart ?? schedule.rooms.at(0)?.id} / room-${overrideRoomEnd ?? schedule.rooms.at(-1)?.id}`
+            ? // Use the named grid lines that actually exist in the template
+              // (`room-N-start` / `room-N-end`). Bare `room-N` doesn't resolve, so the
+              // span collapses. With no real conflict this spans the full grid.
+              `room-${overrideRoomStart ?? schedule.rooms.at(0)?.id}-start / room-${overrideRoomEnd ?? schedule.rooms.at(-1)?.id}-end`
             : `room-${room.id}`
 
     return (
@@ -406,7 +444,7 @@ function RoomTimeSlot({
                     lineHeight="tight"
                     mb="2"
                 >
-                    {fullSession?.isServiceSession ? (
+                    {fullSession?.isServiceSession || !linkTalks ? (
                         fullSession?.title
                     ) : (
                         <AppLink

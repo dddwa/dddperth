@@ -44,8 +44,11 @@ export default [
                     // typed identity function for theme config (not website
                     // runtime code), but lives there for upstream reasons.
                     // Allow this specific path until defineTheme moves to
-                    // @ddd/conference-config.
-                    allow: ['^.*/core/website/themes/theme-builder$'],
+                    // @ddd/conference-config. The `.ts` is optional so the
+                    // pattern matches whether or not the import carries an
+                    // explicit extension — anchoring on the bare specifier
+                    // alone silently stops matching the moment one is added.
+                    allow: ['^.*/core/website/themes/theme-builder(\\.ts)?$'],
                     depConstraints: [
                         {
                             sourceTag: '*',

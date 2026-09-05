@@ -4,6 +4,7 @@ import { sanitiseRedirect } from '~/lib/auth/validation'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.verify.$token'
+import { noIndexMeta } from '~/lib/seo'
 
 /**
  * GET renders a "Click to sign in" page only — it never consumes the token.
@@ -31,16 +32,26 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // shouldn't be able to plant an open redirect via a malformed
     // redirect_to column. Defence in depth.
     let redirectTo = sanitiseRedirect(result.redirectTo)
+    const services = getServices(context)
 
-    // The default destination is /admin, but sponsor contacts who logged in
-    // without an explicit destination belong in their portal. Explicit
-    // redirects are honoured either way — requireAdmin bounces non-admins.
-    if (redirectTo === '/admin' && !(await getServices(context).auth.isAdminEmail(result.email))) {
-        redirectTo = '/portal'
+    // The default destination is /admin, but sponsor/speaker contacts who
+    // logged in without an explicit destination belong in their own portal.
+    // Explicit redirects are honoured either way — requireAdmin/
+    // requireSponsorContact/requireSpeaker each bounce a wrong-role session
+    // to the right place regardless.
+    if (redirectTo === '/admin' && !(await services.auth.isAdminEmail(result.email))) {
+        redirectTo = (await services.sponsors.isSponsorContact(result.email))
+            ? '/portal'
+            : (await services.speakers.isSpeakerContact(result.email))
+              ? '/speaker-portal'
+              : '/portal'
     }
 
-    return await createUserSession(request.headers, getServices(context), { email: result.email, name: null }, redirectTo)
+    return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)
 }
+
+/** Not indexed: magic-link URLs are single-use and must never be indexed. */
+export const meta = noIndexMeta
 
 export default function Verify() {
     const [searchParams] = useSearchParams()

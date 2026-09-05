@@ -7,8 +7,10 @@ import { ErrorPage } from '~/components/error-page'
 import { Footer } from '~/components/footer/footer'
 import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
+import { SkipToContent } from '~/components/skip-to-content'
 import { getUser, isAdminUser } from '~/lib/auth.server'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
+import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout'
 
 export async function loader({ context, request }: Route.LoaderArgs) {
@@ -89,6 +91,7 @@ export default function Index() {
 
     return (
         <div>
+            <SkipToContent />
             {adminData && (
                 <AdminOverlay
                     user={adminData.user}
@@ -140,7 +143,9 @@ export default function Index() {
                     }}
                 />
             )}
-            <Outlet />
+            <styled.main id="main">
+                <Outlet />
+            </styled.main>
             <Footer />
             <Acknowledgement conferenceState={conferenceState} />
         </div>
@@ -150,11 +155,14 @@ export default function Index() {
 export function ErrorBoundary() {
     return (
         <div>
+            <SkipToContent />
             <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venue={undefined} />
 
-            <ContentPageLayout>
-                <ErrorPage />
-            </ContentPageLayout>
+            <styled.main id="main">
+                <ContentPageLayout>
+                    <ErrorPage />
+                </ContentPageLayout>
+            </styled.main>
             <Footer />
             <Acknowledgement />
         </div>

@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
 import { css } from '~/styled-system/css'
-import { Box, Divider, Flex, Grid, styled } from '~/styled-system/jsx'
+import { Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from './socials-data'
 import { AppLink } from '../app-link'
 
@@ -17,7 +17,7 @@ export const Footer = () => (
     // strip is the single curated sponsor surface, and duplicating it in
     // the footer competed visually on long pages. The /sponsors and
     // /sponsorship nav links below give discovery without the noise.
-    <Box mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
+    <styled.footer mt="48" pt="12" pb="12" px="5" bg="surface.footer" color="text.primary">
         <Divider color="border.subtle" mb="6" />
         <Grid
             gridTemplateColumns="1fr"
@@ -72,9 +72,9 @@ export const Footer = () => (
                 <AppLink to="/volunteer" variant="chrome">
                     Work With Us
                 </AppLink>
-                <styled.a href={`mailto:${contactEmail}`} color="text.highlight" _hover={{ color: 'interactive.active' }}>
+                <AppLink unstyled to={`mailto:${contactEmail}`} color="text.highlight" _hover={{ color: 'interactive.active' }}>
                     {contactEmail}
-                </styled.a>
+                </AppLink>
             </Flex>
             <Flex direction="column" gap="4">
                 {/* <styled.p color="#C2C2FF" fontSize="2xl" lineHeight={1.2} textWrap="balance">
@@ -95,12 +95,10 @@ export const Footer = () => (
                 /> */}
                 <Flex direction="row" gap="1">
                     {socialsData.map((item) => (
-                        <styled.a
+                        <AppLink unstyled
                             aria-label={`Visit us on ${item.title}`}
                             key={item.link}
-                            href={item.link}
-                            target={`_blank`}
-                            rel={`nofollow noopener`}
+                            to={item.link}
                             display="flex"
                             justifyContent="flex-start"
                             alignItems="center"
@@ -113,10 +111,10 @@ export const Footer = () => (
                                     _hover: { color: 'interactive.active' },
                                 })}
                             />
-                        </styled.a>
+                        </AppLink>
                     ))}
                 </Flex>
             </Flex>
         </Grid>
-    </Box>
+    </styled.footer>
 )

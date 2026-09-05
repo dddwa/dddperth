@@ -18,6 +18,7 @@
 import type { Sponsor } from '~/lib/conference-state-client-safe'
 import { Box, styled } from '~/styled-system/jsx'
 import { SponsorInlineLogo } from './sponsor-inline-logo'
+import { AppLink } from './app-link'
 
 export interface SponsorAcknowledgementCta {
     href: string
@@ -52,11 +53,9 @@ export function SponsorAcknowledgement({ prefix, sponsors, cta }: SponsorAcknowl
         >
             <styled.span>{prefix}</styled.span>
             {sponsors.map((sponsor) => (
-                <styled.a
+                <AppLink unstyled
                     key={sponsor.name}
-                    href={sponsor.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={sponsor.website}
                     display="inline-flex"
                     alignItems="center"
                     aria-label={sponsor.name}
@@ -70,7 +69,7 @@ export function SponsorAcknowledgement({ prefix, sponsors, cta }: SponsorAcknowl
                         height="[1.5em]"
                         maxWidth="[110px]"
                     />
-                </styled.a>
+                </AppLink>
             ))}
             {cta ? (
                 <styled.a

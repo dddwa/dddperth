@@ -1,6 +1,6 @@
 import type { ConferenceYear } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
-import { optusStadiumVenue } from '../venues/optus-stadium'
+import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 
 const SESSIONIZE_2025_SESSIONS = 'https://sessionize.com/api/v2/vhwwzm15'
 const SESSIONIZE_2025_ALL_SESSIONS = 'https://sessionize.com/api/v2/vhwwzm15/view/All'

@@ -37,7 +37,17 @@ The script is expected to also create the `staging` and `production` GitHub Envi
 
 The provisioning script only writes the Cloudflare credentials into GitHub. The app's own runtime secrets (read at request time from `context.cloudflare.env`) are set on each Worker separately. The full list lives in the `CloudflareEnv` interface in `core/website/app/remix-app-load-context.ts` (or `website/app/remix-app-load-context.ts` in `ddd-core` standalone).
 
-The Worker has to exist before secrets can be set, so run an initial `pnpm wrangler deploy --env <env>` first (or trigger the workflow once — it will deploy successfully but the app will fail at runtime until secrets are populated). Non-secret values like `WEB_URL` are already set via `vars` in the wrangler config. Local development reads these names from `website/.dev.vars` instead.
+The Worker has to exist before secrets can be set, so deploy once first (or trigger the workflow — it will deploy successfully but the app will fail at runtime until secrets are populated). Non-secret values like `WEB_URL` are already set via `vars` in the wrangler config. Local development reads these names from `conference/wrangler/.dev.vars` instead.
+
+**Running wrangler in a fork.** Every command below takes this shape, run from the repo root:
+
+```bash
+pnpm nx wrangler website -- <command> -c ../../conference/wrangler/<env>.jsonc
+```
+
+Environments are separate config *files*, not `[env.*]` sections, so `--env staging` fails with "No environment found" and then "Required Worker name missing" — the name lives in the file it didn't load. Wrangler is also a devDependency of `core/website`, so a bare `pnpm wrangler` from the root won't resolve; `nx wrangler website --` runs it with the right cwd. The `-c` path is relative to `core/website`.
+
+In `ddd-core` standalone it's the same shape one level shallower — `-c ../conference-stub/wrangler/<env>.jsonc`.
 
 #### `SESSION_SECRET`
 
@@ -48,9 +58,8 @@ Used to sign the session cookie. Pick a long random value — anything ≥ 32 by
 openssl rand -base64 32
 
 # Set it
-cd website   # or cd core/website in a fork
-pnpm wrangler secret put SESSION_SECRET --env staging
-pnpm wrangler secret put SESSION_SECRET --env production
+pnpm nx wrangler website -- secret put SESSION_SECRET -c ../../conference/wrangler/staging.jsonc
+pnpm nx wrangler website -- secret put SESSION_SECRET -c ../../conference/wrangler/production.jsonc
 ```
 
 #### Magic-link auth (Resend)
@@ -61,9 +70,8 @@ The admin area (and, optionally, the entire site in staging) is gated by magic-l
 2. Set the key per environment:
 
    ```bash
-   cd website   # or cd core/website
-   pnpm wrangler secret put RESEND_API_KEY --env staging
-   pnpm wrangler secret put RESEND_API_KEY --env production
+   pnpm nx wrangler website -- secret put RESEND_API_KEY -c ../../conference/wrangler/staging.jsonc
+   pnpm nx wrangler website -- secret put RESEND_API_KEY -c ../../conference/wrangler/production.jsonc
    ```
 
 3. The from-address (`AUTH_EMAIL_FROM`) and the staging-wide gate flag (`WEBSITE_AUTH_REQUIRED`) are non-secret and live in your wrangler `staging.jsonc` / `production.jsonc` under `vars`.
@@ -76,23 +84,31 @@ The same code path runs locally with `RESEND_API_KEY` unset — magic links are 
 The bare API URL exposes unpublished sessions, so it lives as a secret. Get the value from the Sessionize event admin page. The env-var name is year-suffixed on purpose, so a stale value can't keep silently serving the old event's data after rollover:
 
 ```bash
-pnpm wrangler secret put SESSIONIZE_<YEAR>_SESSIONS --env <env>
-pnpm wrangler secret put SESSIONIZE_<YEAR>_ALL_SESSIONS --env <env>   # required for voting
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_SESSIONS -c ../../conference/wrangler/<env>.jsonc
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_ALL_SESSIONS -c ../../conference/wrangler/<env>.jsonc   # required for voting
 ```
 
 See [`runbooks/new-year.md`](./runbooks/new-year.md) for the full year-rollover workflow.
 
+#### Speaker ticket claim link
+
+Set once the speaker portal opens. The Tito "with" link for the speaker release — a secret because holding the URL is what claims a free ticket. Unset, the dashboard doesn't render the claim action; delete it once every speaker has claimed.
+
+```bash
+pnpm nx wrangler website -- secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/<env>.jsonc
+```
+
 #### Optional
 
 ```bash
-pnpm wrangler secret put TITO_SECURITY_TOKEN --env <env>   # tito webhook signature, if used
+pnpm nx wrangler website -- secret put TITO_SECURITY_TOKEN -c ../../conference/wrangler/<env>.jsonc   # tito webhook signature, if used
 ```
 
-To rotate any secret, run `wrangler secret put` again — it overwrites.
+To rotate any secret, run `secret put` again — it overwrites.
 
 ## Production deploys
 
-The convention is `.github/workflows/deploy-cloudflare.yml` running on every push to `main` (excluding content-only changes). It type checks, lints, builds, applies pending D1 migrations, and runs `wrangler deploy --env production`. The D1 database name is read from `conference/manifest.ts` `deployment.d1DatabaseName.production` so the workflow doesn't need editing when forks rename databases.
+The convention is `.github/workflows/deploy-cloudflare.yml` running on every push to `main` (excluding content-only changes). It type checks, lints, builds, applies pending D1 migrations, and runs `pnpm nx deploy-production website`. The D1 database name is read from `conference/manifest.ts` `deployment.d1DatabaseName.production` so the workflow doesn't need editing when forks rename databases.
 
 The job uses the `production` GitHub Environment, so any reviewers configured on that environment must approve before secrets are exposed.
 
@@ -122,10 +138,11 @@ The default deploy URL is the `*.workers.dev` URL printed by `wrangler deploy`. 
 Both workflows support `workflow_dispatch` for the production one. For ad-hoc local deploys (not recommended for production):
 
 ```bash
-cd website   # or cd core/website
-pnpm wrangler deploy --env staging
-pnpm wrangler deploy --env production
+pnpm nx deploy-staging website
+pnpm nx deploy-production website
 ```
+
+These build first and run `prepare-deploy-config.mjs` to resolve the right wrangler config, so prefer them over calling `wrangler deploy` directly.
 
 You'll need `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` set in your environment.
 

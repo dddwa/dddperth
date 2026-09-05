@@ -50,6 +50,18 @@ const navLinkRecipe = defineRecipe({
                 _hover: { color: 'brand.accent' },
                 _active: { color: 'brand.accent' },
             },
+            onDark: {
+                // Overlay/drawer links sit on a near-black surface (surface.drawer)
+                // in BOTH themes, so their text must stay light regardless of theme.
+                // `text.on-brand` can't be reused: it's white in the light theme but
+                // dark (#0f172a) in the dark theme, where it's tuned for text on the
+                // bright teal CTA gradient — dark-on-near-black in the drawer is
+                // unreadable. Fixed white base + brand.accent hover matches the
+                // light-theme drawer, so the menu looks the same in both themes.
+                color: 'white',
+                _hover: { color: 'brand.accent' },
+                _active: { color: 'brand.accent' },
+            },
             chrome: {
                 // Header in light theme blends into the off-white body, so nav text
                 // can't be locked to white. `text.primary` adapts: cream-white on dark

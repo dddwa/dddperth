@@ -11,12 +11,16 @@
         "test": "nx run-many --target test --all",
         "e2e": "nx run-many --target e2e --all",
         "prepare2": "pnpm run setup",
+        "prepare": "node scripts/sync-core-skills.mjs",
+        "sync-skills": "node scripts/sync-core-skills.mjs",
         "setup": "nx run-many --target setup --all",
         "start": "nx dev website",
+        "install-browsers": "pnpm --filter website exec playwright install --with-deps chromium",
         "sponsor:add": "node scripts/add-sponsor.mjs",
         "jira:auth": "node scripts/jira-auth.mjs",
         "sponsor:cli": "node scripts/sponsor-manager.mjs",
-        "provision:cloudflare": "node scripts/provision-cloudflare.mjs"
+        "provision:cloudflare": "node scripts/provision-cloudflare.mjs",
+        "vr": "node scripts/visual-regression.mjs"
     },
     "private": true,
     "devDependencies": {
@@ -27,7 +31,7 @@
         "@nx/vitest": "23.1.1",
         "@pandacss/dev": "^1.12.0",
         "@park-ui/cli": "^1.0.1",
-        "@types/luxon": "^3.7.3",
+        "@types/luxon": "^3.7.5",
         "@types/node": "^26.1.2",
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.4",
@@ -49,7 +53,7 @@
         "vite-plugin-svgr": "^5.2.0",
         "vitest": "4.1.10"
     },
-    "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
+    "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000",
     "dependencies": {
         "@pandacss/preset-panda": "^1.12.0",
         "@react-router/dev": "^8.3.0",

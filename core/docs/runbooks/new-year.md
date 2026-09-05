@@ -88,20 +88,45 @@ If your fork keeps a perth-style `docs/deploy.md` with the year baked in, update
 
 ### d. Set the secrets
 
-For each environment (and locally in `website/.dev.vars`):
+For each environment (and locally in `conference/wrangler/.dev.vars`). Run
+these from the repo root:
 
 ```bash
-cd core/website
-pnpm wrangler secret put SESSIONIZE_<YEAR>_SESSIONS --env staging
-pnpm wrangler secret put SESSIONIZE_<YEAR>_SESSIONS --env production
-pnpm wrangler secret put SESSIONIZE_<YEAR>_ALL_SESSIONS --env staging
-pnpm wrangler secret put SESSIONIZE_<YEAR>_ALL_SESSIONS --env production
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_SESSIONS -c ../../conference/wrangler/staging.jsonc
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_SESSIONS -c ../../conference/wrangler/production.jsonc
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_ALL_SESSIONS -c ../../conference/wrangler/staging.jsonc
+pnpm nx wrangler website -- secret put SESSIONIZE_<YEAR>_ALL_SESSIONS -c ../../conference/wrangler/production.jsonc
 ```
+
+> **Why the long form.** Environments are separate config *files* here, not
+> `[env.*]` sections — `--env staging` fails with "No environment found",
+> then "Required Worker name missing" because the name lives in the file it
+> didn't load. And wrangler is a devDependency of `core/website`, so a bare
+> `pnpm wrangler` from the root won't resolve; `nx wrangler website --` runs
+> it with the right cwd. The `-c` path is relative to `core/website`.
 
 Values come from the Sessionize event admin page → API:
 
 - `_SESSIONS` is the bare endpoint: `https://sessionize.com/api/v2/<event-id>`
 - `_ALL_SESSIONS` appends the all-sessions view: `https://sessionize.com/api/v2/<event-id>/view/All`
+
+Once the speaker portal opens, also set the Tito speaker ticket claim link:
+
+```bash
+pnpm nx wrangler website -- secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/staging.jsonc
+pnpm nx wrangler website -- secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/production.jsonc
+```
+
+The value is the Tito "with" link for the speaker release, e.g.
+`https://ti.to/<account>/<year>/with/<token>`. A secret rather than config
+because that token is the only thing gating a free ticket. Until it's set,
+the dashboard doesn't render the claim action. Delete it once every speaker
+has claimed:
+
+```bash
+pnpm nx wrangler website -- secret delete SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/staging.jsonc
+pnpm nx wrangler website -- secret delete SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/production.jsonc
+```
 
 ### e. Cut over from the previous year
 
@@ -121,13 +146,13 @@ Once the new year's secrets are set in all environments, the previous year's API
 2. Remove the previous year's secrets from staging and production:
 
     ```bash
-    pnpm wrangler secret delete SESSIONIZE_<PREV>_SESSIONS --env staging
-    pnpm wrangler secret delete SESSIONIZE_<PREV>_SESSIONS --env production
-    pnpm wrangler secret delete SESSIONIZE_<PREV>_ALL_SESSIONS --env staging
-    pnpm wrangler secret delete SESSIONIZE_<PREV>_ALL_SESSIONS --env production
+    pnpm nx wrangler website -- secret delete SESSIONIZE_<PREV>_SESSIONS -c ../../conference/wrangler/staging.jsonc
+    pnpm nx wrangler website -- secret delete SESSIONIZE_<PREV>_SESSIONS -c ../../conference/wrangler/production.jsonc
+    pnpm nx wrangler website -- secret delete SESSIONIZE_<PREV>_ALL_SESSIONS -c ../../conference/wrangler/staging.jsonc
+    pnpm nx wrangler website -- secret delete SESSIONIZE_<PREV>_ALL_SESSIONS -c ../../conference/wrangler/production.jsonc
     ```
 
-3. Remove the previous year's entries from `website/.dev.vars`.
+3. Remove the previous year's entries from `conference/wrangler/.dev.vars`.
 
 ### f. `underrepresentedGroupsQuestionId`
 

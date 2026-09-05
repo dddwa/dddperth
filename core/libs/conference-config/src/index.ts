@@ -9,6 +9,7 @@ export type {
     ConferenceVenue,
     ConferenceYear,
     DateTimeRange,
+    MinorSponsorTier,
     SessionData,
     SessionizeConferenceSessions,
     Sponsor,
@@ -18,7 +19,7 @@ export type {
     VolunteerForm,
     Year,
     YearSponsors,
-} from './types'
+} from './types.ts'
 
 export type {
     Brand,
@@ -30,13 +31,19 @@ export type {
     DeploymentConfig,
     HomepageContentSlots,
     MobileApp,
+    MeetTheExpertsConfig,
+    MeetTheExpertsSlotConfig,
     NavConfig,
     NavItem,
     Socials,
+    SpeakerDinnerConfig,
+    SpeakerPortalChecklistConfig,
+    SpeakerPortalConfig,
+    SpeakerTrainingSessionConfig,
     SponsorPortalConfig,
     SponsorPortalJiraConfig,
     ThemeRefs,
-} from './manifest'
+} from './manifest.ts'
 
 // Year keys are derived per-fork from its years map. Cast `keyof typeof
 // conferenceManifest.conferences.conferences` at the use-site in the fork.
@@ -47,4 +54,4 @@ export {
     roomSchema,
     sessionSchema,
     timeSlotSchema,
-} from './sessionize-schema'
+} from './sessionize-schema.ts'

@@ -1,0 +1,55 @@
+{
+    // Wrangler config used ONLY by the e2e and visual regression suites.
+    //
+    // It lives in its own directory because the Cloudflare Vite plugin
+    // resolves `.dev.vars` relative to the active wrangler config's
+    // directory. Giving the suites their own directory means they get their
+    // own generated `.dev.vars` (gitignored) and never read or write the
+    // developer's `wrangler/.dev.vars`.
+    //
+    // Consequences, all deliberate:
+    //   - A test run can't corrupt your local env, even if killed with -9.
+    //   - `pnpm start` and an e2e/visual run can run at the same time.
+    //
+    // Selected via WRANGLER_CONFIG=e2e/e2e.jsonc (see website/vite.config.ts).
+    // A fork keeps the equivalent file at conference/wrangler/e2e/e2e.jsonc.
+    "$schema": "../../../node_modules/wrangler/config-schema.json",
+    "name": "devconf-example-website-e2e",
+    "main": "../../../website/workers/app.ts",
+    "compatibility_date": "2024-12-30",
+    "compatibility_flags": ["nodejs_compat"],
+
+    // Deliberately the SAME local database as local.jsonc.
+    //
+    // The isolation this file exists for is about *config* — Sessionize
+    // endpoints, the date-override flag, the port, and `.dev.vars` — not about
+    // storage. Giving the suite its own database would mean a second migration
+    // target in `manifest-d1-migrate.mjs`, a new `e2e` key in every fork's
+    // build-manifest `d1DatabaseName`, and a CI step to migrate it: a change to
+    // the cross-fork manifest contract, to isolate rows nobody reads. The
+    // existing `nx d1-migrate-local` covers this database in CI and locally.
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "devconf-example-voting-local",
+            "database_id": "local",
+            "migrations_dir": "../../../website/migrations"
+        }
+    ],
+
+    "assets": {
+        "directory": "../../../website/build/client"
+    },
+
+    "vars": {
+        // Port 3801, not 3800: the suites run on their own port so they can
+        // never attach to (or be attached to by) a running `pnpm start`.
+        "WEB_URL": "http://localhost:3801",
+        "WEBSITE_AUTH_REQUIRED": "false",
+        "AUTH_EMAIL_FROM": "DevConf Example <noreply@example.test>"
+    },
+
+    "observability": {
+        "enabled": true
+    }
+}

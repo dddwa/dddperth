@@ -35,6 +35,12 @@ export interface AppConfig {
         }
     >
 
+    /**
+     * Per-year speaker ticket claim URLs from
+     * `SPEAKER_TICKET_CLAIM_URL_<YYYY>`, e.g. `speakerTicketClaimUrls['2026']`.
+     */
+    speakerTicketClaimUrls: Record<string, string>
+
     tito: {
         securityToken?: string
         apiToken?: string

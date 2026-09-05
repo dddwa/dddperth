@@ -2,6 +2,7 @@ import type { ConferenceVenue, TicketInfo, VolunteerForm, Year, YearSponsors } f
 
 export type {
     ConferenceVenue,
+    MinorSponsorTier,
     Sponsor,
     TicketInfo,
     TitoTicketInfo,

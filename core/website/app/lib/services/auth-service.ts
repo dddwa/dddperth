@@ -10,10 +10,11 @@ import type { User } from '../session-types'
  */
 export interface AuthService {
     /**
-     * True when `email` may log in (case-insensitive): either on the admin
-     * allowlist or a contact of an active sponsor. Checked at magic-link
-     * issue time — what the login grants access to is decided per request
-     * by `requireAdmin` / `requireSponsorContact`.
+     * True when `email` may log in (case-insensitive): on the admin
+     * allowlist, a contact of an active sponsor, or a contact of an active
+     * speaker. Checked at magic-link issue time — what the login grants
+     * access to is decided per request by `requireAdmin` /
+     * `requireSponsorContact` / `requireSpeaker`.
      */
     isAllowed(email: string): Promise<boolean>
 
@@ -50,4 +51,11 @@ export interface AuthService {
 
     /** Deletes the session row. Idempotent. */
     destroySession(sessionId: string): Promise<void>
+
+    /** Most recent login (session creation) time for every email that has
+     * ever logged in, as unix seconds, keyed by lowercased email. Emails
+     * that have never logged in are simply absent — distinct from a login
+     * time of 0. Powers "last login" columns in admin views (e.g. the
+     * speakers table); callers filter down to the emails they care about. */
+    getLastLoginTimes(): Promise<Record<string, number>>
 }

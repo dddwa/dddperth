@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
-import agenda2019 from './2019-agenda-data.json'
+import agenda2019 from './2019-agenda-data.json' with { type: 'json' }
 
 export const conference2019: ConferenceYear = {
     kind: 'conference',

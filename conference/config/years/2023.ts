@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 
-import { optusStadiumVenue } from '../venues/optus-stadium'
+import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 
 export const conference2023: ConferenceYear = {
     kind: 'conference',

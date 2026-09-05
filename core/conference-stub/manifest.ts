@@ -18,10 +18,11 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
-import { nav } from './config/nav'
-import { conferenceConfigPublic } from './config/public'
-import { socials } from './config/socials'
-import { conferenceConfig } from './config/years-index'
+import { nav } from './config/nav.ts'
+import { conferenceConfigPublic } from './config/public.ts'
+import { socials } from './config/socials.ts'
+import { speakerPortal } from './config/speaker-portal.ts'
+import { conferenceConfig } from './config/years-index.ts'
 
 // Year keys this stub knows about. Re-exported so consumers can constrain
 // types without depending on the years-index path.
@@ -30,6 +31,7 @@ export type ConferenceYears = keyof typeof conferenceConfig.conferences
 export const conferenceManifest: ConferenceManifest = {
     public: conferenceConfigPublic,
     socials,
+    speakerPortal,
     brand: {
         legalName: 'DevConf Example Inc.',
         contactEmail: 'info@example.test',

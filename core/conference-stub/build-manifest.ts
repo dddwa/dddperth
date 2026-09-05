@@ -11,9 +11,9 @@
 
 import path from 'node:path'
 import type { ConferenceBuildManifest } from '@ddd/conference-config'
-import { conferenceManifest } from './manifest'
-import { exampleLightTheme } from './theme/example-light.theme'
-import { exampleTheme } from './theme/example.theme'
+import { conferenceManifest } from './manifest.ts'
+import { exampleLightTheme } from './theme/example-light.theme.ts'
+import { exampleTheme } from './theme/example.theme.ts'
 
 const stubDir = import.meta.dirname
 

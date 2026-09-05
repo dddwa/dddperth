@@ -14,6 +14,7 @@ import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
 import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
+import { NewTabHint } from '~/components/new-tab-hint'
 
 export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year, getConfig(context))
@@ -95,47 +96,51 @@ export default function Agenda() {
             p="4"
         >
             <Box maxWidth="[1200px]" color="text.secondary" mx="auto" p="1" fontSize="sm">
-                <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
-                    Back to {year} Agenda
-                </AppLink>
-                <styled.h2 fontSize="lg" pb="3">
-                    {session.title}
-                </styled.h2>
-                <styled.span
-                    display="none"
-                    md={{
-                        display: 'block',
-                    }}
-                    color="text.secondary"
-                    textWrap="nowrap"
-                    pb="3"
-                >
-                    🕓 {sessionStart} - {sessionEnd}
-                </styled.span>
-                <styled.span display="block" color="text.secondary" textOverflow="ellipsis" textWrap="nowrap" pb="3">
-                    📍 {session.room}
-                </styled.span>
-                <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
-                <styled.div>{session.description}</styled.div>
-                {session?.speakers?.length ? (
-                    <styled.div display="block" color="text.secondary">
-                        {talkSpeakers.map((speaker) => (
-                            <styled.div key={speaker.id} display="flex" alignItems="center">
-                                {speaker.profilePicture ? (
-                                    <styled.img
-                                        src={speaker.profilePicture}
-                                        alt={speaker.fullName}
-                                        width="[120px]"
-                                        height="[120px]"
-                                        borderRightRadius="[50%]"
-                                        mr="2"
-                                    />
-                                ) : null}
-                                {speaker.fullName}
-                            </styled.div>
-                        ))}
-                    </styled.div>
-                ) : null}
+                <Box id="talk-detail-content">
+                    <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
+                        Back to {year} Agenda
+                    </AppLink>
+                    <styled.h1 fontSize="lg" pb="3">
+                        {session.title}
+                    </styled.h1>
+                    {sessionStart && sessionEnd ? (
+                        <styled.span display="block" color="text.secondary" textWrap="nowrap" pb="3">
+                            🕓 {sessionStart} - {sessionEnd}
+                        </styled.span>
+                    ) : null}
+                    {session.room ? (
+                        <styled.span
+                            display="block"
+                            color="text.secondary"
+                            textOverflow="ellipsis"
+                            textWrap="nowrap"
+                            pb="3"
+                        >
+                            📍 {session.room}
+                        </styled.span>
+                    ) : null}
+                    <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
+                    <styled.div>{session.description}</styled.div>
+                    {session?.speakers?.length ? (
+                        <styled.div display="block" color="text.secondary">
+                            {talkSpeakers.map((speaker) => (
+                                <styled.div key={speaker.id} display="flex" alignItems="center">
+                                    {speaker.profilePicture ? (
+                                        <styled.img
+                                            src={speaker.profilePicture}
+                                            alt={speaker.fullName}
+                                            width="[120px]"
+                                            height="[120px]"
+                                            borderRightRadius="[50%]"
+                                            mr="2"
+                                        />
+                                    ) : null}
+                                    {speaker.fullName}
+                                </styled.div>
+                            ))}
+                        </styled.div>
+                    ) : null}
+                </Box>
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
@@ -150,10 +155,8 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
     return (
         <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
             <styled.span>Room sponsored by</styled.span>
-            <styled.a
-                href={roomSponsor.website}
-                target="_blank"
-                rel="noopener noreferrer"
+            <AppLink unstyled
+                to={roomSponsor.website}
                 display="inline-flex"
                 alignItems="center"
             >
@@ -165,7 +168,8 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
                     maxWidth="[140px]"
                     objectFit="contain"
                 />
-            </styled.a>
+                <NewTabHint />
+            </AppLink>
         </Flex>
     )
 }

@@ -53,7 +53,7 @@ export function socialsFromForm(data: Record<string, unknown>): Record<string, s
 /**
  * Phase 1 completion = logo + blurb + website. Socials are optional —
  * this mirrors what the public site renders for a sponsor (logo, link,
- * optional quote). Completing flips the Jira "Assets for Conference" task.
+ * optional quote). Completing advances the Jira assets status field.
  */
 export function isProfileComplete(profile: SponsorProfile | null): boolean {
     if (!profile) return false

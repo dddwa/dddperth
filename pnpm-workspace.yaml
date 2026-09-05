@@ -2,3 +2,30 @@ packages:
     - 'core/website'
     - 'core/libs/*'
     - 'conference'
+
+# pnpm 10+ reads its own settings from here, NOT from .npmrc. Moving any of
+# these back into .npmrc silently disables them (`pnpm config get` returns
+# undefined) rather than erroring.
+strictPeerDependencies: false
+autoInstallPeers: true
+
+# Supply-chain protection: refuse to install package versions younger than this
+# (minutes). Recent npm/pnpm compromises were typically detected and yanked
+# within hours, so a 3-day cooldown catches most of them. Bump higher (e.g.
+# 10080 for 7d) for more safety at the cost of slower access to legitimate
+# fixes. Override per-install with `--minimum-release-age=0`, or exclude
+# specific packages via `minimumReleaseAgeExclude` if a vetted dep blocks a
+# CI bump.
+minimumReleaseAge: 4320
+
+# pnpm 10+ blocks dependency lifecycle scripts by default. These are the
+# packages that genuinely need to build on install; without them esbuild,
+# workerd and @swc/core ship no working binary. Regenerate with
+# `pnpm approve-builds` rather than hand-editing.
+allowBuilds:
+    '@parcel/watcher': true
+    '@swc/core': true
+    esbuild: true
+    msw: true
+    nx: true
+    workerd: true

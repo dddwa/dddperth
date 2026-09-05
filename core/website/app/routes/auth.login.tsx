@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { data, Form, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from 'react-router'
 import { getUser } from '~/lib/auth.server'
 import { isValidEmail, sanitiseRedirect } from '~/lib/auth/validation'
@@ -5,6 +6,7 @@ import { recordException } from '~/lib/record-exception'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/auth.login'
+import { noIndexMeta } from '~/lib/seo'
 
 const REDIRECT_PARAM = 'redirectTo'
 
@@ -49,13 +51,28 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ sent: true as const, email })
 }
 
+/** Not indexed: a sign-in form has no search value and should not rank for the brand. */
+export const meta = noIndexMeta
+
 export default function Login() {
     const { canSendEmail } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
     const actionData = useActionData<typeof action>()
     const navigation = useNavigation()
     const isSubmitting = navigation.state === 'submitting'
+    const errorRef = useRef<HTMLDivElement>(null)
     const redirectTo = sanitiseRedirect(searchParams.get(REDIRECT_PARAM))
+    const error = (actionData && 'error' in actionData && actionData.error) || null
+
+    // The error arrives with a fresh document (server-rendered action response),
+    // so focus starts at the top of the page with nothing to say the submit
+    // failed. Moving focus onto the alert both announces it and puts the user a
+    // Tab away from the field they need to correct.
+    useEffect(() => {
+        if (error) {
+            errorRef.current?.focus()
+        }
+    }, [error])
 
     if (actionData && 'sent' in actionData) {
         return (
@@ -87,8 +104,6 @@ export default function Login() {
         )
     }
 
-    const error = (actionData && 'error' in actionData && actionData.error) || null
-
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
             <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" maxW="[440px]" w="full">
@@ -97,7 +112,14 @@ export default function Login() {
                 </styled.h1>
 
                 {error && (
+                    // Server-rendered on a full page load rather than a client-side
+                    // toast, so a live region alone can't be relied on to announce it
+                    // (the region isn't in the DOM before the error is). role="alert"
+                    // plus a focus target: the effect above moves focus here on render.
                     <Box
+                        ref={errorRef}
+                        role="alert"
+                        tabIndex={-1}
                         mb="6"
                         p="4"
                         bg="status.danger.bg"
