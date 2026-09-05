@@ -1,29 +1,14 @@
 import { z } from 'zod'
 
 /**
- * The sponsor-supplied logistics the portal collects on behalf of the
- * committee: exhibition/bump-in, raffle, Optus screen orders and induction.
- *
- * Every field here is sponsor-owned — Jira's own status options label each of
- * these workstreams "… Pending (Sponsor)". Like blurb and socials, the
- * portal's value wins and is pushed into Jira on every save; the committee
- * owns the *status* fields that track them, never the answers.
- *
- * Pure: no platform imports, unit-testable in node.
+ * Sponsor-supplied logistics: exhibition/bump-in, raffle, screens, induction.
+ * Sponsor-owned, so the portal's values are pushed to Jira on every save.
+ * Pure — no platform imports.
  */
 
-/**
- * Tiers with a physical exhibition space. Anything bump-in/out, equipment,
- * loading-dock or screen-related only applies to these.
- *
- * Community is included: those sponsorships are often in-kind (Elite Lighting
- * supplies lighting, for instance), so they bump equipment in even though
- * they aren't a paid booth tier.
- *
- * These are `YearSponsors` category keys (the mapped side of the manifest's
- * tierMap), not raw Jira tier values, so a rename in Jira doesn't silently
- * change who sees the form.
- */
+/** Tiers with an exhibition space. Community is in: those sponsorships are
+ * often in-kind and still bump equipment in. Mapped tierMap keys, not raw
+ * Jira values. */
 export const BOOTH_TIERS = ['platinum', 'gold', 'room', 'community'] as const
 
 /** Which sections a sponsor sees, by mapped tier. */
@@ -40,15 +25,8 @@ export interface LogisticsVisibility {
     socialQuote: boolean
 }
 
-/**
- * Sections visible to a sponsor on the given (mapped) tier.
- *
- * An unmapped or unknown tier gets the exhibition sections. That's deliberate:
- * a new Jira tier option that nobody has added to tierMap yet should show a
- * sponsor too much rather than too little — a sponsor seeing an irrelevant
- * section can skip it, but one who never sees bump-in has no way to tell us
- * when they're arriving, and we find out at the loading dock.
- */
+/** An unknown tier sees the exhibition sections — better to show a sponsor a
+ * section they can skip than to hide bump-in from someone who needs it. */
 export function logisticsVisibility(mappedTier: string | undefined): LogisticsVisibility {
     const known = ['platinum', 'gold', 'room', 'coffeecart', 'digital', 'community', 'raffleonly']
     const tier = (mappedTier ?? '').toLowerCase()
@@ -63,6 +41,36 @@ export function logisticsVisibility(mappedTier: string | undefined): LogisticsVi
     }
 }
 
+/** Must match the Jira option values exactly — pushLogistics drops anything
+ * that doesn't match, so drift here silently stops saving to Jira. */
+export const BUMP_IN_SLOTS = [
+    'Friday noon - 1pm',
+    'Friday 1pm - 2pm',
+    'Friday 2pm - 3pm',
+    'Friday 3pm - 4pm',
+    'Friday 4pm - 5pm',
+    'Friday 5pm - 6pm',
+    'Saturday 6.30am to 7am (minimal set-up only)',
+] as const
+
+export const BUMP_OUT_WINDOWS = [
+    'During afternoon tea (room sponsors only)',
+    'Saturday 4pm',
+    'Saturday 5pm (after conference concludes)',
+] as const
+
+export const PARKING_OPTIONS = ['For Bump In', 'For Bump Out'] as const
+
+export const SCREEN_OPTIONS = [
+    '55" LCD ($500+GST)',
+    '65" LCD ($600+GST)',
+    '75" LCD ($700+GST)',
+    '85" LCD ($800+GST)',
+] as const
+
+export const RAFFLE_LOCATIONS = ['Exhibition Space', 'Raffle Give-away on main stage'] as const
+
+// Free text on save, so an old answer survives the committee editing options.
 const optionalText = (max: number) =>
     z.preprocess(
         (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -74,12 +82,7 @@ const optionalEmail = z.preprocess(
     z.email({ error: 'Enter a valid email address' }).max(320).optional(),
 )
 
-/**
- * Every field is optional. The committee chases missing logistics through the
- * Jira status fields, and a sponsor filling in half the form now and the rest
- * next week is the normal case — a required field would just block the save
- * and lose what they'd already typed.
- */
+/** All optional — sponsors fill this in over several visits. */
 export const logisticsSchema = z.object({
     // Exhibition
     exhibitorContactName: optionalText(200),
@@ -104,17 +107,17 @@ export const logisticsSchema = z.object({
     raffleLocation: optionalText(200),
     // Social
     socialQuote: optionalText(2000),
+    // Spreadsheet-only: no Jira field, so it stays in D1 for the export.
+    additionalNotes: optionalText(2000),
 })
 
 export type LogisticsFields = z.infer<typeof logisticsSchema>
 
-/** Field keys, so storage and write-back iterate one list rather than two. */
+/** Field keys, so storage and write-back iterate one list. */
 export const LOGISTICS_KEYS = Object.keys(logisticsSchema.shape) as Array<keyof LogisticsFields>
 
-/**
- * Drops answers for sections the sponsor can't see, so a tier change (or a
- * hand-crafted POST) can't write exhibition data against a Digital sponsor.
- */
+/** Drops answers for hidden sections, so a tier change or crafted POST can't
+ * write exhibition data for a sponsor without a booth. */
 export function filterByVisibility(fields: LogisticsFields, visibility: LogisticsVisibility): LogisticsFields {
     const exhibitionKeys: Array<keyof LogisticsFields> = [
         'exhibitorContactName',
@@ -130,6 +133,7 @@ export function filterByVisibility(fields: LogisticsFields, visibility: Logistic
         'loadingDockAssistance',
         'porterAssistance',
         'parking',
+        'additionalNotes',
     ]
     const screenKeys: Array<keyof LogisticsFields> = ['screenOrders', 'screenNotes', 'screenInvoicingEmail']
     const raffleKeys: Array<keyof LogisticsFields> = ['rafflePrize', 'raffleLocation']

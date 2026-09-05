@@ -8,15 +8,10 @@ import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/admin.sponsors.exhibitor-export'
 
 /**
- * The venue's "Supplier & Exhibitor List" as .xlsx, for handing to Optus
- * Stadium.
+ * The venue's "Supplier & Exhibitor List" as .xlsx.
  *
- * Company names and tiers come from D1 (already synced); the logistics
- * columns are read live from Jira, since none of it is synced and the
- * committee edits it right up to the event. A Jira failure surfaces as an
- * error rather than a half-filled spreadsheet — the venue can't tell the
- * difference between "blank because unknown" and "blank because the fetch
- * broke", but they'd act on both.
+ * Names come from D1; logistics are read live from Jira, which isn't synced.
+ * A Jira failure 502s rather than handing the venue a half-filled sheet.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
@@ -49,9 +44,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const conferenceDate =
         conference && conference.kind === 'conference' ? conference.conferenceDate?.toJSDate() : undefined
 
-    // Jira is the source of truth for logistics (the committee edits it
-    // directly too), but fall back to what the sponsor submitted in case a
-    // push hasn't landed yet.
+    // Jira wins (the committee edits it directly), falling back to the
+    // portal if a push hasn't landed.
     const sources: ExhibitorSource[] = activeSponsors.map((sponsor) => {
         const fromJira = logistics.get(sponsor.issueKey) ?? {}
         const fromPortal = sponsor.profile?.logistics ?? {}
@@ -68,6 +62,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             equipmentList: pick('equipmentList'),
             trolleyOrForklift: pick('trolleyOrForklift'),
             loadingDockAssistance: pick('loadingDockAssistance'),
+            // Portal-only — no Jira field, so it never appears in `fromJira`.
+            additionalNotes: fromPortal.additionalNotes,
         }
     })
 

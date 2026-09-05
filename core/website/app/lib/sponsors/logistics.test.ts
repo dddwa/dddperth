@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { filterByVisibility, logisticsSchema, logisticsVisibility, type LogisticsFields } from './logistics'
+import {
+    BUMP_IN_SLOTS,
+    BUMP_OUT_WINDOWS,
+    filterByVisibility,
+    logisticsSchema,
+    logisticsVisibility,
+    LOGISTICS_KEYS,
+    PARKING_OPTIONS,
+    SCREEN_OPTIONS,
+    type LogisticsFields,
+} from './logistics'
 
 describe('logisticsVisibility', () => {
     it('shows exhibition sections to tiers with a booth', () => {
@@ -120,5 +130,38 @@ describe('logisticsSchema', () => {
         const parsed = logisticsSchema.safeParse({ equipmentList: '  1x banner  ' })
         expect(parsed.success).toBe(true)
         if (parsed.success) expect(parsed.data.equipmentList).toBe('1x banner')
+    })
+})
+
+describe('dropdown options', () => {
+    it('keeps additionalNotes out of Jira — it is spreadsheet-only', () => {
+        // No `logistics.additionalNotes` mapping exists in fork config, so a
+        // key added here without one silently stops reaching the export.
+        expect(LOGISTICS_KEYS).toContain('additionalNotes')
+    })
+
+    it('offers every Jira bump-in slot, including the Saturday early option', () => {
+        expect(BUMP_IN_SLOTS).toHaveLength(7)
+        expect(BUMP_IN_SLOTS).toContain('Friday noon - 1pm')
+        expect(BUMP_IN_SLOTS).toContain('Saturday 6.30am to 7am (minimal set-up only)')
+    })
+
+    it('offers every Jira bump-out window', () => {
+        expect(BUMP_OUT_WINDOWS).toEqual([
+            'During afternoon tea (room sponsors only)',
+            'Saturday 4pm',
+            'Saturday 5pm (after conference concludes)',
+        ])
+    })
+
+    it('keeps screen options priced, so sponsors see the cost before ordering', () => {
+        expect(SCREEN_OPTIONS.every((option) => option.includes('+GST'))).toBe(true)
+    })
+
+    it('round-trips a multi-checkbox answer through the comma-joined string', () => {
+        const joined = [...PARKING_OPTIONS].join(', ')
+        const parsed = logisticsSchema.safeParse({ parking: joined })
+        expect(parsed.success).toBe(true)
+        if (parsed.success) expect(parsed.data.parking).toBe('For Bump In, For Bump Out')
     })
 })

@@ -1,16 +1,9 @@
 /**
- * Builds the venue's "Supplier & Exhibitor List" spreadsheet from sponsor
- * records.
+ * Builds the venue's "Supplier & Exhibitor List" spreadsheet.
  *
- * The venue (Optus Stadium) supplies a fixed template — a title row, a header
- * row, then one row per exhibitor. Its columns are reproduced here rather than
- * filled into the supplied .xlsx: the template carries printer settings and
- * data-validation dropdowns that aren't worth round-tripping through a
- * spreadsheet library, and the venue only cares about the tabular content.
- *
- * Column order is the venue's and must not be reordered — they read it by
- * position. Every column is emitted even when we have nothing for it, so the
- * shape of what's handed over stays constant and the gaps are visible.
+ * Columns are reproduced rather than filled into the venue's template file.
+ * Don't reorder them — the venue reads by position — and keep emitting every
+ * column even when empty, so gaps stay visible.
  */
 
 /** One exhibitor's logistics, as far as we know it. */
@@ -54,18 +47,9 @@ export const EXHIBITOR_COLUMNS = [
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
 /**
- * Splits a Jira bump slot into the venue's separate date and time columns.
- *
- * Jira stores one option ("Friday 1pm - 2pm", "Saturday 6.30am to 7am"); the
- * venue wants a DD/MM/YYYY date and an HH:MM start time. The weekday in the
- * option is resolved against the conference date — the only anchor we have —
- * by walking back to the most recent matching weekday on or before it. That
- * covers the template's Friday/Saturday options without hardcoding "the day
- * before".
- *
- * Anything that doesn't parse is passed through in the date column untouched
- * rather than dropped, so the committee sees the original text and can fix it
- * by hand instead of silently shipping a blank cell to the venue.
+ * Splits a Jira bump slot ("Friday 1pm - 2pm") into the venue's separate date
+ * and time columns, resolving the weekday against the conference date.
+ * Unparseable text passes through in the date column so the committee sees it.
  */
 export function splitBumpSlot(
     slot: string | undefined,
@@ -75,10 +59,8 @@ export function splitBumpSlot(
 
     const text = slot.trim()
     const weekdayMatch = /\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i.exec(text)
-    // Anchored to just after the weekday so a range ("Friday noon - 1pm")
-    // can't yield its END time as the start. A slot whose start isn't a
-    // numeric time ("noon") therefore reports no time at all, rather than
-    // confidently reporting the wrong one to the venue.
+    // Anchored after the weekday so "Friday noon - 1pm" can't report 1pm as
+    // the start time.
     const afterWeekday = weekdayMatch ? text.slice(weekdayMatch.index + weekdayMatch[0].length) : ''
     const timeMatch = /^[\s,]*(\d{1,2})([.:](\d{2}))?\s*(am|pm)\b/i.exec(afterWeekday)
 
@@ -110,12 +92,8 @@ export function splitBumpSlot(
     return { date: formattedDate, time: `${String(hour).padStart(2, '0')}:${minutes}` }
 }
 
-/**
- * Jira holds trolley and forklift in a single free-text field, but the venue
- * asks separately. Rather than guess, the raw answer is echoed into whichever
- * column it actually mentions; an answer naming neither goes to both, since
- * that's the field the committee filled in for this question.
- */
+/** Jira has one trolley/forklift field; the venue asks separately. Route the
+ * answer to whichever it mentions, or both if it names neither. */
 export function splitTrolleyForklift(answer: string | undefined): { trolley: string; forklift: string } {
     if (!answer?.trim()) return { trolley: '', forklift: '' }
 
@@ -153,10 +131,7 @@ export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date 
     ]
 }
 
-/**
- * The full sheet: the venue's title row, the header row, then one row per
- * exhibitor sorted by company name so successive exports diff cleanly.
- */
+/** Title row, headers, then one row per exhibitor sorted by name. */
 export function buildExhibitorSheet(args: {
     sources: ExhibitorSource[]
     conferenceName: string

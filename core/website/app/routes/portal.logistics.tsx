@@ -5,10 +5,15 @@ import { FieldError, fieldLabelClass, inputClass, PrimaryButton, textareaClass }
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import {
+    BUMP_IN_SLOTS,
+    BUMP_OUT_WINDOWS,
     filterByVisibility,
     logisticsSchema,
     logisticsVisibility,
     LOGISTICS_KEYS,
+    PARKING_OPTIONS,
+    RAFFLE_LOCATIONS,
+    SCREEN_OPTIONS,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
 import { getServices } from '~/remix-app-load-context'
@@ -38,6 +43,15 @@ export async function action({ request, context }: Route.ActionArgs) {
     const services = getServices(context)
 
     const formData = await request.formData()
+
+    // Checkbox groups post as `field[]` repeated; collapse each into the
+    // comma-separated string the schema and Jira write-back expect.
+    for (const name of ['parking', 'screenOrders'] as const) {
+        const values = formData.getAll(`${name}[]`).filter((value): value is string => typeof value === 'string')
+        formData.delete(`${name}[]`)
+        formData.set(name, values.join(', '))
+    }
+
     const parsed = parseFormData(logisticsSchema, formData)
     if (!parsed.ok) {
         return data({ fieldErrors: parsed.fieldErrors }, { status: 400 })
@@ -88,6 +102,98 @@ function Text({
             )}
             <input id={name} name={name} defaultValue={value} placeholder={placeholder} className={inputClass} />
             <FieldError message={errors[name]} />
+        </Box>
+    )
+}
+
+function Select({
+    name,
+    label,
+    hint,
+    value,
+    errors,
+    options,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    errors: Record<string, string | undefined>
+    options: readonly string[]
+}) {
+    return (
+        <Box>
+            <label htmlFor={name} className={fieldLabelClass}>
+                {label}
+            </label>
+            {hint && (
+                <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                    {hint}
+                </styled.p>
+            )}
+            <select id={name} name={name} defaultValue={value} className={inputClass}>
+                <option value="">— not sure yet —</option>
+                {options.map((option) => (
+                    <option key={option} value={option}>
+                        {option}
+                    </option>
+                ))}
+            </select>
+            <FieldError message={errors[name]} />
+        </Box>
+    )
+}
+
+/**
+ * Jira multi-checkbox fields. Rendered as checkboxes sharing one hidden input
+ * name, joined comma-separated — parseFormData keeps only the last value for a
+ * repeated key, so each box can't post under its own name.
+ */
+function CheckboxGroup({
+    name,
+    label,
+    hint,
+    value,
+    options,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    options: readonly string[]
+}) {
+    const selected = new Set(
+        value
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean),
+    )
+
+    return (
+        <Box>
+            <styled.fieldset border="none" p="0" m="0">
+                <styled.legend className={fieldLabelClass} p="0">
+                    {label}
+                </styled.legend>
+                {hint && (
+                    <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                        {hint}
+                    </styled.p>
+                )}
+                <Box display="grid" gap="1.5" mt="2">
+                    {options.map((option) => (
+                        <styled.label key={option} display="flex" gap="2" alignItems="center" fontSize="sm">
+                            <input
+                                type="checkbox"
+                                name={`${name}[]`}
+                                value={option}
+                                defaultChecked={selected.has(option)}
+                            />
+                            {option}
+                        </styled.label>
+                    ))}
+                </Box>
+            </styled.fieldset>
         </Box>
     )
 }
@@ -204,28 +310,30 @@ export default function PortalLogistics() {
                                 Bump in &amp; bump out
                             </SectionHeading>
                             <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
-                                <Text
+                                <Select
                                     name="bumpInSlot"
                                     label="Bump-in day and time"
-                                    hint="e.g. Friday 1pm - 2pm"
                                     value={value('bumpInSlot')}
                                     errors={errors}
+                                    options={BUMP_IN_SLOTS}
                                 />
-                                <Text
+                                <Select
                                     name="bumpOutWindow"
                                     label="Bump-out window"
-                                    hint="e.g. Saturday 5pm (after conference concludes)"
                                     value={value('bumpOutWindow')}
                                     errors={errors}
-                                />
-                                <Text
-                                    name="parking"
-                                    label="Under-stadium drop-off/pick-up needed?"
-                                    hint="For bump in, bump out, both, or neither"
-                                    value={value('parking')}
-                                    errors={errors}
+                                    options={BUMP_OUT_WINDOWS}
                                 />
                             </Grid>
+                            <Box mt="4">
+                                <CheckboxGroup
+                                    name="parking"
+                                    label="Under-stadium drop-off/pick-up needed?"
+                                    hint="Tick any that apply"
+                                    value={value('parking')}
+                                    options={PARKING_OPTIONS}
+                                />
+                            </Box>
 
                             <SectionHeading hint="What you're bringing, and what you need to move it.">
                                 Equipment &amp; loading dock
@@ -266,6 +374,12 @@ export default function PortalLogistics() {
                                         errors={errors}
                                     />
                                 </Grid>
+                                <LongText
+                                    name="additionalNotes"
+                                    label="Anything else the venue should know?"
+                                    value={value('additionalNotes')}
+                                    errors={errors}
+                                />
                             </Box>
                         </>
                     )}
@@ -300,12 +414,12 @@ export default function PortalLogistics() {
                                 TV screen orders
                             </SectionHeading>
                             <Box display="grid" gap="4">
-                                <Text
+                                <CheckboxGroup
                                     name="screenOrders"
                                     label="Screens required"
-                                    hint={'e.g. 55" LCD, 65" LCD — leave blank if none'}
+                                    hint="Leave all unticked if you don't need any"
                                     value={value('screenOrders')}
-                                    errors={errors}
+                                    options={SCREEN_OPTIONS}
                                 />
                                 <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
                                     <Text
@@ -339,12 +453,12 @@ export default function PortalLogistics() {
                                     value={value('rafflePrize')}
                                     errors={errors}
                                 />
-                                <Text
+                                <Select
                                     name="raffleLocation"
                                     label="Where should it be given away?"
-                                    hint="At your exhibition space, or on the main stage"
                                     value={value('raffleLocation')}
                                     errors={errors}
+                                    options={RAFFLE_LOCATIONS}
                                 />
                             </Box>
                         </>

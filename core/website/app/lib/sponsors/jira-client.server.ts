@@ -91,14 +91,8 @@ function fieldOptionId(fields: Record<string, unknown>, fieldId: string): string
     return undefined
 }
 
-/**
- * Reads a field without knowing its type. The exhibitor logistics fields are
- * a mix of plain text, single-selects, multi-checkboxes and rich text (Jira's
- * ADF), and the committee can change a field's type — as they did when the
- * checkbox "Sponsor Tasks" became per-workstream single-selects. Everything
- * here lands in a spreadsheet cell as text, so read defensively rather than
- * pinning each field to one shape.
- */
+/** Reads a field as text regardless of its Jira type (string, select,
+ * checkbox, ADF) — the committee changes field types. */
 function fieldAsText(fields: Record<string, unknown>, fieldId: string | undefined): string | undefined {
     if (!fieldId) return undefined
     const value = fields[fieldId]
@@ -140,21 +134,15 @@ function fieldAsText(fields: Record<string, unknown>, fieldId: string | undefine
     return undefined
 }
 
-/**
- * Resolves a sponsor's answer to one of a select/checkbox field's allowed
- * options, by id if we were given one and otherwise by case-insensitive
- * value. Returns null when nothing matches: Jira rejects an unknown option
- * outright, which would fail the whole save, so an unmatched answer is
- * dropped rather than allowed to take the rest of the form down with it.
- */
+/** Resolves an answer to an allowed option, by id or case-insensitive value.
+ * Returns null if nothing matches — Jira rejects unknown options and would
+ * fail the whole save, so we drop the one answer instead. */
 function matchOption(allowedValues: unknown[] | undefined, answer: string): { id: string } | null {
     if (!answer || !Array.isArray(allowedValues)) return null
 
     for (const option of allowedValues) {
         if (!option || typeof option !== 'object') continue
         const { id, value } = option as { id?: unknown; value?: unknown }
-        // Jira ids come back as strings or numbers; anything else isn't an
-        // option we can reference.
         if (typeof id !== 'string' && typeof id !== 'number') continue
         const optionId = String(id)
 
@@ -173,12 +161,7 @@ function isRichText(fieldMeta: { schema?: { type?: string; custom?: string } }):
 
 const YEAR_LABEL = /^\d{4}$/
 
-/**
- * The years before `year`, as a quoted JQL list. Substituted into
- * `{pastYears}` so the sync's "not labelled with a past year" arm doesn't
- * need a hand-maintained list in fork config. Ten years back is plenty —
- * the label only has to outlive the archive step.
- */
+/** The ten years before `year` as a quoted JQL list, for `{pastYears}`. */
 export function pastYearsList(year: string): string {
     const current = Number(year)
     if (!Number.isFinite(current)) return '"0000"'
@@ -349,11 +332,8 @@ export function createJiraClient(args: {
             )
             if (entries.length === 0) return
 
-            // Jira rejects a plain string for a select or checkbox field, and
-            // the committee changes field types (the old "Sponsor Tasks"
-            // checkbox became single-selects). So ask this issue's edit
-            // metadata what each field actually is rather than assuming —
-            // one request, and it also tells us the valid option values.
+            // Ask what type each field is rather than assuming: Jira rejects
+            // a plain string for a select, and field types do change.
             const metaResponse = await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}/editmeta`)
             const meta = await parseJson<{
                 fields?: Record<
@@ -366,9 +346,8 @@ export function createJiraClient(args: {
             for (const [portalKey, fieldId] of entries) {
                 const raw = logistics[portalKey]
                 const fieldMeta = meta.fields?.[fieldId]
-                // A field missing from editmeta isn't on this issue's screen
-                // (or we lack permission) — writing it would 400 the whole
-                // request and lose every other answer with it.
+                // Not on the screen (or no permission) — writing it would 400
+                // the request and lose every other answer.
                 if (!fieldMeta) continue
 
                 const type = fieldMeta.schema?.type
