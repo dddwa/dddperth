@@ -3,7 +3,7 @@ import { filterByVisibility, logisticsSchema, logisticsVisibility, type Logistic
 
 describe('logisticsVisibility', () => {
     it('shows exhibition sections to tiers with a booth', () => {
-        for (const tier of ['platinum', 'gold', 'room']) {
+        for (const tier of ['platinum', 'gold', 'room', 'community']) {
             const visibility = logisticsVisibility(tier)
             expect(visibility.exhibition, tier).toBe(true)
             expect(visibility.screens, tier).toBe(true)
@@ -12,7 +12,7 @@ describe('logisticsVisibility', () => {
     })
 
     it('hides exhibition sections from tiers without one', () => {
-        for (const tier of ['coffeecart', 'digital', 'community', 'raffleonly']) {
+        for (const tier of ['coffeecart', 'digital', 'raffleonly']) {
             const visibility = logisticsVisibility(tier)
             expect(visibility.exhibition, tier).toBe(false)
             expect(visibility.screens, tier).toBe(false)
@@ -85,8 +85,14 @@ describe('filterByVisibility', () => {
     it('protects against a hand-crafted POST for a hidden section', () => {
         // The action re-derives visibility server-side, so submitting
         // exhibition fields as a Digital sponsor must not persist them.
-        const result = filterByVisibility({ bumpInSlot: 'Friday 1pm - 2pm' }, logisticsVisibility('community'))
+        const result = filterByVisibility({ bumpInSlot: 'Friday 1pm - 2pm' }, logisticsVisibility('digital'))
         expect(result.bumpInSlot).toBeUndefined()
+    })
+
+    it('keeps exhibition answers for a community sponsor — in-kind sponsors bump in too', () => {
+        const result = filterByVisibility(filled, logisticsVisibility('community'))
+        expect(result.bumpInSlot).toBe('Friday 1pm - 2pm')
+        expect(result.equipmentList).toBe('Banner')
     })
 })
 

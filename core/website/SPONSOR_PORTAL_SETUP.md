@@ -229,6 +229,42 @@ Each piece of sponsor data has one owner, which resolves every "who wins" questi
 |---|---|---|
 | Tier, contact emails, company name | Committee (Jira) | Jira → portal on sync; read-only for sponsors |
 | Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's |
+| Logistics (bump-in/out, equipment, screens, raffle, induction) | Sponsor (portal) | Portal → Jira on every save; read back for the exhibitor export |
+| The six `… Status` fields | Committee (Jira) | Committee-managed; the portal only advances Asset Creation Status on completion |
+
+**How to tell which is which:** Jira's status options say so. Every workstream whose default
+option reads "… Pending **(Sponsor)**" — assets, social media, exhibition, raffle, screens,
+induction — is data the *sponsor* supplies, so it belongs in the portal and flows portal → Jira.
+The status field tracking that workstream stays committee-owned.
+
+### Sponsor logistics (`/portal/logistics`)
+
+Collects the sponsor-supplied half of those workstreams: exhibitor contact, bump-in/out,
+equipment, loading dock, induction attendees, Optus screen orders, raffle prize and the social
+quote. Field ids live in `conference/config/sponsor-portal.ts` under `fields.logistics`; omit the
+block entirely and the page still works, it just pushes nothing.
+
+- **Tier-gated.** Exhibition, screens and induction show only for tiers in `BOOTH_TIERS`
+  (`app/lib/sponsors/logistics.ts`) — currently platinum, gold, room and community. Community is
+  included because those sponsorships are often in-kind (lighting, AV) and still bump equipment
+  in. Raffle and the social quote show for everyone, including Raffle Only. **An unmapped tier
+  sees the exhibition sections**: a sponsor shown an irrelevant section can skip it, but one who
+  never sees bump-in has no way to tell us when they're arriving.
+- Visibility is re-derived server-side in the action, so a tier change (or a hand-crafted POST)
+  can't write exhibition answers against a sponsor without a booth.
+- **Write-back converts per field type.** These Jira fields are a mix of plain text,
+  single-selects, multi-checkboxes and rich text, and Jira rejects a plain string for a select.
+  `pushLogistics` reads the issue's `editmeta` and converts each value accordingly, matching
+  select answers against the field's allowed options. Two consequences worth knowing:
+  - An answer that matches no option is **dropped rather than sent** — Jira rejects unknown
+    options outright, which would fail the whole save. Bump-in/out are free-text in the portal
+    but single-selects in Jira, so a sponsor typing "Friday afternoon" silently won't reach Jira.
+    Making those dropdowns fed by the allowed values is the obvious follow-up.
+  - A field missing from `editmeta` (not on the screen, or no permission) is skipped, since one
+    bad field 400s the request and takes every other answer with it.
+- Answers are stored as one `logistics_json` column rather than ~19 columns: the venue's form
+  changes shape between years, nothing queries an individual answer, and Jira stays the
+  committee's queryable copy.
 
 **On every portal save**, sponsor-owned values are pushed into the Jira fields (`Company
 Website`, plus the `quote` paragraph field and per-platform `socials` URL fields if configured

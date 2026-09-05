@@ -14,14 +14,17 @@ import { z } from 'zod'
 
 /**
  * Tiers with a physical exhibition space. Anything bump-in/out, equipment,
- * loading-dock or screen-related only applies to these — a Digital or
- * Community sponsor has no booth to load in.
+ * loading-dock or screen-related only applies to these.
+ *
+ * Community is included: those sponsorships are often in-kind (Elite Lighting
+ * supplies lighting, for instance), so they bump equipment in even though
+ * they aren't a paid booth tier.
  *
  * These are `YearSponsors` category keys (the mapped side of the manifest's
  * tierMap), not raw Jira tier values, so a rename in Jira doesn't silently
  * change who sees the form.
  */
-export const BOOTH_TIERS = ['platinum', 'gold', 'room'] as const
+export const BOOTH_TIERS = ['platinum', 'gold', 'room', 'community'] as const
 
 /** Which sections a sponsor sees, by mapped tier. */
 export interface LogisticsVisibility {
