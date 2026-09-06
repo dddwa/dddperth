@@ -1,5 +1,4 @@
 import { data, Form, redirect, useLoaderData } from 'react-router'
-import type { JSX } from 'react/jsx-runtime'
 import { z } from 'zod'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
@@ -48,31 +47,34 @@ export const bulkIssuesSchema = z.object({
     issues: z.array(issueSchema),
 })
 
-enum teamList {
-    'team-1' = 'Team 1',
-    'team-2' = 'Team 2',
-    'team-3' = 'Team 3',
-    'team-4' = 'Team 4',
-    'team-5' = 'Team 5',
-    'team-6' = 'Team 6',
-    'team-7' = 'Team 7',
-    'team-photographers' = 'Photographers',
-    'team-Sat-Bump-Out' = 'Bump Out',
+/** Jira "Volunteer Team" label -> display name. */
+const teamList: Record<string, string> = {
+    'team-1': 'Team 1',
+    'team-2': 'Team 2',
+    'team-3': 'Team 3',
+    'team-4': 'Team 4',
+    'team-5': 'Team 5',
+    'team-6': 'Team 6',
+    'team-7': 'Team 7',
+    'team-photographers': 'Photographers',
+    'team-Sat-Bump-Out': 'Bump Out',
 }
-enum locationList {
-    'loc-black-swan-room' = 'Black Swan Room',
-    'loc-champions-terrace' = 'Champions Terrace',
-    'loc-cygnet-room' = 'Cygnet Room',
-    'loc-help-desk' = 'Help Desk Level 3',
-    'loc-L2-Lobby' = 'Lobby Level 2',
-    'loc-L3-lobby' = 'Lobby Level 3',
-    'loc-platinum-terrace' = 'Platinum Terrace',
-    'loc-premiership-terrace' = 'Premiership Terrace',
-    'loc-registration-area' = 'Registration Area',
-    'loc-river-view-room-1' = 'River View Room 1',
-    'loc-river-view-room-2' = 'River View Room 2',
-    'loc-river-view-room-3' = 'River View Room 3',
-    'loc-sports-lounge' = 'Sports Lounge',
+
+/** Jira "Location" label -> display name. */
+const locationList: Record<string, string> = {
+    'loc-black-swan-room': 'Black Swan Room',
+    'loc-champions-terrace': 'Champions Terrace',
+    'loc-cygnet-room': 'Cygnet Room',
+    'loc-help-desk': 'Help Desk Level 3',
+    'loc-L2-Lobby': 'Lobby Level 2',
+    'loc-L3-lobby': 'Lobby Level 3',
+    'loc-platinum-terrace': 'Platinum Terrace',
+    'loc-premiership-terrace': 'Premiership Terrace',
+    'loc-registration-area': 'Registration Area',
+    'loc-river-view-room-1': 'River View Room 1',
+    'loc-river-view-room-2': 'River View Room 2',
+    'loc-river-view-room-3': 'River View Room 3',
+    'loc-sports-lounge': 'Sports Lounge',
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -120,7 +122,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     if (token === '' || email === '') {
         throw new Error('Error - Jira API credentials missing')
     }
-    const authorization = `Basic ${Buffer.from(`${email}:${token}`).toString('base64')}`
+    const authorization = `Basic ${btoa(`${email}:${token}`)}`
 
     // get ids of issues
     const fetchedIds = await fetch(
@@ -169,7 +171,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         "summary"
         ],
         "fieldsByKeys": false,
-        "issueIdsOrKeys": [${issueIds}],
+        "issueIdsOrKeys": [${issueIds.join(',')}],
         "properties": []
     }`
     // retrieve the issue details for all the ids in the issueIds list
@@ -200,23 +202,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         return timeA.localeCompare(timeB)
     })
 
-    // todo - fix the type errors
-    // create options list for the select using the nice names for the teams and locations in the enums
-    const options: JSX.Element[] = []
-    Object.keys(teamList).forEach((team) => {
-        options.push(
-            <option key={team} value={`team.${team}`}>
-                {teamList[team]}
-            </option>,
-        )
-    })
-    Object.keys(locationList).forEach((location) => {
-        options.push(
-            <option key={location} value={`location.${location}`}>
-                {locationList[location]}
-            </option>,
-        )
-    })
+    // Plain data, not JSX — the loader result is serialised to the client.
+    const options = [
+        ...Object.entries(teamList).map(([key, label]) => ({ value: `team.${key}`, label })),
+        ...Object.entries(locationList).map(([key, label]) => ({ value: `location.${key}`, label })),
+    ]
     return data({ issues, filter, options })
 }
 
@@ -241,7 +231,11 @@ export default function Index() {
                                     }}
                                 >
                                     <option value="">Filter by Team or Location</option>
-                                    {options}
+                                    {options.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
                                 </select>
                                 <Button type="submit">Apply Filter</Button>
                             </Flex>
@@ -301,23 +295,17 @@ export default function Index() {
                                             </styled.td>
                                             <styled.td key="location" p="2">
                                                 {issue.fields.customfield_10135
-                                                    ? issue.fields.customfield_10135.map((location) => {
-                                                          return `${
-                                                              locationList[location] === undefined
-                                                                  ? location
-                                                                  : locationList[location]
-                                                          }${issue.fields.customfield_10135?.length > 1 ? ', ' : ''}`
-                                                      })
+                                                    ? issue.fields.customfield_10135
+                                                          .map((location) => locationList[location] ?? location)
+                                                          .join(', ')
                                                     : ''}
                                             </styled.td>
                                             <styled.td key="team" p="2" maxW="20">
                                                 <Flex spaceX="1" overflowWrap="break-word" textWrap="wrap">
                                                     {issue.fields.customfield_10132
-                                                        ? issue.fields.customfield_10132.map((team) => {
-                                                              return `${
-                                                                  teamList[team] === undefined ? team : teamList[team]
-                                                              }${issue.fields.customfield_10132?.length > 1 ? ', ' : ''}`
-                                                          })
+                                                        ? issue.fields.customfield_10132
+                                                              .map((team) => teamList[team] ?? team)
+                                                              .join(', ')
                                                         : ''}
                                                 </Flex>
                                             </styled.td>
