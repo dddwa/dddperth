@@ -10,8 +10,9 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.join(__dirname, '..')
-const SPONSORS_DIR = path.join(ROOT_DIR, 'website', 'public', 'images', 'sponsors')
-const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'website', 'app', 'config', 'years')
+// Fork-owned content (see ARCHITECTURE.md) — not core/website.
+const SPONSORS_DIR = path.join(ROOT_DIR, 'conference', 'public', 'images', 'sponsors')
+const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'conference', 'config', 'years')
 
 const SPONSOR_TIERS = [
     'platinum',
@@ -28,7 +29,7 @@ const SPONSOR_TIERS = [
 
 // Helper function to read year config
 async function readYearConfig(year) {
-    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.server.ts`)
+    const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
     try {
         const content = await fs.readFile(configPath, 'utf-8')
         return content
@@ -44,7 +45,7 @@ async function findSponsorInPreviousYears(sponsorName, currentYear) {
     const files = await fs.readdir(YEARS_CONFIG_DIR)
 
     for (const file of files) {
-        const match = file.match(/^(\d{4})\.server\.ts$/)
+        const match = file.match(/^(\d{4})\.ts$/)
         if (match && match[1] < currentYear) {
             years.push(match[1])
         }
@@ -151,7 +152,7 @@ async function addSponsor(options) {
     console.log(chalk.blue('\nSponsor configuration to add:'))
     console.log(chalk.gray(sponsorObj))
 
-    console.log(chalk.yellow(`\nPlease manually add this to: website/app/config/years/${year}.server.ts`))
+    console.log(chalk.yellow(`\nPlease manually add this to: conference/config/years/${year}.ts`))
     console.log(chalk.yellow(`Under the "${tier}" array in the sponsors section\n`))
 
     // Ask if user wants to launch web UI
@@ -222,23 +223,31 @@ async function importSponsor(options) {
         console.log(chalk.yellow('\nPlease upload new logos using the web UI'))
     }
 
-    // Update the configuration
-    const updatedConfig = match[0].replace(new RegExp(`${from}-${sponsorNameSlug}`, 'g'), `${to}-${sponsorNameSlug}`)
+    // Update the configuration. The quote is dropped: last year's often
+    // names last year ("returning in 2025"), and a stale quote on the live
+    // site is worse than none. Sponsors resupply it via /portal.
+    const updatedConfig = match[0]
+        .replace(new RegExp(`${from}-${sponsorNameSlug}`, 'g'), `${to}-${sponsorNameSlug}`)
+        .replace(/,\s*quote:\s*(['"`])(?:\\.|(?!\1)[\s\S])*\1/, '')
 
     console.log(chalk.blue('\nUpdated sponsor configuration:'))
     console.log(chalk.gray(updatedConfig))
+    if (/quote:/.test(match[0])) {
+        console.log(chalk.yellow("Dropped last year's quote — ask the sponsor for a current one."))
+    }
 
     // Ask for tier
     const { tier } = await inquirer.prompt([
         {
-            type: 'list',
+            // inquirer v14 renamed 'list' to 'select'.
+            type: 'select',
             name: 'tier',
             message: 'Select sponsor tier for this year:',
             choices: SPONSOR_TIERS,
         },
     ])
 
-    console.log(chalk.yellow(`\nPlease add this to: website/app/config/years/${to}.server.ts`))
+    console.log(chalk.yellow(`\nPlease add this to: conference/config/years/${to}.ts`))
     console.log(chalk.yellow(`Under the "${tier}" array in the sponsors section\n`))
 }
 

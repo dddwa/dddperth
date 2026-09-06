@@ -124,8 +124,8 @@ Read `.claude/skills/new-conference/SKILL.md` and `ARCHITECTURE.md` before reorg
     - Dynamic segments use `$param` syntax
 
 2. **Conference Data**: Year-based configuration
-    - Config files in `website/app/config/years/`
-    - Main config in `conference-config.ts`
+    - Config files in `conference/config/years/<year>.ts` (fork-owned)
+    - Indexed by `conference/config/years-index.ts`
     - Each year has sponsors, dates, venues, etc.
 
 3. **Content Management**:

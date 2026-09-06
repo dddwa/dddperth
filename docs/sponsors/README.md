@@ -26,7 +26,7 @@ Automated conversion of logos to dark/light/black/white variants.
 # Add a new sponsor with interactive prompts
 node scripts/sponsor-manager.mjs add --year 2025 --name "CompanyName" --tier gold
 
-# Import sponsor from previous year
+# Import sponsor from previous year (copies logos, drops last year's quote)
 node scripts/sponsor-manager.mjs import --from 2024 --to 2025 --sponsor "Bankwest"
 
 # Launch web UI for visual management
@@ -119,7 +119,9 @@ Sponsors are categorized into tiers (defined in year config files):
 
 ## Year Configuration
 
-Sponsor data is stored in: `website/app/config/years/{year}.server.ts`
+Sponsor data is stored in: `conference/config/years/{year}.ts`, and logos in
+`conference/public/images/sponsors/`. Both are fork-owned (see `ARCHITECTURE.md`) —
+nothing sponsor-related lives under `core/`.
 
 ### Sponsor Object Structure
 
