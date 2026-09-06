@@ -121,9 +121,12 @@ When a new per-fork extension point is needed, the same pattern applies: add an 
 
 ## Skills
 
-Two skills automate the lifecycle:
+Three skills automate the lifecycle:
 
 - `/new-conference` (in `.claude/skills/new-conference/`) — scaffolds a fork repo with `core/` as a git subtree. Copies `conference-stub/` as the seed for the fork's `/conference/`, then runs a substitution pass. No separate templates folder.
-- `/pull-upstream` (in `.claude/skills/pull-upstream/`) — pulls latest ddd-core into a fork via `git subtree pull` and verifies the build.
+- `/core-pull` (in `.claude/skills/core-pull/`) — pulls latest ddd-core into a fork via `git subtree pull` and verifies the build.
+- `/core-push` (in `.claude/skills/core-push/`) — upstreams a change made in a fork's `core/` back into ddd-core as a curated PR, leaving fork-local divergence (visual baselines, `nx.json` deletion, fork-shape config) behind.
+
+`/core-push` and `/core-pull` are a pair: work is built in a fork, pushed up, then pulled down by the other forks.
 
 See each skill's `SKILL.md` for the full workflow.

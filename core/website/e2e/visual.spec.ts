@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { ROUTES, VISUAL_MASK_SELECTORS } from './routes'
+import { ROUTES, VISUAL_EXPECTED_DAYS_LEFT, VISUAL_MASK_SELECTORS } from './routes'
 
 /**
  * Visual regression suite. Runs only under the `visual-*` projects defined
@@ -18,7 +18,7 @@ import { ROUTES, VISUAL_MASK_SELECTORS } from './routes'
  * renders different content, sponsors, theme and copy, so it regenerates the
  * whole set against its own conference — `pnpm vr --update-snapshots`, in the
  * container, never on the host — and points `FIXTURE_BLOG_SLUG` in
- * `routes.ts` at one of its own posts. Expect a `/pull-upstream` that changes
+ * `routes.ts` at one of its own posts. Expect a `/core-pull` that changes
  * a template to need a regeneration on both sides.
  *
  * Two things narrow what each baseline covers, both configured per-route in
@@ -36,6 +36,35 @@ import { ROUTES, VISUAL_MASK_SELECTORS } from './routes'
 function snapshotName(name: string) {
     return name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
 }
+
+/**
+ * The date pin (`__devDateOverride`, set per-project in `playwright.config.ts`)
+ * has to be verified, not assumed: when the cookie doesn't apply, nothing
+ * fails — the app just falls back to the live clock and the baselines resume
+ * decaying by a pixel a day. That is exactly how the drift got in, so it is
+ * checked once here rather than trusted.
+ *
+ * `/e2e-content-fixture` is the probe because its "Important Dates" card
+ * renders a `DaysLeftPill` counting down to the conference date; at the pinned
+ * date that reads a fixed number, and at the live clock it reads today's.
+ *
+ * The card renders **one pill per configured date window**, not one overall:
+ * a fork with CFP, voting and agenda-published windows shows a countdown for
+ * each. So this asserts the conference-day countdown *is among* them rather
+ * than that it is the only one — the conference date is the single window
+ * every conference has, which is what makes `VISUAL_EXPECTED_DAYS_LEFT`
+ * meaningful across forks.
+ */
+test('the visual suite renders at the pinned date, not the live clock', async ({ page }) => {
+    await page.goto('/e2e-content-fixture')
+    await expect(
+        page.getByText(`${VISUAL_EXPECTED_DAYS_LEFT} days left`).first(),
+        'the __devDateOverride cookie did not apply — baselines would capture the live clock. ' +
+            'Check the cookie domain matches baseURL, and that its value needs no URL-encoding. ' +
+            `(Expected the conference-day countdown to read ${VISUAL_EXPECTED_DAYS_LEFT} days ` +
+            'at VISUAL_DATE — if the conference date moved, update both in e2e/routes.ts.)',
+    ).toBeVisible()
+})
 
 for (const route of ROUTES) {
     test(`${route.name} (${route.path}) matches its visual baseline`, async ({ page }) => {

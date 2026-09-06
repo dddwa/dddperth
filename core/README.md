@@ -25,15 +25,19 @@ Use the bundled Claude Code skill:
 
 It scaffolds a sibling repo, embeds ddd-core as a `git subtree` under `core/`, copies `conference-stub/` as the fork's starting `/conference/`, and runs a substitution pass for name, slug, domain, theme. See `.claude/skills/new-conference/SKILL.md` for the workflow.
 
-## Pulling upstream changes into a fork
+## Moving changes between a fork and core
 
 From inside a fork repo:
 
 ```
-/pull-upstream
+/core-pull    # bring latest ddd-core down into the fork's core/
+/core-push    # send a change made in the fork's core/ up to ddd-core
 ```
 
-See `.claude/skills/pull-upstream/SKILL.md`.
+A change is normally built in a fork (where it can be run against real content),
+pushed upstream with `/core-push`, then picked up by every other fork with
+`/core-pull`. See `.claude/skills/core-pull/SKILL.md` and
+`.claude/skills/core-push/SKILL.md`.
 
 ## Stack
 

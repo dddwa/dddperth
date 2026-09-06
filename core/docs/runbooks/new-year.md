@@ -80,7 +80,7 @@ SESSIONIZE_<YEAR>_SESSIONS: string
 SESSIONIZE_<YEAR>_ALL_SESSIONS?: string
 ```
 
-This is a `core/` edit. It will surface as a one-time conflict on the next `/pull-upstream`, which resolves by re-applying your fork's year name. (When `ddd-core` ever makes this declarative — e.g. driven by `manifest.currentConferenceYear` — the conflict goes away.)
+This is a `core/` edit. It will surface as a one-time conflict on the next `/core-pull`, which resolves by re-applying your fork's year name. (When `ddd-core` ever makes this declarative — e.g. driven by `manifest.currentConferenceYear` — the conflict goes away.)
 
 ### c. Update `docs/deploy.md` if you have one
 

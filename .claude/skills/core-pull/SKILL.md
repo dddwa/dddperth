@@ -1,15 +1,17 @@
 ---
-name: pull-upstream
-description: Pull latest changes from ddd-core into a fork via git subtree, surface any conflicts, and run a build/typecheck to flag breakage. Use when the user wants to update their conference fork with upstream core changes, sync with ddd-core, or run "pull-upstream". Only meaningful inside a fork repo (one with a /core/ git subtree). Conflicts should be rare because /conference/ is fork-owned and never edited upstream; this skill handles the workflow and the post-pull verification.
+name: core-pull
+description: Pull latest changes from ddd-core into a fork via git subtree, surface any conflicts, and run a build/typecheck to flag breakage. Use when the user wants to update their conference fork with upstream core changes, sync with ddd-core, or run "core-pull" / "pull-upstream". Only meaningful inside a fork repo (one with a /core/ git subtree). Conflicts should be rare because /conference/ is fork-owned and never edited upstream; this skill handles the workflow and the post-pull verification.
 ---
 
-# pull-upstream
+# core-pull
 
 Pulls latest `ddd-core` into a fork's `core/` subtree, then verifies the fork still builds. Conflicts should be rare in practice because the fork only owns `/conference/` (which upstream never touches) and core only owns `/core/` (which the fork never edits).
 
 ## When this fails to converge
 
-If conflicts touch files OUTSIDE `core/` (i.e. the fork has edited core directly), this skill stops and asks the user to fix that first. Editing core inside a fork is the slow-bleed antipattern that subtrees are designed to discourage; the right fix is to upstream the change to ddd-core, then re-pull.
+If conflicts touch files OUTSIDE `core/` (i.e. the fork has edited core directly), this skill stops and asks the user to fix that first. Editing core inside a fork is the slow-bleed antipattern that subtrees are designed to discourage; the right fix is to upstream the change with `/core-push`, then re-pull.
+
+This skill is one half of a pair: `/core-push` moves fork work *up* into ddd-core, `/core-pull` brings ddd-core *down* into a fork. The normal cycle is to build a change in the fork where it can be run and tested, push it upstream, then let every fork pull it.
 
 ## Workflow
 
@@ -84,7 +86,7 @@ For each conflict:
   > These files are inside `core/` but the fork has local edits to them.
   > That's the antipattern this layout is meant to prevent. The right fix is
   > to upstream the change to ddd-core (and remove the local edit), then
-  > re-run `/pull-upstream`. For now, you can resolve manually — typically
+  > re-run `/core-pull`. For now, you can resolve manually — typically
   > taking the upstream version and re-applying your edit in a follow-up
   > commit that you'll then upstream.
 
