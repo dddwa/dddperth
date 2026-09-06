@@ -97,8 +97,6 @@ export const conference2026: ConferenceYear = {
         releaseTitlePrefixes: ['General Attendee'],
     },
 
-    // Tiers mirror "Level of Sponsorship" in Jira (SPN). Logos carried forward
-    // from the sponsor's most recent year until they upload via /portal.
     sponsors: {
         platinum: [
             {
@@ -107,10 +105,6 @@ export const conference2026: ConferenceYear = {
                 logoUrlDarkMode: '/images/sponsors/2026-bankwest-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2026-bankwest-light.svg',
             },
-            // iCetana: first-time sponsor, awaiting a logo via /portal.
-            // Quote is already in Jira (Quotes for Socials):
-            // "As a Perth-born company, icetana AI is proud to be part of DDD
-            // Perth and connect with the local tech community…"
         ],
         gold: [
             {
@@ -163,8 +157,6 @@ export const conference2026: ConferenceYear = {
                 quote: 'The UWA Data Institute is proud to support DDD Perth as a Community Sponsor. We’re passionate about strengthening Western Australia’s data, technology and innovation ecosystem, and DDD Perth provides an important platform for the community to connect, share ideas and learn from one another.',
             },
         ],
-        // Elite Lighting (in-kind, community tier): first-time sponsor,
-        // awaiting a logo via /portal.
     },
 
     foodInfo: {
