@@ -97,7 +97,75 @@ export const conference2026: ConferenceYear = {
         releaseTitlePrefixes: ['General Attendee'],
     },
 
-    sponsors: {},
+    // Tiers mirror "Level of Sponsorship" in Jira (SPN). Logos carried forward
+    // from the sponsor's most recent year until they upload via /portal.
+    sponsors: {
+        platinum: [
+            {
+                name: 'Bankwest',
+                website: 'https://www.bankwest.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-bankwest-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-bankwest-light.svg',
+            },
+            // iCetana: first-time sponsor, awaiting a logo via /portal.
+            // Quote is already in Jira (Quotes for Socials):
+            // "As a Perth-born company, icetana AI is proud to be part of DDD
+            // Perth and connect with the local tech community…"
+        ],
+        gold: [
+            {
+                name: 'Mantel Group',
+                website: 'https://mantelgroup.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-mantel-group-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-mantel-group-light.svg',
+            },
+            {
+                name: 'Microsoft',
+                website: 'https://www.microsoft.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-microsoft-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-microsoft-light.svg',
+            },
+            {
+                name: 'Qoria',
+                website: 'https://qoria.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-qoria-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-qoria-light.svg',
+            },
+            {
+                name: 'Woodside',
+                website: 'https://www.woodside.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-woodside-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-woodside-light.svg',
+            },
+        ],
+        room: [
+            {
+                name: 'Interfuze',
+                website: 'https://interfuze.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-interfuze-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-interfuze-light.svg',
+                roomName: 'TBC',
+            },
+        ],
+        digital: [
+            {
+                name: 'Australian Finance Group',
+                website: 'https://www.afgonline.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-afg-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-afg-light.svg',
+                quote: 'AFG is on a digital transformation journey, delivering exceptional experiences and market-leading digital products for our customers. We’re proud to once again sponsor DDD Perth and support our home state and the vibrant Perth tech community. Our team will be there on the day, ready to connect, share, and learn.',
+            },
+            {
+                name: 'UWA Data Institute',
+                website: 'https://uwadatainstitute.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-uwa-data-institute-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-uwa-data-institute-light.png',
+                quote: 'The UWA Data Institute is proud to support DDD Perth as a Community Sponsor. We’re passionate about strengthening Western Australia’s data, technology and innovation ecosystem, and DDD Perth provides an important platform for the community to connect, share ideas and learn from one another.',
+            },
+        ],
+        // Elite Lighting (in-kind, community tier): first-time sponsor,
+        // awaiting a logo via /portal.
+    },
 
     foodInfo: {
         lunch: [],
