@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
+import { DateTime } from 'luxon'
 
 import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 
@@ -99,6 +99,12 @@ export const conference2026: ConferenceYear = {
 
     sponsors: {
         platinum: [
+            {
+                name: 'iCetana',
+                website: 'https://www.icentia.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-icetana-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-icetana-light.png',
+            },
             {
                 name: 'Bankwest',
                 website: 'https://www.bankwest.com.au/',
