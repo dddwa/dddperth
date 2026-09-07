@@ -101,7 +101,7 @@ export const conference2026: ConferenceYear = {
         platinum: [
             {
                 name: 'iCetana',
-                website: 'https://www.icetana.ai/',
+                website: 'https://www.icetana.ai',
                 logoUrlDarkMode: '/images/sponsors/2026-icetana-dark.png',
                 logoUrlLightMode: '/images/sponsors/2026-icetana-light.png',
             },
