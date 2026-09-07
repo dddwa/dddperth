@@ -21,6 +21,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     const heroSponsors = resolveSponsorsWithFallback(
         getConferenceState(context).conference.year,
         getConferenceState(context).conference.sponsors,
+        getConfig(context).useSponsorFixtures,
     )
 
     return data(

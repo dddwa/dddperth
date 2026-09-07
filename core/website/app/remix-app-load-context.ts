@@ -36,6 +36,12 @@ export interface CloudflareEnv {
      * `app/lib/sessionize-fixture-fetch.server.ts`.
      */
     SESSIONIZE_FIXTURE_URL?: string
+    /**
+     * Renders the sponsor strip from `e2e/fixtures/sponsors.ts` instead of the
+     * conference config, so the home page's baseline doesn't move every time a
+     * sponsor is signed. Set only by `e2e/start-dev-server.mjs`.
+     */
+    E2E_SPONSOR_FIXTURES?: string
     /** Resend API key. Optional locally — if absent, magic links are logged to the console. */
     RESEND_API_KEY?: string
     /** From-address for outgoing magic-link emails. */

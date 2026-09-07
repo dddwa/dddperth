@@ -83,6 +83,12 @@ writeFileSync(
         // Enables the __devDateOverride cookie. Scoped to this file so the
         // cookie does nothing during ordinary local dev.
         'E2E_DATE_OVERRIDE=true',
+        // Renders the sponsor strip from e2e/fixtures/sponsors.ts. The home
+        // page is the only visual baseline that renders the *current*
+        // conference, so without this its baselines move every time a sponsor
+        // is signed, re-tiered or re-logoed. Real sponsor content stays
+        // covered by the year-pinned /sponsors/<year> baseline.
+        'E2E_SPONSOR_FIXTURES=true',
         // Interception: the worker rewrites any sessionize.com request to the
         // fixtures (app/lib/sessionize-fixture-fetch.server.ts). Host-based, so
         // it covers every year — including 2021-2025, which hardcode their

@@ -13,6 +13,10 @@ const DEV_ONLY_MARKERS = [
     // it would let anyone who can set a Worker var silently reroute the site's
     // Sessionize traffic.
     { name: 'Sessionize fixture interceptor', value: 'SESSIONIZE_FIXTURE_URL', guard: 'workers/app.ts' },
+    // Sponsor fixtures replace the real sponsor strip. Shipping this would let
+    // anyone who can set a Worker var blank the site's sponsors — the people
+    // paying for the conference.
+    { name: 'sponsor fixtures', value: 'E2E_SPONSOR_FIXTURES', guard: 'cloudflare/build-config.server.ts' },
 ]
 
 /**
@@ -49,7 +53,7 @@ describe('dev-only seams are absent from production builds', () => {
         expect(
             files.length,
             'no built JS found. This test greps the production build, which is supplied by ' +
-                "nx (`test` dependsOn `build`) — run it via `nx test website`, not bare `vitest run`.",
+                'nx (`test` dependsOn `build`) — run it via `nx test website`, not bare `vitest run`.',
         ).toBeGreaterThan(0)
 
         const offenders = files.filter((file) => readFileSync(file, 'utf8').includes(value))

@@ -348,6 +348,27 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
   **When adding coverage for a template, pin it to a past year.** `/voting` is deliberately not covered for this
   reason — it has no year param, so it's inherently a moving target; `VotingMessage` and `TalkOptionCard` are
   covered by unit tests instead.
+- **The home page's sponsor strip renders fixtures, not real sponsors.** `/` is the one route with no year in
+  its path, so it renders the *current* conference — and its sponsor strip moved every time a sponsor was
+  signed, re-tiered or re-logoed, costing a 9-baseline regeneration for a routine content edit and making it
+  easy to sweep an unreviewed sponsor change into a regeneration done for something else. `E2E_SPONSOR_FIXTURES`
+  (set only by `e2e/start-dev-server.mjs`, read behind the same statically-folded production-mode guard as the
+  date override) swaps in `e2e/fixtures/sponsors.ts`. What `/` covers is then the strip's *layout* plus the
+  shared chrome; **real sponsor content stays covered by the year-pinned `/sponsors/2025`**, whose config is
+  frozen. Fixture logos are inline `data:` URIs, not files — anything under `public/` is copied verbatim into
+  the client build, so committed fixture logos would ship as dead assets (they did; verified in `build/client/`).
+  The deliberate trade: the strip is no longer verified against real logos, so a sponsor supplying a
+  grid-breaking logo won't be caught here. `/sponsors/<year>` and the portal's upload validation cover that.
+  In practice this trade costs less than it sounds, and that is worth knowing: **swapping the whole sponsor
+  strip does not by itself fail the `home` baseline.** `/` is a ~3200px full-page capture against a *ratio*
+  gate (`maxDiffPixelRatio: 0.02`), and the strip is a small enough share of that area to stay under it —
+  measured, by rendering fixtures against real-sponsor baselines and watching all 9 pass. So `/` was never
+  really policing sponsor content; it polices layout and chrome. Anything that must genuinely be caught needs
+  either its own scoped route baseline or an explicit assertion, which is why the fixture seam has one
+  (`the home page renders fixture sponsors...`) rather than trusting the baseline to notice.
+  It also costs the strip's *fallback* state ("Our {year} platinum and gold sponsors" + a "Join them" CTA, shown
+  in the months between announcing a conference and signing its first sponsor) its visual coverage, since the
+  fixtures always resolve as `current`. `app/lib/sponsor-fixtures.test.ts` covers that resolution instead.
 - **One route per template.** This suite is a regression net, not an exhaustive crawl — a second year of the same
   template costs a scan x2 themes plus 9 visual baselines and catches nothing new.
 - **Themes**: the suite runs under two Playwright projects — `chromium` (dark, the site default) and
