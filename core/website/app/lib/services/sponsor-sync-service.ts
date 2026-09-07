@@ -1,4 +1,4 @@
-import type { ExhibitorLogistics } from '../sponsors/jira-client.server'
+import type { ExhibitorLogistics, SponsorDeliverables } from '../sponsors/jira-client.server'
 import type { SponsorSyncRun } from './sponsors-store'
 
 export type SyncOutcome =
@@ -34,6 +34,26 @@ export interface SponsorSyncService {
      * throws and never blocks the sponsor's save.
      */
     pushSponsorOwnedData(issueKey: string, change: 'details' | 'logo'): Promise<void>
+
+    /**
+     * Advances the other workstream status fields (social, exhibition,
+     * raffle, Optus induction) to match what the sponsor has now supplied.
+     * Same ownership rule as the assets flip: only ever moves a status off a
+     * "pending (sponsor)" value, so committee progress is never undone.
+     *
+     * Called after every profile and logistics save. Idempotent and
+     * best-effort — never throws and never blocks the sponsor's save.
+     */
+    flipWorkstreamStatuses(issueKey: string): Promise<void>
+
+    /**
+     * Committee-owned deliverables for one sponsor (ticket allocation and
+     * claim link, assets owed, upload folder), read live from Jira for the
+     * portal dashboard. Returns an empty object when the portal isn't
+     * configured or Jira is unreachable — these sections are informational,
+     * so the dashboard hides them rather than failing to load.
+     */
+    getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
 
     /** Retries every owed write-back (sponsors with assets_task_pending). */
     retryPendingWritebacks(): Promise<void>

@@ -296,6 +296,33 @@ export interface SponsorPortalJiraConfig {
          */
         assetsStatus: string
         /**
+         * The other single-select workstream statuses the portal advances as
+         * the sponsor completes the matching part of the portal. Each follows
+         * the same ownership rule as `assetsStatus` (see `statusFlips`): the
+         * portal only moves it off a "pending (sponsor)" value, so committee
+         * progress is never dragged backwards. Omit any field the fork's Jira
+         * doesn't have and that flip is skipped.
+         */
+        socialStatus?: string
+        exhibitionStatus?: string
+        raffleStatus?: string
+        inductionStatus?: string
+        /**
+         * Read-only fields backing the dashboard's tickets and assets
+         * sections. The committee fills these in; the portal only displays
+         * them, so a missing field just hides that section.
+         */
+        freeTicketCount?: string
+        ticketClaimUrl?: string
+        /** Multi-checkbox of the assets this sponsor owes ("Assets Required"). */
+        assetsRequired?: string
+        /**
+         * URL of a per-sponsor upload folder (SharePoint) the committee
+         * creates and pastes in. Surfaced as an "upload your assets" link;
+         * hidden until the committee fills it in.
+         */
+        assetUploadUrl?: string
+        /**
          * Paragraph field the sponsor's quote/blurb is pushed into on every
          * portal save (sponsor-owned — the portal's value overrides Jira's).
          * Omit if the field doesn't exist; the push is skipped.
@@ -364,6 +391,28 @@ export interface SponsorPortalJiraConfig {
      */
     assetsPendingOptionIds: string[]
     /**
+     * The remaining workstream status flips, each triggered by the sponsor
+     * finishing the matching part of the portal:
+     *
+     *   - `social`     — logo uploaded AND a social quote supplied
+     *   - `exhibition` — every required exhibition logistics answer given
+     *   - `raffle`     — a raffle prize described
+     *   - `induction`  — resolves to `requiredOptionId` when the sponsor names
+     *                    anyone needing loading dock access, and
+     *                    `notRequiredOptionId` when they've answered the
+     *                    logistics form but named nobody
+     *
+     * `pendingOptionIds` carries the same meaning as `assetsPendingOptionIds`:
+     * the only values the portal is allowed to move off. Omit a block (or its
+     * matching field id) to disable that flip.
+     */
+    statusFlips?: {
+        social?: StatusFlipConfig
+        exhibition?: StatusFlipConfig
+        raffle?: StatusFlipConfig
+        induction?: InductionStatusFlipConfig
+    }
+    /**
      * Year label maintenance. The sync selects issues labelled with the
      * current year *or* carrying no year label at all, so a sponsor issue
      * created without one still syncs; `writeYearLabel` then stamps the
@@ -390,6 +439,31 @@ export interface SponsorPortalJiraConfig {
  * records sync from Jira. Omit for forks without a sponsor portal — /portal
  * returns 404 and the sync never runs.
  */
+/**
+ * One portal-driven status flip: the value to write once the sponsor has
+ * finished that workstream, and the values the portal may overwrite.
+ */
+export interface StatusFlipConfig {
+    /** Option id set when the sponsor completes this workstream. */
+    targetOptionId: string
+    /** Option ids meaning "still waiting on the sponsor" — the only values
+     * the portal will move off. */
+    pendingOptionIds: string[]
+}
+
+/**
+ * The induction flip is the one that isn't a simple "done → advance": the
+ * sponsor's own answer decides *which* value is correct, so it carries two
+ * targets instead of one.
+ */
+export interface InductionStatusFlipConfig {
+    /** Set when the sponsor names people needing loading dock access. */
+    requiredOptionId: string
+    /** Set when the sponsor has answered but named nobody. */
+    notRequiredOptionId: string
+    pendingOptionIds: string[]
+}
+
 export interface SponsorPortalConfig {
     /** Conference year the portal is collecting assets for, e.g. "2026". */
     year: string

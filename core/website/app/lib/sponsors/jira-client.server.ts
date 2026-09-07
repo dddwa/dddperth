@@ -10,10 +10,10 @@ import { parseContactEmails } from './sync-plan'
 export interface JiraClient {
     /** This year's sponsor issues, parsed via the manifest's field mapping. */
     searchSponsorIssues(): Promise<SyncSourceSponsor[]>
-    /** Current option id on the issue's assets status single-select, if set. */
-    getAssetsStatusOptionId(issueKey: string): Promise<string | undefined>
-    /** Sets the assets status single-select to one option. */
-    setAssetsStatusOptionId(issueKey: string, optionId: string): Promise<void>
+    /** Current option id on any single-select field on the issue, if set. */
+    getStatusOptionId(issueKey: string, fieldId: string): Promise<string | undefined>
+    /** Sets a single-select field to one option. */
+    setStatusOptionId(issueKey: string, fieldId: string, optionId: string): Promise<void>
     /** Adds a label without disturbing the issue's existing labels. */
     addLabel(issueKey: string, label: string): Promise<void>
     /**
@@ -33,6 +33,25 @@ export interface JiraClient {
     addAttachment(issueKey: string, filename: string, content: ArrayBuffer, contentType: string): Promise<void>
     /** Sets issue fields verbatim (used to push sponsor-owned values). */
     updateIssueFields(issueKey: string, fields: Record<string, unknown>): Promise<void>
+    /**
+     * The committee-owned deliverables the portal only displays: how many
+     * tickets this sponsor gets, where to claim them, which assets they owe
+     * and where to upload them. Every field is optional in both the manifest
+     * and Jira, so any of these may be undefined.
+     */
+    getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
+}
+
+/** Read-only, committee-filled values surfaced on the portal dashboard. */
+export interface SponsorDeliverables {
+    /** Number of complimentary tickets, as text (Jira stores it as a number). */
+    freeTicketCount?: string
+    /** Tito link the sponsor sends to each person claiming a ticket. */
+    ticketClaimUrl?: string
+    /** The assets this sponsor owes, e.g. "Logo for screens, Video for Mega Screen". */
+    assetsRequired?: string
+    /** Per-sponsor upload folder (SharePoint) the committee creates. */
+    assetUploadUrl?: string
 }
 
 /**
@@ -266,19 +285,42 @@ export function createJiraClient(args: {
             return issues
         },
 
-        async getAssetsStatusOptionId(issueKey) {
+        async getStatusOptionId(issueKey, fieldId) {
             const response = await jiraFetch(
-                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fields.assetsStatus}`,
+                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fieldId}`,
             )
             const body = await parseJson<{ fields?: Record<string, unknown> }>(response)
-            return fieldOptionId(body.fields ?? {}, fields.assetsStatus)
+            return fieldOptionId(body.fields ?? {}, fieldId)
         },
 
-        async setAssetsStatusOptionId(issueKey, optionId) {
+        async getSponsorDeliverables(issueKey) {
+            const wanted = [
+                fields.freeTicketCount,
+                fields.ticketClaimUrl,
+                fields.assetsRequired,
+                fields.assetUploadUrl,
+            ].filter((id): id is string => Boolean(id))
+            if (wanted.length === 0) return {}
+
+            const response = await jiraFetch(
+                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${wanted.join(',')}`,
+            )
+            const body = await parseJson<{ fields?: Record<string, unknown> }>(response)
+            const issueFields = body.fields ?? {}
+
+            return {
+                freeTicketCount: fieldAsText(issueFields, fields.freeTicketCount),
+                ticketClaimUrl: fieldAsText(issueFields, fields.ticketClaimUrl),
+                assetsRequired: fieldAsText(issueFields, fields.assetsRequired),
+                assetUploadUrl: fieldAsText(issueFields, fields.assetUploadUrl),
+            }
+        },
+
+        async setStatusOptionId(issueKey, fieldId, optionId) {
             await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    fields: { [fields.assetsStatus]: { id: optionId } },
+                    fields: { [fieldId]: { id: optionId } },
                 }),
             })
         },
