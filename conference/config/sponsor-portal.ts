@@ -18,6 +18,11 @@ import type { SponsorPortalConfig } from '@ddd/conference-config'
  *     underway" — the website logo/blurb is only part of what a sponsor
  *     owes (screens, print, video), so this deliberately isn't the
  *     "All Assets received" value.
+ *   - Each workstream has its own status field, and every one of them starts
+ *     on a "… Pending (Sponsor)" default. The portal advances each as the
+ *     sponsor completes the matching part of the form (see `statusFlips`),
+ *     and only ever moves off that pending value — once the committee has
+ *     advanced a status, the portal leaves it alone.
  *   - Test issues live on the same board with a `portal-test` label. This
  *     JQL excludes them; test environments override the whole query via the
  *     JIRA_SYNC_JQL var to select ONLY portal-test issues (see
@@ -49,6 +54,16 @@ export const sponsorPortal: SponsorPortalConfig = {
             additionalContactEmails: 'customfield_10147',
             tier: 'customfield_10086',
             assetsStatus: 'customfield_10205',
+            // The other workstream statuses the portal advances. Option ids
+            // for each live in `statusFlips` below.
+            socialStatus: 'customfield_10201',
+            exhibitionStatus: 'customfield_10202',
+            raffleStatus: 'customfield_10204',
+            inductionStatus: 'customfield_10199',
+            // Read-only, committee-filled: shown on the portal dashboard.
+            freeTicketCount: 'customfield_10092',
+            ticketClaimUrl: 'customfield_10093',
+            assetsRequired: 'customfield_10203',
             quote: 'customfield_10140',
             socials: {
                 linkedin: 'customfield_10141',
@@ -90,6 +105,24 @@ export const sponsorPortal: SponsorPortalConfig = {
         // "Asset Information Pending (Sponsor)" — the default. Anything past
         // this is the committee's own progress and the portal won't touch it.
         assetsPendingOptionIds: ['10201'],
+        // Each of these moves only off its own "… Pending (Sponsor)" default,
+        // so anything the committee has already advanced is left alone.
+        statusFlips: {
+            // "Quotes and Logos Pending (Sponsor)" -> "Posts to be created (Media)".
+            social: { targetOptionId: '10184', pendingOptionIds: ['10183'] },
+            // "Exhibition Information Pending (Sponsor)" -> "Space Assignment Pending (Sponsorship)".
+            exhibition: { targetOptionId: '10188', pendingOptionIds: ['10187'] },
+            // "Raffle Prize Information Pending (Sponsor)" -> "Raffle Prize Confirmed (Sponsorship)".
+            raffle: { targetOptionId: '10199', pendingOptionIds: ['10198'] },
+            // "Induction Information Pending (Sponsor)" -> "Induction Required -
+            // to be triggered (Logistics)" when they name loading dock
+            // attendees, or "Induction Not Required (Sponsor)" when they don't.
+            induction: {
+                requiredOptionId: '10178',
+                notRequiredOptionId: '10177',
+                pendingOptionIds: ['10190'],
+            },
+        },
         writeYearLabel: true,
         tierMap: {
             Platinum: 'platinum',

@@ -44,16 +44,28 @@ export function createStubJiraClient(): JiraClient {
             ]
         },
 
-        async getAssetsStatusOptionId(issueKey) {
+        async getStatusOptionId(issueKey, fieldId) {
             // Undefined = status unset, which counts as "pending" — so the
             // local flow takes the branch where the portal moves it, without
             // core needing to know any fork's option ids.
-            console.log(`[jira-stub] getAssetsStatusOptionId(${issueKey}) -> undefined`)
+            console.log(`[jira-stub] getStatusOptionId(${issueKey}, ${fieldId}) -> undefined`)
             return undefined
         },
 
-        async setAssetsStatusOptionId(issueKey, optionId) {
-            console.log(`[jira-stub] setAssetsStatusOptionId(${issueKey}, ${optionId}) — no-op`)
+        async setStatusOptionId(issueKey, fieldId, optionId) {
+            console.log(`[jira-stub] setStatusOptionId(${issueKey}, ${fieldId}, ${optionId}) — no-op`)
+        },
+
+        async getSponsorDeliverables(issueKey) {
+            // Enough for the dashboard's tickets and assets sections to render
+            // locally without a Jira connection.
+            console.log(`[jira-stub] getSponsorDeliverables(${issueKey})`)
+            return {
+                freeTicketCount: '4',
+                ticketClaimUrl: 'https://ti.to/example/stub-sponsor-tickets',
+                assetsRequired: 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)',
+                assetUploadUrl: 'https://example.sharepoint.com/stub-sponsor-uploads',
+            }
         },
 
         async pushLogistics(issueKey, logistics) {

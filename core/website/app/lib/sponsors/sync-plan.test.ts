@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
     computeSyncPlan,
     parseContactEmails,
-    planAssetsStatusWrite,
+    planStatusWrite,
     type SyncSourceSponsor,
 } from './sync-plan'
 
@@ -169,11 +169,11 @@ describe('computeSyncPlan', () => {
     })
 })
 
-describe('planAssetsStatusWrite', () => {
+describe('planStatusWrite', () => {
     const completeOptionId = '10202'
     const pendingOptionIds = ['10201']
     const plan = (current: string | undefined) =>
-        planAssetsStatusWrite({ current, completeOptionId, pendingOptionIds })
+        planStatusWrite({ current, targetOptionId: completeOptionId, pendingOptionIds })
 
     it('sets the status when the sponsor is still pending', () => {
         expect(plan('10201')).toBe('set')

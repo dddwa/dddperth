@@ -98,7 +98,10 @@ pnpm start                          # http://localhost:3800
 2. Log out, request a magic link for `sponsor-acme@example.com`, and you're in that sponsor's
    `/portal` workspace.
 3. Upload a logo and fill in details. On completion the stub "write-back" logs
-   `[jira-stub] setSponsorTaskOptionIds(SPN-101, [10078])` to the console instead of touching Jira.
+   `[jira-stub] setStatusOptionId(SPN-101, customfield_10205, 10202)` to the console instead of
+   touching Jira. Saving the logistics form logs the same line for the social, exhibition, raffle
+   and induction status fields as each becomes complete — see `statusFlips` in
+   `conference/config/sponsor-portal.ts`.
 
 R2 is simulated locally by miniflare (objects under `core/website/.wrangler/state`) — no real
 bucket needed.

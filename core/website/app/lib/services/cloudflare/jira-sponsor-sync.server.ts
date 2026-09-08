@@ -2,7 +2,9 @@ import { conferenceManifest } from '@conference/manifest'
 import type { JiraClient } from '../../sponsors/jira-client.server'
 import { createJiraClient, textToAdf } from '../../sponsors/jira-client.server'
 import { createStubJiraClient } from '../../sponsors/stub-jira-client.server'
-import { computeSyncPlan, planAssetsStatusWrite } from '../../sponsors/sync-plan'
+import { logisticsVisibility } from '../../sponsors/logistics'
+import { statusFlipReadiness } from '../../sponsors/progress'
+import { computeSyncPlan, planStatusWrite } from '../../sponsors/sync-plan'
 import { dueExpiryReminder } from '../../sponsors/token-expiry'
 import type { AppConfig } from '../app-config'
 import type { AssetStorage } from '../asset-storage'
@@ -196,15 +198,16 @@ export function createJiraSponsorSyncService(args: {
 
             try {
                 const completeOptionId = portalConfig.jira.assetsCompleteOptionId
-                const currentOptionId = await client.getAssetsStatusOptionId(issueKey)
-                const action = planAssetsStatusWrite({
+                const assetsField = portalConfig.jira.fields.assetsStatus
+                const currentOptionId = await client.getStatusOptionId(issueKey, assetsField)
+                const action = planStatusWrite({
                     current: currentOptionId,
-                    completeOptionId,
+                    targetOptionId: completeOptionId,
                     pendingOptionIds: portalConfig.jira.assetsPendingOptionIds,
                 })
 
                 if (action === 'set') {
-                    await client.setAssetsStatusOptionId(issueKey, completeOptionId)
+                    await client.setStatusOptionId(issueKey, assetsField, completeOptionId)
                 } else if (action === 'committee-advanced') {
                     console.log(
                         `Sponsor write-back: assets status on ${issueKey} already advanced by the committee ` +
@@ -264,6 +267,111 @@ export function createJiraSponsorSyncService(args: {
                     error instanceof Error ? error.message : error,
                 )
                 await sponsors.markAssetsTaskPending(issueKey).catch(() => {})
+            }
+        },
+
+        async flipWorkstreamStatuses(issueKey) {
+            if (!portalConfig || !client || !writebackEnabled) return
+
+            const flips = portalConfig.jira.statusFlips
+            const fields = portalConfig.jira.fields
+            if (!flips) return
+
+            try {
+                const sponsor = await sponsors.getSponsor(issueKey)
+                const profile = await sponsors.getProfile(issueKey)
+                const visibility = logisticsVisibility(portalConfig.jira.tierMap[sponsor?.tier ?? ''])
+                const readiness = statusFlipReadiness({ profile, visibility })
+
+                // Each entry: the Jira field, the option to write, and the
+                // values the portal is allowed to overwrite. `undefined`
+                // target = not ready yet, so nothing is written.
+                const writes: Array<{
+                    name: string
+                    fieldId: string | undefined
+                    targetOptionId: string | undefined
+                    pendingOptionIds: string[]
+                }> = [
+                    {
+                        name: 'social',
+                        fieldId: fields.socialStatus,
+                        targetOptionId: readiness.social ? flips.social?.targetOptionId : undefined,
+                        pendingOptionIds: flips.social?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'exhibition',
+                        fieldId: fields.exhibitionStatus,
+                        targetOptionId: readiness.exhibition ? flips.exhibition?.targetOptionId : undefined,
+                        pendingOptionIds: flips.exhibition?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'raffle',
+                        fieldId: fields.raffleStatus,
+                        targetOptionId: readiness.raffle ? flips.raffle?.targetOptionId : undefined,
+                        pendingOptionIds: flips.raffle?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'induction',
+                        fieldId: fields.inductionStatus,
+                        targetOptionId:
+                            readiness.induction === 'required'
+                                ? flips.induction?.requiredOptionId
+                                : readiness.induction === 'not-required'
+                                  ? flips.induction?.notRequiredOptionId
+                                  : undefined,
+                        pendingOptionIds: flips.induction?.pendingOptionIds ?? [],
+                    },
+                ]
+
+                for (const write of writes) {
+                    if (!write.fieldId || !write.targetOptionId) continue
+
+                    // Each flip is independent: one failing field (or one the
+                    // committee has advanced) must not stop the others.
+                    try {
+                        const current = await client.getStatusOptionId(issueKey, write.fieldId)
+                        const action = planStatusWrite({
+                            current,
+                            targetOptionId: write.targetOptionId,
+                            pendingOptionIds: write.pendingOptionIds,
+                        })
+
+                        if (action === 'set') {
+                            await client.setStatusOptionId(issueKey, write.fieldId, write.targetOptionId)
+                            console.log(`Sponsor write-back: moved ${write.name} status on ${issueKey}`)
+                        } else if (action === 'committee-advanced') {
+                            console.log(
+                                `Sponsor write-back: ${write.name} status on ${issueKey} already advanced by the ` +
+                                    `committee (option ${current}) — leaving it alone`,
+                            )
+                        }
+                    } catch (error) {
+                        console.error(
+                            `Sponsor write-back: ${write.name} status on ${issueKey} failed:`,
+                            error instanceof Error ? error.message : error,
+                        )
+                    }
+                }
+            } catch (error) {
+                console.error(
+                    `Sponsor write-back: workstream statuses on ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
+            }
+        },
+
+        async getSponsorDeliverables(issueKey) {
+            if (!portalConfig || !client) return {}
+            try {
+                return await client.getSponsorDeliverables(issueKey)
+            } catch (error) {
+                // Informational only — the dashboard hides these sections
+                // rather than failing to load because Jira is down.
+                console.error(
+                    `Sponsor deliverables lookup for ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
+                return {}
             }
         },
 

@@ -2,6 +2,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { FieldError, fieldLabelClass, inputClass, PrimaryButton, textareaClass } from '~/components/portal-form'
+import { PortalSavedBanner } from '~/components/portal-saved-banner'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import {
@@ -16,6 +17,7 @@ import {
     SCREEN_OPTIONS,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
+import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/portal.logistics'
@@ -29,12 +31,23 @@ function mappedTier(rawTier: string): string | undefined {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const { sponsor } = await requireSponsorContact(request, context)
-    const profile = await getServices(context).sponsors.getProfile(sponsor.issueKey)
+    const services = getServices(context)
+    const profile = await services.sponsors.getProfile(sponsor.issueKey)
+    const meetTheExpertsRegistration = await services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey)
+
+    const visibility = logisticsVisibility(mappedTier(sponsor.tier))
+    const sections = sponsorProgress({
+        profile,
+        visibility,
+        meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
+        meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+    })
 
     return {
         tier: sponsor.tier,
-        visibility: logisticsVisibility(mappedTier(sponsor.tier)),
+        visibility,
         logistics: profile?.logistics ?? {},
+        nextSection: nextIncompleteSection(sections) ?? null,
     }
 }
 
@@ -71,8 +84,24 @@ export async function action({ request, context }: Route.ActionArgs) {
     // Sponsor-owned, so the portal's values win in Jira. Best-effort: the
     // sponsor's save must not fail because Jira is down.
     await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics)
+    // Logistics answers are what drive the exhibition, raffle and induction
+    // statuses (and the social one, via the social quote).
+    await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
 
-    return data({ saved: true })
+    // Recomputed after the save — the loader's value predates it, so the
+    // banner would point at the page the sponsor is already on.
+    const savedProfile = await services.sponsors.getProfile(sponsor.issueKey)
+    const meetTheExpertsRegistration = await services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey)
+    const next = nextIncompleteSection(
+        sponsorProgress({
+            profile: savedProfile,
+            visibility: logisticsVisibility(mappedTier(sponsor.tier)),
+            meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
+            meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+        }),
+    )
+
+    return data({ saved: true, nextSection: next ? { label: next.label, href: next.href } : null })
 }
 
 function Text({
@@ -252,13 +281,14 @@ function SectionHeading({ children, hint }: { children: string; hint?: string })
 }
 
 export default function PortalLogistics() {
-    const { visibility, logistics } = useLoaderData<typeof loader>()
+    const { visibility, logistics, nextSection } = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
     const navigation = useNavigation()
     const isSubmitting = navigation.state === 'submitting'
 
     const errors = actionData && 'fieldErrors' in actionData ? actionData.fieldErrors : {}
     const saved = actionData && 'saved' in actionData
+    const savedNextSection = actionData && 'nextSection' in actionData ? actionData.nextSection : nextSection
     const value = (key: keyof LogisticsFields) => logistics[key] ?? ''
 
     return (
@@ -272,11 +302,7 @@ export default function PortalLogistics() {
                     save as much as you know now and come back to fill in the rest.
                 </styled.p>
 
-                {saved && (
-                    <Box mb="4" p="3" bg="status.success.bg" borderRadius="md" fontSize="sm" color="status.success.fg">
-                        Saved — thank you!
-                    </Box>
-                )}
+                {saved && <PortalSavedBanner message="Saved — thank you!" next={savedNextSection} />}
 
                 <Form method="post">
                     {visibility.exhibition && (
