@@ -178,6 +178,40 @@ function isRichText(fieldMeta: { schema?: { type?: string; custom?: string } }):
     return typeof fieldMeta.schema?.custom === 'string' && fieldMeta.schema.custom.includes('textarea')
 }
 
+interface JiraEditFieldMeta {
+    schema?: { type?: string; items?: string; custom?: string }
+    allowedValues?: unknown[]
+}
+
+/** Converts one portal answer to Jira's edit shape. Unknown option values are
+ * skipped rather than cleared: they may be a legacy option no longer present
+ * in editmeta, and an unrelated portal save must preserve Jira's current
+ * value. Explicit blanks still clear the field. */
+export function planJiraFieldValue(
+    fieldMeta: JiraEditFieldMeta,
+    raw: string | undefined,
+): { action: 'set'; value: unknown } | { action: 'skip' } {
+    const type = fieldMeta.schema?.type
+    const value = raw?.trim() ?? ''
+
+    if (type === 'option') {
+        if (!value) return { action: 'set', value: null }
+        const option = matchOption(fieldMeta.allowedValues, value)
+        return option ? { action: 'set', value: option } : { action: 'skip' }
+    }
+    if (type === 'array') {
+        if (!value) return { action: 'set', value: [] }
+        const answers = value.split(',').map((part) => part.trim())
+        const options = answers.map((answer) => matchOption(fieldMeta.allowedValues, answer))
+        if (options.some((option) => option === null)) return { action: 'skip' }
+        return { action: 'set', value: options }
+    }
+    if (type === 'string' && isRichText(fieldMeta)) {
+        return { action: 'set', value: value ? textToAdf(value) : null }
+    }
+    return { action: 'set', value: value || null }
+}
+
 const YEAR_LABEL = /^\d{4}$/
 
 /** The ten years before `year` as a quoted JQL list, for `{pastYears}`. */
@@ -286,9 +320,7 @@ export function createJiraClient(args: {
         },
 
         async getStatusOptionId(issueKey, fieldId) {
-            const response = await jiraFetch(
-                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fieldId}`,
-            )
+            const response = await jiraFetch(`/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fieldId}`)
             const body = await parseJson<{ fields?: Record<string, unknown> }>(response)
             return fieldOptionId(body.fields ?? {}, fieldId)
         },
@@ -392,23 +424,8 @@ export function createJiraClient(args: {
                 // the request and lose every other answer.
                 if (!fieldMeta) continue
 
-                const type = fieldMeta.schema?.type
-                const value = raw?.trim() ?? ''
-
-                if (type === 'option') {
-                    payload[fieldId] = value ? matchOption(fieldMeta.allowedValues, value) : null
-                } else if (type === 'array') {
-                    payload[fieldId] = value
-                        ? value
-                              .split(',')
-                              .map((part) => matchOption(fieldMeta.allowedValues, part.trim()))
-                              .filter((option) => option !== null)
-                        : []
-                } else if (type === 'string' && isRichText(fieldMeta)) {
-                    payload[fieldId] = value ? textToAdf(value) : null
-                } else {
-                    payload[fieldId] = value || null
-                }
+                const planned = planJiraFieldValue(fieldMeta, raw)
+                if (planned.action === 'set') payload[fieldId] = planned.value
             }
 
             if (Object.keys(payload).length > 0) {
@@ -466,7 +483,9 @@ export function createJiraClient(args: {
             })
             if (!response.ok) {
                 const body = await response.text().catch(() => '')
-                throw new Error(`Jira attachment upload to ${issueKey} failed: ${response.status} ${body.slice(0, 300)}`)
+                throw new Error(
+                    `Jira attachment upload to ${issueKey} failed: ${response.status} ${body.slice(0, 300)}`,
+                )
             }
         },
     }

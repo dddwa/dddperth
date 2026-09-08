@@ -15,6 +15,7 @@ import {
     PARKING_OPTIONS,
     RAFFLE_LOCATIONS,
     SCREEN_OPTIONS,
+    optionsIncludingStored,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
@@ -162,7 +163,7 @@ function Select({
             )}
             <select id={name} name={name} defaultValue={value} className={inputClass}>
                 <option value="">— not sure yet —</option>
-                {options.map((option) => (
+                {optionsIncludingStored(options, [value]).map((option) => (
                     <option key={option} value={option}>
                         {option}
                     </option>
@@ -210,7 +211,7 @@ function CheckboxGroup({
                     </styled.p>
                 )}
                 <Box display="grid" gap="1.5" mt="2">
-                    {options.map((option) => (
+                    {optionsIncludingStored(options, [...selected]).map((option) => (
                         <styled.label key={option} display="flex" gap="2" alignItems="center" fontSize="sm">
                             <input
                                 type="checkbox"
@@ -298,8 +299,8 @@ export default function PortalLogistics() {
                     Event logistics
                 </styled.h2>
                 <styled.p fontSize="sm" color="admin.600" mb="4">
-                    Everything the venue and our logistics team need from you. Nothing here is required up front —
-                    save as much as you know now and come back to fill in the rest.
+                    Everything the venue and our logistics team need from you. Nothing here is required up front — save
+                    as much as you know now and come back to fill in the rest.
                 </styled.p>
 
                 {saved && <PortalSavedBanner message="Saved — thank you!" next={savedNextSection} />}

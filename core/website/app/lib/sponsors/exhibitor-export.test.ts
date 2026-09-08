@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
     buildExhibitorRow,
     buildExhibitorSheet,
+    buildExhibitorSource,
+    deriveParkingTimes,
     EXHIBITOR_COLUMNS,
     splitBumpSlot,
     splitTrolleyForklift,
@@ -73,6 +75,45 @@ describe('splitTrolleyForklift', () => {
     })
 })
 
+describe('buildExhibitorSource', () => {
+    it('uses Jira for a sponsor who has never submitted portal logistics', () => {
+        expect(
+            buildExhibitorSource(
+                { companyName: 'Acme', profile: { logistics: { equipmentList: 'Portal draft' } } },
+                { equipmentList: 'Committee value' },
+            ).equipmentList,
+        ).toBe('Committee value')
+    })
+
+    it('uses the submitted portal snapshot over stale Jira, including deliberate clears', () => {
+        const source = buildExhibitorSource(
+            {
+                companyName: 'Acme',
+                profile: { logistics: { contactName: 'Portal' }, logisticsUpdatedAt: 123 },
+            },
+            { exhibitorContactName: 'Old Jira name', equipmentList: 'Old Jira equipment' },
+        )
+        expect(source.contactName).toBeUndefined()
+        expect(source.equipmentList).toBeUndefined()
+    })
+})
+
+describe('deriveParkingTimes', () => {
+    it('uses the selected bump-in and bump-out slots for the venue parking column', () => {
+        expect(
+            deriveParkingTimes(
+                'For Bump In, For Bump Out',
+                'Friday 1pm - 2pm',
+                'Saturday 5pm (after conference concludes)',
+            ),
+        ).toBe('Friday 1pm - 2pm; Saturday 5pm (after conference concludes)')
+    })
+
+    it('does not include a slot whose parking option was not selected', () => {
+        expect(deriveParkingTimes('For Bump Out', 'Friday 1pm - 2pm', 'Saturday 4pm')).toBe('Saturday 4pm')
+    })
+})
+
 describe('buildExhibitorRow', () => {
     it('emits every column in the venue-defined order, even when unknown', () => {
         const row = buildExhibitorRow({ companyName: 'Acme Rockets' }, CONFERENCE_DATE)
@@ -108,7 +149,7 @@ describe('buildExhibitorRow', () => {
             '03/10/2026',
             '16:00',
             'For Bump In',
-            '',
+            'Friday 1pm - 2pm',
             '1x banner (5kg)',
             'Trolley please',
             '',

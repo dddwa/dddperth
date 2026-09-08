@@ -33,6 +33,10 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
     const jira = (portal as NonNullable<typeof portal>).jira
     const { fields, statusFlips } = jira
 
+    it('keeps label-free sponsors in the production query while excluding portal-test issues', () => {
+        expect(jira.jql).toContain('AND (labels IS EMPTY OR labels NOT IN ("portal-test"))')
+    })
+
     it('points the assets flip at options belonging to the assets field', () => {
         const allowed = JIRA_OPTIONS[fields.assetsStatus]
         expect(allowed).toBeDefined()
@@ -122,5 +126,28 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
                 pendingOptionIds: raffle.pendingOptionIds,
             }),
         ).toBe('committee-advanced')
+    })
+
+    it('allows a corrected induction answer to switch between both portal-owned outcomes', () => {
+        const induction = statusFlips?.induction
+        if (!induction) return
+        const portalOwnedOptionIds = [induction.requiredOptionId, induction.notRequiredOptionId]
+
+        expect(
+            planStatusWrite({
+                current: induction.notRequiredOptionId,
+                targetOptionId: induction.requiredOptionId,
+                pendingOptionIds: induction.pendingOptionIds,
+                portalOwnedOptionIds,
+            }),
+        ).toBe('set')
+        expect(
+            planStatusWrite({
+                current: induction.requiredOptionId,
+                targetOptionId: induction.notRequiredOptionId,
+                pendingOptionIds: induction.pendingOptionIds,
+                portalOwnedOptionIds,
+            }),
+        ).toBe('set')
     })
 })

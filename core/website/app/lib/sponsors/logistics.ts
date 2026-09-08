@@ -70,6 +70,18 @@ export const SCREEN_OPTIONS = [
 
 export const RAFFLE_LOCATIONS = ['Exhibition Space', 'Raffle Give-away on main stage'] as const
 
+/** Keeps stored values visible when Jira's option labels have changed since
+ * the sponsor last saved. Without this, an unrelated form save silently
+ * replaces an unknown select with blank and drops unknown checkbox values. */
+export function optionsIncludingStored(options: readonly string[], storedValues: readonly string[]): string[] {
+    const result = [...options]
+    for (const stored of storedValues) {
+        const value = stored.trim()
+        if (value && !result.includes(value)) result.push(value)
+    }
+    return result
+}
+
 // Free text on save, so an old answer survives the committee editing options.
 const optionalText = (max: number) =>
     z.preprocess(

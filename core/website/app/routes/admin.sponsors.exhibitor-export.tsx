@@ -2,7 +2,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import { requireAdmin } from '~/lib/auth.server'
 import { isConferenceYear } from '~/lib/get-year-config.server'
-import { buildExhibitorSheet, type ExhibitorSource } from '~/lib/sponsors/exhibitor-export'
+import { buildExhibitorSheet, buildExhibitorSource } from '~/lib/sponsors/exhibitor-export'
 import type { ExhibitorLogistics } from '~/lib/sponsors/jira-client.server'
 import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/admin.sponsors.exhibitor-export'
@@ -44,28 +44,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const conferenceDate =
         conference && conference.kind === 'conference' ? conference.conferenceDate?.toJSDate() : undefined
 
-    // Jira wins (the committee edits it directly), falling back to the
-    // portal if a push hasn't landed.
-    const sources: ExhibitorSource[] = activeSponsors.map((sponsor) => {
-        const fromJira = logistics.get(sponsor.issueKey) ?? {}
-        const fromPortal = sponsor.profile?.logistics ?? {}
-        const pick = (key: string) => fromJira[key] || fromPortal[key] || undefined
-
-        return {
-            companyName: sponsor.companyName,
-            contactName: pick('exhibitorContactName'),
-            contactPhone: pick('exhibitorContactPhone'),
-            contactEmail: pick('exhibitorContactEmail'),
-            bumpInSlot: pick('bumpInSlot'),
-            bumpOutWindow: pick('bumpOutWindow'),
-            parking: pick('parking'),
-            equipmentList: pick('equipmentList'),
-            trolleyOrForklift: pick('trolleyOrForklift'),
-            loadingDockAssistance: pick('loadingDockAssistance'),
-            // Portal-only — no Jira field, so it never appears in `fromJira`.
-            additionalNotes: fromPortal.additionalNotes,
-        }
-    })
+    const sources = activeSponsors.map((sponsor) =>
+        buildExhibitorSource(sponsor, logistics.get(sponsor.issueKey) ?? {}),
+    )
 
     const sheet = sheetUtils.aoa_to_sheet(
         buildExhibitorSheet({
