@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-    computeSyncPlan,
-    parseContactEmails,
-    planStatusWrite,
-    type SyncSourceSponsor,
-} from './sync-plan'
+import { computeSyncPlan, parseContactEmails, planStatusWrite, type SyncSourceSponsor } from './sync-plan'
 
 describe('parseContactEmails', () => {
     it('splits on commas and semicolons', () => {
@@ -73,7 +68,14 @@ describe('computeSyncPlan', () => {
         })
 
         expect(plan.upserts).toEqual([
-            { issueKey: 'SPN-1', year: '2026', companyName: 'Acme', tier: 'Gold', website: undefined, jiraStatus: undefined },
+            {
+                issueKey: 'SPN-1',
+                year: '2026',
+                companyName: 'Acme',
+                tier: 'Gold',
+                website: undefined,
+                jiraStatus: undefined,
+            },
         ])
         expect(plan.contactAdds).toEqual([{ email: 'a@example.com', issueKey: 'SPN-1' }])
         expect(plan.deactivateIssueKeys).toEqual([])
@@ -192,5 +194,24 @@ describe('planStatusWrite', () => {
         // no business overwriting these with "partially received".
         expect(plan('10203')).toBe('committee-advanced')
         expect(plan('10204')).toBe('committee-advanced')
+    })
+
+    it('can replace another portal-owned outcome without replacing committee progress', () => {
+        expect(
+            planStatusWrite({
+                current: 'not-required',
+                targetOptionId: 'required',
+                pendingOptionIds,
+                portalOwnedOptionIds: ['required', 'not-required'],
+            }),
+        ).toBe('set')
+        expect(
+            planStatusWrite({
+                current: 'committee-complete',
+                targetOptionId: 'required',
+                pendingOptionIds,
+                portalOwnedOptionIds: ['required', 'not-required'],
+            }),
+        ).toBe('committee-advanced')
     })
 })

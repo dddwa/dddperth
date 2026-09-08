@@ -38,6 +38,9 @@ export interface SponsorProfile {
      * pushed into Jira on every save. Absent keys mean "not answered yet".
      */
     logistics?: Record<string, string>
+    /** First/most recent full logistics form submission. Before this exists,
+     * Jira remains the export fallback for legacy committee-entered answers. */
+    logisticsUpdatedAt?: number
     logo?: SponsorLogoMeta
     /** First time the completion criteria were met; never unset. */
     completedAt?: number

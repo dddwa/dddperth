@@ -1,10 +1,4 @@
-import type {
-    SponsorListEntry,
-    SponsorProfile,
-    SponsorRecord,
-    SponsorsStore,
-    SponsorSyncRun,
-} from '../sponsors-store'
+import type { SponsorListEntry, SponsorProfile, SponsorRecord, SponsorsStore, SponsorSyncRun } from '../sponsors-store'
 
 interface SponsorRow {
     issue_key: string
@@ -24,6 +18,7 @@ interface SponsorProfileRow {
     website_url: string | null
     socials_json: string | null
     logistics_json: string | null
+    logistics_updated_at: number | null
     logo_r2_key: string | null
     logo_filename: string | null
     logo_content_type: string | null
@@ -78,6 +73,7 @@ function toProfile(row: SponsorProfileRow): SponsorProfile {
         websiteUrl: row.website_url ?? undefined,
         socials: parseJsonMap(row.socials_json),
         logistics: parseJsonMap(row.logistics_json),
+        logisticsUpdatedAt: row.logistics_updated_at ?? undefined,
         logo:
             row.logo_r2_key && row.logo_content_type
                 ? {
@@ -137,7 +133,10 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
         },
 
         async getSponsor(issueKey) {
-            const row = await db.prepare(`SELECT * FROM sponsors WHERE issue_key = ?`).bind(issueKey).first<SponsorRow>()
+            const row = await db
+                .prepare(`SELECT * FROM sponsors WHERE issue_key = ?`)
+                .bind(issueKey)
+                .first<SponsorRow>()
             return row ? toSponsor(row) : null
         },
 
@@ -184,13 +183,11 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
             }
             const profileByIssue = new Map((profiles.results ?? []).map((p) => [p.issue_key, toProfile(p)]))
 
-            return (sponsors.results ?? []).map(
-                (row): SponsorListEntry => ({
-                    ...toSponsor(row),
-                    contacts: contactsByIssue.get(row.issue_key) ?? [],
-                    profile: profileByIssue.get(row.issue_key) ?? null,
-                }),
-            )
+            return (sponsors.results ?? []).map((row): SponsorListEntry => ({
+                ...toSponsor(row),
+                contacts: contactsByIssue.get(row.issue_key) ?? [],
+                profile: profileByIssue.get(row.issue_key) ?? null,
+            }))
         },
 
         async getAllSponsorsForSync() {
@@ -228,10 +225,12 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
         async saveLogistics(issueKey, logistics, updatedBy) {
             await db
                 .prepare(
-                    `INSERT INTO sponsor_profiles (issue_key, logistics_json, updated_at, updated_by)
-                     VALUES (?, ?, unixepoch(), ?)
+                    `INSERT INTO sponsor_profiles
+                         (issue_key, logistics_json, logistics_updated_at, updated_at, updated_by)
+                     VALUES (?, ?, unixepoch(), unixepoch(), ?)
                      ON CONFLICT(issue_key) DO UPDATE SET
                          logistics_json = excluded.logistics_json,
+                         logistics_updated_at = excluded.logistics_updated_at,
                          updated_at = excluded.updated_at,
                          updated_by = excluded.updated_by`,
                 )
@@ -366,9 +365,7 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
         },
 
         async getLatestSyncRun() {
-            const row = await db
-                .prepare(`SELECT * FROM sponsor_sync_runs ORDER BY id DESC LIMIT 1`)
-                .first<SyncRunRow>()
+            const row = await db.prepare(`SELECT * FROM sponsor_sync_runs ORDER BY id DESC LIMIT 1`).first<SyncRunRow>()
             return row ? toSyncRun(row) : null
         },
 

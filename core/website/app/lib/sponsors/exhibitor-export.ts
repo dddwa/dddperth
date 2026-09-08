@@ -25,6 +25,43 @@ export interface ExhibitorSource {
     additionalNotes?: string
 }
 
+export interface ExhibitorSponsorRecord {
+    companyName: string
+    profile: {
+        logistics?: Record<string, string>
+        logisticsUpdatedAt?: number
+    } | null
+}
+
+/** Builds one export source with an explicit authority boundary. Before the
+ * sponsor has submitted logistics, Jira supplies legacy committee-entered
+ * values. After the first full portal submission, D1 wins wholesale so a
+ * failed write-back—or an intentionally cleared field—cannot be masked by a
+ * stale non-empty Jira value. */
+export function buildExhibitorSource(
+    sponsor: ExhibitorSponsorRecord,
+    fromJira: Record<string, string>,
+): ExhibitorSource {
+    const fromPortal = sponsor.profile?.logistics ?? {}
+    const portalOwnsLogistics = sponsor.profile?.logisticsUpdatedAt !== undefined
+    const pick = (key: string) =>
+        (portalOwnsLogistics ? fromPortal[key] : fromJira[key] || fromPortal[key]) || undefined
+
+    return {
+        companyName: sponsor.companyName,
+        contactName: pick('exhibitorContactName'),
+        contactPhone: pick('exhibitorContactPhone'),
+        contactEmail: pick('exhibitorContactEmail'),
+        bumpInSlot: pick('bumpInSlot'),
+        bumpOutWindow: pick('bumpOutWindow'),
+        parking: pick('parking'),
+        equipmentList: pick('equipmentList'),
+        trolleyOrForklift: pick('trolleyOrForklift'),
+        loadingDockAssistance: pick('loadingDockAssistance'),
+        additionalNotes: fromPortal.additionalNotes,
+    }
+}
+
 /** The venue's column headers, in the order the template lists them. */
 export const EXHIBITOR_COLUMNS = [
     'Exhibitor Company Name',
@@ -106,6 +143,26 @@ export function splitTrolleyForklift(answer: string | undefined): { trolley: str
     return { trolley: text, forklift: text }
 }
 
+/** The venue asks for parking times separately, while the portal asks whether
+ * parking is needed for bump-in/out. Reuse the corresponding submitted slots
+ * rather than emitting a permanently blank column. */
+export function deriveParkingTimes(
+    parking: string | undefined,
+    bumpInSlot: string | undefined,
+    bumpOutWindow: string | undefined,
+): string {
+    const selected = new Set(
+        (parking ?? '')
+            .split(',')
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean),
+    )
+    const times: string[] = []
+    if (selected.has('for bump in') && bumpInSlot) times.push(bumpInSlot)
+    if (selected.has('for bump out') && bumpOutWindow) times.push(bumpOutWindow)
+    return times.join('; ')
+}
+
 /** One spreadsheet row (header order) for an exhibitor. */
 export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date | undefined): string[] {
     const bumpIn = splitBumpSlot(source.bumpInSlot, conferenceDate)
@@ -122,7 +179,7 @@ export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date 
         bumpOut.date,
         bumpOut.time,
         source.parking ?? '',
-        source.parkingTimes ?? '',
+        source.parkingTimes ?? deriveParkingTimes(source.parking, source.bumpInSlot, source.bumpOutWindow),
         source.equipmentList ?? '',
         trolley,
         forklift,
@@ -138,9 +195,10 @@ export function buildExhibitorSheet(args: {
     conferenceDate: Date | undefined
 }): string[][] {
     const { sources, conferenceName, conferenceDate } = args
-    const dateLabel = conferenceDate && !Number.isNaN(conferenceDate.getTime())
-        ? conferenceDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
-        : ''
+    const dateLabel =
+        conferenceDate && !Number.isNaN(conferenceDate.getTime())
+            ? conferenceDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+            : ''
 
     const title = `Supplier & Exhibitor List - ${conferenceName}${dateLabel ? ` - ${dateLabel}` : ''}`
     const rows = [...sources]

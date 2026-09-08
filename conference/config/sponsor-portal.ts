@@ -46,7 +46,7 @@ export const sponsorPortal: SponsorPortalConfig = {
         jql:
             'project = SPN AND issuetype = Sponsor' +
             ' AND (labels = "{year}" OR labels IS EMPTY OR labels NOT IN ({pastYears}))' +
-            ' AND labels NOT IN ("portal-test")',
+            ' AND (labels IS EMPTY OR labels NOT IN ("portal-test"))',
         fields: {
             companyName: 'customfield_10087',
             website: 'customfield_10089',

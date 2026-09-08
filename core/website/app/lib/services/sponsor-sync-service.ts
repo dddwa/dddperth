@@ -55,7 +55,9 @@ export interface SponsorSyncService {
      */
     getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
 
-    /** Retries every owed write-back (sponsors with assets_task_pending). */
+    /** Reconciles every sponsor-owned Jira field/status after a sync. This is
+     * deliberately broader than the persisted assets pending flag: failed
+     * best-effort saves otherwise have no request left to retry them. */
     retryPendingWritebacks(): Promise<void>
 
     /**

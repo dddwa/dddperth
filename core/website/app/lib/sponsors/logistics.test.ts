@@ -8,6 +8,7 @@ import {
     LOGISTICS_KEYS,
     PARKING_OPTIONS,
     SCREEN_OPTIONS,
+    optionsIncludingStored,
     type LogisticsFields,
 } from './logistics'
 
@@ -134,6 +135,14 @@ describe('logisticsSchema', () => {
 })
 
 describe('dropdown options', () => {
+    it('retains stored values that no longer appear in Jira configuration', () => {
+        expect(optionsIncludingStored(['Current A', 'Current B'], ['Legacy', 'Current A'])).toEqual([
+            'Current A',
+            'Current B',
+            'Legacy',
+        ])
+    })
+
     it('keeps additionalNotes out of Jira — it is spreadsheet-only', () => {
         // No `logistics.additionalNotes` mapping exists in fork config, so a
         // key added here without one silently stops reaching the export.

@@ -11,7 +11,7 @@ import type { AssetStorage } from '../asset-storage'
 import type { EmailService } from '../email-service'
 import type { NotificationLog } from '../notification-log'
 import type { SponsorSyncService } from '../sponsor-sync-service'
-import type { SponsorsStore } from '../sponsors-store'
+import type { SponsorProfile, SponsorsStore } from '../sponsors-store'
 
 /**
  * If a sync run has been "running" longer than this it's considered crashed
@@ -21,18 +21,44 @@ const STALE_RUN_SECONDS = 5 * 60
 
 const TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
 
+interface SponsorOwnedJiraFields {
+    website: string
+    quote?: string
+    socials?: Record<string, string>
+}
+
+/** Builds a complete replacement for the sponsor-owned profile fields.
+ * Details are only eligible after the required blurb and website form has
+ * been submitted; once they are, every configured social field is included
+ * so deleting an optional URL clears the corresponding Jira value. */
+export function buildSponsorDetailsPayload(
+    profile: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
+    fields: SponsorOwnedJiraFields,
+): Record<string, unknown> {
+    if (!profile.blurb || !profile.websiteUrl) return {}
+
+    const payload: Record<string, unknown> = { [fields.website]: profile.websiteUrl }
+    if (fields.quote) payload[fields.quote] = textToAdf(profile.blurb)
+    for (const [platform, fieldId] of Object.entries(fields.socials ?? {})) {
+        payload[fieldId] = profile.socials[platform] || null
+    }
+    return payload
+}
+
 export function createJiraSponsorSyncService(args: {
     config: AppConfig
     sponsors: SponsorsStore
     assets: AssetStorage
     email: EmailService
     notifications: NotificationLog
+    /** Test seam for exercising orchestration without real Jira I/O. */
+    jiraClient?: JiraClient
 }): SponsorSyncService {
     const { config, sponsors, assets, email, notifications } = args
     const portalConfig = conferenceManifest.sponsorPortal
 
-    let client: JiraClient | null = null
-    if (portalConfig) {
+    let client: JiraClient | null = args.jiraClient ?? null
+    if (portalConfig && !client) {
         if (config.jira.stub) {
             client = createStubJiraClient()
         } else if (config.jira.apiEmail && config.jira.apiToken) {
@@ -291,6 +317,7 @@ export function createJiraSponsorSyncService(args: {
                     fieldId: string | undefined
                     targetOptionId: string | undefined
                     pendingOptionIds: string[]
+                    portalOwnedOptionIds?: string[]
                 }> = [
                     {
                         name: 'social',
@@ -320,6 +347,10 @@ export function createJiraSponsorSyncService(args: {
                                   ? flips.induction?.notRequiredOptionId
                                   : undefined,
                         pendingOptionIds: flips.induction?.pendingOptionIds ?? [],
+                        portalOwnedOptionIds: [
+                            flips.induction?.requiredOptionId,
+                            flips.induction?.notRequiredOptionId,
+                        ].filter((optionId): optionId is string => Boolean(optionId)),
                     },
                 ]
 
@@ -334,6 +365,7 @@ export function createJiraSponsorSyncService(args: {
                             current,
                             targetOptionId: write.targetOptionId,
                             pendingOptionIds: write.pendingOptionIds,
+                            portalOwnedOptionIds: write.portalOwnedOptionIds,
                         })
 
                         if (action === 'set') {
@@ -378,7 +410,9 @@ export function createJiraSponsorSyncService(args: {
         async getExhibitorLogistics() {
             // Deliberately not caught: the caller is building a document for
             // the venue, and a blank spreadsheet is worse than an error page.
-            if (!portalConfig || !client) return new Map()
+            if (!portalConfig || !client) {
+                throw new Error('Sponsor portal Jira client is not configured')
+            }
             return client.getExhibitorLogistics()
         },
 
@@ -397,9 +431,27 @@ export function createJiraSponsorSyncService(args: {
         async retryPendingWritebacks() {
             if (!portalConfig || !client || !writebackEnabled) return
 
-            const pending = await sponsors.getPendingWritebacks()
-            for (const issueKey of pending) {
-                await this.flipAssetsTask(issueKey)
+            const pendingAssets = new Set(await sponsors.getPendingWritebacks())
+            const activeSponsors = (await sponsors.listSponsors(portalConfig.year)).filter((sponsor) => sponsor.active)
+
+            // Reconcile all sponsor-owned state, not just writes for which we
+            // happened to persist a pending flag. Jira updates are idempotent,
+            // and this makes a transient failure after the sponsor's final
+            // save self-heal on the next hourly/manual sync.
+            for (const sponsor of activeSponsors) {
+                if (pendingAssets.has(sponsor.issueKey)) {
+                    await this.flipAssetsTask(sponsor.issueKey)
+                }
+
+                const profile = sponsor.profile
+                if (!profile) continue
+                if (profile.blurb && profile.websiteUrl) {
+                    await this.pushSponsorOwnedData(sponsor.issueKey, 'details')
+                }
+                if (profile.logisticsUpdatedAt !== undefined) {
+                    await this.pushLogistics(sponsor.issueKey, profile.logistics ?? {})
+                }
+                await this.flipWorkstreamStatuses(sponsor.issueKey)
             }
         },
 
@@ -415,13 +467,7 @@ export function createJiraSponsorSyncService(args: {
             // never written from here.) A PUT with unchanged values creates
             // no Jira history entry, so redundant saves stay quiet.
             try {
-                const payload: Record<string, unknown> = {}
-                if (profile.websiteUrl) payload[jiraFields.website] = profile.websiteUrl
-                if (jiraFields.quote && profile.blurb) payload[jiraFields.quote] = textToAdf(profile.blurb)
-                for (const [platform, fieldId] of Object.entries(jiraFields.socials ?? {})) {
-                    const url = profile.socials[platform]
-                    if (url) payload[fieldId] = url
-                }
+                const payload = buildSponsorDetailsPayload(profile, jiraFields)
                 if (Object.keys(payload).length > 0) {
                     await client.updateIssueFields(issueKey, payload)
                 }
