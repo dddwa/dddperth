@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { FIXTURE_SPONSOR_NAME } from './fixtures/sponsors'
 import { ROUTES, VISUAL_EXPECTED_DAYS_LEFT, VISUAL_MASK_SELECTORS } from './routes'
 
 /**
@@ -34,7 +35,10 @@ import { ROUTES, VISUAL_EXPECTED_DAYS_LEFT, VISUAL_MASK_SELECTORS } from './rout
 
 /** Route names contain spaces/parens for readability; filenames shouldn't. */
 function snapshotName(name: string) {
-    return name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+    return name
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase()
 }
 
 /**
@@ -63,6 +67,28 @@ test('the visual suite renders at the pinned date, not the live clock', async ({
             'Check the cookie domain matches baseURL, and that its value needs no URL-encoding. ' +
             `(Expected the conference-day countdown to read ${VISUAL_EXPECTED_DAYS_LEFT} days ` +
             'at VISUAL_DATE — if the conference date moved, update both in e2e/routes.ts.)',
+    ).toBeVisible()
+})
+
+/**
+ * The home page is the one route with no year in its path, so its sponsor
+ * strip would otherwise track whichever sponsors are currently signed and its
+ * baselines would move on every sponsor change. `E2E_SPONSOR_FIXTURES` swaps
+ * in `e2e/fixtures/sponsors.ts`.
+ *
+ * Asserted for the same reason as the date pin above: when the seam fails to
+ * apply, the page still renders perfectly — just with real sponsors — so the
+ * baselines silently go back to tracking live config. That is exactly how this
+ * shipped broken the first time; without this assertion the suite reported
+ * "72 passed" while the fixtures never loaded.
+ */
+test('the home page renders fixture sponsors, not the live sponsor list', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+        page.getByRole('img', { name: FIXTURE_SPONSOR_NAME }).first(),
+        'the sponsor fixtures did not apply — the home baseline would track the real sponsor ' +
+            'list and move whenever a sponsor is signed. Check E2E_SPONSOR_FIXTURES is set by ' +
+            'e2e/start-dev-server.mjs and read into AppConfig.useSponsorFixtures.',
     ).toBeVisible()
 })
 

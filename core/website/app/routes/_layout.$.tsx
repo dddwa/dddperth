@@ -73,6 +73,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const ticketSponsorsResolved = resolveSponsorsWithFallback(
         getConferenceState(context).conference.year,
         getConferenceState(context).conference.sponsors,
+        getConfig(context).useSponsorFixtures,
     )
     const ticketSponsors =
         ticketSponsorsResolved.kind === 'empty'
