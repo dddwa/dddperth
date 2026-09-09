@@ -9,6 +9,7 @@ import {
     PARKING_OPTIONS,
     SCREEN_OPTIONS,
     optionsIncludingStored,
+    seedLogisticsFromJira,
     type LogisticsFields,
 } from './logistics'
 
@@ -172,5 +173,59 @@ describe('dropdown options', () => {
         const parsed = logisticsSchema.safeParse({ parking: joined })
         expect(parsed.success).toBe(true)
         if (parsed.success) expect(parsed.data.parking).toBe('For Bump In, For Bump Out')
+    })
+})
+
+describe('seedLogisticsFromJira', () => {
+    it('fills blank portal fields from Jira', () => {
+        const seeded = seedLogisticsFromJira({
+            fromPortal: {},
+            fromJira: { exhibitorContactName: 'Vicki', bumpInSlot: 'Friday 1pm - 2pm' },
+            submitted: false,
+        })
+
+        expect(seeded.exhibitorContactName).toBe('Vicki')
+        expect(seeded.bumpInSlot).toBe('Friday 1pm - 2pm')
+    })
+
+    it('never overwrites a value the sponsor has entered', () => {
+        const seeded = seedLogisticsFromJira({
+            fromPortal: { exhibitorContactName: 'Sponsor typed this' },
+            fromJira: { exhibitorContactName: 'Committee typed this' },
+            submitted: false,
+        })
+
+        expect(seeded.exhibitorContactName).toBe('Sponsor typed this')
+    })
+
+    /**
+     * The gap stays open while both sides are empty, so a committee edit made
+     * *after* the sponsor first opened the form still reaches them.
+     */
+    it('leaves a field blank when Jira is empty too, so it stays eligible', () => {
+        const seeded = seedLogisticsFromJira({ fromPortal: {}, fromJira: {}, submitted: false })
+        expect(seeded.exhibitorContactName).toBeUndefined()
+
+        const later = seedLogisticsFromJira({
+            fromPortal: {},
+            fromJira: { exhibitorContactName: 'Added later' },
+            submitted: false,
+        })
+        expect(later.exhibitorContactName).toBe('Added later')
+    })
+
+    /**
+     * After submission the portal is authoritative wholesale — a field the
+     * sponsor deliberately cleared must not be refilled from a stale Jira value.
+     */
+    it('stops seeding once the sponsor has submitted the form', () => {
+        const seeded = seedLogisticsFromJira({
+            fromPortal: { exhibitorContactName: 'Vicki' },
+            fromJira: { exhibitorContactName: 'Vicki', bumpInSlot: 'Friday 1pm - 2pm' },
+            submitted: true,
+        })
+
+        expect(seeded.bumpInSlot).toBeUndefined()
+        expect(seeded.exhibitorContactName).toBe('Vicki')
     })
 })

@@ -392,6 +392,22 @@ export function createJiraSponsorSyncService(args: {
             }
         },
 
+        async getIssueLogistics(issueKey) {
+            if (!portalConfig || !client) return {}
+            try {
+                return await client.getIssueLogistics(issueKey)
+            } catch (error) {
+                // Seeding is a convenience: the form still renders with
+                // whatever the portal holds, so a Jira outage must not stop a
+                // sponsor filling it in.
+                console.error(
+                    `Sponsor logistics lookup for ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
+                return {}
+            }
+        },
+
         async getSponsorDeliverables(issueKey) {
             if (!portalConfig || !client) return {}
             try {

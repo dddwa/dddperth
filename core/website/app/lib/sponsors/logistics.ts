@@ -162,3 +162,39 @@ export function filterByVisibility(fields: LogisticsFields, visibility: Logistic
 
     return result
 }
+
+/**
+ * Fills blank portal fields from Jira, so committee-entered answers show up in
+ * the form instead of the sponsor facing an empty page.
+ *
+ * The committee routinely takes logistics by email and types them straight into
+ * Jira. Without this the portal showed nothing, told the sponsor the section was
+ * outstanding, and invited them to re-enter what they'd already sent.
+ *
+ * **Seeding is per-field and only ever fills a gap.** A value the sponsor has
+ * entered is never overwritten, so the portal stays authoritative for anything
+ * they've touched. While a field is still blank on both sides it stays eligible,
+ * so a later committee edit in Jira flows through on the next load — nobody has
+ * claimed it yet, so there is nothing to protect.
+ *
+ * `submitted` is the same authority boundary the exhibitor export uses
+ * (`logistics_updated_at`): once the sponsor has submitted the full form, D1
+ * wins wholesale, because a field they deliberately cleared must not be
+ * refilled from a stale Jira value.
+ */
+export function seedLogisticsFromJira(args: {
+    fromPortal: Record<string, string>
+    fromJira: Record<string, string>
+    submitted: boolean
+}): Record<string, string> {
+    const { fromPortal, fromJira, submitted } = args
+    if (submitted) return fromPortal
+
+    const seeded: Record<string, string> = { ...fromPortal }
+    for (const key of LOGISTICS_KEYS) {
+        if (seeded[key]) continue
+        const jiraValue = fromJira[key]
+        if (jiraValue) seeded[key] = jiraValue
+    }
+    return seeded
+}

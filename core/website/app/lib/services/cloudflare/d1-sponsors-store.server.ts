@@ -7,6 +7,7 @@ interface SponsorRow {
     tier: string
     website: string | null
     jira_status: string | null
+    exhibitor_room: string | null
     active: number
     assets_task_flipped_at: number | null
     assets_task_pending: number
@@ -50,6 +51,7 @@ function toSponsor(row: SponsorRow): SponsorRecord {
         tier: row.tier,
         website: row.website ?? undefined,
         jiraStatus: row.jira_status ?? undefined,
+        exhibitorRoom: row.exhibitor_room ?? undefined,
         active: row.active === 1,
         assetsTaskFlippedAt: row.assets_task_flipped_at ?? undefined,
         assetsTaskPending: row.assets_task_pending === 1,
@@ -276,18 +278,27 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                     db
                         .prepare(
                             `INSERT INTO sponsors
-                                 (issue_key, year, company_name, tier, website, jira_status, active, created_at, updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
+                                 (issue_key, year, company_name, tier, website, jira_status, exhibitor_room, active, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
                              ON CONFLICT(issue_key) DO UPDATE SET
                                  year = excluded.year,
                                  company_name = excluded.company_name,
                                  tier = excluded.tier,
                                  website = excluded.website,
                                  jira_status = excluded.jira_status,
+                                 exhibitor_room = excluded.exhibitor_room,
                                  active = 1,
                                  updated_at = excluded.updated_at`,
                         )
-                        .bind(s.issueKey, s.year, s.companyName, s.tier, s.website ?? null, s.jiraStatus ?? null),
+                        .bind(
+                            s.issueKey,
+                            s.year,
+                            s.companyName,
+                            s.tier,
+                            s.website ?? null,
+                            s.jiraStatus ?? null,
+                            s.exhibitorRoom ?? null,
+                        ),
                 )
             }
             for (const issueKey of plan.deactivateIssueKeys) {

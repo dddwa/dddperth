@@ -323,6 +323,16 @@ export interface SponsorPortalJiraConfig {
          */
         assetUploadUrl?: string
         /**
+         * Which room a room sponsor's sponsorship covers. Committee-assigned,
+         * so the portal only displays it — and it feeds the venue's exhibitor
+         * spreadsheet and the public site's `roomName`.
+         *
+         * The field may carry a Jira default, which would make every sponsor
+         * look assigned. Treat a value equal to `unassignedRoomValue` as "not
+         * yet decided" so the portal stays honest until someone chooses.
+         */
+        exhibitorRoom?: string
+        /**
          * Paragraph field the sponsor's quote/blurb is pushed into on every
          * portal save (sponsor-owned — the portal's value overrides Jira's).
          * Omit if the field doesn't exist; the push is skipped.
@@ -390,6 +400,16 @@ export interface SponsorPortalJiraConfig {
      * these, the portal leaves it alone rather than dragging it backwards.
      */
     assetsPendingOptionIds: string[]
+    /**
+     * The `exhibitorRoom` value meaning "no room assigned yet".
+     *
+     * Jira single-selects can carry a default, and DDD Perth's does — every
+     * issue reads back as the first room whether or not anyone chose it. Naming
+     * that value here lets the portal tell "assigned" from "untouched" and stay
+     * quiet until the committee actually decides. Omit when the field has no
+     * default, and every non-empty value counts as assigned.
+     */
+    unassignedRoomValue?: string
     /**
      * The remaining workstream status flips, each triggered by the sponsor
      * finishing the matching part of the portal:

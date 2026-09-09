@@ -49,6 +49,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             issueKey: s.issueKey,
             companyName: s.companyName,
             tier: s.tier,
+            exhibitorRoom: s.exhibitorRoom,
             active: s.active,
             contacts: s.contacts,
             complete: isProfileComplete(s.profile),
@@ -104,8 +105,8 @@ export default function AdminSponsors() {
             <AdminLayout heading="Sponsors">
                 <AdminCard>
                     <styled.p fontSize="sm" color="admin.700">
-                        The sponsor portal isn't configured for this conference — add <code>sponsorPortal</code> to
-                        the conference manifest to enable it.
+                        The sponsor portal isn't configured for this conference — add <code>sponsorPortal</code> to the
+                        conference manifest to enable it.
                     </styled.p>
                 </AdminCard>
             </AdminLayout>
@@ -202,30 +203,42 @@ export default function AdminSponsors() {
                 </styled.h2>
                 {sponsors.length === 0 ? (
                     <styled.p fontSize="sm" color="admin.600">
-                        No sponsors synced yet — run a sync once the committee has added Sponsor issues (labelled{' '}
-                        {year}) in Jira.
+                        No sponsors synced yet — run a sync once the committee has added Sponsor issues (labelled {year}
+                        ) in Jira.
                     </styled.p>
                 ) : (
                     <Box overflowX="auto">
                         <styled.table w="full" fontSize="sm">
                             <styled.thead>
                                 <styled.tr textAlign="left" color="admin.600" borderBottom="admin-subtle">
-                                    <styled.th py="2" pr="4">Sponsor</styled.th>
-                                    <styled.th py="2" pr="4">Tier</styled.th>
-                                    <styled.th py="2" pr="4">Contacts</styled.th>
-                                    <styled.th py="2" pr="4">Profile</styled.th>
-                                    <styled.th py="2" pr="4">Logo</styled.th>
-                                    <styled.th py="2" pr="4">Jira task</styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Sponsor
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Tier
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Room
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Contacts
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Profile
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Logo
+                                    </styled.th>
+                                    <styled.th py="2" pr="4">
+                                        Jira task
+                                    </styled.th>
                                 </styled.tr>
                             </styled.thead>
                             <styled.tbody>
                                 {sponsors.map((sponsor) => (
                                     <styled.tr key={sponsor.issueKey} borderBottom="admin-subtle" color="admin.900">
                                         <styled.td py="2" pr="4">
-                                            <AppLink unstyled
-                                                to={sponsor.jiraUrl}
-                                                textDecoration="underline"
-                                            >
+                                            <AppLink unstyled to={sponsor.jiraUrl} textDecoration="underline">
                                                 {sponsor.companyName}
                                             </AppLink>{' '}
                                             <styled.span color="admin.600" fontSize="xs">
@@ -233,11 +246,23 @@ export default function AdminSponsors() {
                                                 {!sponsor.active && ' (departed)'}
                                             </styled.span>
                                         </styled.td>
-                                        <styled.td py="2" pr="4">{sponsor.tier}</styled.td>
+                                        <styled.td py="2" pr="4">
+                                            {sponsor.tier}
+                                        </styled.td>
+                                        {/* Room sponsors only; blank until the committee assigns one. */}
+                                        <styled.td
+                                            py="2"
+                                            pr="4"
+                                            color={sponsor.exhibitorRoom ? undefined : 'admin.500'}
+                                        >
+                                            {sponsor.exhibitorRoom ?? '—'}
+                                        </styled.td>
                                         <styled.td py="2" pr="4">
                                             {sponsor.contacts.length > 0 ? sponsor.contacts.join(', ') : '—'}
                                         </styled.td>
-                                        <styled.td py="2" pr="4">{sponsor.complete ? '✅ Complete' : 'In progress'}</styled.td>
+                                        <styled.td py="2" pr="4">
+                                            {sponsor.complete ? '✅ Complete' : 'In progress'}
+                                        </styled.td>
                                         <styled.td py="2" pr="4">
                                             {sponsor.hasLogo ? (
                                                 <styled.a

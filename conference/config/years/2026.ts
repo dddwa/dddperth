@@ -163,6 +163,32 @@ export const conference2026: ConferenceYear = {
                 quote: 'The UWA Data Institute is proud to support DDD Perth as a Community Sponsor. We’re passionate about strengthening Western Australia’s data, technology and innovation ecosystem, and DDD Perth provides an important platform for the community to connect, share ideas and learn from one another.',
             },
         ],
+        community: [
+            {
+                name: 'Breast Cancer Partners',
+                website: 'https://breastcancerpartners.org/',
+                logoUrlDarkMode: '/images/sponsors/2026-breast-cancer-partners-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-breast-cancer-partners-light.svg',
+            },
+            {
+                name: 'Hello Initiative',
+                website: 'https://www.helloinitiative.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-hello-initiative-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-hello-initiative-light.png',
+            },
+            {
+                name: 'She Codes',
+                website: 'https://shecodes.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-she-codes-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-she-codes-light.svg',
+            },
+            {
+                name: 'WiTWA',
+                website: 'https://www.witwa.org.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-witwa-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-witwa-light.svg',
+            },
+        ],
     },
 
     foodInfo: {
