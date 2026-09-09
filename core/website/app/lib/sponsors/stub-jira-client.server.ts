@@ -9,6 +9,30 @@ import type { JiraClient } from './jira-client.server'
  *
  * See SPONSOR_PORTAL_SETUP.md for the local dev walkthrough.
  */
+/**
+ * Enough shape to exercise the spreadsheet export and the form's
+ * seed-from-Jira path locally: one fully-populated exhibitor, one with only a
+ * contact, and one absent entirely (the export must still emit its row).
+ */
+const STUB_LOGISTICS = new Map<string, Record<string, string>>([
+    [
+        'SPN-101',
+        {
+            exhibitorContactName: 'Wile E. Coyote',
+            exhibitorContactPhone: '0400 000 000',
+            exhibitorContactEmail: 'logistics-acme@example.com',
+            bumpInSlot: 'Friday 1pm - 2pm',
+            bumpOutWindow: 'Saturday 5pm (after conference concludes)',
+            parking: 'For Bump In, For Bump Out',
+            equipmentList: '1x pop-up banner (5kg), 2x crates (20kg each)',
+            trolleyOrForklift: 'Trolley please',
+            loadingDockAssistance: 'Yes',
+            rafflePrize: 'Mechanical keyboard (~$250)',
+        },
+    ],
+    ['SPN-102', { exhibitorContactName: 'Hank Scorpio', exhibitorContactEmail: 'globex@example.com' }],
+])
+
 export function createStubJiraClient(): JiraClient {
     return {
         async searchSponsorIssues() {
@@ -17,6 +41,8 @@ export function createStubJiraClient(): JiraClient {
                     issueKey: 'SPN-101',
                     companyName: 'Acme Rockets',
                     tier: 'Platinum',
+                    // Exercises the "Your room" card and the admin Room column.
+                    exhibitorRoom: 'River View Room 2',
                     website: 'https://acme.example.com',
                     jiraStatus: 'Committed',
                     contactEmails: ['sponsor-acme@example.com', 'marketing-acme@example.com'],
@@ -65,6 +91,7 @@ export function createStubJiraClient(): JiraClient {
                 ticketClaimUrl: 'https://ti.to/example/stub-sponsor-tickets',
                 assetsRequired: 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)',
                 assetUploadUrl: 'https://example.sharepoint.com/stub-sponsor-uploads',
+                exhibitorRoom: 'River View Room 2',
             }
         },
 
@@ -77,28 +104,14 @@ export function createStubJiraClient(): JiraClient {
             console.log(`[jira-stub] addLabel(${issueKey}, ${label}) — no-op`)
         },
 
+        async getIssueLogistics(issueKey: string) {
+            // Same fixtures as the board-wide read, so local dev exercises the
+            // seed-from-Jira path on the logistics form.
+            return STUB_LOGISTICS.get(issueKey) ?? {}
+        },
+
         async getExhibitorLogistics() {
-            // Enough shape to exercise the spreadsheet export locally: one
-            // fully-populated exhibitor, one with only a contact, and one
-            // absent entirely (the export must still emit its row).
-            return new Map<string, Record<string, string>>([
-                [
-                    'SPN-101',
-                    {
-                        exhibitorContactName: 'Wile E. Coyote',
-                        exhibitorContactPhone: '0400 000 000',
-                        exhibitorContactEmail: 'logistics-acme@example.com',
-                        bumpInSlot: 'Friday 1pm - 2pm',
-                        bumpOutWindow: 'Saturday 5pm (after conference concludes)',
-                        parking: 'For Bump In, For Bump Out',
-                        equipmentList: '1x pop-up banner (5kg), 2x crates (20kg each)',
-                        trolleyOrForklift: 'Trolley please',
-                        loadingDockAssistance: 'Yes',
-                        rafflePrize: 'Mechanical keyboard (~$250)',
-                    },
-                ],
-                ['SPN-102', { exhibitorContactName: 'Hank Scorpio', exhibitorContactEmail: 'globex@example.com' }],
-            ])
+            return new Map(STUB_LOGISTICS)
         },
 
         async addComment(issueKey, text) {

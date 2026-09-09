@@ -22,6 +22,13 @@ export interface JiraClient {
      */
     getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
     /**
+     * One sponsor's logistics, for seeding their portal form from values the
+     * committee entered directly in Jira. A single-issue read rather than
+     * `getExhibitorLogistics`, which pages the whole board — this runs on every
+     * load of the logistics page.
+     */
+    getIssueLogistics(issueKey: string): Promise<ExhibitorLogistics>
+    /**
      * Writes sponsor-supplied logistics back, converting each value to the
      * shape its Jira field expects (select, multi-checkbox, rich text or
      * plain string). Unmapped fields are skipped.
@@ -52,6 +59,13 @@ export interface SponsorDeliverables {
     assetsRequired?: string
     /** Per-sponsor upload folder (SharePoint) the committee creates. */
     assetUploadUrl?: string
+    /**
+     * The room this sponsorship covers, for room sponsors. Undefined until the
+     * committee assigns one — including when Jira's own default is still in
+     * place (see `unassignedRoomValue`), so this never reports a room nobody
+     * chose.
+     */
+    exhibitorRoom?: string
 }
 
 /**
@@ -215,6 +229,21 @@ export function planJiraFieldValue(
 const YEAR_LABEL = /^\d{4}$/
 
 /** The ten years before `year` as a quoted JQL list, for `{pastYears}`. */
+/**
+ * A room value, or undefined when nobody has actually chosen one.
+ *
+ * Jira single-selects can carry a default, and DDD Perth's "Exhibitor Room"
+ * does — so a freshly created sponsor reads back as the first room in the list
+ * even though the committee hasn't decided. Showing that to a sponsor would be
+ * worse than showing nothing: they'd turn up at the wrong room. Anything equal
+ * to `unassignedValue` is therefore treated as unset.
+ */
+export function assignedRoom(value: string | undefined, unassignedValue?: string): string | undefined {
+    if (!value) return undefined
+    if (unassignedValue && value === unassignedValue) return undefined
+    return value
+}
+
 export function pastYearsList(year: string): string {
     const current = Number(year)
     if (!Number.isFinite(current)) return '"0000"'
@@ -276,6 +305,7 @@ export function createJiraClient(args: {
                 fields.contactEmail,
                 fields.tier,
                 ...(fields.additionalContactEmails ? [fields.additionalContactEmails] : []),
+                ...(fields.exhibitorRoom ? [fields.exhibitorRoom] : []),
             ]
 
             const issues: SyncSourceSponsor[] = []
@@ -303,6 +333,10 @@ export function createJiraClient(args: {
                         tier: fieldOptionValue(issueFields, fields.tier) ?? 'Unknown',
                         website: fieldString(issueFields, fields.website),
                         jiraStatus: typeof status?.name === 'string' ? status.name : undefined,
+                        exhibitorRoom: assignedRoom(
+                            fieldAsText(issueFields, fields.exhibitorRoom),
+                            portalConfig.jira.unassignedRoomValue,
+                        ),
                         hasYearLabel: labels.some((l) => YEAR_LABEL.test(l)),
                         contactEmails: parseContactEmails(
                             fieldString(issueFields, fields.contactEmail),
@@ -331,6 +365,7 @@ export function createJiraClient(args: {
                 fields.ticketClaimUrl,
                 fields.assetsRequired,
                 fields.assetUploadUrl,
+                fields.exhibitorRoom,
             ].filter((id): id is string => Boolean(id))
             if (wanted.length === 0) return {}
 
@@ -345,6 +380,10 @@ export function createJiraClient(args: {
                 ticketClaimUrl: fieldAsText(issueFields, fields.ticketClaimUrl),
                 assetsRequired: fieldAsText(issueFields, fields.assetsRequired),
                 assetUploadUrl: fieldAsText(issueFields, fields.assetUploadUrl),
+                exhibitorRoom: assignedRoom(
+                    fieldAsText(issueFields, fields.exhibitorRoom),
+                    portalConfig.jira.unassignedRoomValue,
+                ),
             }
         },
 
@@ -355,6 +394,29 @@ export function createJiraClient(args: {
                     fields: { [fieldId]: { id: optionId } },
                 }),
             })
+        },
+
+        async getIssueLogistics(issueKey) {
+            const exhibitor = fields.logistics
+            if (!exhibitor) return {}
+
+            const requestFields = Object.values(exhibitor).filter(
+                (id): id is string => typeof id === 'string' && id !== '',
+            )
+            if (requestFields.length === 0) return {}
+
+            const response = await jiraFetch(
+                `/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${requestFields.join(',')}`,
+            )
+            const body = await parseJson<{ fields?: Record<string, unknown> }>(response)
+            const issueFields = body.fields ?? {}
+
+            const entry: ExhibitorLogistics = {}
+            for (const [portalKey, fieldId] of Object.entries(exhibitor)) {
+                const text = fieldAsText(issueFields, fieldId)
+                if (text !== undefined) entry[portalKey] = text
+            }
+            return entry
         },
 
         async getExhibitorLogistics() {

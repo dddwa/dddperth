@@ -200,6 +200,22 @@ export default function PortalDashboard() {
                 </AdminCard>
             )}
 
+            {/* Room sponsors only, and only once the committee has actually
+                chosen — an unassigned value reads back as undefined, so this
+                stays hidden rather than naming a room nobody decided on. */}
+            {deliverables.exhibitorRoom && (
+                <AdminCard>
+                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
+                        Your room
+                    </styled.h2>
+                    <styled.p fontSize="sm" color="admin.600">
+                        Your sponsorship covers{' '}
+                        <styled.strong fontWeight="semibold">{deliverables.exhibitorRoom}</styled.strong>. We'll have
+                        your branding in the room on the day.
+                    </styled.p>
+                </AdminCard>
+            )}
+
             {deliverables.ticketClaimUrl && (
                 <AdminCard>
                     <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">

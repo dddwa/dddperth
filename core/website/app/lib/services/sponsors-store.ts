@@ -13,6 +13,8 @@ export interface SponsorRecord {
     /** Website prefill from Jira, if the committee captured one. */
     website?: string
     jiraStatus?: string
+    /** Committee-assigned room, for room sponsors. Synced from Jira. */
+    exhibitorRoom?: string
     active: boolean
     assetsTaskFlippedAt?: number
     assetsTaskPending: boolean
@@ -58,6 +60,7 @@ export interface SponsorSyncPlan {
         tier: string
         website?: string
         jiraStatus?: string
+        exhibitorRoom?: string
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>

@@ -16,6 +16,7 @@ import {
     RAFFLE_LOCATIONS,
     SCREEN_OPTIONS,
     optionsIncludingStored,
+    seedLogisticsFromJira,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
@@ -44,10 +45,20 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
     })
 
+    // Committee-entered answers seed any field the sponsor hasn't filled in,
+    // so someone who emailed their logistics doesn't face a blank form and
+    // retype it. Skipped once they've submitted — from then on the portal is
+    // authoritative, including fields they deliberately cleared.
+    const fromJira = profile?.logisticsUpdatedAt ? {} : await services.sponsorSync.getIssueLogistics(sponsor.issueKey)
+
     return {
         tier: sponsor.tier,
         visibility,
-        logistics: profile?.logistics ?? {},
+        logistics: seedLogisticsFromJira({
+            fromPortal: profile?.logistics ?? {},
+            fromJira,
+            submitted: profile?.logisticsUpdatedAt !== undefined,
+        }),
         nextSection: nextIncompleteSection(sections) ?? null,
     }
 }

@@ -72,6 +72,14 @@ export interface SponsorSyncService {
     getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
 
     /**
+     * One sponsor's committee-entered logistics, for seeding blank fields on
+     * their portal form. Returns `{}` when the portal isn't configured or Jira
+     * is unreachable — seeding is a convenience, so the form still renders with
+     * whatever the portal already holds.
+     */
+    getIssueLogistics(issueKey: string): Promise<ExhibitorLogistics>
+
+    /**
      * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
      * portal's values win. Best-effort like the other pushes — never blocks
      * the sponsor's save.

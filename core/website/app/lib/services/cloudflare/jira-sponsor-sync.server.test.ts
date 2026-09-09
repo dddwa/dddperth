@@ -99,6 +99,7 @@ describe('retryPendingWritebacks', () => {
             setStatusOptionId: vi.fn(async () => undefined),
             addLabel: vi.fn(async () => undefined),
             getExhibitorLogistics: vi.fn(async () => new Map()),
+            getIssueLogistics: vi.fn(async () => ({})),
             pushLogistics: vi.fn(async () => undefined),
             addComment: vi.fn(async () => undefined),
             addAttachment: vi.fn(async () => undefined),
