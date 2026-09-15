@@ -1,246 +1,126 @@
+import { conferenceManifest } from '@conference/manifest'
+import { DateTime } from 'luxon'
 import { data, Form, redirect, useLoaderData } from 'react-router'
-import { z } from 'zod'
+import { AppLink } from '~/components/app-link'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
-import { getServices } from '~/remix-app-load-context'
+import {
+    fetchRunsheet,
+    LOCATION_LABELS,
+    parseRunsheetFilter,
+    TEAM_LABELS,
+} from '~/lib/runsheets/runsheet-client.server'
+import { noIndexMeta } from '~/lib/seo'
+import { getConferenceState, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
-export const issueSchema = z.object({
-    id: z.string(),
-    self: z.string(),
-    key: z.string(),
-    fields: z.object({
-        summary: z.string(),
-        issuetype: z.object({
-            id: z.string(),
-            name: z.string(),
-            description: z.string(),
-        }),
-        labels: z.array(z.string()),
-        status: z.object({
-            id: z.string(),
-            name: z.string(),
-            description: z.string(),
-        }),
-        description: z.object().nullable(),
-        customfield_10131: z.string().nullable(), // Role Instructions
-        customfield_10132: z.array(z.string()).nullable(), // Volunteer Team
-        customfield_10133: z.string().nullable(), // Item End Time
-        customfield_10134: z.string().nullable(), // Item Start Time
-        customfield_10135: z.array(z.string()).nullable(), // Location
-        customfield_10136: z
-            .object({
-                value: z.string().nullable(),
-            })
-            .nullable(), //Time Bracket
-    }),
-})
-export const jsonSchema = z.object({
-    issues: z.array(z.object({ id: z.string() })),
-    isLast: z.boolean(),
-})
+/**
+ * The volunteer run sheet. Deliberately public — volunteers need it on the
+ * day without an account — but `noindex`, because it is only meaningful to
+ * people who were sent the link and shouldn't turn up in search results.
+ *
+ * It carries no personal information: times, locations, team labels and
+ * publicly-shared Confluence links. Anything sensitive must not be added to
+ * the fields this page renders (see the schema in runsheet-client.server.ts).
+ */
+export const meta = noIndexMeta
 
-export const bulkIssuesSchema = z.object({
-    issues: z.array(issueSchema),
-})
-
-/** Jira "Volunteer Team" label -> display name. */
-const teamList: Record<string, string> = {
-    'team-1': 'Team 1',
-    'team-2': 'Team 2',
-    'team-3': 'Team 3',
-    'team-4': 'Team 4',
-    'team-5': 'Team 5',
-    'team-6': 'Team 6',
-    'team-7': 'Team 7',
-    'team-photographers': 'Photographers',
-    'team-Sat-Bump-Out': 'Bump Out',
-}
-
-/** Jira "Location" label -> display name. */
-const locationList: Record<string, string> = {
-    'loc-black-swan-room': 'Black Swan Room',
-    'loc-champions-terrace': 'Champions Terrace',
-    'loc-cygnet-room': 'Cygnet Room',
-    'loc-help-desk': 'Help Desk Level 3',
-    'loc-L2-Lobby': 'Lobby Level 2',
-    'loc-L3-lobby': 'Lobby Level 3',
-    'loc-platinum-terrace': 'Platinum Terrace',
-    'loc-premiership-terrace': 'Premiership Terrace',
-    'loc-registration-area': 'Registration Area',
-    'loc-river-view-room-1': 'River View Room 1',
-    'loc-river-view-room-2': 'River View Room 2',
-    'loc-river-view-room-3': 'River View Room 3',
-    'loc-sports-lounge': 'Sports Lounge',
-}
+/**
+ * How long Jira responses stay cached. Run sheets are edited right up to the
+ * morning, so conference day refreshes quickly; the rest of the year the page
+ * is consulted rarely and the data barely moves.
+ */
+const CACHE_TTL_CONFERENCE_DAY_SECONDS = 5 * 60
+const CACHE_TTL_DEFAULT_SECONDS = 30 * 60
 
 export async function action({ request }: Route.ActionArgs) {
     const formData = await request.formData()
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    const filter = formData.get('filter')?.toString()
-    if (filter) {
-        return redirect(`/runsheets/${filter}`)
+    const filter = formData.get('filter')
+    // Only ever redirect to a filter we recognise — the value arrives from a
+    // form post and lands in the URL.
+    const parsed = parseRunsheetFilter(typeof filter === 'string' ? filter : undefined)
+    if (parsed) {
+        return redirect(`/runsheets/${parsed.kind}.${parsed.value}`)
     }
-    return redirect(`/runsheets`)
+    return redirect('/runsheets')
 }
 
 export async function loader({ params, context }: Route.LoaderArgs) {
-    const filter: string | undefined = params.filter
+    const filter = parseRunsheetFilter(params.filter)
+    const { jiraAuth } = getServices(context)
 
-    // filter using JQL based on the param passed from the select
-    let value: string | null = null
-    let label: string | null = null
-    let jql = ' AND '
-    if (filter) {
-        const splitFilter = filter.split('.')
-        switch (splitFilter[0]) {
-            case 'team': {
-                label = 'team'
-                if (Object.keys(teamList).includes(splitFilter[1])) {
-                    value = splitFilter[1]
-                }
-                jql = jql + '"Volunteer Team[Labels]" %3D ' + value
-                break
-            }
-            case 'location': {
-                label = 'team'
-                if (Object.keys(locationList).includes(splitFilter[1])) {
-                    value = splitFilter[1]
-                }
-                jql = jql + '"Location[Labels]" %3D ' + value
-            }
-        }
-    }
+    const isConferenceDay = getConferenceState(context).conferenceState === 'conference-day'
+    const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
 
-    // auth needs to be set in JIRA_API_EMAIL JIRA_API_TOKEN env vars - pnpm jira:auth
-    const services = getServices(context)
-    const token = services.jiraAuth.authToken
-    const email = services.jiraAuth.authEmail
-    if (token === '' || email === '') {
-        throw new Error('Error - Jira API credentials missing')
-    }
-    const authorization = `Basic ${btoa(`${email}:${token}`)}`
-
-    // get ids of issues
-    const fetchedIds = await fetch(
-        `https://dddperth.atlassian.net/rest/api/3/search/jql?jql=project %3D VOL AND type %3D "Run Sheet Item" AND "Time Bracket[Dropdown]" %3D "Saturday Conference"${label && value ? jql : ''}&type=issue&product=jira&maxResults=150`,
-        {
-            method: 'GET',
-            headers: {
-                Authorization: authorization,
-                Accept: 'application/json',
-            },
-        },
-    )
-    if (!fetchedIds.ok) {
-        throw new Error('Error fetching issue ids, responded with status: ' + fetchedIds.status)
-    }
-
-    // parse returned json to get the list of IDs that match the filters
-    const jsonIds = await fetchedIds.json()
-    const idList = jsonSchema.parse(jsonIds).issues
-    if (!idList) {
-        throw new Error('Error parsing issue ids')
-    }
-    const issueIds = []
-    for (const issue of idList) {
-        issueIds.push(issue.id)
-    }
-    if (issueIds.length <= 0) {
-        throw new Error(`Error, no issues found${label && value ? ` with filter: ${value}` : ''}`)
-    }
-
-    const bodyData = `{
-        "expand": [
-        "names"
-        ],
-        "fields": [
-        "issuetype",
-        "labels",
-        "status",
-        "description",
-        "customfield_10131",
-        "customfield_10132",
-        "customfield_10133",
-        "customfield_10134",
-        "customfield_10135",
-        "customfield_10136",
-        "summary"
-        ],
-        "fieldsByKeys": false,
-        "issueIdsOrKeys": [${issueIds.join(',')}],
-        "properties": []
-    }`
-    // retrieve the issue details for all the ids in the issueIds list
-    const fetchedIssues = await fetch('https://dddperth.atlassian.net/rest/api/3/issue/bulkfetch', {
-        method: 'POST',
-        headers: {
-            Authorization: authorization,
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: bodyData,
-    })
-    if (!fetchedIssues.ok) {
-        throw new Error('Error fetching issues, responded with status: ' + fetchedIssues.status)
-    }
-
-    // parse and sort issues
-    const issueJson = await fetchedIssues.json()
-    const issues = bulkIssuesSchema.parse(issueJson).issues
-    issues.sort((a, b) => {
-        const timeA = a.fields.customfield_10134
-        const timeB = b.fields.customfield_10134
-
-        if (timeA === null && timeB === null) return 0
-        if (timeA === null) return 1
-        if (timeB === null) return -1
-
-        return timeA.localeCompare(timeB)
+    const items = await fetchRunsheet({
+        authEmail: jiraAuth.authEmail,
+        authToken: jiraAuth.authToken,
+        filter,
+        cacheTtlSeconds,
     })
 
-    // Plain data, not JSX — the loader result is serialised to the client.
     const options = [
-        ...Object.entries(teamList).map(([key, label]) => ({ value: `team.${key}`, label })),
-        ...Object.entries(locationList).map(([key, label]) => ({ value: `location.${key}`, label })),
+        ...Object.entries(TEAM_LABELS).map(([key, label]) => ({ value: `team.${key}`, label })),
+        ...Object.entries(LOCATION_LABELS).map(([key, label]) => ({ value: `location.${key}`, label })),
     ]
-    return data({ issues, filter, options })
+
+    return data(
+        { items, filter: filter ? `${filter.kind}.${filter.value}` : '', options },
+        { headers: { 'Cache-Control': `max-age=${cacheTtlSeconds}` } },
+    )
 }
 
-export default function Index() {
-    const { issues, filter, options } = useLoaderData<typeof loader>()
+/**
+ * Formats a Jira datetime for display in the conference's timezone.
+ *
+ * Explicitly zoned: workers run in UTC, so reading local hours off a `Date`
+ * renders every Perth time eight hours out — and correct on a developer's
+ * machine, which is why that is worth stating here.
+ */
+function formatTime(isoDateTime: string | null): string {
+    if (!isoDateTime) return '-'
+    const dateTime = DateTime.fromISO(isoDateTime, { zone: conferenceManifest.public.timezone })
+    return dateTime.isValid ? dateTime.toFormat('h:mm a') : '-'
+}
+
+export default function Runsheets() {
+    const { items, filter, options } = useLoaderData<typeof loader>()
 
     return (
-        <>
-            <AdminLayout heading="Runsheets">
-                <Box maxW="4xl" mx="auto">
-                    <AdminCard overflow="scroll">
-                        <Form method="post">
-                            <Flex alignContent={'center'} marginBottom={'2'} maxWidth={'fit'} gap={'1'}>
-                                <select
-                                    name="filter"
-                                    defaultValue={filter ? filter : ''}
-                                    style={{
-                                        borderWidth: '1px',
-                                        borderColor: 'gray',
-                                        padding: '8px',
-                                        borderRadius: '5px',
-                                    }}
-                                >
-                                    <option value="">Filter by Team or Location</option>
-                                    {options.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <Button type="submit">Apply Filter</Button>
-                            </Flex>
-                        </Form>
-                        <styled.table width="full" fontSize="sm" overflow="scroll">
+        <AdminLayout heading="Runsheets">
+            <Box maxW="4xl" mx="auto">
+                <AdminCard overflow="auto">
+                    <Form method="post">
+                        <Flex alignItems="center" marginBottom="2" maxWidth="fit" gap="1">
+                            <styled.label htmlFor="runsheet-filter" srOnly>
+                                Filter by team or location
+                            </styled.label>
+                            <styled.select
+                                id="runsheet-filter"
+                                name="filter"
+                                defaultValue={filter}
+                                border="admin-subtle"
+                                p="2"
+                                borderRadius="md"
+                            >
+                                <option value="">Filter by Team or Location</option>
+                                {options.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </styled.select>
+                            <Button type="submit">Apply Filter</Button>
+                        </Flex>
+                    </Form>
+
+                    {items.length === 0 ? (
+                        <styled.p p="2">No run sheet items match this filter.</styled.p>
+                    ) : (
+                        <styled.table width="full" fontSize="sm">
                             <thead>
                                 <tr>
                                     <styled.th textAlign="left" p="2" textWrap="wrap">
@@ -258,80 +138,41 @@ export default function Index() {
                                     <styled.th textAlign="left" p="2" textWrap="wrap">
                                         Team
                                     </styled.th>
-                                    <styled.th
-                                        textAlign="left"
-                                        p="2"
-                                        maxW="40"
-                                        overflowWrap="break-word"
-                                        textWrap="wrap"
-                                    >
+                                    <styled.th textAlign="left" p="2" maxW="40" textWrap="wrap">
                                         Role Details
                                     </styled.th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {issues?.map((issue) => {
-                                    return (
-                                        <tr
-                                            key={issue.id}
-                                            style={{
-                                                backgroundColor: `${issue.fields.customfield_10132 && issue.fields.customfield_10132[0] === 'session' ? '#e9d5ff' : ''}`,
-                                                borderWidth: '1px',
-                                                borderColor: 'gray',
-                                            }}
-                                        >
-                                            <styled.td key="start-time" p="2">
-                                                {issue.fields.customfield_10134
-                                                    ? formatTime(issue.fields.customfield_10134)
-                                                    : '-'}
-                                            </styled.td>
-                                            <styled.td key="end-time" p="2">
-                                                {issue.fields.customfield_10133
-                                                    ? formatTime(issue.fields.customfield_10133)
-                                                    : '-'}
-                                            </styled.td>
-                                            <styled.td key="summary" p="2">
-                                                {issue.fields.summary}
-                                            </styled.td>
-                                            <styled.td key="location" p="2">
-                                                {issue.fields.customfield_10135
-                                                    ? issue.fields.customfield_10135
-                                                          .map((location) => locationList[location] ?? location)
-                                                          .join(', ')
-                                                    : ''}
-                                            </styled.td>
-                                            <styled.td key="team" p="2" maxW="20">
-                                                <Flex spaceX="1" overflowWrap="break-word" textWrap="wrap">
-                                                    {issue.fields.customfield_10132
-                                                        ? issue.fields.customfield_10132
-                                                              .map((team) => teamList[team] ?? team)
-                                                              .join(', ')
-                                                        : ''}
-                                                </Flex>
-                                            </styled.td>
-                                            <styled.td key="role-instructions" p="2" maxW="20" alignContent={'center'}>
-                                                {issue.fields.customfield_10131 ? (
-                                                    <a href={issue.fields.customfield_10131}>
-                                                        <ConfluenceLogo height="2rem" />
-                                                    </a>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </styled.td>
-                                        </tr>
-                                    )
-                                })}
+                                {items.map((item) => (
+                                    <styled.tr key={item.id} border="admin-subtle">
+                                        <styled.td p="2">{formatTime(item.startTime)}</styled.td>
+                                        <styled.td p="2">{formatTime(item.endTime)}</styled.td>
+                                        <styled.td p="2">{item.summary}</styled.td>
+                                        <styled.td p="2">{item.locations.join(', ')}</styled.td>
+                                        <styled.td p="2" maxW="20" overflowWrap="break-word">
+                                            {item.teams.join(', ')}
+                                        </styled.td>
+                                        <styled.td p="2" maxW="20">
+                                            {item.roleInstructionsUrl ? (
+                                                <AppLink
+                                                    unstyled
+                                                    to={item.roleInstructionsUrl}
+                                                    display="inline-flex"
+                                                    alignItems="center"
+                                                    aria-label={`Role instructions for ${item.summary}`}
+                                                >
+                                                    <ConfluenceLogo height="2rem" />
+                                                </AppLink>
+                                            ) : null}
+                                        </styled.td>
+                                    </styled.tr>
+                                ))}
                             </tbody>
                         </styled.table>
-                    </AdminCard>
-                </Box>
-            </AdminLayout>
-        </>
+                    )}
+                </AdminCard>
+            </Box>
+        </AdminLayout>
     )
-}
-
-function formatTime(dateString: string) {
-    const date: Date = new Date(dateString)
-    const minutes = date.getMinutes()
-    return `${date.getHours()}:${minutes < 10 ? 0 : ''}${minutes}`
 }
