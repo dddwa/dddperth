@@ -65,6 +65,10 @@ export const sponsorPortal: SponsorPortalConfig = {
             ticketClaimUrl: 'customfield_10093',
             assetsRequired: 'customfield_10203',
             assetUploadUrl: 'customfield_10302',
+            // "Exhibitor Room" — which room a Room sponsor's package covers.
+            // Vicki cleared this field's Jira default, so no
+            // `unassignedRoomValue` is configured: any value here was chosen.
+            exhibitorRoom: 'customfield_10303',
             quote: 'customfield_10140',
             socials: {
                 linkedin: 'customfield_10141',
@@ -91,7 +95,10 @@ export const sponsorPortal: SponsorPortalConfig = {
                 porterAssistance: 'customfield_10157',
                 parking: 'customfield_10159',
                 screenOrders: 'customfield_10162',
-                screenNotes: 'customfield_10163',
+                // "Screen ordering notes" (customfield_10163) is deliberately
+                // unmapped. It's the committee's own running note ("informed
+                // PAV - 23/8"), so the portal neither shows it nor pushes it —
+                // and an unmapped field can never be cleared by a portal save.
                 screenInvoicingEmail: 'customfield_10164',
                 rafflePrize: 'customfield_10095',
                 raffleLocation: 'customfield_10196',

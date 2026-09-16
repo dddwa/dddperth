@@ -1,5 +1,5 @@
 import type { ExhibitorLogistics, SponsorDeliverables } from '../sponsors/jira-client.server'
-import type { SponsorSyncRun } from './sponsors-store'
+import type { SponsorProfile, SponsorSyncRun } from './sponsors-store'
 
 export type SyncOutcome =
     | { ok: true; run: SponsorSyncRun }
@@ -27,13 +27,27 @@ export interface SponsorSyncService {
     flipAssetsTask(issueKey: string): Promise<void>
 
     /**
-     * Pushes sponsor-owned data (quote, website, socials — and for logo
-     * changes after completion, a fresh attachment) into Jira. Called on
-     * every portal save: these fields belong to the sponsor, so the
-     * portal's value overrides whatever Jira has. Best-effort; never
-     * throws and never blocks the sponsor's save.
+     * Writes the sponsor's submitted blurb, website and socials into Jira.
+     *
+     * **Throws on failure**, so the route can abandon the save before touching
+     * D1 — a sponsor must never see a success banner over an answer Jira
+     * refused. Takes the details explicitly rather than re-reading the profile:
+     * the write happens *before* D1 is updated, so a stored copy would be the
+     * previous save's values.
      */
-    pushSponsorOwnedData(issueKey: string, change: 'details' | 'logo'): Promise<void>
+    pushSponsorDetails(
+        issueKey: string,
+        details: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
+    ): Promise<void>
+
+    /**
+     * Re-attaches a logo replaced *after* the completion write-back already
+     * fired, with a comment so the change shows in the activity feed. A logo
+     * uploaded before completion is skipped — the completion write-back
+     * attaches it. Best-effort: never throws, since the file is already safe
+     * in R2 and the sponsor's upload has genuinely succeeded.
+     */
+    attachUpdatedLogo(issueKey: string): Promise<void>
 
     /**
      * Advances the other workstream status fields (social, exhibition,
@@ -55,10 +69,15 @@ export interface SponsorSyncService {
      */
     getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
 
-    /** Reconciles every sponsor-owned Jira field/status after a sync. This is
-     * deliberately broader than the persisted assets pending flag: failed
-     * best-effort saves otherwise have no request left to retry them. */
-    retryPendingWritebacks(): Promise<void>
+    /**
+     * Re-runs the workstream status flips after a sync.
+     *
+     * Status flips are best-effort on save, so Jira being down loses them
+     * permanently without this. Profile and logistics *fields* are deliberately
+     * not replayed — Jira is canonical at sync time, and re-pushing a stored
+     * answer would overwrite a committee edit the sync just pulled in.
+     */
+    retryPendingStatusFlips(): Promise<void>
 
     /**
      * Committee-owned logistics (bump-in/out, equipment, parking) keyed by
@@ -73,8 +92,17 @@ export interface SponsorSyncService {
 
     /**
      * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
-     * portal's values win. Best-effort like the other pushes — never blocks
-     * the sponsor's save.
+     * portal's values win. Failures throw so the form can fail before
+     * updating D1.
+     *
+     * `submittedKeys` names the portal fields the sponsor actually submitted.
+     * A field they never answered is left untouched in Jira — the committee
+     * gathers most of this by email, and a blanket write would erase it. A
+     * field submitted empty *is* cleared, because that's a deliberate removal.
      */
-    pushLogistics(issueKey: string, logistics: Record<string, string>): Promise<void>
+    pushLogistics(
+        issueKey: string,
+        logistics: Record<string, string>,
+        submittedKeys: ReadonlySet<string>,
+    ): Promise<void>
 }

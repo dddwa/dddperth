@@ -51,13 +51,19 @@ describe('prefilledProfileFields', () => {
         })
     })
 
-    it("never lets a Jira value override what the sponsor saved", () => {
+    it('uses a submitted profile snapshot instead of stale Jira prefills', () => {
         const result = prefilledProfileFields({
-            profile: { blurb: 'Sponsor blurb', websiteUrl: 'https://sponsor.example.com', socials: {} },
+            profile: {
+                blurb: 'Sponsor blurb',
+                websiteUrl: 'https://sponsor.example.com',
+                socials: {},
+                detailsUpdatedAt: 1,
+            },
             jira,
         })
         expect(result.blurb).toBe('Sponsor blurb')
         expect(result.websiteUrl).toBe('https://sponsor.example.com')
+        expect(result.socials).toEqual({})
     })
 
     it('merges socials per platform rather than all-or-nothing', () => {
@@ -83,6 +89,15 @@ describe('prefilledProfileFields', () => {
             jira,
         })
         expect(result.socials.linkedin).toBe('https://linkedin.com/company/sponsor')
+    })
+
+    it('shows Jira clears after the sync replaces a submitted profile', () => {
+        expect(
+            prefilledProfileFields({
+                profile: { socials: {}, detailsUpdatedAt: 2 },
+                jira,
+            }),
+        ).toEqual({ blurb: '', websiteUrl: '', socials: {} })
     })
 
     it('falls back to empty strings when neither side has anything', () => {

@@ -20,6 +20,15 @@ export interface SponsorRecord {
     jiraQuote?: string
     /** Social URL prefills from Jira, keyed by platform. Same rule as `jiraQuote`. */
     jiraSocials?: Record<string, string>
+    /**
+     * Logistics prefills from Jira, keyed by portal field name — what the
+     * committee gathered by email before the sponsor opened the form. Same
+     * rule as `jiraQuote`, but authority flips wholesale on the profile's
+     * `logisticsUpdatedAt` rather than per field.
+     */
+    jiraLogistics?: Record<string, string>
+    /** Committee-assigned room, for room sponsors. Synced from Jira. */
+    exhibitorRoom?: string
     jiraStatus?: string
     active: boolean
     assetsTaskFlippedAt?: number
@@ -40,6 +49,10 @@ export interface SponsorProfile {
     websiteUrl?: string
     /** Platform → URL, e.g. { twitter: "https://…", linkedin: "https://…" }. */
     socials: Record<string, string>
+    /** Set after the sponsor has submitted the profile form. Before this,
+     * Jira values are display-only prefills; afterwards each Jira sync copies
+     * the canonical Jira values back into these fields. */
+    detailsUpdatedAt?: number
     /**
      * Sponsor-supplied logistics keyed by `LOGISTICS_KEYS` (bump-in, equipment,
      * raffle, screens, induction). Sponsor-owned like the rest of the profile:
@@ -68,6 +81,13 @@ export interface SponsorSyncPlan {
         jiraStatus?: string
         quote?: string
         socials?: Record<string, string>
+        logistics?: Record<string, string>
+        /** Every Jira-backed logistics key, including fields currently blank
+         * in Jira. Needed so a Jira-side clear removes the portal copy. */
+        logisticsKeys?: string[]
+        /** Jira-backed detail keys: blurb, websiteUrl and social_<platform>. */
+        detailsKeys?: string[]
+        exhibitorRoom?: string
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>

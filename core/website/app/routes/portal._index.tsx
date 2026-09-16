@@ -8,7 +8,13 @@ import { SponsorProgressList } from '~/components/sponsor-progress-list'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseMeetTheExpertsForm } from '~/lib/speakers/profile-form.server'
 import { logisticsVisibility } from '~/lib/sponsors/logistics'
-import { allRequiredComplete, nextIncompleteSection, splitJiraOptions, sponsorProgress } from '~/lib/sponsors/progress'
+import {
+    allRequiredComplete,
+    nextIncompleteSection,
+    splitJiraOptions,
+    sponsorProgress,
+    stripTierSuffix,
+} from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/portal._index'
@@ -168,7 +174,7 @@ export default function PortalDashboard() {
                                 {splitJiraOptions(deliverables.assetsRequired).map((asset) => (
                                     <Flex key={asset} align="center" gap="3" p="3" borderRadius="md" bg="admin.100">
                                         <styled.span fontSize="sm" color="admin.900">
-                                            {asset}
+                                            {stripTierSuffix(asset)}
                                         </styled.span>
                                     </Flex>
                                 ))}
@@ -197,6 +203,22 @@ export default function PortalDashboard() {
                             Upload your assets
                         </AppLink>
                     )}
+                </AdminCard>
+            )}
+
+            {/* Room sponsors only, and only once the committee has actually
+                chosen — an unassigned value reads back as undefined, so this
+                stays hidden rather than naming a room nobody decided on. */}
+            {deliverables.exhibitorRoom && (
+                <AdminCard>
+                    <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
+                        Your room
+                    </styled.h2>
+                    <styled.p fontSize="sm" color="admin.600">
+                        Your sponsorship covers{' '}
+                        <styled.strong fontWeight="semibold">{deliverables.exhibitorRoom}</styled.strong>. We'll have
+                        your branding in the room on the day.
+                    </styled.p>
                 </AdminCard>
             )}
 

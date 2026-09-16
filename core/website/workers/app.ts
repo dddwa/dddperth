@@ -74,7 +74,7 @@ export default {
             ctx.waitUntil(
                 services.sponsorSync
                     .syncNow('cron')
-                    .then(() => services.sponsorSync.retryPendingWritebacks())
+                    .then(() => services.sponsorSync.retryPendingStatusFlips())
                     .catch((error) => console.error('Scheduled sponsor sync failed:', error)),
             )
         } else {

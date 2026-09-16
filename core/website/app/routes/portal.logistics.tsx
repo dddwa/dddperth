@@ -16,8 +16,12 @@ import {
     RAFFLE_LOCATIONS,
     SCREEN_OPTIONS,
     optionsIncludingStored,
+    prefilledLogistics,
+    readSubmittedLogistics,
+    visibleLogisticsKeys,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
+import { JiraFieldRejectedError } from '~/lib/sponsors/jira-client.server'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
@@ -47,7 +51,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return {
         tier: sponsor.tier,
         visibility,
-        logistics: profile?.logistics ?? {},
+        // Display-only: nothing here is written back to D1 until the sponsor
+        // saves, so an unvisited form leaves both sides untouched.
+        logistics: prefilledLogistics({ profile, jiraLogistics: sponsor.jiraLogistics }),
         nextSection: nextIncompleteSection(sections) ?? null,
     }
 }
@@ -58,13 +64,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
 
-    // Checkbox groups post as `field[]` repeated; collapse each into the
-    // comma-separated string the schema and Jira write-back expect.
-    for (const name of ['parking', 'screenOrders'] as const) {
-        const values = formData.getAll(`${name}[]`).filter((value): value is string => typeof value === 'string')
-        formData.delete(`${name}[]`)
-        formData.set(name, values.join(', '))
-    }
+    // Collapses the checkbox groups and captures which fields the sponsor
+    // submitted — necessarily *before* the schema runs, which erases the
+    // difference between a cleared field and an absent one. See
+    // `readSubmittedLogistics` for why both halves matter.
+    const visibility = logisticsVisibility(mappedTier(sponsor.tier))
+    const submittedKeys = readSubmittedLogistics(formData)
 
     const parsed = parseFormData(logisticsSchema, formData)
     if (!parsed.ok) {
@@ -73,7 +78,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     // Re-derive visibility server-side: a tier change (or a hand-crafted
     // POST) must not write exhibition answers for a sponsor without a booth.
-    const visible = filterByVisibility(parsed.data, logisticsVisibility(mappedTier(sponsor.tier)))
+    const visible = filterByVisibility(parsed.data, visibility)
 
     const logistics: Record<string, string> = {}
     for (const key of LOGISTICS_KEYS) {
@@ -81,10 +86,23 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (typeof value === 'string' && value !== '') logistics[key] = value
     }
 
+    // Same server-side re-derivation for the submitted set: a crafted POST
+    // naming a hidden section's field must not clear it in Jira either.
+    const seeable = visibleLogisticsKeys(visibility)
+    const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
+
+    // Jira first: if it rejects the save, nothing is written to D1, so the
+    // sponsor sees a real error instead of a green banner over a lost answer.
+    try {
+        await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
+    } catch (error) {
+        const message =
+            error instanceof JiraFieldRejectedError
+                ? `Your changes were not saved. ${error.message}. Please correct the answer and try again.`
+                : 'Jira could not save your changes. Nothing was saved. Please try again or contact the sponsorship team.'
+        return data({ error: message }, { status: 502 })
+    }
     await services.sponsors.saveLogistics(sponsor.issueKey, logistics, user.email)
-    // Sponsor-owned, so the portal's values win in Jira. Best-effort: the
-    // sponsor's save must not fail because Jira is down.
-    await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics)
     // Logistics answers are what drive the exhibition, raffle and induction
     // statuses (and the social one, via the social quote).
     await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
@@ -210,6 +228,12 @@ function CheckboxGroup({
                         {hint}
                     </styled.p>
                 )}
+                {/* An all-unticked group posts no `name[]` at all, which is
+                    indistinguishable from a form that never showed the group.
+                    This marker says "the sponsor saw this and chose nothing",
+                    so unticking everything clears Jira while an unrelated save
+                    leaves the committee's answer alone. */}
+                <input type="hidden" name={`${name}__present`} value="1" />
                 <Box display="grid" gap="1.5" mt="2">
                     {optionsIncludingStored(options, [...selected]).map((option) => (
                         <styled.label key={option} display="flex" gap="2" alignItems="center" fontSize="sm">
@@ -289,6 +313,7 @@ export default function PortalLogistics() {
 
     const errors = actionData && 'fieldErrors' in actionData ? actionData.fieldErrors : {}
     const saved = actionData && 'saved' in actionData
+    const saveError = actionData && 'error' in actionData ? actionData.error : null
     const savedNextSection = actionData && 'nextSection' in actionData ? actionData.nextSection : nextSection
     const value = (key: keyof LogisticsFields) => logistics[key] ?? ''
 
@@ -304,6 +329,11 @@ export default function PortalLogistics() {
                 </styled.p>
 
                 {saved && <PortalSavedBanner message="Saved — thank you!" next={savedNextSection} />}
+                {saveError && (
+                    <Box mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                        {saveError}
+                    </Box>
+                )}
 
                 <Form method="post">
                     {visibility.exhibition && (
@@ -457,12 +487,6 @@ export default function PortalLogistics() {
                                         errors={errors}
                                     />
                                 </Grid>
-                                <LongText
-                                    name="screenNotes"
-                                    label="Screen ordering notes"
-                                    value={value('screenNotes')}
-                                    errors={errors}
-                                />
                             </Box>
                         </>
                     )}

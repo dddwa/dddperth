@@ -1,13 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
-import {
-    dropzoneClass,
-    FieldError,
-    fieldLabelClass,
-    inputClass,
-    PrimaryButton,
-} from '~/components/portal-form'
+import { dropzoneClass, FieldError, fieldLabelClass, inputClass, PrimaryButton } from '~/components/portal-form'
 import { PortalSavedBanner } from '~/components/portal-saved-banner'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
@@ -112,17 +106,29 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ intent: 'save-details' as const, fieldErrors: parsed.fieldErrors }, { status: 400 })
         }
 
-        await services.sponsors.saveDetails(
-            sponsor.issueKey,
-            {
-                blurb: parsed.data.blurb,
-                websiteUrl: parsed.data.websiteUrl,
-                socials: socialsFromForm(parsed.data),
-            },
-            user.email,
-        )
-        // Sponsor-owned data flows into Jira on every save (portal wins).
-        await services.sponsorSync.pushSponsorOwnedData(sponsor.issueKey, 'details')
+        const details = {
+            blurb: parsed.data.blurb,
+            websiteUrl: parsed.data.websiteUrl,
+            socials: socialsFromForm(parsed.data),
+        }
+        // Jira first: on failure nothing reaches D1, so the sponsor is told
+        // rather than shown a success banner over a lost answer.
+        try {
+            await services.sponsorSync.pushSponsorDetails(sponsor.issueKey, details)
+        } catch (error) {
+            console.error(
+                `Sponsor profile: Jira write-back for ${sponsor.issueKey} failed:`,
+                error instanceof Error ? error.message : error,
+            )
+            return data(
+                {
+                    intent: 'save-details' as const,
+                    error: 'Jira is unavailable, so your changes were not saved. Please try again.',
+                },
+                { status: 502 },
+            )
+        }
+        await services.sponsors.saveDetails(sponsor.issueKey, details, user.email)
         await recordCompletionIfReady(services, sponsor)
         await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
         return data({
@@ -156,7 +162,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             user.email,
         )
         // Re-attaches the new logo in Jira when this is a post-completion change.
-        await services.sponsorSync.pushSponsorOwnedData(sponsor.issueKey, 'logo')
+        await services.sponsorSync.attachUpdatedLogo(sponsor.issueKey)
         await recordCompletionIfReady(services, sponsor)
         await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
         return data({
@@ -179,6 +185,7 @@ export default function PortalProfile() {
     const fieldErrors =
         actionData?.intent === 'save-details' && 'fieldErrors' in actionData ? actionData.fieldErrors : {}
     const detailsSaved = actionData?.intent === 'save-details' && 'saved' in actionData
+    const detailsError = actionData?.intent === 'save-details' && 'error' in actionData ? actionData.error : null
     const logoSaved = actionData?.intent === 'upload-logo' && 'saved' in actionData
     // The action recomputes this after writing, so it reflects the save the
     // sponsor just made rather than the loader's pre-save snapshot.
@@ -273,6 +280,11 @@ export default function PortalProfile() {
                 </styled.p>
 
                 {detailsSaved && <PortalSavedBanner message="Details saved." next={savedNextSection} />}
+                {detailsError && (
+                    <Box mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                        {detailsError}
+                    </Box>
+                )}
 
                 <Form method="post">
                     <input type="hidden" name="_action" value="save-details" />

@@ -110,9 +110,11 @@ export const logisticsSchema = z.object({
     loadingDockAssistance: optionalText(500),
     porterAssistance: optionalText(500),
     parking: optionalText(200),
-    // Screens
+    // Screens. "Screen ordering notes" (customfield_10163) is deliberately
+    // absent: it's the committee's own running note ("informed PAV - 23/8"),
+    // not something the sponsor supplies. Collecting it here would both show
+    // sponsors internal shorthand and let a portal save overwrite it.
     screenOrders: optionalText(500),
-    screenNotes: optionalText(1000),
     screenInvoicingEmail: optionalEmail,
     // Raffle
     rafflePrize: optionalText(1000),
@@ -127,6 +129,84 @@ export type LogisticsFields = z.infer<typeof logisticsSchema>
 
 /** Field keys, so storage and write-back iterate one list. */
 export const LOGISTICS_KEYS = Object.keys(logisticsSchema.shape) as Array<keyof LogisticsFields>
+
+/**
+ * What the logistics form starts out showing.
+ *
+ * The sponsorship team gathers bump-in times, screen orders and raffle prizes
+ * by email long before a sponsor opens the portal, and files them on the Jira
+ * issue. Until this existed the form read only the sponsor's own answers, so
+ * they saw empty fields and their first save overwrote the lot.
+ *
+ * Only relevant *before* the sponsor's first submission, where it fills the
+ * form from Jira. Afterwards `sponsor_profiles` already holds a copy that each
+ * sync refreshes from Jira, so the stored answers are returned untouched —
+ * reaching for `jiraLogistics` there could resurrect a field the sponsor
+ * cleared moments ago, using a snapshot up to an hour old.
+ */
+export function prefilledLogistics(args: {
+    /** The sponsor's own answers, and whether they have ever submitted. */
+    profile: { logistics?: Record<string, string>; logisticsUpdatedAt?: number } | null
+    /** Committee-entered values synced from Jira onto the sponsor record. */
+    jiraLogistics: Record<string, string> | undefined
+}): Record<string, string> {
+    const { profile, jiraLogistics } = args
+    const own = profile?.logistics ?? {}
+    if (profile?.logisticsUpdatedAt !== undefined) return own
+    return { ...(jiraLogistics ?? {}), ...own }
+}
+
+/** Checkbox groups post as `name[]` repeated, so the action collapses each
+ * into the comma-joined string the schema and Jira write-back expect. */
+export const CHECKBOX_GROUP_KEYS = ['parking', 'screenOrders'] as const
+
+/**
+ * Collapses the checkbox groups and works out which fields the sponsor
+ * actually submitted — the distinction Jira needs, and the one the form data
+ * nearly loses twice over.
+ *
+ * `logisticsSchema` preprocesses `''` to `undefined`, so after parsing a
+ * cleared field and an absent one are identical. And a checkbox group with
+ * nothing ticked posts no `name[]` entries at all, so it looks absent even
+ * when the sponsor deliberately unticked everything — hence the hidden
+ * `name__present` marker the form renders alongside each group.
+ *
+ * Getting this wrong is not hypothetical in either direction: collapsing the
+ * groups unconditionally made *every* save look like it cleared both, so a
+ * sponsor saving their raffle prize wiped the screen order the committee had
+ * collected by email. Extracted from the route so tests exercise the real
+ * derivation rather than a hand-kept copy of it — the copy is what let that
+ * bug through.
+ */
+export function readSubmittedLogistics(formData: {
+    has(key: string): boolean
+    getAll(key: string): unknown[]
+    delete(key: string): void
+    set(key: string, value: string): void
+}): Set<string> {
+    for (const name of CHECKBOX_GROUP_KEYS) {
+        if (!formData.has(`${name}[]`) && !formData.has(`${name}__present`)) continue
+        const values = formData.getAll(`${name}[]`).filter((value): value is string => typeof value === 'string')
+        formData.delete(`${name}[]`)
+        formData.delete(`${name}__present`)
+        formData.set(name, values.join(', '))
+    }
+
+    return new Set(LOGISTICS_KEYS.filter((key) => formData.has(key)))
+}
+
+/**
+ * The portal field names a sponsor with this visibility can actually see.
+ *
+ * Used to narrow the submitted-key set before it reaches Jira: a crafted POST
+ * naming a hidden section's field must not clear that field in Jira any more
+ * than it may write one.
+ */
+export function visibleLogisticsKeys(visibility: LogisticsVisibility): Set<string> {
+    const probe: LogisticsFields = Object.fromEntries(LOGISTICS_KEYS.map((key) => [key, 'x']))
+    const kept = filterByVisibility(probe, visibility)
+    return new Set(LOGISTICS_KEYS.filter((key) => kept[key] !== undefined))
+}
 
 /** Drops answers for hidden sections, so a tier change or crafted POST can't
  * write exhibition data for a sponsor without a booth. */
@@ -147,7 +227,7 @@ export function filterByVisibility(fields: LogisticsFields, visibility: Logistic
         'parking',
         'additionalNotes',
     ]
-    const screenKeys: Array<keyof LogisticsFields> = ['screenOrders', 'screenNotes', 'screenInvoicingEmail']
+    const screenKeys: Array<keyof LogisticsFields> = ['screenOrders', 'screenInvoicingEmail']
     const raffleKeys: Array<keyof LogisticsFields> = ['rafflePrize', 'raffleLocation']
 
     const result: LogisticsFields = { ...fields }
