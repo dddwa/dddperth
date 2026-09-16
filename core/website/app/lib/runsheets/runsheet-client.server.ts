@@ -1,90 +1,51 @@
+import type { RunsheetsConfig } from '@ddd/conference-config'
 import { z } from 'zod'
 
 /**
- * Reads the volunteer run sheet out of Jira for the public `/runsheets` page.
+ * Reads a volunteer run sheet out of Jira for the public `/runsheets` page.
+ *
+ * Everything site-specific — the Jira base URL, the JQL, the custom field ids
+ * and the team/location label vocabulary — is fork config, passed in as
+ * `RunsheetsConfig`. This module is only the mechanism.
  *
  * The page is anonymous, so everything here runs on behalf of committee
- * credentials for a caller we know nothing about. Two consequences shape this
- * module:
+ * credentials for a caller we know nothing about. Two consequences shape it:
  *
  * - **Nothing from the URL reaches JQL as text.** The filter is parsed into a
- *   closed set of known labels first (see `parseRunsheetFilter`); an unknown
- *   value becomes `null` and the query runs unfiltered rather than embedding
- *   whatever was in the path.
+ *   closed set of configured labels first (see `parseRunsheetFilter`); an
+ *   unknown value becomes `null` and the query runs unfiltered rather than
+ *   embedding whatever was in the path.
  * - **Responses are cached.** Without it, every page load costs two
  *   authenticated Jira calls, so a busy conference morning could exhaust the
  *   API budget on the one day the run sheet has to work.
  */
 
-const JIRA_BASE = 'https://dddperth.atlassian.net'
-
-/** Jira "Volunteer Team" label -> display name. */
-export const TEAM_LABELS: Record<string, string> = {
-    'team-1': 'Team 1',
-    'team-2': 'Team 2',
-    'team-3': 'Team 3',
-    'team-4': 'Team 4',
-    'team-5': 'Team 5',
-    'team-6': 'Team 6',
-    'team-7': 'Team 7',
-    'team-photographers': 'Photographers',
-    'team-Sat-Bump-Out': 'Bump Out',
-}
-
-/** Jira "Location" label -> display name. */
-export const LOCATION_LABELS: Record<string, string> = {
-    'loc-black-swan-room': 'Black Swan Room',
-    'loc-champions-terrace': 'Champions Terrace',
-    'loc-cygnet-room': 'Cygnet Room',
-    'loc-help-desk': 'Help Desk Level 3',
-    'loc-L2-Lobby': 'Lobby Level 2',
-    'loc-L3-lobby': 'Lobby Level 3',
-    'loc-platinum-terrace': 'Platinum Terrace',
-    'loc-premiership-terrace': 'Premiership Terrace',
-    'loc-registration-area': 'Registration Area',
-    'loc-river-view-room-1': 'River View Room 1',
-    'loc-river-view-room-2': 'River View Room 2',
-    'loc-river-view-room-3': 'River View Room 3',
-    'loc-sports-lounge': 'Sports Lounge',
-}
-
-/**
- * Custom field ids on the VOL project's "Run Sheet Item" type. Jira's REST API
- * only speaks these ids, so they are named once here rather than at each use.
- */
-const FIELDS = {
-    roleInstructions: 'customfield_10131',
-    team: 'customfield_10132',
-    endTime: 'customfield_10133',
-    startTime: 'customfield_10134',
-    location: 'customfield_10135',
-    timeBracket: 'customfield_10136',
-} as const
-
 /**
  * Only the fields the page renders. Jira returns far more per issue —
  * including reporter and assignee details — and this response is serialised
- * to an anonymous client, so the schema is the boundary that keeps the rest
- * of it off the page. `.strip()` (Zod's default) drops anything unlisted.
+ * to an anonymous client, so this schema is the boundary that keeps the rest
+ * of it off the page. Built per-request because the field ids are config.
+ *
+ * `z.looseObject` on `fields` keeps the configured custom field ids (which
+ * aren't known statically) while the explicit entries below pin the ones the
+ * page actually reads.
  */
-const issueSchema = z.object({
-    id: z.string(),
-    fields: z.object({
-        summary: z.string(),
-        [FIELDS.roleInstructions]: z.string().nullable(),
-        [FIELDS.team]: z.array(z.string()).nullable(),
-        [FIELDS.endTime]: z.string().nullable(),
-        [FIELDS.startTime]: z.string().nullable(),
-        [FIELDS.location]: z.array(z.string()).nullable(),
-    }),
-})
+function buildBulkResponseSchema(fields: RunsheetsConfig['jira']['fields']) {
+    // The custom field ids are config, so they can't be named as static keys.
+    // `summary` is, and is declared separately from the catch-all so it keeps
+    // its `string` type rather than widening to the record's value union.
+    const issueSchema = z.object({
+        id: z.string(),
+        fields: z.intersection(
+            z.object({ summary: z.string() }),
+            z.record(z.string(), z.union([z.string(), z.array(z.string())]).nullable().optional()),
+        ),
+    })
+    return z.object({ issues: z.array(issueSchema) })
+}
 
 const searchResponseSchema = z.object({
     issues: z.array(z.object({ id: z.string() })),
-})
-
-const bulkResponseSchema = z.object({
-    issues: z.array(issueSchema),
 })
 
 /** One run sheet row, already mapped to display values. */
@@ -97,7 +58,7 @@ export interface RunsheetItem {
     /** Display names, falling back to the raw label when unmapped. */
     locations: string[]
     teams: string[]
-    /** Confluence URL for role instructions. Publicly shared, so safe to render. */
+    /** Role instructions URL. Publicly shared, so safe to render. */
     roleInstructionsUrl: string | null
 }
 
@@ -108,11 +69,14 @@ export type RunsheetFilter = { kind: 'team' | 'location'; value: string }
  *
  * This is the trust boundary for the page: the param is attacker-controlled,
  * and its value is the only thing that varies the JQL. Anything that isn't
- * `team.<known-label>` or `location.<known-label>` returns null, so an
- * unrecognised filter renders the unfiltered run sheet instead of reaching
+ * `team.<configured-label>` or `location.<configured-label>` returns null, so
+ * an unrecognised filter renders the unfiltered run sheet instead of reaching
  * the query.
  */
-export function parseRunsheetFilter(filter: string | undefined): RunsheetFilter | null {
+export function parseRunsheetFilter(
+    filter: string | undefined,
+    config: Pick<RunsheetsConfig, 'teamLabels' | 'locationLabels'>,
+): RunsheetFilter | null {
     if (!filter) return null
 
     const separator = filter.indexOf('.')
@@ -121,31 +85,31 @@ export function parseRunsheetFilter(filter: string | undefined): RunsheetFilter 
     const kind = filter.slice(0, separator)
     const value = filter.slice(separator + 1)
 
-    if (kind === 'team' && Object.hasOwn(TEAM_LABELS, value)) {
+    if (kind === 'team' && Object.hasOwn(config.teamLabels, value)) {
         return { kind, value }
     }
-    if (kind === 'location' && Object.hasOwn(LOCATION_LABELS, value)) {
+    if (kind === 'location' && Object.hasOwn(config.locationLabels, value)) {
         return { kind, value }
     }
     return null
 }
 
 /**
- * Builds the JQL for the run sheet.
+ * Appends the filter clause to the fork's configured JQL.
  *
  * `filter.value` is interpolated, but only ever after `parseRunsheetFilter`
- * has matched it against `TEAM_LABELS`/`LOCATION_LABELS` — it is one of a
- * fixed set of literals, never caller text. Callers must not pass a filter
- * built any other way.
+ * has matched it against the configured label maps — it is one of a fixed set
+ * of literals, never caller text. Callers must not pass a filter built any
+ * other way.
  */
-function buildJql(filter: RunsheetFilter | null): string {
-    let jql = 'project = VOL AND type = "Run Sheet Item" AND "Time Bracket[Dropdown]" = "Saturday Conference"'
+function buildJql(baseJql: string, filter: RunsheetFilter | null): string {
     if (filter?.kind === 'team') {
-        jql += ` AND "Volunteer Team[Labels]" = ${filter.value}`
-    } else if (filter?.kind === 'location') {
-        jql += ` AND "Location[Labels]" = ${filter.value}`
+        return `${baseJql} AND "Volunteer Team[Labels]" = ${filter.value}`
     }
-    return jql
+    if (filter?.kind === 'location') {
+        return `${baseJql} AND "Location[Labels]" = ${filter.value}`
+    }
+    return baseJql
 }
 
 async function jiraFetch(
@@ -189,6 +153,7 @@ async function jiraFetch(
 }
 
 export interface FetchRunsheetOptions {
+    config: RunsheetsConfig
     authEmail: string
     authToken: string
     filter: RunsheetFilter | null
@@ -202,6 +167,7 @@ export interface FetchRunsheetOptions {
  * a team with nothing scheduled is a normal result, not an error.
  */
 export async function fetchRunsheet({
+    config,
     authEmail,
     authToken,
     filter,
@@ -211,9 +177,10 @@ export async function fetchRunsheet({
         throw new Error('Jira API credentials are not configured')
     }
     const authorization = `Basic ${btoa(`${authEmail}:${authToken}`)}`
+    const { baseUrl, fields } = config.jira
 
-    const searchUrl = new URL('/rest/api/3/search/jql', JIRA_BASE)
-    searchUrl.searchParams.set('jql', buildJql(filter))
+    const searchUrl = new URL('/rest/api/3/search/jql', baseUrl)
+    searchUrl.searchParams.set('jql', buildJql(config.jira.jql, filter))
     searchUrl.searchParams.set('maxResults', '150')
     searchUrl.searchParams.set('fields', 'id')
 
@@ -225,35 +192,41 @@ export async function fetchRunsheet({
     }
 
     const bulkBody = JSON.stringify({
-        fields: [FIELDS.startTime, FIELDS.endTime, FIELDS.location, FIELDS.team, FIELDS.roleInstructions, 'summary'],
+        fields: [fields.startTime, fields.endTime, fields.location, fields.team, fields.roleInstructions, 'summary'],
         fieldsByKeys: false,
         issueIdsOrKeys: issueIds,
         properties: [],
     })
 
     const bulkResponse = await jiraFetch(
-        new URL('/rest/api/3/issue/bulkfetch', JIRA_BASE).toString(),
+        new URL('/rest/api/3/issue/bulkfetch', baseUrl).toString(),
         authorization,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bulkBody },
         cacheTtlSeconds,
     )
 
-    const issues = bulkResponseSchema.parse(bulkResponse).issues
+    const issues = buildBulkResponseSchema(fields).parse(bulkResponse).issues
 
     return issues
-        .map(
-            (issue): RunsheetItem => ({
+        .map((issue): RunsheetItem => {
+            // Field ids are config, so these come back as `unknown` from the
+            // loose schema — narrow each to the shape the page renders.
+            const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null)
+            const asLabels = (value: unknown): string[] =>
+                Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
+
+            return {
                 id: issue.id,
                 summary: issue.fields.summary,
-                startTime: issue.fields[FIELDS.startTime],
-                endTime: issue.fields[FIELDS.endTime],
-                locations: (issue.fields[FIELDS.location] ?? []).map(
-                    (label) => LOCATION_LABELS[label] ?? label,
+                startTime: asString(issue.fields[fields.startTime]),
+                endTime: asString(issue.fields[fields.endTime]),
+                locations: asLabels(issue.fields[fields.location]).map(
+                    (label) => config.locationLabels[label] ?? label,
                 ),
-                teams: (issue.fields[FIELDS.team] ?? []).map((label) => TEAM_LABELS[label] ?? label),
-                roleInstructionsUrl: issue.fields[FIELDS.roleInstructions],
-            }),
-        )
+                teams: asLabels(issue.fields[fields.team]).map((label) => config.teamLabels[label] ?? label),
+                roleInstructionsUrl: asString(issue.fields[fields.roleInstructions]),
+            }
+        })
         .sort((a, b) => {
             // Items with no start time sort last rather than disappearing.
             if (a.startTime === null && b.startTime === null) return 0

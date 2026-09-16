@@ -511,6 +511,56 @@ export interface MeetTheExpertsConfig {
  * The fork's /conference/manifest.ts exports an object of this shape as
  * `conferenceManifest`.
  */
+/**
+ * Jira wiring for the public volunteer run sheet. Like the sponsor portal's
+ * config, every value here is fork-owned: the Jira site, the project, the
+ * custom field ids and the committee's label vocabulary all differ per fork,
+ * so none of it can live in core. Credentials are NOT here; they're host
+ * secrets (wrangler `JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
+ */
+export interface RunsheetsJiraConfig {
+    /** Jira site, e.g. "https://dddperth.atlassian.net" */
+    baseUrl: string
+    /**
+     * JQL selecting the run sheet items to display. Written out in full
+     * rather than assembled from parts, because which issue type, time
+     * bracket or board convention marks "the run sheet" is a committee
+     * decision, not something core should presume.
+     */
+    jql: string
+    /** Custom field ids on the run sheet issue type. */
+    fields: {
+        /** Datetime field for when the item starts. */
+        startTime: string
+        /** Datetime field for when the item ends. */
+        endTime: string
+        /** Labels field naming the location(s) the item happens at. */
+        location: string
+        /** Labels field naming the volunteer team(s) responsible. */
+        team: string
+        /** URL field linking to the role instructions (a Confluence page here). */
+        roleInstructions: string
+    }
+}
+
+/**
+ * The public volunteer run sheet at /runsheets. Omit for forks without a
+ * volunteer Jira board — the route returns 404 then.
+ *
+ * The page is deliberately anonymous, so the label maps below are also the
+ * page's allowlist: the `$filter` path segment is only ever matched against
+ * these keys, and anything else is rejected rather than reaching the JQL.
+ * A label missing from these maps is still *displayed* (it falls back to the
+ * raw Jira label) — it just can't be filtered on.
+ */
+export interface RunsheetsConfig {
+    jira: RunsheetsJiraConfig
+    /** Jira "Volunteer Team" label -> display name, e.g. `'team-1': 'Team 1'`. */
+    teamLabels: Record<string, string>
+    /** Jira "Location" label -> display name, e.g. `'loc-cygnet-room': 'Cygnet Room'`. */
+    locationLabels: Record<string, string>
+}
+
 export interface ConferenceManifest {
     public: ConferenceConfigPublic
     socials: Socials
@@ -522,6 +572,8 @@ export interface ConferenceManifest {
     homepage?: HomepageContentSlots
     /** Mobile app config. Omit for forks without an app — /app returns 404 then. */
     mobileApp?: MobileApp
+    /** Public volunteer run sheet. Omit for forks without one — /runsheets returns 404 then. */
+    runsheets?: RunsheetsConfig
     /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
     sponsorPortal?: SponsorPortalConfig
     /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */

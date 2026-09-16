@@ -6,12 +6,7 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
-import {
-    fetchRunsheet,
-    LOCATION_LABELS,
-    parseRunsheetFilter,
-    TEAM_LABELS,
-} from '~/lib/runsheets/runsheet-client.server'
+import { fetchRunsheet, parseRunsheetFilter } from '~/lib/runsheets/runsheet-client.server'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -37,11 +32,16 @@ const CACHE_TTL_CONFERENCE_DAY_SECONDS = 5 * 60
 const CACHE_TTL_DEFAULT_SECONDS = 30 * 60
 
 export async function action({ request }: Route.ActionArgs) {
+    const config = conferenceManifest.runsheets
+    if (!config) {
+        throw new Response('Not Found', { status: 404 })
+    }
+
     const formData = await request.formData()
     const filter = formData.get('filter')
     // Only ever redirect to a filter we recognise — the value arrives from a
     // form post and lands in the URL.
-    const parsed = parseRunsheetFilter(typeof filter === 'string' ? filter : undefined)
+    const parsed = parseRunsheetFilter(typeof filter === 'string' ? filter : undefined, config)
     if (parsed) {
         return redirect(`/runsheets/${parsed.kind}.${parsed.value}`)
     }
@@ -49,13 +49,19 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ params, context }: Route.LoaderArgs) {
-    const filter = parseRunsheetFilter(params.filter)
+    const config = conferenceManifest.runsheets
+    if (!config) {
+        throw new Response('Not Found', { status: 404 })
+    }
+
+    const filter = parseRunsheetFilter(params.filter, config)
     const { jiraAuth } = getServices(context)
 
     const isConferenceDay = getConferenceState(context).conferenceState === 'conference-day'
     const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
 
     const items = await fetchRunsheet({
+        config,
         authEmail: jiraAuth.authEmail,
         authToken: jiraAuth.authToken,
         filter,
@@ -63,8 +69,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     })
 
     const options = [
-        ...Object.entries(TEAM_LABELS).map(([key, label]) => ({ value: `team.${key}`, label })),
-        ...Object.entries(LOCATION_LABELS).map(([key, label]) => ({ value: `location.${key}`, label })),
+        ...Object.entries(config.teamLabels).map(([key, label]) => ({ value: `team.${key}`, label })),
+        ...Object.entries(config.locationLabels).map(([key, label]) => ({ value: `location.${key}`, label })),
     ]
 
     return data(
