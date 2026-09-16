@@ -238,7 +238,8 @@ Each piece of sponsor data has one owner, which resolves every "who wins" questi
 |---|---|---|
 | Tier, contact emails, company name | Committee (Jira) | Jira → portal on sync; read-only for sponsors |
 | Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's. Jira → portal as a **prefill** until the sponsor saves their own — see below |
-| Logistics (bump-in/out, equipment, screens, raffle, induction) | Sponsor (portal) | Portal → Jira on every save; read back for the exhibitor export |
+| Logistics (bump-in/out, equipment, screens, raffle, induction) | Sponsor (portal) | Portal → Jira on save, but **only for fields the sponsor submitted**; Jira → portal as a prefill until their first submission; read back for the exhibitor export |
+| Screen ordering notes (`customfield_10163`) | Committee (Jira) | Never touched by the portal — deliberately unmapped |
 | The six `… Status` fields | Committee (Jira) | Committee-managed; the portal only advances Asset Creation Status on completion |
 
 **How to tell which is which:** Jira's status options say so. Every workstream whose default
@@ -273,6 +274,18 @@ equipment, loading dock, induction attendees, Optus screen orders, raffle prize 
 quote. Field ids live in `conference/config/sponsor-portal.ts` under `fields.logistics`; omit the
 block entirely and the page still works, it just pushes nothing.
 
+**Prefilled from Jira until the sponsor's first submission.** The committee collects most of this
+by email long before a sponsor opens the portal, so the form falls back to whatever is on the Jira
+issue (`prefilledLogistics()`). Authority flips **wholesale** on `logisticsUpdatedAt` — the same
+boundary `buildExhibitorSource` uses for the venue spreadsheet, reused deliberately so the form and
+the export can't disagree about who owns an answer. Per-field merging would be wrong here: a field
+the sponsor deliberately cleared would be re-populated from a stale Jira value on the next load.
+
+**"Screen ordering notes" (`customfield_10163`) is deliberately unmapped.** It's the committee's
+own running note ("informed PAV - 23/8"), not something the sponsor supplies. It has no schema key,
+no form field and no config mapping — and an unmapped field can never be written by a portal save.
+If you ever want sponsors to see it, all three have to come back together.
+
 - **Tier-gated.** Exhibition, screens and induction show only for tiers in `BOOTH_TIERS`
   (`app/lib/sponsors/logistics.ts`) — currently platinum, gold, room and community. Community is
   included because those sponsorships are often in-kind (lighting, AV) and still bump equipment
@@ -281,6 +294,19 @@ block entirely and the page still works, it just pushes nothing.
   never sees bump-in has no way to tell us when they're arriving.
 - Visibility is re-derived server-side in the action, so a tier change (or a hand-crafted POST)
   can't write exhibition answers against a sponsor without a booth.
+- **The write-back only touches fields the sponsor actually submitted.** `pushLogistics` takes a
+  `submittedKeys` set alongside the values, so three states stay distinct (`buildLogisticsPayload`):
+  a field **never answered** is omitted from the payload entirely and Jira keeps the committee's
+  value; a field **submitted empty** is cleared, because that's a deliberate removal; an
+  **answered** field is set. Getting this wrong is not theoretical — the push used to loop over
+  every mapped field and plan `undefined` as a clear, so a sponsor's first save wiped every
+  logistics value the committee had gathered but the sponsor hadn't retyped.
+  - The key set is captured from `FormData` **before** the schema runs: `logisticsSchema`
+    preprocesses `''` to `undefined`, which collapses "cleared" and "never answered" into one
+    state. It's then narrowed by `visibleLogisticsKeys()`, so a crafted POST naming a hidden
+    section's field can't clear it in Jira any more than it can write one.
+  - A retry (`retryPendingWritebacks`) has no originating form, so it passes the stored answers as
+    the submitted set — re-sending everything saved without clearing anything never answered.
 - **Write-back converts per field type.** These Jira fields are a mix of plain text,
   single-selects, multi-checkboxes and rich text, and Jira rejects a plain string for a select.
   `pushLogistics` reads the issue's `editmeta` and converts each value accordingly, matching
