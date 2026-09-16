@@ -35,6 +35,8 @@ export type {
     MeetTheExpertsSlotConfig,
     NavConfig,
     NavItem,
+    RunsheetsConfig,
+    RunsheetsJiraConfig,
     Socials,
     SpeakerDinnerConfig,
     SpeakerPortalChecklistConfig,
