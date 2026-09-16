@@ -1,42 +1,9 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { d1FromSqlite, migrate } from '../../sponsors/sponsor-portal-harness'
 import { computeSyncPlan, type SyncSourceSponsor } from '../../sponsors/sync-plan'
 import type { SponsorsStore } from '../sponsors-store'
 import { createD1SponsorsStore } from './d1-sponsors-store.server'
-
-/** Executes the store's real SQL against its real migrations. */
-function d1FromSqlite(sqlite: DatabaseSync): D1Database {
-    const statementApi = (sql: string, params: Array<string | number | null>) => ({
-        bind: (...args: Array<string | number | null>) => statementApi(sql, args),
-        first: <T>() => Promise.resolve((sqlite.prepare(sql).get(...params) ?? null) as T | null),
-        all: <T>() => Promise.resolve({ results: sqlite.prepare(sql).all(...params) as T[] }),
-        run: () => {
-            const result = sqlite.prepare(sql).run(...params)
-            return Promise.resolve({ meta: { changes: Number(result.changes) } })
-        },
-    })
-    return {
-        prepare: (sql: string) => statementApi(sql, []),
-        batch: async (statements: Array<ReturnType<typeof statementApi>>) => {
-            sqlite.exec('BEGIN')
-            try {
-                const results = []
-                for (const statement of statements) results.push(await statement.run())
-                sqlite.exec('COMMIT')
-                return results
-            } catch (error) {
-                sqlite.exec('ROLLBACK')
-                throw error
-            }
-        },
-    } as unknown as D1Database
-}
-
-function migrate(sqlite: DatabaseSync, name: string) {
-    sqlite.exec(readFileSync(join(import.meta.dirname, '../../../../migrations', name), 'utf8'))
-}
 
 describe('sponsor two-way sync (real SQL)', () => {
     let sqlite: DatabaseSync
