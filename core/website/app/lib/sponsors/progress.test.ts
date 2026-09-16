@@ -73,6 +73,39 @@ describe('sponsorProgress', () => {
         const sections = sponsorProgress(input({ profile: profile({ blurb: '   ', websiteUrl: '  ' }) }))
         expect(sections.find((s) => s.key === 'profile')).toMatchObject({ done: 0 })
     })
+
+    it('counts what the committee put in Jira, not just what the sponsor typed', () => {
+        // iCetana's shape: website, social quote and screen order all sat in
+        // Jira and all rendered on the forms, while the dashboard read
+        // "0 of 3" and "Not started" — progress was measured against the
+        // stored profile while the forms were measured against the prefill.
+        const sections = sponsorProgress(
+            input({
+                profile: null,
+                sponsor: {
+                    website: 'https://icetana.test',
+                    jiraLogistics: { socialQuote: 'As a Perth-born company…', screenOrders: '55" LCD ($500+GST)' },
+                },
+            }),
+        )
+
+        expect(sections.find((s) => s.key === 'profile')).toMatchObject({ done: 1, total: 3 })
+        expect(sections.find((s) => s.key === 'social')?.complete).toBe(true)
+        expect(sections.find((s) => s.key === 'screens')?.complete).toBe(true)
+    })
+
+    it('stops counting a Jira value once the sponsor has cleared it', () => {
+        // Authority flips on submission, so a stale Jira snapshot must not
+        // resurrect an answer the sponsor deliberately removed.
+        const sections = sponsorProgress(
+            input({
+                profile: profile({ logistics: {}, logisticsUpdatedAt: 2 }),
+                sponsor: { jiraLogistics: { rafflePrize: 'Keyboard' } },
+            }),
+        )
+
+        expect(sections.find((s) => s.key === 'raffle')?.complete).toBe(false)
+    })
 })
 
 describe('allRequiredComplete', () => {
@@ -143,6 +176,20 @@ describe('nextIncompleteSection', () => {
 })
 
 describe('statusFlipReadiness', () => {
+    it('is ready on a quote the committee collected, without the sponsor retyping it', () => {
+        // The half of this bug with teeth: iCetana's quote reached Jira in
+        // August, so the social status sat on "Quotes and Logos Pending
+        // (Sponsor)" waiting for a sponsor who had already answered.
+        const visibility = logisticsVisibility('gold')
+        const readiness = statusFlipReadiness({
+            profile: profile({ logo }),
+            sponsor: { jiraLogistics: { socialQuote: 'As a Perth-born company…' } },
+            visibility,
+        })
+
+        expect(readiness.social).toBe(true)
+    })
+
     const visibility = logisticsVisibility('gold')
 
     it('flips social only once there is both a logo and a social quote', () => {

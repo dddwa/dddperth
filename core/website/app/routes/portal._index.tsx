@@ -39,6 +39,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const slots = conferenceManifest.meetTheExperts?.slots ?? []
     const sections = sponsorProgress({
         profile,
+        sponsor,
         visibility: logisticsVisibility(mappedTier(sponsor.tier)),
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
         meetTheExpertsOffered: slots.length > 0,

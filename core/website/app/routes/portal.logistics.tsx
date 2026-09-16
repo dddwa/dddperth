@@ -43,6 +43,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const visibility = logisticsVisibility(mappedTier(sponsor.tier))
     const sections = sponsorProgress({
         profile,
+        sponsor,
         visibility,
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
         meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
@@ -114,6 +115,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const next = nextIncompleteSection(
         sponsorProgress({
             profile: savedProfile,
+            sponsor,
             visibility: logisticsVisibility(mappedTier(sponsor.tier)),
             meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
             meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,

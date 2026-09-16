@@ -28,14 +28,28 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         },
         year: conferenceManifest.sponsorPortal.year,
         conferenceName: conferenceManifest.public.name,
+        sponsorshipEmail: conferenceManifest.brand.sponsorshipEmail,
     }
+}
+
+/**
+ * A prefilled subject, not a bare address.
+ *
+ * The portal is new this year, so the sponsorship team should hear about
+ * anything that looks wrong — but an open-ended "email us" invites every
+ * sponsorship question into an inbox that can't tell them apart. Naming the
+ * portal in the subject keeps the ask scoped and the replies triageable.
+ */
+function supportMailto(email: string, companyName: string): string {
+    const subject = encodeURIComponent(`Sponsor portal issue — ${companyName}`)
+    return `mailto:${email}?subject=${subject}`
 }
 
 /** Not indexed: the sponsor portal is auth-gated and contains commercial data. */
 export const meta = noIndexMeta
 
 export default function PortalLayout() {
-    const { user, sponsor, year, conferenceName } = useLoaderData<typeof loader>()
+    const { user, sponsor, year, conferenceName, sponsorshipEmail } = useLoaderData<typeof loader>()
 
     return (
         <Box minH="screen" bg="admin.50">
@@ -99,6 +113,17 @@ export default function PortalLayout() {
             <styled.main p={{ base: '4', md: '8' }}>
                 <Outlet />
             </styled.main>
+            <styled.footer px={{ base: '4', md: '8' }} pb="8" textAlign="center" fontSize="sm" color="admin.600">
+                Got an issue with our new sponsorship portal?{' '}
+                <AppLink
+                    unstyled
+                    to={supportMailto(sponsorshipEmail, sponsor.companyName)}
+                    color="admin.900"
+                    textDecoration="underline"
+                >
+                    Email {sponsorshipEmail}
+                </AppLink>
+            </styled.footer>
         </Box>
     )
 }

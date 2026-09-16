@@ -307,7 +307,7 @@ export function createJiraSponsorSyncService(args: {
                 const sponsor = await sponsors.getSponsor(issueKey)
                 const profile = await sponsors.getProfile(issueKey)
                 const visibility = logisticsVisibility(portalConfig.jira.tierMap[sponsor?.tier ?? ''])
-                const readiness = statusFlipReadiness({ profile, visibility })
+                const readiness = statusFlipReadiness({ profile, sponsor, visibility })
 
                 // Each entry: the Jira field, the option to write, and the
                 // values the portal is allowed to overwrite. `undefined`

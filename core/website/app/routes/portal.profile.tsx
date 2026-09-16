@@ -35,6 +35,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // always pointed at whatever they still owe us.
     const sections = sponsorProgress({
         profile,
+        sponsor,
         visibility: logisticsVisibility(conferenceManifest.sponsorPortal?.jira.tierMap?.[sponsor.tier]),
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
         meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
@@ -85,6 +86,7 @@ async function nextSectionAfterSave(services: AppServices, sponsor: SponsorRecor
 
     const sections = sponsorProgress({
         profile,
+        sponsor,
         visibility: logisticsVisibility(conferenceManifest.sponsorPortal?.jira.tierMap?.[sponsor.tier]),
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
         meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
