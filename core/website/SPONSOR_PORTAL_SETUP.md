@@ -46,6 +46,12 @@ sync never runs.
   - Each workstream has its **own single-select status field** (assets, social, exhibition,
     raffle) rather than one multi-checkbox, because checkbox fields can't be filtered in JQL and
     the committee filters boards by where each sponsor is up to.
+- **Asset Upload URL** is where the committee pastes the sponsor's upload folder (SharePoint).
+  Filling it in reveals an "Upload your assets" button on that sponsor's dashboard; leaving it
+  empty hides the button, so it can be filled in per sponsor whenever the folder is ready.
+- **Website Blurb** and the per-platform social URL fields are sponsor-owned, but the committee
+  can fill them in from an emailed reply — the portal shows them as a prefill until the sponsor
+  saves their own. See *Prefilling the profile from Jira* below.
 
 Field/option ids live in `conference/config/sponsor-portal.ts`; update them if the Jira custom
 fields are ever recreated.
@@ -231,7 +237,7 @@ Each piece of sponsor data has one owner, which resolves every "who wins" questi
 | Data | Owner | Flow |
 |---|---|---|
 | Tier, contact emails, company name | Committee (Jira) | Jira → portal on sync; read-only for sponsors |
-| Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's |
+| Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's. Jira → portal as a **prefill** until the sponsor saves their own — see below |
 | Logistics (bump-in/out, equipment, screens, raffle, induction) | Sponsor (portal) | Portal → Jira on every save; read back for the exhibitor export |
 | The six `… Status` fields | Committee (Jira) | Committee-managed; the portal only advances Asset Creation Status on completion |
 
@@ -239,6 +245,26 @@ Each piece of sponsor data has one owner, which resolves every "who wins" questi
 option reads "… Pending **(Sponsor)**" — assets, social media, exhibition, raffle, screens,
 induction — is data the *sponsor* supplies, so it belongs in the portal and flows portal → Jira.
 The status field tracking that workstream stays committee-owned.
+
+### Prefilling the profile from Jira
+
+Sponsors often answer the sponsorship team by email before they ever open the portal, so the
+committee already holds their blurb and socials on the Jira issue. The sync pulls those onto the
+sponsor record (`sponsors.jira_quote`, `sponsors.jira_socials_json`) and the profile form falls
+back to them, so nobody is asked to type in what they've already sent.
+
+**This does not make Jira an owner of that data.** The prefills live on `sponsors` — refreshed
+wholesale each sync — while the sponsor's own answers live in `sponsor_profiles`. A sync writes a
+different table, so it can never overwrite something the sponsor submitted; the fallback in
+`prefilledProfileFields()` (`app/lib/sponsors/profile.ts`) only reaches the Jira value while the
+portal value is unset. `website` already worked this way via `sponsors.website`.
+
+- **An empty Jira field prefills nothing.** `fieldAsText` reports blank and whitespace-only fields
+  as `undefined`, so a committee member clearing a field doesn't mask the sponsor's own answer.
+- **Socials merge per platform**, not all-or-nothing: the committee may have captured only
+  LinkedIn while the sponsor has since added their own X link, and neither hides the other.
+- The blurb prefills from **Website Blurb** (`quote` in config), *not* from **Quotes for Socials** —
+  those are deliberately different copy, and the latter stays part of the logistics form.
 
 ### Sponsor logistics (`/portal/logistics`)
 
