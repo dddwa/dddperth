@@ -34,6 +34,14 @@ export function createStubJiraClient(): JiraClient {
                     hasYearLabel: true,
                     quote: 'Globex is proud to back the local tech community.',
                     socials: { linkedin: 'https://linkedin.com/company/globex' },
+                    // Committee-collected logistics, so the local flow walks
+                    // the prefill path: these show in the form until Globex
+                    // submits it, then their own answers take over.
+                    logistics: {
+                        bumpInSlot: 'Friday 1pm - 2pm',
+                        screenOrders: '55" LCD ($500+GST)',
+                        socialQuote: 'Globex: proud supporters of the Perth tech community.',
+                    },
                 },
                 {
                     // Deliberately unlabelled — exercises the year-label
@@ -73,9 +81,13 @@ export function createStubJiraClient(): JiraClient {
             }
         },
 
-        async pushLogistics(issueKey, logistics) {
+        async pushLogistics(issueKey, logistics, submittedKeys) {
             const answered = Object.entries(logistics).filter(([, value]) => value.trim() !== '')
-            console.log(`[jira-stub] pushLogistics(${issueKey}, ${answered.length} answered fields) — no-op`)
+            const cleared = [...submittedKeys].filter((key) => !logistics[key])
+            console.log(
+                `[jira-stub] pushLogistics(${issueKey}, ${answered.length} answered, ` +
+                    `${cleared.length} explicitly cleared) — no-op`,
+            )
         },
 
         async addLabel(issueKey, label) {

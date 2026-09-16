@@ -75,6 +75,15 @@ export interface SponsorSyncService {
      * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
      * portal's values win. Best-effort like the other pushes — never blocks
      * the sponsor's save.
+     *
+     * `submittedKeys` names the portal fields the sponsor actually submitted.
+     * A field they never answered is left untouched in Jira — the committee
+     * gathers most of this by email, and a blanket write would erase it. A
+     * field submitted empty *is* cleared, because that's a deliberate removal.
      */
-    pushLogistics(issueKey: string, logistics: Record<string, string>): Promise<void>
+    pushLogistics(
+        issueKey: string,
+        logistics: Record<string, string>,
+        submittedKeys: ReadonlySet<string>,
+    ): Promise<void>
 }

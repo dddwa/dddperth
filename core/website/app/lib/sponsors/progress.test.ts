@@ -6,6 +6,7 @@ import {
     splitJiraOptions,
     sponsorProgress,
     statusFlipReadiness,
+    stripTierSuffix,
     type ProgressInput,
 } from './progress'
 import type { SponsorProfile } from '../services/sponsors-store'
@@ -225,5 +226,35 @@ describe('splitJiraOptions', () => {
     it('does not lose text when parentheses are unbalanced', () => {
         expect(splitJiraOptions('Broken (open, still open')).toEqual(['Broken (open, still open'])
         expect(splitJiraOptions('Closed) extra, second')).toEqual(['Closed) extra', 'second'])
+    })
+})
+
+describe('stripTierSuffix', () => {
+    it('drops the tier list a sponsor has no use for', () => {
+        // A Platinum sponsor seeing "(Platinum, Gold, Room, Coffee, Digital)"
+        // has to work out which of five words is theirs — on a row that
+        // already applies to them, because the ticks are per-sponsor.
+        expect(stripTierSuffix('Logo for screens (Platinum, Gold, Room, Coffee, Digital)')).toBe('Logo for screens')
+        expect(stripTierSuffix('DDD Perth App promotion spot (Platinum)')).toBe('DDD Perth App promotion spot')
+        expect(stripTierSuffix('Logo and blurb on Website (All types)')).toBe('Logo and blurb on Website')
+    })
+
+    it('leaves a label with no suffix alone', () => {
+        expect(stripTierSuffix('Logo for screens')).toBe('Logo for screens')
+        expect(stripTierSuffix('')).toBe('')
+    })
+
+    it('only strips a trailing group, so parentheses mid-label survive', () => {
+        expect(stripTierSuffix('Video (short) for Mega Screen (Platinum, Gold)')).toBe('Video (short) for Mega Screen')
+    })
+
+    it('keeps the label when it is nothing but a parenthesised group', () => {
+        // Stripping would leave an empty row, which reads as a rendering bug.
+        expect(stripTierSuffix('(Platinum, Gold)')).toBe('(Platinum, Gold)')
+    })
+
+    it('composes with splitJiraOptions over a real Assets Required value', () => {
+        const raw = 'Logo for screens (Platinum, Gold, Room, Coffee, Digital), Video for Mega Screen (Platinum, Gold)'
+        expect(splitJiraOptions(raw).map(stripTierSuffix)).toEqual(['Logo for screens', 'Video for Mega Screen'])
     })
 })

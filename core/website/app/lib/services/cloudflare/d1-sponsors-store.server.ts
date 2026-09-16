@@ -8,6 +8,7 @@ interface SponsorRow {
     website: string | null
     jira_quote: string | null
     jira_socials_json: string | null
+    jira_logistics_json: string | null
     jira_status: string | null
     active: number
     assets_task_flipped_at: number | null
@@ -53,6 +54,7 @@ function toSponsor(row: SponsorRow): SponsorRecord {
         website: row.website ?? undefined,
         jiraQuote: row.jira_quote ?? undefined,
         jiraSocials: row.jira_socials_json ? parseJsonMap(row.jira_socials_json) : undefined,
+        jiraLogistics: row.jira_logistics_json ? parseJsonMap(row.jira_logistics_json) : undefined,
         jiraStatus: row.jira_status ?? undefined,
         active: row.active === 1,
         assetsTaskFlippedAt: row.assets_task_flipped_at ?? undefined,
@@ -281,8 +283,8 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                         .prepare(
                             `INSERT INTO sponsors
                                  (issue_key, year, company_name, tier, website, jira_quote, jira_socials_json,
-                                  jira_status, active, created_at, updated_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
+                                  jira_logistics_json, jira_status, active, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
                              ON CONFLICT(issue_key) DO UPDATE SET
                                  year = excluded.year,
                                  company_name = excluded.company_name,
@@ -290,6 +292,7 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                                  website = excluded.website,
                                  jira_quote = excluded.jira_quote,
                                  jira_socials_json = excluded.jira_socials_json,
+                                 jira_logistics_json = excluded.jira_logistics_json,
                                  jira_status = excluded.jira_status,
                                  active = 1,
                                  updated_at = excluded.updated_at`,
@@ -302,6 +305,7 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                             s.website ?? null,
                             s.quote ?? null,
                             s.socials && Object.keys(s.socials).length > 0 ? JSON.stringify(s.socials) : null,
+                            s.logistics && Object.keys(s.logistics).length > 0 ? JSON.stringify(s.logistics) : null,
                             s.jiraStatus ?? null,
                         ),
                 )

@@ -110,9 +110,11 @@ export const logisticsSchema = z.object({
     loadingDockAssistance: optionalText(500),
     porterAssistance: optionalText(500),
     parking: optionalText(200),
-    // Screens
+    // Screens. "Screen ordering notes" (customfield_10163) is deliberately
+    // absent: it's the committee's own running note ("informed PAV - 23/8"),
+    // not something the sponsor supplies. Collecting it here would both show
+    // sponsors internal shorthand and let a portal save overwrite it.
     screenOrders: optionalText(500),
-    screenNotes: optionalText(1000),
     screenInvoicingEmail: optionalEmail,
     // Raffle
     rafflePrize: optionalText(1000),
@@ -127,6 +129,47 @@ export type LogisticsFields = z.infer<typeof logisticsSchema>
 
 /** Field keys, so storage and write-back iterate one list. */
 export const LOGISTICS_KEYS = Object.keys(logisticsSchema.shape) as Array<keyof LogisticsFields>
+
+/**
+ * What the logistics form starts out showing.
+ *
+ * The sponsorship team gathers bump-in times, screen orders and raffle prizes
+ * by email long before a sponsor opens the portal, and files them on the Jira
+ * issue. Until this existed the form read only the sponsor's own answers, so
+ * they saw empty fields and their first save overwrote the lot.
+ *
+ * **Authority flips wholesale, not per field**, on the profile's
+ * `logisticsUpdatedAt` — the same boundary `buildExhibitorSource` already uses
+ * for the venue spreadsheet, deliberately reused so the form and the export
+ * can't disagree about who owns an answer. Before the sponsor's first
+ * submission Jira fills the gaps; after it their answers stand alone, so a
+ * field they deliberately cleared can't be re-populated from a stale Jira
+ * value on the next page load.
+ */
+export function prefilledLogistics(args: {
+    /** The sponsor's own answers, and whether they have ever submitted. */
+    profile: { logistics?: Record<string, string>; logisticsUpdatedAt?: number } | null
+    /** Committee-entered values synced from Jira onto the sponsor record. */
+    jiraLogistics: Record<string, string> | undefined
+}): Record<string, string> {
+    const { profile, jiraLogistics } = args
+    const own = profile?.logistics ?? {}
+    if (profile?.logisticsUpdatedAt !== undefined) return own
+    return { ...(jiraLogistics ?? {}), ...own }
+}
+
+/**
+ * The portal field names a sponsor with this visibility can actually see.
+ *
+ * Used to narrow the submitted-key set before it reaches Jira: a crafted POST
+ * naming a hidden section's field must not clear that field in Jira any more
+ * than it may write one.
+ */
+export function visibleLogisticsKeys(visibility: LogisticsVisibility): Set<string> {
+    const probe: LogisticsFields = Object.fromEntries(LOGISTICS_KEYS.map((key) => [key, 'x']))
+    const kept = filterByVisibility(probe, visibility)
+    return new Set(LOGISTICS_KEYS.filter((key) => kept[key] !== undefined))
+}
 
 /** Drops answers for hidden sections, so a tier change or crafted POST can't
  * write exhibition data for a sponsor without a booth. */
@@ -147,7 +190,7 @@ export function filterByVisibility(fields: LogisticsFields, visibility: Logistic
         'parking',
         'additionalNotes',
     ]
-    const screenKeys: Array<keyof LogisticsFields> = ['screenOrders', 'screenNotes', 'screenInvoicingEmail']
+    const screenKeys: Array<keyof LogisticsFields> = ['screenOrders', 'screenInvoicingEmail']
     const raffleKeys: Array<keyof LogisticsFields> = ['rafflePrize', 'raffleLocation']
 
     const result: LogisticsFields = { ...fields }

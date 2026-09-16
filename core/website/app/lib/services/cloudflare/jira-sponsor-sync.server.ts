@@ -416,10 +416,10 @@ export function createJiraSponsorSyncService(args: {
             return client.getExhibitorLogistics()
         },
 
-        async pushLogistics(issueKey, logistics) {
+        async pushLogistics(issueKey, logistics, submittedKeys) {
             if (!portalConfig || !client || !writebackEnabled) return
             try {
-                await client.pushLogistics(issueKey, logistics)
+                await client.pushLogistics(issueKey, logistics, submittedKeys)
             } catch (error) {
                 console.error(
                     `Sponsor push: logistics update on ${issueKey} failed:`,
@@ -449,7 +449,12 @@ export function createJiraSponsorSyncService(args: {
                     await this.pushSponsorOwnedData(sponsor.issueKey, 'details')
                 }
                 if (profile.logisticsUpdatedAt !== undefined) {
-                    await this.pushLogistics(sponsor.issueKey, profile.logistics ?? {})
+                    // A retry has no originating form, so "what did they
+                    // submit?" is unknowable here. Treat the stored answers as
+                    // the submitted set: that re-sends everything the sponsor
+                    // has saved without clearing anything they never answered.
+                    const stored = profile.logistics ?? {}
+                    await this.pushLogistics(sponsor.issueKey, stored, new Set(Object.keys(stored)))
                 }
                 await this.flipWorkstreamStatuses(sponsor.issueKey)
             }

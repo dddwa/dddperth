@@ -91,7 +91,10 @@ export const sponsorPortal: SponsorPortalConfig = {
                 porterAssistance: 'customfield_10157',
                 parking: 'customfield_10159',
                 screenOrders: 'customfield_10162',
-                screenNotes: 'customfield_10163',
+                // "Screen ordering notes" (customfield_10163) is deliberately
+                // unmapped. It's the committee's own running note ("informed
+                // PAV - 23/8"), so the portal neither shows it nor pushes it —
+                // and an unmapped field can never be cleared by a portal save.
                 screenInvoicingEmail: 'customfield_10164',
                 rafflePrize: 'customfield_10095',
                 raffleLocation: 'customfield_10196',

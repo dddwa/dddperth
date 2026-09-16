@@ -77,6 +77,7 @@ describe('computeSyncPlan', () => {
                 jiraStatus: undefined,
                 quote: undefined,
                 socials: undefined,
+                logistics: undefined,
             },
         ])
         expect(plan.contactAdds).toEqual([{ email: 'a@example.com', issueKey: 'SPN-1' }])
@@ -165,6 +166,28 @@ describe('computeSyncPlan', () => {
 
         expect(plan.upserts[0].quote).toBe('Proud to support the community.')
         expect(plan.upserts[0].socials).toEqual({ linkedin: 'https://linkedin.com/company/acme' })
+    })
+
+    it('carries committee-entered logistics through for prefill', () => {
+        // Bump-in times, screen orders and the social quote are collected by
+        // email; without this they never leave Jira and the sponsor's first
+        // save overwrites them.
+        const plan = computeSyncPlan({
+            year: '2026',
+            source: [
+                sponsor({
+                    issueKey: 'SPN-1',
+                    logistics: { bumpInSlot: 'Friday 1pm - 2pm', socialQuote: 'Delighted to sponsor.' },
+                }),
+            ],
+            currentSponsors: [],
+            currentContacts: [],
+        })
+
+        expect(plan.upserts[0].logistics).toEqual({
+            bumpInSlot: 'Friday 1pm - 2pm',
+            socialQuote: 'Delighted to sponsor.',
+        })
     })
 
     it('handles tier changes through upsert', () => {

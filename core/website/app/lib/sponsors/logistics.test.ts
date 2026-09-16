@@ -7,8 +7,10 @@ import {
     logisticsVisibility,
     LOGISTICS_KEYS,
     PARKING_OPTIONS,
+    prefilledLogistics,
     SCREEN_OPTIONS,
     optionsIncludingStored,
+    visibleLogisticsKeys,
     type LogisticsFields,
 } from './logistics'
 
@@ -68,7 +70,6 @@ describe('filterByVisibility', () => {
         porterAssistance: 'No',
         parking: 'For Bump In',
         screenOrders: '55" LCD',
-        screenNotes: 'Near the door',
         screenInvoicingEmail: 'ap@example.com',
         rafflePrize: 'Keyboard',
         raffleLocation: 'Main stage',
@@ -104,6 +105,86 @@ describe('filterByVisibility', () => {
         const result = filterByVisibility(filled, logisticsVisibility('community'))
         expect(result.bumpInSlot).toBe('Friday 1pm - 2pm')
         expect(result.equipmentList).toBe('Banner')
+    })
+})
+
+describe('prefilledLogistics', () => {
+    const fromJira = {
+        bumpInSlot: 'Friday 1pm - 2pm',
+        screenOrders: '55" LCD ($500+GST)',
+        socialQuote: 'Committee-collected quote',
+    }
+
+    it('fills the form from Jira before the sponsor has ever submitted', () => {
+        // iCetana's screen order and bump-in slot were collected by email and
+        // sat invisible in Jira; the sponsor saw an empty form.
+        expect(prefilledLogistics({ profile: null, jiraLogistics: fromJira })).toEqual(fromJira)
+    })
+
+    it("prefers the sponsor's own answer over Jira's before submission", () => {
+        const result = prefilledLogistics({
+            profile: { logistics: { bumpInSlot: 'Friday 4pm - 5pm' } },
+            jiraLogistics: fromJira,
+        })
+
+        expect(result.bumpInSlot).toBe('Friday 4pm - 5pm')
+        expect(result.screenOrders).toBe('55" LCD ($500+GST)')
+    })
+
+    it('hands authority to the sponsor wholesale once they submit', () => {
+        // Not per field: after a submission the form is their answers alone,
+        // matching buildExhibitorSource so the form and the venue export
+        // can never disagree about who owns a value.
+        const result = prefilledLogistics({
+            profile: { logistics: { bumpInSlot: 'Friday 4pm - 5pm' }, logisticsUpdatedAt: 1 },
+            jiraLogistics: fromJira,
+        })
+
+        expect(result).toEqual({ bumpInSlot: 'Friday 4pm - 5pm' })
+    })
+
+    it('keeps a deliberately cleared field cleared', () => {
+        // The regression that makes wholesale authority necessary: a per-field
+        // merge would resurrect the Jira value on the next page load.
+        const result = prefilledLogistics({
+            profile: { logistics: {}, logisticsUpdatedAt: 1 },
+            jiraLogistics: fromJira,
+        })
+
+        expect(result.screenOrders).toBeUndefined()
+        expect(result).toEqual({})
+    })
+
+    it('prefills nothing when Jira holds nothing', () => {
+        expect(prefilledLogistics({ profile: null, jiraLogistics: undefined })).toEqual({})
+        expect(prefilledLogistics({ profile: null, jiraLogistics: {} })).toEqual({})
+    })
+})
+
+describe('visibleLogisticsKeys', () => {
+    it('lists what a booth tier can see', () => {
+        const keys = visibleLogisticsKeys(logisticsVisibility('platinum'))
+        expect(keys.has('bumpInSlot')).toBe(true)
+        expect(keys.has('screenOrders')).toBe(true)
+        expect(keys.has('rafflePrize')).toBe(true)
+        expect(keys.has('socialQuote')).toBe(true)
+    })
+
+    it('excludes hidden sections, so a crafted POST cannot clear them in Jira', () => {
+        const keys = visibleLogisticsKeys(logisticsVisibility('digital'))
+        expect(keys.has('bumpInSlot')).toBe(false)
+        expect(keys.has('screenOrders')).toBe(false)
+        expect(keys.has('equipmentList')).toBe(false)
+
+        // Raffle and the social quote are open to every tier.
+        expect(keys.has('rafflePrize')).toBe(true)
+        expect(keys.has('socialQuote')).toBe(true)
+    })
+
+    it('never names a key that is not a real logistics field', () => {
+        for (const key of visibleLogisticsKeys(logisticsVisibility('platinum'))) {
+            expect(LOGISTICS_KEYS).toContain(key)
+        }
     })
 })
 
@@ -147,6 +228,15 @@ describe('dropdown options', () => {
         // No `logistics.additionalNotes` mapping exists in fork config, so a
         // key added here without one silently stops reaching the export.
         expect(LOGISTICS_KEYS).toContain('additionalNotes')
+    })
+
+    it('does not collect screen ordering notes — that field is committee-owned', () => {
+        // customfield_10163 holds the committee's own running note ("informed
+        // PAV - 23/8"). Collecting it would show sponsors internal shorthand,
+        // and a portal save would overwrite it. Re-adding the key here without
+        // reinstating the fork-config mapping would silently do neither.
+        expect(LOGISTICS_KEYS).not.toContain('screenNotes')
+        expect(Object.keys(logisticsSchema.shape)).not.toContain('screenNotes')
     })
 
     it('offers every Jira bump-in slot, including the Saturday early option', () => {

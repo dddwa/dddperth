@@ -20,6 +20,13 @@ export interface SponsorRecord {
     jiraQuote?: string
     /** Social URL prefills from Jira, keyed by platform. Same rule as `jiraQuote`. */
     jiraSocials?: Record<string, string>
+    /**
+     * Logistics prefills from Jira, keyed by portal field name — what the
+     * committee gathered by email before the sponsor opened the form. Same
+     * rule as `jiraQuote`, but authority flips wholesale on the profile's
+     * `logisticsUpdatedAt` rather than per field.
+     */
+    jiraLogistics?: Record<string, string>
     jiraStatus?: string
     active: boolean
     assetsTaskFlippedAt?: number
@@ -68,6 +75,7 @@ export interface SponsorSyncPlan {
         jiraStatus?: string
         quote?: string
         socials?: Record<string, string>
+        logistics?: Record<string, string>
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>

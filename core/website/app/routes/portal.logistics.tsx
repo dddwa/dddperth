@@ -16,6 +16,8 @@ import {
     RAFFLE_LOCATIONS,
     SCREEN_OPTIONS,
     optionsIncludingStored,
+    prefilledLogistics,
+    visibleLogisticsKeys,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
@@ -47,7 +49,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return {
         tier: sponsor.tier,
         visibility,
-        logistics: profile?.logistics ?? {},
+        // Display-only: nothing here is written back to D1 until the sponsor
+        // saves, so an unvisited form leaves both sides untouched.
+        logistics: prefilledLogistics({ profile, jiraLogistics: sponsor.jiraLogistics }),
         nextSection: nextIncompleteSection(sections) ?? null,
     }
 }
@@ -66,6 +70,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         formData.set(name, values.join(', '))
     }
 
+    // Which fields were on the form the sponsor submitted, captured *before*
+    // the schema runs: `logisticsSchema` preprocesses '' to undefined, so
+    // after parsing "cleared this field" and "never saw this field" are
+    // indistinguishable. Jira needs to tell them apart — one is a deliberate
+    // removal, the other is committee-collected data we must not erase.
+    const visibility = logisticsVisibility(mappedTier(sponsor.tier))
+    const submittedKeys = new Set(
+        LOGISTICS_KEYS.filter((key) => formData.has(key) || formData.has(`${key}[]`)),
+    ) as Set<string>
+
     const parsed = parseFormData(logisticsSchema, formData)
     if (!parsed.ok) {
         return data({ fieldErrors: parsed.fieldErrors }, { status: 400 })
@@ -73,7 +87,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     // Re-derive visibility server-side: a tier change (or a hand-crafted
     // POST) must not write exhibition answers for a sponsor without a booth.
-    const visible = filterByVisibility(parsed.data, logisticsVisibility(mappedTier(sponsor.tier)))
+    const visible = filterByVisibility(parsed.data, visibility)
 
     const logistics: Record<string, string> = {}
     for (const key of LOGISTICS_KEYS) {
@@ -81,10 +95,15 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (typeof value === 'string' && value !== '') logistics[key] = value
     }
 
+    // Same server-side re-derivation for the submitted set: a crafted POST
+    // naming a hidden section's field must not clear it in Jira either.
+    const seeable = visibleLogisticsKeys(visibility)
+    const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
+
     await services.sponsors.saveLogistics(sponsor.issueKey, logistics, user.email)
     // Sponsor-owned, so the portal's values win in Jira. Best-effort: the
     // sponsor's save must not fail because Jira is down.
-    await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics)
+    await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
     // Logistics answers are what drive the exhibition, raffle and induction
     // statuses (and the social one, via the social quote).
     await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
@@ -457,12 +476,6 @@ export default function PortalLogistics() {
                                         errors={errors}
                                     />
                                 </Grid>
-                                <LongText
-                                    name="screenNotes"
-                                    label="Screen ordering notes"
-                                    value={value('screenNotes')}
-                                    errors={errors}
-                                />
                             </Box>
                         </>
                     )}

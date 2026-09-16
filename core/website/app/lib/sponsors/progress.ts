@@ -221,6 +221,23 @@ export function splitJiraOptions(value: string | undefined): string[] {
     return parts.map((part) => part.trim()).filter(Boolean)
 }
 
+/**
+ * Drops the parenthesised tier list Jira option labels carry, e.g.
+ * "Logo for screens (Platinum, Gold, Room, Coffee, Digital)" → "Logo for
+ * screens".
+ *
+ * That suffix exists so the committee can tick the right boxes in Jira. To a
+ * sponsor it's a puzzle: a Platinum sponsor sees "(Platinum, Gold, Room,
+ * Coffee, Digital)" on a row that already applies to them, and has to work
+ * out which of the five words is theirs. The ticks are already per-sponsor,
+ * so the tier list tells them nothing they need.
+ *
+ * Only a *trailing* group is removed, so parentheses inside a label survive.
+ */
+export function stripTierSuffix(label: string): string {
+    return label.replace(/\s*\([^()]*\)\s*$/, '').trim() || label.trim()
+}
+
 /** Re-exported so callers doing "is the website profile done?" don't need
  * both modules. */
 export { isProfileComplete }
