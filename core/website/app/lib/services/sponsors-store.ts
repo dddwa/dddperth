@@ -27,6 +27,8 @@ export interface SponsorRecord {
      * `logisticsUpdatedAt` rather than per field.
      */
     jiraLogistics?: Record<string, string>
+    /** Committee-assigned room, for room sponsors. Synced from Jira. */
+    exhibitorRoom?: string
     jiraStatus?: string
     active: boolean
     assetsTaskFlippedAt?: number
@@ -85,6 +87,7 @@ export interface SponsorSyncPlan {
         logisticsKeys?: string[]
         /** Jira-backed detail keys: blurb, websiteUrl and social_<platform>. */
         detailsKeys?: string[]
+        exhibitorRoom?: string
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>

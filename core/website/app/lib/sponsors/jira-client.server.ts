@@ -60,6 +60,28 @@ export interface SponsorDeliverables {
     assetsRequired?: string
     /** Per-sponsor upload folder (SharePoint) the committee creates. */
     assetUploadUrl?: string
+    /**
+     * The room this sponsorship covers, for room sponsors. Undefined until the
+     * committee assigns one — including when Jira's own default is still in
+     * place (see `unassignedRoomValue`), so this never reports a room nobody
+     * chose.
+     */
+    exhibitorRoom?: string
+}
+
+/**
+ * A room value, or undefined when nobody has actually chosen one.
+ *
+ * Jira single-selects can carry a default, so a freshly created sponsor can
+ * read back as the first room in the list even though the committee hasn't
+ * decided. Showing that would be worse than showing nothing: the sponsor would
+ * turn up at the wrong room. Anything equal to `unassignedValue` is therefore
+ * treated as unset.
+ */
+export function assignedRoom(value: string | undefined, unassignedValue?: string): string | undefined {
+    if (!value) return undefined
+    if (unassignedValue && value === unassignedValue) return undefined
+    return value
 }
 
 /**
@@ -373,6 +395,7 @@ export function createJiraClient(args: {
                 fields.contactEmail,
                 fields.tier,
                 ...(fields.additionalContactEmails ? [fields.additionalContactEmails] : []),
+                ...(fields.exhibitorRoom ? [fields.exhibitorRoom] : []),
                 // Prefill sources: what the committee already captured by
                 // email before the sponsor ever opened the portal.
                 ...(fields.quote ? [fields.quote] : []),
@@ -427,6 +450,10 @@ export function createJiraClient(args: {
                         tier: fieldOptionValue(issueFields, fields.tier) ?? 'Unknown',
                         website: fieldString(issueFields, fields.website),
                         jiraStatus: typeof status?.name === 'string' ? status.name : undefined,
+                        exhibitorRoom: assignedRoom(
+                            fieldAsText(issueFields, fields.exhibitorRoom),
+                            portalConfig.jira.unassignedRoomValue,
+                        ),
                         hasYearLabel: labels.some((l) => YEAR_LABEL.test(l)),
                         quote: fieldAsText(issueFields, fields.quote),
                         socials: Object.keys(socials).length > 0 ? socials : undefined,
@@ -468,6 +495,7 @@ export function createJiraClient(args: {
                 fields.ticketClaimUrl,
                 fields.assetsRequired,
                 fields.assetUploadUrl,
+                fields.exhibitorRoom,
             ].filter((id): id is string => Boolean(id))
             if (wanted.length === 0) return {}
 
@@ -482,6 +510,10 @@ export function createJiraClient(args: {
                 ticketClaimUrl: fieldAsText(issueFields, fields.ticketClaimUrl),
                 assetsRequired: fieldAsText(issueFields, fields.assetsRequired),
                 assetUploadUrl: fieldAsText(issueFields, fields.assetUploadUrl),
+                exhibitorRoom: assignedRoom(
+                    fieldAsText(issueFields, fields.exhibitorRoom),
+                    portalConfig.jira.unassignedRoomValue,
+                ),
             }
         },
 

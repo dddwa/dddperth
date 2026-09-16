@@ -51,6 +51,7 @@ describe('sponsor two-way sync (real SQL)', () => {
             '0021_sponsor_jira_prefill.sql',
             '0022_sponsor_jira_logistics_prefill.sql',
             '0023_sponsor_two_way_sync.sql',
+            '0024_sponsor_exhibitor_room.sql',
         ])
             migrate(sqlite, name)
         store = createD1SponsorsStore(d1FromSqlite(sqlite))

@@ -17,6 +17,8 @@ export function createStubJiraClient(): JiraClient {
                     issueKey: 'SPN-101',
                     companyName: 'Acme Rockets',
                     tier: 'Platinum',
+                    // Exercises the "Your room" card and the admin Room column.
+                    exhibitorRoom: 'River View Room 2',
                     website: 'https://acme.example.com',
                     jiraStatus: 'Committed',
                     contactEmails: ['sponsor-acme@example.com', 'marketing-acme@example.com'],
@@ -78,6 +80,7 @@ export function createStubJiraClient(): JiraClient {
                 ticketClaimUrl: 'https://ti.to/example/stub-sponsor-tickets',
                 assetsRequired: 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)',
                 assetUploadUrl: 'https://example.sharepoint.com/stub-sponsor-uploads',
+                exhibitorRoom: 'River View Room 2',
             }
         },
 

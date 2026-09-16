@@ -49,6 +49,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             issueKey: s.issueKey,
             companyName: s.companyName,
             tier: s.tier,
+            exhibitorRoom: s.exhibitorRoom,
             active: s.active,
             contacts: s.contacts,
             complete: isProfileComplete(s.profile),
@@ -212,6 +213,7 @@ export default function AdminSponsors() {
                                 <styled.tr textAlign="left" color="admin.600" borderBottom="admin-subtle">
                                     <styled.th py="2" pr="4">Sponsor</styled.th>
                                     <styled.th py="2" pr="4">Tier</styled.th>
+                                    <styled.th py="2" pr="4">Room</styled.th>
                                     <styled.th py="2" pr="4">Contacts</styled.th>
                                     <styled.th py="2" pr="4">Profile</styled.th>
                                     <styled.th py="2" pr="4">Logo</styled.th>
@@ -234,6 +236,10 @@ export default function AdminSponsors() {
                                             </styled.span>
                                         </styled.td>
                                         <styled.td py="2" pr="4">{sponsor.tier}</styled.td>
+                                        {/* Blank until the committee assigns one — the run sheets
+                                            are built from this list, so an unassigned room must
+                                            read as undecided rather than as a default. */}
+                                        <styled.td py="2" pr="4">{sponsor.exhibitorRoom ?? '—'}</styled.td>
                                         <styled.td py="2" pr="4">
                                             {sponsor.contacts.length > 0 ? sponsor.contacts.join(', ') : '—'}
                                         </styled.td>
