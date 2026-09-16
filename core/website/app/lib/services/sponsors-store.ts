@@ -12,6 +12,14 @@ export interface SponsorRecord {
     tier: string
     /** Website prefill from Jira, if the committee captured one. */
     website?: string
+    /**
+     * Blurb prefill from Jira's quote field — what the committee captured by
+     * email before the sponsor used the portal. Prefill only: the sponsor's
+     * own blurb wins as soon as they save one.
+     */
+    jiraQuote?: string
+    /** Social URL prefills from Jira, keyed by platform. Same rule as `jiraQuote`. */
+    jiraSocials?: Record<string, string>
     jiraStatus?: string
     active: boolean
     assetsTaskFlippedAt?: number
@@ -58,6 +66,8 @@ export interface SponsorSyncPlan {
         tier: string
         website?: string
         jiraStatus?: string
+        quote?: string
+        socials?: Record<string, string>
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>

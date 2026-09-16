@@ -75,6 +75,8 @@ describe('computeSyncPlan', () => {
                 tier: 'Gold',
                 website: undefined,
                 jiraStatus: undefined,
+                quote: undefined,
+                socials: undefined,
             },
         ])
         expect(plan.contactAdds).toEqual([{ email: 'a@example.com', issueKey: 'SPN-1' }])
@@ -142,6 +144,27 @@ describe('computeSyncPlan', () => {
 
         expect(plan.deactivateIssueKeys).toEqual(['SPN-1'])
         expect(plan.contactRemoves).toEqual([{ email: 'old@example.com', issueKey: 'SPN-1' }])
+    })
+
+    it('carries the committee-entered quote and socials through for prefill', () => {
+        // What the sponsorship team captured by email before the sponsor ever
+        // opened the portal. Stored on `sponsors`, never on the profile, so a
+        // later sync can't overwrite what the sponsor themselves submitted.
+        const plan = computeSyncPlan({
+            year: '2026',
+            source: [
+                sponsor({
+                    issueKey: 'SPN-1',
+                    quote: 'Proud to support the community.',
+                    socials: { linkedin: 'https://linkedin.com/company/acme' },
+                }),
+            ],
+            currentSponsors: [],
+            currentContacts: [],
+        })
+
+        expect(plan.upserts[0].quote).toBe('Proud to support the community.')
+        expect(plan.upserts[0].socials).toEqual({ linkedin: 'https://linkedin.com/company/acme' })
     })
 
     it('handles tier changes through upsert', () => {

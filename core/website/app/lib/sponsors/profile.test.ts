@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { SponsorProfile } from '../services/sponsors-store'
-import { isProfileComplete, profileChecklist, profileDetailsSchema, socialsFromForm, validateLogoUpload } from './profile'
+import {
+    isProfileComplete,
+    prefilledProfileFields,
+    profileChecklist,
+    profileDetailsSchema,
+    socialsFromForm,
+    validateLogoUpload,
+} from './profile'
 
 function profile(overrides: Partial<SponsorProfile> = {}): SponsorProfile {
     return {
@@ -24,6 +31,66 @@ describe('isProfileComplete', () => {
 
     it('does not require socials', () => {
         expect(isProfileComplete(profile({ socials: {} }))).toBe(true)
+    })
+})
+
+describe('prefilledProfileFields', () => {
+    const jira = {
+        quote: 'Committee-entered quote',
+        website: 'https://jira-entered.example.com',
+        socials: { linkedin: 'https://linkedin.com/company/committee' },
+    }
+
+    it('shows the committee Jira values to a sponsor who has saved nothing', () => {
+        // Aaron collected these by email before the portal existed; without
+        // this the sponsor opened an empty form and retyped it all.
+        expect(prefilledProfileFields({ profile: null, jira })).toEqual({
+            blurb: 'Committee-entered quote',
+            websiteUrl: 'https://jira-entered.example.com',
+            socials: { linkedin: 'https://linkedin.com/company/committee' },
+        })
+    })
+
+    it("never lets a Jira value override what the sponsor saved", () => {
+        const result = prefilledProfileFields({
+            profile: { blurb: 'Sponsor blurb', websiteUrl: 'https://sponsor.example.com', socials: {} },
+            jira,
+        })
+        expect(result.blurb).toBe('Sponsor blurb')
+        expect(result.websiteUrl).toBe('https://sponsor.example.com')
+    })
+
+    it('merges socials per platform rather than all-or-nothing', () => {
+        // The committee captured LinkedIn; the sponsor has since added X.
+        // Neither should hide the other.
+        const result = prefilledProfileFields({
+            profile: { blurb: 'b', websiteUrl: 'https://x.test', socials: { twitter: 'https://x.com/sponsor' } },
+            jira,
+        })
+        expect(result.socials).toEqual({
+            linkedin: 'https://linkedin.com/company/committee',
+            twitter: 'https://x.com/sponsor',
+        })
+    })
+
+    it('prefers the sponsor URL when both supplied the same platform', () => {
+        const result = prefilledProfileFields({
+            profile: {
+                blurb: 'b',
+                websiteUrl: 'https://x.test',
+                socials: { linkedin: 'https://linkedin.com/company/sponsor' },
+            },
+            jira,
+        })
+        expect(result.socials.linkedin).toBe('https://linkedin.com/company/sponsor')
+    })
+
+    it('falls back to empty strings when neither side has anything', () => {
+        expect(prefilledProfileFields({ profile: null, jira: {} })).toEqual({
+            blurb: '',
+            websiteUrl: '',
+            socials: {},
+        })
     })
 })
 

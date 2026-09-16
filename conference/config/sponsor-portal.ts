@@ -64,6 +64,7 @@ export const sponsorPortal: SponsorPortalConfig = {
             freeTicketCount: 'customfield_10092',
             ticketClaimUrl: 'customfield_10093',
             assetsRequired: 'customfield_10203',
+            assetUploadUrl: 'customfield_10302',
             quote: 'customfield_10140',
             socials: {
                 linkedin: 'customfield_10141',

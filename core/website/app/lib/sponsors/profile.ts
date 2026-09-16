@@ -51,6 +51,34 @@ export function socialsFromForm(data: Record<string, unknown>): Record<string, s
 }
 
 /**
+ * What the profile form starts out showing, given what the sponsor has saved
+ * and what the committee already captured in Jira.
+ *
+ * Sponsors who answered the sponsorship team by email before the portal
+ * existed already have their quote and socials on the Jira issue; without
+ * this they were shown an empty form and asked to type it all again.
+ *
+ * **The sponsor's own value always wins.** These are prefills, never
+ * authority: a Jira value only shows through while the corresponding portal
+ * value is unset, so a sync can't overwrite something the sponsor submitted.
+ * Socials merge per platform rather than all-or-nothing — the committee may
+ * have captured only LinkedIn while the sponsor has since added their own X
+ * link, and neither should hide the other.
+ */
+export function prefilledProfileFields(args: {
+    profile: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'> | null
+    /** Committee-entered values synced from Jira onto the sponsor record. */
+    jira: { quote?: string; website?: string; socials?: Record<string, string> }
+}): { blurb: string; websiteUrl: string; socials: Record<string, string> } {
+    const { profile, jira } = args
+    return {
+        blurb: profile?.blurb ?? jira.quote ?? '',
+        websiteUrl: profile?.websiteUrl ?? jira.website ?? '',
+        socials: { ...(jira.socials ?? {}), ...(profile?.socials ?? {}) },
+    }
+}
+
+/**
  * Phase 1 completion = logo + blurb + website. Socials are optional —
  * this mirrors what the public site renders for a sponsor (logo, link,
  * optional quote). Completing advances the Jira assets status field.
