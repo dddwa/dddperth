@@ -21,6 +21,7 @@ import {
     type LogisticsVisibility,
 } from './logistics'
 import { prefilledProfileFields } from './profile'
+import { sponsorProgress } from './progress'
 
 /** The manifest's Jira field mapping, which the fake resolves ids through. */
 type JiraFields = SponsorPortalConfig['jira']['fields']
@@ -353,6 +354,8 @@ export interface SponsorPortalHarness {
     profileForm(issueKey: string): Promise<{ blurb: string; websiteUrl: string; socials: Record<string, string> }>
     /** What `/portal/logistics` would render for this sponsor. */
     logisticsForm(issueKey: string): Promise<Record<string, string>>
+    /** What the dashboard checklist would show: section key → progress. */
+    dashboardProgress(issueKey: string): Promise<Record<string, { done: number; total: number; complete: boolean }>>
     /** The profile form's save action: Jira first, then D1. Throws as it does. */
     saveProfileForm(
         issueKey: string,
@@ -439,6 +442,25 @@ export function createSponsorPortalHarness(args: {
         async logisticsForm(issueKey) {
             const [sponsor, profile] = await Promise.all([store.getSponsor(issueKey), store.getProfile(issueKey)])
             return prefilledLogistics({ profile, jiraLogistics: sponsor?.jiraLogistics })
+        },
+
+        async dashboardProgress(issueKey) {
+            const [sponsor, profile] = await Promise.all([store.getSponsor(issueKey), store.getProfile(issueKey)])
+            const sections = sponsorProgress({
+                profile,
+                sponsor,
+                visibility: await visibilityFor(issueKey),
+                // Not what this seam is for; fixed so it never colours a
+                // progress assertion.
+                meetTheExpertsResponded: false,
+                meetTheExpertsOffered: false,
+            })
+            return Object.fromEntries(
+                sections.map((section) => [
+                    section.key,
+                    { done: section.done, total: section.total, complete: section.complete },
+                ]),
+            )
         },
 
         async saveProfileForm(issueKey, details) {

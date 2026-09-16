@@ -1,6 +1,6 @@
-import type { SponsorProfile } from '../services/sponsors-store'
-import type { LogisticsVisibility } from './logistics'
-import { isProfileComplete } from './profile'
+import type { SponsorProfile, SponsorRecord } from '../services/sponsors-store'
+import { prefilledLogistics, type LogisticsVisibility } from './logistics'
+import { isProfileComplete, prefilledProfileFields } from './profile'
 
 /**
  * What the sponsor still owes us, per section. One source of truth for both
@@ -31,6 +31,39 @@ export interface SectionProgress {
 
 const filled = (value: string | undefined): boolean => typeof value === 'string' && value.trim() !== ''
 
+/** What the sponsor record contributes: the committee's Jira answers. */
+export type SponsorJiraPrefills = Pick<SponsorRecord, 'website' | 'jiraQuote' | 'jiraSocials' | 'jiraLogistics'> | null
+
+/**
+ * What the sponsor would see on the forms right now — their own answers where
+ * they've submitted, the committee's Jira values where they haven't.
+ *
+ * Progress has to be measured against this rather than against the stored
+ * profile alone, or the dashboard contradicts the form sitting next to it:
+ * iCetana's website, social quote and screen order were all in Jira and all
+ * rendered in the form, while the checklist read "0 of 3" and "Not started".
+ * Worse than cosmetic — `statusFlipReadiness` shares this view, so a social
+ * quote the committee collected in August never advanced the social status
+ * off "Quotes and Logos Pending (Sponsor)".
+ *
+ * Authority stays per-form and asymmetric, which is why this defers to the
+ * two existing prefill functions instead of merging here: profile fields flip
+ * on `detailsUpdatedAt`, logistics wholesale on `logisticsUpdatedAt`. Merging
+ * in one step would let an hour-old Jira snapshot resurrect a field the
+ * sponsor had just cleared.
+ */
+function effectiveAnswers(profile: SponsorProfile | null, sponsor: SponsorJiraPrefills) {
+    const details = prefilledProfileFields({
+        profile,
+        jira: { quote: sponsor?.jiraQuote, website: sponsor?.website, socials: sponsor?.jiraSocials },
+    })
+    return {
+        blurb: details.blurb,
+        websiteUrl: details.websiteUrl,
+        logistics: prefilledLogistics({ profile, jiraLogistics: sponsor?.jiraLogistics }),
+    }
+}
+
 /**
  * The exhibition answers we consider "required" for the status flip.
  *
@@ -50,6 +83,13 @@ const REQUIRED_EXHIBITION_KEYS = [
 
 export interface ProgressInput {
     profile: SponsorProfile | null
+    /**
+     * The sponsor record, for the committee's Jira answers. Optional so a
+     * caller with only a profile still type-checks, but omitting it counts
+     * the sponsor's own submissions only — pass it wherever a sponsor sees
+     * the result.
+     */
+    sponsor?: SponsorJiraPrefills
     visibility: LogisticsVisibility
     /** Whether the sponsor has answered the Meet the Experts invitation
      * (either picking slots or declining). */
@@ -64,8 +104,9 @@ export interface ProgressInput {
  * entirely rather than shown as incomplete forever.
  */
 export function sponsorProgress(input: ProgressInput): SectionProgress[] {
-    const { profile, visibility, meetTheExpertsResponded, meetTheExpertsOffered } = input
-    const logistics = profile?.logistics ?? {}
+    const { profile, sponsor = null, visibility, meetTheExpertsResponded, meetTheExpertsOffered } = input
+    const answers = effectiveAnswers(profile, sponsor)
+    const logistics = answers.logistics
     const sections: SectionProgress[] = []
 
     const push = (
@@ -90,8 +131,8 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
 
     push('profile', 'Company profile', '/portal/profile', [
         Boolean(profile?.logo),
-        filled(profile?.blurb),
-        filled(profile?.websiteUrl),
+        filled(answers.blurb),
+        filled(answers.websiteUrl),
     ])
 
     if (visibility.exhibition) {
@@ -164,10 +205,14 @@ export interface StatusFlipReadiness {
 
 export function statusFlipReadiness(args: {
     profile: SponsorProfile | null
+    /** The committee's Jira answers — see `effectiveAnswers`. Without this a
+     * quote or bump-in time the committee collected by email never advances
+     * its workstream, because the sponsor never retyped it. */
+    sponsor?: SponsorJiraPrefills
     visibility: LogisticsVisibility
 }): StatusFlipReadiness {
-    const { profile, visibility } = args
-    const logistics = profile?.logistics ?? {}
+    const { profile, sponsor = null, visibility } = args
+    const logistics = effectiveAnswers(profile, sponsor).logistics
 
     const exhibitionComplete =
         visibility.exhibition && REQUIRED_EXHIBITION_KEYS.every((key) => filled(logistics[key]))

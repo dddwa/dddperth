@@ -32,6 +32,14 @@ function jiraIssue(h: SponsorPortalHarness, issueKey: string) {
     return issue
 }
 
+/** The social workstream's field and option ids, as the fork config sets them. */
+function socialFlipConfig() {
+    const socialStatusField = portal?.jira.fields.socialStatus
+    const flip = portal?.jira.statusFlips?.social
+    if (!socialStatusField || !flip) throw new Error('social status flip is not configured')
+    return { socialStatusField, pendingOptionId: flip.pendingOptionIds[0], targetOptionId: flip.targetOptionId }
+}
+
 /** A Gold sponsor: sees exhibition, screens, raffle and the social quote. */
 const gold = {
     companyName: 'Globex',
@@ -174,6 +182,29 @@ describe.runIf(portal)('sponsor portal: what the sponsor sees', () => {
         })
     })
 
+    it('counts the committee’s Jira answers on the dashboard checklist', async () => {
+        // iCetana (SPN-4), reproduced: website, social quote and screen order
+        // all in Jira, none typed by the sponsor. The forms rendered every one
+        // of them while the checklist said "0 of 3" and "Not started" twice —
+        // progress read the stored profile, the forms read the prefill.
+        const h = setup({
+            'SPN-1': {
+                ...gold,
+                website: 'https://icetana.test',
+                logistics: {
+                    socialQuote: 'As a Perth-born company, we are proud to be part of DDD Perth.',
+                    screenOrders: '55" LCD ($500+GST)',
+                },
+            },
+        })
+        await h.runSync()
+
+        const progress = await h.dashboardProgress('SPN-1')
+        expect(progress.profile).toMatchObject({ done: 1, total: 3 })
+        expect(progress.social?.complete).toBe(true)
+        expect(progress.screens?.complete).toBe(true)
+    })
+
     it('keeps a logo-only profile on the prefill path', async () => {
         // A logo upload must not count as "submitted the details form", or the
         // sponsor stops seeing the committee's blurb.
@@ -261,6 +292,34 @@ describe.runIf(portal)('sponsor portal: a rejected save tells the sponsor', () =
 
         expect((await h.logisticsForm('SPN-1')).bumpInSlot).toBe('Friday 1pm - 2pm')
         expect(h.jira.issues.get('SPN-1')?.logistics?.bumpInSlot).toBe('Friday 1pm - 2pm')
+    })
+})
+
+describe.runIf(portal)('sponsor portal: workstream statuses', () => {
+    it('advances the social status on a quote the committee collected', async () => {
+        // The costly half of the same bug. iCetana's quote reached Jira in
+        // August; the social status stayed on "Quotes and Logos Pending
+        // (Sponsor)" waiting for a sponsor who had already answered by email.
+        const { socialStatusField, pendingOptionId, targetOptionId } = socialFlipConfig()
+
+        const h = setup({
+            'SPN-1': {
+                ...gold,
+                logistics: { socialQuote: 'As a Perth-born company, we are proud to be part of DDD Perth.' },
+                statuses: { [socialStatusField]: pendingOptionId },
+            },
+        })
+        await h.runSync()
+        // The logo is the other half of what the media team needs.
+        await h.store.saveLogo(
+            'SPN-1',
+            { r2Key: 'logo', filename: 'logo.svg', contentType: 'image/svg+xml', size: 10 },
+            'sponsor@globex.test',
+        )
+
+        await h.sync.flipWorkstreamStatuses('SPN-1')
+
+        expect(jiraIssue(h, 'SPN-1').statuses?.[socialStatusField]).toBe(targetOptionId)
     })
 })
 
