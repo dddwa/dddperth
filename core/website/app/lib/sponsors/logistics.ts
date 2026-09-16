@@ -156,6 +156,45 @@ export function prefilledLogistics(args: {
     return { ...(jiraLogistics ?? {}), ...own }
 }
 
+/** Checkbox groups post as `name[]` repeated, so the action collapses each
+ * into the comma-joined string the schema and Jira write-back expect. */
+export const CHECKBOX_GROUP_KEYS = ['parking', 'screenOrders'] as const
+
+/**
+ * Collapses the checkbox groups and works out which fields the sponsor
+ * actually submitted — the distinction Jira needs, and the one the form data
+ * nearly loses twice over.
+ *
+ * `logisticsSchema` preprocesses `''` to `undefined`, so after parsing a
+ * cleared field and an absent one are identical. And a checkbox group with
+ * nothing ticked posts no `name[]` entries at all, so it looks absent even
+ * when the sponsor deliberately unticked everything — hence the hidden
+ * `name__present` marker the form renders alongside each group.
+ *
+ * Getting this wrong is not hypothetical in either direction: collapsing the
+ * groups unconditionally made *every* save look like it cleared both, so a
+ * sponsor saving their raffle prize wiped the screen order the committee had
+ * collected by email. Extracted from the route so tests exercise the real
+ * derivation rather than a hand-kept copy of it — the copy is what let that
+ * bug through.
+ */
+export function readSubmittedLogistics(formData: {
+    has(key: string): boolean
+    getAll(key: string): unknown[]
+    delete(key: string): void
+    set(key: string, value: string): void
+}): Set<string> {
+    for (const name of CHECKBOX_GROUP_KEYS) {
+        if (!formData.has(`${name}[]`) && !formData.has(`${name}__present`)) continue
+        const values = formData.getAll(`${name}[]`).filter((value): value is string => typeof value === 'string')
+        formData.delete(`${name}[]`)
+        formData.delete(`${name}__present`)
+        formData.set(name, values.join(', '))
+    }
+
+    return new Set(LOGISTICS_KEYS.filter((key) => formData.has(key)))
+}
+
 /**
  * The portal field names a sponsor with this visibility can actually see.
  *

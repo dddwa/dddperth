@@ -13,8 +13,10 @@ import type { SponsorsStore } from '../services/sponsors-store'
 import type { ExhibitorLogistics, JiraClient, SponsorDeliverables } from './jira-client.server'
 import { buildLogisticsPayload } from './jira-client.server'
 import {
+    CHECKBOX_GROUP_KEYS,
     logisticsVisibility,
     prefilledLogistics,
+    readSubmittedLogistics,
     visibleLogisticsKeys,
     type LogisticsVisibility,
 } from './logistics'
@@ -445,19 +447,38 @@ export function createSponsorPortalHarness(args: {
         },
 
         async saveLogisticsForm(issueKey, fields, submitted) {
-            // Mirrors `portal.logistics.tsx`: the submitted-key set is narrowed
-            // to what the sponsor's tier can actually see, so a crafted POST
-            // naming a hidden section can't clear it in Jira. Duplicated rather
-            // than imported because it lives inside a route action, which
-            // can't be called without a Request.
-            const seeable = visibleLogisticsKeys(await visibilityFor(issueKey))
-            const submittedKeys = new Set(submitted.filter((key) => seeable.has(key)))
-            const answered: Record<string, string> = {}
-            for (const [key, value] of Object.entries(fields)) {
-                if (value !== '' && seeable.has(key)) answered[key] = value
+            // Builds the FormData a browser would post — repeated `name[]` for
+            // the checkbox groups, plus the hidden presence marker the form
+            // renders — and runs the route's own `readSubmittedLogistics`.
+            //
+            // The previous version took the submitted-key set as an argument,
+            // which is precisely why it missed the bug the browser found: the
+            // route derives that set from form data, and a hand-kept copy of
+            // the derivation cannot disagree with itself.
+            const formData = new FormData()
+            for (const key of submitted) {
+                const value = fields[key] ?? ''
+                if ((CHECKBOX_GROUP_KEYS as readonly string[]).includes(key)) {
+                    formData.set(`${key}__present`, '1')
+                    for (const option of value.split(',').map((part) => part.trim()).filter(Boolean)) {
+                        formData.append(`${key}[]`, option)
+                    }
+                } else {
+                    formData.set(key, value)
+                }
             }
 
-            await sync.pushLogistics(issueKey, answered, submittedKeys)
+            const submittedKeys = readSubmittedLogistics(formData)
+            const seeable = visibleLogisticsKeys(await visibilityFor(issueKey))
+            const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
+
+            const answered: Record<string, string> = {}
+            for (const key of submittedKeys) {
+                const value = formData.get(key)
+                if (typeof value === 'string' && value !== '' && seeable.has(key)) answered[key] = value
+            }
+
+            await sync.pushLogistics(issueKey, answered, visibleSubmittedKeys)
             await store.saveLogistics(issueKey, answered, 'sponsor@example.com')
         },
 

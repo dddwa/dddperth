@@ -17,6 +17,7 @@ import {
     SCREEN_OPTIONS,
     optionsIncludingStored,
     prefilledLogistics,
+    readSubmittedLogistics,
     visibleLogisticsKeys,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
@@ -63,23 +64,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const formData = await request.formData()
 
-    // Checkbox groups post as `field[]` repeated; collapse each into the
-    // comma-separated string the schema and Jira write-back expect.
-    for (const name of ['parking', 'screenOrders'] as const) {
-        const values = formData.getAll(`${name}[]`).filter((value): value is string => typeof value === 'string')
-        formData.delete(`${name}[]`)
-        formData.set(name, values.join(', '))
-    }
-
-    // Which fields were on the form the sponsor submitted, captured *before*
-    // the schema runs: `logisticsSchema` preprocesses '' to undefined, so
-    // after parsing "cleared this field" and "never saw this field" are
-    // indistinguishable. Jira needs to tell them apart — one is a deliberate
-    // removal, the other is committee-collected data we must not erase.
+    // Collapses the checkbox groups and captures which fields the sponsor
+    // submitted — necessarily *before* the schema runs, which erases the
+    // difference between a cleared field and an absent one. See
+    // `readSubmittedLogistics` for why both halves matter.
     const visibility = logisticsVisibility(mappedTier(sponsor.tier))
-    const submittedKeys = new Set(
-        LOGISTICS_KEYS.filter((key) => formData.has(key) || formData.has(`${key}[]`)),
-    ) as Set<string>
+    const submittedKeys = readSubmittedLogistics(formData)
 
     const parsed = parseFormData(logisticsSchema, formData)
     if (!parsed.ok) {
@@ -238,6 +228,12 @@ function CheckboxGroup({
                         {hint}
                     </styled.p>
                 )}
+                {/* An all-unticked group posts no `name[]` at all, which is
+                    indistinguishable from a form that never showed the group.
+                    This marker says "the sponsor saw this and chose nothing",
+                    so unticking everything clears Jira while an unrelated save
+                    leaves the committee's answer alone. */}
+                <input type="hidden" name={`${name}__present`} value="1" />
                 <Box display="grid" gap="1.5" mt="2">
                     {optionsIncludingStored(options, [...selected]).map((option) => (
                         <styled.label key={option} display="flex" gap="2" alignItems="center" fontSize="sm">

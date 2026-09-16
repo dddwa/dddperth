@@ -226,8 +226,8 @@ declare module "safe-routes" {
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
-            | 'routes/_layout.voting'
             | 'routes/_layout._index'
+            | 'routes/_layout.voting'
             | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
@@ -250,8 +250,8 @@ declare module "safe-routes" {
             | 'routes/admin.sponsors'
             | 'routes/admin.sponsors.exhibitor-export'
             | 'routes/admin.content'
-            | 'routes/admin.voting'
-            | 'routes/admin._index';
+            | 'routes/admin._index'
+            | 'routes/admin.voting';
 
   export function $path<
     Route extends keyof Routes,

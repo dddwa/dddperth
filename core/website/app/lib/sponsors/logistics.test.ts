@@ -8,6 +8,7 @@ import {
     LOGISTICS_KEYS,
     PARKING_OPTIONS,
     prefilledLogistics,
+    readSubmittedLogistics,
     SCREEN_OPTIONS,
     optionsIncludingStored,
     visibleLogisticsKeys,
@@ -158,6 +159,64 @@ describe('prefilledLogistics', () => {
     it('prefills nothing when Jira holds nothing', () => {
         expect(prefilledLogistics({ profile: null, jiraLogistics: undefined })).toEqual({})
         expect(prefilledLogistics({ profile: null, jiraLogistics: {} })).toEqual({})
+    })
+})
+
+describe('readSubmittedLogistics', () => {
+    it('does not count a checkbox group the form never showed', () => {
+        // The bug the browser walkthrough found: collapsing the groups
+        // unconditionally made every save look like it cleared both, so a
+        // sponsor saving their raffle prize wiped the committee's screen order.
+        const formData = new FormData()
+        formData.set('rafflePrize', 'Keyboard')
+
+        const submitted = readSubmittedLogistics(formData)
+
+        expect(submitted.has('rafflePrize')).toBe(true)
+        expect(submitted.has('screenOrders')).toBe(false)
+        expect(submitted.has('parking')).toBe(false)
+    })
+
+    it('counts a group the sponsor unticked entirely, so it can be cleared', () => {
+        // An all-unticked group posts no `name[]`, which is why the form
+        // renders a hidden presence marker alongside it.
+        const formData = new FormData()
+        formData.set('screenOrders__present', '1')
+
+        const submitted = readSubmittedLogistics(formData)
+
+        expect(submitted.has('screenOrders')).toBe(true)
+        expect(formData.get('screenOrders')).toBe('')
+    })
+
+    it('collapses ticked options into the comma-joined string Jira expects', () => {
+        const formData = new FormData()
+        formData.set('parking__present', '1')
+        formData.append('parking[]', 'For Bump In')
+        formData.append('parking[]', 'For Bump Out')
+
+        const submitted = readSubmittedLogistics(formData)
+
+        expect(submitted.has('parking')).toBe(true)
+        expect(formData.get('parking')).toBe('For Bump In, For Bump Out')
+        expect(formData.has('parking[]')).toBe(false)
+        expect(formData.has('parking__present')).toBe(false)
+    })
+
+    it('treats a submitted-but-blank text field as submitted', () => {
+        // Deliberate removal, as distinct from never being asked.
+        const formData = new FormData()
+        formData.set('rafflePrize', '')
+
+        expect(readSubmittedLogistics(formData).has('rafflePrize')).toBe(true)
+    })
+
+    it('ignores form keys that are not logistics fields', () => {
+        const formData = new FormData()
+        formData.set('_action', 'save')
+        formData.set('csrf', 'token')
+
+        expect([...readSubmittedLogistics(formData)]).toEqual([])
     })
 })
 

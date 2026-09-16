@@ -80,7 +80,11 @@ export function createStubJiraClient(): JiraClient {
                 ticketClaimUrl: 'https://ti.to/example/stub-sponsor-tickets',
                 assetsRequired: 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)',
                 assetUploadUrl: 'https://example.sharepoint.com/stub-sponsor-uploads',
-                exhibitorRoom: 'River View Room 2',
+                // Only the Room sponsor has one. Returning a room for every
+                // issue made the local dashboard show Acme's room to Globex,
+                // and hid the unassigned case that `assignedRoom()` exists to
+                // protect — so the fixture could never surface a bug there.
+                exhibitorRoom: issueKey === 'SPN-101' ? 'River View Room 2' : undefined,
             }
         },
 

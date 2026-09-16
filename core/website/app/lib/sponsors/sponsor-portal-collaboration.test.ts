@@ -66,6 +66,41 @@ describe.runIf(portal)('sponsor portal: committee data survives a sponsor save',
         })
     })
 
+    it('leaves a checkbox group alone when the save did not include it', async () => {
+        // Found in the browser, not here: the old harness took the submitted
+        // keys as an argument, so it could not disagree with the route. The
+        // route collapsed both checkbox groups on every save, which read as
+        // two deliberate clears — wiping a screen order the committee had
+        // collected by email.
+        const h = setup({
+            'SPN-1': {
+                ...gold,
+                logistics: { screenOrders: '55" LCD ($500+GST)', parking: 'For Bump In' },
+            },
+        })
+        await h.runSync()
+
+        await h.saveLogisticsForm('SPN-1', { rafflePrize: 'Keyboard' }, ['rafflePrize'])
+
+        expect(jiraIssue(h, 'SPN-1').logistics).toMatchObject({
+            screenOrders: '55" LCD ($500+GST)',
+            parking: 'For Bump In',
+            rafflePrize: 'Keyboard',
+        })
+    })
+
+    it('clears a checkbox group the sponsor unticked entirely', async () => {
+        // The mirror case, and why the form renders a presence marker: with no
+        // ticked boxes there is no `name[]` to distinguish "chose nothing"
+        // from "never saw it".
+        const h = setup({ 'SPN-1': { ...gold, logistics: { screenOrders: '55" LCD ($500+GST)' } } })
+        await h.runSync()
+
+        await h.saveLogisticsForm('SPN-1', { screenOrders: '' }, ['screenOrders'])
+
+        expect(jiraIssue(h, 'SPN-1').logistics?.screenOrders).toBeUndefined()
+    })
+
     it('clears a field the sponsor submitted empty', async () => {
         const h = setup({ 'SPN-1': { ...gold, logistics: { rafflePrize: 'Keyboard' } } })
         await h.runSync()
