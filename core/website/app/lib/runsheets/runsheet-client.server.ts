@@ -154,8 +154,15 @@ async function jiraFetch(
 
 export interface FetchRunsheetOptions {
     config: RunsheetsConfig
-    authEmail: string
-    authToken: string
+    /** Service-account email for Jira Basic auth (`config.jira.apiEmail`). */
+    apiEmail: string | undefined
+    apiToken: string | undefined
+    /**
+     * REST base override. Scoped API tokens authenticate only via the
+     * api.atlassian.com gateway, not the site URL — same override the sponsor
+     * portal's client takes. Defaults to the fork's configured site.
+     */
+    apiBaseUrl?: string
     filter: RunsheetFilter | null
     /** How long to cache Jira's responses. Short on conference day. */
     cacheTtlSeconds: number
@@ -168,23 +175,38 @@ export interface FetchRunsheetOptions {
  */
 export async function fetchRunsheet({
     config,
-    authEmail,
-    authToken,
+    apiEmail,
+    apiToken,
+    apiBaseUrl,
     filter,
     cacheTtlSeconds,
 }: FetchRunsheetOptions): Promise<RunsheetItem[]> {
-    if (!authEmail || !authToken) {
+    if (!apiEmail || !apiToken) {
         throw new Error('Jira API credentials are not configured')
     }
-    const authorization = `Basic ${btoa(`${authEmail}:${authToken}`)}`
-    const { baseUrl, fields } = config.jira
+    const authorization = `Basic ${btoa(`${apiEmail}:${apiToken}`)}`
+    const { fields } = config.jira
+    const baseUrl = apiBaseUrl ?? config.jira.baseUrl
 
-    const searchUrl = new URL('/rest/api/3/search/jql', baseUrl)
-    searchUrl.searchParams.set('jql', buildJql(config.jira.jql, filter))
-    searchUrl.searchParams.set('maxResults', '150')
-    searchUrl.searchParams.set('fields', 'id')
+    // NOT `new URL(path, baseUrl)` — that drops the base's own path, which is
+    // fatal for the scoped-token gateway base
+    // (https://api.atlassian.com/ex/jira/<cloudId>): the cloudId prefix would
+    // be stripped and every call would 404. Same reasoning as the sponsor
+    // portal's jira-client.server.ts.
+    const joinUrl = (path: string) => `${baseUrl.replace(/\/$/, '')}${path}`
 
-    const searchBody = await jiraFetch(searchUrl.toString(), authorization, { method: 'GET' }, cacheTtlSeconds)
+    const searchParams = new URLSearchParams({
+        jql: buildJql(config.jira.jql, filter),
+        maxResults: '150',
+        fields: 'id',
+    })
+
+    const searchBody = await jiraFetch(
+        joinUrl(`/rest/api/3/search/jql?${searchParams.toString()}`),
+        authorization,
+        { method: 'GET' },
+        cacheTtlSeconds,
+    )
     const issueIds = searchResponseSchema.parse(searchBody).issues.map((issue) => issue.id)
 
     if (issueIds.length === 0) {
@@ -199,7 +221,7 @@ export async function fetchRunsheet({
     })
 
     const bulkResponse = await jiraFetch(
-        new URL('/rest/api/3/issue/bulkfetch', baseUrl).toString(),
+        joinUrl('/rest/api/3/issue/bulkfetch'),
         authorization,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bulkBody },
         cacheTtlSeconds,

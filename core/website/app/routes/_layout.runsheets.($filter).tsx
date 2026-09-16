@@ -8,7 +8,7 @@ import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import { fetchRunsheet, parseRunsheetFilter } from '~/lib/runsheets/runsheet-client.server'
 import { noIndexMeta } from '~/lib/seo'
-import { getConferenceState, getServices } from '~/remix-app-load-context'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
@@ -55,15 +55,18 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     }
 
     const filter = parseRunsheetFilter(params.filter, config)
-    const { jiraAuth } = getServices(context)
+    // Same Jira credentials the sponsor portal sync uses — one set of secrets,
+    // read once in build-config.server.ts.
+    const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
 
     const isConferenceDay = getConferenceState(context).conferenceState === 'conference-day'
     const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
 
     const items = await fetchRunsheet({
         config,
-        authEmail: jiraAuth.authEmail,
-        authToken: jiraAuth.authToken,
+        apiEmail,
+        apiToken,
+        apiBaseUrl,
         filter,
         cacheTtlSeconds,
     })

@@ -3,7 +3,6 @@ import type { AppConfig } from '../app-config'
 import type { AppServices } from '../app-services'
 import { createConsoleEmailService } from '../console-email-service.server'
 import { createCookieSessionStorages } from './cookie-session-storages.server'
-import { createJiraAuth } from './create-jira-auth.server'
 import { createD1AgendaPlanningStore } from './d1-agenda-planning-store.server'
 import { createD1AnnouncementsStore } from './d1-announcements-store.server'
 import { createD1AuthService } from './d1-auth-service.server'
@@ -57,6 +56,5 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         speakerSync: createSessionizeSpeakerSyncService({ config, speakers }),
         meetTheExperts,
         meetTheExpertsScheduling: createD1MeetTheExpertsSchedulingStore(db, meetTheExperts),
-        jiraAuth: createJiraAuth(env.JIRA_API_TOKEN, env.JIRA_API_EMAIL),
     }
 }
