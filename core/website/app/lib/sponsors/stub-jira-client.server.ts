@@ -23,12 +23,17 @@ export function createStubJiraClient(): JiraClient {
                     hasYearLabel: true,
                 },
                 {
+                    // Answered the sponsorship team by email before the
+                    // portal existed, so the committee already has their
+                    // quote and socials in Jira — exercises the prefill path.
                     issueKey: 'SPN-102',
                     companyName: 'Globex Corporation',
                     tier: 'Gold',
                     jiraStatus: 'Committed',
                     contactEmails: ['sponsor-globex@example.com'],
                     hasYearLabel: true,
+                    quote: 'Globex is proud to back the local tech community.',
+                    socials: { linkedin: 'https://linkedin.com/company/globex' },
                 },
                 {
                     // Deliberately unlabelled — exercises the year-label

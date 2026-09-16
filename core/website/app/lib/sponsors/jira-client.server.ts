@@ -267,6 +267,9 @@ export function createJiraClient(args: {
             const jql = (jqlOverride ?? portalConfig.jira.jql)
                 .replaceAll('{year}', portalConfig.year)
                 .replaceAll('{pastYears}', pastYearsList(portalConfig.year))
+            const socialFieldIds = Object.values(fields.socials ?? {}).filter(
+                (id): id is string => typeof id === 'string' && id !== '',
+            )
             const requestFields = [
                 'summary',
                 'status',
@@ -276,6 +279,10 @@ export function createJiraClient(args: {
                 fields.contactEmail,
                 fields.tier,
                 ...(fields.additionalContactEmails ? [fields.additionalContactEmails] : []),
+                // Prefill sources: what the committee already captured by
+                // email before the sponsor ever opened the portal.
+                ...(fields.quote ? [fields.quote] : []),
+                ...socialFieldIds,
             ]
 
             const issues: SyncSourceSponsor[] = []
@@ -297,6 +304,17 @@ export function createJiraClient(args: {
                         ? issueFields.labels.filter((l): l is string => typeof l === 'string')
                         : []
 
+                    // `fieldAsText` rather than `fieldString`: the quote is a
+                    // rich-text field, so it arrives as an ADF document that
+                    // needs flattening. It also reports an empty field as
+                    // undefined, which is what lets a sponsor's own blank
+                    // answer win over a stale Jira value.
+                    const socials: Record<string, string> = {}
+                    for (const [platform, fieldId] of Object.entries(fields.socials ?? {})) {
+                        const url = fieldAsText(issueFields, fieldId)
+                        if (url) socials[platform] = url
+                    }
+
                     issues.push({
                         issueKey: issue.key,
                         companyName: fieldString(issueFields, fields.companyName) ?? summary ?? issue.key,
@@ -304,6 +322,8 @@ export function createJiraClient(args: {
                         website: fieldString(issueFields, fields.website),
                         jiraStatus: typeof status?.name === 'string' ? status.name : undefined,
                         hasYearLabel: labels.some((l) => YEAR_LABEL.test(l)),
+                        quote: fieldAsText(issueFields, fields.quote),
+                        socials: Object.keys(socials).length > 0 ? socials : undefined,
                         contactEmails: parseContactEmails(
                             fieldString(issueFields, fields.contactEmail),
                             fields.additionalContactEmails

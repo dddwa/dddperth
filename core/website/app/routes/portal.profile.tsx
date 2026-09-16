@@ -18,6 +18,7 @@ import {
     isProfileComplete,
     LOGO_MAX_BYTES,
     logoExtensionForContentType,
+    prefilledProfileFields,
     profileDetailsSchema,
     SOCIAL_PLATFORMS,
     socialsFromForm,
@@ -48,10 +49,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return {
         issueKey: sponsor.issueKey,
         nextSection: nextIncompleteSection(sections) ?? null,
-        blurb: profile?.blurb ?? '',
-        // Prefill from the Jira-synced website if the sponsor hasn't set one.
-        websiteUrl: profile?.websiteUrl ?? sponsor.website ?? '',
-        socials: profile?.socials ?? {},
+        ...prefilledProfileFields({
+            profile,
+            jira: { quote: sponsor.jiraQuote, website: sponsor.website, socials: sponsor.jiraSocials },
+        }),
         logo: profile?.logo
             ? { filename: profile.logo.filename, uploadedAt: profile.logo.uploadedAt, size: profile.logo.size }
             : null,
