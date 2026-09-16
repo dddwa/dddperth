@@ -418,84 +418,76 @@ export function createJiraSponsorSyncService(args: {
 
         async pushLogistics(issueKey, logistics, submittedKeys) {
             if (!portalConfig || !client || !writebackEnabled) return
-            try {
-                await client.pushLogistics(issueKey, logistics, submittedKeys)
-            } catch (error) {
-                console.error(
-                    `Sponsor push: logistics update on ${issueKey} failed:`,
-                    error instanceof Error ? error.message : error,
-                )
-                throw error
-            }
+            // Deliberately uncaught, like pushSponsorDetails: the route aborts
+            // the save on a throw and owns the message the sponsor sees.
+            await client.pushLogistics(issueKey, logistics, submittedKeys)
         },
 
-        async retryPendingWritebacks() {
+        async retryPendingStatusFlips() {
             if (!portalConfig || !client || !writebackEnabled) return
 
             const pendingAssets = new Set(await sponsors.getPendingWritebacks())
             const activeSponsors = (await sponsors.listSponsors(portalConfig.year)).filter((sponsor) => sponsor.active)
 
-            // Jira is canonical at sync time. Profile and logistics writes
-            // happen when the sponsor saves; replaying them here would race a
-            // later committee edit and overwrite the value we just pulled.
+            // Statuses only. Jira is canonical at sync time, so replaying the
+            // stored profile/logistics values here would overwrite a committee
+            // edit the sync just pulled in.
             for (const sponsor of activeSponsors) {
+                // Owed from a completion whose flip failed — independent of
+                // whether the sponsor has a profile row yet.
                 if (pendingAssets.has(sponsor.issueKey)) {
                     await this.flipAssetsTask(sponsor.issueKey)
                 }
 
-                if (!sponsor.profile) continue
-                await this.flipWorkstreamStatuses(sponsor.issueKey)
+                // The remaining flips read the profile's answers, so there is
+                // nothing to derive them from without one.
+                if (sponsor.profile) {
+                    await this.flipWorkstreamStatuses(sponsor.issueKey)
+                }
             }
         },
 
-        async pushSponsorOwnedData(issueKey, change, details) {
+        async pushSponsorDetails(issueKey, details) {
             if (!portalConfig || !client || !writebackEnabled) return
 
-            const jiraFields = portalConfig.jira.fields
+            const payload = buildSponsorDetailsPayload(details, portalConfig.jira.fields)
+            if (Object.keys(payload).length === 0) return
 
-            // Only an explicit details save wins over Jira's profile fields.
-            // An unrelated logo upload must not replay stale cached answers.
-            if (change === 'details') {
-                if (!details) throw new Error('Sponsor details are required for Jira write-back')
-                try {
-                    const payload = buildSponsorDetailsPayload(details, jiraFields)
-                    if (Object.keys(payload).length > 0) {
-                        await client.updateIssueFields(issueKey, payload)
-                    }
-                } catch (error) {
-                    console.error(
-                        `Sponsor push: field update on ${issueKey} failed:`,
-                        error instanceof Error ? error.message : error,
-                    )
-                    throw error
-                }
-            }
+            // Deliberately not caught: the route aborts the save on a throw, so
+            // swallowing it here would persist to D1 as though Jira had
+            // accepted it. The route logs and reports.
+            await client.updateIssueFields(issueKey, payload)
+        },
 
-            // A logo replaced after completion won't go through the
-            // completion write-back again — attach the new file with a note
-            // so the committee sees the change in the activity feed.
-            const profile = change === 'logo' ? await sponsors.getProfile(issueKey).catch(() => null) : null
-            if (profile?.logo) {
-                const sponsor = await sponsors.getSponsor(issueKey).catch(() => null)
-                if (!sponsor?.assetsTaskFlippedAt) return // completion write-back will attach it
+        async attachUpdatedLogo(issueKey) {
+            if (!portalConfig || !client || !writebackEnabled) return
 
-                try {
-                    const asset = await assets.get(profile.logo.r2Key)
-                    if (asset) {
-                        const content = await new Response(asset.body).arrayBuffer()
-                        await client.addAttachment(issueKey, profile.logo.filename, content, asset.contentType)
-                        await client.addComment(
-                            issueKey,
-                            `Sponsor portal: the sponsor updated their logo — ${profile.logo.filename} ` +
-                                `(${(profile.logo.size / 1024).toFixed(0)} KB) attached.`,
-                        )
-                    }
-                } catch (error) {
-                    console.error(
-                        `Sponsor push: logo re-attach on ${issueKey} failed:`,
-                        error instanceof Error ? error.message : error,
-                    )
-                }
+            const profile = await sponsors.getProfile(issueKey).catch(() => null)
+            if (!profile?.logo) return
+
+            const sponsor = await sponsors.getSponsor(issueKey).catch(() => null)
+            // Before completion the assets write-back attaches the logo itself,
+            // so attaching here too would duplicate it.
+            if (!sponsor?.assetsTaskFlippedAt) return
+
+            try {
+                const asset = await assets.get(profile.logo.r2Key)
+                if (!asset) return
+
+                const content = await new Response(asset.body).arrayBuffer()
+                await client.addAttachment(issueKey, profile.logo.filename, content, asset.contentType)
+                await client.addComment(
+                    issueKey,
+                    `Sponsor portal: the sponsor updated their logo — ${profile.logo.filename} ` +
+                        `(${(profile.logo.size / 1024).toFixed(0)} KB) attached.`,
+                )
+            } catch (error) {
+                // Best-effort: the file is already in R2 and the upload really
+                // did succeed, so a failed attachment must not fail the save.
+                console.error(
+                    `Sponsor push: logo re-attach on ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
             }
         },
     }

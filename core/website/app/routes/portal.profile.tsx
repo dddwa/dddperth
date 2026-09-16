@@ -111,9 +111,15 @@ export async function action({ request, context }: Route.ActionArgs) {
             websiteUrl: parsed.data.websiteUrl,
             socials: socialsFromForm(parsed.data),
         }
+        // Jira first: on failure nothing reaches D1, so the sponsor is told
+        // rather than shown a success banner over a lost answer.
         try {
-            await services.sponsorSync.pushSponsorOwnedData(sponsor.issueKey, 'details', details)
-        } catch {
+            await services.sponsorSync.pushSponsorDetails(sponsor.issueKey, details)
+        } catch (error) {
+            console.error(
+                `Sponsor profile: Jira write-back for ${sponsor.issueKey} failed:`,
+                error instanceof Error ? error.message : error,
+            )
             return data(
                 {
                     intent: 'save-details' as const,
@@ -156,7 +162,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             user.email,
         )
         // Re-attaches the new logo in Jira when this is a post-completion change.
-        await services.sponsorSync.pushSponsorOwnedData(sponsor.issueKey, 'logo')
+        await services.sponsorSync.attachUpdatedLogo(sponsor.issueKey)
         await recordCompletionIfReady(services, sponsor)
         await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
         return data({

@@ -73,7 +73,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const outcome = await services.sponsorSync.syncNow('manual')
     if (outcome.ok) {
-        await services.sponsorSync.retryPendingWritebacks()
+        await services.sponsorSync.retryPendingStatusFlips()
         return data({ synced: true as const })
     }
 

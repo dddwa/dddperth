@@ -138,10 +138,11 @@ export const LOGISTICS_KEYS = Object.keys(logisticsSchema.shape) as Array<keyof 
  * issue. Until this existed the form read only the sponsor's own answers, so
  * they saw empty fields and their first save overwrote the lot.
  *
- * Before the sponsor's first submission Jira fills the gaps. Afterwards D1
- * holds the latest Jira-synchronised snapshot. This prevents stale prefills
- * from resurrecting a field the sponsor just cleared between their save and
- * the next Jira sync.
+ * Only relevant *before* the sponsor's first submission, where it fills the
+ * form from Jira. Afterwards `sponsor_profiles` already holds a copy that each
+ * sync refreshes from Jira, so the stored answers are returned untouched —
+ * reaching for `jiraLogistics` there could resurrect a field the sponsor
+ * cleared moments ago, using a snapshot up to an hour old.
  */
 export function prefilledLogistics(args: {
     /** The sponsor's own answers, and whether they have ever submitted. */

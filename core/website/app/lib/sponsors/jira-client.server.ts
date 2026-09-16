@@ -192,6 +192,25 @@ interface JiraEditFieldMeta {
 }
 
 /**
+ * A field the sponsor submitted that Jira won't accept — an answer matching no
+ * allowed option, or a field that isn't on the issue's edit screen.
+ *
+ * A type rather than a message prefix so the route can tell "your answer needs
+ * correcting" from "Jira is down" without matching on prose: reworded copy
+ * would otherwise silently downgrade this to the generic failure.
+ */
+export class JiraFieldRejectedError extends Error {
+    constructor(
+        /** Portal field name, e.g. `bumpInSlot`. */
+        readonly portalKey: string,
+        message: string,
+    ) {
+        super(message)
+        this.name = 'JiraFieldRejectedError'
+    }
+}
+
+/**
  * Builds the Jira payload for one logistics save.
  *
  * `submittedKeys` is the load-bearing argument. The portal must distinguish
@@ -235,7 +254,9 @@ export function buildLogisticsPayload(args: {
 
         const fieldMeta = editMetaFields?.[fieldId]
         if (!fieldMeta) {
-            if (wasSubmitted) throw new Error(`Jira field for "${portalKey}" is not editable`)
+            if (wasSubmitted) {
+                throw new JiraFieldRejectedError(portalKey, `Jira field for "${portalKey}" is not editable`)
+            }
             continue
         }
 
@@ -245,7 +266,7 @@ export function buildLogisticsPayload(args: {
         if (planned.action === 'set') {
             payload[fieldId] = planned.value
         } else if (wasSubmitted) {
-            throw new Error(`Jira cannot accept "${stored ?? ''}" for "${portalKey}"`)
+            throw new JiraFieldRejectedError(portalKey, `Jira cannot accept "${stored ?? ''}" for "${portalKey}"`)
         }
     }
 

@@ -27,17 +27,27 @@ export interface SponsorSyncService {
     flipAssetsTask(issueKey: string): Promise<void>
 
     /**
-     * Pushes sponsor-owned data (quote, website, socials — and for logo
-     * changes after completion, a fresh attachment) into Jira. Called on
-     * every portal save: these fields belong to the sponsor, so the
-     * portal's value overrides whatever Jira has. Detail failures throw so
-     * the form can fail before updating D1.
+     * Writes the sponsor's submitted blurb, website and socials into Jira.
+     *
+     * **Throws on failure**, so the route can abandon the save before touching
+     * D1 — a sponsor must never see a success banner over an answer Jira
+     * refused. Takes the details explicitly rather than re-reading the profile:
+     * the write happens *before* D1 is updated, so a stored copy would be the
+     * previous save's values.
      */
-    pushSponsorOwnedData(
+    pushSponsorDetails(
         issueKey: string,
-        change: 'details' | 'logo',
-        details?: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
+        details: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
     ): Promise<void>
+
+    /**
+     * Re-attaches a logo replaced *after* the completion write-back already
+     * fired, with a comment so the change shows in the activity feed. A logo
+     * uploaded before completion is skipped — the completion write-back
+     * attaches it. Best-effort: never throws, since the file is already safe
+     * in R2 and the sponsor's upload has genuinely succeeded.
+     */
+    attachUpdatedLogo(issueKey: string): Promise<void>
 
     /**
      * Advances the other workstream status fields (social, exhibition,
@@ -59,9 +69,15 @@ export interface SponsorSyncService {
      */
     getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
 
-    /** Retries completion statuses after a sync. Profile/logistics fields
-     * are not replayed: the latest Jira values are canonical. */
-    retryPendingWritebacks(): Promise<void>
+    /**
+     * Re-runs the workstream status flips after a sync.
+     *
+     * Status flips are best-effort on save, so Jira being down loses them
+     * permanently without this. Profile and logistics *fields* are deliberately
+     * not replayed — Jira is canonical at sync time, and re-pushing a stored
+     * answer would overwrite a committee edit the sync just pulled in.
+     */
+    retryPendingStatusFlips(): Promise<void>
 
     /**
      * Committee-owned logistics (bump-in/out, equipment, parking) keyed by

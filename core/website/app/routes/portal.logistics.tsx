@@ -20,6 +20,7 @@ import {
     visibleLogisticsKeys,
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
+import { JiraFieldRejectedError } from '~/lib/sponsors/jira-client.server'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
@@ -100,11 +101,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     const seeable = visibleLogisticsKeys(visibility)
     const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
 
+    // Jira first: if it rejects the save, nothing is written to D1, so the
+    // sponsor sees a real error instead of a green banner over a lost answer.
     try {
         await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
     } catch (error) {
         const message =
-            error instanceof Error && error.message.startsWith('Jira cannot accept')
+            error instanceof JiraFieldRejectedError
                 ? `Your changes were not saved. ${error.message}. Please correct the answer and try again.`
                 : 'Jira could not save your changes. Nothing was saved. Please try again or contact the sponsorship team.'
         return data({ error: message }, { status: 502 })

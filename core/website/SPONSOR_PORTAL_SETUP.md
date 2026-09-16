@@ -326,8 +326,13 @@ If you ever want sponsors to see it, all three have to come back together.
 Website`, plus the `quote` paragraph field and per-platform `socials` URL fields if configured
 in `conference/config/sponsor-portal.ts` — omit them and the push skips those). A save with
 unchanged values produces no Jira history noise. A logo replaced _after_ completion is
-re-attached to the issue with a note in the activity feed. All pushes are best-effort — Jira
-being down never fails a sponsor's save.
+re-attached to the issue with a note in the activity feed.
+
+**Field writes are no longer best-effort.** The details and logistics forms write Jira *before*
+D1, and a rejection aborts the save: the sponsor sees an error and nothing is persisted, rather
+than a success banner over an answer Jira refused. Only the two genuinely optional side effects
+stay best-effort — the logo re-attachment (the file is already safe in R2) and the status flips
+(retried by `retryPendingStatusFlips` on the next sync).
 
 - "Complete" = logo + blurb + website URL (socials optional) — `isProfileComplete()` in
   `app/lib/sponsors/profile.ts`.

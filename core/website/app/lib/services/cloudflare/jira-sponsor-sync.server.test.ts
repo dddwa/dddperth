@@ -60,7 +60,7 @@ describe('getExhibitorLogistics', () => {
     })
 })
 
-describe('retryPendingWritebacks', () => {
+describe('retryPendingStatusFlips', () => {
     it('writes details only on explicit saves, not status retries or logo uploads', async () => {
         const profile = {
             issueKey: 'SPN-1',
@@ -114,19 +114,19 @@ describe('retryPendingWritebacks', () => {
             jiraClient: client,
         })
 
-        await service.retryPendingWritebacks()
+        await service.retryPendingStatusFlips()
 
         expect(client.updateIssueFields).not.toHaveBeenCalled()
         expect(client.pushLogistics).not.toHaveBeenCalled()
         expect(client.setStatusOptionId).toHaveBeenCalledTimes(2)
 
-        await service.pushSponsorOwnedData('SPN-1', 'logo')
+        await service.attachUpdatedLogo('SPN-1')
         expect(client.updateIssueFields).not.toHaveBeenCalled()
 
-        await service.pushSponsorOwnedData('SPN-1', 'details', profile)
+        await service.pushSponsorDetails('SPN-1', profile)
         expect(client.updateIssueFields).toHaveBeenCalledTimes(1)
 
         vi.mocked(client.updateIssueFields).mockRejectedValueOnce(new Error('Jira unavailable'))
-        await expect(service.pushSponsorOwnedData('SPN-1', 'details', profile)).rejects.toThrow('Jira unavailable')
+        await expect(service.pushSponsorDetails('SPN-1', profile)).rejects.toThrow('Jira unavailable')
     })
 })

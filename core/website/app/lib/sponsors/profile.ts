@@ -61,9 +61,11 @@ export function socialsFromForm(data: Record<string, unknown>): Record<string, s
  * existed already have their quote and socials on the Jira issue; without
  * this they were shown an empty form and asked to type it all again.
  *
- * Before the sponsor submits, Jira fills gaps in the form. Afterwards the
- * profile is a local copy of Jira: portal saves write there immediately and
- * later Jira syncs replace this copy, including fields cleared in Jira.
+ * Only relevant *before* the sponsor's first submission, where it fills the
+ * form from Jira. Afterwards `sponsor_profiles` is a local copy of Jira —
+ * portal saves write Jira first, and each sync refreshes the copy — so the
+ * stored values are returned untouched rather than merged against a snapshot
+ * that may be an hour old.
  */
 export function prefilledProfileFields(args: {
     profile: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials' | 'detailsUpdatedAt'> | null
