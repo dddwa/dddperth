@@ -107,9 +107,9 @@ export const conference2026: ConferenceYear = {
             },
             {
                 name: 'Bankwest',
-                website: 'https://www.bankwest.com.au/',
-                logoUrlDarkMode: '/images/sponsors/2026-bankwest-dark.svg',
-                logoUrlLightMode: '/images/sponsors/2026-bankwest-light.svg',
+                website: 'https://bankwest.com.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-bankwest-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-bankwest-light.png',
             },
         ],
         gold: [
@@ -133,9 +133,9 @@ export const conference2026: ConferenceYear = {
             },
             {
                 name: 'Woodside',
-                website: 'https://www.woodside.com/',
-                logoUrlDarkMode: '/images/sponsors/2026-woodside-dark.svg',
-                logoUrlLightMode: '/images/sponsors/2026-woodside-light.svg',
+                website: '',
+                logoUrlDarkMode: '/images/sponsors/2026-woodside-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-woodside-light.png',
             },
         ],
         room: [
