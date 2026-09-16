@@ -208,9 +208,9 @@ interface JiraEditFieldMeta {
  * `undefined` as a clear, so one sponsor save wiped every Jira value the
  * committee had gathered but the sponsor hadn't retyped.
  *
- * A field missing from `editmeta` is skipped: it isn't on the issue's screen
- * (or we lack permission), and including it 400s the whole request, taking
- * every other answer with it.
+ * A submitted field missing from `editmeta` fails the save: it isn't on the
+ * issue's screen (or we lack permission), so telling the sponsor it saved
+ * would be false. Unsubmitted stored fields are still left alone.
  */
 export function buildLogisticsPayload(args: {
     /** Portal field name → Jira custom field id, from the manifest. */
@@ -234,12 +234,19 @@ export function buildLogisticsPayload(args: {
         if (stored === undefined && !wasSubmitted) continue
 
         const fieldMeta = editMetaFields?.[fieldId]
-        if (!fieldMeta) continue
+        if (!fieldMeta) {
+            if (wasSubmitted) throw new Error(`Jira field for "${portalKey}" is not editable`)
+            continue
+        }
 
         // A submitted-but-absent value is an explicit clear; `planJiraFieldValue`
         // already treats '' as one.
         const planned = planJiraFieldValue(fieldMeta, stored ?? '')
-        if (planned.action === 'set') payload[fieldId] = planned.value
+        if (planned.action === 'set') {
+            payload[fieldId] = planned.value
+        } else if (wasSubmitted) {
+            throw new Error(`Jira cannot accept "${stored ?? ''}" for "${portalKey}"`)
+        }
     }
 
     return payload
@@ -403,6 +410,16 @@ export function createJiraClient(args: {
                         quote: fieldAsText(issueFields, fields.quote),
                         socials: Object.keys(socials).length > 0 ? socials : undefined,
                         logistics: Object.keys(logistics).length > 0 ? logistics : undefined,
+                        logisticsKeys: Object.entries(logisticsMapping)
+                            .filter(([, fieldId]) => typeof fieldId === 'string' && fieldId !== '')
+                            .map(([portalKey]) => portalKey),
+                        detailsKeys: [
+                            'websiteUrl',
+                            ...(fields.quote ? ['blurb'] : []),
+                            ...Object.entries(fields.socials ?? {})
+                                .filter(([, fieldId]) => typeof fieldId === 'string' && fieldId !== '')
+                                .map(([platform]) => `social_${platform}`),
+                        ],
                         contactEmails: parseContactEmails(
                             fieldString(issueFields, fields.contactEmail),
                             fields.additionalContactEmails
@@ -508,7 +525,9 @@ export function createJiraClient(args: {
             // Nothing stored and nothing submitted — every field would be
             // "never answered", so there is no write to make. Skipping here
             // also avoids an editmeta fetch per no-op retry.
-            const hasWork = entries.some(([portalKey]) => logistics[portalKey] !== undefined || submittedKeys.has(portalKey))
+            const hasWork = entries.some(
+                ([portalKey]) => logistics[portalKey] !== undefined || submittedKeys.has(portalKey),
+            )
             if (!hasWork) return
 
             // Ask what type each field is rather than assuming: Jira rejects

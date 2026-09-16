@@ -1,4 +1,5 @@
 import type { SponsorListEntry, SponsorProfile, SponsorRecord, SponsorsStore, SponsorSyncRun } from '../sponsors-store'
+import { reconcileProfileFromJira } from '../../sponsors/sync-plan'
 
 interface SponsorRow {
     issue_key: string
@@ -20,6 +21,7 @@ interface SponsorProfileRow {
     blurb: string | null
     website_url: string | null
     socials_json: string | null
+    details_updated_at: number | null
     logistics_json: string | null
     logistics_updated_at: number | null
     logo_r2_key: string | null
@@ -78,6 +80,7 @@ function toProfile(row: SponsorProfileRow): SponsorProfile {
         blurb: row.blurb ?? undefined,
         websiteUrl: row.website_url ?? undefined,
         socials: parseJsonMap(row.socials_json),
+        detailsUpdatedAt: row.details_updated_at ?? undefined,
         logistics: parseJsonMap(row.logistics_json),
         logisticsUpdatedAt: row.logistics_updated_at ?? undefined,
         logo:
@@ -215,12 +218,14 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
         async saveDetails(issueKey, details, updatedBy) {
             await db
                 .prepare(
-                    `INSERT INTO sponsor_profiles (issue_key, blurb, website_url, socials_json, updated_at, updated_by)
-                     VALUES (?, ?, ?, ?, unixepoch(), ?)
+                    `INSERT INTO sponsor_profiles
+                         (issue_key, blurb, website_url, socials_json, details_updated_at, updated_at, updated_by)
+                     VALUES (?, ?, ?, ?, unixepoch(), unixepoch(), ?)
                      ON CONFLICT(issue_key) DO UPDATE SET
                          blurb = excluded.blurb,
                          website_url = excluded.website_url,
                          socials_json = excluded.socials_json,
+                         details_updated_at = excluded.details_updated_at,
                          updated_at = excluded.updated_at,
                          updated_by = excluded.updated_by`,
                 )
@@ -277,7 +282,40 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
         async applySyncPlan(plan) {
             const statements: D1PreparedStatement[] = []
 
+            const profileResult = await db.prepare(`SELECT * FROM sponsor_profiles`).all<SponsorProfileRow>()
+            const profilesByIssue = new Map((profileResult.results ?? []).map((row) => [row.issue_key, toProfile(row)]))
+
             for (const s of plan.upserts) {
+                const profile = profilesByIssue.get(s.issueKey)
+                const reconciliation = profile ? reconcileProfileFromJira(profile, s) : null
+                if (reconciliation?.details) {
+                    statements.push(
+                        db
+                            .prepare(
+                                `UPDATE sponsor_profiles SET
+                                     blurb = ?, website_url = ?, socials_json = ?,
+                                     updated_at = unixepoch(), updated_by = 'jira-sync'
+                                 WHERE issue_key = ?`,
+                            )
+                            .bind(
+                                reconciliation.details.blurb ?? null,
+                                reconciliation.details.websiteUrl ?? null,
+                                JSON.stringify(reconciliation.details.socials),
+                                s.issueKey,
+                            ),
+                    )
+                }
+                if (reconciliation?.logistics) {
+                    statements.push(
+                        db
+                            .prepare(
+                                `UPDATE sponsor_profiles SET
+                                     logistics_json = ?, updated_at = unixepoch(), updated_by = 'jira-sync'
+                                 WHERE issue_key = ?`,
+                            )
+                            .bind(JSON.stringify(reconciliation.logistics), s.issueKey),
+                    )
+                }
                 statements.push(
                     db
                         .prepare(

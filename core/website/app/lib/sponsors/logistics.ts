@@ -138,13 +138,10 @@ export const LOGISTICS_KEYS = Object.keys(logisticsSchema.shape) as Array<keyof 
  * issue. Until this existed the form read only the sponsor's own answers, so
  * they saw empty fields and their first save overwrote the lot.
  *
- * **Authority flips wholesale, not per field**, on the profile's
- * `logisticsUpdatedAt` — the same boundary `buildExhibitorSource` already uses
- * for the venue spreadsheet, deliberately reused so the form and the export
- * can't disagree about who owns an answer. Before the sponsor's first
- * submission Jira fills the gaps; after it their answers stand alone, so a
- * field they deliberately cleared can't be re-populated from a stale Jira
- * value on the next page load.
+ * Before the sponsor's first submission Jira fills the gaps. Afterwards D1
+ * holds the latest Jira-synchronised snapshot. This prevents stale prefills
+ * from resurrecting a field the sponsor just cleared between their save and
+ * the next Jira sync.
  */
 export function prefilledLogistics(args: {
     /** The sponsor's own answers, and whether they have ever submitted. */

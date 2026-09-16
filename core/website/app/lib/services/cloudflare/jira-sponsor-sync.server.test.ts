@@ -61,7 +61,7 @@ describe('getExhibitorLogistics', () => {
 })
 
 describe('retryPendingWritebacks', () => {
-    it('reconciles profile, logistics and workstream statuses on the next sync', async () => {
+    it('writes details only on explicit saves, not status retries or logo uploads', async () => {
         const profile = {
             issueKey: 'SPN-1',
             blurb: 'About Acme',
@@ -116,11 +116,17 @@ describe('retryPendingWritebacks', () => {
 
         await service.retryPendingWritebacks()
 
-        expect(client.updateIssueFields).toHaveBeenCalledWith(
-            'SPN-1',
-            expect.objectContaining({ customfield_10089: 'https://acme.test' }),
-        )
-        expect(client.pushLogistics).toHaveBeenCalledWith('SPN-1', profile.logistics)
+        expect(client.updateIssueFields).not.toHaveBeenCalled()
+        expect(client.pushLogistics).not.toHaveBeenCalled()
         expect(client.setStatusOptionId).toHaveBeenCalledTimes(2)
+
+        await service.pushSponsorOwnedData('SPN-1', 'logo')
+        expect(client.updateIssueFields).not.toHaveBeenCalled()
+
+        await service.pushSponsorOwnedData('SPN-1', 'details', profile)
+        expect(client.updateIssueFields).toHaveBeenCalledTimes(1)
+
+        vi.mocked(client.updateIssueFields).mockRejectedValueOnce(new Error('Jira unavailable'))
+        await expect(service.pushSponsorOwnedData('SPN-1', 'details', profile)).rejects.toThrow('Jira unavailable')
     })
 })

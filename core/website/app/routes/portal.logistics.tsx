@@ -100,10 +100,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     const seeable = visibleLogisticsKeys(visibility)
     const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
 
+    try {
+        await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
+    } catch (error) {
+        const message =
+            error instanceof Error && error.message.startsWith('Jira cannot accept')
+                ? `Your changes were not saved. ${error.message}. Please correct the answer and try again.`
+                : 'Jira could not save your changes. Nothing was saved. Please try again or contact the sponsorship team.'
+        return data({ error: message }, { status: 502 })
+    }
     await services.sponsors.saveLogistics(sponsor.issueKey, logistics, user.email)
-    // Sponsor-owned, so the portal's values win in Jira. Best-effort: the
-    // sponsor's save must not fail because Jira is down.
-    await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
     // Logistics answers are what drive the exhibition, raffle and induction
     // statuses (and the social one, via the social quote).
     await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
@@ -308,6 +314,7 @@ export default function PortalLogistics() {
 
     const errors = actionData && 'fieldErrors' in actionData ? actionData.fieldErrors : {}
     const saved = actionData && 'saved' in actionData
+    const saveError = actionData && 'error' in actionData ? actionData.error : null
     const savedNextSection = actionData && 'nextSection' in actionData ? actionData.nextSection : nextSection
     const value = (key: keyof LogisticsFields) => logistics[key] ?? ''
 
@@ -323,6 +330,11 @@ export default function PortalLogistics() {
                 </styled.p>
 
                 {saved && <PortalSavedBanner message="Saved — thank you!" next={savedNextSection} />}
+                {saveError && (
+                    <Box mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                        {saveError}
+                    </Box>
+                )}
 
                 <Form method="post">
                     {visibility.exhibition && (

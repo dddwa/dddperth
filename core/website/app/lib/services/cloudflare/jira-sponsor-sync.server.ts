@@ -425,6 +425,7 @@ export function createJiraSponsorSyncService(args: {
                     `Sponsor push: logistics update on ${issueKey} failed:`,
                     error instanceof Error ? error.message : error,
                 )
+                throw error
             }
         },
 
@@ -434,59 +435,47 @@ export function createJiraSponsorSyncService(args: {
             const pendingAssets = new Set(await sponsors.getPendingWritebacks())
             const activeSponsors = (await sponsors.listSponsors(portalConfig.year)).filter((sponsor) => sponsor.active)
 
-            // Reconcile all sponsor-owned state, not just writes for which we
-            // happened to persist a pending flag. Jira updates are idempotent,
-            // and this makes a transient failure after the sponsor's final
-            // save self-heal on the next hourly/manual sync.
+            // Jira is canonical at sync time. Profile and logistics writes
+            // happen when the sponsor saves; replaying them here would race a
+            // later committee edit and overwrite the value we just pulled.
             for (const sponsor of activeSponsors) {
                 if (pendingAssets.has(sponsor.issueKey)) {
                     await this.flipAssetsTask(sponsor.issueKey)
                 }
 
-                const profile = sponsor.profile
-                if (!profile) continue
-                if (profile.blurb && profile.websiteUrl) {
-                    await this.pushSponsorOwnedData(sponsor.issueKey, 'details')
-                }
-                if (profile.logisticsUpdatedAt !== undefined) {
-                    // A retry has no originating form, so "what did they
-                    // submit?" is unknowable here. Treat the stored answers as
-                    // the submitted set: that re-sends everything the sponsor
-                    // has saved without clearing anything they never answered.
-                    const stored = profile.logistics ?? {}
-                    await this.pushLogistics(sponsor.issueKey, stored, new Set(Object.keys(stored)))
-                }
+                if (!sponsor.profile) continue
                 await this.flipWorkstreamStatuses(sponsor.issueKey)
             }
         },
 
-        async pushSponsorOwnedData(issueKey, change) {
+        async pushSponsorOwnedData(issueKey, change, details) {
             if (!portalConfig || !client || !writebackEnabled) return
 
-            const profile = await sponsors.getProfile(issueKey).catch(() => null)
-            if (!profile) return
             const jiraFields = portalConfig.jira.fields
 
-            // Sponsor-owned fields: the portal's value wins, every save.
-            // (Committee-owned fields — tier, contacts, company name — are
-            // never written from here.) A PUT with unchanged values creates
-            // no Jira history entry, so redundant saves stay quiet.
-            try {
-                const payload = buildSponsorDetailsPayload(profile, jiraFields)
-                if (Object.keys(payload).length > 0) {
-                    await client.updateIssueFields(issueKey, payload)
+            // Only an explicit details save wins over Jira's profile fields.
+            // An unrelated logo upload must not replay stale cached answers.
+            if (change === 'details') {
+                if (!details) throw new Error('Sponsor details are required for Jira write-back')
+                try {
+                    const payload = buildSponsorDetailsPayload(details, jiraFields)
+                    if (Object.keys(payload).length > 0) {
+                        await client.updateIssueFields(issueKey, payload)
+                    }
+                } catch (error) {
+                    console.error(
+                        `Sponsor push: field update on ${issueKey} failed:`,
+                        error instanceof Error ? error.message : error,
+                    )
+                    throw error
                 }
-            } catch (error) {
-                console.error(
-                    `Sponsor push: field update on ${issueKey} failed:`,
-                    error instanceof Error ? error.message : error,
-                )
             }
 
             // A logo replaced after completion won't go through the
             // completion write-back again — attach the new file with a note
             // so the committee sees the change in the activity feed.
-            if (change === 'logo' && profile.logo) {
+            const profile = change === 'logo' ? await sponsors.getProfile(issueKey).catch(() => null) : null
+            if (profile?.logo) {
                 const sponsor = await sponsors.getSponsor(issueKey).catch(() => null)
                 if (!sponsor?.assetsTaskFlippedAt) return // completion write-back will attach it
 

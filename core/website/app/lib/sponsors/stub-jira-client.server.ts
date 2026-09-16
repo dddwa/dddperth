@@ -35,8 +35,8 @@ export function createStubJiraClient(): JiraClient {
                     quote: 'Globex is proud to back the local tech community.',
                     socials: { linkedin: 'https://linkedin.com/company/globex' },
                     // Committee-collected logistics, so the local flow walks
-                    // the prefill path: these show in the form until Globex
-                    // submits it, then their own answers take over.
+                    // the prefill path. Later stub syncs restore these fixture
+                    // values just as a real Jira sync refreshes the portal copy.
                     logistics: {
                         bumpInSlot: 'Friday 1pm - 2pm',
                         screenOrders: '55" LCD ($500+GST)',

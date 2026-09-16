@@ -1,5 +1,5 @@
 import type { ExhibitorLogistics, SponsorDeliverables } from '../sponsors/jira-client.server'
-import type { SponsorSyncRun } from './sponsors-store'
+import type { SponsorProfile, SponsorSyncRun } from './sponsors-store'
 
 export type SyncOutcome =
     | { ok: true; run: SponsorSyncRun }
@@ -30,10 +30,14 @@ export interface SponsorSyncService {
      * Pushes sponsor-owned data (quote, website, socials — and for logo
      * changes after completion, a fresh attachment) into Jira. Called on
      * every portal save: these fields belong to the sponsor, so the
-     * portal's value overrides whatever Jira has. Best-effort; never
-     * throws and never blocks the sponsor's save.
+     * portal's value overrides whatever Jira has. Detail failures throw so
+     * the form can fail before updating D1.
      */
-    pushSponsorOwnedData(issueKey: string, change: 'details' | 'logo'): Promise<void>
+    pushSponsorOwnedData(
+        issueKey: string,
+        change: 'details' | 'logo',
+        details?: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
+    ): Promise<void>
 
     /**
      * Advances the other workstream status fields (social, exhibition,
@@ -55,9 +59,8 @@ export interface SponsorSyncService {
      */
     getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
 
-    /** Reconciles every sponsor-owned Jira field/status after a sync. This is
-     * deliberately broader than the persisted assets pending flag: failed
-     * best-effort saves otherwise have no request left to retry them. */
+    /** Retries completion statuses after a sync. Profile/logistics fields
+     * are not replayed: the latest Jira values are canonical. */
     retryPendingWritebacks(): Promise<void>
 
     /**
@@ -73,8 +76,8 @@ export interface SponsorSyncService {
 
     /**
      * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the
-     * portal's values win. Best-effort like the other pushes — never blocks
-     * the sponsor's save.
+     * portal's values win. Failures throw so the form can fail before
+     * updating D1.
      *
      * `submittedKeys` names the portal fields the sponsor actually submitted.
      * A field they never answered is left untouched in Jira — the committee

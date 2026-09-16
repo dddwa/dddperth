@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { buildLogisticsPayload, planJiraFieldValue } from './jira-client.server'
+import { conferenceManifest } from '@conference/manifest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { buildLogisticsPayload, createJiraClient, planJiraFieldValue, textToAdf } from './jira-client.server'
 
 const allowedValues = [
     { id: '1', value: 'Current A' },
@@ -83,16 +84,15 @@ describe('buildLogisticsPayload', () => {
         expect(payload.cf_equipment).toBe('Banner')
     })
 
-    it('skips a field missing from editmeta, keeping the rest of the save', () => {
-        // Including it would 400 the whole request and lose every answer.
-        const payload = buildLogisticsPayload({
-            mapping,
-            editMetaFields: { cf_equipment: { schema: { type: 'string' } } },
-            logistics: { bumpInSlot: 'Friday 1pm - 2pm', equipmentList: 'Banner' },
-            submittedKeys: new Set(['bumpInSlot', 'equipmentList']),
-        })
-
-        expect(payload).toEqual({ cf_equipment: 'Banner' })
+    it('fails when a submitted field is not editable in Jira', () => {
+        expect(() =>
+            buildLogisticsPayload({
+                mapping,
+                editMetaFields: { cf_equipment: { schema: { type: 'string' } } },
+                logistics: { bumpInSlot: 'Friday 1pm - 2pm', equipmentList: 'Banner' },
+                submittedKeys: new Set(['bumpInSlot', 'equipmentList']),
+            }),
+        ).toThrow('Jira field for "bumpInSlot" is not editable')
     })
 
     it('never touches a field with no Jira mapping', () => {
@@ -112,9 +112,133 @@ describe('buildLogisticsPayload', () => {
         expect(buildLogisticsPayload({ mapping, editMetaFields, logistics: {}, submittedKeys: new Set() })).toEqual({})
     })
 
-    it('preserves an unknown legacy option rather than clearing it', () => {
-        // A value Jira no longer offers is skipped, not nulled — the
-        // committee may have retired the option after the sponsor answered.
-        expect(build({ bumpInSlot: 'Thursday 9am (retired)' }, ['bumpInSlot'])).toEqual({})
+    it('fails when Jira cannot accept a submitted select value', () => {
+        expect(() => build({ bumpInSlot: 'Thursday 9am (retired)' }, ['bumpInSlot'])).toThrow(
+            'Jira cannot accept "Thursday 9am (retired)" for "bumpInSlot"',
+        )
+    })
+
+    it('preserves an unknown legacy select value when it was not submitted', () => {
+        expect(build({ bumpInSlot: 'Thursday 9am (retired)' }, [])).toEqual({})
+    })
+
+    it('fails the entire payload when one submitted checkbox option is invalid', () => {
+        expect(() =>
+            build({ equipmentList: 'Banner', screenOrders: '55" LCD ($500+GST), Unknown screen' }, [
+                'equipmentList',
+                'screenOrders',
+            ]),
+        ).toThrow('Jira cannot accept')
+    })
+})
+
+describe('pushLogistics', () => {
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('rejects an invalid select before sending any Jira update', async () => {
+        const portalConfig = conferenceManifest.sponsorPortal
+        const fieldId = portalConfig?.jira.fields.logistics?.bumpInSlot
+        if (!portalConfig || !fieldId) throw new Error('Expected sponsor logistics config')
+        const fetchMock = vi.fn<typeof fetch>(async () =>
+            Response.json({
+                fields: {
+                    [fieldId]: { schema: { type: 'option' }, allowedValues: [{ id: '1', value: 'Friday 1pm - 2pm' }] },
+                },
+            }),
+        )
+        vi.stubGlobal('fetch', fetchMock)
+        const client = createJiraClient({ portalConfig, apiEmail: 'test@example.com', apiToken: 'test' })
+
+        await expect(
+            client.pushLogistics('SPN-1', { bumpInSlot: 'Friday afternoon' }, new Set(['bumpInSlot'])),
+        ).rejects.toThrow('Jira cannot accept "Friday afternoon" for "bumpInSlot"')
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+        expect(fetchMock.mock.calls[0][0]).toContain('/editmeta')
+    })
+})
+
+describe('searchSponsorIssues', () => {
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('reads Jira field shapes and retains mapped blank keys for portal clears', async () => {
+        const portalConfig = conferenceManifest.sponsorPortal
+        if (!portalConfig) throw new Error('Sponsor portal config is required for this test')
+        const fields = portalConfig.jira.fields
+        const logistics = fields.logistics
+        const quoteField = fields.quote
+        const linkedInField = fields.socials?.linkedin
+        const { bumpInSlot, screenOrders, socialQuote, rafflePrize } = logistics ?? {}
+        if (!quoteField || !linkedInField || !bumpInSlot || !screenOrders || !socialQuote || !rafflePrize) {
+            throw new Error('Expected Jira field mappings are required for this test')
+        }
+        const fetchMock = vi.fn<typeof fetch>(async () =>
+            Response.json({
+                isLast: true,
+                issues: [
+                    {
+                        key: 'SPN-1',
+                        fields: {
+                            [fields.companyName]: 'Acme',
+                            [fields.tier]: { id: 'tier', value: 'Gold' },
+                            [fields.website]: 'https://acme.test',
+                            [fields.contactEmail]: 'Sponsor@Example.com',
+                            [quoteField]: textToAdf('Committee blurb'),
+                            [linkedInField]: 'https://linkedin.com/company/acme',
+                            [bumpInSlot]: { id: 'slot', value: 'Friday 1pm - 2pm' },
+                            [screenOrders]: [{ id: 'screen', value: '55" LCD ($500+GST)' }],
+                            [socialQuote]: textToAdf('Social quote from Jira'),
+                            [rafflePrize]: null,
+                        },
+                    },
+                ],
+            }),
+        )
+        vi.stubGlobal('fetch', fetchMock)
+        const client = createJiraClient({ portalConfig, apiEmail: 'test@example.com', apiToken: 'test' })
+
+        const [sponsor] = await client.searchSponsorIssues()
+
+        expect(sponsor).toMatchObject({
+            companyName: 'Acme',
+            tier: 'Gold',
+            website: 'https://acme.test',
+            quote: 'Committee blurb',
+            socials: { linkedin: 'https://linkedin.com/company/acme' },
+            contactEmails: ['sponsor@example.com'],
+            logistics: {
+                bumpInSlot: 'Friday 1pm - 2pm',
+                screenOrders: '55" LCD ($500+GST)',
+                socialQuote: 'Social quote from Jira',
+            },
+        })
+        expect(sponsor.logistics).not.toHaveProperty('rafflePrize')
+        expect(sponsor.logisticsKeys).toContain('rafflePrize')
+        const requestBody = fetchMock.mock.calls.at(0)?.[1]?.body
+        if (typeof requestBody !== 'string') throw new Error('Expected Jira request body')
+        const request = JSON.parse(requestBody)
+        expect(request.fields).toContain(quoteField)
+        expect(request.fields).toContain(socialQuote)
+    })
+
+    it('fetches every Jira page before returning the authoritative result set', async () => {
+        const fetchMock = vi
+            .fn<typeof fetch>()
+            .mockResolvedValueOnce(
+                Response.json({ issues: [{ key: 'SPN-1', fields: {} }], nextPageToken: 'page-2', isLast: false }),
+            )
+            .mockResolvedValueOnce(Response.json({ issues: [{ key: 'SPN-2', fields: {} }], isLast: true }))
+        vi.stubGlobal('fetch', fetchMock)
+        const portalConfig = conferenceManifest.sponsorPortal
+        if (!portalConfig) throw new Error('Sponsor portal config is required for this test')
+        const client = createJiraClient({
+            portalConfig,
+            apiEmail: 'test@example.com',
+            apiToken: 'test',
+        })
+
+        expect((await client.searchSponsorIssues()).map((sponsor) => sponsor.issueKey)).toEqual(['SPN-1', 'SPN-2'])
+        const requestBody = fetchMock.mock.calls.at(1)?.[1]?.body
+        if (typeof requestBody !== 'string') throw new Error('Expected second Jira request body')
+        expect(JSON.parse(requestBody).nextPageToken).toBe('page-2')
     })
 })
