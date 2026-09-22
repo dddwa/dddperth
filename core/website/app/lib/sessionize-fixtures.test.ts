@@ -77,6 +77,39 @@ describe('Sessionize e2e fixtures', () => {
             ).toBe(true)
         })
 
+        it('covers a long talk running against two short ones', () => {
+            // The timetable is deliberately not a uniform rectangle: one room
+            // splits the long 45 minute slots into 20 minute talks, so a
+            // single long talk runs against *two* short ones that sit in
+            // different `timeSlots` entries.
+            //
+            // Without that, a session's time *slot* and its time *span* were
+            // interchangeable across the whole fixture, and anything that
+            // confused the two — an agenda builder allowing one pick per
+            // slot, say — looked correct here while being wrong on a real
+            // conference day. This asserts the distinguishing case survives:
+            // flatten the short-talk room back to the long grid and it fails.
+            const overlapping = (a: (typeof TALKS)[number], b: (typeof TALKS)[number]) =>
+                a.start < b.end && b.start < a.end
+
+            const longTalkAgainstTwoShort = TALKS.some((talk) => {
+                const clashes = TALKS.filter((other) => other.id !== talk.id && overlapping(talk, other))
+                // Two clashing talks *in the same room as each other* is the
+                // split-slot shape. Clashes spread across rooms are just the
+                // ordinary concurrent tracks, which every slot already has.
+                const byRoom = new Map<number, number>()
+                for (const clash of clashes) {
+                    byRoom.set(clash.room, (byRoom.get(clash.room) ?? 0) + 1)
+                }
+                return [...byRoom.values()].some((count) => count > 1)
+            })
+
+            expect(
+                longTalkAgainstTwoShort,
+                'no talk overlaps two others in the same room — the split-slot case is gone',
+            ).toBe(true)
+        })
+
         it('covers both single- and multi-speaker talks', () => {
             // The agenda and talk-detail templates both render a byline, which
             // differs for a co-presented talk.
