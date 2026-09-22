@@ -244,7 +244,11 @@ describe.runIf(portal)('sponsor portal: Jira stays canonical after a submission'
         // works because the sync enumerates the configured keys.
         const h = setup({ 'SPN-1': { ...gold, quote: 'Original', website: 'https://globex.test' } })
         await h.runSync()
-        await h.saveProfileForm('SPN-1', { blurb: 'Sponsor wrote this', websiteUrl: 'https://globex.test', socials: {} })
+        await h.saveProfileForm('SPN-1', {
+            blurb: 'Sponsor wrote this',
+            websiteUrl: 'https://globex.test',
+            socials: {},
+        })
 
         delete jiraIssue(h, 'SPN-1').quote
         await h.runSync()
@@ -286,9 +290,7 @@ describe.runIf(portal)('sponsor portal: a rejected save tells the sponsor', () =
         const h = setup({ 'SPN-1': { ...gold, logistics: { bumpInSlot: 'Friday 1pm - 2pm' } } })
         await h.runSync()
 
-        await expect(
-            h.saveLogisticsForm('SPN-1', { bumpInSlot: 'Whenever suits' }, ['bumpInSlot']),
-        ).rejects.toThrow()
+        await expect(h.saveLogisticsForm('SPN-1', { bumpInSlot: 'Whenever suits' }, ['bumpInSlot'])).rejects.toThrow()
 
         expect((await h.logisticsForm('SPN-1')).bumpInSlot).toBe('Friday 1pm - 2pm')
         expect(h.jira.issues.get('SPN-1')?.logistics?.bumpInSlot).toBe('Friday 1pm - 2pm')
@@ -345,5 +347,38 @@ describe.runIf(portal)('sponsor portal: committee-owned display fields', () => {
         await h.runSync()
 
         expect((await h.store.getSponsor('SPN-1'))?.exhibitorRoom).toBe('Sports Lounge')
+    })
+})
+
+describe.runIf(portal)('sponsor portal: a Jira outage during write-back', () => {
+    it('keeps the status flip from failing the save it follows', async () => {
+        // `flipWorkstreamStatuses` runs *after* the sponsor's answers are in
+        // D1, and the route awaits it without a catch. If it threw, the
+        // sponsor would get the error boundary over a save that in fact
+        // succeeded, and would submit again. It guards itself instead; this
+        // pins that, because the guard is what makes the bare `await` at the
+        // call site correct.
+        const { socialStatusField, pendingOptionId } = socialFlipConfig()
+        const h = setup({
+            'SPN-1': {
+                ...gold,
+                logistics: { socialQuote: 'Proudly Perth.' },
+                statuses: { [socialStatusField]: pendingOptionId },
+            },
+        })
+        await h.runSync()
+        await h.store.saveLogo(
+            'SPN-1',
+            { r2Key: 'logo', filename: 'logo.svg', contentType: 'image/svg+xml', size: 10 },
+            'sponsor@globex.test',
+        )
+
+        h.jira.failWrites = new Error('Jira 503')
+
+        await expect(h.sync.flipWorkstreamStatuses('SPN-1')).resolves.toBeUndefined()
+        // The sponsor's own answers are untouched by the failed flip.
+        expect((await h.store.getProfile('SPN-1'))?.logo?.filename).toBe('logo.svg')
+        // And Jira kept the committee's value rather than a half-written one.
+        expect(jiraIssue(h, 'SPN-1').statuses?.[socialStatusField]).toBe(pendingOptionId)
     })
 })

@@ -7,6 +7,7 @@ import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import { conferenceManifest } from '@conference/manifest'
 import { logisticsVisibility } from '~/lib/sponsors/logistics'
+import { logSponsorPortalEvent } from '~/lib/sponsors/log.server'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import {
     isProfileComplete,
@@ -105,6 +106,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === 'save-details') {
         const parsed = parseFormData(profileDetailsSchema, formData)
         if (!parsed.ok) {
+            // Answered to the sponsor, not thrown, so nothing else would record it.
+            logSponsorPortalEvent({
+                event: 'portal.save_rejected',
+                issueKey: sponsor.issueKey,
+                form: 'profile',
+                fields: Object.keys(parsed.fieldErrors),
+            })
             return data({ intent: 'save-details' as const, fieldErrors: parsed.fieldErrors }, { status: 400 })
         }
 
@@ -118,10 +126,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         try {
             await services.sponsorSync.pushSponsorDetails(sponsor.issueKey, details)
         } catch (error) {
-            console.error(
-                `Sponsor profile: Jira write-back for ${sponsor.issueKey} failed:`,
-                error instanceof Error ? error.message : error,
-            )
+            logSponsorPortalEvent({
+                event: 'portal.writeback_failed',
+                issueKey: sponsor.issueKey,
+                form: 'profile',
+                error: error instanceof Error ? error.message : String(error),
+            })
             return data(
                 {
                     intent: 'save-details' as const,
@@ -146,12 +156,29 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ intent: 'upload-logo' as const, error: 'Choose a file to upload' }, { status: 400 })
         }
         if (file.size > LOGO_MAX_BYTES) {
+            logSponsorPortalEvent({
+                event: 'portal.logo_rejected',
+                issueKey: sponsor.issueKey,
+                reason: 'too-large',
+                contentType: file.type,
+                size: file.size,
+            })
             return data({ intent: 'upload-logo' as const, error: 'Logo must be under 10 MB' }, { status: 400 })
         }
 
         const bytes = new Uint8Array(await file.arrayBuffer())
         const uploadError = validateLogoUpload({ contentType: file.type, size: file.size, bytes })
         if (uploadError) {
+            // The likeliest routine friction: a sponsor sending a format the
+            // portal will not take. Logged with the type so a recurring one
+            // can be answered by widening the allow-list, not by email.
+            logSponsorPortalEvent({
+                event: 'portal.logo_rejected',
+                issueKey: sponsor.issueKey,
+                reason: uploadError,
+                contentType: file.type,
+                size: file.size,
+            })
             return data({ intent: 'upload-logo' as const, error: uploadError }, { status: 400 })
         }
 

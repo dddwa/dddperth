@@ -161,6 +161,9 @@ export class FakeJira {
     readonly issues = new Map<string, FakeJiraIssue>()
     /** Every `updateIssueFields` payload, for asserting on what was *not* sent. */
     readonly writes: Array<{ issueKey: string; fields: Record<string, unknown> }> = []
+    /** Set to make every write throw, standing in for a Jira outage. Reads
+     * keep working, which is the shape of a 5xx on the write endpoints. */
+    failWrites: Error | undefined
 
     constructor(private readonly fields: JiraFields) {}
 
@@ -168,7 +171,10 @@ export class FakeJira {
         return this.fields.logistics ?? {}
     }
 
-    private editMetaFields(): Record<string, { schema?: { type?: string; custom?: string }; allowedValues?: unknown[] }> {
+    private editMetaFields(): Record<
+        string,
+        { schema?: { type?: string; custom?: string }; allowedValues?: unknown[] }
+    > {
         const meta: Record<string, { schema?: { type?: string; custom?: string }; allowedValues?: unknown[] }> = {}
         for (const [portalKey, fieldId] of Object.entries(this.fields.logistics ?? {})) {
             if (typeof fieldId !== 'string' || fieldId === '') continue
@@ -187,6 +193,11 @@ export class FakeJira {
         const logisticsMapping = () => this.logisticsMapping()
         const optionValue = (fieldId: string, option: { id: string }) => this.optionValue(fieldId, option)
         const adfToText = (value: unknown) => this.adfToText(value)
+        // Read through `this` on every call, so a test can set it after the
+        // client has been handed to the services.
+        const failWrites = () => {
+            if (this.failWrites) throw this.failWrites
+        }
 
         return {
             async searchSponsorIssues() {
@@ -198,12 +209,9 @@ export class FakeJira {
                     contactEmails: issue.contactEmails,
                     hasYearLabel: true,
                     quote: issue.quote,
-                    socials:
-                        issue.socials && Object.keys(issue.socials).length > 0 ? { ...issue.socials } : undefined,
+                    socials: issue.socials && Object.keys(issue.socials).length > 0 ? { ...issue.socials } : undefined,
                     logistics:
-                        issue.logistics && Object.keys(issue.logistics).length > 0
-                            ? { ...issue.logistics }
-                            : undefined,
+                        issue.logistics && Object.keys(issue.logistics).length > 0 ? { ...issue.logistics } : undefined,
                     // Enumerating configured keys is what lets a Jira-side
                     // *clear* propagate: a cleared field is simply absent from
                     // the response, so values alone can't distinguish it from
@@ -225,6 +233,7 @@ export class FakeJira {
             },
 
             async setStatusOptionId(issueKey, fieldId, optionId) {
+                failWrites()
                 const issue = issues.get(issueKey)
                 if (!issue) return
                 issue.statuses = { ...(issue.statuses ?? {}), [fieldId]: optionId }
@@ -289,6 +298,7 @@ export class FakeJira {
             async addAttachment() {},
 
             async updateIssueFields(issueKey, fieldValues) {
+                failWrites()
                 const issue = issues.get(issueKey)
                 if (!issue) return
                 writes.push({ issueKey, fields: fieldValues })
@@ -325,9 +335,8 @@ export class FakeJira {
 
     private optionValue(fieldId: string, option: { id: string }): string {
         const meta = this.editMetaFields()[fieldId]
-        const match = (meta?.allowedValues ?? []).find(
-            (allowed) => (allowed as { id: string }).id === option.id,
-        ) as { value: string } | undefined
+        const match = (meta?.allowedValues ?? []).find((allowed) => (allowed as { id: string }).id === option.id) as
+            { value: string } | undefined
         return match?.value ?? ''
     }
 
@@ -482,7 +491,10 @@ export function createSponsorPortalHarness(args: {
                 const value = fields[key] ?? ''
                 if ((CHECKBOX_GROUP_KEYS as readonly string[]).includes(key)) {
                     formData.set(`${key}__present`, '1')
-                    for (const option of value.split(',').map((part) => part.trim()).filter(Boolean)) {
+                    for (const option of value
+                        .split(',')
+                        .map((part) => part.trim())
+                        .filter(Boolean)) {
                         formData.append(`${key}[]`, option)
                     }
                 } else {
