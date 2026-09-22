@@ -24,12 +24,29 @@ interface AppConfig {
         support: string
         after: string
     }
+
+    /**
+     * Present only once the app is retired. The app renders this as a banner
+     * telling its users the app is no longer updated and the website is the
+     * place to go. Absent for a maintained app, so older builds that don't
+     * know about the field are unaffected.
+     */
+    notice?: {
+        message: string
+        /** Where the banner should send people — the conference website. */
+        url: string
+    }
 }
 
 export function loader({ context }: Route.LoaderArgs) {
-    if (!conferenceManifest.mobileApp) {
+    const mobileApp = conferenceManifest.mobileApp
+    if (!mobileApp) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
+    // NOTE: a *retired* app deliberately still gets a config response. The
+    // copies installed on people's phones poll this endpoint on launch, and
+    // 404ing it breaks them rather than retiring them. /app is where the
+    // advertising stops; this endpoint keeps its promise and adds a notice.
 
     const { githubOrg, domain } = conferenceManifest.brand
     // The fork's repo name is conventionally its slug; we approximate with
@@ -49,6 +66,16 @@ export function loader({ context }: Route.LoaderArgs) {
             support: `https://${domain}/app-content/conference-day`,
             after: `https://${domain}/app-content/post-conference`,
         },
+        ...(mobileApp.retired
+            ? {
+                  notice: {
+                      message:
+                          mobileApp.retired.notice ??
+                          `This app hasn't been updated since ${mobileApp.retired.lastUpdatedFor} and may be out of date. Visit ${domain} for the latest agenda, speakers and updates.`,
+                      url: `https://${domain}`,
+                  },
+              }
+            : {}),
     }
 
     return new Response(JSON.stringify(appConfig), {

@@ -241,6 +241,14 @@ export type NavConfig = NavItem[]
  * Optional mobile app advertising. When set, /app is reachable and links to
  * the app stores. When absent, /app returns 404 (most forks don't have a
  * mobile app and shouldn't surface a dead route).
+ *
+ * `retired` splits those two behaviours apart. A fork that has stopped
+ * maintaining its app still has copies installed on people's phones, and
+ * those copies poll /app-config on launch — so the endpoint must keep
+ * answering even once the website stops advertising the app. Set `retired`
+ * and /app 404s like a fork with no app at all, while /app-config continues
+ * to serve and carries a `notice` telling the app to point its users back
+ * at the website.
  */
 export interface MobileApp {
     iosUrl: string
@@ -248,6 +256,29 @@ export interface MobileApp {
     /** Bundle ID surfaced via /app-config to the mobile app itself. */
     iosBundleId?: string
     androidBundleId?: string
+    /**
+     * Set once the app is no longer maintained. Stops the website
+     * advertising it (/app 404s, store links disappear) without cutting off
+     * the installed copies that still depend on /app-config.
+     */
+    retired?: MobileAppRetired
+}
+
+/**
+ * Deprecation notice served to already-installed copies of a retired app.
+ * Surfaced at /app-config as `notice`, for the app to render as a banner.
+ */
+export interface MobileAppRetired {
+    /**
+     * The year the app was last updated for — i.e. the first year its data
+     * may be stale. Rendered into the default notice message.
+     */
+    lastUpdatedFor: string
+    /**
+     * Banner copy for the app to display. Omit to use a default built from
+     * `lastUpdatedFor` and the fork's domain.
+     */
+    notice?: string
 }
 
 /**
