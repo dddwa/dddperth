@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { gridSmartSchema, sessionSchema } from '@ddd/conference-config'
 import { CATEGORY_GROUPS, SPEAKERS, TALKS, speakerId } from '../../e2e/fixtures/sessionize/model'
-import {
-    projectAllSessions,
-    projectGridSmart,
-    projectSpeakers,
-} from '../../e2e/fixtures/sessionize/projections'
+import { projectAllSessions, projectGridSmart, projectSpeakers } from '../../e2e/fixtures/sessionize/projections'
 
 /**
  * The e2e Sessionize fixtures are projected from a typed model
@@ -56,6 +52,18 @@ describe('Sessionize e2e fixtures', () => {
             // ended up reaching the live API.
             const { speakersSchema } = await import('./sessionize.server')
             expect(() => speakersSchema.parse(speakers)).not.toThrow()
+        })
+
+        it('accepts a speaker who left the optional free-text fields empty', async () => {
+            // Sessionize returns null — not "" and not an absent key — for a
+            // tagLine, bio or photo the speaker never filled in. `tagLine` was
+            // the one field of the three typed as a bare string, so three such
+            // speakers in the 2022 data made every /agenda/2022/talk/* page
+            // throw in its loader and serve a 500, continuously, for any year
+            // whose speakers include one.
+            const { speakersSchema } = await import('./sessionize.server')
+            const sparse = [{ ...speakers[0], tagLine: null, bio: null, profilePicture: null }]
+            expect(() => speakersSchema.parse(sparse)).not.toThrow()
         })
     })
 
@@ -128,9 +136,7 @@ describe('Sessionize e2e fixtures', () => {
                 ...gridSmart.flatMap((day) =>
                     day.rooms.flatMap((room) => room.sessions.flatMap((s) => s.speakers.map((sp) => sp.name))),
                 ),
-                ...allSessions.flatMap((group) =>
-                    group.sessions.flatMap((s) => s.speakers.map((sp) => sp.name)),
-                ),
+                ...allSessions.flatMap((group) => group.sessions.flatMap((s) => s.speakers.map((sp) => sp.name))),
                 ...speakers.map((speaker) => speaker.fullName),
             ]
 
