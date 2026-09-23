@@ -54,7 +54,7 @@ export const conferenceManifest: ConferenceManifest = {
         // keep answering the copies already installed — `retired` is what
         // stops the website advertising it (/app 404s).
         retired: {
-            notice: "This app should still work, but we haven't made any updates for 2026. For anything important, check dddperth.com.",
+            notice: "This app should still work, but we haven't made any updates for 2026. If something doesn't look right, check dddperth.com.",
         },
     },
     sponsorPortal,
