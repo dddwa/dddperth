@@ -31,11 +31,9 @@ interface AppConfig {
      * maintained app, so older builds that don't know about the field are
      * unaffected.
      *
-     * The default copy states a fact — no updates were made this year —
-     * rather than calling the app broken or unsupported. The agenda,
-     * speaker and announcement endpoints are live, so a retired build still
-     * shows current data and generally still works. The year comes from
-     * conference state, so the message tracks forward on its own.
+     * `message` is the fork's own copy, passed through verbatim — core
+     * writes no default, so nothing here speaks in a conference's voice.
+     * See `MobileAppRetired.notice` for what belongs in it.
      */
     notice?: {
         message: string
@@ -75,9 +73,7 @@ export function loader({ context }: Route.LoaderArgs) {
         ...(mobileApp.retired
             ? {
                   notice: {
-                      message:
-                          mobileApp.retired.notice ??
-                          `This app should still work, but we haven't made any updates for ${getConferenceState(context).conference.year}. For anything important, check ${domain}.`,
+                      message: mobileApp.retired.notice,
                       url: `https://${domain}`,
                   },
               }

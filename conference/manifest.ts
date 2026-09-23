@@ -53,7 +53,9 @@ export const conferenceManifest: ConferenceManifest = {
         // maintaining it. The store links stay because /app-config has to
         // keep answering the copies already installed — `retired` is what
         // stops the website advertising it (/app 404s).
-        retired: {},
+        retired: {
+            notice: "This app should still work, but we haven't made any updates for 2026. For anything important, check dddperth.com.",
+        },
     },
     sponsorPortal,
     speakerPortal,

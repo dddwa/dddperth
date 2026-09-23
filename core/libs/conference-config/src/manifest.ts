@@ -267,18 +267,22 @@ export interface MobileApp {
 /**
  * Notice served to already-installed copies of a retired app. Surfaced at
  * /app-config as `notice`, for the app to render as a banner.
- *
- * Deliberately states what happened — no updates for the current year —
- * rather than claiming the app is broken or unsupported. Its agenda,
- * speakers and announcements all come from live endpoints here, so a
- * retired build still shows current data and generally still works.
  */
 export interface MobileAppRetired {
     /**
-     * Banner copy for the app to display. Omit for a default built from the
-     * fork's domain.
+     * Banner copy for the app to display. Required, and deliberately has no
+     * core default: this sentence is addressed to a fork's own users in the
+     * fork's own voice, and a generic one written here would ship as if the
+     * conference had written it.
+     *
+     * Worth stating what actually happened rather than calling the app
+     * broken or unsupported — a retired build still reads the live agenda,
+     * speaker and announcement endpoints, so it generally still works.
+     *
+     * Mention the year if it's relevant; this is a literal string, so
+     * remember it won't advance on its own when the next year rolls around.
      */
-    notice?: string
+    notice: string
 }
 
 /**

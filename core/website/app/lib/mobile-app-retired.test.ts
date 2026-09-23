@@ -41,6 +41,9 @@ const loadAppPage = async () => {
 // The loaders only read `context` through the mocked getConferenceState.
 const ctx = {} as never
 
+// The notice is fork-owned copy; core must pass it through verbatim.
+const FORK_NOTICE = 'Test Conf notice copy, written by the fork.'
+
 const maintained = {
     iosUrl: 'https://apps.apple.com/au/app/test/id1',
     androidUrl: 'https://play.google.com/store/apps/details?id=com.test',
@@ -55,7 +58,7 @@ describe('mobile app retirement', () => {
         beforeEach(() => {
             manifestMock.conferenceManifest.mobileApp = {
                 ...maintained,
-                retired: {},
+                retired: { notice: FORK_NOTICE },
             }
         })
 
@@ -72,12 +75,8 @@ describe('mobile app retirement', () => {
             const body = JSON.parse(await response.text())
 
             expect(body.notice.url).toBe('https://testconf.example')
-            expect(body.notice.message).toContain('testconf.example')
-            // States what happened (no 2026 updates) rather than claiming the
-            // app is broken or unsupported — the data it shows is live.
-            expect(body.notice.message).toContain('should still work')
-            // Year comes from conference state, so it tracks forward on its own.
-            expect(body.notice.message).toContain('2026')
+            // Passed straight through from fork config — core writes no copy.
+            expect(body.notice.message).toBe(FORK_NOTICE)
         })
 
         it('keeps serving the rest of the config alongside the notice', async () => {
@@ -95,15 +94,15 @@ describe('mobile app retirement', () => {
             expect(() => loader()).toThrowError(expect.objectContaining({ status: 404 }))
         })
 
-        it('prefers an explicit notice over the generated one', async () => {
+        it('serves whatever copy the fork configured', async () => {
             manifestMock.conferenceManifest.mobileApp = {
                 ...maintained,
-                retired: { notice: 'Custom copy.' },
+                retired: { notice: 'Different copy.' },
             }
             const loader = await loadAppConfig()
             const body = JSON.parse(await (await loader({ context: ctx } as never)).text())
 
-            expect(body.notice.message).toBe('Custom copy.')
+            expect(body.notice.message).toBe('Different copy.')
         })
     })
 
