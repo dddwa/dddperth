@@ -55,7 +55,7 @@ describe('mobile app retirement', () => {
         beforeEach(() => {
             manifestMock.conferenceManifest.mobileApp = {
                 ...maintained,
-                retired: { lastUpdatedFor: '2025' },
+                retired: {},
             }
         })
 
@@ -72,8 +72,9 @@ describe('mobile app retirement', () => {
             const body = JSON.parse(await response.text())
 
             expect(body.notice.url).toBe('https://testconf.example')
-            expect(body.notice.message).toContain('2025')
             expect(body.notice.message).toContain('testconf.example')
+            // "unsupported", not "out of date" — the data it shows is live.
+            expect(body.notice.message).toContain("isn't supported")
         })
 
         it('keeps serving the rest of the config alongside the notice', async () => {
@@ -94,7 +95,7 @@ describe('mobile app retirement', () => {
         it('prefers an explicit notice over the generated one', async () => {
             manifestMock.conferenceManifest.mobileApp = {
                 ...maintained,
-                retired: { lastUpdatedFor: '2025', notice: 'Custom copy.' },
+                retired: { notice: 'Custom copy.' },
             }
             const loader = await loadAppConfig()
             const body = JSON.parse(await (await loader({ context: ctx } as never)).text())

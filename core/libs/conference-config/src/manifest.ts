@@ -265,18 +265,18 @@ export interface MobileApp {
 }
 
 /**
- * Deprecation notice served to already-installed copies of a retired app.
- * Surfaced at /app-config as `notice`, for the app to render as a banner.
+ * Notice served to already-installed copies of a retired app. Surfaced at
+ * /app-config as `notice`, for the app to render as a banner.
+ *
+ * Deliberately says "unsupported" rather than "out of date": the app's
+ * agenda, speakers and announcements all come from live endpoints here, so
+ * a retired build still shows current data. What's gone is the maintenance
+ * — nobody is testing it or fixing it if it breaks.
  */
 export interface MobileAppRetired {
     /**
-     * The year the app was last updated for — i.e. the first year its data
-     * may be stale. Rendered into the default notice message.
-     */
-    lastUpdatedFor: string
-    /**
-     * Banner copy for the app to display. Omit to use a default built from
-     * `lastUpdatedFor` and the fork's domain.
+     * Banner copy for the app to display. Omit for a default built from the
+     * fork's domain.
      */
     notice?: string
 }

@@ -48,12 +48,12 @@ export const conferenceManifest: ConferenceManifest = {
         androidUrl: 'https://play.google.com/store/apps/details?id=com.dddperth.conference&hl=en_AU',
         iosBundleId: 'au.com.dddperth.app',
         androidBundleId: 'com.dddperth.conference',
-        // The app wasn't updated for 2026. The store links stay here because
-        // /app-config still has to answer the copies already installed —
-        // `retired` is what stops the website advertising it (/app 404s).
-        retired: {
-            lastUpdatedFor: '2025',
-        },
+        // Unsupported for 2026: the app still works (its agenda and
+        // announcements come from live endpoints here), we're just not
+        // maintaining it. The store links stay because /app-config has to
+        // keep answering the copies already installed — `retired` is what
+        // stops the website advertising it (/app 404s).
+        retired: {},
     },
     sponsorPortal,
     speakerPortal,

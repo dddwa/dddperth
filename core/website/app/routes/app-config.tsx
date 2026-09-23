@@ -27,9 +27,13 @@ interface AppConfig {
 
     /**
      * Present only once the app is retired. The app renders this as a banner
-     * telling its users the app is no longer updated and the website is the
-     * place to go. Absent for a maintained app, so older builds that don't
-     * know about the field are unaffected.
+     * telling its users the app is unsupported and the website is the place
+     * to go for anything that matters. Absent for a maintained app, so older
+     * builds that don't know about the field are unaffected.
+     *
+     * Note it says unsupported, not broken: the agenda, speaker and
+     * announcement endpoints are live, so a retired build still shows
+     * current data. Only the maintenance has stopped.
      */
     notice?: {
         message: string
@@ -71,7 +75,7 @@ export function loader({ context }: Route.LoaderArgs) {
                   notice: {
                       message:
                           mobileApp.retired.notice ??
-                          `This app hasn't been updated since ${mobileApp.retired.lastUpdatedFor} and may be out of date. Visit ${domain} for the latest agenda, speakers and updates.`,
+                          `This app isn't supported this year — it still works, but we're not maintaining it. For anything important, check ${domain}.`,
                       url: `https://${domain}`,
                   },
               }

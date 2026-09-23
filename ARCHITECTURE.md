@@ -116,6 +116,8 @@ Mobile-app advertising follows a different pattern — `manifest.mobileApp` eith
 
 Retiring an app is a third state, and it splits those two routes apart. Once a fork stops maintaining its app there are still copies installed on people's phones polling `/app-config` on launch, so 404ing that endpoint breaks them rather than retiring them. Setting `manifest.mobileApp.retired` keeps the store URLs in the manifest (the endpoint needs the rest of the block) while `/app` starts 404ing like a fork with no app at all, and `/app-config` gains a `notice` object the app renders as a banner pointing back at the website. Don't retire an app by deleting `mobileApp` — that takes the installed copies down with it.
 
+The notice wording says *unsupported*, not *out of date*, and that distinction is real: the app's agenda, speaker and announcement endpoints are served live from here, so a retired build still shows current data. What a fork is withdrawing is the maintenance, not the data.
+
 When a new per-fork extension point is needed, the same pattern applies: add an optional manifest field in `core/libs/conference-config/src/manifest.ts`, have the core component check + branch on it, ship an `.mdx` in `conference/content/pages/` if the fork wants the content. Avoid baking conference-specific strings into components.
 
 ## Scripts
