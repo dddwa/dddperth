@@ -9,6 +9,7 @@ import { Project } from 'ts-morph'
 import url, { fileURLToPath } from 'url'
 import { attachFilesToIssue, loadJiraSession } from './lib/jira-attach.mjs'
 import { processLogo } from './lib/process-logo.mjs'
+import { SPONSOR_TIERS, tierLabel } from './lib/sponsor-tiers.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -47,21 +48,6 @@ const config = {
     port: 3802,
     appName: 'DDD Perth Sponsor Management',
 }
-
-// Mirrors the YearSponsors tier keys in core/libs/conference-config/src/types.ts
-const SPONSOR_TIERS = [
-    'platinum',
-    'gold',
-    'silver',
-    'digital',
-    'bronze',
-    'community',
-    'coffeeCart',
-    'quietRoom',
-    'keynotes',
-    'room',
-    'lunch',
-]
 
 // ---------------------------------------------------------------------------
 // Portal import: pull sponsor submissions out of the deployed portal's D1/R2
@@ -864,16 +850,10 @@ function getHTML(years) {
                         <div class="form-group">
                             <label for="tier">Sponsorship Tier *</label>
                             <select id="tier" name="tier" required>
-                                <option value="platinum">Platinum</option>
-                                <option value="gold" selected>Gold</option>
-                                <option value="silver">Silver</option>
-                                <option value="digital">Digital</option>
-                                <option value="bronze">Bronze</option>
-                                <option value="community">Community</option>
-                                <option value="coffeeCart">Coffee Cart</option>
-                                <option value="quietRoom">Quiet Room</option>
-                                <option value="keynotes">Keynotes</option>
-                                <option value="room">Room</option>
+                                ${SPONSOR_TIERS.map(
+                                    (tier) =>
+                                        `<option value="${tier}"${tier === 'gold' ? ' selected' : ''}>${tierLabel(tier)}</option>`,
+                                ).join('\n                                ')}
                             </select>
                         </div>
                         <div class="form-group">
