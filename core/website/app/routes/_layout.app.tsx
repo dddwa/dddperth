@@ -52,7 +52,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
     const { iosUrl, androidUrl } = loaderData
     return (
         <ContentPageLayout>
-            <styled.main id="content" marginX={{ base: '6', lg: '0' }}>
+            <styled.div id="content" marginX={{ base: '6', lg: '0' }}>
                 <styled.div display="flex" flexDirection="column" alignItems="center" gap="8" py="8">
                     <styled.div textAlign="center" maxW="3xl" mb="4">
                         <styled.h1 fontSize="3xl" fontWeight="bold" mb="6">
@@ -125,7 +125,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                         </styled.p>
                     </Box>
                 </styled.div>
-            </styled.main>
+            </styled.div>
         </ContentPageLayout>
     )
 }

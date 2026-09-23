@@ -240,10 +240,10 @@ function ContentPageWithSidebar({
 >) {
     return (
         <Grid gridTemplateColumns={{ base: '1fr', lg: '1fr auto' }}>
-            <styled.main id="content" marginX={{ base: "6", lg: "0" }}>
+            <styled.div id="content" marginX={{ base: "6", lg: "0" }}>
                 <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
                 <Box className={prose({ size: 'lg' })}>{children}</Box>
-            </styled.main>
+            </styled.div>
             <styled.aside
                 display="flex"
                 flexDirection="column"
