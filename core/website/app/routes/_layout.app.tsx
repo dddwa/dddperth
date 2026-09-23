@@ -3,6 +3,11 @@
 // get a 404 here — the route never tells visitors to download something
 // that doesn't exist.
 //
+// A retired app (`mobileApp.retired`) 404s for the same reason: it still
+// exists in the stores, but it's no longer maintained, so sending new
+// visitors to install it is worse than sending them nowhere. The installed
+// copies are served by /app-config, which keeps answering.
+//
 // The page copy is intentionally generic ("the official conference app");
 // if a fork has app-specific marketing copy, the right place for it is an
 // MDX page under conference/content/pages/, not this layout component.
@@ -21,8 +26,9 @@ export const headers: HeadersFunction = () => {
 
 export function loader() {
     const mobileApp = conferenceManifest.mobileApp
-    if (!mobileApp) {
-        // No app for this fork — pretend the route doesn't exist.
+    if (!mobileApp || mobileApp.retired) {
+        // No app for this fork, or one we've stopped maintaining — pretend
+        // the route doesn't exist either way.
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     // Loader-returned values are serialised, so we only ship the URL strings

@@ -96,7 +96,7 @@ D1 database names are duplicated between the wrangler files and `build-manifest.
 | New page added for one conference only | `conference/content/pages/<slug>.mdx` (auto-discovered by mdx-bundles) |
 | Hero blurb on the homepage | `conference/content/pages/_home-hero.mdx`, referenced by `manifest.homepage.heroBlurbSlug` |
 | Country / land acknowledgement | `conference/content/pages/_acknowledgement.mdx`, referenced by `manifest.homepage.acknowledgementSlug` |
-| Mobile app download page (`/app`) | `manifest.mobileApp` (iOS + Android URLs). Omit to 404 the route |
+| Mobile app download page (`/app`) | `manifest.mobileApp` (iOS + Android URLs). Omit to 404 the route; set `mobileApp.retired` to 404 it while keeping `/app-config` alive |
 | New manifest field | `core/libs/conference-config/src/manifest.ts` (interface) + every fork's `conference/manifest.ts` (value) |
 | D1 migration | `core/website/migrations/` (schema is core; data is per-fork at runtime) |
 | Sessionize/Tito secret | env var (set per environment via `wrangler secret put`) |
@@ -111,6 +111,10 @@ The runtime manifest has two opt-in slots for fork-owned MDX rendered by core co
 Slugs starting with `_` are excluded from the sitemap and the catchall route (they're fragments embedded in other pages, not navigable pages).
 
 Mobile-app advertising follows a different pattern — `manifest.mobileApp` either exists (route renders) or doesn't (route + JSON endpoint both 404). No fallback rendering, because pointing visitors at a non-existent app is worse than no link at all.
+
+Retiring an app is a third state, and it splits those two routes apart. Once a fork stops maintaining its app there are still copies installed on people's phones polling `/app-config` on launch, so 404ing that endpoint breaks them rather than retiring them. Setting `manifest.mobileApp.retired` keeps the store URLs in the manifest (the endpoint needs the rest of the block) while `/app` starts 404ing like a fork with no app at all. `/app-config` is untouched — a retired app receives a byte-identical payload, which a test asserts. Don't retire an app by deleting `mobileApp` — that takes the installed copies down with it.
+
+**`retired` is deliberately a bare flag, not a place for banner copy.** Telling a retired app's remaining users something is what `/app-announcements` already does — editable at `/admin/settings`, stored in D1, and, decisively, *already understood by the installed builds*. A new config field would only reach a build shipped after it was added, which for an app nobody is rebuilding is nobody. Note the announcement slot is a single current message per year, so a standing retirement notice and a day-of update compete for it.
 
 When a new per-fork extension point is needed, the same pattern applies: add an optional manifest field in `core/libs/conference-config/src/manifest.ts`, have the core component check + branch on it, ship an `.mdx` in `conference/content/pages/` if the fork wants the content. Avoid baking conference-specific strings into components.
 
