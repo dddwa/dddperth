@@ -2,14 +2,15 @@
 /**
  * Copies core's Claude skills from the subtree into the fork's `.claude/`.
  *
- * The skills that describe this layout (`/new-conference`, `/pull-upstream`)
- * are authored in ddd-core and travel down with the subtree as
+ * The skills that describe this layout (`/new-conference`, `/core-pull`,
+ * `/core-push`) are authored in ddd-core and travel down with the subtree as
  * `core/.claude/skills/`. But Claude Code only reads `.claude/skills/` at the
  * repo root, so the copies it actually loads were snapshots taken whenever the
  * fork was created and never updated again.
  *
- * That gap is silent and it bites: ddd-core added a step to `/pull-upstream`
- * requiring the subtree-split trailer be verified and the PR marked
+ * That gap is silent and it bites: ddd-core once added a step to the pull
+ * skill (then named `/pull-upstream`, now `/core-pull`) requiring the
+ * subtree-split trailer be verified and the PR marked
  * do-not-squash — guidance that exists precisely because squash-merging a
  * subtree pull corrupts future pulls. The fork's copy was 50 lines behind and
  * had none of it, so the skill ran without those checks.

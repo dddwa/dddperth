@@ -109,10 +109,11 @@ This repo is split into a **core** layer (shared infrastructure) and a **fork** 
 
 ### Creating sister conferences
 
-Two skills live in `.claude/skills/`:
+Three skills live in `.claude/skills/`:
 
 - `/new-conference` — scaffolds a sibling fork repo using `git subtree` to embed `core/` (this repo's `website` + `libs`).
-- `/pull-upstream` — pulls latest ddd-core into an existing fork.
+- `/core-pull` — pulls latest ddd-core into this fork.
+- `/core-push` — upstreams a change made in this fork's `core/` back into ddd-core as a curated PR.
 
 Read `.claude/skills/new-conference/SKILL.md` and `ARCHITECTURE.md` before reorganising any cross-layer code.
 
