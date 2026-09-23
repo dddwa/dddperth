@@ -63,7 +63,7 @@ export interface PortalSessionContent {
 export function toPortalSpeaker(speaker: SessionizeSpeaker): PortalSpeakerContent {
     return {
         fullName: speaker.fullName,
-        tagLine: speaker.tagLine,
+        tagLine: speaker.tagLine ?? undefined,
         bio: speaker.bio ?? undefined,
         profilePictureUrl: speaker.profilePicture ?? undefined,
         links: speaker.links,

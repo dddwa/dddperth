@@ -22,6 +22,7 @@ import {
     type LogisticsFields,
 } from '~/lib/sponsors/logistics'
 import { JiraFieldRejectedError } from '~/lib/sponsors/jira-client.server'
+import { logSponsorPortalEvent } from '~/lib/sponsors/log.server'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
@@ -74,6 +75,13 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const parsed = parseFormData(logisticsSchema, formData)
     if (!parsed.ok) {
+        // Answered to the sponsor, not thrown, so nothing else would record it.
+        logSponsorPortalEvent({
+            event: 'portal.save_rejected',
+            issueKey: sponsor.issueKey,
+            form: 'logistics',
+            fields: Object.keys(parsed.fieldErrors),
+        })
         return data({ fieldErrors: parsed.fieldErrors }, { status: 400 })
     }
 
@@ -97,6 +105,12 @@ export async function action({ request, context }: Route.ActionArgs) {
     try {
         await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
     } catch (error) {
+        logSponsorPortalEvent({
+            event: 'portal.writeback_failed',
+            issueKey: sponsor.issueKey,
+            form: 'logistics',
+            error: error instanceof Error ? error.message : String(error),
+        })
         const message =
             error instanceof JiraFieldRejectedError
                 ? `Your changes were not saved. ${error.message}. Please correct the answer and try again.`
