@@ -73,8 +73,11 @@ describe('mobile app retirement', () => {
 
             expect(body.notice.url).toBe('https://testconf.example')
             expect(body.notice.message).toContain('testconf.example')
-            // "unsupported", not "out of date" — the data it shows is live.
-            expect(body.notice.message).toContain("isn't supported")
+            // States what happened (no 2026 updates) rather than claiming the
+            // app is broken or unsupported — the data it shows is live.
+            expect(body.notice.message).toContain('should still work')
+            // Year comes from conference state, so it tracks forward on its own.
+            expect(body.notice.message).toContain('2026')
         })
 
         it('keeps serving the rest of the config alongside the notice', async () => {

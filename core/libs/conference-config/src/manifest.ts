@@ -268,10 +268,10 @@ export interface MobileApp {
  * Notice served to already-installed copies of a retired app. Surfaced at
  * /app-config as `notice`, for the app to render as a banner.
  *
- * Deliberately says "unsupported" rather than "out of date": the app's
- * agenda, speakers and announcements all come from live endpoints here, so
- * a retired build still shows current data. What's gone is the maintenance
- * — nobody is testing it or fixing it if it breaks.
+ * Deliberately states what happened — no updates for the current year —
+ * rather than claiming the app is broken or unsupported. Its agenda,
+ * speakers and announcements all come from live endpoints here, so a
+ * retired build still shows current data and generally still works.
  */
 export interface MobileAppRetired {
     /**
