@@ -8,7 +8,7 @@
  * names) lives in /conference/build-manifest.ts and is read by
  * vite.config.ts / panda.config.ts / scripts.
  *
- * To pull upstream changes from ddd-core: run the /pull-upstream skill.
+ * To pull upstream changes from ddd-core: run the /core-pull skill.
  * Changes to ConferenceManifest in core will surface as TS errors here.
  */
 
