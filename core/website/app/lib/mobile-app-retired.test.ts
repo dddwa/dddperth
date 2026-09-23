@@ -64,14 +64,14 @@ describe('mobile app retirement', () => {
 
         it('still serves /app-config, because installed copies depend on it', async () => {
             const loader = await loadAppConfig()
-            const response = await loader({ context: ctx } as never)
+            const response = loader({ context: ctx } as never)
 
             expect(response.status).toBe(200)
         })
 
         it('includes a notice pointing at the website', async () => {
             const loader = await loadAppConfig()
-            const response = await loader({ context: ctx } as never)
+            const response = loader({ context: ctx } as never)
             const body = JSON.parse(await response.text())
 
             expect(body.notice.url).toBe('https://testconf.example')
@@ -81,7 +81,7 @@ describe('mobile app retirement', () => {
 
         it('keeps serving the rest of the config alongside the notice', async () => {
             const loader = await loadAppConfig()
-            const response = await loader({ context: ctx } as never)
+            const response = loader({ context: ctx } as never)
             const body = JSON.parse(await response.text())
 
             expect(body.conferenceDate).toBe('2026-09-19')
@@ -100,7 +100,7 @@ describe('mobile app retirement', () => {
                 retired: { notice: 'Different copy.' },
             }
             const loader = await loadAppConfig()
-            const body = JSON.parse(await (await loader({ context: ctx } as never)).text())
+            const body = JSON.parse(await loader({ context: ctx } as never).text())
 
             expect(body.notice.message).toBe('Different copy.')
         })
@@ -113,7 +113,7 @@ describe('mobile app retirement', () => {
 
         it('omits the notice entirely, so older builds are unaffected', async () => {
             const loader = await loadAppConfig()
-            const body = JSON.parse(await (await loader({ context: ctx } as never)).text())
+            const body = JSON.parse(await loader({ context: ctx } as never).text())
 
             expect(body).not.toHaveProperty('notice')
         })
