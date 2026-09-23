@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
+import { MINOR_SPONSOR_TIERS } from '@ddd/conference-config'
 import type { MinorSponsorTier, Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
@@ -30,6 +31,7 @@ const sponsorStyles = {
     venue: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     prize: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     keynotes: { gradientFrom: 'sponsor.community', logoSize: 'sm' },
+    inKind: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
 } as const
 
 function getSponsorStyle(category: keyof typeof sponsorStyles) {
@@ -37,18 +39,12 @@ function getSponsorStyle(category: keyof typeof sponsorStyles) {
 }
 
 /**
- * Order the minor tiers render in, and their default headings. A fork
- * renames any of them via `public.sponsorTierLabels` rather than us baking
- * regional wording ("SA Sponsors", "WA Sponsors") into core.
+ * Order the minor tiers render in, and their default headings — shared with the
+ * sponsor tooling so a new tier only has to be declared once. A fork renames any
+ * of them via `public.sponsorTierLabels` rather than us baking regional wording
+ * ("SA Sponsors", "WA Sponsors") into core.
  */
-const MINOR_TIERS: { tier: MinorSponsorTier; defaultLabel: string }[] = [
-    { tier: 'community', defaultLabel: 'Community' },
-    { tier: 'coffeeCart', defaultLabel: 'Coffee Cart' },
-    { tier: 'quietRoom', defaultLabel: 'Quiet Room' },
-    { tier: 'venue', defaultLabel: 'Venue' },
-    { tier: 'prize', defaultLabel: 'Prize' },
-    { tier: 'keynotes', defaultLabel: 'Keynotes' },
-]
+const MINOR_TIERS: readonly { tier: MinorSponsorTier; defaultLabel: string }[] = MINOR_SPONSOR_TIERS
 
 function minorTierLabel(tier: MinorSponsorTier, defaultLabel: string) {
     return conferenceManifest.public.sponsorTierLabels?.[tier] ?? defaultLabel

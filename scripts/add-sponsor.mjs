@@ -9,6 +9,7 @@ import { Project } from 'ts-morph'
 import url, { fileURLToPath } from 'url'
 import { attachFilesToIssue, loadJiraSession } from './lib/jira-attach.mjs'
 import { processLogo } from './lib/process-logo.mjs'
+import { SPONSOR_TIERS, tierLabel } from './lib/sponsor-tiers.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -47,21 +48,6 @@ const config = {
     port: 3802,
     appName: 'DDD Perth Sponsor Management',
 }
-
-// Mirrors the YearSponsors tier keys in core/libs/conference-config/src/types.ts
-const SPONSOR_TIERS = [
-    'platinum',
-    'gold',
-    'silver',
-    'digital',
-    'bronze',
-    'community',
-    'coffeeCart',
-    'quietRoom',
-    'keynotes',
-    'room',
-    'lunch',
-]
 
 // ---------------------------------------------------------------------------
 // Portal import: pull sponsor submissions out of the deployed portal's D1/R2
@@ -272,31 +258,43 @@ async function readYearConfig(year) {
     }
 }
 
-// Improved sponsor parsing using ts-morph for reliable TypeScript parsing
+/**
+ * Reads a year's sponsors out of its config with ts-morph.
+ *
+ * Throws rather than falling back to a looser parse. There used to be a
+ * regex fallback here, and it returned each sponsor's `name` with `website`
+ * and both logo URLs blank. That is worse than failing: the portal import
+ * below uses this result to decide whether a sponsor already exists, and a
+ * name-only match sends it down the *update* path, writing those blanks back
+ * over the real values. A parse failure here means the config is malformed
+ * or its shape changed, which is worth surfacing, not papering over.
+ *
+ * Returns null when the year has no config or declares no sponsors — that is
+ * an ordinary "nothing here", not a failure.
+ */
 async function getSponsorsByYear(year) {
     const configPath = path.join(YEARS_CONFIG_DIR, `${year}.ts`)
 
     try {
-        // Try ts-morph approach first (more reliable)
         const project = new Project()
         const sourceFile = project.addSourceFileAtPath(configPath)
 
         // Find the conference object
         const conferenceVar = sourceFile.getVariableDeclaration(`conference${year}`)
         if (!conferenceVar) {
-            print.warning(`No conference${year} variable found, falling back to regex`)
-            return await extractSponsorsRegex(year)
+            print.warning(`No conference${year} variable found in ${yearConfigRelPath(year)}`)
+            return null
         }
 
         const initializer = conferenceVar.getInitializer()
         if (!initializer || !initializer.getKind()) {
-            return await extractSponsorsRegex(year)
+            return null
         }
 
         // Get the sponsors property
         const sponsorsProperty = initializer.getProperty('sponsors')
         if (!sponsorsProperty) {
-            return await extractSponsorsRegex(year)
+            return null
         }
 
         const sponsors = {}
@@ -351,56 +349,10 @@ async function getSponsorsByYear(year) {
 
         return sponsors
     } catch (error) {
-        print.error(`ts-morph parsing failed: ${error.message}`)
-        print.info('Falling back to regex parsing')
-        return await extractSponsorsRegex(year)
+        print.error(`Could not parse ${yearConfigRelPath(year)}: ${error.message}`)
+        throw error
     }
 }
-
-// Fallback regex-based sponsor extraction (simplified)
-async function extractSponsorsRegex(year) {
-    const configContent = await readYearConfig(year)
-    if (!configContent) return null
-
-    const sponsors = {}
-
-    // Initialize all tiers
-    for (const tier of SPONSOR_TIERS) {
-        sponsors[tier] = []
-    }
-
-    // Simple approach - look for sponsors section and try to extract basic info
-    const sponsorsMatch = configContent.match(/sponsors:\s*{([\s\S]*?)},?\s*\w+:/)
-    if (!sponsorsMatch) return sponsors
-
-    const sponsorsSection = sponsorsMatch[1]
-
-    // For each tier, try to extract sponsors
-    for (const tier of SPONSOR_TIERS) {
-        const tierPattern = new RegExp(`${tier}:\\s*\\[([\s\S]*?)\\]`, 'g')
-        const tierMatch = tierPattern.exec(sponsorsSection)
-
-        if (tierMatch) {
-            // Look for name patterns
-            const nameMatches = tierMatch[1].match(/name:\s*['"`]([^'"`]+)['"`]/g)
-            if (nameMatches) {
-                sponsors[tier] = nameMatches.map((nameStr) => {
-                    const name = nameStr.match(/name:\s*['"`]([^'"`]+)['"`]/)[1]
-                    return {
-                        name: name,
-                        website: '',
-                        logoUrlDarkMode: '',
-                        logoUrlLightMode: '',
-                        quote: '',
-                    }
-                })
-            }
-        }
-    }
-
-    return sponsors
-}
-
 
 // Simple multipart parser for file uploads
 function parseMultipart(data, boundary) {
@@ -864,16 +816,10 @@ function getHTML(years) {
                         <div class="form-group">
                             <label for="tier">Sponsorship Tier *</label>
                             <select id="tier" name="tier" required>
-                                <option value="platinum">Platinum</option>
-                                <option value="gold" selected>Gold</option>
-                                <option value="silver">Silver</option>
-                                <option value="digital">Digital</option>
-                                <option value="bronze">Bronze</option>
-                                <option value="community">Community</option>
-                                <option value="coffeeCart">Coffee Cart</option>
-                                <option value="quietRoom">Quiet Room</option>
-                                <option value="keynotes">Keynotes</option>
-                                <option value="room">Room</option>
+                                ${SPONSOR_TIERS.map(
+                                    (tier) =>
+                                        `<option value="${tier}"${tier === 'gold' ? ' selected' : ''}>${tierLabel(tier)}</option>`,
+                                ).join('\n                                ')}
                             </select>
                         </div>
                         <div class="form-group">

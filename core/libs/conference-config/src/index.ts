@@ -9,6 +9,7 @@ export type {
     ConferenceVenue,
     ConferenceYear,
     DateTimeRange,
+    MajorSponsorTier,
     MinorSponsorTier,
     SessionData,
     SessionizeConferenceSessions,
@@ -20,6 +21,8 @@ export type {
     Year,
     YearSponsors,
 } from './types.ts'
+
+export { MAJOR_SPONSOR_TIERS, MINOR_SPONSOR_TIERS, SPONSOR_TIERS } from './types.ts'
 
 export type {
     Brand,

@@ -6,6 +6,7 @@ import fs from 'fs/promises'
 import inquirer from 'inquirer'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { SPONSOR_TIERS } from './lib/sponsor-tiers.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,19 +14,6 @@ const ROOT_DIR = path.join(__dirname, '..')
 // Fork-owned content (see ARCHITECTURE.md) — not core/website.
 const SPONSORS_DIR = path.join(ROOT_DIR, 'conference', 'public', 'images', 'sponsors')
 const YEARS_CONFIG_DIR = path.join(ROOT_DIR, 'conference', 'config', 'years')
-
-const SPONSOR_TIERS = [
-    'platinum',
-    'gold',
-    'silver',
-    'digital',
-    'bronze',
-    'community',
-    'coffeeCart',
-    'quietRoom',
-    'keynotes',
-    'room',
-]
 
 // Helper function to read year config
 async function readYearConfig(year) {

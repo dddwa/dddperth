@@ -183,10 +183,36 @@ export const conference2026: ConferenceYear = {
                 logoUrlLightMode: '/images/sponsors/2026-she-codes-light.svg',
             },
             {
+                name: 'Perth AI',
+                website: 'https://perthai.org/',
+                logoUrlDarkMode: '/images/sponsors/2026-perth-ai-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-perth-ai-light.png',
+            },
+            {
+                name: 'WA AI Hub',
+                website: 'https://wahub.ai/',
+                logoUrlDarkMode: '/images/sponsors/2026-wa-ai-hub-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-wa-ai-hub-light.png',
+            },
+            {
                 name: 'WiTWA',
                 website: 'https://www.witwa.org.au/',
                 logoUrlDarkMode: '/images/sponsors/2026-witwa-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2026-witwa-light.svg',
+            },
+        ],
+        inKind: [
+            {
+                name: 'Elite Lighting',
+                website: 'https://elitelighting.au/',
+                logoUrlDarkMode: '/images/sponsors/2026-elite-lighting-dark.png',
+                logoUrlLightMode: '/images/sponsors/2026-elite-lighting-light.png',
+            },
+            {
+                name: 'Spacecubed',
+                website: 'https://spacecubed.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-spacecubed-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-spacecubed-light.svg',
             },
         ],
     },
