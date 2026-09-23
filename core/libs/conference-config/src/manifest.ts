@@ -260,29 +260,15 @@ export interface MobileApp {
      * Set once the app is no longer maintained. Stops the website
      * advertising it (/app 404s, store links disappear) without cutting off
      * the installed copies that still depend on /app-config.
-     */
-    retired?: MobileAppRetired
-}
-
-/**
- * Notice served to already-installed copies of a retired app. Surfaced at
- * /app-config as `notice`, for the app to render as a banner.
- */
-export interface MobileAppRetired {
-    /**
-     * Banner copy for the app to display. Required, and deliberately has no
-     * core default: this sentence is addressed to a fork's own users in the
-     * fork's own voice, and a generic one written here would ship as if the
-     * conference had written it.
      *
-     * Worth stating what actually happened rather than calling the app
-     * broken or unsupported — a retired build still reads the live agenda,
-     * speaker and announcement endpoints, so it generally still works.
-     *
-     * Mention the year if it's relevant; this is a literal string, so
-     * remember it won't advance on its own when the next year rolls around.
+     * Deliberately a bare flag and not a place to put banner copy. Telling
+     * the app's remaining users anything is what `/app-announcements`
+     * already does, and that channel has the decisive advantage: the
+     * installed builds already know how to render it. A new config field
+     * would only reach a build shipped after it was added — which, for an
+     * app nobody is rebuilding, is no one.
      */
-    notice: string
+    retired?: boolean
 }
 
 /**

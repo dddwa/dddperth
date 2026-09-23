@@ -41,9 +41,6 @@ const loadAppPage = async () => {
 // The loaders only read `context` through the mocked getConferenceState.
 const ctx = {} as never
 
-// The notice is fork-owned copy; core must pass it through verbatim.
-const FORK_NOTICE = 'Test Conf notice copy, written by the fork.'
-
 const maintained = {
     iosUrl: 'https://apps.apple.com/au/app/test/id1',
     androidUrl: 'https://play.google.com/store/apps/details?id=com.test',
@@ -58,7 +55,7 @@ describe('mobile app retirement', () => {
         beforeEach(() => {
             manifestMock.conferenceManifest.mobileApp = {
                 ...maintained,
-                retired: { notice: FORK_NOTICE },
+                retired: true,
             }
         })
 
@@ -69,17 +66,7 @@ describe('mobile app retirement', () => {
             expect(response.status).toBe(200)
         })
 
-        it('includes a notice pointing at the website', async () => {
-            const loader = await loadAppConfig()
-            const response = loader({ context: ctx } as never)
-            const body = JSON.parse(await response.text())
-
-            expect(body.notice.url).toBe('https://testconf.example')
-            // Passed straight through from fork config — core writes no copy.
-            expect(body.notice.message).toBe(FORK_NOTICE)
-        })
-
-        it('keeps serving the rest of the config alongside the notice', async () => {
+        it('serves the full config, unchanged', async () => {
             const loader = await loadAppConfig()
             const response = loader({ context: ctx } as never)
             const body = JSON.parse(await response.text())
@@ -94,28 +81,22 @@ describe('mobile app retirement', () => {
             expect(() => loader()).toThrowError(expect.objectContaining({ status: 404 }))
         })
 
-        it('serves whatever copy the fork configured', async () => {
-            manifestMock.conferenceManifest.mobileApp = {
-                ...maintained,
-                retired: { notice: 'Different copy.' },
-            }
-            const loader = await loadAppConfig()
-            const body = JSON.parse(await loader({ context: ctx } as never).text())
+        // Retiring must not alter the payload at all. Anything a fork wants
+        // to say to the remaining users goes through /app-announcements,
+        // which the installed builds already know how to render.
+        it('serves a payload byte-identical to a maintained app', async () => {
+            const retiredBody = await loadAppConfig().then((l) => l({ context: ctx } as never).text())
 
-            expect(body.notice.message).toBe('Different copy.')
+            manifestMock.conferenceManifest.mobileApp = { ...maintained }
+            const maintainedBody = await loadAppConfig().then((l) => l({ context: ctx } as never).text())
+
+            expect(retiredBody).toBe(maintainedBody)
         })
     })
 
     describe('when the app is maintained', () => {
         beforeEach(() => {
             manifestMock.conferenceManifest.mobileApp = { ...maintained }
-        })
-
-        it('omits the notice entirely, so older builds are unaffected', async () => {
-            const loader = await loadAppConfig()
-            const body = JSON.parse(await loader({ context: ctx } as never).text())
-
-            expect(body).not.toHaveProperty('notice')
         })
 
         it('renders /app', async () => {

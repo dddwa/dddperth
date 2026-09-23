@@ -48,14 +48,15 @@ export const conferenceManifest: ConferenceManifest = {
         androidUrl: 'https://play.google.com/store/apps/details?id=com.dddperth.conference&hl=en_AU',
         iosBundleId: 'au.com.dddperth.app',
         androidBundleId: 'com.dddperth.conference',
-        // Unsupported for 2026: the app still works (its agenda and
-        // announcements come from live endpoints here), we're just not
-        // maintaining it. The store links stay because /app-config has to
-        // keep answering the copies already installed — `retired` is what
-        // stops the website advertising it (/app 404s).
-        retired: {
-            notice: "This app should still work, but we haven't made any updates for 2026. If something doesn't look right, check dddperth.com.",
-        },
+        // No updates for 2026: the app still works (its agenda and
+        // announcements come from live endpoints here), we just haven't
+        // touched it. The store links stay because /app-config has to keep
+        // answering the copies already installed — `retired` is what stops
+        // the website advertising it (/app 404s).
+        //
+        // To tell the remaining users anything, post an App Announcement in
+        // /admin/settings rather than adding copy here.
+        retired: true,
     },
     sponsorPortal,
     speakerPortal,
