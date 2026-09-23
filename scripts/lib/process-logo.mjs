@@ -43,6 +43,53 @@ function keyOutBackground(data, channels) {
 }
 
 /**
+ * Is this SVG a "reversed" asset — white artwork meant to sit on a dark
+ * background, with no background of its own?
+ *
+ * Decided on the colours it actually paints with: if every one is white (or
+ * near-white) and nothing paints a dark field behind them, there is no
+ * knockout to preserve. Opacity is ignored, since a reversed logo commonly
+ * shades its facets with `opacity` rather than with grey fills.
+ */
+function isReversedSvg(svg) {
+    const painted = [...svg.matchAll(/(?:fill|stroke)\s*[:=]\s*["']?\s*(#[0-9a-f]{3,6}|rgb\([^)]+\))/gi)].map(
+        ([, colour]) => colour.toLowerCase(),
+    )
+    if (painted.length === 0) return false
+
+    const isLight = (colour) => {
+        if (colour.startsWith('rgb')) {
+            return colour
+                .slice(4, -1)
+                .split(',')
+                .every((v) => parseInt(v.trim(), 10) >= 240)
+        }
+        const hex = colour.slice(1)
+        const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex
+        return full.length === 6 && /^[e-f]{6}$/.test(full)
+    }
+
+    return painted.every(isLight)
+}
+
+/**
+ * Replaces gradient fills with flat black.
+ *
+ * The recolouring below rewrites literal colours, but a gradient is applied as
+ * `fill="url(#id)"` and its colours live in a `<linearGradient>` in `<defs>` —
+ * so a gradient-filled shape came through untouched and kept its brand colour
+ * while the rest of the logo went monochrome. Pointing the fill at black is
+ * enough; the now-unreferenced gradient defs are harmless.
+ */
+function flattenGradientsToBlack(svg) {
+    return svg
+        .replace(/fill\s*:\s*url\(#[^)]*\)/gi, 'fill: #000000')
+        .replace(/fill\s*=\s*"url\(#[^)]*\)"/gi, 'fill="#000000"')
+        .replace(/stroke\s*:\s*url\(#[^)]*\)/gi, 'stroke: #000000')
+        .replace(/stroke\s*=\s*"url\(#[^)]*\)"/gi, 'stroke="#000000"')
+}
+
+/**
  * Generates light- and dark-mode variants of a sponsor logo from a single source image.
  *
  * Returns an object with `success`, `original`, `light`, `dark` (and optionally `error`).
@@ -63,15 +110,25 @@ export async function processLogo(buffer, filename) {
             const svgContent = buffer.toString('utf-8')
             results.original = 'data:image/svg+xml;base64,' + buffer.toString('base64')
 
+            // A reversed asset — white artwork meant for dark backgrounds, with
+            // no background of its own. The "keep whites" guard below exists to
+            // preserve a knockout on a coloured field, but here there is no
+            // field: keeping white would leave the light variant invisible, and
+            // the dark pass would then find no black to invert. Recolour it
+            // like any other artwork. (Same case the raster branch handles.)
+            const isReversedArtwork = isReversedSvg(svgContent)
+            const keepWhite = (colour) =>
+                !isReversedArtwork && (colour === 'fff' || colour === 'ffffff' || /^[e-f]{3,6}$/.test(colour))
+
             // Step 1: Create white/light version - make all non-white areas black
-            const whiteVersion = svgContent
+            const whiteVersion = flattenGradientsToBlack(svgContent)
                 // Handle CSS styles in <style> tags - convert fill colors to black
                 .replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (match, styleContent) => {
                     const newStyleContent = styleContent
                         // Convert fill colors in CSS to black (except white/transparent)
                         .replace(/fill:\s*#([a-f0-9]{3,6})/gi, (fillMatch, color) => {
                             const c = color.toLowerCase()
-                            if (c === 'fff' || c === 'ffffff' || c.match(/^[e-f]{3,6}$/)) {
+                            if (keepWhite(c)) {
                                 return fillMatch // Keep whites/very light colors
                             }
                             return 'fill: #000000'
@@ -87,7 +144,7 @@ export async function processLogo(buffer, filename) {
                         // Also handle stroke colors
                         .replace(/stroke:\s*#([a-f0-9]{3,6})/gi, (strokeMatch, color) => {
                             const c = color.toLowerCase()
-                            if (c === 'fff' || c === 'ffffff' || c.match(/^[e-f]{3,6}$/)) {
+                            if (keepWhite(c)) {
                                 return strokeMatch
                             }
                             return 'stroke: #000000'
@@ -106,14 +163,14 @@ export async function processLogo(buffer, filename) {
                 // Convert any inline hex colors to black (except white variations)
                 .replace(/fill="#([a-f0-9]{3,6})"/gi, (match, color) => {
                     const c = color.toLowerCase()
-                    if (c === 'fff' || c === 'ffffff' || c.match(/^[e-f]{3,6}$/)) {
+                    if (keepWhite(c)) {
                         return match
                     }
                     return 'fill="#000000"'
                 })
                 .replace(/stroke="#([a-f0-9]{3,6})"/gi, (match, color) => {
                     const c = color.toLowerCase()
-                    if (c === 'fff' || c === 'ffffff' || c.match(/^[e-f]{3,6}$/)) {
+                    if (keepWhite(c)) {
                         return match
                     }
                     return 'stroke="#000000"'

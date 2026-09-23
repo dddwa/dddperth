@@ -7,7 +7,7 @@
       }
 
       .cls-1, .cls-2, .cls-3 {
-        fill: #fff;
+        fill: #FFFFFF;
       }
 
       .cls-2 {
