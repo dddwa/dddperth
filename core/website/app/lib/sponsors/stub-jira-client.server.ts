@@ -88,6 +88,16 @@ export function createStubJiraClient(): JiraClient {
             }
         },
 
+        async getAssetTracking() {
+            // One sponsor per state the follow-up list distinguishes: assets
+            // received, video owed and not yet in, and nothing recorded.
+            const video = 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)'
+            return new Map([
+                ['SPN-101', { assetsRequired: video, assetsStatus: 'All Assets received' }],
+                ['SPN-102', { assetsRequired: video, assetsStatus: 'Asset Information Pending (Sponsor)' }],
+            ])
+        },
+
         async pushLogistics(issueKey, logistics, submittedKeys) {
             const answered = Object.entries(logistics).filter(([, value]) => value.trim() !== '')
             const cleared = [...submittedKeys].filter((key) => !logistics[key])

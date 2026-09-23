@@ -10,7 +10,7 @@ import type { EmailService } from '../services/email-service'
 import type { NotificationLog } from '../services/notification-log'
 import type { SponsorSyncService } from '../services/sponsor-sync-service'
 import type { SponsorsStore } from '../services/sponsors-store'
-import type { ExhibitorLogistics, JiraClient, SponsorDeliverables } from './jira-client.server'
+import type { AssetTracking, ExhibitorLogistics, JiraClient, SponsorDeliverables } from './jira-client.server'
 import { buildLogisticsPayload } from './jira-client.server'
 import {
     CHECKBOX_GROUP_KEYS,
@@ -329,6 +329,14 @@ export class FakeJira {
                     exhibitorRoom: issue?.exhibitorRoom,
                 }
                 return deliverables
+            },
+
+            async getAssetTracking() {
+                // Statuses here are option ids with no labels, so only what
+                // the assets are is reported.
+                const map = new Map<string, AssetTracking>()
+                for (const [issueKey, issue] of issues) map.set(issueKey, { assetsRequired: issue.assetsRequired })
+                return map
             },
         }
     }

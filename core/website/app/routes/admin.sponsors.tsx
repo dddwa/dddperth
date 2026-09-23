@@ -160,6 +160,11 @@ export default function AdminSponsors() {
                         </styled.p>
                     </Box>
                     <Flex gap="2" align="center">
+                        <Button asChild>
+                            <AppLink unstyled to="/admin/sponsors/follow-up">
+                                Follow-up list
+                            </AppLink>
+                        </Button>
                         <Button
                             asChild
                             variant="outline"

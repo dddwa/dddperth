@@ -48,6 +48,20 @@ export interface JiraClient {
      * and Jira, so any of these may be undefined.
      */
     getSponsorDeliverables(issueKey: string): Promise<SponsorDeliverables>
+    /**
+     * Assets owed and the committee's asset status, per issue key, for the
+     * admin follow-up list. The portal never sees the upload folder, so the
+     * committee's "Asset Creation Status" is the only record of whether
+     * videos and artwork have arrived.
+     */
+    getAssetTracking(): Promise<Map<string, AssetTracking>>
+}
+
+export interface AssetTracking {
+    /** Same as `SponsorDeliverables.assetsRequired`. */
+    assetsRequired?: string
+    /** The committee's "Asset Creation Status" option label. */
+    assetsStatus?: string
 }
 
 /** Read-only, committee-filled values surfaced on the portal dashboard. */
@@ -515,6 +529,39 @@ export function createJiraClient(args: {
                     portalConfig.jira.unassignedRoomValue,
                 ),
             }
+        },
+
+        async getAssetTracking() {
+            const map = new Map<string, AssetTracking>()
+            const requestFields = [fields.assetsRequired, fields.assetsStatus].filter((id): id is string =>
+                Boolean(id),
+            )
+            if (requestFields.length === 0) return map
+
+            const jql = (jqlOverride ?? portalConfig.jira.jql)
+                .replaceAll('{year}', portalConfig.year)
+                .replaceAll('{pastYears}', pastYearsList(portalConfig.year))
+
+            let nextPageToken: string | undefined
+            do {
+                const response = await jiraFetch('/rest/api/3/search/jql', {
+                    method: 'POST',
+                    body: JSON.stringify({ jql, fields: requestFields, maxResults: 100, nextPageToken }),
+                })
+                const page = await parseJson<JiraSearchResponse>(response)
+
+                for (const issue of page.issues ?? []) {
+                    const issueFields = issue.fields ?? {}
+                    map.set(issue.key, {
+                        assetsRequired: fieldAsText(issueFields, fields.assetsRequired),
+                        assetsStatus: fieldAsText(issueFields, fields.assetsStatus),
+                    })
+                }
+
+                nextPageToken = page.isLast ? undefined : page.nextPageToken
+            } while (nextPageToken)
+
+            return map
         },
 
         async setStatusOptionId(issueKey, fieldId, optionId) {
