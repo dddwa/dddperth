@@ -57,6 +57,11 @@ for (const route of ROUTES) {
         await page.goto(route.path)
         await page.waitForLoadState('networkidle').catch(() => {})
 
+        // Count every <main>, not just `main#main`: the content-page and /app
+        // templates nested a second `<main id="content">` inside the layout's,
+        // and `main#main` alone passed. axe's duplicate-main rule is
+        // best-practice, not WCAG-tagged, so the scan above doesn't catch it.
+        await expect(page.locator('main')).toHaveCount(1)
         await expect(page.locator('main#main')).toHaveCount(1)
         await expect(page.locator('h1')).toHaveCount(1)
     })
