@@ -60,6 +60,8 @@ export type AssetSummary =
           required: string[]
           videoRequired: boolean
           status?: string
+          /** The sponsor's upload folder, so an admin can check it directly. */
+          uploadUrl?: string
       }
 
 const filled = (value: string | undefined): value is string => typeof value === 'string' && value.trim() !== ''
@@ -114,6 +116,7 @@ export function buildFollowUpRow(args: {
                       required,
                       videoRequired: required.some((asset) => /video/i.test(asset)),
                       status: assets?.assetsStatus,
+                      uploadUrl: assets?.uploadUrl,
                   },
     }
 }

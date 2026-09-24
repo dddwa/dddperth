@@ -218,6 +218,13 @@ function FollowUpTableRow({
                     <Box>
                         <Box>{row.assets.videoRequired ? 'Video owed' : <Muted>No video</Muted>}</Box>
                         <Muted>{row.assets.status ?? 'No status in Jira'}</Muted>
+                        {row.assets.uploadUrl && (
+                            <Box mt="1">
+                                <AppLink unstyled to={row.assets.uploadUrl} textDecoration="underline" fontSize="xs">
+                                    Upload folder
+                                </AppLink>
+                            </Box>
+                        )}
                     </Box>
                 )}
             </styled.td>
@@ -358,7 +365,8 @@ export default function AdminSponsorFollowUp() {
                 </Box>
                 <styled.p fontSize="xs" color="admin.600" mt="4">
                     Videos and print artwork go to each sponsor's upload folder, which the portal can't see — the Assets
-                    column is the committee's own "Asset Creation Status" in Jira.
+                    column is the committee's own "Asset Creation Status" in Jira. Open the sponsor's upload folder to
+                    check what has actually arrived.
                 </styled.p>
             </AdminCard>
         </AdminLayout>

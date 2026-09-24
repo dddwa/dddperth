@@ -93,7 +93,14 @@ export function createStubJiraClient(): JiraClient {
             // received, video owed and not yet in, and nothing recorded.
             const video = 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)'
             return new Map([
-                ['SPN-101', { assetsRequired: video, assetsStatus: 'All Assets received' }],
+                [
+                    'SPN-101',
+                    {
+                        assetsRequired: video,
+                        assetsStatus: 'All Assets received',
+                        uploadUrl: 'https://example.sharepoint.com/stub-sponsor-uploads/acme',
+                    },
+                ],
                 ['SPN-102', { assetsRequired: video, assetsStatus: 'Asset Information Pending (Sponsor)' }],
             ])
         },

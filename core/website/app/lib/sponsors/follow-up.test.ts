@@ -94,6 +94,7 @@ describe('buildFollowUpRow', () => {
             assets: {
                 assetsRequired: 'Logo and blurb on Website (All types), Video for Mega Screen (Platinum, Gold)',
                 assetsStatus: 'All Assets received',
+                uploadUrl: 'https://example.sharepoint.com/acme',
             },
         })
         expect(withAssets.assets).toEqual({
@@ -101,6 +102,7 @@ describe('buildFollowUpRow', () => {
             required: ['Logo and blurb on Website', 'Video for Mega Screen'],
             videoRequired: true,
             status: 'All Assets received',
+            uploadUrl: 'https://example.sharepoint.com/acme',
         })
 
         const unknown = buildFollowUpRow({

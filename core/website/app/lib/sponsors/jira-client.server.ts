@@ -62,6 +62,8 @@ export interface AssetTracking {
     assetsRequired?: string
     /** The committee's "Asset Creation Status" option label. */
     assetsStatus?: string
+    /** Same as `SponsorDeliverables.assetUploadUrl` — where the files land. */
+    uploadUrl?: string
 }
 
 /** Read-only, committee-filled values surfaced on the portal dashboard. */
@@ -533,7 +535,7 @@ export function createJiraClient(args: {
 
         async getAssetTracking() {
             const map = new Map<string, AssetTracking>()
-            const requestFields = [fields.assetsRequired, fields.assetsStatus].filter((id): id is string =>
+            const requestFields = [fields.assetsRequired, fields.assetsStatus, fields.assetUploadUrl].filter((id): id is string =>
                 Boolean(id),
             )
             if (requestFields.length === 0) return map
@@ -555,6 +557,7 @@ export function createJiraClient(args: {
                     map.set(issue.key, {
                         assetsRequired: fieldAsText(issueFields, fields.assetsRequired),
                         assetsStatus: fieldAsText(issueFields, fields.assetsStatus),
+                        uploadUrl: fieldAsText(issueFields, fields.assetUploadUrl),
                     })
                 }
 

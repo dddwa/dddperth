@@ -335,7 +335,8 @@ export class FakeJira {
                 // Statuses here are option ids with no labels, so only what
                 // the assets are is reported.
                 const map = new Map<string, AssetTracking>()
-                for (const [issueKey, issue] of issues) map.set(issueKey, { assetsRequired: issue.assetsRequired })
+                for (const [issueKey, issue] of issues)
+                    map.set(issueKey, { assetsRequired: issue.assetsRequired, uploadUrl: issue.assetUploadUrl })
                 return map
             },
         }
@@ -344,7 +345,8 @@ export class FakeJira {
     private optionValue(fieldId: string, option: { id: string }): string {
         const meta = this.editMetaFields()[fieldId]
         const match = (meta?.allowedValues ?? []).find((allowed) => (allowed as { id: string }).id === option.id) as
-            { value: string } | undefined
+            | { value: string }
+            | undefined
         return match?.value ?? ''
     }
 
