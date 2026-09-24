@@ -162,14 +162,7 @@ function FollowUpTableRow({
     return (
         <styled.tr borderBottom="admin-subtle" color="admin.900">
             <styled.td {...cell}>
-                <AppLink
-                    unstyled
-                    to={`${jiraBaseUrl}/browse/${row.issueKey}`}
-                    textDecoration="underline"
-                    fontWeight="medium"
-                >
-                    {row.companyName}
-                </AppLink>
+                <styled.span fontWeight="medium">{row.companyName}</styled.span>
                 <Box>
                     <Muted>
                         {row.tier} · {row.issueKey}
@@ -220,7 +213,13 @@ function FollowUpTableRow({
                         <Muted>{row.assets.status ?? 'No status in Jira'}</Muted>
                         {row.assets.uploadUrl && (
                             <Box mt="1">
-                                <AppLink unstyled to={row.assets.uploadUrl} textDecoration="underline" fontSize="xs">
+                                <AppLink
+                                    unstyled
+                                    to={row.assets.uploadUrl}
+                                    aria-label={`${row.companyName} upload folder`}
+                                    textDecoration="underline"
+                                    fontSize="xs"
+                                >
                                     Upload folder
                                 </AppLink>
                             </Box>
@@ -229,15 +228,25 @@ function FollowUpTableRow({
                 )}
             </styled.td>
             <styled.td {...cell}>
-                {row.email ? (
-                    <AppLink unstyled to={row.email} textDecoration="underline" whiteSpace="nowrap">
-                        Email {row.companyName}
+                <Flex direction="column" gap="1">
+                    {row.email ? (
+                        <AppLink unstyled to={row.email} textDecoration="underline" whiteSpace="nowrap">
+                            Email {row.companyName}
+                        </AppLink>
+                    ) : row.contacts.length === 0 ? (
+                        <Muted>No contacts</Muted>
+                    ) : (
+                        <span>All done</span>
+                    )}
+                    <AppLink
+                        unstyled
+                        to={`${jiraBaseUrl}/browse/${row.issueKey}`}
+                        textDecoration="underline"
+                        whiteSpace="nowrap"
+                    >
+                        Open {row.issueKey} in Jira
                     </AppLink>
-                ) : row.contacts.length === 0 ? (
-                    <Muted>No contacts</Muted>
-                ) : (
-                    <span>All done</span>
-                )}
+                </Flex>
             </styled.td>
         </styled.tr>
     )
