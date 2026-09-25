@@ -104,6 +104,7 @@ describe('retryPendingStatusFlips', () => {
             addAttachment: vi.fn(async () => undefined),
             updateIssueFields: vi.fn(async () => undefined),
             getSponsorDeliverables: vi.fn(async () => ({})),
+            getAssetTracking: vi.fn(async () => new Map()),
         }
         const service = createJiraSponsorSyncService({
             config: config({ writebackEnabled: true }),

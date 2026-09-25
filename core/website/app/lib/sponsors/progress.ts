@@ -27,6 +27,8 @@ export interface SectionProgress {
     notStarted: boolean
     /** Section is optional — an incomplete one doesn't block "all done". */
     optional: boolean
+    /** Labels of the items still outstanding, for follow-up emails. */
+    missing: string[]
 }
 
 const filled = (value: string | undefined): boolean => typeof value === 'string' && value.trim() !== ''
@@ -52,7 +54,7 @@ export type SponsorJiraPrefills = Pick<SponsorRecord, 'website' | 'jiraQuote' | 
  * in one step would let an hour-old Jira snapshot resurrect a field the
  * sponsor had just cleared.
  */
-function effectiveAnswers(profile: SponsorProfile | null, sponsor: SponsorJiraPrefills) {
+export function effectiveAnswers(profile: SponsorProfile | null, sponsor: SponsorJiraPrefills) {
     const details = prefilledProfileFields({
         profile,
         jira: { quote: sponsor?.jiraQuote, website: sponsor?.website, socials: sponsor?.jiraSocials },
@@ -80,6 +82,15 @@ const REQUIRED_EXHIBITION_KEYS = [
     'bumpOutWindow',
     'equipmentList',
 ] as const
+
+const EXHIBITION_ITEM_LABELS: Record<(typeof REQUIRED_EXHIBITION_KEYS)[number], string> = {
+    exhibitorContactName: 'On-the-day contact name',
+    exhibitorContactPhone: 'On-the-day contact phone',
+    exhibitorContactEmail: 'On-the-day contact email',
+    bumpInSlot: 'Bump-in day and time',
+    bumpOutWindow: 'Bump-out window',
+    equipmentList: 'Equipment list',
+}
 
 export interface ProgressInput {
     profile: SponsorProfile | null
@@ -113,9 +124,10 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
         key: SectionKey,
         label: string,
         href: string,
-        flags: boolean[],
+        items: Array<[label: string, done: boolean]>,
         options: { optional?: boolean } = {},
     ) => {
+        const flags = items.map(([, itemDone]) => itemDone)
         const done = flags.filter(Boolean).length
         sections.push({
             key,
@@ -126,13 +138,14 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
             complete: done === flags.length,
             notStarted: done === 0,
             optional: options.optional ?? false,
+            missing: items.filter(([, itemDone]) => !itemDone).map(([itemLabel]) => itemLabel),
         })
     }
 
     push('profile', 'Company profile', '/portal/profile', [
-        Boolean(profile?.logo),
-        filled(answers.blurb),
-        filled(answers.websiteUrl),
+        ['Company logo', Boolean(profile?.logo)],
+        ['Company blurb', filled(answers.blurb)],
+        ['Website URL', filled(answers.websiteUrl)],
     ])
 
     if (visibility.exhibition) {
@@ -140,7 +153,7 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
             'exhibition',
             'Exhibition & bump-in',
             '/portal/logistics',
-            REQUIRED_EXHIBITION_KEYS.map((key) => filled(logistics[key])),
+            REQUIRED_EXHIBITION_KEYS.map((key) => [EXHIBITION_ITEM_LABELS[key], filled(logistics[key])]),
         )
     }
 
@@ -148,23 +161,27 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
     // valid finished answer. We can't tell "decided against screens" from
     // "hasn't looked yet", so this never blocks completion.
     if (visibility.screens) {
-        push('screens', 'TV screen orders', '/portal/logistics', [filled(logistics.screenOrders)], {
+        push('screens', 'TV screen orders', '/portal/logistics', [['TV screen order', filled(logistics.screenOrders)]], {
             optional: true,
         })
     }
 
     if (visibility.raffle) {
-        push('raffle', 'Raffle prize', '/portal/logistics', [filled(logistics.rafflePrize)], { optional: true })
+        push('raffle', 'Raffle prize', '/portal/logistics', [['Raffle prize', filled(logistics.rafflePrize)]], {
+            optional: true,
+        })
     }
 
     if (visibility.socialQuote) {
-        push('social', 'Quote for social media', '/portal/logistics', [filled(logistics.socialQuote)], {
+        push('social', 'Quote for social media', '/portal/logistics', [['Quote for social media', filled(logistics.socialQuote)]], {
             optional: true,
         })
     }
 
     if (meetTheExpertsOffered) {
-        push('meetTheExperts', 'Meet the Experts', '/portal', [meetTheExpertsResponded], { optional: true })
+        push('meetTheExperts', 'Meet the Experts', '/portal', [['Meet the Experts response', meetTheExpertsResponded]], {
+            optional: true,
+        })
     }
 
     return sections
