@@ -1,18 +1,21 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { Fragment } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
+import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import type { AgendaTalk } from '~/lib/my-agenda'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
 import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
+import { useMyAgenda } from '~/lib/use-my-agenda'
 import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
@@ -49,6 +52,14 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
     const schedule = schedules[0]
 
+    // Only the current conference's agenda can be built from: past years are
+    // an archive, and the shortlist counts are only useful while there is
+    // still a day to plan for.
+    const canPick =
+        !!schedule &&
+        conferenceYearConfig?.sessions?.kind === 'sessionize' &&
+        year === getConferenceState(context).conference.year
+
     return data(
         {
             year,
@@ -57,6 +68,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // speaker store, so their talk titles render as plain text instead of
             // linking to a sparse detail page.
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
+            canPick,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
             conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
@@ -89,8 +101,41 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks } = useLoaderData<typeof loader>()
+    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick } =
+        useLoaderData<typeof loader>()
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
+
+    const sessionsById = useMemo(
+        () => new Map(schedule?.rooms.flatMap((room) => room.sessions.map((session) => [session.id, session])) ?? []),
+        [schedule],
+    )
+    const pickableTalks = useMemo(() => {
+        const talks = new Map<string, AgendaTalk>()
+        for (const session of sessionsById.values()) {
+            if (!session.isServiceSession && session.startsAt && session.endsAt) {
+                talks.set(session.id, { id: session.id, startsAt: session.startsAt, endsAt: session.endsAt })
+            }
+        }
+        return talks
+    }, [sessionsById])
+    const { picked, toggle } = useMyAgenda(year, pickableTalks)
+    const [announcement, setAnnouncement] = useState('')
+
+    const onToggle = (talk: AgendaTalk) => {
+        const title = (id: string) => sessionsById.get(id)?.title ?? 'a talk'
+        const outcome = toggle(talk)
+        if (!outcome.added) {
+            setAnnouncement(`Removed ${title(talk.id)} from your agenda.`)
+            return
+        }
+        const clashes = outcome.displaced.map(title)
+        setAnnouncement(
+            `Added ${title(talk.id)} to your agenda.` +
+                (clashes.length
+                    ? ` Removed ${clashes.join(' and ')}, which ${clashes.length > 1 ? 'clash' : 'clashes'} with it.`
+                    : ''),
+        )
+    }
 
     const isLatestConference = conferences.every((c) => c.year <= year)
 
@@ -137,6 +182,13 @@ export default function Agenda() {
     ) : (
         <PageLayout>
             {pageHeading}
+            {canPick ? (
+                // Picking a talk can silently unpick others that clash with it;
+                // this is the only place that is said in words.
+                <styled.div srOnly aria-live="polite" role="status">
+                    {announcement}
+                </styled.div>
+            ) : null}
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
                 <Box
@@ -241,6 +293,9 @@ export default function Agenda() {
                                             linkTalks={linkTalks}
                                             startTime12={startTime12}
                                             timeSlotIndex={timeSlotIndex}
+                                            pickable={canPick ? pickableTalks.get(room.session.id) : undefined}
+                                            isPicked={picked.includes(room.session.id)}
+                                            onToggle={onToggle}
                                         />
                                     )
                                 })}
@@ -332,6 +387,9 @@ function RoomTimeSlot({
     linkTalks,
     startTime12,
     timeSlotIndex,
+    pickable,
+    isPicked,
+    onToggle,
 }: {
     schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
@@ -344,6 +402,10 @@ function RoomTimeSlot({
     linkTalks: boolean
     startTime12: string
     timeSlotIndex: number
+    /** Set only for a talk that can go on the person's agenda. */
+    pickable: AgendaTalk | undefined
+    isPicked: boolean
+    onToggle: (talk: AgendaTalk) => void
 }) {
     const fullSession = schedule.rooms
         .find((r) => r.id === room.id)
@@ -435,33 +497,52 @@ function RoomTimeSlot({
                 xl={{
                     mt: '0',
                 }}
+                outlineWidth="2px"
+                outlineStyle={isPicked ? 'solid' : 'none'}
+                outlineColor="border.emphasis"
             >
-                <styled.h3
-                    wordWrap="break-word"
-                    color="text.primary"
-                    fontSize="md"
-                    fontWeight="semibold"
-                    lineHeight="tight"
-                    mb="2"
-                >
-                    {fullSession?.isServiceSession || !linkTalks ? (
-                        fullSession?.title
-                    ) : (
-                        <AppLink
-                            to={$path('/agenda/:year/talk/:sessionId', {
-                                year,
-                                sessionId: fullSession?.id ?? '#',
-                            })}
-                            // The default `primary` nav variant paints `text.on-brand` (white),
-                            // which disappears on the card's `surface.card` background in light
-                            // theme. Override to body text so it tracks the surrounding card.
-                            color="text.primary"
-                            _hover={{ color: 'text.highlight' }}
+                <Flex alignItems="flex-start" justifyContent="space-between" gap="2" mb="2">
+                    <styled.h3
+                        wordWrap="break-word"
+                        color="text.primary"
+                        fontSize="md"
+                        fontWeight="semibold"
+                        lineHeight="tight"
+                    >
+                        {fullSession?.isServiceSession || !linkTalks ? (
+                            fullSession?.title
+                        ) : (
+                            <AppLink
+                                to={$path('/agenda/:year/talk/:sessionId', {
+                                    year,
+                                    sessionId: fullSession?.id ?? '#',
+                                })}
+                                // The default `primary` nav variant paints `text.on-brand` (white),
+                                // which disappears on the card's `surface.card` background in light
+                                // theme. Override to body text so it tracks the surrounding card.
+                                color="text.primary"
+                                _hover={{ color: 'text.highlight' }}
+                            >
+                                {fullSession?.title}
+                            </AppLink>
+                        )}
+                    </styled.h3>
+                    {pickable ? (
+                        <Button
+                            size="xs"
+                            colorPalette="brand.primary"
+                            variant={isPicked ? 'solid' : 'outline'}
+                            onClick={() => onToggle(pickable)}
+                            aria-label={
+                                isPicked
+                                    ? `Remove ${fullSession?.title} from my agenda`
+                                    : `Add ${fullSession?.title} to my agenda`
+                            }
                         >
-                            {fullSession?.title}
-                        </AppLink>
-                    )}
-                </styled.h3>
+                            <span aria-hidden="true">{isPicked ? '✓' : '+'}</span>
+                        </Button>
+                    ) : null}
+                </Flex>
                 <styled.span
                     display="flex"
                     alignItems="center"
