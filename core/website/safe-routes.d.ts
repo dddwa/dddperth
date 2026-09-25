@@ -78,6 +78,10 @@ declare module "safe-routes" {
       params: {'year': string | number; 'sessionId': string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
     },
+    "/api/agenda/shortlist": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
+    },
     "/api/theme": {
       params: never,
       query: ExportedQuery<import('app/routes/api.theme.js').SearchParams>,
@@ -202,6 +206,7 @@ declare module "safe-routes" {
   export type RouteId =
             | 'root'
             | 'routes/api.tito-registration'
+            | 'routes/api.agenda.shortlist'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
             | 'routes/auth.verify.$token'
