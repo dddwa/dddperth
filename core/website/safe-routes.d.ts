@@ -34,6 +34,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
     },
+    "/admin/settings/speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.settings_.speakers.js').SearchParams>,
+    },
     "/admin/speakers": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers._index.js').SearchParams>,
@@ -265,6 +269,7 @@ declare module "safe-routes" {
             | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.sponsors_.follow-up'
+            | 'routes/admin.settings_.speakers'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
             | 'routes/admin.speakers'

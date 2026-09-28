@@ -3,6 +3,7 @@ import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
+import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
@@ -109,6 +110,20 @@ export default function AdminSettings() {
 
     return (
         <AdminLayout heading="Admin Settings">
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                    Sections
+                </styled.h2>
+                <styled.ul listStyle="none">
+                    <li>
+                        <AppLink to="/admin/settings/speakers" unstyled color="indigo.9" textDecoration="underline">
+                            Speakers
+                        </AppLink>{' '}
+                        — checklist due dates, training, dinner, links and Meet the Experts slots
+                    </li>
+                </styled.ul>
+            </AdminCard>
+
             <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                     Date Override

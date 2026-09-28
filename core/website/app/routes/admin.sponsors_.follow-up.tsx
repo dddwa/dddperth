@@ -4,6 +4,7 @@ import { data, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
+import { isMeetTheExpertsOffered } from '~/lib/admin-settings/speakers.server'
 import { requireAdmin } from '~/lib/auth.server'
 import {
     buildFollowUpRow,
@@ -42,7 +43,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const respondedSponsors = new Set(
         registrations.filter((r) => r.registrantType === 'sponsor').map((r) => r.registrantId),
     )
-    const meetTheExpertsOffered = (conferenceManifest.meetTheExperts?.slots ?? []).length > 0
+    const meetTheExpertsOffered = await isMeetTheExpertsOffered(context)
 
     const rows = sortForFollowUp(
         sponsors

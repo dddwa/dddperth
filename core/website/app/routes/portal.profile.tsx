@@ -3,6 +3,7 @@ import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-r
 import { AdminCard } from '~/components/admin-card'
 import { dropzoneClass, FieldError, fieldLabelClass, inputClass, PrimaryButton } from '~/components/portal-form'
 import { PortalSavedBanner } from '~/components/portal-saved-banner'
+import { isMeetTheExpertsOffered } from '~/lib/admin-settings/speakers.server'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import { conferenceManifest } from '@conference/manifest'
@@ -39,7 +40,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         sponsor,
         visibility: logisticsVisibility(conferenceManifest.sponsorPortal?.jira.tierMap?.[sponsor.tier]),
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
-        meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+        meetTheExpertsOffered: await isMeetTheExpertsOffered(context),
     })
 
     return {
@@ -79,7 +80,7 @@ async function recordCompletionIfReady(services: AppServices, sponsor: SponsorRe
  * from the profile as it was before this save — so the banner would tell the
  * sponsor to go to the page they're already on.
  */
-async function nextSectionAfterSave(services: AppServices, sponsor: SponsorRecord) {
+async function nextSectionAfterSave(services: AppServices, sponsor: SponsorRecord, meetTheExpertsOffered: boolean) {
     const [profile, meetTheExpertsRegistration] = await Promise.all([
         services.sponsors.getProfile(sponsor.issueKey),
         services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey),
@@ -90,7 +91,7 @@ async function nextSectionAfterSave(services: AppServices, sponsor: SponsorRecor
         sponsor,
         visibility: logisticsVisibility(conferenceManifest.sponsorPortal?.jira.tierMap?.[sponsor.tier]),
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
-        meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+        meetTheExpertsOffered,
     })
     const next = nextIncompleteSection(sections)
     return next ? { label: next.label, href: next.href } : null
@@ -146,7 +147,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({
             intent: 'save-details' as const,
             saved: true,
-            nextSection: await nextSectionAfterSave(services, sponsor),
+            nextSection: await nextSectionAfterSave(services, sponsor, await isMeetTheExpertsOffered(context)),
         })
     }
 
@@ -197,7 +198,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({
             intent: 'upload-logo' as const,
             saved: true,
-            nextSection: await nextSectionAfterSave(services, sponsor),
+            nextSection: await nextSectionAfterSave(services, sponsor, await isMeetTheExpertsOffered(context)),
         })
     }
 

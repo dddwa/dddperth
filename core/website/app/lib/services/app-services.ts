@@ -1,3 +1,4 @@
+import type { AdminSettingsStore } from './admin-settings-store'
 import type { AgendaPlanningStore } from './agenda-planning-store'
 import type { AgendaShortlistStore } from './agenda-shortlist-store'
 import type { AnnouncementsStore } from './announcements-store'
@@ -41,4 +42,5 @@ export interface AppServices {
     speakerSync: SpeakerSyncService
     meetTheExperts: MeetTheExpertsStore
     meetTheExpertsScheduling: MeetTheExpertsSchedulingStore
+    adminSettings: AdminSettingsStore
 }

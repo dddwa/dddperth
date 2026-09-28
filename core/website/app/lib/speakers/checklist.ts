@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate, type ChecklistItemDefinition } from './checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates, type ChecklistItemDefinition } from './checklist-items'
 import type { SpeakerProfile } from '../services/speakers-store'
 
 /**
@@ -160,6 +160,7 @@ export function speakerChecklist(
     sessions: SpeakerSessionChecklistInput[],
     meetTheExpertsResponded: boolean,
     now: DateTime = DateTime.now(),
+    dueDates: ChecklistDueDates = {},
 ): SpeakerChecklistItem[] {
     const backup = isBackupSpeaker(sessions)
     return SPEAKER_CHECKLIST_ITEMS.filter((definition) => {
@@ -174,7 +175,7 @@ export function speakerChecklist(
             definition.key === 'meetTheExperts'
                 ? isMeetTheExpertsRegistrationComplete(meetTheExpertsResponded ? 1 : undefined)
                 : CHECKLIST_DONE_PREDICATES[definition.key](profile, sessions)
-        const dueDateIso = checklistDueDate(definition.key)?.toISO() ?? undefined
+        const dueDateIso = dueDates[definition.key]?.toISO() ?? undefined
         const isPastDue = Boolean(dueDateIso && DateTime.fromISO(dueDateIso) < now)
         return {
             key: definition.key,

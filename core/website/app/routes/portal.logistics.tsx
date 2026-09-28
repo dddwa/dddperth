@@ -3,6 +3,7 @@ import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-r
 import { AdminCard } from '~/components/admin-card'
 import { FieldError, fieldLabelClass, inputClass, PrimaryButton, textareaClass } from '~/components/portal-form'
 import { PortalSavedBanner } from '~/components/portal-saved-banner'
+import { isMeetTheExpertsOffered } from '~/lib/admin-settings/speakers.server'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import {
@@ -47,7 +48,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         sponsor,
         visibility,
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
-        meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+        meetTheExpertsOffered: await isMeetTheExpertsOffered(context),
     })
 
     return {
@@ -132,7 +133,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             sponsor,
             visibility: logisticsVisibility(mappedTier(sponsor.tier)),
             meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
-            meetTheExpertsOffered: (conferenceManifest.meetTheExperts?.slots ?? []).length > 0,
+            meetTheExpertsOffered: await isMeetTheExpertsOffered(context),
         }),
     )
 
