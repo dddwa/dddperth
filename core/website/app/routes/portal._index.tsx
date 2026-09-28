@@ -5,6 +5,7 @@ import { AdminCard } from '~/components/admin-card'
 import { AppLink } from '~/components/app-link'
 import { SponsorMeetTheExpertsModal } from '~/components/sponsor-meet-the-experts-modal'
 import { SponsorProgressList } from '~/components/sponsor-progress-list'
+import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseMeetTheExpertsForm } from '~/lib/speakers/profile-form.server'
 import { logisticsVisibility } from '~/lib/sponsors/logistics'
@@ -29,14 +30,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const { sponsor } = await requireSponsorContact(request, context)
     const services = getServices(context)
 
-    const [profile, contacts, meetTheExpertsRegistration, deliverables] = await Promise.all([
+    const [profile, contacts, meetTheExpertsRegistration, deliverables, { meetTheExpertsSlots: slots }] = await Promise.all([
         services.sponsors.getProfile(sponsor.issueKey),
         services.sponsors.getContactEmails(sponsor.issueKey),
         services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey),
         services.sponsorSync.getSponsorDeliverables(sponsor.issueKey),
+        loadSpeakerSettings(context),
     ])
 
-    const slots = conferenceManifest.meetTheExperts?.slots ?? []
     const sections = sponsorProgress({
         profile,
         sponsor,

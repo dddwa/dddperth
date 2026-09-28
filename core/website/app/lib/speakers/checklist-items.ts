@@ -1,5 +1,4 @@
 import type { DateTime } from 'luxon'
-import { conferenceManifest } from '@conference/manifest'
 
 /**
  * Declarative list of the speaker dashboard checklist items — one place to
@@ -65,13 +64,11 @@ export interface ChecklistItemDefinition {
 }
 
 /**
- * A checklist item's due date, from `speakerPortal.checklist.dueDates`. Core
- * owns the item definitions, the fork owns the calendar. Undefined renders
- * the item undated.
+ * When each checklist item is due, from the admin speaker settings (see
+ * lib/admin-settings/speakers.ts). Core owns the item definitions, the admin
+ * owns the calendar. A missing key renders that item undated.
  */
-export function checklistDueDate(key: ChecklistItemKey): DateTime | undefined {
-    return conferenceManifest.speakerPortal?.checklist?.dueDates?.[key]
-}
+export type ChecklistDueDates = Partial<Record<ChecklistItemKey, DateTime>>
 
 export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     {

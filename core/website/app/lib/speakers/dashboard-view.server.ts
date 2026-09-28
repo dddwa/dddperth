@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import type { RouterContext } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
-import { getConfig, getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
 import type { ReminderEvent } from '~/components/speaker-reminder-banner'
 import type { TrainingSessionView } from '~/components/speaker-training-modal'
 import { buildCalendarDataUrl } from './calendar.server'
@@ -12,6 +12,7 @@ import {
     type SpeakerSessionDetailsSection,
     type SpeakerWorkspaceSessionView,
 } from './workspace-view.server'
+import type { ResolvedSpeakerSettings } from '../admin-settings/speakers'
 import type { MeetTheExpertsRegistration } from '../services/meet-the-experts-store'
 import type { SpeakerWorkspace, YesNoMaybe } from '../services/speakers-store'
 
@@ -63,29 +64,18 @@ export interface SpeakerDashboardView {
     sessionDetailsIntroText?: string
 }
 
-/**
- * The speaker ticket claim URL for the current year, from
- * `SPEAKER_TICKET_CLAIM_URL_<YYYY>`. A secret rather than config because the
- * link is unguessable by design — holding it is what claims a free ticket.
- * Undefined drops the claim action.
- */
-function ticketClaimUrlFor(context: { get<T>(context: RouterContext<T>): T }): string | undefined {
-    const year = getConferenceState(context).conference.year
-    return getConfig(context).speakerTicketClaimUrls[year]
-}
-
 export function buildSpeakerDashboardView(
     context: { get<T>(context: RouterContext<T>): T },
     workspace: SpeakerWorkspace,
     targetSessionizeId: string,
     meetTheExpertsRegistration: MeetTheExpertsRegistration | null,
+    settings: ResolvedSpeakerSettings,
 ): SpeakerDashboardView {
     const now = getDateTimeProvider(context).nowDate()
     const conferenceDateIso = getConferenceState(context).conference.date
     const timezone = conferenceManifest.public.timezone
     const conferenceDate = conferenceDateIso ? DateTime.fromISO(conferenceDateIso, { zone: timezone }) : null
 
-    const checklistConfig = conferenceManifest.speakerPortal?.checklist
     const sessionDetailsSections = toSessionDetailsSections(workspace)
     const ownProfile =
         workspace.sessions
@@ -98,7 +88,7 @@ export function buildSpeakerDashboardView(
         sessionDetailsComplete: Boolean(sessionDetails?.questionsPreference),
         backupAccepted,
     }))
-    const checklist = speakerChecklist(ownProfile, checklistSessions, Boolean(meetTheExpertsRegistration), now)
+    const checklist = speakerChecklist(ownProfile, checklistSessions, Boolean(meetTheExpertsRegistration), now, settings.dueDates)
     const backupSessionIds = workspace.sessions
         .filter(({ session, backupAccepted }) => session.status !== 'Accepted' && !backupAccepted)
         .map(({ session }) => session.sessionizeSessionId)
@@ -106,8 +96,8 @@ export function buildSpeakerDashboardView(
     const reminders = upcomingRsvpedEvents(
         ownProfile,
         {
-            speakerTrainingSessions: checklistConfig?.speakerTrainingSessions,
-            speakerDinner: checklistConfig?.speakerDinner,
+            speakerTrainingSessions: settings.trainingSessions,
+            speakerDinner: settings.dinner,
         },
         now,
     ).map((event) => ({
@@ -115,7 +105,7 @@ export function buildSpeakerDashboardView(
         dateLabel: formatEventDate(event.dateTime),
     }))
 
-    const trainingSessions: TrainingSessionView[] = (checklistConfig?.speakerTrainingSessions ?? []).map((session) => ({
+    const trainingSessions: TrainingSessionView[] = settings.trainingSessions.map((session) => ({
         id: session.id,
         title: session.title,
         dateLabel: formatEventDate(session.dateTime),
@@ -127,15 +117,15 @@ export function buildSpeakerDashboardView(
         }),
     }))
 
-    const dinnerConfig = checklistConfig?.speakerDinner
+    const dinnerConfig = settings.dinner
 
     return {
         ...toWorkspaceView(workspace),
-        infoPackUrl: conferenceManifest.speakerPortal?.infoPackUrl,
+        infoPackUrl: settings.infoPackUrl,
         sessionDetailsSections,
 
         checklist,
-        ticketClaimUrl: ticketClaimUrlFor(context),
+        ticketClaimUrl: settings.ticketClaimUrl,
         backupSessionIds,
 
         conferenceName: conferenceManifest.public.name,
@@ -160,7 +150,7 @@ export function buildSpeakerDashboardView(
         dinnerResponse: ownProfile?.rsvpSpeakersDinner,
         dinnerDietaryRequirements: ownProfile?.dietaryRequirements,
 
-        meetTheExpertsSlots: conferenceManifest.meetTheExperts?.slots ?? [],
+        meetTheExpertsSlots: settings.meetTheExpertsSlots,
         meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
         meetTheExpertsSelectedSlotIds: meetTheExpertsRegistration?.slots ?? [],
         meetTheExpertsBio: workspace.speaker.bio,

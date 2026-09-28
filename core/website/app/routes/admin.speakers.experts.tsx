@@ -7,6 +7,7 @@ import { CopyField } from '~/components/copy-field'
 import { MeetTheExpertsPlanner, type MeetTheExpertsChange } from '~/components/meet-the-experts-planner'
 import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
+import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { requireAdmin } from '~/lib/auth.server'
 import { buildScheduleEmail } from '~/lib/meet-the-experts-schedule-email'
 import { getServices } from '~/remix-app-load-context'
@@ -17,15 +18,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     await requireAdmin(request, context)
     const services = getServices(context)
 
-    const slots = conferenceManifest.meetTheExperts?.slots ?? []
     const speakerYear = conferenceManifest.speakerPortal?.year
     const sponsorYear = conferenceManifest.sponsorPortal?.year
 
-    const [speakers, sponsors, registrations, schedulingState] = await Promise.all([
+    const [speakers, sponsors, registrations, schedulingState, { meetTheExpertsSlots: slots }] = await Promise.all([
         speakerYear ? services.speakers.listSpeakers(speakerYear) : Promise.resolve([]),
         sponsorYear ? services.sponsors.listSponsors(sponsorYear) : Promise.resolve([]),
         services.meetTheExperts.listRegistrations(),
         services.meetTheExpertsScheduling.getState(),
+        loadSpeakerSettings(context),
     ])
 
     const displayNameByKey = new Map<string, string>()

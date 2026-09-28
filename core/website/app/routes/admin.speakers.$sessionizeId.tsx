@@ -11,6 +11,7 @@ import { SpeakerReminderBanner } from '~/components/speaker-reminder-banner'
 import { SpeakerSessionDetailsModal } from '~/components/speaker-session-details-modal'
 import { SpeakerTrainingModal } from '~/components/speaker-training-modal'
 import { SpeakerWorkspaceView } from '~/components/speaker-workspace-view'
+import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { requireAdmin } from '~/lib/auth.server'
 import { recordException } from '~/lib/record-exception'
 import { buildSpeakerDashboardView } from '~/lib/speakers/dashboard-view.server'
@@ -32,9 +33,10 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     await requireAdmin(request, context)
     const services = getServices(context)
 
-    const [workspace, meetTheExpertsRegistration] = await Promise.all([
+    const [workspace, meetTheExpertsRegistration, settings] = await Promise.all([
         services.speakers.getWorkspace(params.sessionizeId),
         services.meetTheExperts.getRegistration('speaker', params.sessionizeId),
+        loadSpeakerSettings(context),
     ])
     if (!workspace) {
         throw new Response('Not Found', { status: 404 })
@@ -42,7 +44,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
 
     return {
         fullName: workspace.speaker.fullName,
-        ...buildSpeakerDashboardView(context, workspace, params.sessionizeId, meetTheExpertsRegistration),
+        ...buildSpeakerDashboardView(context, workspace, params.sessionizeId, meetTheExpertsRegistration, settings),
     }
 }
 

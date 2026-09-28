@@ -3,6 +3,7 @@ import type { AppConfig } from '../app-config'
 import type { AppServices } from '../app-services'
 import { createConsoleEmailService } from '../console-email-service.server'
 import { createCookieSessionStorages } from './cookie-session-storages.server'
+import { createD1AdminSettingsStore } from './d1-admin-settings-store.server'
 import { createD1AgendaPlanningStore } from './d1-agenda-planning-store.server'
 import { createD1AgendaShortlistStore } from './d1-agenda-shortlist-store.server'
 import { createD1AnnouncementsStore } from './d1-announcements-store.server'
@@ -58,5 +59,6 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         speakerSync: createSessionizeSpeakerSyncService({ config, speakers }),
         meetTheExperts,
         meetTheExpertsScheduling: createD1MeetTheExpertsSchedulingStore(db, meetTheExperts),
+        adminSettings: createD1AdminSettingsStore(db),
     }
 }

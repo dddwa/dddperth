@@ -17,7 +17,12 @@ import {
     urgencyFor,
     type SpeakerSessionChecklistInput,
 } from './checklist'
-import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate } from './checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates } from './checklist-items'
+
+const DUE_DATES: ChecklistDueDates = {
+    confirmSession: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
+    sessionDetails: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Australia/Perth' }),
+}
 
 const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
 
@@ -209,11 +214,11 @@ describe('speakerChecklist', () => {
     })
 
     it("carries each item's configured due date through as an ISO string", () => {
-        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW)
+        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW, DUE_DATES)
         for (const definition of SPEAKER_CHECKLIST_ITEMS) {
             const item = items.find((i) => i.key === definition.key)
             if (!item) continue // filtered out in this scenario, e.g. acceptBackupSpeaker (not a backup speaker)
-            expect(item.dueDateIso).toBe(checklistDueDate(definition.key)?.toISO())
+            expect(item.dueDateIso).toBe(DUE_DATES[definition.key]?.toISO() ?? undefined)
         }
     })
 
@@ -229,11 +234,11 @@ describe('speakerChecklist', () => {
     })
 
     it('flags isPastDue only once an item\'s own due date has actually passed', () => {
-        expect(speakerChecklist(null, [], false, NOW).every((i) => !i.isPastDue)).toBe(true)
+        expect(speakerChecklist(null, [], false, NOW, DUE_DATES).every((i) => !i.isPastDue)).toBe(true)
 
-        const confirmSessionDueDate = checklistDueDate('confirmSession')
+        const confirmSessionDueDate = DUE_DATES.confirmSession
         if (!confirmSessionDueDate) throw new Error('confirmSession is expected to have a due date')
-        const items = speakerChecklist(null, [], false, confirmSessionDueDate.plus({ minutes: 1 }))
+        const items = speakerChecklist(null, [], false, confirmSessionDueDate.plus({ minutes: 1 }), DUE_DATES)
         expect(items.find((i) => i.key === 'confirmSession')?.isPastDue).toBe(true)
         // sessionDetails is due later than confirmSession, so it isn't past due yet.
         expect(items.find((i) => i.key === 'sessionDetails')?.isPastDue).toBe(false)

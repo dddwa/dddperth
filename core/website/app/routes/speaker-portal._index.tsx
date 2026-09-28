@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { data, useActionData, useLoaderData } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
 import { SpeakerChecklistCard, type ChecklistModalKey } from '~/components/speaker-checklist-card'
@@ -21,15 +22,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const { speaker } = await requireSpeaker(request, context)
     const services = getServices(context)
 
-    const [workspace, meetTheExpertsRegistration] = await Promise.all([
+    const [workspace, meetTheExpertsRegistration, settings] = await Promise.all([
         services.speakers.getWorkspace(speaker.sessionizeId),
         services.meetTheExperts.getRegistration('speaker', speaker.sessionizeId),
+        loadSpeakerSettings(context),
     ])
     if (!workspace) {
         throw new Response('Not Found', { status: 404 })
     }
 
-    return buildSpeakerDashboardView(context, workspace, speaker.sessionizeId, meetTheExpertsRegistration)
+    return buildSpeakerDashboardView(context, workspace, speaker.sessionizeId, meetTheExpertsRegistration, settings)
 }
 
 function oneOf<T extends string>(value: FormDataEntryValue | null, options: readonly T[]): T | undefined {

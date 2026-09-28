@@ -8,12 +8,13 @@ import { AppLink } from '~/components/app-link'
 import { CopyField } from '~/components/copy-field'
 import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
+import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { requireAdmin } from '~/lib/auth.server'
 import { isConferenceYear } from '~/lib/get-year-config.server'
 import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
-import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
 import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
 import { DAY_DETAILS_EMAIL, FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
@@ -78,10 +79,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         })
     }
 
-    const [speakers, lastRun, lastLoginTimes] = await Promise.all([
+    const [speakers, lastRun, lastLoginTimes, settings] = await Promise.all([
         services.speakers.listSpeakers(portalConfig.year),
         services.speakers.getLatestSyncRun(),
         services.auth.getLastLoginTimes(),
+        loadSpeakerSettings(context),
     ])
 
     const now = getDateTimeProvider(context).nowDate()
@@ -124,15 +126,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const allSessions = [...sessionsById.values()].sort((a, b) => a.title.localeCompare(b.title))
 
     const activeSpeakers = speakers.filter((s) => s.active)
-    const trainingSessions =
-        portalConfig.checklist?.speakerTrainingSessions?.map((s) => ({ id: s.id, title: s.title })) ?? []
+    const trainingSessions = settings.trainingSessions.map((s) => ({ id: s.id, title: s.title }))
     const rsvpHeadcount = buildRsvpHeadcount(
         activeSpeakers.map((s) => s.profile),
         trainingSessions,
     )
     const rsvpLists = buildRsvpLists(activeSpeakers, trainingSessions)
     const followUps = SPEAKER_CHECKLIST_ITEMS.map((definition) => {
-        const dueDateIso = checklistDueDate(definition.key)?.toISO() ?? undefined
+        const dueDateIso = settings.dueDates[definition.key]?.toISO() ?? undefined
         return {
             key: definition.key,
             label: definition.label,
