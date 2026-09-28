@@ -178,6 +178,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 - Build outputs are in `core/website/build/` directory
 - Static assets served from core's `core/website/public/` plus `conference/public/` (conference-owned assets like sponsor logos; overlaid onto the site root at the same URLs)
 - Environment variables for local dev go in `conference/wrangler/.dev.vars` (the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root)
+  - `.dev.vars` is gitignored, so a new worktree starts without one. `SESSION_SECRET` falls back to a fixed, public value outside production builds so magic-link login still works there (`build-config.server.ts`); a production build drops the fallback, and `dates/dev-date-override.test.ts` checks it isn't in the built worker. Real Sessionize data for the current year still needs `SESSIONIZE_<YYYY>_SESSIONS` in `.dev.vars`.
 - Local D1 data stored in `core/website/.wrangler/state/`
 
 ## Search indexing
