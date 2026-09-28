@@ -1,21 +1,23 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { data, Form, useActionData, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
+import { CopyField } from '~/components/copy-field'
 import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
+import { isConferenceYear } from '~/lib/get-year-config.server'
 import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
 import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
-import { FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
-import { buildRsvpHeadcount, type RsvpHeadcount } from '~/lib/speakers/rsvp-summary'
+import { DAY_DETAILS_EMAIL, FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
+import { buildRsvpHeadcount, buildRsvpLists, type RsvpHeadcount, type RsvpListGroup, type RsvpLists } from '~/lib/speakers/rsvp-summary'
 import { getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.speakers._index'
@@ -70,6 +72,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             lastRun: null,
             syncAvailable: false,
             rsvpHeadcount: null,
+            rsvpLists: null,
             followUps: [],
             speakerEmailAddress: undefined,
         })
@@ -121,10 +124,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const allSessions = [...sessionsById.values()].sort((a, b) => a.title.localeCompare(b.title))
 
     const activeSpeakers = speakers.filter((s) => s.active)
+    const trainingSessions =
+        portalConfig.checklist?.speakerTrainingSessions?.map((s) => ({ id: s.id, title: s.title })) ?? []
     const rsvpHeadcount = buildRsvpHeadcount(
         activeSpeakers.map((s) => s.profile),
-        portalConfig.checklist?.speakerTrainingSessions?.map((s) => ({ id: s.id, title: s.title })) ?? [],
+        trainingSessions,
     )
+    const rsvpLists = buildRsvpLists(activeSpeakers, trainingSessions)
     const followUps = SPEAKER_CHECKLIST_ITEMS.map((definition) => {
         const dueDateIso = checklistDueDate(definition.key)?.toISO() ?? undefined
         return {
@@ -149,6 +155,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         lastRun,
         syncAvailable: services.speakerSync.isConfigured(),
         rsvpHeadcount,
+        rsvpLists,
         followUps,
         speakerEmailAddress: portalConfig.speakerEmailAddress,
     })
@@ -334,6 +341,40 @@ export async function action({ request, context }: Route.ActionArgs) {
         })
     }
 
+    if (actionName === 'day-details-manual') {
+        const portalConfig = conferenceManifest.speakerPortal
+        if (!portalConfig) {
+            return data({ _action: actionName, error: 'Speaker portal not configured' }, { status: 400 })
+        }
+
+        const speakers = await services.speakers.listSpeakers(portalConfig.year)
+        const yearConfig = isConferenceYear(portalConfig.year)
+            ? conferenceManifest.conferences.conferences[portalConfig.year]
+            : undefined
+        const conferenceDate = yearConfig && 'conferenceDate' in yearConfig ? yearConfig.conferenceDate : undefined
+        const venue = yearConfig && 'venue' in yearConfig ? yearConfig.venue : undefined
+        const vars = {
+            firstName: 'there',
+            portalUrl: new URL('/speaker-portal', getConfig(context).webUrl).toString(),
+            conferenceName: conferenceManifest.public.name,
+            dateLabel: conferenceDate
+                ? `${conferenceDate.toFormat('cccc d LLLL yyyy', { locale: 'en-AU' })}, from ${conferenceDate.toFormat('h:mma', { locale: 'en-AU' }).toLowerCase()}`
+                : undefined,
+            venueLabel: venue
+                ? [venue.name, venue.address?.streetAddress, venue.address?.addressLocality].filter(Boolean).join(', ')
+                : undefined,
+        }
+
+        return data({
+            _action: actionName,
+            subject: DAY_DETAILS_EMAIL.subject,
+            emailText: DAY_DETAILS_EMAIL.text(vars),
+            // Everyone still active, backups included — a backup may be
+            // called up on the day, so they need the details too.
+            emailAddresses: [...new Set(speakers.filter((s) => s.active).flatMap((s) => s.contacts))].join(', '),
+        })
+    }
+
     return data({ _action: 'unknown' as const, error: 'Unknown action' }, { status: 400 })
 }
 
@@ -408,12 +449,21 @@ export default function AdminSpeakers() {
         )
     }
 
-    const { acceptedSessions, waitlistedSessions, lastRun, syncAvailable, year, rsvpHeadcount, followUps, speakerEmailAddress } =
-        loaderData
+    const {
+        acceptedSessions,
+        waitlistedSessions,
+        lastRun,
+        syncAvailable,
+        year,
+        rsvpHeadcount,
+        rsvpLists,
+        followUps,
+        speakerEmailAddress,
+    } = loaderData
 
     return (
         <AdminLayout heading={`Speakers (${year})`}>
-            {rsvpHeadcount && <RsvpHeadcountCard headcount={rsvpHeadcount} />}
+            {rsvpHeadcount && rsvpLists && <RsvpHeadcountCard headcount={rsvpHeadcount} lists={rsvpLists} />}
 
             {followUps.length > 0 && (
                 <FollowUpCard
@@ -751,6 +801,20 @@ function FollowUpCard({
                         </Flex>
                     )
                 })}
+                <Flex
+                    justify="space-between"
+                    align="center"
+                    gap="3"
+                    p="3"
+                    bg="admin.100"
+                    borderRadius="md"
+                    flexWrap="wrap"
+                >
+                    <styled.span fontSize="sm" color="admin.900">
+                        Day details — last-minute check-in to every active speaker
+                    </styled.span>
+                    <ManualEmailButton actionName="day-details-manual" label="Day details" />
+                </Flex>
             </Flex>
         </AdminCard>
     )
@@ -760,7 +824,15 @@ function FollowUpCard({
  * anything (`follow-up-manual`), then shows both in read-only fields sized
  * for a quick select-all/copy into an external mail client (Outlook, Gmail,
  * etc. — wherever the admin actually sends manual follow-ups from). */
-function ManualEmailButton({ itemKey, label }: { itemKey: string; label: string }) {
+function ManualEmailButton({
+    itemKey,
+    label,
+    actionName = 'follow-up-manual',
+}: {
+    itemKey?: string
+    label: string
+    actionName?: 'follow-up-manual' | 'day-details-manual'
+}) {
     const fetcher = useFetcher<typeof action>()
     const [open, setOpen] = useState(false)
     const isLoading = fetcher.state !== 'idle'
@@ -776,8 +848,8 @@ function ManualEmailButton({ itemKey, label }: { itemKey: string; label: string 
     return (
         <>
             <fetcher.Form method="post">
-                <input type="hidden" name="_action" value="follow-up-manual" />
-                <input type="hidden" name="itemKey" value={itemKey} />
+                <input type="hidden" name="_action" value={actionName} />
+                {itemKey && <input type="hidden" name="itemKey" value={itemKey} />}
                 <Button
                     type="submit"
                     variant="outline"
@@ -799,70 +871,13 @@ function ManualEmailButton({ itemKey, label }: { itemKey: string; label: string 
                 )}
                 {result && 'emailText' in result && (
                     <Flex direction="column" gap="4">
-                        <Box>
-                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
-                                Subject
-                            </styled.label>
-                            <styled.input
-                                readOnly
-                                value={result.subject}
-                                onFocus={(e) => e.currentTarget.select()}
-                                w="full"
-                                px="3"
-                                py="2"
-                                borderWidth="1px"
-                                borderStyle="solid"
-                                borderColor="admin.400"
-                                borderRadius="md"
-                                fontSize="sm"
-                                bg="admin.50"
-                                color="admin.900"
-                            />
-                        </Box>
-                        <Box>
-                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
-                                Email text
-                            </styled.label>
-                            <styled.textarea
-                                readOnly
-                                value={result.emailText}
-                                onFocus={(e) => e.currentTarget.select()}
-                                w="full"
-                                rows={10}
-                                px="3"
-                                py="2"
-                                borderWidth="1px"
-                                borderStyle="solid"
-                                borderColor="admin.400"
-                                borderRadius="md"
-                                fontSize="sm"
-                                bg="admin.50"
-                                color="admin.900"
-                                fontFamily="mono"
-                            />
-                        </Box>
-                        <Box>
-                            <styled.label display="block" fontSize="sm" fontWeight="medium" color="admin.700" mb="1">
-                                Recipients ({result.emailAddresses ? result.emailAddresses.split(', ').length : 0})
-                            </styled.label>
-                            <styled.textarea
-                                readOnly
-                                value={result.emailAddresses}
-                                onFocus={(e) => e.currentTarget.select()}
-                                w="full"
-                                rows={3}
-                                px="3"
-                                py="2"
-                                borderWidth="1px"
-                                borderStyle="solid"
-                                borderColor="admin.400"
-                                borderRadius="md"
-                                fontSize="sm"
-                                bg="admin.50"
-                                color="admin.900"
-                                fontFamily="mono"
-                            />
-                        </Box>
+                        <CopyField label="Subject" value={result.subject} />
+                        <CopyField label="Email text" value={result.emailText} rows={10} />
+                        <CopyField
+                            label={`Recipients (${result.emailAddresses ? result.emailAddresses.split(', ').length : 0})`}
+                            value={result.emailAddresses}
+                            rows={3}
+                        />
                     </Flex>
                 )}
             </SpeakerModal>
@@ -874,7 +889,7 @@ function ManualEmailButton({ itemKey, label }: { itemKey: string; label: string 
  * speakers have committed to each training session and the dinner, with
  * "not attending" (a completed RSVP that says so) broken out separately from
  * "hasn't responded yet" so admins can tell the two apart at a glance. */
-function RsvpHeadcountCard({ headcount }: { headcount: RsvpHeadcount }) {
+function RsvpHeadcountCard({ headcount, lists }: { headcount: RsvpHeadcount; lists: RsvpLists }) {
     return (
         <AdminCard>
             <styled.h2 fontSize="xl" fontWeight="semibold" mb="1">
@@ -886,9 +901,12 @@ function RsvpHeadcountCard({ headcount }: { headcount: RsvpHeadcount }) {
 
             {headcount.training.sessions.length > 0 && (
                 <Box mb="6">
-                    <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700" mb="2">
-                        Speaker training
-                    </styled.h3>
+                    <Flex justify="space-between" align="center" gap="2" mb="2">
+                        <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700">
+                            Speaker training
+                        </styled.h3>
+                        <RsvpListButton title="Speaker training RSVPs" groups={lists.training} />
+                    </Flex>
                     <Flex gap="3" flexWrap="wrap">
                         {headcount.training.sessions.map((session) => (
                             <StatTile key={session.id} label={session.title} value={session.attendingCount} />
@@ -900,9 +918,12 @@ function RsvpHeadcountCard({ headcount }: { headcount: RsvpHeadcount }) {
             )}
 
             <Box>
-                <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700" mb="2">
-                    Speaker dinner
-                </styled.h3>
+                <Flex justify="space-between" align="center" gap="2" mb="2">
+                    <styled.h3 fontSize="sm" fontWeight="semibold" color="admin.700">
+                        Speaker dinner
+                    </styled.h3>
+                    <RsvpListButton title="Speaker dinner RSVPs" groups={lists.dinner} />
+                </Flex>
                 <Flex gap="3" flexWrap="wrap">
                     <StatTile label="Yes" value={headcount.dinner.yesCount} />
                     <StatTile label="Maybe" value={headcount.dinner.maybeCount} />
@@ -911,6 +932,85 @@ function RsvpHeadcountCard({ headcount }: { headcount: RsvpHeadcount }) {
                 </Flex>
             </Box>
         </AdminCard>
+    )
+}
+
+/** Who's behind each headcount tile, one section per group, each with its
+ * recipient list ready to paste into an external mail client — for the
+ * one-off manual emails (venue details, "are you still coming?") that don't
+ * warrant a template. */
+function RsvpListButton({ title, groups }: { title: string; groups: RsvpListGroup[] }) {
+    const [open, setOpen] = useState(false)
+    const detailsName = useId()
+    return (
+        <>
+            <Button
+                type="button"
+                size="xs"
+                variant="outline"
+                color="admin.900"
+                borderColor="admin.400"
+                bg="white"
+                _hover={{ bg: 'admin.100' }}
+                onClick={() => setOpen(true)}
+            >
+                View list
+            </Button>
+            <SpeakerModal title={title} open={open} onOpenChange={setOpen}>
+                <Flex direction="column" gap="2">
+                    {/* A shared `name` makes these an exclusive accordion —
+                        opening one group closes the others. The first group
+                        (dinner "Yes", training's first session) starts open. */}
+                    {groups.map((group, index) => (
+                        <styled.details
+                            key={group.label}
+                            name={detailsName}
+                            open={index === 0}
+                            borderWidth="1px"
+                            borderStyle="solid"
+                            borderColor="admin.200"
+                            borderRadius="md"
+                            px="3"
+                            py="2"
+                        >
+                            <styled.summary cursor="pointer" py="1">
+                                <styled.h3 display="inline" fontSize="md" fontWeight="semibold">
+                                    {group.label} ({group.people.length})
+                                </styled.h3>
+                            </styled.summary>
+                            <Box pt="2" pb="1">
+                                {group.people.length === 0 ? (
+                                    <styled.p fontSize="sm" color="admin.600">
+                                        Nobody.
+                                    </styled.p>
+                                ) : (
+                                    <>
+                                        <styled.ul fontSize="sm" mb="3">
+                                            {group.people.map((person) => (
+                                                <styled.li key={person.sessionizeId}>
+                                                    {person.fullName}
+                                                    {person.dietaryRequirements && (
+                                                        <styled.span color="admin.600"> — {person.dietaryRequirements}</styled.span>
+                                                    )}
+                                                    {person.emails.length === 0 && (
+                                                        <styled.span color="status.warning.fg"> (no contact email)</styled.span>
+                                                    )}
+                                                </styled.li>
+                                            ))}
+                                        </styled.ul>
+                                        <CopyField
+                                            label={`${group.label} emails`}
+                                            value={group.people.flatMap((p) => p.emails).join(', ')}
+                                            rows={2}
+                                        />
+                                    </>
+                                )}
+                            </Box>
+                        </styled.details>
+                    ))}
+                </Flex>
+            </SpeakerModal>
+        </>
     )
 }
 

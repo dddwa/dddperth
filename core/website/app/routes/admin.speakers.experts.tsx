@@ -3,10 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { data, useLoaderData, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
+import { CopyField } from '~/components/copy-field'
 import { MeetTheExpertsPlanner, type MeetTheExpertsChange } from '~/components/meet-the-experts-planner'
+import { SpeakerModal } from '~/components/speaker-modal'
+import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
+import { buildScheduleEmail } from '~/lib/meet-the-experts-schedule-email'
 import { getServices } from '~/remix-app-load-context'
-import { Box, styled } from '~/styled-system/jsx'
+import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.speakers.experts'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -27,6 +31,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const displayNameByKey = new Map<string, string>()
     for (const speaker of speakers) displayNameByKey.set(`speaker:${speaker.sessionizeId}`, speaker.fullName)
     for (const sponsor of sponsors) displayNameByKey.set(`sponsor:${sponsor.issueKey}`, sponsor.companyName)
+
+    // Active only — someone who's since dropped out (or a departed sponsor)
+    // shouldn't get the schedule even if their registration is still on file.
+    const contactsByKey = new Map<string, string[]>()
+    for (const speaker of speakers.filter((s) => s.active)) contactsByKey.set(`speaker:${speaker.sessionizeId}`, speaker.contacts)
+    for (const sponsor of sponsors.filter((s) => s.active)) contactsByKey.set(`sponsor:${sponsor.issueKey}`, sponsor.contacts)
 
     const assignedCountByRegistrant = new Map<string, number>()
     for (const assignment of schedulingState.assignments) {
@@ -60,7 +70,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // pool rather than shown unschedulable.
     const optedOutCount = registrations.filter((registration) => registration.slots.length === 0).length
 
+    // Everyone who registered for at least one slot, seated or not — the
+    // schedule email is also how an unseated registrant finds out.
+    const recipientEmails = [
+        ...new Set(
+            registrants.flatMap((r) => contactsByKey.get(`${r.registrantType}:${r.registrantId}`) ?? []),
+        ),
+    ]
+
     return data({
+        conferenceName: conferenceManifest.public.name,
+        recipientEmails,
         slots,
         tables: schedulingState.tables,
         assignments,
@@ -131,7 +151,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function AdminSpeakersExperts() {
-    const { slots, tables, assignments, registrants, optedOutCount } = useLoaderData<typeof loader>()
+    const { slots, tables, assignments, registrants, optedOutCount, conferenceName, recipientEmails } =
+        useLoaderData<typeof loader>()
     const revalidator = useRevalidator()
 
     // Same queued-fetch-then-revalidate pattern as the agenda planner
@@ -192,6 +213,21 @@ export default function AdminSpeakersExperts() {
             )}
 
             <AdminCard>
+                <Flex justify="space-between" align="center" gap="4" flexWrap="wrap">
+                    <styled.p fontSize="sm" color="admin.700">
+                        Email the current schedule to everyone who registered for a slot — speakers and sponsors.
+                    </styled.p>
+                    <ScheduleEmailButton
+                        conferenceName={conferenceName}
+                        slots={slots}
+                        tables={tables}
+                        assignments={assignments}
+                        recipientEmails={recipientEmails}
+                    />
+                </Flex>
+            </AdminCard>
+
+            <AdminCard>
                 <MeetTheExpertsPlanner
                     slots={slots}
                     tables={tables}
@@ -201,5 +237,95 @@ export default function AdminSpeakersExperts() {
                 />
             </AdminCard>
         </AdminLayout>
+    )
+}
+
+/** Same copy-into-your-mail-client flow as the speaker follow-ups' "Manual
+ * Email" (admin.speakers._index.tsx), but built client-side from the grid as
+ * it stands — so it reflects the latest drag without a round trip. The
+ * formatted copy puts the rendered table on the clipboard as HTML, so it
+ * pastes into Gmail/Outlook as a real table rather than plain text. */
+function ScheduleEmailButton({
+    recipientEmails,
+    ...input
+}: Parameters<typeof buildScheduleEmail>[0] & { recipientEmails: string[] }) {
+    const [open, setOpen] = useState(false)
+    const [copied, setCopied] = useState(false)
+    const email = open ? buildScheduleEmail(input) : null
+
+    const copyFormatted = async () => {
+        if (!email) return
+        try {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/html': new Blob([email.html], { type: 'text/html' }),
+                    'text/plain': new Blob([email.text], { type: 'text/plain' }),
+                }),
+            ])
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        } catch {
+            // Clipboard refused — the plain-text field below still works.
+        }
+    }
+
+    return (
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                color="admin.900"
+                borderColor="admin.400"
+                bg="white"
+                _hover={{ bg: 'admin.100' }}
+                onClick={() => setOpen(true)}
+            >
+                Manual Email
+            </Button>
+            <SpeakerModal title="Manual email — Meet the Experts schedule" open={open} onOpenChange={setOpen} wide>
+                {email && (
+                    <Flex direction="column" gap="4">
+                        <CopyField label="Subject" value={email.subject} />
+                        <Box>
+                            <Flex justify="space-between" align="flex-end" gap="2" mb="1">
+                                <styled.h3 fontSize="sm" fontWeight="medium" color="admin.700">
+                                    Formatted email
+                                </styled.h3>
+                                <Button
+                                    type="button"
+                                    size="xs"
+                                    variant="outline"
+                                    color="admin.900"
+                                    borderColor="admin.400"
+                                    bg="white"
+                                    _hover={{ bg: 'admin.100' }}
+                                    onClick={() => void copyFormatted()}
+                                >
+                                    {copied ? 'Copied' : 'Copy formatted'}
+                                </Button>
+                            </Flex>
+                            <styled.span role="status" srOnly>
+                                {copied ? 'Formatted email copied' : ''}
+                            </styled.span>
+                            <Box
+                                p="3"
+                                borderWidth="1px"
+                                borderStyle="solid"
+                                borderColor="admin.400"
+                                borderRadius="md"
+                                fontSize="sm"
+                                overflowX="auto"
+                                css={{ '& p': { mb: '3' } }}
+                                // Names are escaped by buildScheduleEmail; this is
+                                // the exact HTML the copy button puts on the clipboard.
+                                dangerouslySetInnerHTML={{ __html: email.html }}
+                            />
+                        </Box>
+                        <CopyField label="Plain text" value={email.text} rows={10} />
+                        <CopyField label={`Recipients (${recipientEmails.length})`} value={recipientEmails.join(', ')} rows={3} />
+                    </Flex>
+                )}
+            </SpeakerModal>
+        </>
     )
 }

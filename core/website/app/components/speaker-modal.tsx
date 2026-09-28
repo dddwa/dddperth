@@ -22,11 +22,14 @@ export function SpeakerModal({
     open,
     onOpenChange,
     children,
+    wide = false,
 }: {
     title: string
     open: boolean
     onOpenChange: (open: boolean) => void
     children: ReactNode
+    /** For content that's genuinely tabular (a schedule grid) rather than a form. */
+    wide?: boolean
 }) {
     return (
         <Dialog.Root open={open} onOpenChange={(e) => onOpenChange(e.open)}>
@@ -55,7 +58,7 @@ export function SpeakerModal({
                         borderRadius="xl"
                         boxShadow="lg"
                         width="full"
-                        maxWidth="[560px]"
+                        maxWidth={wide ? '[960px]' : '[560px]'}
                         maxHeight="[85vh]"
                         display="flex"
                         flexDirection="column"

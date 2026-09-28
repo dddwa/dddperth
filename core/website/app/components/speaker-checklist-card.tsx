@@ -285,9 +285,25 @@ export function SpeakerChecklistCard({
                             )
 
                             if (!editModalKey) {
+                                // Ticket link stays reachable after "I've claimed it" —
+                                // speakers click that by mistake, and there's no undo.
+                                const keepsConfiguredLink =
+                                    ticketClaimUrl &&
+                                    SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === item.key)?.actions.some(
+                                        (a) => 'configuredHref' in a,
+                                    )
                                 return (
                                     <Flex key={item.key} align="center" gap="2" py="1.5" px="1">
                                         {content}
+                                        {keepsConfiguredLink && (
+                                            <AppLink
+                                                unstyled
+                                                to={ticketClaimUrl}
+                                                className={css({ fontSize: 'xs', color: 'admin.700', textDecoration: 'underline', flexShrink: '0' })}
+                                            >
+                                                Ticket link
+                                            </AppLink>
+                                        )}
                                     </Flex>
                                 )
                             }
