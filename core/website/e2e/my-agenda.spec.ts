@@ -82,3 +82,105 @@ test('a past conference agenda offers no picker', async ({ page }) => {
     await expect(page.getByText(/Fixture Talk/).first()).toBeVisible()
     await expect(page.getByRole('button', { name: /to my agenda$/ })).toHaveCount(0)
 })
+
+test.describe('/agenda/my', () => {
+    test('resolves to the personal agenda rather than being read as a year', async ({ page }) => {
+        // `/agenda/my` also matches `/agenda/($year)`; the static route has to
+        // win, or this lands on a redirect back to the grid.
+        await page.goto('/agenda/my')
+
+        await expect(page).toHaveURL(/\/agenda\/my$/)
+        await expect(page.getByRole('heading', { level: 1, name: 'My agenda' })).toBeVisible()
+    })
+
+    test('says so when nothing is picked', async ({ page }) => {
+        await page.goto('/agenda/my')
+
+        await expect(page.getByText("You haven't picked any talks yet.")).toBeVisible()
+    })
+
+    test('lists picks in time order and can remove one', async ({ page }) => {
+        // Picked out of order, to prove the page sorts rather than echoing
+        // the order they were clicked in.
+        await addButton(page, 'Fixture Talk 28').click()
+        await addButton(page, 'Fixture Talk 27').click()
+        await page.getByRole('link', { name: 'My agenda (2)' }).click()
+
+        const items = page.getByRole('listitem').filter({ has: page.getByRole('heading', { level: 2 }) })
+        await expect(items).toHaveCount(2)
+        await expect(items.nth(0)).toContainText('Fixture Talk 27')
+        await expect(items.nth(1)).toContainText('Fixture Talk 28')
+
+        await removeButton(page, 'Fixture Talk 27').click()
+
+        await expect(items).toHaveCount(1)
+        await expect(page.getByRole('status')).toHaveText('Removed Fixture Talk 27 from your agenda.')
+    })
+
+    test('exports the picks as a calendar file', async ({ page }) => {
+        await addButton(page, 'Fixture Talk 27').click()
+        await addButton(page, 'Fixture Talk 28').click()
+        await page.goto('/agenda/my')
+
+        const download = page.waitForEvent('download')
+        await page.getByRole('link', { name: 'Add to calendar (.ics)' }).click()
+        const file = await download
+        const ics = await (await file.createReadStream()).toArray().then((chunks) => Buffer.concat(chunks).toString())
+
+        expect(file.suggestedFilename()).toMatch(/my-agenda\.ics$/)
+        expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2)
+        expect(ics).toContain('SUMMARY:Fixture Talk 27')
+        expect(ics).toContain('SUMMARY:Fixture Talk 28')
+    })
+})
+
+test.describe('/agenda/my.ics', () => {
+    test('only ever emits talks on the published agenda, whatever ids are asked for', async ({ page }) => {
+        // 1240238 is Fixture Talk 02; the rest are a made-up id and a
+        // malformed one.
+        const response = await page.request.get('/agenda/my.ics?talks=1240238,999999999,<script>')
+        const ics = await response.text()
+
+        expect(response.status()).toBe(200)
+        expect(response.headers()['content-type']).toContain('text/calendar')
+        expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1)
+        expect(ics).toContain('SUMMARY:Fixture Talk 02')
+    })
+
+    test('404s when none of the ids is a talk on the agenda', async ({ page }) => {
+        const response = await page.request.get('/agenda/my.ics?talks=999999999')
+
+        expect(response.status()).toBe(404)
+    })
+})
+
+test.describe('before the agenda is published', () => {
+    test.beforeEach(async ({ context, baseURL }) => {
+        // Inside the CFP window: the draft grid may exist in Sessionize, but
+        // nothing may be served from it.
+        await context.addCookies([
+            { name: '__devDateOverride', value: '2026-05-15T10:00:00', url: baseURL ?? 'http://localhost:3800' },
+        ])
+    })
+
+    test('the calendar export serves nothing, even for a real talk id', async ({ page }) => {
+        const response = await page.request.get('/agenda/my.ics?talks=1240238')
+
+        expect(response.status()).toBe(404)
+        expect(await response.text()).not.toContain('Fixture Talk')
+    })
+
+    test('the shortlist endpoint does not confirm which talk ids exist', async ({ page }) => {
+        const response = await page.request.post('/api/agenda/shortlist', {
+            form: { year: '2026', talkId: '1240238', action: 'add' },
+        })
+
+        expect(response.status()).toBe(400)
+    })
+
+    test('the page says the agenda is not announced', async ({ page }) => {
+        await page.goto('/agenda/my')
+
+        await expect(page.getByText(/agenda hasn't been announced yet/)).toBeVisible()
+    })
+})

@@ -11,12 +11,13 @@ import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import type { AgendaTalk } from '~/lib/my-agenda'
+import { getPublishedSchedule } from '~/lib/published-agenda.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
-import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
+import { formatDate } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
 import { useMyAgenda } from '~/lib/use-my-agenda'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
 
@@ -31,26 +32,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(year, getConfig(context))
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
-    const now = getDateTimeProvider(context).nowDate()
-    const agendaPublished = conferenceYearConfig
-        ? (conferenceYearConfig.agendaPublishedDateTime
-              ? now >= conferenceYearConfig.agendaPublishedDateTime
-              : false) ||
-          (!!conferenceYearConfig.conferenceDate && now >= conferenceYearConfig.conferenceDate)
-        : false
-
-    const schedules: TypeOf<typeof gridSmartSchema> =
-        conferenceYearConfig?.sessions?.kind === 'sessionize' &&
-        conferenceYearConfig.sessions.sessionizeEndpoint &&
-        agendaPublished
-            ? await getScheduleGrid({
-                  sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
-              })
-            : conferenceYearConfig?.sessions?.kind === 'session-data'
-              ? conferenceYearConfig.sessions.sessions
-              : []
-
-    const schedule = schedules[0]
+    const schedule = await getPublishedSchedule(context, year)
 
     // Only the current conference's agenda can be built from: past years are
     // an archive, and the shortlist counts are only useful while there is
@@ -188,6 +170,13 @@ export default function Agenda() {
                 <styled.div srOnly aria-live="polite" role="status">
                     {announcement}
                 </styled.div>
+            ) : null}
+            {canPick ? (
+                <Flex justifyContent="flex-end" px="1" py="2">
+                    <AppLink to="/agenda/my" unstyled color="text.highlight" textDecoration="underline" fontSize="sm">
+                        My agenda{picked.length ? ` (${picked.length})` : ''}
+                    </AppLink>
+                </Flex>
             ) : null}
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}

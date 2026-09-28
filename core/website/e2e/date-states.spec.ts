@@ -188,3 +188,34 @@ test('the agenda with a picked talk has no WCAG violations', async ({ context, p
 
     expect(violations, JSON.stringify(violations, null, 2)).toEqual([])
 })
+
+test.skip(
+    !DATE_DEPENDENT_ROUTES.agendaPublished.date,
+    'the current conference has no agendaPublishedDateTime configured',
+)
+test('my agenda with picked talks has no WCAG violations', async ({ context, page, baseURL }) => {
+    await context.addCookies([
+        {
+            name: '__devDateOverride',
+            value: DATE_DEPENDENT_ROUTES.agendaPublished.date as string,
+            url: baseURL ?? 'http://localhost:3800',
+        },
+    ])
+
+    await page.goto(DATE_DEPENDENT_ROUTES.agendaPublished.path)
+    await page.waitForLoadState('networkidle').catch(() => {})
+    await page.getByRole('button', { name: /^Add .+ to my agenda$/ }).first().click()
+
+    await page.goto('/agenda/my')
+    await expect(page.getByRole('button', { name: /^Remove .+ from my agenda$/ })).toHaveCount(1)
+
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    const violations = results.violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        help: v.help,
+        nodes: v.nodes.map((n) => n.target.join(' ')),
+    }))
+
+    expect(violations, JSON.stringify(violations, null, 2)).toEqual([])
+})

@@ -78,6 +78,14 @@ declare module "safe-routes" {
       params: {'year': string | number; 'sessionId': string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
     },
+    "/agenda/my": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.agenda.my.js').SearchParams>,
+    },
+    "/agenda/my.ics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/agenda.my[.ics].js').SearchParams>,
+    },
     "/api/agenda/shortlist": {
       params: never,
       query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
@@ -212,6 +220,7 @@ declare module "safe-routes" {
             | 'routes/auth.verify.$token'
             | 'routes/app-announcements'
             | 'routes/api.voting.batch'
+            | 'routes/agenda.my[.ics]'
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
@@ -231,6 +240,7 @@ declare module "safe-routes" {
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
+            | 'routes/_layout.agenda.my'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
             | 'routes/_layout.share'

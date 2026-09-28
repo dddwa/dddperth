@@ -67,6 +67,21 @@ export interface ToggleOutcome {
     displaced: string[]
 }
 
+const noopSubscribe = () => () => {}
+
+/**
+ * False during SSR and the hydration pass, true after. Picks are invisible to
+ * the server, so a page that shows "you haven't picked anything" before this
+ * flips would flash that at everyone who has.
+ */
+export function useHydrated() {
+    return useSyncExternalStore(
+        noopSubscribe,
+        () => true,
+        () => false,
+    )
+}
+
 export function useMyAgenda(year: string, talksById: ReadonlyMap<string, AgendaTalk>) {
     const picked = useSyncExternalStore(
         subscribe,
@@ -94,5 +109,18 @@ export function useMyAgenda(year: string, talksById: ReadonlyMap<string, AgendaT
         [year, talksById],
     )
 
-    return { picked, toggle }
+    // Picks that are no longer on the agenda (a withdrawn talk) have nothing
+    // to report to the counter — the endpoint would reject the id — so they
+    // are only dropped locally.
+    const forget = useCallback(
+        (talkIds: readonly string[]) => {
+            writePicks(
+                year,
+                readPicks(year).filter((id) => !talkIds.includes(id)),
+            )
+        },
+        [year],
+    )
+
+    return { picked, toggle, forget }
 }
