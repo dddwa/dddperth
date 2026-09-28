@@ -18,6 +18,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin._index.js').SearchParams>,
     },
+    "/admin/agenda-shortlist/:year?": {
+      params: {'year'?: string | number},
+      query: ExportedQuery<import('app/routes/admin.agenda-shortlist.($year).js').SearchParams>,
+    },
     "/admin/content": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.content.js').SearchParams>,
@@ -254,6 +258,7 @@ declare module "safe-routes" {
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'

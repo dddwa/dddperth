@@ -85,7 +85,26 @@ export async function getShortlistCountsForYear(db: D1Database, year: Year): Pro
             }
         }
 
-        return { year, countsByTalkId }
+        const browserRows = await db
+            .prepare(
+                `SELECT signed_in, COUNT(DISTINCT browser_id) AS n
+                 FROM agenda_shortlist_picks
+                 WHERE year = ?
+                 GROUP BY signed_in`,
+            )
+            .bind(year)
+            .all<{ signed_in: number; n: number }>()
+
+        const browsers = { anonymous: 0, signedIn: 0 }
+        for (const row of browserRows.results ?? []) {
+            if (row.signed_in === 1) {
+                browsers.signedIn = row.n
+            } else {
+                browsers.anonymous = row.n
+            }
+        }
+
+        return { year, countsByTalkId, browsers }
     } catch (error: any) {
         recordException(error)
         throw error

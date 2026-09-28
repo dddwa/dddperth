@@ -184,3 +184,14 @@ test.describe('before the agenda is published', () => {
         await expect(page.getByText(/agenda hasn't been announced yet/)).toBeVisible()
     })
 })
+
+test('the organiser shortlist counts are not visible without an admin login', async ({ page }) => {
+    // The page itself is covered by `admin.agenda-shortlist.test.tsx`; the
+    // e2e suite has no admin session, so this pins down the other half:
+    // an anonymous visitor is bounced before any count is loaded.
+    const response = await page.request.get('/admin/agenda-shortlist/2026', { maxRedirects: 0 })
+
+    expect(response.status()).toBe(302)
+    expect(response.headers().location).toMatch(/\/auth\/login/)
+    expect(await response.text()).not.toContain('Anonymous picks')
+})

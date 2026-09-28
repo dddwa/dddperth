@@ -20,4 +20,10 @@ export interface TalkShortlistCount {
 export interface YearShortlistCounts {
     year: Year
     countsByTalkId: Record<string, TalkShortlistCount>
+    /**
+     * How many browsers picked anything at all that year — the denominator a
+     * talk's count is read against. "40 picks" means little on its own; "40 of
+     * 60" is a talk most people want.
+     */
+    browsers: { anonymous: number; signedIn: number }
 }

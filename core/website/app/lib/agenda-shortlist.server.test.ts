@@ -112,6 +112,23 @@ describe('agenda shortlist counting', () => {
         expect(Object.keys(countsByTalkId)).toEqual(['talk-1'])
     })
 
+    it('counts distinct browsers per year as the denominator', async () => {
+        await store.addPick({ browserId: 'browser-a', year: YEAR_2026, talkId: 'talk-1' })
+        await store.addPick({ browserId: 'browser-a', year: YEAR_2026, talkId: 'talk-2' })
+        await store.addPick({ browserId: 'browser-b', year: YEAR_2026, talkId: 'talk-1' })
+        await store.addPick({ browserId: 'browser-c', year: YEAR_2026, talkId: 'talk-1', signedIn: true })
+        await store.addPick({ browserId: 'browser-d', year: YEAR_2025, talkId: 'talk-1' })
+
+        const { browsers } = await store.getCountsForYear(YEAR_2026)
+
+        // browser-a picked two talks but is one browser; browser-d is 2025.
+        expect(browsers).toEqual({ anonymous: 2, signedIn: 1 })
+    })
+
+    it('reports zero browsers for a year nobody has picked in', async () => {
+        expect((await store.getCountsForYear(YEAR_2026)).browsers).toEqual({ anonymous: 0, signedIn: 0 })
+    })
+
     it("lists a browser's own picks for a year", async () => {
         await store.addPick({ browserId: 'browser-a', year: YEAR_2026, talkId: 'talk-1' })
         await store.addPick({ browserId: 'browser-a', year: YEAR_2026, talkId: 'talk-2' })

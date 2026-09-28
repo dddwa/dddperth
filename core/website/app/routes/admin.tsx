@@ -43,6 +43,9 @@ export default function AdminLayout() {
                             <AppNavLink to="/admin/speakers" variant="admin">
                                 Speakers
                             </AppNavLink>
+                            <AppNavLink to="/admin/agenda-shortlist" variant="admin">
+                                Shortlist
+                            </AppNavLink>
                             <AppNavLink to="/admin/settings" variant="admin">
                                 Settings
                             </AppNavLink>
