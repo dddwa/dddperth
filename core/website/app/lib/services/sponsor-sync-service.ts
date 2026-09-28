@@ -1,4 +1,4 @@
-import type { ExhibitorLogistics, SponsorDeliverables } from '../sponsors/jira-client.server'
+import type { AssetTracking, ExhibitorLogistics, SponsorDeliverables } from '../sponsors/jira-client.server'
 import type { SponsorProfile, SponsorSyncRun } from './sponsors-store'
 
 export type SyncOutcome =
@@ -89,6 +89,14 @@ export interface SponsorSyncService {
      * result here would be handed to the venue as if it were complete.
      */
     getExhibitorLogistics(): Promise<Map<string, ExhibitorLogistics>>
+
+    /**
+     * Assets owed and the committee's asset status per issue key, read live
+     * from Jira for the admin follow-up list. Returns null when Jira isn't
+     * configured or is unreachable: the rest of that list comes from D1, so
+     * it renders with the assets column marked unknown rather than failing.
+     */
+    getAssetTracking(): Promise<Map<string, AssetTracking> | null>
 
     /**
      * Pushes the sponsor's logistics answers into Jira. Sponsor-owned, so the

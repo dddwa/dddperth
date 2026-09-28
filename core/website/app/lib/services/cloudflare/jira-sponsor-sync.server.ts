@@ -416,6 +416,16 @@ export function createJiraSponsorSyncService(args: {
             return client.getExhibitorLogistics()
         },
 
+        async getAssetTracking() {
+            if (!portalConfig || !client) return null
+            try {
+                return await client.getAssetTracking()
+            } catch (error) {
+                console.error('Sponsor asset tracking lookup failed:', error instanceof Error ? error.message : error)
+                return null
+            }
+        },
+
         async pushLogistics(issueKey, logistics, submittedKeys) {
             if (!portalConfig || !client || !writebackEnabled) return
             // Deliberately uncaught, like pushSponsorDetails: the route aborts
