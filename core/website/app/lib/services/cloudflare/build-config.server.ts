@@ -13,7 +13,17 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
     const fallbackEmailFrom = `${conferenceManifest.public.name} <${conferenceManifest.brand.noreplyEmail}>`
     return {
         webUrl: env.WEB_URL,
-        sessionSecret: env.SESSION_SECRET,
+        // Fresh worktrees have no `.dev.vars` (it's gitignored), and an empty
+        // secret fails every login with an opaque HMAC "key length (0)" error.
+        // Outside production an unset secret falls back to a fixed, public one.
+        // In a production build `import.meta.env.MODE` is statically
+        // "production", so the fallback and its literal are dropped: a
+        // deployment with no SESSION_SECRET stays broken, rather than signing
+        // sessions with a value anyone can read here. Kept statically
+        // evaluable, and checked by `dates/dev-date-override.test.ts`.
+        sessionSecret:
+            env.SESSION_SECRET ||
+            (import.meta.env.MODE !== 'production' ? 'local-dev-session-secret-not-for-deployment' : ''),
         websiteAuthRequired: env.WEBSITE_AUTH_REQUIRED === 'true',
         // `import.meta.env.MODE` is statically replaced in a production build,
         // so this folds to `false` and the fixture branch in

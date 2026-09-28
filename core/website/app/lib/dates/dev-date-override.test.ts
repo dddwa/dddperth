@@ -17,6 +17,14 @@ const DEV_ONLY_MARKERS = [
     // anyone who can set a Worker var blank the site's sponsors — the people
     // paying for the conference.
     { name: 'sponsor fixtures', value: 'E2E_SPONSOR_FIXTURES', guard: 'cloudflare/build-config.server.ts' },
+    // The local-dev session secret is public (it's in the repo). Shipping it
+    // as a fallback would let anyone forge an admin session cookie on a
+    // deployment whose SESSION_SECRET went missing.
+    {
+        name: 'local-dev session secret',
+        value: 'local-dev-session-secret-not-for-deployment',
+        guard: 'cloudflare/build-config.server.ts',
+    },
 ]
 
 /**
