@@ -5,9 +5,8 @@ import {
     readShortlistBrowserId,
     writeShortlistCookie,
 } from '~/lib/agenda-shortlist-cookie.server'
-import { getYearConfig } from '~/lib/get-year-config.server'
-import { getScheduleGrid } from '~/lib/sessionize.server'
-import { getConfig, getServices } from '~/remix-app-load-context'
+import { getPublishedSchedule, scheduleTalks } from '~/lib/published-agenda.server'
+import { getServices } from '~/remix-app-load-context'
 
 /**
  * POST /api/agenda/shortlist  body=`year=2026&talkId=123&action=add|remove`
@@ -78,41 +77,16 @@ export async function action({ request, context }: ActionFunctionArgs) {
 }
 
 /**
- * Whether `talkId` appears on the given year's schedule.
+ * Whether `talkId` is a talk on the given year's *published* agenda.
  *
- * Reads the same cached Sessionize grid the agenda page renders from
- * (`getScheduleGrid` is LRU-cached for 5 minutes), so this costs a map lookup
- * rather than a fetch on all but the first call.
+ * Unpublished years answer false, so this endpoint's 200/400 can't be used to
+ * confirm which talk ids exist before the agenda is announced.
  */
 async function isTalkOnAgenda(args: {
     context: ActionFunctionArgs['context']
     year: Year
     talkId: string
 }): Promise<boolean> {
-    const yearConfig = getYearConfig(args.year, getConfig(args.context))
-    if (yearConfig.kind !== 'conference') return false
-
-    const sessions = yearConfig.sessions
-
-    if (sessions?.kind === 'session-data') {
-        return sessions.sessions.some((day) =>
-            day.rooms.some((room) => room.sessions.some((session) => session.id === args.talkId)),
-        )
-    }
-
-    if (sessions?.kind !== 'sessionize' || !sessions.sessionizeEndpoint) {
-        return false
-    }
-
-    const schedules = await getScheduleGrid({ sessionizeEndpoint: sessions.sessionizeEndpoint })
-
-    return schedules.some((day) =>
-        day.rooms.some((room) =>
-            room.sessions.some(
-                // Service sessions (breaks, changeovers) are on the grid but
-                // are not talks anyone shortlists.
-                (session) => session.id === args.talkId && !session.isServiceSession,
-            ),
-        ),
-    )
+    const schedule = await getPublishedSchedule(args.context, args.year)
+    return !!schedule && scheduleTalks(schedule).some((session) => session.id === args.talkId)
 }
