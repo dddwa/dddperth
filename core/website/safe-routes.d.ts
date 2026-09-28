@@ -18,6 +18,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin._index.js').SearchParams>,
     },
+    "/admin/agenda-shortlist/:year?": {
+      params: {'year'?: string | number},
+      query: ExportedQuery<import('app/routes/admin.agenda-shortlist.($year).js').SearchParams>,
+    },
     "/admin/content": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.content.js').SearchParams>,
@@ -81,6 +85,18 @@ declare module "safe-routes" {
     "/agenda/:year/talk/:sessionId": {
       params: {'year': string | number; 'sessionId': string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
+    },
+    "/agenda/my": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.agenda.my.js').SearchParams>,
+    },
+    "/agenda/my.ics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/agenda.my[.ics].js').SearchParams>,
+    },
+    "/api/agenda/shortlist": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
     },
     "/api/theme": {
       params: never,
@@ -206,11 +222,13 @@ declare module "safe-routes" {
   export type RouteId =
             | 'root'
             | 'routes/api.tito-registration'
+            | 'routes/api.agenda.shortlist'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
             | 'routes/auth.verify.$token'
             | 'routes/app-announcements'
             | 'routes/api.voting.batch'
+            | 'routes/agenda.my[.ics]'
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
@@ -230,6 +248,7 @@ declare module "safe-routes" {
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
+            | 'routes/_layout.agenda.my'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
             | 'routes/_layout.share'
@@ -243,6 +262,7 @@ declare module "safe-routes" {
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.sponsors_.follow-up'
             | 'routes/admin.dashboard'

@@ -4,6 +4,7 @@ import type { AppServices } from '../app-services'
 import { createConsoleEmailService } from '../console-email-service.server'
 import { createCookieSessionStorages } from './cookie-session-storages.server'
 import { createD1AgendaPlanningStore } from './d1-agenda-planning-store.server'
+import { createD1AgendaShortlistStore } from './d1-agenda-shortlist-store.server'
 import { createD1AnnouncementsStore } from './d1-announcements-store.server'
 import { createD1AuthService } from './d1-auth-service.server'
 import { createD1MeetTheExpertsSchedulingStore } from './d1-meet-the-experts-scheduling-store.server'
@@ -42,6 +43,7 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
     return {
         voting: createD1VotingStore(db),
         agendaPlanning: createD1AgendaPlanningStore(db),
+        agendaShortlist: createD1AgendaShortlistStore(db),
         announcements: createD1AnnouncementsStore(db),
         content: createMdxContentService(),
         tickets: createTitoTicketsService(config),
