@@ -13,6 +13,7 @@ import { createD1MeetTheExpertsStore } from './d1-meet-the-experts-store.server'
 import { createD1NotificationLog } from './d1-notification-log.server'
 import { createD1SpeakersStore } from './d1-speakers-store.server'
 import { createD1SponsorsStore } from './d1-sponsors-store.server'
+import { createD1VolunteersStore } from './d1-volunteers-store.server'
 import { createD1VotingStore } from './d1-voting-store.server'
 import { createJiraSponsorSyncService } from './jira-sponsor-sync.server'
 import { createMdxContentService } from './mdx-content-service.server'
@@ -60,5 +61,6 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         meetTheExperts,
         meetTheExpertsScheduling: createD1MeetTheExpertsSchedulingStore(db, meetTheExperts),
         adminSettings: createD1AdminSettingsStore(db),
+        volunteers: createD1VolunteersStore(db),
     }
 }

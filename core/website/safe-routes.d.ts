@@ -50,6 +50,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers.experts.js').SearchParams>,
     },
+    "/admin/speakers/experts/save": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.experts_.save.js').SearchParams>,
+    },
     "/admin/speakers/export": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers.export.js').SearchParams>,
@@ -66,6 +70,14 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors_.follow-up.js').SearchParams>,
     },
+    "/admin/volunteers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers.js').SearchParams>,
+    },
+    "/admin/volunteers/save": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers_.save.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -81,6 +93,10 @@ declare module "safe-routes" {
     "/admin/voting/agenda/:runId": {
       params: {'runId': string | number},
       query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId.js').SearchParams>,
+    },
+    "/admin/voting/agenda/:runId/save": {
+      params: {'runId': string | number},
+      query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId_.save.js').SearchParams>,
     },
     "/agenda/:year?": {
       params: {'year'?: string | number},
@@ -266,14 +282,18 @@ declare module "safe-routes" {
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.voting_.agenda.$runId_.save'
             | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.sponsors_.follow-up'
             | 'routes/admin.settings_.speakers'
+            | 'routes/admin.volunteers_.save'
+            | 'routes/admin.volunteers'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
             | 'routes/admin.speakers'
             | 'routes/admin.speakers.$sessionizeId'
+            | 'routes/admin.speakers.experts_.save'
             | 'routes/admin.speakers.experts'
             | 'routes/admin.speakers._index'
             | 'routes/admin.speakers.export'

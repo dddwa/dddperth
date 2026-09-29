@@ -14,6 +14,7 @@ import type { AgendaPlanningImport, PlannerBoard, TalkStatus } from '~/lib/agend
 import { requireAdmin } from '~/lib/auth.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } from '~/lib/sessionize.server'
+import { useQueuedSave } from '~/lib/use-queued-save'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { ColorToken } from '~/styled-system/tokens'
@@ -1219,52 +1220,16 @@ export default function VotingAgenda() {
         return merged
     }, [planning.planningByTalkId, pendingOverrides])
 
-    // Edits post through a queue rather than a fetcher: a fetcher aborts its
-    // own in-flight request when it submits again, so two edits landing close
-    // together (two debounced track renames, a capacity change during a
-    // rename) would silently drop the first. Chaining keeps every write, and
-    // in submission order — which matters because these are last-write-wins.
-    const queue = useRef<Promise<unknown>>(Promise.resolve())
-    const [inFlight, setInFlight] = useState(0)
-    const [saveError, setSaveError] = useState<string | null>(null)
-
-    const save = useCallback(
-        (fields: Record<string, string>) => {
-            setInFlight((n) => n + 1)
-            queue.current = queue.current
-                .then(async () => {
-                    const response = await fetch(window.location.pathname, {
-                        method: 'POST',
-                        body: new URLSearchParams(fields),
-                    })
-                    if (!response.ok) {
-                        throw new Error(`Save failed (${response.status})`)
-                    }
-                    const result: { success: boolean; error?: string } = await response.json()
-                    if (!result.success) {
-                        throw new Error(result.error ?? 'Save failed')
-                    }
-                    setSaveError(null)
-                })
-                .catch((error: unknown) => {
-                    console.error('Failed to save agenda planning:', error)
-                    setSaveError(error instanceof Error ? error.message : 'Failed to save')
-                })
-                .finally(() => setInFlight((n) => n - 1))
-        },
-        [],
+    // Edits post through a queue rather than a fetcher, so two edits landing
+    // close together (two debounced track renames, a capacity change during a
+    // rename) both land, in submission order — which matters because these
+    // are last-write-wins. The hook also pulls the saved values back once the
+    // queue drains, so the optimistic copies below can be retired against
+    // real server state.
+    const { save, isSaving, saveError } = useQueuedSave<Record<string, string>>(
+        'agenda planning',
+        `/admin/voting/agenda/${runId}/save`,
     )
-
-    const isSaving = inFlight > 0
-
-    // Pull the saved values back once the queue drains, so the optimistic
-    // copies below can be retired against real server state. Guarding on
-    // revalidator.state keeps this from re-entering while a fetch is running.
-    useEffect(() => {
-        if (!isSaving && revalidator.state === 'idle') {
-            void revalidator.revalidate()
-        }
-    }, [isSaving, revalidator])
 
     // Drop an optimistic value only once the server echoes it back. Clearing
     // as soon as the request settles would briefly un-apply the edit: the
