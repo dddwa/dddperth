@@ -126,25 +126,25 @@ function laneColumn(roomIndex: number, lane: number) {
 const calendarClass = css({
     '--session_bg': 'token(colors.status.info.bg)',
     '--session_edge': 'token(colors.status.info.emphasis)',
-    '--room_coordinator_bg': 'token(colors.status.warning.bg)',
-    '--room_coordinator_edge': 'token(colors.status.warning.emphasis)',
-    '--room_coordinator_strong': 'token(colors.status.warning.border)',
-    '--photographer_bg': 'token(colors.status.success.bg)',
-    '--photographer_edge': 'token(colors.status.success.emphasis)',
-    '--photographer_strong': 'token(colors.status.success.border)',
+    '--room-coordinators_bg': 'token(colors.status.warning.bg)',
+    '--room-coordinators_edge': 'token(colors.status.warning.emphasis)',
+    '--room-coordinators_strong': 'token(colors.status.warning.border)',
+    '--photographers_bg': 'token(colors.status.success.bg)',
+    '--photographers_edge': 'token(colors.status.success.emphasis)',
+    '--photographers_strong': 'token(colors.status.success.border)',
     fontSize: 'sm',
 })
 const gridClass = css({ display: 'grid', rowGap: '1.5', alignItems: 'stretch' })
 /** Maps `data-lane` to that lane's tint and edge colour. */
 const laneColourClass = css({
     '&[data-lane="session"]': { '--lane_bg': 'var(--session_bg)', '--lane_edge': 'var(--session_edge)' },
-    '&[data-lane="room_coordinator"]': {
-        '--lane_bg': 'var(--room_coordinator_bg)',
-        '--lane_edge': 'var(--room_coordinator_edge)',
+    '&[data-lane="room-coordinators"]': {
+        '--lane_bg': 'var(--room-coordinators_bg)',
+        '--lane_edge': 'var(--room-coordinators_edge)',
     },
-    '&[data-lane="photographer"]': {
-        '--lane_bg': 'var(--photographer_bg)',
-        '--lane_edge': 'var(--photographer_edge)',
+    '&[data-lane="photographers"]': {
+        '--lane_bg': 'var(--photographers_bg)',
+        '--lane_edge': 'var(--photographers_edge)',
     },
     '&[data-lane="service"]': { '--lane_bg': 'token(colors.admin.100)', '--lane_edge': 'token(colors.admin.400)' },
 })
@@ -152,11 +152,11 @@ const laneColourClass = css({
 const personClass = css({
     bg: 'white',
     color: 'admin.900',
-    '&[data-roles~="room_coordinator"]': { bg: 'var(--room_coordinator_strong)' },
-    '&[data-roles~="photographer"]': { bg: 'var(--photographer_strong)' },
-    '&[data-roles~="room_coordinator"][data-roles~="photographer"]': {
+    '&[data-roles~="room-coordinators"]': { bg: 'var(--room-coordinators_strong)' },
+    '&[data-roles~="photographers"]': { bg: 'var(--photographers_strong)' },
+    '&[data-roles~="room-coordinators"][data-roles~="photographers"]': {
         bgImage:
-            'repeating-linear-gradient(135deg, var(--room_coordinator_strong) 0 6px, var(--photographer_strong) 6px 12px)',
+            'repeating-linear-gradient(135deg, var(--room-coordinators_strong) 0 6px, var(--photographers_strong) 6px 12px)',
     },
 })
 /**
@@ -301,7 +301,14 @@ export function VolunteerPlanner({
                 for (const volunteerId of seats.get(seatKey(slots[slotIndex].id, room.id, role.id)) ?? []) {
                     let shift = open.get(volunteerId)
                     if (!shift) {
-                        shift = { volunteerId, roomId: room.id, role: role.id, slotIndices: [], stack: 0, stackCount: 1 }
+                        shift = {
+                            volunteerId,
+                            roomId: room.id,
+                            role: role.id,
+                            slotIndices: [],
+                            stack: 0,
+                            stackCount: 1,
+                        }
                         lane.push(shift)
                     }
                     shift.slotIndices.push(slotIndex)
@@ -561,7 +568,10 @@ export function VolunteerPlanner({
                                                                     ? 'valid'
                                                                     : undefined
                                                         }
-                                                        style={{ gridRow, gridColumn: laneColumn(roomIndex, roleIndex + 1) }}
+                                                        style={{
+                                                            gridRow,
+                                                            gridColumn: laneColumn(roomIndex, roleIndex + 1),
+                                                        }}
                                                         onDragEnter={() => setHover(droppable ? seat : null)}
                                                         onDragOver={(e) => {
                                                             if (droppable) e.preventDefault()

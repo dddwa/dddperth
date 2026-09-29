@@ -1,5 +1,9 @@
-import type { RunsheetsConfig } from '@ddd/conference-config'
+import type { RunsheetsConfig, sessionSchema } from '@ddd/conference-config'
+import { DateTime } from 'luxon'
 import { z } from 'zod'
+import type { RunsheetItem } from './runsheet-filters'
+
+export type { RunsheetItem } from './runsheet-filters'
 
 /**
  * Reads a volunteer run sheet out of Jira for the public `/runsheets` page.
@@ -11,10 +15,9 @@ import { z } from 'zod'
  * The page is anonymous, so everything here runs on behalf of committee
  * credentials for a caller we know nothing about. Two consequences shape it:
  *
- * - **Nothing from the URL reaches JQL as text.** The filter is parsed into a
- *   closed set of configured labels first (see `parseRunsheetFilter`); an
- *   unknown value becomes `null` and the query runs unfiltered rather than
- *   embedding whatever was in the path.
+ * - **Nothing from the URL reaches Jira.** The query is always the fork's
+ *   configured JQL for the whole run sheet; the page filters the result
+ *   itself (see `runsheet-filters.ts`).
  * - **Responses are cached.** Without it, every page load costs two
  *   authenticated Jira calls, so a busy conference morning could exhaust the
  *   API budget on the one day the run sheet has to work.
@@ -54,69 +57,64 @@ const searchResponseSchema = z.object({
     issues: z.array(z.object({ id: z.string() })),
 })
 
-/** One run sheet row, already mapped to display values. */
-export interface RunsheetItem {
-    id: string
-    summary: string
-    /** ISO datetime from Jira, or null. Formatted for display in the route. */
+/**
+ * A Jira item standing in for agenda sessions (one carrying the
+ * `sessionTeam` label). It isn't shown itself — the agenda comes from
+ * Sessionize — but its teams and role instructions are carried onto the
+ * sessions it overlaps (see `sessionsToRunsheetItems`).
+ */
+export interface RunsheetPlaceholder {
     startTime: string | null
     endTime: string | null
-    /** Display names, falling back to the raw label when unmapped. */
-    locations: string[]
+    /** Raw Jira team labels, so they can be matched against the team filter. */
     teams: string[]
-    /** Role instructions URL. Publicly shared, so safe to render. */
     roleInstructionsUrl: string | null
 }
 
-export type RunsheetFilter = { kind: 'team' | 'location'; value: string }
+/** The fields of a Sessionize session the run sheet renders. */
+export type RunsheetSession = Pick<
+    z.infer<typeof sessionSchema>,
+    | 'id'
+    | 'title'
+    | 'description'
+    | 'startsAt'
+    | 'endsAt'
+    | 'room'
+    | 'speakers'
+    | 'isServiceSession'
+    | 'isPlenumSession'
+>
 
 /**
- * Parses the `$filter` path param into a known team or location, or null.
+ * The Cache API key for a Jira request. Everything that should tell two
+ * requests apart has to go in the query string, because the Cache API ignores
+ * a URL's `#fragment` when matching:
  *
- * This is the trust boundary for the page: the param is attacker-controlled,
- * and its value is the only thing that varies the JQL. Anything that isn't
- * `team.<configured-label>` or `location.<configured-label>` returns null, so
- * an unrecognised filter renders the unfiltered run sheet instead of reaching
- * the query.
+ * - the request body — the bulk fetch POSTs a different issue list to the
+ *   same URL. Hashed, since the list can run to thousands of characters.
+ * - the cache generation, which an admin refresh changes so every existing
+ *   entry misses.
+ *
+ * Both used to be appended after a `#`, so every bulk fetch shared one entry
+ * (a filtered run sheet got the unfiltered issues back) and the admin refresh
+ * never invalidated anything.
  */
-export function parseRunsheetFilter(
-    filter: string | undefined,
-    config: Pick<RunsheetsConfig, 'teamLabels' | 'locationLabels'>,
-): RunsheetFilter | null {
-    if (!filter) return null
-
-    const separator = filter.indexOf('.')
-    if (separator === -1) return null
-
-    const kind = filter.slice(0, separator)
-    const value = filter.slice(separator + 1)
-
-    if (kind === 'team' && Object.hasOwn(config.teamLabels, value)) {
-        return { kind, value }
+export async function jiraCacheKey(url: string, body: string | undefined, cacheGeneration = ''): Promise<string> {
+    const params = new URLSearchParams()
+    if (cacheGeneration) params.set('__generation', cacheGeneration)
+    if (body) {
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body))
+        params.set('__body', [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join(''))
     }
-    if (kind === 'location' && Object.hasOwn(config.locationLabels, value)) {
-        return { kind, value }
-    }
-    return null
+    const extra = params.toString()
+    return extra ? `${url}${url.includes('?') ? '&' : '?'}${extra}` : url
 }
 
 /**
- * Appends the filter clause to the fork's configured JQL.
- *
- * `filter.value` is interpolated, but only ever after `parseRunsheetFilter`
- * has matched it against the configured label maps — it is one of a fixed set
- * of literals, never caller text. Callers must not pass a filter built any
- * other way.
+ * When a cached response actually came from Jira — the page shows it as
+ * "last updated", which would otherwise claim a cached answer is fresh.
  */
-function buildJql(baseJql: string, filter: RunsheetFilter | null): string {
-    if (filter?.kind === 'team') {
-        return `${baseJql} AND "Volunteer Team[Labels]" = ${filter.value}`
-    }
-    if (filter?.kind === 'location') {
-        return `${baseJql} AND "Location[Labels]" = ${filter.value}`
-    }
-    return baseJql
-}
+const FETCHED_AT_HEADER = 'X-Fetched-At'
 
 /**
  * A Jira REST call through the run sheet cache. `cacheGeneration` is part of
@@ -128,17 +126,18 @@ export async function jiraFetch(
     init: RequestInit,
     cacheTtlSeconds: number,
     cacheGeneration: string,
-): Promise<unknown> {
-    // Cache key must capture the request body too — the bulk fetch POSTs a
-    // different issue list per filter to the same URL. A named cache keeps
-    // these entries away from the public zone cache; they hold committee data
-    // and are only ever read back by this module.
+): Promise<{ body: unknown; fetchedAt: string }> {
+    // A named cache keeps these entries away from the public zone cache; they
+    // hold committee data and are only ever read back by this module.
     const cache = await caches.open('jira-runsheets')
-    const cacheKey = `${url}#${encodeURIComponent(cacheGeneration)}#${typeof init.body === 'string' ? init.body : ''}`
+    const cacheKey = await jiraCacheKey(url, typeof init.body === 'string' ? init.body : undefined, cacheGeneration)
 
     const cached = await cache.match(cacheKey)
     if (cached) {
-        return await cached.json()
+        return {
+            body: await cached.json(),
+            fetchedAt: cached.headers.get(FETCHED_AT_HEADER) ?? new Date().toISOString(),
+        }
     }
 
     const res = await fetch(url, {
@@ -154,13 +153,18 @@ export async function jiraFetch(
     }
 
     const body: unknown = await res.json()
+    const fetchedAt = new Date().toISOString()
     await cache.put(
         cacheKey,
         new Response(JSON.stringify(body), {
-            headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${cacheTtlSeconds}` },
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': `max-age=${cacheTtlSeconds}`,
+                [FETCHED_AT_HEADER]: fetchedAt,
+            },
         }),
     )
-    return body
+    return { body, fetchedAt }
 }
 
 export interface FetchRunsheetOptions {
@@ -174,13 +178,14 @@ export interface FetchRunsheetOptions {
      * portal's client takes. Defaults to the fork's configured site.
      */
     apiBaseUrl?: string
-    filter: RunsheetFilter | null
     /** Replaces `config.jira.jql`, e.g. to read the bump-in items instead of the day's. */
     jql?: string
     /** How long to cache Jira's responses. Short on conference day. */
     cacheTtlSeconds: number
     /** From `getRunsheetCacheGeneration`; changes when an admin refreshes. */
     cacheGeneration: string
+    /** The conference's IANA timezone, for ordering items by start time. */
+    timezone: string
 }
 
 /** Basic auth header for the committee's Jira service account. */
@@ -203,42 +208,44 @@ export function joinJiraUrl(baseUrl: string, path: string): string {
 }
 
 /**
- * Fetches the run sheet: a JQL search for matching issue ids, then a bulk
- * fetch for their fields. Returns an empty array when nothing matches —
- * a team with nothing scheduled is a normal result, not an error.
+ * Fetches the whole run sheet: a JQL search for its issue ids, then a bulk
+ * fetch for their fields. Always the whole of it — one cached answer serves
+ * every filter, so however volunteers filter the page, Jira sees at most two
+ * calls per cache period. `fetchedAt` is when the older of the two responses
+ * actually came from Jira.
  */
 export async function fetchRunsheet({
     config,
     apiEmail,
     apiToken,
     apiBaseUrl,
-    filter,
     jql,
     cacheTtlSeconds,
     cacheGeneration,
-}: FetchRunsheetOptions): Promise<RunsheetItem[]> {
+    timezone,
+}: FetchRunsheetOptions): Promise<{ items: RunsheetItem[]; placeholders: RunsheetPlaceholder[]; fetchedAt: string }> {
     const authorization = jiraAuthorization(apiEmail, apiToken)
     const { fields } = config.jira
     const baseUrl = apiBaseUrl ?? config.jira.baseUrl
     const joinUrl = (path: string) => joinJiraUrl(baseUrl, path)
 
     const searchParams = new URLSearchParams({
-        jql: buildJql(jql ?? config.jira.jql, filter),
+        jql: jql ?? config.jira.jql,
         maxResults: '150',
         fields: 'id',
     })
 
-    const searchBody = await jiraFetch(
+    const search = await jiraFetch(
         joinUrl(`/rest/api/3/search/jql?${searchParams.toString()}`),
         authorization,
         { method: 'GET' },
         cacheTtlSeconds,
         cacheGeneration,
     )
-    const issueIds = searchResponseSchema.parse(searchBody).issues.map((issue) => issue.id)
+    const issueIds = searchResponseSchema.parse(search.body).issues.map((issue) => issue.id)
 
     if (issueIds.length === 0) {
-        return []
+        return { items: [], placeholders: [], fetchedAt: search.fetchedAt }
     }
 
     const bulkBody = JSON.stringify({
@@ -248,7 +255,7 @@ export async function fetchRunsheet({
         properties: [],
     })
 
-    const bulkResponse = await jiraFetch(
+    const bulk = await jiraFetch(
         joinUrl('/rest/api/3/issue/bulkfetch'),
         authorization,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bulkBody },
@@ -256,33 +263,170 @@ export async function fetchRunsheet({
         cacheGeneration,
     )
 
-    const issues = buildBulkResponseSchema(fields).parse(bulkResponse).issues
+    const issues = buildBulkResponseSchema(fields).parse(bulk.body).issues
 
-    return issues
-        .map((issue): RunsheetItem => {
-            // Field ids are config, so these come back as `unknown` from the
-            // loose schema — narrow each to the shape the page renders.
-            const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null)
-            const asLabels = (value: unknown): string[] =>
-                Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
+    // Field ids are config, so these come back as `unknown` from the loose
+    // schema — narrow each to the shape the page renders.
+    const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null)
+    const asLabels = (value: unknown): string[] =>
+        Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
 
-            return {
-                id: issue.id,
-                summary: issue.fields.summary,
-                startTime: asString(issue.fields[fields.startTime]),
-                endTime: asString(issue.fields[fields.endTime]),
-                locations: asLabels(issue.fields[fields.location]).map(
-                    (label) => config.locationLabels[label] ?? label,
-                ),
-                teams: asLabels(issue.fields[fields.team]).map((label) => config.teamLabels[label] ?? label),
-                roleInstructionsUrl: asString(issue.fields[fields.roleInstructions]),
-            }
+    const items: RunsheetItem[] = []
+    const placeholders: RunsheetPlaceholder[] = []
+    for (const issue of issues) {
+        const teams = asLabels(issue.fields[fields.team])
+        const startTime = asString(issue.fields[fields.startTime])
+        const endTime = asString(issue.fields[fields.endTime])
+        const roleInstructionsUrl = asString(issue.fields[fields.roleInstructions])
+
+        if (config.sessionTeam && teams.includes(config.sessionTeam)) {
+            placeholders.push({ startTime, endTime, teams, roleInstructionsUrl })
+            continue
+        }
+
+        const locationKeys = asLabels(issue.fields[fields.location])
+        items.push({
+            id: issue.id,
+            summary: issue.fields.summary,
+            startTime,
+            endTime,
+            locations: locationKeys.map((label) => config.locationLabels[label] ?? label),
+            teams: teams.map((label) => config.teamLabels[label] ?? label),
+            locationKeys,
+            teamKeys: teams,
+            roleInstructionsUrl,
+            source: 'jira',
+            sessionizeSessionId: null,
         })
-        .sort((a, b) => {
-            // Items with no start time sort last rather than disappearing.
-            if (a.startTime === null && b.startTime === null) return 0
-            if (a.startTime === null) return 1
-            if (b.startTime === null) return -1
-            return a.startTime.localeCompare(b.startTime)
-        })
+    }
+
+    const fetchedAt = search.fetchedAt < bulk.fetchedAt ? search.fetchedAt : bulk.fetchedAt
+    return { items: items.sort(compareRunsheetItems(timezone)), placeholders, fetchedAt }
+}
+
+type SessionConfig = Pick<
+    RunsheetsConfig,
+    'locationLabels' | 'teamLabels' | 'sessionizeRoomLocations' | 'plenumLocations' | 'sessionTeam'
+>
+
+/**
+ * The published agenda's sessions — talks and service sessions (breaks,
+ * changeovers, registration) — as run sheet rows under the configured
+ * `sessionTeam`. Locations are always `locationLabels` keys, so the location
+ * filter matches sessions and Jira items alike:
+ *
+ * - A service session is located only by its *description*, which the
+ *   committee fills with comma-separated keys
+ *   (`loc-river-view-room-1, loc-cygnet-room`). One left without a
+ *   description (a changeover) gets no location and no team either.
+ * - A plenum talk is held across `plenumLocations`. Sessionize files every
+ *   plenum under its first room, so its room says nothing about where it's
+ *   held.
+ * - Any other talk is located by its Sessionize room, through
+ *   `sessionizeRoomLocations`.
+ *
+ * Callers must pass sessions from the *published* schedule: this page is
+ * public, so a draft agenda passed here would announce it early.
+ */
+export function sessionsToRunsheetItems(
+    sessions: RunsheetSession[],
+    config: SessionConfig,
+    { placeholders, timezone }: { placeholders: RunsheetPlaceholder[]; timezone: string },
+): RunsheetItem[] {
+    const overlapping = overlappingPlaceholders(placeholders, timezone)
+
+    return sessions.map((session): RunsheetItem => {
+        const locationKeys = sessionLocationKeys(session, config)
+        const unassigned = session.isServiceSession && locationKeys.length === 0
+        // A session left without a location (a changeover) gets no team
+        // either, so it takes nothing from a placeholder.
+        const matched = unassigned ? [] : overlapping(session)
+        // Who else works a session (photographers, room coordinators) is the
+        // committee's call per slot, so it comes from the placeholders' teams.
+        // The placeholder marker itself is internal, so it isn't one of them.
+        const teams = unassigned
+            ? []
+            : [...new Set(matched.flatMap((p) => p.teams))].filter((team) => team !== config.sessionTeam)
+
+        // An unmapped key still displays as itself, like an unmapped Jira
+        // label; an unmapped room displays by its Sessionize name.
+        const locations = locationKeys.length
+            ? locationKeys.map((key) => config.locationLabels[key] ?? key)
+            : session.room && !session.isPlenumSession && !session.isServiceSession
+              ? [session.room]
+              : []
+        const speakers = session.speakers.map((speaker) => speaker.name).join(', ')
+
+        return {
+            // Prefixed so a Sessionize id can't collide with a Jira one.
+            id: `session-${session.id}`,
+            summary: speakers ? `${session.title} (${speakers})` : session.title,
+            startTime: session.startsAt,
+            endTime: session.endsAt,
+            locations,
+            teams: teams.map((team) => config.teamLabels[team] ?? team),
+            locationKeys,
+            teamKeys: teams,
+            roleInstructionsUrl: matched.find((p) => p.roleInstructionsUrl)?.roleInstructionsUrl ?? null,
+            source: 'agenda',
+            // Service sessions have nothing to open: their description is
+            // location ids, and they have no speakers.
+            sessionizeSessionId: session.isServiceSession ? null : session.id,
+        }
+    })
+}
+
+/**
+ * Finds the placeholders whose time overlaps a session's. Matched on time
+ * because a placeholder and the sessions filling it share nothing else: the
+ * slot placeholder "Session 1" covers all five talks in that slot, and a
+ * Jira break can start a few minutes off the Sessionize one.
+ */
+function overlappingPlaceholders(placeholders: RunsheetPlaceholder[], timezone: string) {
+    const toMillis = (iso: string | null) => (iso ? DateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+    const windows = placeholders
+        .map((placeholder) => ({
+            placeholder,
+            start: toMillis(placeholder.startTime),
+            end: toMillis(placeholder.endTime),
+        }))
+        .filter(({ start, end }) => start < end)
+
+    return (session: RunsheetSession) => {
+        const start = toMillis(session.startsAt)
+        const end = toMillis(session.endsAt)
+        // Strictly overlapping: back-to-back slots only touch, so a changeover
+        // between two sessions matches neither.
+        return windows.filter((window) => window.start < end && start < window.end).map((w) => w.placeholder)
+    }
+}
+
+function sessionLocationKeys(session: RunsheetSession, config: SessionConfig): string[] {
+    if (session.isServiceSession) {
+        return (session.description ?? '')
+            .split(',')
+            .map((key) => key.trim())
+            .filter(Boolean)
+    }
+    if (session.isPlenumSession && config.plenumLocations?.length) return config.plenumLocations
+    const roomKey = session.room ? config.sessionizeRoomLocations?.[session.room] : undefined
+    return roomKey ? [roomKey] : []
+}
+
+/**
+ * Orders run sheet rows by start time. Compared as instants, not strings:
+ * Jira datetimes carry an offset and Sessionize's are local to the
+ * conference, so the two only line up once both are read in its timezone.
+ */
+export function compareRunsheetItems(timezone: string) {
+    const toMillis = (iso: string | null) => (iso ? DateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+    return (a: RunsheetItem, b: RunsheetItem) => {
+        const aStart = toMillis(a.startTime)
+        const bStart = toMillis(b.startTime)
+        // Items with no start time sort last rather than disappearing.
+        if (Number.isNaN(aStart) && Number.isNaN(bStart)) return 0
+        if (Number.isNaN(aStart)) return 1
+        if (Number.isNaN(bStart)) return -1
+        return aStart - bStart
+    }
 }

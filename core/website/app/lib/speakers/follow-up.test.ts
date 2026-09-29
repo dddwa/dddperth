@@ -18,6 +18,7 @@ function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
         sessionDetailsComplete: {},
         meetTheExpertsResponded: false,
         sessionBackupAccepted: {},
+        sessionOptedOutOfRecording: {},
         ...overrides,
     }
 }

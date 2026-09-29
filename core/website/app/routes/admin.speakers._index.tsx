@@ -17,6 +17,7 @@ import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
 import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
+import { recordingOptOuts, type RecordingOptOut } from '~/lib/speakers/recording-opt-outs'
 import { DAY_DETAILS_EMAIL, FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
 import { buildRsvpHeadcount, buildRsvpLists, type RsvpHeadcount, type RsvpListGroup, type RsvpLists } from '~/lib/speakers/rsvp-summary'
 import { getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
@@ -75,6 +76,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             rsvpHeadcount: null,
             rsvpLists: null,
             followUps: [],
+            recordingOptOuts: [],
             speakerEmailAddress: undefined,
         })
     }
@@ -158,6 +160,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         rsvpHeadcount,
         rsvpLists,
         followUps,
+        recordingOptOuts: recordingOptOuts(speakers),
         speakerEmailAddress: portalConfig.speakerEmailAddress,
     })
 }
@@ -459,6 +462,7 @@ export default function AdminSpeakers() {
         rsvpHeadcount,
         rsvpLists,
         followUps,
+        recordingOptOuts,
         speakerEmailAddress,
     } = loaderData
 
@@ -479,7 +483,7 @@ export default function AdminSpeakers() {
                 <Flex justify="space-between" align="center" flexWrap="wrap" gap="4" mb="4">
                     <Box>
                         <styled.h2 fontSize="xl" fontWeight="semibold">
-                            Sessionize sync
+                            Speaker actions
                         </styled.h2>
                         <styled.p fontSize="sm" color="admin.600" mt="1">
                             {lastRun ? (
@@ -496,7 +500,8 @@ export default function AdminSpeakers() {
                             )}
                         </styled.p>
                     </Box>
-                    <Flex gap="2" align="center">
+                    <Flex gap="2" align="center" flexWrap="wrap">
+                        <RecordingOptOutsButton sessions={recordingOptOuts} />
                         <Button
                             asChild
                             variant="outline"
@@ -933,6 +938,43 @@ function RsvpHeadcountCard({ headcount, lists }: { headcount: RsvpHeadcount; lis
                 </Flex>
             </Box>
         </AdminCard>
+    )
+}
+
+/** Accepted sessions that opted out of recording, for passing on to the AV
+ * team. */
+function RecordingOptOutsButton({ sessions }: { sessions: RecordingOptOut[] }) {
+    const [open, setOpen] = useState(false)
+    return (
+        <>
+            <Button
+                type="button"
+                variant="outline"
+                color="admin.900"
+                borderColor="admin.400"
+                bg="white"
+                _hover={{ bg: 'admin.100' }}
+                onClick={() => setOpen(true)}
+            >
+                Recording opt-outs ({sessions.length})
+            </Button>
+            <SpeakerModal title="Accepted sessions not to be recorded" open={open} onOpenChange={setOpen}>
+                {sessions.length === 0 ? (
+                    <styled.p fontSize="sm" color="admin.600">
+                        No accepted sessions have opted out of recording.
+                    </styled.p>
+                ) : (
+                    <styled.ul fontSize="sm">
+                        {sessions.map((session) => (
+                            <styled.li key={session.sessionizeSessionId} mb="1">
+                                <styled.span fontWeight="medium">{session.title}</styled.span>
+                                <styled.span color="admin.600"> — {session.presenters.join(', ')}</styled.span>
+                            </styled.li>
+                        ))}
+                    </styled.ul>
+                )}
+            </SpeakerModal>
+        </>
     )
 }
 

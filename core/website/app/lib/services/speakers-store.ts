@@ -170,6 +170,9 @@ export interface SpeakerListEntry extends SpeakerRecord {
      * sessionizeSessionId, same "just enough for `speakerChecklist`" idiom
      * as `sessionDetailsComplete`. */
     sessionBackupAccepted: Record<string, boolean>
+    /** Whether each session's shared session details opt out of recording,
+     * keyed by sessionizeSessionId — same idiom as `sessionDetailsComplete`. */
+    sessionOptedOutOfRecording: Record<string, boolean>
 }
 
 /** A speaker + all their co-presenters on shared sessions, for the dashboard. */
