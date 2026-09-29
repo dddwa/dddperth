@@ -38,7 +38,7 @@ pnpm sponsor:add portal list --env production --year 2026
 pnpm sponsor:add portal import SPN-24 --env production --tier room
 ```
 
-`--dry-run` writes the processed light/dark variants to a preview directory (`--preview-dir`, else a temp dir) and nothing to the site, so the logos can be checked first. `--json` prints the result on stdout; logs go to stderr. New `room` sponsors get `roomName: 'TBC'` unless `--room-name` is passed, because the config type requires it. After every config write the file is formatted with the repo's Prettier config, so the diff is just the entry. Portal commands need a working `wrangler` login. In a non-interactive shell where wrangler can't refresh an expired OAuth token, set `CLOUDFLARE_API_TOKEN` instead.
+`--dry-run` writes the processed light/dark variants to a preview directory (`--preview-dir`, else a temp dir) and nothing to the site, so the logos can be checked first. `--json` prints the result on stdout; logs go to stderr. New `room` sponsors need a `roomName` (the config type requires it, and the agenda matches it exactly against the Sessionize room name). `--room-name` sets it; otherwise a portal import reads the issue's **Exhibitor Room** from Jira, and anything else gets `'TBC'`. After every config write the file is formatted with the repo's Prettier config, so the diff is just the entry. Portal commands need a working `wrangler` login. In a non-interactive shell where wrangler can't refresh an expired OAuth token, set `CLOUDFLARE_API_TOKEN` instead.
 
 The **Portal Import** tab pulls sponsor submissions out of the deployed sponsor portal (remote D1 rows + R2 logos, fetched by shelling out to `wrangler` — run `wrangler login` first) and feeds them through the same preview/approve flow. Imports are recorded in a committed `conference/config/years/<year>.portal-imports.json` sidecar so the list flags new/updated/imported sponsors, and re-imports update the existing config entry in place. Approving a portal import also attaches the processed light/dark logo variants to the sponsor's Jira issue (replacing same-named attachments), using the credentials saved by `pnpm jira:auth` — skipped with a warning when no credentials or `JIRA_STUB=true` is set. See [`core/website/SPONSOR_PORTAL_SETUP.md`](../core/website/SPONSOR_PORTAL_SETUP.md).
 
@@ -62,7 +62,7 @@ node scripts/sponsor-manager.mjs
 
 ## `process-logo.mjs`
 
-Generates `<year>-<slug>-light.<ext>` and `<year>-<slug>-dark.<ext>` from a single source image. Uses the same image processing as `add-sponsor.mjs` (shared via `scripts/lib/process-logo.mjs`).
+Generates `<year>-<slug>-light.<ext>` and `<year>-<slug>-dark.<ext>` from a single source image. Transparent padding is cropped off both rasters and SVGs (an SVG gets its viewBox tightened to the painted artwork). Uses the same image processing as `add-sponsor.mjs` (shared via `scripts/lib/process-logo.mjs`).
 
 ```bash
 node scripts/process-logo.mjs <input-file> <year> <slug> [--out-dir <dir>]
