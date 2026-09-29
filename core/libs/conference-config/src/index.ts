@@ -38,6 +38,7 @@ export type {
     MeetTheExpertsSlotConfig,
     NavConfig,
     NavItem,
+    RunsheetsBumpInConfig,
     RunsheetsConfig,
     RunsheetsJiraConfig,
     Socials,

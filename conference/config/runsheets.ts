@@ -1,4 +1,5 @@
 import type { RunsheetsConfig } from '@ddd/conference-config'
+import { sponsorPortal } from './sponsor-portal.ts'
 
 /**
  * The public volunteer run sheet at /runsheets, backed by DDD Perth's Jira
@@ -44,6 +45,8 @@ export const runsheets: RunsheetsConfig = {
         'team-7': 'Team 7',
         'team-photographers': 'Photographers',
         'team-Sat-Bump-Out': 'Bump Out',
+        'team-Fri-Bump-In': 'Friday Bump In',
+        'team-Sat-Bump-In': 'Saturday Bump In',
     },
 
     // Optus Stadium room names, as labelled on the VOL board.
@@ -62,4 +65,56 @@ export const runsheets: RunsheetsConfig = {
         'loc-river-view-room-3': 'River View Room 3',
         'loc-sports-lounge': 'Sports Lounge',
     },
+    // /runsheets/bump-in. Exhibitor rows come straight from the SPN board, so
+    // there's no need for a VOL ticket per sponsor — a VOL item like
+    // "Exhibitor - BankWest" would show twice.
+    bumpIn: {
+        volunteerJql:
+            'project = VOL AND type = "Run Sheet Item"' +
+            ' AND "Time Bracket[Dropdown]" IN ("Friday Bump In", "Saturday Bump In")',
+        sponsors: {
+            // The portal's own JQL has a `{year}` template and also picks up
+            // unlabelled issues; here only this year's labelled sponsors count.
+            jql:
+                `project = SPN AND issuetype = Sponsor AND labels = "${sponsorPortal.year}"` +
+                ' AND labels NOT IN ("portal-test")',
+            // PUBLIC FIELDS ONLY. Everything listed here is shown to anyone
+            // with the link. Contacts, attendees, equipment, the summary (it
+            // carries the deal value) and every URL field stay off this list.
+            fields: {
+                companyName: 'customfield_10087', // Company Name*
+                tier: 'customfield_10086', // Level of Sponsorship*
+                bumpInSlot: 'customfield_10153', // Bump In Day/Time Start
+                underStadiumDropOff: 'customfield_10159', // Under Stadium Drop-off/Pick-up required?
+                trolley: 'customfield_10160', // Do you require a Trolley/Forklift
+                loadingDockAssistance: 'customfield_10161', // Loading Dock assistance required?
+                porterAssistance: 'customfield_10157', // Optus Porter assistance required?
+                exhibitorRoom: 'customfield_10303', // Exhibitor Room
+                exhibitorSpaceNumber: 'customfield_10197', // Exhibitor Space Number
+            },
+            underStadiumBumpInOption: 'For Bump In',
+            // Option values of "Bump In Day/Time Start", mirrored in
+            // BUMP_IN_SLOTS (core/website/app/lib/sponsors/logistics.ts).
+            // Conference is Saturday 3 October 2026.
+            slots: {
+                'Friday noon - 1pm': fri('12:00', '13:00'),
+                'Friday 1pm - 2pm': fri('13:00', '14:00'),
+                'Friday 2pm - 3pm': fri('14:00', '15:00'),
+                'Friday 3pm - 4pm': fri('15:00', '16:00'),
+                'Friday 4pm - 5pm': fri('16:00', '17:00'),
+                'Friday 5pm - 6pm': fri('17:00', '18:00'),
+                'Saturday 6.30am to 7am (minimal set-up only)': {
+                    start: '2026-10-03T06:30:00+08:00',
+                    end: '2026-10-03T07:00:00+08:00',
+                    team: 'team-Sat-Bump-In',
+                },
+            },
+            // Raw Jira tiers with a stand — same set as BOOTH_TIERS.
+            exhibitingTiers: ['Platinum', 'Gold', 'Room', 'Community'],
+        },
+    },
+}
+
+function fri(start: string, end: string) {
+    return { start: `2026-10-02T${start}:00+08:00`, end: `2026-10-02T${end}:00+08:00`, team: 'team-Fri-Bump-In' }
 }
