@@ -142,6 +142,7 @@ export interface FakeJiraIssue {
     /** Keyed by portal field name, e.g. `bumpInSlot`. */
     logistics?: Record<string, string>
     exhibitorRoom?: string
+    exhibitorSpaceNumber?: string
     freeTicketCount?: string
     ticketClaimUrl?: string
     assetsRequired?: string
@@ -243,7 +244,13 @@ export class FakeJira {
 
             async getExhibitorLogistics() {
                 const map = new Map<string, ExhibitorLogistics>()
-                for (const [issueKey, issue] of issues) map.set(issueKey, { ...(issue.logistics ?? {}) })
+                for (const [issueKey, issue] of issues) {
+                    map.set(issueKey, {
+                        ...(issue.logistics ?? {}),
+                        ...(issue.exhibitorRoom ? { exhibitorRoom: issue.exhibitorRoom } : {}),
+                        ...(issue.exhibitorSpaceNumber ? { exhibitorSpaceNumber: issue.exhibitorSpaceNumber } : {}),
+                    })
+                }
                 return map
             },
 
