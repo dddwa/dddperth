@@ -139,6 +139,10 @@ export const sponsorPortal: SponsorPortalConfig = {
             Coffee: 'coffeeCart',
             Digital: 'digital',
             Community: 'community',
+            // In-kind sponsors (lighting, venue space) have no stand, so
+            // they're hidden from the exhibition sections and left off the
+            // venue's exhibitor list.
+            'In Kind': 'inKind',
             // Raffle-only sponsors donate a prize and get no website
             // placement — this key intentionally matches no YearSponsors
             // category, so they sync and appear in the portal/admin list
