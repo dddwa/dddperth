@@ -1,4 +1,3 @@
-import { DateTime } from 'luxon'
 import type { SpeakerPortalConfig } from '@ddd/conference-config'
 
 /**
@@ -23,44 +22,9 @@ export const speakerPortal: SpeakerPortalConfig = {
         generalTopic: 'General Topic Category',
         talkTopics: 'Talk Topics',
     },
-    // Training session dates/times and the dinner below are confirmed.
-    checklist: {
-        // Ticket claim link is a secret, SPEAKER_TICKET_CLAIM_URL_<YEAR> —
-        // see core/docs/runbooks/new-year.md.
-        dueDates: {
-            confirmSession: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
-            acceptBackupSpeaker: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Australia/Perth' }),
-            sessionDetails: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Australia/Perth' }),
-            claimTicket: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Australia/Perth' }),
-            speakerTraining: DateTime.fromISO('2026-08-28T22:00:00', { zone: 'Australia/Perth' }),
-            speakerDinner: DateTime.fromISO('2026-09-25T17:00:00', { zone: 'Australia/Perth' }),
-            meetTheExperts: DateTime.fromISO('2026-09-18T22:00:00', { zone: 'Australia/Perth' }),
-        },
-        speakerTrainingSessions: [
-            {
-                id: 'Session 1',
-                title: 'Planning, building and writing your talk',
-                dateTime: DateTime.fromISO('2026-09-02T17:30:00', { zone: 'Australia/Perth' }),
-                endDateTime: DateTime.fromISO('2026-09-02T20:00:00', { zone: 'Australia/Perth' }),
-            },
-            {
-                id: 'Session 2',
-                title: 'Presentation skills, tips and tricks',
-                dateTime: DateTime.fromISO('2026-09-09T17:30:00', { zone: 'Australia/Perth' }),
-                endDateTime: DateTime.fromISO('2026-09-09T20:00:00', { zone: 'Australia/Perth' }),
-            },
-            {
-                id: 'Session 3',
-                title: 'Feedback and practice',
-                dateTime: DateTime.fromISO('2026-09-23T17:30:00', { zone: 'Australia/Perth' }),
-                endDateTime: DateTime.fromISO('2026-09-23T20:00:00', { zone: 'Australia/Perth' }),
-            },
-        ],
-        speakerDinner: {
-            dateTime: DateTime.fromISO('2026-10-02T18:00:00', { zone: 'Australia/Perth' }),
-            endDateTime: DateTime.fromISO('2026-10-02T20:00:00', { zone: 'Australia/Perth' }),
-        },
-    },
+    // Due dates, training sessions, the dinner, the ticket claim link and
+    // Meet the Experts slots change every year, so they're set by an admin at
+    // /admin/settings/speakers (stored in D1) rather than here.
     sessionConfirmationNotifyEmail: 'speakers@dddperth.com',
     speakerEmailAddress: 'speakers@dddperth.com',
 }

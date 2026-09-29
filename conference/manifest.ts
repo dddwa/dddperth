@@ -13,7 +13,6 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
-import { meetTheExperts } from './config/meet-the-experts.ts'
 import { nav } from './config/nav.ts'
 import { conferenceConfigPublic } from './config/public.ts'
 import { runsheets } from './config/runsheets.ts'
@@ -60,6 +59,5 @@ export const conferenceManifest: ConferenceManifest = {
     },
     sponsorPortal,
     speakerPortal,
-    meetTheExperts,
     runsheets,
 }
