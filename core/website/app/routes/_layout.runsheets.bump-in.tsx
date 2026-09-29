@@ -43,12 +43,13 @@ async function loadBumpIn(context: LoadContext, cacheGeneration: string) {
     const { config, bumpIn } = requireBumpInConfig()
     const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
     const shared = { config, apiEmail, apiToken, apiBaseUrl, cacheTtlSeconds: CACHE_TTL_SECONDS, cacheGeneration }
+    const { timezone } = conferenceManifest.public
 
-    const [volunteerItems, exhibitorItems] = await Promise.all([
-        fetchRunsheet({ ...shared, filter: null, jql: bumpIn.volunteerJql }),
+    const [volunteer, exhibitorItems] = await Promise.all([
+        fetchRunsheet({ ...shared, jql: bumpIn.volunteerJql, timezone }),
         fetchSponsorBumpIn({ ...shared, bumpIn }),
     ])
-    const items: BumpInItem[] = [...volunteerItems, ...exhibitorItems]
+    const items: BumpInItem[] = [...volunteer.items, ...exhibitorItems]
     return sortByStartTime(items)
 }
 

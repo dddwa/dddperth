@@ -60,7 +60,11 @@ describe('mapSponsorBumpIn', () => {
             endTime: '2026-10-02T15:00:00+08:00',
             locations: ['Champions Terrace', 'Space 12'],
             teams: ['Friday Bump In'],
+            locationKeys: [],
+            teamKeys: ['team-Fri-Bump-In'],
             roleInstructionsUrl: null,
+            source: 'jira',
+            sessionizeSessionId: null,
             exhibitor: {
                 tier: 'Platinum',
                 slot: 'Friday 2pm - 3pm',

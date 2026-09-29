@@ -38,6 +38,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings_.speakers.js').SearchParams>,
     },
+    "/admin/settings/volunteers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.settings_.volunteers.js').SearchParams>,
+    },
     "/admin/speakers": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers._index.js').SearchParams>,
@@ -117,6 +121,10 @@ declare module "safe-routes" {
     "/api/agenda/shortlist": {
       params: never,
       query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
+    },
+    "/api/runsheets/session/:sessionId": {
+      params: {'sessionId': string | number},
+      query: ExportedQuery<import('app/routes/api.runsheets.session.$sessionId.js').SearchParams>,
     },
     "/api/theme": {
       params: never,
@@ -210,6 +218,10 @@ declare module "safe-routes" {
       params: {'filter'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
     },
+    "/runsheets/bump-in": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.runsheets.bump-in.js').SearchParams>,
+    },
     "/share": {
       params: never,
       query: ExportedQuery<import('app/routes/_layout.share.js').SearchParams>,
@@ -241,6 +253,7 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
+            | 'routes/api.runsheets.session.$sessionId'
             | 'routes/api.tito-registration'
             | 'routes/api.agenda.shortlist'
             | 'routes/app-agenda-sessions'
@@ -264,6 +277,7 @@ declare module "safe-routes" {
             | 'routes/_layout'
             | 'routes/_layout.agenda.$year.talk.$sessionId'
             | 'routes/_layout.runsheets.($filter)'
+            | 'routes/_layout.runsheets.bump-in'
             | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
             | 'routes/_layout.blog._index'
@@ -285,6 +299,7 @@ declare module "safe-routes" {
             | 'routes/admin.voting_.agenda.$runId_.save'
             | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
+            | 'routes/admin.settings_.volunteers'
             | 'routes/admin.sponsors_.follow-up'
             | 'routes/admin.settings_.speakers'
             | 'routes/admin.volunteers_.save'

@@ -44,9 +44,23 @@ export const runsheets: RunsheetsConfig = {
         'team-6': 'Team 6',
         'team-7': 'Team 7',
         'team-photographers': 'Photographers',
+        'team-room-coordinators': 'Room Coordinators',
         'team-Sat-Bump-Out': 'Bump Out',
         'team-Fri-Bump-In': 'Friday Bump In',
         'team-Sat-Bump-In': 'Saturday Bump In',
+    },
+
+    // Shown in place of the team name in the run sheet's Related column.
+    teamIcons: {
+        'team-1': '1️⃣',
+        'team-2': '2️⃣',
+        'team-3': '3️⃣',
+        'team-4': '4️⃣',
+        'team-5': '5️⃣',
+        'team-6': '6️⃣',
+        'team-7': '7️⃣',
+        'team-photographers': '📷',
+        'team-room-coordinators': '🎤',
     },
 
     // Optus Stadium room names, as labelled on the VOL board.
@@ -65,6 +79,25 @@ export const runsheets: RunsheetsConfig = {
         'loc-river-view-room-3': 'River View Room 3',
         'loc-sports-lounge': 'Sports Lounge',
     },
+
+    // Room names as they appear on the Sessionize agenda.
+    sessionizeRoomLocations: {
+        'River Room 1 (Lv 3)': 'loc-river-view-room-1',
+        'River Room 2 (Lv 3)': 'loc-river-view-room-2',
+        'River Room 3 (Lv 3)': 'loc-river-view-room-3',
+        'Cygnet room (Lv 2)': 'loc-cygnet-room',
+        'Black Swan (Lv 2)': 'loc-black-swan-room',
+    },
+
+    // Plenum talks (the keynotes) fill all three River View Rooms with the
+    // walls open. Service sessions take their locations from their
+    // Sessionize description instead.
+    plenumLocations: ['loc-river-view-room-1', 'loc-river-view-room-2', 'loc-river-view-room-3'],
+
+    sessionTeam: 'session',
+
+    speakerPronouns: { category: 'Your pronoun', withheldAnswers: ["I'd rather not answer"] },
+
     // /runsheets/bump-in. Exhibitor rows come straight from the SPN board, so
     // there's no need for a VOL ticket per sponsor — a VOL item like
     // "Exhibitor - BankWest" would show twice.

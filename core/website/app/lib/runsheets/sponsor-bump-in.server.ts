@@ -111,7 +111,13 @@ export function mapSponsorBumpIn(
             endTime: timing?.end ?? null,
             locations,
             teams: timing ? [teamLabels[timing.team] ?? timing.team] : [],
+            // The room and space are free text off the sponsor issue, not
+            // location labels, so there's nothing for a location filter to match.
+            locationKeys: [],
+            teamKeys: timing ? [timing.team] : [],
             roleInstructionsUrl: null,
+            source: 'jira',
+            sessionizeSessionId: null,
             exhibitor: {
                 tier,
                 slot,
@@ -157,7 +163,7 @@ export async function fetchSponsorBumpIn({
         fields: requestFields.join(','),
     })
 
-    const body = await jiraFetch(
+    const { body } = await jiraFetch(
         joinJiraUrl(baseUrl, `/rest/api/3/search/jql?${searchParams.toString()}`),
         authorization,
         { method: 'GET' },

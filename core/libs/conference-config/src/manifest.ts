@@ -679,8 +679,44 @@ export interface RunsheetsConfig {
     jira: RunsheetsJiraConfig
     /** Jira "Volunteer Team" label -> display name, e.g. `'team-1': 'Team 1'`. */
     teamLabels: Record<string, string>
+    /**
+     * Jira "Volunteer Team" label -> an emoji shown in place of the team's name
+     * in the run sheet's Related column, e.g. `'team-1': '1️⃣'`. The name stays
+     * its accessible label and hover text. Teams without one show their name.
+     */
+    teamIcons?: Record<string, string>
     /** Jira "Location" label -> display name, e.g. `'loc-cygnet-room': 'Cygnet Room'`. */
     locationLabels: Record<string, string>
+    /**
+     * Sessionize room name -> a `locationLabels` key, e.g.
+     * `'Cygnet room (Lv 2)': 'loc-cygnet-room'`. The run sheet lists the
+     * published agenda's talks alongside the Jira items, located by their
+     * Sessionize room; this map puts them under the same location names and
+     * filter as the Jira items. An unmapped room still displays (by its
+     * Sessionize name) but can't be filtered on.
+     */
+    sessionizeRoomLocations?: Record<string, string>
+    /**
+     * `locationLabels` keys a plenum session (one the whole conference
+     * attends) is held across. Sessionize files every plenum under its first
+     * room, which is rarely the whole story — a keynote usually fills the
+     * main room with its partition walls opened.
+     */
+    plenumLocations?: string[]
+    /**
+     * Jira "Volunteer Team" label marking a placeholder for agenda sessions.
+     * Those items are left off the page (the agenda itself fills the slots);
+     * their other teams and role instructions are carried onto the sessions
+     * they overlap. Internal only: not a `teamLabels` key, so it's never shown
+     * or offered as a filter.
+     */
+    sessionTeam?: string
+    /**
+     * The Sessionize *speaker* category holding pronouns, shown beside each
+     * speaker's name in the session modal. `withheldAnswers` are answers that
+     * decline to say (e.g. "I'd rather not answer"), which show as nothing.
+     */
+    speakerPronouns?: { category: string; withheldAnswers: string[] }
     /** Bump-in run sheet at /runsheets/bump-in. Omit and that page returns 404. */
     bumpIn?: RunsheetsBumpInConfig
 }
