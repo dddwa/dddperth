@@ -162,6 +162,20 @@ export const conference2026: ConferenceYear = {
                 logoUrlLightMode: '/images/sponsors/2026-uwa-data-institute-light.png',
                 quote: 'The UWA Data Institute is proud to support DDD Perth as a Community Sponsor. We’re passionate about strengthening Western Australia’s data, technology and innovation ecosystem, and DDD Perth provides an important platform for the community to connect, share ideas and learn from one another.',
             },
+            {
+                name: 'The Digital Bench',
+                website: 'https://www.thedigitalbench.co.uk/',
+                logoUrlDarkMode: '/images/sponsors/2026-the-digital-bench-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-the-digital-bench-light.svg',
+                quote: 'Delighted to be supporting DDD Perth — bringing so much talent, curiosity and ambition together in one place. Connecting the people shaping the future of tech is what The Digital Bench is all about.',
+            },
+            {
+                name: 'Black Ocean',
+                website: 'https://blackocean.io/',
+                logoUrlDarkMode: '/images/sponsors/2026-black-ocean-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-black-ocean-light.svg',
+                quote: 'I came to DDD Perth in 2024 as an attendee, so sponsoring it with Black Ocean felt like an obvious first step. It’s where Perth’s data and dev people actually meet each other. I’ll be there on the day, so come and find me if you want to talk Fabric, Power BI or where the contract market’s heading.',
+            },
         ],
         community: [
             {
