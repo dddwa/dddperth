@@ -70,6 +70,14 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors_.follow-up.js').SearchParams>,
     },
+    "/admin/volunteers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers.js').SearchParams>,
+    },
+    "/admin/volunteers/save": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers_.save.js').SearchParams>,
+    },
     "/admin/voting": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.voting.js').SearchParams>,
@@ -279,6 +287,8 @@ declare module "safe-routes" {
             | 'routes/admin.voting_.agenda.$runId'
             | 'routes/admin.sponsors_.follow-up'
             | 'routes/admin.settings_.speakers'
+            | 'routes/admin.volunteers_.save'
+            | 'routes/admin.volunteers'
             | 'routes/admin.dashboard'
             | 'routes/admin.settings'
             | 'routes/admin.speakers'

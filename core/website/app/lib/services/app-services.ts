@@ -15,6 +15,7 @@ import type { SpeakersStore } from './speakers-store'
 import type { SponsorSyncService } from './sponsor-sync-service'
 import type { SponsorsStore } from './sponsors-store'
 import type { TicketsService } from './tickets-service'
+import type { VolunteersStore } from './volunteers-store'
 import type { VotingStore } from './voting-store'
 
 /**
@@ -43,4 +44,5 @@ export interface AppServices {
     meetTheExperts: MeetTheExpertsStore
     meetTheExpertsScheduling: MeetTheExpertsSchedulingStore
     adminSettings: AdminSettingsStore
+    volunteers: VolunteersStore
 }
