@@ -1,0 +1,20 @@
+{
+    "SPN-24": {
+        "name": "Databricks",
+        "portalName": "Databricks",
+        "tier": "room",
+        "configYear": "2026",
+        "importedAt": "2026-09-29T05:27:37.540Z",
+        "blurb": "\"The best Data and AI work happens when people share ideas, swap lessons and build on each other's thinking. That's what DDD Perth is all about, and it's why Databricks is proud to sponsor alongside Endava. We're looking forward to the conversations, the connections and the practical ideas that help Perth's developers turn their data into real impact with Data and AI.\"",
+        "websiteUrl": "https://www.databricks.com/",
+        "socials": {
+            "linkedin": "https://www.linkedin.com/company/databricks/",
+            "twitter": "https://x.com/databricks",
+            "instagram": "https://www.instagram.com/databricksinc/",
+            "facebook": "https://www.facebook.com/databricksinc/",
+            "youtube": "https://www.youtube.com/c/Databricks"
+        },
+        "logoR2Key": "sponsors/2026/SPN-24/logo-1790340319377.svg",
+        "profileUpdatedAt": 1790658065
+    }
+}
