@@ -69,6 +69,8 @@ export const sponsorPortal: SponsorPortalConfig = {
             // Vicki cleared this field's Jira default, so no
             // `unassignedRoomValue` is configured: any value here was chosen.
             exhibitorRoom: 'customfield_10303',
+            // "Exhibitor Space Number" — the stand within the exhibition space.
+            exhibitorSpaceNumber: 'customfield_10197',
             quote: 'customfield_10140',
             socials: {
                 linkedin: 'customfield_10141',
