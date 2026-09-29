@@ -144,7 +144,7 @@ export const conference2026: ConferenceYear = {
                 website: 'https://interfuze.com/',
                 logoUrlDarkMode: '/images/sponsors/2026-interfuze-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2026-interfuze-light.svg',
-                roomName: 'TBC',
+                roomName: 'River View Room 1',
             },
             {
                 name: 'Databricks',
@@ -152,14 +152,14 @@ export const conference2026: ConferenceYear = {
                 logoUrlDarkMode: '/images/sponsors/2026-databricks-dark.svg',
                 logoUrlLightMode: '/images/sponsors/2026-databricks-light.svg',
                 quote: "The best Data and AI work happens when people share ideas, swap lessons and build on each other's thinking. That's what DDD Perth is all about, and it's why Databricks is proud to sponsor alongside Endava. We're looking forward to the conversations, the connections and the practical ideas that help Perth's developers turn their data into real impact with Data and AI.",
-                roomName: 'TBC',
+                roomName: 'River View Room 3',
             },
             {
                 name: 'Endava',
                 website: 'https://www.endava.com/',
                 logoUrlDarkMode: '/images/sponsors/2026-endava-dark.png',
                 logoUrlLightMode: '/images/sponsors/2026-endava-light.png',
-                roomName: 'TBC',
+                roomName: 'River View Room 3',
             },
         ],
         digital: [
