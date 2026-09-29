@@ -1,6 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { data, useLoaderData, useRevalidator } from 'react-router'
+import { useState } from 'react'
+import { data, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { CopyField } from '~/components/copy-field'
@@ -10,6 +10,7 @@ import { Button } from '~/components/ui/button'
 import { loadSpeakerSettings } from '~/lib/admin-settings/speakers.server'
 import { requireAdmin } from '~/lib/auth.server'
 import { buildScheduleEmail } from '~/lib/meet-the-experts-schedule-email'
+import { useQueuedSave } from '~/lib/use-queued-save'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.speakers.experts'
@@ -154,47 +155,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function AdminSpeakersExperts() {
     const { slots, tables, assignments, registrants, optedOutCount, conferenceName, recipientEmails } =
         useLoaderData<typeof loader>()
-    const revalidator = useRevalidator()
-
-    // Same queued-fetch-then-revalidate pattern as the agenda planner
-    // (admin.voting_.agenda.$runId.tsx): a fetcher would abort an in-flight
-    // submit when a second drag lands close behind it, so writes are chained
-    // through a manual promise queue instead.
-    const queue = useRef<Promise<unknown>>(Promise.resolve())
-    const [inFlight, setInFlight] = useState(0)
-    const [saveError, setSaveError] = useState<string | null>(null)
-
-    const save = useCallback((change: MeetTheExpertsChange) => {
-        setInFlight((n) => n + 1)
-        queue.current = queue.current
-            .then(async () => {
-                const response = await fetch(window.location.pathname, {
-                    method: 'POST',
-                    body: new URLSearchParams(change),
-                })
-                if (!response.ok) {
-                    throw new Error(`Save failed (${response.status})`)
-                }
-                const result: { success: boolean; error?: string } = await response.json()
-                if (!result.success) {
-                    throw new Error(result.error ?? 'Save failed')
-                }
-                setSaveError(null)
-            })
-            .catch((error: unknown) => {
-                console.error('Failed to save Meet the Experts scheduling:', error)
-                setSaveError(error instanceof Error ? error.message : 'Failed to save')
-            })
-            .finally(() => setInFlight((n) => n - 1))
-    }, [])
-
-    const isSaving = inFlight > 0
-
-    useEffect(() => {
-        if (!isSaving && revalidator.state === 'idle') {
-            void revalidator.revalidate()
-        }
-    }, [isSaving, revalidator])
+    const { save, saveError } = useQueuedSave<MeetTheExpertsChange>('Meet the Experts scheduling', '/admin/speakers/experts/save')
 
     return (
         <AdminLayout heading="Meet the Experts — seating" fullWidth>
