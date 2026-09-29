@@ -681,6 +681,62 @@ export interface RunsheetsConfig {
     teamLabels: Record<string, string>
     /** Jira "Location" label -> display name, e.g. `'loc-cygnet-room': 'Cygnet Room'`. */
     locationLabels: Record<string, string>
+    /** Bump-in run sheet at /runsheets/bump-in. Omit and that page returns 404. */
+    bumpIn?: RunsheetsBumpInConfig
+}
+
+/**
+ * The bump-in run sheet: the committee's own bump-in items from the
+ * volunteer board, plus one generated row per exhibiting sponsor read from
+ * the sponsors board, so exhibitor arrivals don't have to be re-typed as
+ * volunteer tickets.
+ *
+ * The page is as public as /runsheets, and a sponsor issue holds contact
+ * names, phone numbers, emails, the deal value (in the summary) and private
+ * links. `sponsors.fields` is therefore the allowlist: only these field ids
+ * are ever requested from Jira, so nothing else can reach the page even by
+ * mistake. Don't add a field here without checking it is safe to publish.
+ */
+export interface RunsheetsBumpInConfig {
+    /** JQL for the committee's bump-in items on the volunteer board. Same issue type and fields as `jira`. */
+    volunteerJql: string
+    sponsors: {
+        /** JQL selecting this year's sponsor issues. */
+        jql: string
+        fields: {
+            /** Text field — the public company name. Not the issue summary, which carries the deal value. */
+            companyName: string
+            /** Single-select — sponsorship level, as shown on the sponsors page. */
+            tier: string
+            /** Single-select — the sponsor's chosen bump-in slot. */
+            bumpInSlot: string
+            /** Multi-checkbox — under-stadium (ring road) drop-off, e.g. "For Bump In". */
+            underStadiumDropOff: string
+            /** Free text — trolley or forklift needs. */
+            trolley: string
+            /** Free text — loading dock assistance needs. */
+            loadingDockAssistance: string
+            /** Free text — venue porter assistance needs. */
+            porterAssistance: string
+            /** Single-select — the room a room sponsor exhibits in. */
+            exhibitorRoom?: string
+            /** Text — the exhibitor's space number on the floor map. */
+            exhibitorSpaceNumber?: string
+        }
+        /** The `underStadiumDropOff` option meaning "needed at bump-in". */
+        underStadiumBumpInOption: string
+        /**
+         * Bump-in slot option value -> when it runs and which volunteer team
+         * meets it. A slot missing here still shows, untimed, at the end.
+         * Times are ISO datetimes with offset.
+         */
+        slots: Record<string, { start: string; end: string; team: string }>
+        /**
+         * Raw Jira tier values that exhibit. A sponsor on one of these tiers
+         * with no slot chosen yet still gets a row, so the gap is visible.
+         */
+        exhibitingTiers: string[]
+    }
 }
 
 export interface ConferenceManifest {

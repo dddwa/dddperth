@@ -38,7 +38,13 @@ function buildBulkResponseSchema(fields: RunsheetsConfig['jira']['fields']) {
         id: z.string(),
         fields: z.intersection(
             z.object({ summary: z.string() }),
-            z.record(z.string(), z.union([z.string(), z.array(z.string())]).nullable().optional()),
+            z.record(
+                z.string(),
+                z
+                    .union([z.string(), z.array(z.string())])
+                    .nullable()
+                    .optional(),
+            ),
         ),
     })
     return z.object({ issues: z.array(issueSchema) })
@@ -112,18 +118,23 @@ function buildJql(baseJql: string, filter: RunsheetFilter | null): string {
     return baseJql
 }
 
-async function jiraFetch(
+/**
+ * A Jira REST call through the run sheet cache. `cacheGeneration` is part of
+ * the key, so bumping it (the admin refresh) makes every existing entry miss.
+ */
+export async function jiraFetch(
     url: string,
     authorization: string,
     init: RequestInit,
     cacheTtlSeconds: number,
+    cacheGeneration: string,
 ): Promise<unknown> {
     // Cache key must capture the request body too — the bulk fetch POSTs a
     // different issue list per filter to the same URL. A named cache keeps
     // these entries away from the public zone cache; they hold committee data
     // and are only ever read back by this module.
     const cache = await caches.open('jira-runsheets')
-    const cacheKey = `${url}#${typeof init.body === 'string' ? init.body : ''}`
+    const cacheKey = `${url}#${encodeURIComponent(cacheGeneration)}#${typeof init.body === 'string' ? init.body : ''}`
 
     const cached = await cache.match(cacheKey)
     if (cached) {
@@ -164,8 +175,31 @@ export interface FetchRunsheetOptions {
      */
     apiBaseUrl?: string
     filter: RunsheetFilter | null
+    /** Replaces `config.jira.jql`, e.g. to read the bump-in items instead of the day's. */
+    jql?: string
     /** How long to cache Jira's responses. Short on conference day. */
     cacheTtlSeconds: number
+    /** From `getRunsheetCacheGeneration`; changes when an admin refreshes. */
+    cacheGeneration: string
+}
+
+/** Basic auth header for the committee's Jira service account. */
+export function jiraAuthorization(apiEmail: string | undefined, apiToken: string | undefined): string {
+    if (!apiEmail || !apiToken) {
+        throw new Error('Jira API credentials are not configured')
+    }
+    return `Basic ${btoa(`${apiEmail}:${apiToken}`)}`
+}
+
+/**
+ * Joins a REST path onto the Jira base. NOT `new URL(path, baseUrl)` — that
+ * drops the base's own path, which is fatal for the scoped-token gateway base
+ * (https://api.atlassian.com/ex/jira/<cloudId>): the cloudId prefix would be
+ * stripped and every call would 404. Same reasoning as the sponsor portal's
+ * jira-client.server.ts.
+ */
+export function joinJiraUrl(baseUrl: string, path: string): string {
+    return `${baseUrl.replace(/\/$/, '')}${path}`
 }
 
 /**
@@ -179,24 +213,17 @@ export async function fetchRunsheet({
     apiToken,
     apiBaseUrl,
     filter,
+    jql,
     cacheTtlSeconds,
+    cacheGeneration,
 }: FetchRunsheetOptions): Promise<RunsheetItem[]> {
-    if (!apiEmail || !apiToken) {
-        throw new Error('Jira API credentials are not configured')
-    }
-    const authorization = `Basic ${btoa(`${apiEmail}:${apiToken}`)}`
+    const authorization = jiraAuthorization(apiEmail, apiToken)
     const { fields } = config.jira
     const baseUrl = apiBaseUrl ?? config.jira.baseUrl
-
-    // NOT `new URL(path, baseUrl)` — that drops the base's own path, which is
-    // fatal for the scoped-token gateway base
-    // (https://api.atlassian.com/ex/jira/<cloudId>): the cloudId prefix would
-    // be stripped and every call would 404. Same reasoning as the sponsor
-    // portal's jira-client.server.ts.
-    const joinUrl = (path: string) => `${baseUrl.replace(/\/$/, '')}${path}`
+    const joinUrl = (path: string) => joinJiraUrl(baseUrl, path)
 
     const searchParams = new URLSearchParams({
-        jql: buildJql(config.jira.jql, filter),
+        jql: buildJql(jql ?? config.jira.jql, filter),
         maxResults: '150',
         fields: 'id',
     })
@@ -206,6 +233,7 @@ export async function fetchRunsheet({
         authorization,
         { method: 'GET' },
         cacheTtlSeconds,
+        cacheGeneration,
     )
     const issueIds = searchResponseSchema.parse(searchBody).issues.map((issue) => issue.id)
 
@@ -225,6 +253,7 @@ export async function fetchRunsheet({
         authorization,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bulkBody },
         cacheTtlSeconds,
+        cacheGeneration,
     )
 
     const issues = buildBulkResponseSchema(fields).parse(bulkResponse).issues
