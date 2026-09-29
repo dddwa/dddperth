@@ -289,8 +289,9 @@ If you ever want sponsors to see it, all three have to come back together.
 
 - **Tier-gated.** Exhibition, screens and induction show only for tiers in `BOOTH_TIERS`
   (`app/lib/sponsors/logistics.ts`) — currently platinum, gold, room and community. Community is
-  included because those sponsorships are often in-kind (lighting, AV) and still bump equipment
-  in. Raffle and the social quote show for everyone, including Raffle Only. **An unmapped tier
+  included because community groups run stands. Digital and in-kind sponsors are excluded: they
+  have no physical presence for the venue to plan around, so the exhibitor export leaves them off
+  too. In-kind needs an "In Kind" option on Jira's tier field, mapped to `inKind`. Raffle and the social quote show for everyone, including Raffle Only. **An unmapped tier
   sees the exhibition sections**: a sponsor shown an irrelevant section can skip it, but one who
   never sees bump-in has no way to tell us when they're arriving.
 - Visibility is re-derived server-side in the action, so a tier change (or a hand-crafted POST)

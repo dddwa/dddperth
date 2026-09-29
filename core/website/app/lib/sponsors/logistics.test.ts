@@ -102,10 +102,15 @@ describe('filterByVisibility', () => {
         expect(result.bumpInSlot).toBeUndefined()
     })
 
-    it('keeps exhibition answers for a community sponsor — in-kind sponsors bump in too', () => {
+    it('keeps exhibition answers for a community sponsor — community groups run stands', () => {
         const result = filterByVisibility(filled, logisticsVisibility('community'))
         expect(result.bumpInSlot).toBe('Friday 1pm - 2pm')
         expect(result.equipmentList).toBe('Banner')
+    })
+
+    it('drops exhibition answers for an in-kind sponsor, who has no stand', () => {
+        expect(logisticsVisibility('inKind').exhibition).toBe(false)
+        expect(filterByVisibility(filled, logisticsVisibility('inKind')).bumpInSlot).toBeUndefined()
     })
 })
 
