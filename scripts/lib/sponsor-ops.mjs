@@ -8,7 +8,7 @@ import path from 'path'
 import prettier from 'prettier'
 import { Project } from 'ts-morph'
 import { fileURLToPath } from 'url'
-import { attachFilesToIssue, loadJiraSession } from './jira-attach.mjs'
+import { attachFilesToIssue, fetchExhibitorRoom, loadJiraSession } from './jira-attach.mjs'
 import { processLogo } from './process-logo.mjs'
 import { SPONSOR_TIERS } from './sponsor-tiers.mjs'
 
@@ -722,8 +722,17 @@ export async function saveSponsor({
         logoUrlLightMode: `/images/sponsors/${year}-${sponsorNameSlug}-light.${ext}`,
         quote: quote || '',
     }
-    // Room sponsors require roomName in the config type. It's committee-assigned,
-    // so a new entry gets the same 'TBC' placeholder the hand-written ones use.
+    // Room sponsors require roomName in the config type. The committee assigns
+    // it in Jira's "Exhibitor Room" field, so a portal import reads it from
+    // there; 'TBC' is only for when nothing has been assigned yet. It must
+    // match the Sessionize room name exactly for the agenda to credit it.
+    if (tier === 'room' && !roomName && portalImport?.issueKey) {
+        const session = await loadJiraSession()
+        if (!session.error) {
+            roomName = await fetchExhibitorRoom(session, portalImport.issueKey)
+            if (roomName) print.info(`Room from ${portalImport.issueKey}'s Exhibitor Room: ${roomName}`)
+        }
+    }
     if (tier === 'room') {
         sponsorObj.roomName = roomName || 'TBC'
     }

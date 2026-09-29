@@ -1558,7 +1558,10 @@ const commonSaveOptions = (command) =>
         .option('--website <url>', 'Sponsor website')
         .option('--quote <text>', 'Sponsor quote shown on the sponsors page')
         .option('--quote-file <file>', 'Read the quote from a file (UTF-8)')
-        .option('--room-name <name>', "Room sponsors only; new room sponsors default to 'TBC'")
+        .option(
+            '--room-name <name>',
+            "Room sponsors only; portal imports default to the issue's Exhibitor Room in Jira, else 'TBC'",
+        )
         .option('--dry-run', 'Process logos into a preview directory; write nothing to the site')
         .option('--preview-dir <dir>', 'Where --dry-run writes the processed logo variants')
         .option('--json', 'Print the result as JSON on stdout (logs go to stderr)')

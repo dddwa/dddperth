@@ -73,6 +73,32 @@ export async function loadJiraSession() {
 }
 
 /**
+ * Reads a sponsor issue's "Exhibitor Room" (the room a Room sponsor's package
+ * covers), using the field id from conference/config/sponsor-portal.ts.
+ *
+ * Returns the room name, or undefined when it's unset or can't be read —
+ * callers fall back to a placeholder rather than failing the import.
+ */
+export async function fetchExhibitorRoom(session, issueKey) {
+    try {
+        const source = await fs.readFile(PORTAL_CONFIG_PATH, 'utf-8')
+        const fieldId = source.match(/exhibitorRoom\s*:\s*'([^']+)'/)?.[1]
+        if (!fieldId) return undefined
+
+        const response = await fetch(
+            `${session.baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}?fields=${fieldId}`,
+            { headers: session.headers },
+        )
+        if (!response.ok) return undefined
+        const value = (await response.json()).fields?.[fieldId]
+        const room = typeof value === 'string' ? value : value?.value
+        return room?.trim() || undefined
+    } catch {
+        return undefined
+    }
+}
+
+/**
  * Attaches processed logo variants to a Jira issue, replacing any existing
  * attachment with the same filename so re-imports don't pile up duplicates
  * (delete failures are tolerated — Jira then just keeps both versions).
