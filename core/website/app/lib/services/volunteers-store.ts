@@ -4,9 +4,14 @@
  * do. Add a role here and it appears in the admin grid — the DB doesn't
  * constrain roles, so no migration is needed.
  */
+/**
+ * Each id is its Jira "Volunteer Team" label minus the `team-` prefix
+ * (`team-room-coordinators`), which is how the run sheet finds a filtered
+ * team's info links in /admin/settings/volunteers.
+ */
 export const VOLUNTEER_ROLES = [
-    { id: 'room_coordinator', label: 'Room coordinator' },
-    { id: 'photographer', label: 'Photographer' },
+    { id: 'room-coordinators', label: 'Room coordinator' },
+    { id: 'photographers', label: 'Photographer' },
 ] as const
 
 export type VolunteerRole = (typeof VOLUNTEER_ROLES)[number]['id']

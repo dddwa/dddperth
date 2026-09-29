@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import { runsheetSettingsSchema } from './runsheets'
 import { speakerSettingsSchema } from './speakers'
+import { volunteerSettingsSchema } from './volunteers'
 
 /**
  * Every section of /admin/settings that stores values in the `admin_settings`
@@ -12,6 +13,7 @@ export const ADMIN_SETTINGS_SCHEMAS = {
     speakers: speakerSettingsSchema,
     // No settings page: written by the run sheets' refresh button.
     runsheets: runsheetSettingsSchema,
+    volunteers: volunteerSettingsSchema,
 } satisfies Record<string, z.ZodType>
 
 export type AdminSettingsSection = keyof typeof ADMIN_SETTINGS_SCHEMAS

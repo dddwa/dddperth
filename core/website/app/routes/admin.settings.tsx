@@ -121,6 +121,12 @@ export default function AdminSettings() {
                         </AppLink>{' '}
                         — checklist due dates, training, dinner, links and Meet the Experts slots
                     </li>
+                    <li>
+                        <AppLink to="/admin/settings/volunteers" unstyled color="indigo.9" textDecoration="underline">
+                            Volunteers
+                        </AppLink>{' '}
+                        — info links for each volunteer role
+                    </li>
                 </styled.ul>
             </AdminCard>
 
