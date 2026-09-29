@@ -89,6 +89,92 @@ function flattenGradientsToBlack(svg) {
         .replace(/stroke\s*=\s*"url\(#[^)]*\)"/gi, 'stroke="#000000"')
 }
 
+/** Longest side, in pixels, that an SVG is rasterised at to find its artwork bounds. */
+const SVG_MEASURE_SIZE = 2000
+
+function parseLength(value) {
+    if (value == null || /%/.test(value)) return undefined
+    const n = parseFloat(value)
+    return Number.isFinite(n) && n > 0 ? n : undefined
+}
+
+function formatNumber(n) {
+    return String(Math.round(n * 10000) / 10000)
+}
+
+/**
+ * Crops an SVG's viewBox to the bounds of what it actually paints.
+ *
+ * The sponsor strip sizes a logo by its canvas, so artwork padded inside a
+ * larger canvas renders small (Databricks shipped a 160x25 logo in a 200x86
+ * canvas). Rasters get `.trim()`; this is the SVG equivalent. Bounds are
+ * measured by rendering rather than by reading path data, since transforms,
+ * clip paths and strokes all move the painted edge.
+ *
+ * Returns the SVG untouched when the root has no usable size or the render
+ * finds nothing to trim.
+ */
+export async function cropSvgToArtwork(svg) {
+    const rootMatch = svg.match(/<svg\b[^>]*>/i)
+    if (!rootMatch) return svg
+    const root = rootMatch[0]
+    const attr = (name) => root.match(new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, 'i'))?.[1]
+
+    let viewBox = attr('viewBox')
+        ?.trim()
+        .split(/[\s,]+/)
+        .map(Number)
+    if (!viewBox || viewBox.length !== 4 || viewBox.some((n) => !Number.isFinite(n))) {
+        const width = parseLength(attr('width'))
+        const height = parseLength(attr('height'))
+        if (!width || !height) return svg
+        viewBox = [0, 0, width, height]
+    }
+    const [vbX, vbY, vbWidth, vbHeight] = viewBox
+    if (vbWidth <= 0 || vbHeight <= 0) return svg
+
+    // Render with width/height matching the viewBox so pixels map linearly
+    // onto viewBox units, whatever aspect ratio the root declared.
+    const withoutSize = (tag) =>
+        tag.replace(/\s(?:width|height|viewBox|preserveAspectRatio)\s*=\s*(["'])[^"']*\1/gi, '')
+    const sizedRoot = (x, y, w, h) =>
+        withoutSize(root).replace(
+            /^<svg\b/i,
+            `<svg width="${formatNumber(w)}" height="${formatNumber(h)}" viewBox="${[x, y, w, h].map(formatNumber).join(' ')}"`,
+        )
+
+    const scale = SVG_MEASURE_SIZE / Math.max(vbWidth, vbHeight)
+    // Trim on alpha alone, so artwork of any colour (white included) counts.
+    // Two passes because sharp applies trim before extractChannel regardless
+    // of chain order.
+    const alpha = await sharp(Buffer.from(svg.replace(root, sizedRoot(vbX, vbY, vbWidth, vbHeight))), {
+        density: 72 * scale,
+    })
+        .ensureAlpha()
+        .extractChannel('alpha')
+        .png()
+        .toBuffer()
+    const { info } = await sharp(alpha)
+        .trim({ background: '#000000', threshold: 1 })
+        .toBuffer({ resolveWithObject: true })
+
+    const left = Math.max(0, -(info.trimOffsetLeft ?? 0) / scale)
+    const top = Math.max(0, -(info.trimOffsetTop ?? 0) / scale)
+    const width = Math.min(vbWidth - left, info.width / scale)
+    const height = Math.min(vbHeight - top, info.height / scale)
+
+    // Antialiasing and rounding shift a tight box by a pixel or so; rewriting
+    // the root for that is churn, not a fix.
+    const tolerance = 0.01
+    const right = vbWidth - left - width
+    const bottom = vbHeight - top - height
+    if ([left, right].every((d) => d <= vbWidth * tolerance) && [top, bottom].every((d) => d <= vbHeight * tolerance)) {
+        return svg
+    }
+
+    return svg.replace(root, sizedRoot(vbX + left, vbY + top, width, height))
+}
+
 /**
  * Generates light- and dark-mode variants of a sponsor logo from a single source image.
  *
@@ -107,7 +193,7 @@ export async function processLogo(buffer, filename) {
     try {
         if (filename.endsWith('.svg')) {
             // SVG processing - two-step approach as requested
-            const svgContent = buffer.toString('utf-8')
+            const svgContent = await cropSvgToArtwork(buffer.toString('utf-8'))
             results.original = 'data:image/svg+xml;base64,' + buffer.toString('base64')
 
             // A reversed asset — white artwork meant for dark backgrounds, with

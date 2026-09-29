@@ -62,7 +62,7 @@ node scripts/sponsor-manager.mjs
 
 ## `process-logo.mjs`
 
-Generates `<year>-<slug>-light.<ext>` and `<year>-<slug>-dark.<ext>` from a single source image. Uses the same image processing as `add-sponsor.mjs` (shared via `scripts/lib/process-logo.mjs`).
+Generates `<year>-<slug>-light.<ext>` and `<year>-<slug>-dark.<ext>` from a single source image. Transparent padding is cropped off both rasters and SVGs (an SVG gets its viewBox tightened to the painted artwork). Uses the same image processing as `add-sponsor.mjs` (shared via `scripts/lib/process-logo.mjs`).
 
 ```bash
 node scripts/process-logo.mjs <input-file> <year> <slug> [--out-dir <dir>]
