@@ -146,6 +146,14 @@ export const conference2026: ConferenceYear = {
                 logoUrlLightMode: '/images/sponsors/2026-interfuze-light.svg',
                 roomName: 'TBC',
             },
+            {
+                name: 'Databricks',
+                website: 'https://www.databricks.com/',
+                logoUrlDarkMode: '/images/sponsors/2026-databricks-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-databricks-light.svg',
+                quote: "The best Data and AI work happens when people share ideas, swap lessons and build on each other's thinking. That's what DDD Perth is all about, and it's why Databricks is proud to sponsor alongside Endava. We're looking forward to the conversations, the connections and the practical ideas that help Perth's developers turn their data into real impact with Data and AI.",
+                roomName: 'TBC',
+            },
         ],
         digital: [
             {
@@ -161,6 +169,20 @@ export const conference2026: ConferenceYear = {
                 logoUrlDarkMode: '/images/sponsors/2026-uwa-data-institute-dark.png',
                 logoUrlLightMode: '/images/sponsors/2026-uwa-data-institute-light.png',
                 quote: 'The UWA Data Institute is proud to support DDD Perth as a Community Sponsor. We’re passionate about strengthening Western Australia’s data, technology and innovation ecosystem, and DDD Perth provides an important platform for the community to connect, share ideas and learn from one another.',
+            },
+            {
+                name: 'The Digital Bench',
+                website: 'https://www.thedigitalbench.co.uk/',
+                logoUrlDarkMode: '/images/sponsors/2026-the-digital-bench-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-the-digital-bench-light.svg',
+                quote: 'Delighted to be supporting DDD Perth — bringing so much talent, curiosity and ambition together in one place. Connecting the people shaping the future of tech is what The Digital Bench is all about.',
+            },
+            {
+                name: 'Black Ocean',
+                website: 'https://blackocean.io/',
+                logoUrlDarkMode: '/images/sponsors/2026-black-ocean-dark.svg',
+                logoUrlLightMode: '/images/sponsors/2026-black-ocean-light.svg',
+                quote: 'I came to DDD Perth in 2024 as an attendee, so sponsoring it with Black Ocean felt like an obvious first step. It’s where Perth’s data and dev people actually meet each other. I’ll be there on the day, so come and find me if you want to talk Fabric, Power BI or where the contract market’s heading.',
             },
         ],
         community: [
