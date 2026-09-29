@@ -1,6 +1,7 @@
-import { redirect, type RouterContext } from 'react-router'
+import { data, redirect, type RouterContext } from 'react-router'
 import { getServices } from '~/remix-app-load-context'
 import type { AppServices } from './services/app-services'
+import type { NotASponsorContact } from './sponsors/not-a-sponsor-contact'
 import type { SpeakerRecord } from './services/speakers-store'
 import type { SponsorRecord } from './services/sponsors-store'
 import type { User } from './session-types'
@@ -101,7 +102,7 @@ export async function requireSponsorContact(
 
     if (await services.auth.isAdminEmail(user.email)) throw redirect('/admin')
     if (await services.speakers.isSpeakerContact(user.email)) throw redirect('/speaker-portal')
-    throw new Response('Not Found', { status: 404 })
+    throw data<NotASponsorContact>({ reason: 'not-a-sponsor-contact', email: user.email }, { status: 404 })
 }
 
 /**
