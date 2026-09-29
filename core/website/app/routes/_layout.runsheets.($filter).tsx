@@ -4,11 +4,14 @@ import { data, Form, redirect, useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
+import { RunsheetRefreshForm } from '~/components/runsheet-refresh-form'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
+import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
+import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { fetchRunsheet, parseRunsheetFilter } from '~/lib/runsheets/runsheet-client.server'
 import { noIndexMeta } from '~/lib/seo'
-import { getConferenceState, getConfig } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 
@@ -31,7 +34,12 @@ export const meta = noIndexMeta
 const CACHE_TTL_CONFERENCE_DAY_SECONDS = 5 * 60
 const CACHE_TTL_DEFAULT_SECONDS = 30 * 60
 
-export async function action({ request }: Route.ActionArgs) {
+function cacheTtlSeconds(context: Route.LoaderArgs['context']): number {
+    const isConferenceDay = getConferenceState(context).conferenceState === 'conference-day'
+    return isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
     const config = conferenceManifest.runsheets
     if (!config) {
         throw new Response('Not Found', { status: 404 })
@@ -42,13 +50,18 @@ export async function action({ request }: Route.ActionArgs) {
     // Only ever redirect to a filter we recognise — the value arrives from a
     // form post and lands in the URL.
     const parsed = parseRunsheetFilter(typeof filter === 'string' ? filter : undefined, config)
-    if (parsed) {
-        return redirect(`/runsheets/${parsed.kind}.${parsed.value}`)
+    const target = parsed ? `/runsheets/${parsed.kind}.${parsed.value}` : '/runsheets'
+
+    // Admin-only: every run sheet view re-reads Jira on its next load.
+    if (formData.get('intent') === 'refresh') {
+        const admin = await requireAdmin(request, context)
+        await invalidateRunsheetCache(getServices(context), admin.email)
     }
-    return redirect('/runsheets')
+
+    return redirect(target)
 }
 
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
     const config = conferenceManifest.runsheets
     if (!config) {
         throw new Response('Not Found', { status: 404 })
@@ -59,8 +72,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     // read once in build-config.server.ts.
     const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
 
-    const isConferenceDay = getConferenceState(context).conferenceState === 'conference-day'
-    const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
+    const ttl = cacheTtlSeconds(context)
+    const services = getServices(context)
+    const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
 
     const items = await fetchRunsheet({
         config,
@@ -68,8 +82,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         apiToken,
         apiBaseUrl,
         filter,
-        cacheTtlSeconds,
+        cacheTtlSeconds: ttl,
+        cacheGeneration: cacheState.generation,
     })
+
+    const canRefresh = await isAdminUser(user, services)
 
     const options = [
         ...Object.entries(config.teamLabels).map(([key, label]) => ({ value: `team.${key}`, label })),
@@ -77,8 +94,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     ]
 
     return data(
-        { items, filter: filter ? `${filter.kind}.${filter.value}` : '', options },
-        { headers: { 'Cache-Control': `max-age=${cacheTtlSeconds}` } },
+        {
+            items,
+            filter: filter ? `${filter.kind}.${filter.value}` : '',
+            options,
+            canRefresh,
+            refreshedAt: canRefresh ? cacheState.refreshedAt : null,
+            hasBumpIn: Boolean(config.bumpIn),
+        },
+        // Private while an admin is looking, so a shared cache can't hand
+        // them the pre-refresh page.
+        { headers: { 'Cache-Control': canRefresh ? 'private, no-store' : `max-age=${ttl}` } },
     )
 }
 
@@ -96,12 +122,30 @@ function formatTime(isoDateTime: string | null): string {
 }
 
 export default function Runsheets() {
-    const { items, filter, options } = useLoaderData<typeof loader>()
+    const { items, filter, options, canRefresh, refreshedAt, hasBumpIn } = useLoaderData<typeof loader>()
 
     return (
         <AdminLayout heading="Runsheets">
             <Box maxW="4xl" mx="auto">
                 <AdminCard overflow="auto">
+                    {hasBumpIn || canRefresh ? (
+                        <Flex
+                            alignItems="center"
+                            justifyContent="space-between"
+                            gap="2"
+                            marginBottom="2"
+                            flexWrap="wrap"
+                        >
+                            {hasBumpIn ? (
+                                <AppLink unstyled to="/runsheets/bump-in" textDecoration="underline">
+                                    Bump-in run sheet
+                                </AppLink>
+                            ) : (
+                                <span />
+                            )}
+                            {canRefresh ? <RunsheetRefreshForm refreshedAt={refreshedAt} filter={filter} /> : null}
+                        </Flex>
+                    ) : null}
                     <Form method="post">
                         <Flex alignItems="center" marginBottom="2" maxWidth="fit" gap="1">
                             <styled.label htmlFor="runsheet-filter" srOnly>
