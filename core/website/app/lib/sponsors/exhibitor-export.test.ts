@@ -98,6 +98,19 @@ describe('buildExhibitorSource', () => {
         expect(source.equipmentList).toBeUndefined()
     })
 
+    it('takes the committee-assigned room and space from Jira even once the portal owns logistics', () => {
+        const source = buildExhibitorSource(
+            {
+                companyName: 'Acme',
+                profile: { logistics: { screenOrders: '65" LCD ($600+GST)' }, logisticsUpdatedAt: 123 },
+            },
+            { exhibitorRoom: 'River View Room 2', exhibitorSpaceNumber: '14', screenOrders: 'Stale Jira order' },
+        )
+        expect(source.exhibitorRoom).toBe('River View Room 2')
+        expect(source.exhibitorSpaceNumber).toBe('14')
+        expect(source.screenOrders).toBe('65" LCD ($600+GST)')
+    })
+
     it('offers the exhibitor contact and portal contacts as known emails', () => {
         const source = buildExhibitorSource(
             { companyName: 'Acme', contacts: ['a@acme.test'], profile: null },
@@ -195,6 +208,10 @@ describe('buildExhibitorRow', () => {
                 equipmentList: '1x banner (5kg)',
                 trolleyOrForklift: 'Trolley please',
                 loadingDockAssistance: 'Yes',
+                exhibitorRoom: 'River View Room 2',
+                exhibitorSpaceNumber: '14',
+                screenOrders: '55" LCD ($500+GST)',
+                screenInvoicingEmail: 'accounts@example.com',
             },
             CONFERENCE_DATE,
         )
@@ -216,7 +233,30 @@ describe('buildExhibitorRow', () => {
             '',
             'Yes',
             '',
+            'River View Room 2',
+            '14',
+            '55" LCD ($500+GST)',
+            'accounts@example.com',
         ])
+    })
+
+    it('appends our columns after the venue template, so its positions are unchanged', () => {
+        expect(EXHIBITOR_COLUMNS.indexOf('Additional Notes')).toBe(15)
+        expect(EXHIBITOR_COLUMNS.slice(16)).toEqual([
+            'Exhibition Room',
+            'Exhibition Space Number',
+            'TV Screen Order',
+            'Screen Invoicing Email',
+        ])
+    })
+
+    it('leaves the invoicing email out when no screen was ordered', () => {
+        const row = buildExhibitorRow(
+            { companyName: 'Acme Rockets', screenInvoicingEmail: 'accounts@example.com' },
+            CONFERENCE_DATE,
+        )
+        expect(row.at(-2)).toBe('')
+        expect(row.at(-1)).toBe('')
     })
 })
 

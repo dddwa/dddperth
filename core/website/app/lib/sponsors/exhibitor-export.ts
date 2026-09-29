@@ -28,6 +28,11 @@ export interface ExhibitorSource {
     trolleyOrForklift?: string
     loadingDockAssistance?: string
     additionalNotes?: string
+    /** Committee-assigned, so always from Jira. */
+    exhibitorRoom?: string
+    exhibitorSpaceNumber?: string
+    screenOrders?: string
+    screenInvoicingEmail?: string
 }
 
 export interface ExhibitorSponsorRecord {
@@ -70,6 +75,12 @@ export function buildExhibitorSource(
         trolleyOrForklift: pick('trolleyOrForklift'),
         loadingDockAssistance: pick('loadingDockAssistance'),
         additionalNotes: fromPortal.additionalNotes,
+        // The committee assigns these, so the portal's authority over the
+        // sponsor's own answers doesn't apply.
+        exhibitorRoom: fromJira.exhibitorRoom || undefined,
+        exhibitorSpaceNumber: fromJira.exhibitorSpaceNumber || undefined,
+        screenOrders: pick('screenOrders'),
+        screenInvoicingEmail: pick('screenInvoicingEmail'),
     }
 }
 
@@ -91,6 +102,12 @@ export const EXHIBITOR_COLUMNS = [
     'Is a Forklift Required?',
     'Assistance Required Moving From Loading Dock to Room?',
     'Additional Notes',
+    // Ours, not the venue template's: appended so the venue's own columns keep
+    // their positions. AV sets up screens per stand.
+    'Exhibition Room',
+    'Exhibition Space Number',
+    'TV Screen Order',
+    'Screen Invoicing Email',
 ] as const
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -243,6 +260,12 @@ export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date 
         forklift,
         source.loadingDockAssistance ?? '',
         source.additionalNotes ?? '',
+        source.exhibitorRoom ?? '',
+        source.exhibitorSpaceNumber ?? '',
+        source.screenOrders ?? '',
+        // Only meaningful with an order; a leftover email alone would read as
+        // a request for screens.
+        source.screenOrders ? (source.screenInvoicingEmail ?? '') : '',
     ]
 }
 

@@ -190,6 +190,51 @@ describe('pushLogistics', () => {
     })
 })
 
+describe('getExhibitorLogistics', () => {
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('adds the committee-assigned room and space number to each sponsor', async () => {
+        const portalConfig = conferenceManifest.sponsorPortal
+        const fields = portalConfig?.jira.fields
+        const screenOrders = fields?.logistics?.screenOrders
+        if (!portalConfig || !fields?.exhibitorRoom || !fields.exhibitorSpaceNumber || !screenOrders) {
+            throw new Error('Expected exhibitor field mappings are required for this test')
+        }
+        const fetchMock = vi.fn<typeof fetch>(async () =>
+            Response.json({
+                isLast: true,
+                issues: [
+                    {
+                        key: 'SPN-1',
+                        fields: {
+                            [fields.exhibitorRoom as string]: { id: 'room', value: 'River View Room 2' },
+                            [fields.exhibitorSpaceNumber as string]: '14',
+                            [screenOrders]: [{ id: 'screen', value: '55" LCD ($500+GST)' }],
+                        },
+                    },
+                    { key: 'SPN-2', fields: {} },
+                ],
+            }),
+        )
+        vi.stubGlobal('fetch', fetchMock)
+        const client = createJiraClient({ portalConfig, apiEmail: 'test@example.com', apiToken: 'test' })
+
+        const logistics = await client.getExhibitorLogistics()
+
+        expect(logistics.get('SPN-1')).toEqual({
+            exhibitorRoom: 'River View Room 2',
+            exhibitorSpaceNumber: '14',
+            screenOrders: '55" LCD ($500+GST)',
+        })
+        expect(logistics.get('SPN-2')).toEqual({})
+        const requestBody = fetchMock.mock.calls.at(0)?.[1]?.body
+        if (typeof requestBody !== 'string') throw new Error('Expected Jira request body')
+        expect(JSON.parse(requestBody).fields).toEqual(
+            expect.arrayContaining([fields.exhibitorRoom, fields.exhibitorSpaceNumber]),
+        )
+    })
+})
+
 describe('searchSponsorIssues', () => {
     afterEach(() => vi.unstubAllGlobals())
 

@@ -103,6 +103,8 @@ export function assignedRoom(value: string | undefined, unassignedValue?: string
 /**
  * Sponsor-supplied logistics read back from Jira, keyed by the portal's own
  * field names (see LOGISTICS_KEYS) so callers never deal in customfield ids.
+ * `getExhibitorLogistics` also adds the committee-assigned `exhibitorRoom` and
+ * `exhibitorSpaceNumber`, which are read here but never pushed.
  */
 export type ExhibitorLogistics = Record<string, string>
 
@@ -535,8 +537,8 @@ export function createJiraClient(args: {
 
         async getAssetTracking() {
             const map = new Map<string, AssetTracking>()
-            const requestFields = [fields.assetsRequired, fields.assetsStatus, fields.assetUploadUrl].filter((id): id is string =>
-                Boolean(id),
+            const requestFields = [fields.assetsRequired, fields.assetsStatus, fields.assetUploadUrl].filter(
+                (id): id is string => Boolean(id),
             )
             if (requestFields.length === 0) return map
 
@@ -581,9 +583,11 @@ export function createJiraClient(args: {
             const exhibitor = fields.logistics
             if (!exhibitor) return map
 
-            const requestFields = Object.values(exhibitor).filter(
-                (id): id is string => typeof id === 'string' && id !== '',
-            )
+            const requestFields = [
+                ...Object.values(exhibitor),
+                fields.exhibitorRoom,
+                fields.exhibitorSpaceNumber,
+            ].filter((id): id is string => typeof id === 'string' && id !== '')
             if (requestFields.length === 0) return map
 
             // Same result set as the sync, so the spreadsheet covers exactly
@@ -607,6 +611,15 @@ export function createJiraClient(args: {
                         const text = fieldAsText(issueFields, fieldId)
                         if (text !== undefined) entry[portalKey] = text
                     }
+                    // Read live rather than from the D1 sync, so a room the
+                    // committee assigns shows up in the next export.
+                    const room = assignedRoom(
+                        fieldAsText(issueFields, fields.exhibitorRoom),
+                        portalConfig.jira.unassignedRoomValue,
+                    )
+                    if (room) entry.exhibitorRoom = room
+                    const spaceNumber = fieldAsText(issueFields, fields.exhibitorSpaceNumber)
+                    if (spaceNumber) entry.exhibitorSpaceNumber = spaceNumber
                     map.set(issue.key, entry)
                 }
 

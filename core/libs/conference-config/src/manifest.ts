@@ -354,6 +354,12 @@ export interface SponsorPortalJiraConfig {
          */
         exhibitorRoom?: string
         /**
+         * The committee-assigned stand number within the exhibition space.
+         * Read-only, like `exhibitorRoom`: it only feeds the venue's exhibitor
+         * spreadsheet, so AV and the venue can find each sponsor's spot.
+         */
+        exhibitorSpaceNumber?: string
+        /**
          * Paragraph field the sponsor's quote/blurb is pushed into on every
          * portal save (sponsor-owned — the portal's value overrides Jira's).
          * Omit if the field doesn't exist; the push is skipped.
