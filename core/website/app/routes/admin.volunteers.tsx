@@ -1,15 +1,18 @@
+import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { data, useFetcher, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { fieldLabelClass, inputClass } from '~/components/portal-form'
+import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
 import { VolunteerPlanner, type VolunteerRosterChange } from '~/components/volunteer-planner'
 import { requireAdmin } from '~/lib/auth.server'
 import { getScheduleForOrganisers } from '~/lib/published-agenda.server'
 import { isVolunteerRole, VOLUNTEER_ROLES, type VolunteerRole } from '~/lib/services/volunteers-store'
 import { useQueuedSave } from '~/lib/use-queued-save'
+import { buildVolunteerRosterTable, type VolunteerRosterInput } from '~/lib/volunteer-roster-table'
 import { getConferenceState, getServices } from '~/remix-app-load-context'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -34,6 +37,21 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const rooms = (schedule?.rooms ?? []).map((room) => ({ id: String(room.id), name: room.name }))
 
+    // A plenum talk (a keynote) is held across the run sheets' plenum rooms
+    // with the walls open, but Sessionize files it under the first of them
+    // only — so it spans the run of plenum rooms from its own, as long as
+    // they're free. Its shifts still belong to its own room.
+    const { plenumLocations = [], sessionizeRoomLocations = {} } = conferenceManifest.runsheets ?? {}
+    const isPlenumRoom = (index: number) =>
+        plenumLocations.includes(sessionizeRoomLocations[rooms[index]?.name ?? ''] ?? '')
+    const plenumColSpan = (roomId: string, busyRoomIds: string[]) => {
+        const roomIndex = rooms.findIndex((room) => room.id === roomId)
+        if (!isPlenumRoom(roomIndex)) return 1
+        let span = 1
+        while (isPlenumRoom(roomIndex + span) && !busyRoomIds.includes(rooms[roomIndex + span].id)) span++
+        return span
+    }
+
     // Every time slot is a calendar row, breaks included, so the day reads
     // top to bottom. Breaks and changeovers (service sessions) show but get
     // no seats. A session spans every slot that starts before it ends.
@@ -47,11 +65,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 const endsAt = room.session.endsAt?.slice(11, 19)
                 const later = timeSlots.slice(slotIndex + 1)
                 const rowSpan = 1 + (endsAt ? later.filter((slot) => slot.slotStart < endsAt).length : 0)
+                const colSpan = room.session.isPlenumSession
+                    ? plenumColSpan(
+                          String(room.id),
+                          timeSlot.rooms.map((other) => String(other.id)),
+                      )
+                    : 1
                 return [
                     String(room.id),
                     {
                         title: room.session.title,
                         rowSpan,
+                        colSpan,
                         isService: room.session.isServiceSession,
                         endLabel: endsAt ? formatTime(endsAt) : '',
                     },
@@ -305,9 +330,22 @@ export default function AdminVolunteers() {
             </AdminCard>
 
             <AdminCard>
-                <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
-                    Room coordinators &amp; photographers
-                </styled.h2>
+                <Flex justify="space-between" align="center" gap="4" flexWrap="wrap" mb="2">
+                    <styled.h2 fontSize="xl" fontWeight="semibold">
+                        Room coordinators &amp; photographers
+                    </styled.h2>
+                    {slots.length > 0 && (
+                        <Flex gap="2" flexWrap="wrap">
+                            {VOLUNTEER_ROLES.map((role) => (
+                                <CopyRosterButton
+                                    key={role.id}
+                                    role={role}
+                                    roster={{ rooms, slots, volunteers, assignments }}
+                                />
+                            ))}
+                        </Flex>
+                    )}
+                </Flex>
                 <styled.p fontSize="sm" color="admin.600" mb="4">
                     Time slots and rooms come from the {year} agenda in Sessionize, including before it&apos;s
                     published. Changes save as you make them. Several people can share a role in a room; volunteers
@@ -337,5 +375,77 @@ export default function AdminVolunteers() {
                 )}
             </AdminCard>
         </AdminLayout>
+    )
+}
+
+/** Opens one role's roster table in a modal, built from the grid as it
+ * stands so it reflects the latest drag without a round trip. Copy puts it on
+ * the clipboard as HTML, so it pastes into Gmail/Outlook as a real table; the
+ * preview can also be selected and copied by hand if the clipboard's refused. */
+function CopyRosterButton({ role, roster }: { role: (typeof VOLUNTEER_ROLES)[number]; roster: VolunteerRosterInput }) {
+    const [open, setOpen] = useState(false)
+    const [copied, setCopied] = useState(false)
+    const table = open ? buildVolunteerRosterTable(roster, role.id) : null
+
+    const copy = async () => {
+        if (!table) return
+        try {
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'text/html': new Blob([table.html], { type: 'text/html' }),
+                    'text/plain': new Blob([table.text], { type: 'text/plain' }),
+                }),
+            ])
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        } catch {
+            // Clipboard refused — the preview can still be selected and copied.
+        }
+    }
+
+    return (
+        <>
+            <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                color="admin.900"
+                borderColor="admin.400"
+                bg="white"
+                _hover={{ bg: 'admin.100' }}
+                onClick={() => setOpen(true)}
+            >
+                Copy {role.label.toLowerCase()} roster
+            </Button>
+            <SpeakerModal title={`${role.label} roster`} open={open} onOpenChange={setOpen} wide>
+                {table && (
+                    <Flex direction="column" alignItems="flex-start" gap="3">
+                        <Button
+                            type="button"
+                            size="xs"
+                            variant="outline"
+                            color="admin.900"
+                            borderColor="admin.400"
+                            bg="white"
+                            _hover={{ bg: 'admin.100' }}
+                            onClick={() => void copy()}
+                        >
+                            {copied ? 'Copied' : 'Copy formatted'}
+                        </Button>
+                        <styled.span role="status" srOnly>
+                            {copied ? `${role.label} roster copied` : ''}
+                        </styled.span>
+                        <Box
+                            maxW="full"
+                            fontSize="sm"
+                            overflowX="auto"
+                            // Escaped by buildVolunteerRosterTable; this is the
+                            // exact HTML the copy button puts on the clipboard.
+                            dangerouslySetInnerHTML={{ __html: table.html }}
+                        />
+                    </Flex>
+                )}
+            </SpeakerModal>
+        </>
     )
 }

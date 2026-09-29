@@ -49,9 +49,11 @@ export interface VolunteerPlannerSlot {
     /**
      * The session starting in each room at this slot, by room id. A room
      * with nothing starting here is either covered by a longer session from
-     * above or empty. Service sessions (breaks) get no shifts.
+     * above or empty. Service sessions (breaks) get no shifts. `colSpan` is
+     * how many rooms from this one it fills — more than one for a plenum
+     * talk, whose shifts still belong to this room.
      */
-    sessions: Record<string, { title: string; rowSpan: number; isService: boolean; endLabel: string }>
+    sessions: Record<string, { title: string; rowSpan: number; colSpan: number; isService: boolean; endLabel: string }>
 }
 
 export interface VolunteerPlannerVolunteer {
@@ -535,7 +537,7 @@ export function VolunteerPlanner({
                                             data-lane={session.isService ? 'service' : 'session'}
                                             style={{
                                                 gridRow,
-                                                gridColumn: `${roomStartLine(roomIndex)} / span ${TRACKS_PER_ROOM}`,
+                                                gridColumn: `${roomStartLine(roomIndex)} / ${roomStartLine(roomIndex + session.colSpan - 1) + TRACKS_PER_ROOM}`,
                                             }}
                                         >
                                             <styled.p

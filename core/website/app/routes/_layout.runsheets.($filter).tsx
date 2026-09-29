@@ -66,8 +66,11 @@ export async function action({ request, context }: Route.ActionArgs) {
         const admin = await requireAdmin(request, context)
         await invalidateRunsheetCache(getServices(context), admin.email)
     }
-    const url = new URL(request.url)
-    return redirect(`${url.pathname}${url.search}`)
+    // No redirect: this is only posted by RunsheetFreshness's fetcher, which
+    // revalidates the page's loaders itself. A redirect built from
+    // `request.url` would also point at the single-fetch `/runsheets.data`
+    // endpoint, and a fetcher that gets a redirect navigates the page to it.
+    return null
 }
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {

@@ -70,7 +70,7 @@ export function RunsheetFreshness({
     const updated = DateTime.fromISO(fetchedAt, { zone: timezone })
     const refreshing = revalidator.state === 'loading' || cacheClear.state !== 'idle'
     const refresh = () => {
-        // The action redirects back to this page, which reloads its data.
+        // A fetcher action revalidates the page's loaders, so this reloads its data too.
         if (clearsJiraCache) void cacheClear.submit({ intent: 'refresh' }, { method: 'post' })
         else void revalidator.revalidate()
     }
