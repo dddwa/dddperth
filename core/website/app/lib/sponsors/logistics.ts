@@ -6,9 +6,10 @@ import { z } from 'zod'
  * Pure — no platform imports.
  */
 
-/** Tiers with an exhibition space. Community is in: those sponsorships are
- * often in-kind and still bump equipment in. Mapped tierMap keys, not raw
- * Jira values. */
+/** Tiers with an exhibition space. Community is in: community groups run
+ * stands and bump equipment in. In-kind is out: those sponsors supply
+ * services rather than exhibit, so the venue has nothing to plan for them.
+ * Mapped tierMap keys, not raw Jira values. */
 export const BOOTH_TIERS = ['platinum', 'gold', 'room', 'community'] as const
 
 /** Which sections a sponsor sees, by mapped tier. */
@@ -28,7 +29,7 @@ export interface LogisticsVisibility {
 /** An unknown tier sees the exhibition sections — better to show a sponsor a
  * section they can skip than to hide bump-in from someone who needs it. */
 export function logisticsVisibility(mappedTier: string | undefined): LogisticsVisibility {
-    const known = ['platinum', 'gold', 'room', 'coffeecart', 'digital', 'community', 'raffleonly']
+    const known = ['platinum', 'gold', 'room', 'coffeecart', 'digital', 'community', 'inkind', 'raffleonly']
     const tier = (mappedTier ?? '').toLowerCase()
     const isBooth = BOOTH_TIERS.includes(tier as (typeof BOOTH_TIERS)[number]) || !known.includes(tier)
 

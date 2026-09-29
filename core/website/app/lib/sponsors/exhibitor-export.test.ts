@@ -5,6 +5,7 @@ import {
     buildExhibitorSource,
     deriveParkingTimes,
     EXHIBITOR_COLUMNS,
+    formatLoadingDockAttendees,
     splitBumpSlot,
     splitTrolleyForklift,
 } from './exhibitor-export'
@@ -96,6 +97,63 @@ describe('buildExhibitorSource', () => {
         expect(source.contactName).toBeUndefined()
         expect(source.equipmentList).toBeUndefined()
     })
+
+    it('offers the exhibitor contact and portal contacts as known emails', () => {
+        const source = buildExhibitorSource(
+            { companyName: 'Acme', contacts: ['a@acme.test'], profile: null },
+            { exhibitorContactEmail: 'logistics@acme.test', loadingDockAttendees: 'Road Runner' },
+        )
+        expect(source.loadingDockAttendees).toBe('Road Runner')
+        expect(source.knownEmails).toEqual(['logistics@acme.test', 'a@acme.test'])
+    })
+})
+
+describe('formatLoadingDockAttendees', () => {
+    const contacts = ['Road.Runner@acme.test', 'wile.coyote@acme.test', 'events@acme.test']
+
+    it('attaches the matching contact email to each named attendee', () => {
+        expect(formatLoadingDockAttendees('Road Runner\nWile Coyote', contacts)).toBe(
+            'Road Runner - Road.Runner@acme.test\nWile Coyote - wile.coyote@acme.test',
+        )
+    })
+
+    it('splits names given on one line rather than one per line', () => {
+        expect(formatLoadingDockAttendees('Road Runner, Wile Coyote', contacts)).toBe(
+            'Road Runner - Road.Runner@acme.test\nWile Coyote - wile.coyote@acme.test',
+        )
+        expect(formatLoadingDockAttendees('Road Runner and Wile Coyote', contacts).split('\n')).toHaveLength(2)
+    })
+
+    it('matches concatenated and reversed local parts', () => {
+        expect(formatLoadingDockAttendees('Marvin Martian', ['marvinmartian@example.com'])).toBe(
+            'Marvin Martian - marvinmartian@example.com',
+        )
+        expect(formatLoadingDockAttendees('Marvin Martian', ['martian_marvin@example.com'])).toBe(
+            'Marvin Martian - martian_marvin@example.com',
+        )
+    })
+
+    it('leaves an attendee who already gave an email as written', () => {
+        expect(formatLoadingDockAttendees('Road Runner <road@elsewhere.test>', contacts)).toBe(
+            'Road Runner <road@elsewhere.test>',
+        )
+    })
+
+    it('leaves a name bare when no contact matches, or more than one does', () => {
+        expect(formatLoadingDockAttendees('Pat Nobody', contacts)).toBe('Pat Nobody')
+        expect(formatLoadingDockAttendees('Marvin Martian', ['marvin.martian@a.test', 'martian.marvin@b.test'])).toBe(
+            'Marvin Martian',
+        )
+    })
+
+    it('does not guess from a single name', () => {
+        expect(formatLoadingDockAttendees('Taz', ['taz.devil@example.com'])).toBe('Taz')
+    })
+
+    it('is empty for an unset field', () => {
+        expect(formatLoadingDockAttendees(undefined, contacts)).toBe('')
+        expect(formatLoadingDockAttendees('  \n ', contacts)).toBe('')
+    })
 })
 
 describe('deriveParkingTimes', () => {
@@ -132,6 +190,8 @@ describe('buildExhibitorRow', () => {
                 bumpInSlot: 'Friday 1pm - 2pm',
                 bumpOutWindow: 'Saturday 4pm',
                 parking: 'For Bump In',
+                loadingDockAttendees: 'Road Runner',
+                knownEmails: ['road.runner@example.com'],
                 equipmentList: '1x banner (5kg)',
                 trolleyOrForklift: 'Trolley please',
                 loadingDockAssistance: 'Yes',
@@ -150,6 +210,7 @@ describe('buildExhibitorRow', () => {
             '16:00',
             'For Bump In',
             'Friday 1pm - 2pm',
+            'Road Runner - road.runner@example.com',
             '1x banner (5kg)',
             'Trolley please',
             '',

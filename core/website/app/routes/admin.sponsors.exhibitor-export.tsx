@@ -3,6 +3,7 @@ import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import { requireAdmin } from '~/lib/auth.server'
 import { isConferenceYear } from '~/lib/get-year-config.server'
 import { buildExhibitorSheet, buildExhibitorSource } from '~/lib/sponsors/exhibitor-export'
+import { logisticsVisibility } from '~/lib/sponsors/logistics'
 import type { ExhibitorLogistics } from '~/lib/sponsors/jira-client.server'
 import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/admin.sponsors.exhibitor-export'
@@ -23,7 +24,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     const sponsors = await services.sponsors.listSponsors(portalConfig.year)
-    const activeSponsors = sponsors.filter((sponsor) => sponsor.active)
+    // Same rule as the portal's exhibition sections, so the venue sees exactly
+    // the sponsors who were asked for bump-in details. Digital and in-kind
+    // sponsors have no stand; an unmapped tier stays in, so a gap is visible.
+    const exhibitors = sponsors.filter(
+        (sponsor) => sponsor.active && logisticsVisibility(portalConfig.jira.tierMap[sponsor.tier]).exhibition,
+    )
 
     let logistics: Map<string, ExhibitorLogistics>
     try {
@@ -44,9 +50,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const conferenceDate =
         conference && conference.kind === 'conference' ? conference.conferenceDate?.toJSDate() : undefined
 
-    const sources = activeSponsors.map((sponsor) =>
-        buildExhibitorSource(sponsor, logistics.get(sponsor.issueKey) ?? {}),
-    )
+    const sources = exhibitors.map((sponsor) => buildExhibitorSource(sponsor, logistics.get(sponsor.issueKey) ?? {}))
 
     const sheet = sheetUtils.aoa_to_sheet(
         buildExhibitorSheet({

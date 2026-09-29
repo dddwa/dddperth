@@ -460,7 +460,7 @@ export default function PortalLogistics() {
 
                     {visibility.induction && (
                         <>
-                            <SectionHeading hint="The venue requires a safety induction for anyone accessing the loading dock. We pass these names to them for that purpose only.">
+                            <SectionHeading hint="The venue requires a safety induction for anyone accessing the loading dock. We pass these names and emails to them for that purpose only.">
                                 Bump-in attendees
                             </SectionHeading>
                             <Box display="grid" gap="4">
@@ -474,7 +474,7 @@ export default function PortalLogistics() {
                                 <LongText
                                     name="loadingDockAttendees"
                                     label="Who needs loading dock access?"
-                                    hint="One name per line — these people need the venue's safety induction"
+                                    hint="One person per line, with their name and email — the venue sends each of them a safety induction"
                                     value={value('loadingDockAttendees')}
                                     errors={errors}
                                 />
