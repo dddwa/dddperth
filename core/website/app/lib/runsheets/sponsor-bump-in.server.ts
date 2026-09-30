@@ -150,7 +150,7 @@ export async function fetchSponsorBumpIn({
     apiBaseUrl,
     cacheTtlSeconds,
     cacheGeneration,
-}: FetchSponsorBumpInOptions): Promise<{ items: BumpInItem[]; fetchedAt: string }> {
+}: FetchSponsorBumpInOptions): Promise<BumpInItem[]> {
     const authorization = jiraAuthorization(apiEmail, apiToken)
     const baseUrl = apiBaseUrl ?? config.jira.baseUrl
 
@@ -163,7 +163,7 @@ export async function fetchSponsorBumpIn({
         fields: requestFields.join(','),
     })
 
-    const { body, fetchedAt } = await jiraFetch(
+    const { body } = await jiraFetch(
         joinJiraUrl(baseUrl, `/rest/api/3/search/jql?${searchParams.toString()}`),
         authorization,
         { method: 'GET' },
@@ -171,10 +171,7 @@ export async function fetchSponsorBumpIn({
         cacheGeneration,
     )
 
-    return {
-        items: mapSponsorBumpIn(searchResponseSchema.parse(body).issues, bumpIn.sponsors, config.teamLabels),
-        fetchedAt,
-    }
+    return mapSponsorBumpIn(searchResponseSchema.parse(body).issues, bumpIn.sponsors, config.teamLabels)
 }
 
 /** Earliest first; untimed rows (no slot, or an unmapped one) last. */
