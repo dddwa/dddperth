@@ -45,6 +45,10 @@ describe('parseRunsheetFilters', () => {
         })
     })
 
+    it('accepts the agenda as a team', () => {
+        expect(parse('team=agenda&team=team-1').teams).toEqual(['agenda', 'team-1'])
+    })
+
     it('does not accept a label under the other kind', () => {
         expect(parse('team=loc-cygnet-room&location=team-1')).toEqual({ teams: [], locations: [] })
     })
@@ -311,7 +315,12 @@ describe('jiraCacheKey', () => {
 })
 
 describe('filterRunsheetItems', () => {
-    const row = (id: string, teamKeys: string[], locationKeys: string[]): RunsheetItem => ({
+    const row = (
+        id: string,
+        teamKeys: string[],
+        locationKeys: string[],
+        source: RunsheetItem['source'] = 'jira',
+    ): RunsheetItem => ({
         id,
         summary: id,
         startTime: null,
@@ -321,7 +330,7 @@ describe('filterRunsheetItems', () => {
         locationKeys,
         teamKeys,
         roleInstructionsUrl: null,
-        source: 'jira',
+        source,
         sessionizeSessionId: null,
     })
     const rows = [
@@ -329,6 +338,8 @@ describe('filterRunsheetItems', () => {
         row('team-1-cygnet', ['team-1'], ['loc-cygnet-room']),
         row('team-2-cygnet', ['team-2'], ['loc-cygnet-room']),
         row('photos-lobby', ['team-photographers'], ['loc-L2-Lobby']),
+        row('talk-cygnet', [], ['loc-cygnet-room'], 'agenda'),
+        row('talk-black-swan-photographed', ['team-photographers'], ['loc-black-swan-room'], 'agenda'),
     ]
     const ids = (teams: string[], locations: string[]) =>
         filterRunsheetItems(rows, { teams, locations }).map((item) => item.id)
@@ -338,11 +349,22 @@ describe('filterRunsheetItems', () => {
             'photos-black-swan',
             'team-1-cygnet',
             'photos-lobby',
+            'talk-black-swan-photographed',
         ])
         expect(ids(['team-photographers', 'team-1'], ['loc-black-swan-room', 'loc-cygnet-room'])).toEqual([
             'photos-black-swan',
             'team-1-cygnet',
+            'talk-black-swan-photographed',
         ])
+    })
+
+    it('hides agenda sessions from a team filter unless the agenda is selected too', () => {
+        expect(ids(['team-1'], [])).toEqual(['team-1-cygnet'])
+        expect(ids(['team-1', 'agenda'], [])).toEqual(['team-1-cygnet', 'talk-cygnet', 'talk-black-swan-photographed'])
+    })
+
+    it('still applies the location filter to agenda sessions', () => {
+        expect(ids(['agenda'], ['loc-cygnet-room'])).toEqual(['talk-cygnet'])
     })
 
     it('shows everything when nothing is selected', () => {

@@ -27,6 +27,14 @@ export interface RunsheetItem {
 }
 
 /**
+ * The Team filter's "Agenda" option: selects the published agenda's sessions
+ * alongside a team's own items. Without it, filtering to a team hid the agenda
+ * entirely, since most sessions carry no team — so a volunteer checking their
+ * team's duties lost sight of what was on around them.
+ */
+export const AGENDA_TEAM_FILTER = 'agenda'
+
+/**
  * Configured labels to show. An empty list means no filter on that field, not
  * "match nothing". Values within a list are OR'd; the two lists are AND'd.
  */
@@ -44,14 +52,23 @@ export function parseRunsheetFilters(
     const known = (name: string, allowed: Record<string, string>) => [
         ...new Set(searchParams.getAll(name).filter((value) => Object.hasOwn(allowed, value))),
     ]
-    return { teams: known('team', labels.teamLabels), locations: known('location', labels.locationLabels) }
+    return {
+        teams: known('team', { ...labels.teamLabels, [AGENDA_TEAM_FILTER]: 'Agenda' }),
+        locations: known('location', labels.locationLabels),
+    }
 }
 
-/** (any selected team) AND (any selected location); an empty list matches everything. */
+/**
+ * (any selected team) AND (any selected location); an empty list matches
+ * everything. An agenda session matches the Team filter when "Agenda" is one
+ * of the selected teams, whatever teams it carries.
+ */
 export function filterRunsheetItems(items: RunsheetItem[], filters: RunsheetFilters): RunsheetItem[] {
     const matches = (selected: string[], keys: string[]) =>
         selected.length === 0 || keys.some((key) => selected.includes(key))
+    const teamKeys = (item: RunsheetItem) =>
+        item.source === 'agenda' ? [...item.teamKeys, AGENDA_TEAM_FILTER] : item.teamKeys
     return items.filter(
-        (item) => matches(filters.teams, item.teamKeys) && matches(filters.locations, item.locationKeys),
+        (item) => matches(filters.teams, teamKeys(item)) && matches(filters.locations, item.locationKeys),
     )
 }

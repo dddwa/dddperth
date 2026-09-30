@@ -24,7 +24,7 @@ import { recordException } from '~/lib/record-exception'
 import { isVolunteerRole } from '~/lib/services/volunteers-store'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/lib/runsheets/runsheet-client.server'
-import { filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
+import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { css, cx } from '~/styled-system/css'
@@ -286,10 +286,15 @@ export default function Runsheets() {
     const toOptions = (labels: Record<string, string>) =>
         Object.entries(labels).map(([value, label]) => ({ value, label }))
     // Each team's icon in front of its name, so the options match the Related column.
-    const teamOptions = toOptions(teamLabels).map((option) => {
-        const icon = teamIcons[option.value]
-        return icon ? { ...option, label: `${icon} ${option.label}` } : option
-    })
+    // "Agenda" first, with the 📢 its rows carry, so a team can keep the
+    // sessions in view around its own items.
+    const teamOptions = [
+        { value: AGENDA_TEAM_FILTER, label: '📢 Agenda' },
+        ...toOptions(teamLabels).map((option) => {
+            const icon = teamIcons[option.value]
+            return icon ? { ...option, label: `${icon} ${option.label}` } : option
+        }),
+    ]
     const locationOptions = toOptions(locationLabels)
 
     // Keeps a copy of the page and its data so it still opens with no
