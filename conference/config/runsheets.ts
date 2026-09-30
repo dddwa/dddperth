@@ -48,6 +48,8 @@ export const runsheets: RunsheetsConfig = {
         'team-Sat-Bump-Out': 'Bump Out',
         'team-Fri-Bump-In': 'Friday Bump In',
         'team-Sat-Bump-In': 'Saturday Bump In',
+        // Optus Stadium staff, not DDD volunteers — hence no `team-` prefix.
+        'porter-1': 'Porters',
     },
 
     // Shown in place of the team name in the run sheet's Related column.

@@ -26,8 +26,12 @@ import type { Route } from './+types/_layout.runsheets.bump-in'
  */
 export const meta = noIndexMeta
 
-/** Bump-in is the day before, and plans move right up to it. */
-const CACHE_TTL_SECONDS = 5 * 60
+/**
+ * Bump-in is the day before, and plans move right up to it. A minute is short
+ * enough that a reload shows a Jira edit almost straight away, so there is no
+ * need for a refresh button, while still capping Jira at three calls a minute.
+ */
+const CACHE_TTL_SECONDS = 60
 
 type LoadContext = Route.LoaderArgs['context']
 
@@ -69,9 +73,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data(
         { items, canRefresh, refreshedAt: canRefresh ? cacheState.refreshedAt : null },
-        // Private while an admin is looking, so a shared cache can't hand
-        // them the pre-refresh page.
-        { headers: { 'Cache-Control': canRefresh ? 'private, no-store' : `max-age=${CACHE_TTL_SECONDS}` } },
+        // Never cached outside the worker: the Jira cache above is what
+        // protects the API, and a browser copy would only delay an edit.
+        { headers: { 'Cache-Control': 'no-store' } },
     )
 }
 
