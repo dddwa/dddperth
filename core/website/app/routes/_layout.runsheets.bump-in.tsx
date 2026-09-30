@@ -73,9 +73,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data(
         { items, canRefresh, refreshedAt: canRefresh ? cacheState.refreshedAt : null },
-        // Private while an admin is looking, so a shared cache can't hand
-        // them the pre-refresh page.
-        { headers: { 'Cache-Control': canRefresh ? 'private, no-store' : `max-age=${CACHE_TTL_SECONDS}` } },
+        // Never cached outside the worker: the Jira cache above is what
+        // protects the API, and a browser copy would only delay an edit.
+        { headers: { 'Cache-Control': 'no-store' } },
     )
 }
 
