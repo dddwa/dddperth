@@ -28,33 +28,27 @@ const JIRA_OPTIONS: Record<string, string[]> = {
 const portal = conferenceManifest.sponsorPortal
 
 describe.runIf(portal)('sponsor portal Jira status flips', () => {
-    // Resolved per test rather than at suite scope. `describe.runIf` skips the
-    // *tests*, but the suite body still executes during collection, so reading
-    // `portal.jira` here directly throws for any conference without a sponsor
-    // portal — conference-stub included, where this suite is skipped entirely.
-    //
-    // The non-null assertion is safe for the same reason `runIf` is: nothing
-    // inside a test runs unless `portal` is set.
-    const jira = () => (portal as NonNullable<typeof portal>).jira
-    const fields = () => jira().fields
-    const statusFlips = () => jira().statusFlips
+    // `runIf` skips the tests, but vitest still runs this body to collect them.
+    if (!portal) return
+    const { jira } = portal
+    const { fields, statusFlips } = jira
 
     it('keeps label-free sponsors in the production query while excluding portal-test issues', () => {
-        expect(jira().jql).toContain('AND (labels IS EMPTY OR labels NOT IN ("portal-test"))')
+        expect(jira.jql).toContain('AND (labels IS EMPTY OR labels NOT IN ("portal-test"))')
     })
 
     it('points the assets flip at options belonging to the assets field', () => {
-        const allowed = JIRA_OPTIONS[fields().assetsStatus]
+        const allowed = JIRA_OPTIONS[fields.assetsStatus]
         expect(allowed).toBeDefined()
-        expect(allowed).toContain(jira().assetsCompleteOptionId)
-        for (const pending of jira().assetsPendingOptionIds) expect(allowed).toContain(pending)
+        expect(allowed).toContain(jira.assetsCompleteOptionId)
+        for (const pending of jira.assetsPendingOptionIds) expect(allowed).toContain(pending)
     })
 
     it('points each simple flip at options belonging to its own field', () => {
         const simpleFlips = [
-            ['social', fields().socialStatus, statusFlips()?.social],
-            ['exhibition', fields().exhibitionStatus, statusFlips()?.exhibition],
-            ['raffle', fields().raffleStatus, statusFlips()?.raffle],
+            ['social', fields.socialStatus, statusFlips?.social],
+            ['exhibition', fields.exhibitionStatus, statusFlips?.exhibition],
+            ['raffle', fields.raffleStatus, statusFlips?.raffle],
         ] as const
 
         for (const [name, fieldId, flip] of simpleFlips) {
@@ -69,8 +63,8 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
     })
 
     it('points both induction targets at options belonging to the induction field', () => {
-        const allowed = JIRA_OPTIONS[fields().inductionStatus ?? '']
-        const induction = statusFlips()?.induction
+        const allowed = JIRA_OPTIONS[fields.inductionStatus ?? '']
+        const induction = statusFlips?.induction
         expect(allowed).toBeDefined()
         expect(allowed).toContain(induction?.requiredOptionId)
         expect(allowed).toContain(induction?.notRequiredOptionId)
@@ -79,12 +73,12 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
 
     it('never lists a target as its own pending value', () => {
         // Such a flip would plan 'already-set' forever and never fire.
-        for (const flip of [statusFlips()?.social, statusFlips()?.exhibition, statusFlips()?.raffle]) {
+        for (const flip of [statusFlips?.social, statusFlips?.exhibition, statusFlips?.raffle]) {
             if (flip) expect(flip.pendingOptionIds).not.toContain(flip.targetOptionId)
         }
-        expect(jira().assetsPendingOptionIds).not.toContain(jira().assetsCompleteOptionId)
+        expect(jira.assetsPendingOptionIds).not.toContain(jira.assetsCompleteOptionId)
 
-        const induction = statusFlips()?.induction
+        const induction = statusFlips?.induction
         if (induction) {
             expect(induction.pendingOptionIds).not.toContain(induction.requiredOptionId)
             expect(induction.pendingOptionIds).not.toContain(induction.notRequiredOptionId)
@@ -94,9 +88,9 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
     it('advances each workstream off its Jira default, then stops', () => {
         // Each field's Jira default is the value the portal may move off.
         const cases = [
-            ['10183', statusFlips()?.social],
-            ['10187', statusFlips()?.exhibition],
-            ['10198', statusFlips()?.raffle],
+            ['10183', statusFlips?.social],
+            ['10187', statusFlips?.exhibition],
+            ['10198', statusFlips?.raffle],
         ] as const
 
         for (const [defaultOption, flip] of cases) {
@@ -121,7 +115,7 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
     })
 
     it('leaves a committee-advanced status alone', () => {
-        const raffle = statusFlips()?.raffle
+        const raffle = statusFlips?.raffle
         if (!raffle) return
         // "Raffle Prize collected/arranged (Sponsorship)" is past the portal's
         // target — the sponsorship team owns it from there.
@@ -135,7 +129,7 @@ describe.runIf(portal)('sponsor portal Jira status flips', () => {
     })
 
     it('allows a corrected induction answer to switch between both portal-owned outcomes', () => {
-        const induction = statusFlips()?.induction
+        const induction = statusFlips?.induction
         if (!induction) return
         const portalOwnedOptionIds = [induction.requiredOptionId, induction.notRequiredOptionId]
 
