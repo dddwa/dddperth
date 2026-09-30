@@ -28,9 +28,9 @@ const JIRA_OPTIONS: Record<string, string[]> = {
 const portal = conferenceManifest.sponsorPortal
 
 describe.runIf(portal)('sponsor portal Jira status flips', () => {
-    // Guarded by describe.runIf above; the non-null narrowing keeps every
-    // assertion below free of `?.` noise that would hide a real undefined.
-    const jira = (portal as NonNullable<typeof portal>).jira
+    // `runIf` skips the tests, but vitest still runs this body to collect them.
+    if (!portal) return
+    const { jira } = portal
     const { fields, statusFlips } = jira
 
     it('keeps label-free sponsors in the production query while excluding portal-test issues', () => {
