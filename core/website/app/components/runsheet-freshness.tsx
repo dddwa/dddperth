@@ -20,14 +20,34 @@ function subscribeToOnline(onChange: () => void) {
 }
 
 /**
+ * Reloads the page's data every minute while it's open, and when the tab
+ * comes back into view. Skipped while offline: a failed reload would replace
+ * the page with an error, when the copy already on screen is still the best
+ * there is.
+ */
+export function useRunsheetAutoRefresh() {
+    const { revalidate } = useRevalidator()
+    useEffect(() => {
+        const refresh = () => {
+            if (navigator.onLine && document.visibilityState === 'visible') void revalidate()
+        }
+        const timer = window.setInterval(refresh, AUTO_REFRESH_MS)
+        document.addEventListener('visibilitychange', refresh)
+        return () => {
+            window.clearInterval(timer)
+            document.removeEventListener('visibilitychange', refresh)
+        }
+        // `revalidate` is stable across renders; depending on the whole
+        // revalidator object would restart the timer on every state change.
+    }, [revalidate])
+}
+
+/**
  * "Last updated" for the run sheet, a manual Refresh, and a notice when
- * offline — as a floating button that pops out a panel. The page holds the whole run sheet in memory, so it also refreshes
- * itself when the tab comes back into view and every minute while open —
- * otherwise a volunteer who opened it first thing would filter the morning's
- * run sheet all day.
- *
- * Refreshing is skipped while offline: a failed reload would replace the page
- * with an error, when the copy already on screen is still the best there is.
+ * offline — as a floating button that pops out a panel. The page holds the
+ * whole run sheet in memory, so it also refreshes itself (see
+ * `useRunsheetAutoRefresh`) — otherwise a volunteer who opened it first thing
+ * would filter the morning's run sheet all day.
  */
 export function RunsheetFreshness({
     fetchedAt,
@@ -44,6 +64,7 @@ export function RunsheetFreshness({
      */
     clearsJiraCache: boolean
 }) {
+    useRunsheetAutoRefresh()
     const revalidator = useRevalidator()
     const cacheClear = useFetcher()
     // Assumed online during server rendering; corrected on hydration.
@@ -52,20 +73,6 @@ export function RunsheetFreshness({
         () => navigator.onLine,
         () => true,
     )
-
-    useEffect(() => {
-        const refresh = () => {
-            if (navigator.onLine && document.visibilityState === 'visible') void revalidator.revalidate()
-        }
-        const timer = window.setInterval(refresh, AUTO_REFRESH_MS)
-        document.addEventListener('visibilitychange', refresh)
-        return () => {
-            window.clearInterval(timer)
-            document.removeEventListener('visibilitychange', refresh)
-        }
-        // `revalidate` is stable across renders; depending on the whole
-        // revalidator object would restart the timer on every state change.
-    }, [revalidator.revalidate])
 
     const updated = DateTime.fromISO(fetchedAt, { zone: timezone })
     const refreshing = revalidator.state === 'loading' || cacheClear.state !== 'idle'

@@ -15,6 +15,13 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { FloatingPanel, floatingPanelAnchorClass } from '~/components/floating-panel'
 import { RunsheetFreshness } from '~/components/runsheet-freshness'
+import {
+    JumpToNowButton,
+    NowLabel,
+    runsheetNowRowClass,
+    runsheetRowId,
+    useRunsheetNow,
+} from '~/components/runsheet-now'
 import { RunsheetSessionModal } from '~/components/runsheet-session-modal'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
@@ -26,7 +33,6 @@ import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/
 import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/lib/runsheets/runsheet-client.server'
 import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
-import { isRunsheetItemNow } from '~/lib/runsheets/runsheet-now'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { css, cx } from '~/styled-system/css'
@@ -197,14 +203,10 @@ function formatTime(isoDateTime: string | null): string {
  */
 const FILTER_PANEL_ID = 'runsheet-filters'
 
-/** Prefixed so a row id (a Jira key or Sessionize id) can't collide with the page's other ids. */
-const rowElementId = (itemId: string) => `runsheet-row-${itemId}`
+/** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
+const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]' })
 
 const WIDE = '@media (min-width: 50em)'
-
-/** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
-const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]', [WIDE]: { mr: '0' } })
-
 const tableClass = css({ display: 'block', [WIDE]: { display: 'table' } })
 const theadClass = css({ display: 'none', [WIDE]: { display: 'table-header-group' } })
 const tbodyClass = css({ display: 'block', [WIDE]: { display: 'table-row-group' } })
@@ -221,21 +223,6 @@ const rowClass = css({
     // shade is 8.6:1).
     _even: { bg: 'indigo.11', _light: { color: 'white' } },
     [WIDE]: { display: 'table-row', py: '0' },
-})
-/**
- * Rows happening now. After `rowClass` so it wins over the even-row shading,
- * and a status pair rather than a brand colour because its foreground is
- * chosen to read on its background in both themes. The inset bar keeps the
- * rows distinct from the alternating shade for anyone who can't tell the
- * colours apart, alongside the "Now" label in the time cell.
- */
-const nowRowClass = css({
-    bg: 'status.success.bg',
-    color: 'status.success.fg',
-    boxShadow: '[inset 6px 0 0 token(colors.status.success.emphasis)]',
-    _even: { bg: 'status.success.bg', _light: { color: 'status.success.fg' } },
-    // Scrolled to by "Jump to now": clear the sticky toolbar, two rows deep on a phone.
-    scrollMarginTop: '[8rem]',
 })
 const startTimeClass = css({ fontWeight: 'bold', [WIDE]: { fontWeight: 'normal' } })
 const cellClass = {
@@ -278,34 +265,6 @@ function RelatedList({
     )
 }
 
-/**
- * The device clock, re-read on each minute boundary — run sheet times are
- * whole minutes, so a row lights up as its minute starts rather than up to a
- * tick late — and whenever the page comes back into view, since a phone's
- * timers stall while it's locked. Null during server rendering and
- * hydration, so the server's clock never decides what is highlighted and the
- * first client render matches the server's HTML.
- */
-function useNow(): number | null {
-    const [now, setNow] = useState<number | null>(null)
-    useEffect(() => {
-        let timer: number | undefined
-        const tick = () => {
-            const current = Date.now()
-            setNow(current)
-            window.clearTimeout(timer)
-            timer = window.setTimeout(tick, 60_000 - (current % 60_000))
-        }
-        tick()
-        document.addEventListener('visibilitychange', tick)
-        return () => {
-            window.clearTimeout(timer)
-            document.removeEventListener('visibilitychange', tick)
-        }
-    }, [])
-    return now
-}
-
 /** "9:30 AM – 10:15 AM", or just the start when there's no end. */
 function formatTimeRange(start: string | null, end: string | null): string {
     return end ? `${formatTime(start)} – ${formatTime(end)}` : formatTime(start)
@@ -327,12 +286,7 @@ export default function Runsheets() {
     // works offline. The server renders the same filter first, from the URL.
     const filters = parseRunsheetFilters(searchParams, { teamLabels, locationLabels })
     const items = filterRunsheetItems(allItems, filters)
-    const now = useNow()
-    const { timezone } = conferenceManifest.public
-    const nowIds = new Set(
-        now === null ? [] : items.filter((item) => isRunsheetItemNow(item, now, timezone)).map((item) => item.id),
-    )
-    const firstNowId = items.find((item) => nowIds.has(item.id))?.id
+    const { nowIds, firstNowId } = useRunsheetNow(items)
     const activeFilterCount = filters.teams.length + filters.locations.length
     // Hidden when nothing on screen has a link, rather than an empty column.
     const showRoleDetails = items.some((item) => item.roleInstructionsUrl)
@@ -372,10 +326,7 @@ export default function Runsheets() {
     }
 
     return (
-        // The public layout has no side padding of its own (the admin shell
-        // supplies it for other full-width pages), so without this the card's
-        // edges and rounded corners run off the screen.
-        <styled.div className={css({ [WIDE]: { px: '[20px]' } })}>
+        <>
             {/* Just below the site header, sticking to the top once scrolled
                 past, so the filters and freshness stay to hand however far down
                 the run sheet a volunteer is. The panels open under it. */}
@@ -396,20 +347,7 @@ export default function Runsheets() {
                         </AppLink>
                     </Button>
                 ) : null}
-                {firstNowId ? (
-                    <Button
-                        type="button"
-                        size="sm"
-                        boxShadow="md"
-                        onClick={() =>
-                            document
-                                .getElementById(rowElementId(firstNowId))
-                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                    >
-                        Jump to now
-                    </Button>
-                ) : null}
+                {firstNowId ? <JumpToNowButton itemId={firstNowId} boxShadow="md" /> : null}
                 <Button type="button" size="sm" boxShadow="md" popoverTarget={FILTER_PANEL_ID}>
                     Filter{activeFilterCount ? ` (${activeFilterCount})` : ''}
                 </Button>
@@ -419,7 +357,7 @@ export default function Runsheets() {
                     clearsJiraCache={canRefresh}
                 />
             </Flex>
-            <AdminLayout heading="Runsheets" fullWidth bareOnSmallScreens>
+            <AdminLayout heading="Runsheets" fullWidth bareOnSmallScreens gutter>
                 <AdminCard overflow="auto" bareOnSmallScreens>
                     {selectedTeamLinks.map((team) => (
                         <styled.section key={team.team} aria-labelledby={`team-links-${team.team}`} mb="4">
@@ -470,22 +408,13 @@ export default function Runsheets() {
                                     return (
                                         <styled.tr
                                             key={item.id}
-                                            id={rowElementId(item.id)}
+                                            id={runsheetRowId(item.id)}
                                             aria-current={isNow ? 'time' : undefined}
                                             border="admin-subtle"
-                                            className={cx(rowClass, isNow && nowRowClass)}
+                                            className={cx(rowClass, isNow && runsheetNowRowClass)}
                                         >
                                             <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
-                                                {isNow ? (
-                                                    <styled.span
-                                                        display="block"
-                                                        fontSize="xs"
-                                                        fontWeight="bold"
-                                                        textTransform="uppercase"
-                                                    >
-                                                        Now
-                                                    </styled.span>
-                                                ) : null}
+                                                {isNow ? <NowLabel /> : null}
                                                 {/* Start and end on their own lines, keeping the column narrow. */}
                                                 <span className={startTimeClass}>{formatTime(item.startTime)}</span>
                                                 {item.endTime ? (
@@ -633,6 +562,6 @@ export default function Runsheets() {
                     onClose={() => setOpenItem(null)}
                 />
             </AdminLayout>
-        </styled.div>
+        </>
     )
 }
