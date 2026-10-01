@@ -107,7 +107,7 @@ const switchClass = css({
         _last: { borderRightRadius: 'full' },
         '&:has(:checked)': { bg: 'admin.900', color: 'white' },
         // The radio holding focus is hidden, so its segment shows the outline.
-        '&:has(:focus-visible)': { outline: '2px solid', outlineColor: 'admin.900', outlineOffset: '2px' },
+        '&:has(:focus-visible)': { outline: '[2px solid token(colors.admin.900)]', outlineOffset: '[2px]' },
     },
     '& input': { srOnly: true },
 })

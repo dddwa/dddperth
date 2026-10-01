@@ -24,7 +24,8 @@ describe('parseRunsheetFilters', () => {
     it('accepts several configured teams and locations', () => {
         expect(parse('team=team-1&team=team-photographers&location=loc-cygnet-room')).toEqual({
             teams: ['team-1', 'team-photographers'],
-            locations: ['loc-cygnet-room'], showAgenda: false
+            locations: ['loc-cygnet-room'],
+            showAgenda: false,
         })
     })
 
@@ -41,7 +42,8 @@ describe('parseRunsheetFilters', () => {
         // allowlist is the config, not a constant baked into core.
         expect(parse('team=team-5&team=team-1&location=loc-sports-lounge')).toEqual({
             teams: ['team-1'],
-            locations: [], showAgenda: false
+            locations: [],
+            showAgenda: false,
         })
     })
 
@@ -76,7 +78,8 @@ describe('parseRunsheetFilters', () => {
                 ),
             ).toEqual({
                 teams: [],
-                locations: [], showAgenda: false
+                locations: [],
+                showAgenda: false,
             })
         }
     })
@@ -130,11 +133,7 @@ describe('sessionsToRunsheetItems', () => {
     const plenum = (overrides: Partial<RunsheetSession>) =>
         session({ room: 'Main (Lv 3)', speakers: [], isPlenumSession: true, ...overrides })
     const noFilters = { teams: [], locations: [], showAgenda: false }
-    const toItems = (
-        sessions: RunsheetSession[],
-        filters: RunsheetFilters,
-        placeholders: RunsheetPlaceholder[] = [],
-    ) =>
+    const toItems = (sessions: RunsheetSession[], filters: RunsheetFilters, placeholders: RunsheetPlaceholder[] = []) =>
         filterRunsheetItems(
             sessionsToRunsheetItems(sessions, sessionConfig, { placeholders, timezone: 'Australia/Perth' }),
             filters,
@@ -202,8 +201,7 @@ describe('sessionsToRunsheetItems', () => {
             session({ id: '2', room: 'Main (Lv 3)' }),
             session({ id: '3', room: 'Somewhere else' }),
         ]
-        const ids = (filters: { teams: string[]; locations: string[] }) =>
-            toItems(sessions, filters).map((item) => item.id)
+        const ids = (filters: RunsheetFilters) => toItems(sessions, filters).map((item) => item.id)
         expect(ids(location('loc-cygnet-room', 'loc-main-1'))).toEqual(['session-1', 'session-2'])
         const slot = {
             startTime: '2026-10-03T09:30:00.000+0800',
@@ -211,8 +209,7 @@ describe('sessionsToRunsheetItems', () => {
             teams: ['session', 'team-1'],
             roleInstructionsUrl: null,
         }
-        const withSlot = (filters: { teams: string[]; locations: string[] }) =>
-            toItems(sessions, filters, [slot]).map((item) => item.id)
+        const withSlot = (filters: RunsheetFilters) => toItems(sessions, filters, [slot]).map((item) => item.id)
         expect(withSlot({ teams: ['team-1'], locations: ['loc-main-1'], showAgenda: false })).toEqual(['session-2'])
         expect(ids({ teams: ['team-1'], locations: ['loc-main-1'], showAgenda: false })).toEqual([])
     })
@@ -233,7 +230,9 @@ describe('sessionsToRunsheetItems', () => {
             roleInstructionsUrl: 'https://example.com/role',
         })
         expect(toItems([session({})], { teams: ['team-1'], locations: [], showAgenda: false }, [slot])).toHaveLength(1)
-        expect(toItems([session({})], { teams: ['team-2'], locations: [], showAgenda: false }, [slot, before])).toEqual([])
+        expect(toItems([session({})], { teams: ['team-2'], locations: [], showAgenda: false }, [slot, before])).toEqual(
+            [],
+        )
     })
 
     it('gives a changeover nothing from an overlapping placeholder', () => {
@@ -248,7 +247,7 @@ describe('sessionsToRunsheetItems', () => {
     })
 
     it("matches a team from the session's placeholders, never the internal session team", () => {
-        const team = (...teams: string[]) => ({ teams, locations: [] })
+        const team = (...teams: string[]) => ({ teams, locations: [], showAgenda: false })
         const slot = {
             startTime: '2026-10-03T09:30:00.000+0800',
             endTime: '2026-10-03T10:15:00.000+0800',
