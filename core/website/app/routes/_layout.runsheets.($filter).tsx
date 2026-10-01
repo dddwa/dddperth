@@ -25,6 +25,7 @@ import { isVolunteerRole } from '~/lib/services/volunteers-store'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/lib/runsheets/runsheet-client.server'
 import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
+import { isRunsheetItemNow } from '~/lib/runsheets/runsheet-now'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { css, cx } from '~/styled-system/css'
@@ -194,6 +195,9 @@ function formatTime(isoDateTime: string | null): string {
  */
 const FILTER_PANEL_ID = 'runsheet-filters'
 
+/** Prefixed so a row id (a Jira key or Sessionize id) can't collide with the page's other ids. */
+const rowElementId = (itemId: string) => `runsheet-row-${itemId}`
+
 /** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
 const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]' })
 
@@ -214,6 +218,21 @@ const rowClass = css({
     // shade is 8.6:1).
     _even: { bg: 'indigo.11', _light: { color: 'white' } },
     [WIDE]: { display: 'table-row', py: '0' },
+})
+/**
+ * Rows happening now. After `rowClass` so it wins over the even-row shading,
+ * and a status pair rather than a brand colour because its foreground is
+ * chosen to read on its background in both themes. The inset bar keeps the
+ * rows distinct from the alternating shade for anyone who can't tell the
+ * colours apart, alongside the "Now" label in the time cell.
+ */
+const nowRowClass = css({
+    bg: 'status.success.bg',
+    color: 'status.success.fg',
+    boxShadow: '[inset 6px 0 0 token(colors.status.success.emphasis)]',
+    _even: { bg: 'status.success.bg', _light: { color: 'status.success.fg' } },
+    // Scrolled to by "Jump to now": clear the sticky toolbar, two rows deep on a phone.
+    scrollMarginTop: '[8rem]',
 })
 const startTimeClass = css({ fontWeight: 'bold', [WIDE]: { fontWeight: 'normal' } })
 const cellClass = {
@@ -257,6 +276,28 @@ function RelatedList({
 }
 
 /** "9:30 AM – 10:15 AM", or just the start when there's no end. */
+/**
+ * The device clock, re-read every half minute and whenever the page comes
+ * back into view (a phone's timers stall while it's locked). Null during
+ * server rendering and hydration, so the server's clock never decides what
+ * is highlighted and the first client render matches the server's HTML.
+ */
+const NOW_TICK_MS = 30_000
+function useNow(): number | null {
+    const [now, setNow] = useState<number | null>(null)
+    useEffect(() => {
+        const tick = () => setNow(Date.now())
+        tick()
+        const timer = window.setInterval(tick, NOW_TICK_MS)
+        document.addEventListener('visibilitychange', tick)
+        return () => {
+            window.clearInterval(timer)
+            document.removeEventListener('visibilitychange', tick)
+        }
+    }, [])
+    return now
+}
+
 function formatTimeRange(start: string | null, end: string | null): string {
     return end ? `${formatTime(start)} – ${formatTime(end)}` : formatTime(start)
 }
@@ -277,6 +318,12 @@ export default function Runsheets() {
     // works offline. The server renders the same filter first, from the URL.
     const filters = parseRunsheetFilters(searchParams, { teamLabels, locationLabels })
     const items = filterRunsheetItems(allItems, filters)
+    const now = useNow()
+    const { timezone } = conferenceManifest.public
+    const nowIds = new Set(
+        now === null ? [] : items.filter((item) => isRunsheetItemNow(item, now, timezone)).map((item) => item.id),
+    )
+    const firstNowId = items.find((item) => nowIds.has(item.id))?.id
     const activeFilterCount = filters.teams.length + filters.locations.length
     // Hidden when nothing on screen has a link, rather than an empty column.
     const showRoleDetails = items.some((item) => item.roleInstructionsUrl)
@@ -325,6 +372,8 @@ export default function Runsheets() {
                 position="sticky"
                 zIndex="docked"
                 justifyContent="flex-end"
+                // Wraps on a phone: four buttons don't fit in one row at 390px.
+                flexWrap="wrap"
                 gap="2"
                 mb="2"
             >
@@ -333,6 +382,20 @@ export default function Runsheets() {
                         <AppLink unstyled to="/runsheets/bump-in">
                             Bump-in run sheet
                         </AppLink>
+                    </Button>
+                ) : null}
+                {firstNowId ? (
+                    <Button
+                        type="button"
+                        size="sm"
+                        boxShadow="md"
+                        onClick={() =>
+                            document
+                                .getElementById(rowElementId(firstNowId))
+                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                    >
+                        Jump to now
                     </Button>
                 ) : null}
                 <Button type="button" size="sm" boxShadow="md" popoverTarget={FILTER_PANEL_ID}>
@@ -390,71 +453,90 @@ export default function Runsheets() {
                                 </tr>
                             </thead>
                             <tbody className={tbodyClass}>
-                                {items.map((item) => (
-                                    <styled.tr key={item.id} border="admin-subtle" className={rowClass}>
-                                        <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
-                                            {/* Start and end on their own lines, keeping the column narrow. */}
-                                            <span className={startTimeClass}>{formatTime(item.startTime)}</span>
-                                            {item.endTime ? (
-                                                <>
-                                                    {' –'}
-                                                    <br />
-                                                    <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
-                                                </>
-                                            ) : null}
-                                        </styled.td>
-                                        <styled.td p="2" className={cellClass.summary}>
-                                            {item.source === 'agenda' ? (
-                                                <span role="img" aria-label="Agenda session">
-                                                    📢{' '}
-                                                </span>
-                                            ) : null}
-                                            {item.sessionizeSessionId ? (
-                                                <styled.button
-                                                    type="button"
-                                                    onClick={() => openSession(item)}
-                                                    aria-haspopup="dialog"
-                                                    bg="transparent"
-                                                    border="none"
-                                                    p="0"
-                                                    color="[inherit]"
-                                                    font="inherit"
-                                                    textAlign="left"
-                                                    textDecoration="underline"
-                                                    cursor="pointer"
-                                                >
-                                                    {item.summary}
-                                                </styled.button>
-                                            ) : (
-                                                item.summary
-                                            )}
-                                        </styled.td>
-                                        <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
-                                            <RelatedList
-                                                locations={item.locations}
-                                                teams={item.teams.map((label, i) => ({
-                                                    label,
-                                                    icon: teamIcons[item.teamKeys[i]],
-                                                }))}
-                                            />
-                                        </styled.td>
-                                        {showRoleDetails ? (
-                                            <styled.td p="2" className={cellClass.details}>
-                                                {item.roleInstructionsUrl ? (
-                                                    <AppLink
-                                                        unstyled
-                                                        to={item.roleInstructionsUrl}
-                                                        display="inline-flex"
-                                                        alignItems="center"
-                                                        aria-label={`Role instructions for ${item.summary}`}
+                                {items.map((item) => {
+                                    const isNow = nowIds.has(item.id)
+                                    return (
+                                        <styled.tr
+                                            key={item.id}
+                                            id={rowElementId(item.id)}
+                                            aria-current={isNow ? 'time' : undefined}
+                                            border="admin-subtle"
+                                            className={cx(rowClass, isNow && nowRowClass)}
+                                        >
+                                            <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
+                                                {isNow ? (
+                                                    <styled.span
+                                                        display="block"
+                                                        fontSize="xs"
+                                                        fontWeight="bold"
+                                                        textTransform="uppercase"
                                                     >
-                                                        <ConfluenceLogo height="2rem" />
-                                                    </AppLink>
+                                                        Now
+                                                    </styled.span>
+                                                ) : null}
+                                                {/* Start and end on their own lines, keeping the column narrow. */}
+                                                <span className={startTimeClass}>{formatTime(item.startTime)}</span>
+                                                {item.endTime ? (
+                                                    <>
+                                                        {' –'}
+                                                        <br />
+                                                        <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
+                                                    </>
                                                 ) : null}
                                             </styled.td>
-                                        ) : null}
-                                    </styled.tr>
-                                ))}
+                                            <styled.td p="2" className={cellClass.summary}>
+                                                {item.source === 'agenda' ? (
+                                                    <span role="img" aria-label="Agenda session">
+                                                        📢{' '}
+                                                    </span>
+                                                ) : null}
+                                                {item.sessionizeSessionId ? (
+                                                    <styled.button
+                                                        type="button"
+                                                        onClick={() => openSession(item)}
+                                                        aria-haspopup="dialog"
+                                                        bg="transparent"
+                                                        border="none"
+                                                        p="0"
+                                                        color="[inherit]"
+                                                        font="inherit"
+                                                        textAlign="left"
+                                                        textDecoration="underline"
+                                                        cursor="pointer"
+                                                    >
+                                                        {item.summary}
+                                                    </styled.button>
+                                                ) : (
+                                                    item.summary
+                                                )}
+                                            </styled.td>
+                                            <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
+                                                <RelatedList
+                                                    locations={item.locations}
+                                                    teams={item.teams.map((label, i) => ({
+                                                        label,
+                                                        icon: teamIcons[item.teamKeys[i]],
+                                                    }))}
+                                                />
+                                            </styled.td>
+                                            {showRoleDetails ? (
+                                                <styled.td p="2" className={cellClass.details}>
+                                                    {item.roleInstructionsUrl ? (
+                                                        <AppLink
+                                                            unstyled
+                                                            to={item.roleInstructionsUrl}
+                                                            display="inline-flex"
+                                                            alignItems="center"
+                                                            aria-label={`Role instructions for ${item.summary}`}
+                                                        >
+                                                            <ConfluenceLogo height="2rem" />
+                                                        </AppLink>
+                                                    ) : null}
+                                                </styled.td>
+                                            ) : null}
+                                        </styled.tr>
+                                    )
+                                })}
                             </tbody>
                         </styled.table>
                     )}
