@@ -2,7 +2,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { describe, expect, it } from 'vitest'
 import type { RunsheetItem, RunsheetPlaceholder, RunsheetSession } from './runsheet-client.server'
 import { compareRunsheetItems, jiraCacheKey, sessionsToRunsheetItems } from './runsheet-client.server'
-import { filterRunsheetItems, parseRunsheetFilters } from './runsheet-filters'
+import { filterRunsheetItems, parseRunsheetFilters, type RunsheetFilters } from './runsheet-filters'
 
 /**
  * `/runsheets` is a public, unauthenticated page, and its `team` and
@@ -25,11 +25,12 @@ describe('parseRunsheetFilters', () => {
         expect(parse('team=team-1&team=team-photographers&location=loc-cygnet-room')).toEqual({
             teams: ['team-1', 'team-photographers'],
             locations: ['loc-cygnet-room'],
+            showAgenda: false,
         })
     })
 
     it('means no filter when nothing is selected', () => {
-        expect(parse('')).toEqual({ teams: [], locations: [] })
+        expect(parse('')).toEqual({ teams: [], locations: [], showAgenda: false })
     })
 
     it('drops a repeated value', () => {
@@ -42,6 +43,7 @@ describe('parseRunsheetFilters', () => {
         expect(parse('team=team-5&team=team-1&location=loc-sports-lounge')).toEqual({
             teams: ['team-1'],
             locations: [],
+            showAgenda: false,
         })
     })
 
@@ -49,8 +51,13 @@ describe('parseRunsheetFilters', () => {
         expect(parse('team=agenda&team=team-1').teams).toEqual(['agenda', 'team-1'])
     })
 
+    it('reads the Show Agenda toggle', () => {
+        expect(parse('agenda=1&team=team-1')).toEqual({ teams: ['team-1'], locations: [], showAgenda: true })
+        expect(parse('agenda=yes').showAgenda).toBe(false)
+    })
+
     it('does not accept a label under the other kind', () => {
-        expect(parse('team=loc-cygnet-room&location=team-1')).toEqual({ teams: [], locations: [] })
+        expect(parse('team=loc-cygnet-room&location=team-1')).toEqual({ teams: [], locations: [], showAgenda: false })
     })
 
     it('drops JQL injection attempts', () => {
@@ -72,6 +79,7 @@ describe('parseRunsheetFilters', () => {
             ).toEqual({
                 teams: [],
                 locations: [],
+                showAgenda: false,
             })
         }
     })
@@ -97,7 +105,7 @@ describe("this fork's runsheets config", () => {
             ...teams.map((team) => ['team', team]),
             ...locations.map((location) => ['location', location]),
         ])
-        expect(parseRunsheetFilters(query, forkConfig)).toEqual({ teams, locations })
+        expect(parseRunsheetFilters(query, forkConfig)).toEqual({ teams, locations, showAgenda: false })
     })
 })
 
@@ -124,18 +132,14 @@ describe('sessionsToRunsheetItems', () => {
     // Sessionize files every plenum under its first room.
     const plenum = (overrides: Partial<RunsheetSession>) =>
         session({ room: 'Main (Lv 3)', speakers: [], isPlenumSession: true, ...overrides })
-    const noFilters = { teams: [], locations: [] }
-    const toItems = (
-        sessions: RunsheetSession[],
-        filters: { teams: string[]; locations: string[] },
-        placeholders: RunsheetPlaceholder[] = [],
-    ) =>
+    const noFilters = { teams: [], locations: [], showAgenda: false }
+    const toItems = (sessions: RunsheetSession[], filters: RunsheetFilters, placeholders: RunsheetPlaceholder[] = []) =>
         filterRunsheetItems(
             sessionsToRunsheetItems(sessions, sessionConfig, { placeholders, timezone: 'Australia/Perth' }),
             filters,
         )
     const locationsOf = (s: RunsheetSession) => toItems([s], noFilters)[0].locations
-    const location = (...locations: string[]) => ({ teams: [], locations })
+    const location = (...locations: string[]) => ({ teams: [], locations, showAgenda: false })
 
     it('locates a talk under its mapped room, in the session team', () => {
         expect(toItems([session({})], noFilters)).toEqual([
@@ -179,7 +183,7 @@ describe('sessionsToRunsheetItems', () => {
             teams: ['session', 'team-1'],
             roleInstructionsUrl: null,
         }
-        expect(toItems([changeover], { teams: ['team-1'], locations: [] }, [slot])).toEqual([])
+        expect(toItems([changeover], { teams: ['team-1'], locations: [], showAgenda: false }, [slot])).toEqual([])
     })
 
     it("ignores a talk's description, which is its abstract", () => {
@@ -197,8 +201,7 @@ describe('sessionsToRunsheetItems', () => {
             session({ id: '2', room: 'Main (Lv 3)' }),
             session({ id: '3', room: 'Somewhere else' }),
         ]
-        const ids = (filters: { teams: string[]; locations: string[] }) =>
-            toItems(sessions, filters).map((item) => item.id)
+        const ids = (filters: RunsheetFilters) => toItems(sessions, filters).map((item) => item.id)
         expect(ids(location('loc-cygnet-room', 'loc-main-1'))).toEqual(['session-1', 'session-2'])
         const slot = {
             startTime: '2026-10-03T09:30:00.000+0800',
@@ -206,10 +209,9 @@ describe('sessionsToRunsheetItems', () => {
             teams: ['session', 'team-1'],
             roleInstructionsUrl: null,
         }
-        const withSlot = (filters: { teams: string[]; locations: string[] }) =>
-            toItems(sessions, filters, [slot]).map((item) => item.id)
-        expect(withSlot({ teams: ['team-1'], locations: ['loc-main-1'] })).toEqual(['session-2'])
-        expect(ids({ teams: ['team-1'], locations: ['loc-main-1'] })).toEqual([])
+        const withSlot = (filters: RunsheetFilters) => toItems(sessions, filters, [slot]).map((item) => item.id)
+        expect(withSlot({ teams: ['team-1'], locations: ['loc-main-1'], showAgenda: false })).toEqual(['session-2'])
+        expect(ids({ teams: ['team-1'], locations: ['loc-main-1'], showAgenda: false })).toEqual([])
     })
 
     it('carries the teams and role instructions of the placeholders a session overlaps', () => {
@@ -227,8 +229,10 @@ describe('sessionsToRunsheetItems', () => {
             teams: ['Team 1'],
             roleInstructionsUrl: 'https://example.com/role',
         })
-        expect(toItems([session({})], { teams: ['team-1'], locations: [] }, [slot])).toHaveLength(1)
-        expect(toItems([session({})], { teams: ['team-2'], locations: [] }, [slot, before])).toEqual([])
+        expect(toItems([session({})], { teams: ['team-1'], locations: [], showAgenda: false }, [slot])).toHaveLength(1)
+        expect(toItems([session({})], { teams: ['team-2'], locations: [], showAgenda: false }, [slot, before])).toEqual(
+            [],
+        )
     })
 
     it('gives a changeover nothing from an overlapping placeholder', () => {
@@ -243,7 +247,7 @@ describe('sessionsToRunsheetItems', () => {
     })
 
     it("matches a team from the session's placeholders, never the internal session team", () => {
-        const team = (...teams: string[]) => ({ teams, locations: [] })
+        const team = (...teams: string[]) => ({ teams, locations: [], showAgenda: false })
         const slot = {
             startTime: '2026-10-03T09:30:00.000+0800',
             endTime: '2026-10-03T10:15:00.000+0800',
@@ -341,8 +345,8 @@ describe('filterRunsheetItems', () => {
         row('talk-cygnet', [], ['loc-cygnet-room'], 'agenda'),
         row('talk-black-swan-photographed', ['team-photographers'], ['loc-black-swan-room'], 'agenda'),
     ]
-    const ids = (teams: string[], locations: string[]) =>
-        filterRunsheetItems(rows, { teams, locations }).map((item) => item.id)
+    const ids = (teams: string[], locations: string[], showAgenda = false) =>
+        filterRunsheetItems(rows, { teams, locations, showAgenda }).map((item) => item.id)
 
     it('ORs within a field and ANDs across them', () => {
         expect(ids(['team-photographers', 'team-1'], [])).toEqual([
@@ -365,6 +369,12 @@ describe('filterRunsheetItems', () => {
 
     it('still applies the location filter to agenda sessions', () => {
         expect(ids(['agenda'], ['loc-cygnet-room'])).toEqual(['talk-cygnet'])
+    })
+
+    it('shows every agenda session when Show Agenda is on, whatever else is selected', () => {
+        expect(ids(['team-1'], ['loc-L2-Lobby'])).toEqual([])
+        expect(ids(['team-1'], ['loc-L2-Lobby'], true)).toEqual(['talk-cygnet', 'talk-black-swan-photographed'])
+        expect(ids(['team-1'], [], true)).toEqual(['team-1-cygnet', 'talk-cygnet', 'talk-black-swan-photographed'])
     })
 
     it('shows everything when nothing is selected', () => {

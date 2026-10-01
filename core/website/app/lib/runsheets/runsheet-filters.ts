@@ -35,15 +35,24 @@ export interface RunsheetItem {
 export const AGENDA_TEAM_FILTER = 'agenda'
 
 /**
+ * The "Show Agenda" toggle's query param. Unlike the Team filter's "Agenda"
+ * option, which the Location filter still narrows, this shows every agenda
+ * session regardless of the other filters.
+ */
+export const SHOW_AGENDA_PARAM = 'agenda'
+
+/**
  * Configured labels to show. An empty list means no filter on that field, not
  * "match nothing". Values within a list are OR'd; the two lists are AND'd.
+ * `showAgenda` keeps every agenda session in view whatever the lists select.
  */
-export type RunsheetFilters = { teams: string[]; locations: string[] }
+export type RunsheetFilters = { teams: string[]; locations: string[]; showAgenda: boolean }
 
 /**
  * Parses the `team` and `location` query params into known labels. Any value
  * that isn't a configured label is dropped, so an unrecognised filter widens
- * the run sheet back towards unfiltered rather than emptying it.
+ * the run sheet back towards unfiltered rather than emptying it. `agenda=1`
+ * is the "Show Agenda" toggle.
  */
 export function parseRunsheetFilters(
     searchParams: URLSearchParams,
@@ -55,13 +64,15 @@ export function parseRunsheetFilters(
     return {
         teams: known('team', { ...labels.teamLabels, [AGENDA_TEAM_FILTER]: 'Agenda' }),
         locations: known('location', labels.locationLabels),
+        showAgenda: searchParams.get(SHOW_AGENDA_PARAM) === '1',
     }
 }
 
 /**
  * (any selected team) AND (any selected location); an empty list matches
  * everything. An agenda session matches the Team filter when "Agenda" is one
- * of the selected teams, whatever teams it carries.
+ * of the selected teams, whatever teams it carries — and skips both filters
+ * when `showAgenda` is on.
  */
 export function filterRunsheetItems(items: RunsheetItem[], filters: RunsheetFilters): RunsheetItem[] {
     const matches = (selected: string[], keys: string[]) =>
@@ -69,6 +80,8 @@ export function filterRunsheetItems(items: RunsheetItem[], filters: RunsheetFilt
     const teamKeys = (item: RunsheetItem) =>
         item.source === 'agenda' ? [...item.teamKeys, AGENDA_TEAM_FILTER] : item.teamKeys
     return items.filter(
-        (item) => matches(filters.teams, teamKeys(item)) && matches(filters.locations, item.locationKeys),
+        (item) =>
+            (filters.showAgenda && item.source === 'agenda') ||
+            (matches(filters.teams, teamKeys(item)) && matches(filters.locations, item.locationKeys)),
     )
 }
