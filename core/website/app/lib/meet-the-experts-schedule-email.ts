@@ -13,17 +13,21 @@ export interface ScheduleEmailInput {
     assignments: Array<{ tableId: string; slotId: string; displayName: string }>
 }
 
-export interface ScheduleGrid {
+type Seat = ScheduleEmailInput['assignments'][number]
+
+/** Each cell is the whole assignment, so a caller that seats richer records
+ * (the public agenda carries each person's bio) gets them back as-is. */
+export interface ScheduleGrid<T extends Seat = Seat> {
     tableLabels: string[]
-    rows: Array<{ slotLabel: string; cells: Array<string | null> }>
+    rows: Array<{ slotLabel: string; cells: Array<T | null> }>
 }
 
-export function buildScheduleGrid({
+export function buildScheduleGrid<T extends Seat>({
     slots,
     tables,
     assignments,
-}: Omit<ScheduleEmailInput, 'conferenceName'>): ScheduleGrid {
-    const seated = new Map(assignments.map((a) => [`${a.tableId}:${a.slotId}`, a.displayName]))
+}: Omit<ScheduleEmailInput, 'conferenceName' | 'assignments'> & { assignments: T[] }): ScheduleGrid<T> {
+    const seated = new Map(assignments.map((a) => [`${a.tableId}:${a.slotId}`, a]))
     return {
         tableLabels: tables.map((t) => t.label),
         rows: slots.map((slot) => ({
@@ -45,7 +49,7 @@ export function buildScheduleEmail(input: ScheduleEmailInput): { subject: string
         .map(
             (row) =>
                 `${row.slotLabel}\n` +
-                grid.tableLabels.map((table, i) => `  ${table}: ${row.cells[i] ?? '—'}`).join('\n'),
+                grid.tableLabels.map((table, i) => `  ${table}: ${row.cells[i]?.displayName ?? '—'}`).join('\n'),
         )
         .join('\n\n')
 
@@ -56,7 +60,7 @@ export function buildScheduleEmail(input: ScheduleEmailInput): { subject: string
 ${grid.rows
     .map(
         (row) =>
-            `<tr><th style="${cell}">${escapeHtml(row.slotLabel)}</th>${row.cells.map((c) => `<td style="${cell}">${c ? escapeHtml(c) : '—'}</td>`).join('')}</tr>`,
+            `<tr><th style="${cell}">${escapeHtml(row.slotLabel)}</th>${row.cells.map((c) => `<td style="${cell}">${c ? escapeHtml(c.displayName) : '—'}</td>`).join('')}</tr>`,
     )
     .join('\n')}
 </tbody>

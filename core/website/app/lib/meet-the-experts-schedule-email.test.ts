@@ -22,8 +22,8 @@ describe('buildScheduleGrid', () => {
         expect(buildScheduleGrid(input)).toEqual({
             tableLabels: ['Table 1', 'Table 2'],
             rows: [
-                { slotLabel: '10:30am', cells: ['Ada', null] },
-                { slotLabel: '11:30am', cells: [null, 'Acme <Corp>'] },
+                { slotLabel: '10:30am', cells: [input.assignments[0], null] },
+                { slotLabel: '11:30am', cells: [null, input.assignments[1]] },
             ],
         })
     })
