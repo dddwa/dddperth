@@ -74,7 +74,7 @@ export function parseRunsheetFilters(
  * of the selected teams, whatever teams it carries — and skips both filters
  * when `showAgenda` is on.
  */
-export function filterRunsheetItems(items: RunsheetItem[], filters: RunsheetFilters): RunsheetItem[] {
+export function filterRunsheetItems<Item extends RunsheetItem>(items: Item[], filters: RunsheetFilters): Item[] {
     const matches = (selected: string[], keys: string[]) =>
         selected.length === 0 || keys.some((key) => selected.includes(key))
     const teamKeys = (item: RunsheetItem) =>
