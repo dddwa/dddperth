@@ -1,6 +1,7 @@
 import { data, redirect, type RouterContext } from 'react-router'
 import { getServices } from '~/remix-app-load-context'
 import type { AppServices } from './services/app-services'
+import type { NotAnAdmin } from './auth/not-an-admin'
 import type { NotASponsorContact } from './sponsors/not-a-sponsor-contact'
 import type { SpeakerRecord } from './services/speakers-store'
 import type { SponsorRecord } from './services/sponsors-store'
@@ -59,8 +60,8 @@ export async function isAdminUser(user: User | null, services: AppServices): Pro
  * in priority order (admin, then sponsor, then speaker). Shared by every
  * `require*` gate below so a speaker who ends up at /admin or /portal lands
  * on /speaker-portal instead of a confusing 404, and vice versa. Returns
- * null only for the (normally unreachable, since `isAllowed` gates login)
- * case where the session belongs to none of the three roles.
+ * null when the session belongs to none of the three roles — `isAllowed`
+ * gates login, but a role can be removed while a 30-day session is live.
  */
 async function findHomeArea(email: string, services: AppServices): Promise<'/admin' | '/portal' | '/speaker-portal' | null> {
     if (await services.auth.isAdminEmail(email)) return '/admin'
@@ -72,6 +73,9 @@ async function findHomeArea(email: string, services: AppServices): Promise<'/adm
 /**
  * Gate for /admin/*: logged in AND on the admin allowlist. Logged-in
  * non-admins (sponsor/speaker contacts) are sent to their own portal instead.
+ * A session with no role at all gets the admin area's own "no access" page —
+ * sending it to /portal showed an admin a sponsor-portal error when their
+ * allowlist row went missing.
  */
 export async function requireAdmin(
     request: Request,
@@ -80,7 +84,9 @@ export async function requireAdmin(
     const user = await requireUser(request, context)
     const services = getServices(context)
     if (await services.auth.isAdminEmail(user.email)) return user
-    throw redirect((await findHomeArea(user.email, services)) ?? '/portal')
+    const home = await findHomeArea(user.email, services)
+    if (home) throw redirect(home)
+    throw data<NotAnAdmin>({ reason: 'not-an-admin', email: user.email }, { status: 403 })
 }
 
 /**
