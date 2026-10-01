@@ -7,9 +7,12 @@ import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
+import { SpeakerModal } from '~/components/speaker-modal'
 import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
+import type { MeetTheExpertsAgenda, MeetTheExpertsSeat } from '~/lib/meet-the-experts-agenda.server'
 import type { AgendaTalk } from '~/lib/my-agenda'
 import { getPublishedSchedule } from '~/lib/published-agenda.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
@@ -33,6 +36,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
     const schedule = await getPublishedSchedule(context, year)
+    // Held back with the rest of the agenda until it's published.
+    const meetTheExperts = schedule ? await getMeetTheExpertsAgenda(context, year) : undefined
 
     // Only the current conference's agenda can be built from: past years are
     // an archive, and the shortlist counts are only useful while there is
@@ -51,6 +56,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // linking to a sparse detail page.
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
             canPick,
+            meetTheExperts,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
             conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
@@ -83,7 +89,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick } =
+    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick, meetTheExperts } =
         useLoaderData<typeof loader>()
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
@@ -292,10 +298,141 @@ export default function Agenda() {
                         )
                     })}
                 </Box>
+                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} /> : null}
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
         </PageLayout>
+    )
+}
+
+/**
+ * Laid out like the talk grid above it: tables stand in for rooms (sticky
+ * column headers), slots for time slots, and each seated person is a card
+ * whose "location" is their table. Stacks on small screens, same as the
+ * agenda. Empty seats are left out rather than drawn as blank cards.
+ * Each person's name opens their registration bio in a modal.
+ */
+function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
+    const [selected, setSelected] = useState<{ seat: MeetTheExpertsSeat; where: string } | null>(null)
+
+    return (
+        <styled.section p="1" mt="8" color="text.secondary" fontSize="sm" aria-labelledby="meet-the-experts">
+            <styled.h2 id="meet-the-experts" color="text.primary" fontSize="xl" fontWeight="semibold" mb="2">
+                Meet the Experts
+            </styled.h2>
+            <Box
+                style={{ '--table-columns': `auto repeat(${grid.tableLabels.length}, 1fr)` } as React.CSSProperties}
+                xl={{ display: 'grid', gridTemplateColumns: 'var(--table-columns)', gap: '1' }}
+            >
+                {grid.tableLabels.map((label, i) => (
+                    <Box
+                        key={i}
+                        style={{ gridColumn: i + 2 }}
+                        gridRow="1"
+                        display="none"
+                        rounded="sm"
+                        bgColor="border.emphasis"
+                        color="surface.hero"
+                        fontWeight="semibold"
+                        textAlign="center"
+                        padding="2"
+                        xl={{ display: 'block', position: 'sticky', top: '4', zIndex: 'modal' }}
+                    >
+                        {label}
+                    </Box>
+                ))}
+                {grid.rows.map((row, r) => (
+                    <Fragment key={r}>
+                        <styled.h3
+                            style={{ gridRow: r + 2 }}
+                            gridColumn="1"
+                            mt="2"
+                            xl={{ mt: '0' }}
+                            fontSize={{ base: 'sm', md: 'md' }}
+                            fontWeight="semibold"
+                        >
+                            {row.slotLabel}
+                        </styled.h3>
+                        <styled.ul
+                            style={{ gridRow: r + 2 }}
+                            gridColumn="2 / -1"
+                            listStyle="none"
+                            xl={{ display: 'grid', gridTemplateColumns: 'subgrid' }}
+                        >
+                            {row.cells.map((seat, i) =>
+                                seat ? (
+                                    <styled.li
+                                        key={i}
+                                        style={{ gridColumn: i + 1 }}
+                                        rounded="sm"
+                                        bgColor="surface.card"
+                                        padding="2"
+                                        mt="2"
+                                        xl={{ mt: '0' }}
+                                    >
+                                        <styled.button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelected({ seat, where: `${row.slotLabel} · ${grid.tableLabels[i]}` })
+                                            }
+                                            aria-haspopup="dialog"
+                                            color="text.primary"
+                                            fontSize="md"
+                                            fontWeight="semibold"
+                                            lineHeight="tight"
+                                            textAlign="left"
+                                            cursor="pointer"
+                                            mb="2"
+                                            _hover={{ color: 'text.highlight' }}
+                                            _focusVisible={{
+                                                outline: '[3px solid token(colors.interactive.focus)]',
+                                                outlineOffset: '[2px]',
+                                            }}
+                                        >
+                                            {seat.displayName}
+                                        </styled.button>
+                                        <Flex alignItems="center" gap="2" fontSize={{ base: 'xs', xl: 'sm' }}>
+                                            <LocationIcon />
+                                            {grid.tableLabels[i]}
+                                        </Flex>
+                                    </styled.li>
+                                ) : null,
+                            )}
+                        </styled.ul>
+                    </Fragment>
+                ))}
+            </Box>
+            <SpeakerModal
+                title={selected?.seat.displayName ?? ''}
+                open={selected !== null}
+                onOpenChange={(open) => !open && setSelected(null)}
+            >
+                <styled.p fontSize="sm" mb="4">
+                    {selected?.where}
+                </styled.p>
+                <styled.p whiteSpace="pre-line">{selected?.seat.bio ?? 'No bio provided.'}</styled.p>
+            </SpeakerModal>
+        </styled.section>
+    )
+}
+
+function LocationIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            style={{ width: '16px', height: '16px' }}
+            aria-label="Location"
+            role="img"
+        >
+            <path
+                fillRule="evenodd"
+                d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                clipRule="evenodd"
+            />
+        </svg>
     )
 }
 
@@ -565,20 +702,7 @@ function RoomTimeSlot({
                         textWrap="nowrap"
                         fontSize={{ base: 'xs', xl: 'sm' }}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            style={{ width: '16px', height: '16px' }}
-                            aria-label="Location"
-                            role="img"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
+                        <LocationIcon />
                         <styled.span display={{ base: 'inline', sm: 'inline' }}>{room.name}</styled.span>
                     </Flex>
                 )}
