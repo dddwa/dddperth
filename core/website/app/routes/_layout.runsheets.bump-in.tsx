@@ -1,28 +1,30 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { RunsheetsBumpInConfig, RunsheetsConfig } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
-import { data, redirect, useLoaderData } from 'react-router'
+import { data, useLoaderData, useSearchParams, type ShouldRevalidateFunctionArgs } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
-import { useRunsheetAutoRefresh } from '~/components/runsheet-freshness'
+import { RunsheetFreshness } from '~/components/runsheet-freshness'
+import { JumpToNowButton, useRunsheetNow } from '~/components/runsheet-now'
 import {
-    JumpToNowButton,
-    NowLabel,
-    runsheetNowRowClass,
-    runsheetRowId,
-    useRunsheetNow,
-} from '~/components/runsheet-now'
-import { RunsheetRefreshForm } from '~/components/runsheet-refresh-form'
-import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
+    RunsheetFilterButton,
+    RunsheetFilterPanel,
+    runsheetFilterOptions,
+    RunsheetTable,
+    RunsheetToolbar,
+    useRunsheetOffline,
+} from '~/components/runsheet-table'
+import { Button } from '~/components/ui/styled/button'
 import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { fetchRunsheet } from '~/lib/runsheets/runsheet-client.server'
+import { filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { type BumpInItem, fetchSponsorBumpIn, sortByStartTime } from '~/lib/runsheets/sponsor-bump-in.server'
 import { noIndexMeta } from '~/lib/seo'
 import { getConfig, getServices } from '~/remix-app-load-context'
-import { Box, Flex, styled } from '~/styled-system/jsx'
+import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.bump-in'
 
 /**
@@ -64,168 +66,170 @@ async function loadBumpIn(context: LoadContext, cacheGeneration: string) {
         fetchSponsorBumpIn({ ...shared, bumpIn }),
     ])
     const items: BumpInItem[] = [...volunteer.items, ...exhibitorItems]
-    return sortByStartTime(items)
+    // The sponsor rows go through the same Jira cache, so the volunteer
+    // board's fetch time stands for both.
+    return { config, items: sortByStartTime(items), fetchedAt: volunteer.fetchedAt }
 }
 
 /** Admin-only: make both run sheets re-read Jira on their next load. */
 export async function action({ request, context }: Route.ActionArgs) {
     requireBumpInConfig()
     requireRunsheetOpen(context)
-    const admin = await requireAdmin(request, context)
-    await invalidateRunsheetCache(getServices(context), admin.email)
-    return redirect('/runsheets/bump-in')
+    const formData = await request.formData()
+    if (formData.get('intent') === 'refresh') {
+        const admin = await requireAdmin(request, context)
+        await invalidateRunsheetCache(getServices(context), admin.email)
+    }
+    // No redirect: only RunsheetFreshness's fetcher posts here, and it
+    // revalidates the page's loaders itself (see the /runsheets action).
+    return null
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     requireRunsheetOpen(context)
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
-    const items = await loadBumpIn(context, cacheState.generation)
+    // Always the whole run sheet: the page filters it in the browser.
+    const { config, items, fetchedAt } = await loadBumpIn(context, cacheState.generation)
     const canRefresh = await isAdminUser(user, services)
 
     return data(
-        { items, canRefresh, refreshedAt: canRefresh ? cacheState.refreshedAt : null },
-        // Never cached outside the worker: the Jira cache above is what
-        // protects the API, and a browser copy would only delay an edit.
-        { headers: { 'Cache-Control': 'no-store' } },
+        {
+            items,
+            canRefresh,
+            teamLabels: config.teamLabels,
+            teamIcons: config.teamIcons ?? {},
+            locationLabels: config.locationLabels,
+            fetchedAt,
+        },
+        // As /runsheets: not cached by the browser, and never stored at all
+        // while an admin is looking.
+        { headers: { 'Cache-Control': canRefresh ? 'private, no-store' : 'no-cache' } },
     )
 }
 
-/** Day and time in the conference's zone — bump-in spans Friday and Saturday morning. */
+/** As /runsheets: a filter change only changes the query string, so it doesn't reload. */
+export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+    if (currentUrl.pathname === nextUrl.pathname && currentUrl.search !== nextUrl.search) return false
+    return defaultShouldRevalidate
+}
+
+/** Time in the conference's zone. The day is the section's heading. */
 function formatTime(isoDateTime: string | null): string {
     if (!isoDateTime) return '-'
     const dateTime = DateTime.fromISO(isoDateTime, { zone: conferenceManifest.public.timezone })
-    return dateTime.isValid ? dateTime.toFormat('ccc h:mm a') : '-'
+    return dateTime.isValid ? dateTime.toFormat('h:mm a') : '-'
+}
+
+/** "Friday 2 October" — bump-in spans Friday and Saturday morning. Untimed rows sort last, into their own section. */
+function dayOf(item: BumpInItem): string {
+    const dateTime = item.startTime
+        ? DateTime.fromISO(item.startTime, { zone: conferenceManifest.public.timezone })
+        : null
+    return dateTime?.isValid ? dateTime.toFormat('cccc d LLLL') : 'Time to be confirmed'
+}
+
+/** What an exhibitor needs help with on arrival, one per line. */
+function exhibitorNeeds(exhibitor: NonNullable<BumpInItem['exhibitor']>) {
+    const needs = [
+        exhibitor.trolley && `Trolley: ${exhibitor.trolley}`,
+        exhibitor.loadingDockAssistance && `Loading dock: ${exhibitor.loadingDockAssistance}`,
+        exhibitor.porterAssistance && `Porter: ${exhibitor.porterAssistance}`,
+    ].filter((need): need is string => Boolean(need))
+    if (needs.length === 0) return null
+    return (
+        <styled.ul listStyle="none" display="inline">
+            {needs.map((need) => (
+                <li key={need}>{need}</li>
+            ))}
+        </styled.ul>
+    )
 }
 
 export default function BumpInRunsheet() {
-    const { items, canRefresh, refreshedAt } = useLoaderData<typeof loader>()
-    useRunsheetAutoRefresh()
+    const {
+        items: allItems,
+        canRefresh,
+        teamLabels,
+        teamIcons,
+        locationLabels,
+        fetchedAt,
+    } = useLoaderData<typeof loader>()
+    const [searchParams] = useSearchParams()
+    // No agenda sessions on this run sheet, so nothing for Show Agenda to show.
+    const filters = { ...parseRunsheetFilters(searchParams, { teamLabels, locationLabels }), showAgenda: false }
+    const items = filterRunsheetItems(allItems, filters).map((item) =>
+        item.exhibitor && item.locations.length === 0 ? { ...item, locations: ['Space TBC'] } : item,
+    )
     const { nowIds, firstNowId } = useRunsheetNow(items)
+    useRunsheetOffline()
+    // Only the teams and locations bump-in actually uses: the labels are the
+    // conference day's too, and most of those would filter to an empty sheet.
+    const used = (labels: Record<string, string>, keys: string[]) =>
+        Object.fromEntries(Object.entries(labels).filter(([key]) => keys.includes(key)))
+    const filterOptions = runsheetFilterOptions({
+        teamLabels: used(
+            teamLabels,
+            allItems.flatMap((item) => item.teamKeys),
+        ),
+        teamIcons,
+        locationLabels: used(
+            locationLabels,
+            allItems.flatMap((item) => item.locationKeys),
+        ),
+    })
 
     return (
-        <AdminLayout heading="Bump-in run sheet" gutter>
-            <Box maxW="6xl" mx="auto">
-                <AdminCard overflow="auto">
-                    <Flex alignItems="center" justifyContent="space-between" gap="2" marginBottom="2" flexWrap="wrap">
-                        <AppLink unstyled to="/runsheets" textDecoration="underline">
-                            Conference day run sheet
-                        </AppLink>
-                        {firstNowId ? <JumpToNowButton itemId={firstNowId} /> : null}
-                        {canRefresh ? <RunsheetRefreshForm refreshedAt={refreshedAt} /> : null}
-                    </Flex>
-
-                    {items.length === 0 ? (
-                        <styled.p p="2">Nothing is scheduled for bump-in yet.</styled.p>
-                    ) : (
-                        <styled.table width="full" fontSize="sm">
-                            <thead>
-                                <tr>
-                                    <styled.th textAlign="left" p="2">
-                                        Start
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        End
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Summary
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Location
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Team
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Ring road
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Trolley / assistance
-                                    </styled.th>
-                                    <styled.th textAlign="left" p="2">
-                                        Role Details
-                                    </styled.th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {items.map((item) => {
-                                    const { exhibitor } = item
-                                    const needs = exhibitor
-                                        ? [
-                                              exhibitor.trolley && `Trolley: ${exhibitor.trolley}`,
-                                              exhibitor.loadingDockAssistance &&
-                                                  `Loading dock: ${exhibitor.loadingDockAssistance}`,
-                                              exhibitor.porterAssistance && `Porter: ${exhibitor.porterAssistance}`,
-                                          ].filter((need): need is string => Boolean(need))
-                                        : []
-                                    const isNow = nowIds.has(item.id)
-
-                                    return (
-                                        <styled.tr
-                                            key={item.id}
-                                            id={runsheetRowId(item.id)}
-                                            aria-current={isNow ? 'time' : undefined}
-                                            border="admin-subtle"
-                                            className={isNow ? runsheetNowRowClass : undefined}
-                                        >
-                                            <styled.td p="2" whiteSpace="nowrap">
-                                                {isNow ? <NowLabel /> : null}
-                                                {item.startTime
-                                                    ? formatTime(item.startTime)
-                                                    : (exhibitor?.slot ?? 'Slot not chosen')}
-                                            </styled.td>
-                                            <styled.td p="2" whiteSpace="nowrap">
-                                                {formatTime(item.endTime)}
-                                            </styled.td>
-                                            <styled.td p="2">
-                                                {item.summary}
-                                                {exhibitor?.tier ? (
-                                                    <styled.span display="block" color="admin.600">
-                                                        {exhibitor.tier}
-                                                    </styled.span>
-                                                ) : null}
-                                            </styled.td>
-                                            <styled.td p="2">
-                                                {item.locations.length > 0
-                                                    ? item.locations.join(', ')
-                                                    : exhibitor
-                                                      ? 'Space TBC'
-                                                      : ''}
-                                            </styled.td>
-                                            <styled.td p="2">{item.teams.join(', ')}</styled.td>
-                                            <styled.td p="2">
-                                                {exhibitor ? (exhibitor.ringRoad ? 'Yes' : 'No') : ''}
-                                            </styled.td>
-                                            <styled.td p="2" maxW="64">
-                                                {needs.length > 0 ? (
-                                                    <styled.ul listStyle="none" p="0" m="0">
-                                                        {needs.map((need) => (
-                                                            <li key={need}>{need}</li>
-                                                        ))}
-                                                    </styled.ul>
-                                                ) : null}
-                                            </styled.td>
-                                            <styled.td p="2">
-                                                {item.roleInstructionsUrl ? (
-                                                    <AppLink
-                                                        unstyled
-                                                        to={item.roleInstructionsUrl}
-                                                        display="inline-flex"
-                                                        alignItems="center"
-                                                        aria-label={`Role instructions for ${item.summary}`}
-                                                    >
-                                                        <ConfluenceLogo height="2rem" />
-                                                    </AppLink>
-                                                ) : null}
-                                            </styled.td>
-                                        </styled.tr>
-                                    )
-                                })}
-                            </tbody>
-                        </styled.table>
-                    )}
+        <>
+            <RunsheetToolbar>
+                <Button asChild size="sm" boxShadow="md">
+                    <AppLink unstyled to="/runsheets">
+                        Conference day run sheet
+                    </AppLink>
+                </Button>
+                {firstNowId ? <JumpToNowButton itemId={firstNowId} boxShadow="md" /> : null}
+                <RunsheetFilterButton filters={filters} />
+                <RunsheetFreshness
+                    fetchedAt={fetchedAt}
+                    timezone={conferenceManifest.public.timezone}
+                    clearsJiraCache={canRefresh}
+                />
+            </RunsheetToolbar>
+            <AdminLayout heading="Bump-in run sheet" fullWidth bareOnSmallScreens gutter>
+                <AdminCard overflow="auto" bareOnSmallScreens>
+                    <RunsheetTable
+                        items={items}
+                        nowIds={nowIds}
+                        teamIcons={teamIcons}
+                        formatTime={formatTime}
+                        emptyMessage={
+                            allItems.length === 0
+                                ? 'Nothing is scheduled for bump-in yet.'
+                                : 'No run sheet items match this filter.'
+                        }
+                        startFallback={(item) => item.exhibitor?.slot ?? (item.exhibitor ? 'Slot not chosen' : '-')}
+                        summaryExtra={(item) =>
+                            item.exhibitor?.tier ? (
+                                <styled.span display="block" fontWeight="normal">
+                                    {item.exhibitor.tier}
+                                </styled.span>
+                            ) : null
+                        }
+                        sectionOf={dayOf}
+                        extraColumns={[
+                            {
+                                header: 'Ring road',
+                                cell: (item) => (item.exhibitor ? (item.exhibitor.ringRoad ? 'Yes' : 'No') : null),
+                            },
+                            {
+                                header: 'Trolley / assistance',
+                                cell: (item) => (item.exhibitor ? exhibitorNeeds(item.exhibitor) : null),
+                            },
+                        ]}
+                    />
                 </AdminCard>
-            </Box>
-        </AdminLayout>
+                <RunsheetFilterPanel filters={filters} {...filterOptions} clearTo="/runsheets/bump-in" />
+            </AdminLayout>
+        </>
     )
 }

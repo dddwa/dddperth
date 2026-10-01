@@ -10,7 +10,8 @@ import { css, cx } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
 
 /**
- * The run sheet's parts: the floating toolbar, the table and the filter panel.
+ * What the run sheets share — the conference day's and bump-in's: the floating
+ * toolbar, the table and the filter panel.
  */
 
 const FILTER_PANEL_ID = 'runsheet-filters'
@@ -253,6 +254,17 @@ const rowClass = css({
     _even: { bg: 'indigo.11', _light: { color: 'white' } },
     [WIDE]: { display: 'table-row', py: '0' },
 })
+// A section's heading row: a block above the stacked rows, a full-width cell in the table.
+const sectionRowClass = css({ display: 'block', [WIDE]: { display: 'table-row' } })
+const sectionHeadingClass = css({
+    display: 'block',
+    textAlign: 'left',
+    p: '2',
+    pt: '4',
+    fontSize: 'md',
+    fontWeight: 'semibold',
+    [WIDE]: { display: 'table-cell' },
+})
 const startTimeClass = css({ fontWeight: 'bold', [WIDE]: { fontWeight: 'normal' } })
 const cellClass = {
     time: css({ gridArea: 'time', [WIDE]: { display: 'table-cell' } }),
@@ -260,7 +272,13 @@ const cellClass = {
     summary: css({ gridArea: 'summary', fontWeight: 'bold', [WIDE]: { display: 'table-cell', fontWeight: 'normal' } }),
     related: css({ gridArea: 'related', [WIDE]: { display: 'table-cell' } }),
     details: css({ gridArea: 'details', [WIDE]: { display: 'table-cell' } }),
+    // A run sheet's own columns stack under Related on small screens.
+    extra: css({ gridColumn: '2 / -1', [WIDE]: { display: 'table-cell' } }),
+    // With nothing in it, the stacked row skips it; the table keeps the cell.
+    emptyExtra: css({ display: 'none', [WIDE]: { display: 'table-cell' } }),
 }
+/** Names an extra column's value in the stacked row, which has no header row. */
+const extraLabelClass = css({ [WIDE]: { display: 'none' } })
 
 /** A row's locations, then its teams on the next line, each comma-separated. */
 function RelatedList({
@@ -300,6 +318,10 @@ export function RunsheetTable<Item extends RunsheetItem>({
     teamIcons,
     formatTime,
     emptyMessage,
+    startFallback,
+    summaryExtra,
+    extraColumns = [],
+    sectionOf,
     onOpenSession,
 }: {
     items: Item[]
@@ -307,6 +329,17 @@ export function RunsheetTable<Item extends RunsheetItem>({
     teamIcons: Record<string, string>
     formatTime: (isoDateTime: string | null) => string
     emptyMessage: string
+    /** Shown in place of the start time for a row that has none. */
+    startFallback?: (item: Item) => string
+    /** More about a row, under its summary. */
+    summaryExtra?: (item: Item) => ReactNode
+    /** Columns of this run sheet's own, between Related and Details. A null cell is left empty. */
+    extraColumns?: Array<{ header: string; cell: (item: Item) => ReactNode }>
+    /**
+     * Splits the table into headed sections, one per run of consecutive rows
+     * this gives the same heading — so the rows need to arrive sorted by it.
+     */
+    sectionOf?: (item: Item) => string
     /** Makes an agenda talk's summary a button that opens its details. */
     onOpenSession?: (item: Item) => void
 }) {
@@ -314,6 +347,15 @@ export function RunsheetTable<Item extends RunsheetItem>({
 
     // Hidden when nothing on screen has a link, rather than an empty column.
     const showRoleDetails = items.some((item) => item.roleInstructionsUrl)
+    const columnCount = 3 + extraColumns.length + (showRoleDetails ? 1 : 0)
+
+    const sections: Array<{ heading: string | null; items: Item[] }> = []
+    for (const item of items) {
+        const heading = sectionOf?.(item) ?? null
+        const current = sections.at(-1)
+        if (current && current.heading === heading) current.items.push(item)
+        else sections.push({ heading, items: [item] })
+    }
 
     return (
         <styled.table width="full" fontSize="sm" className={tableClass}>
@@ -332,6 +374,11 @@ export function RunsheetTable<Item extends RunsheetItem>({
                     <styled.th textAlign="left" p="2" w="[max(20%, 40ch)]">
                         Related
                     </styled.th>
+                    {extraColumns.map((column) => (
+                        <styled.th key={column.header} textAlign="left" p="2">
+                            {column.header}
+                        </styled.th>
+                    ))}
                     {showRoleDetails ? (
                         <styled.th textAlign="left" p="2" w="[1%]" whiteSpace="nowrap">
                             Details
@@ -339,83 +386,108 @@ export function RunsheetTable<Item extends RunsheetItem>({
                     ) : null}
                 </tr>
             </thead>
-            <tbody className={tbodyClass}>
-                {items.map((item) => {
-                    const isNow = nowIds.has(item.id)
-                    return (
-                        <styled.tr
-                            key={item.id}
-                            id={runsheetRowId(item.id)}
-                            aria-current={isNow ? 'time' : undefined}
-                            border="admin-subtle"
-                            className={cx(rowClass, isNow && runsheetNowRowClass)}
-                        >
-                            <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
-                                {isNow ? <NowLabel /> : null}
-                                {/* Start and end on their own lines, keeping the column narrow. */}
-                                <span className={startTimeClass}>{formatTime(item.startTime)}</span>
-                                {item.endTime ? (
-                                    <>
-                                        {' –'}
-                                        <br />
-                                        <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
-                                    </>
-                                ) : null}
-                            </styled.td>
-                            <styled.td p="2" className={cellClass.summary}>
-                                {item.source === 'agenda' ? (
-                                    <span role="img" aria-label="Agenda session">
-                                        📢{' '}
+            {sections.map((section) => (
+                <tbody key={section.heading} className={tbodyClass}>
+                    {section.heading ? (
+                        <tr className={sectionRowClass}>
+                            <th colSpan={columnCount} scope="rowgroup" className={sectionHeadingClass}>
+                                {section.heading}
+                            </th>
+                        </tr>
+                    ) : null}
+                    {section.items.map((item) => {
+                        const isNow = nowIds.has(item.id)
+                        return (
+                            <styled.tr
+                                key={item.id}
+                                id={runsheetRowId(item.id)}
+                                aria-current={isNow ? 'time' : undefined}
+                                border="admin-subtle"
+                                className={cx(rowClass, isNow && runsheetNowRowClass)}
+                            >
+                                <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
+                                    {isNow ? <NowLabel /> : null}
+                                    {/* Start and end on their own lines, keeping the column narrow. */}
+                                    <span className={startTimeClass}>
+                                        {item.startTime || !startFallback
+                                            ? formatTime(item.startTime)
+                                            : startFallback(item)}
                                     </span>
-                                ) : null}
-                                {item.sessionizeSessionId && onOpenSession ? (
-                                    <styled.button
-                                        type="button"
-                                        onClick={() => onOpenSession(item)}
-                                        aria-haspopup="dialog"
-                                        bg="transparent"
-                                        border="none"
-                                        p="0"
-                                        color="[inherit]"
-                                        font="inherit"
-                                        textAlign="left"
-                                        textDecoration="underline"
-                                        cursor="pointer"
-                                    >
-                                        {item.summary}
-                                    </styled.button>
-                                ) : (
-                                    item.summary
-                                )}
-                            </styled.td>
-                            <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
-                                <RelatedList
-                                    locations={item.locations}
-                                    teams={item.teams.map((label, i) => ({
-                                        label,
-                                        icon: teamIcons[item.teamKeys[i]],
-                                    }))}
-                                />
-                            </styled.td>
-                            {showRoleDetails ? (
-                                <styled.td p="2" className={cellClass.details}>
-                                    {item.roleInstructionsUrl ? (
-                                        <AppLink
-                                            unstyled
-                                            to={item.roleInstructionsUrl}
-                                            display="inline-flex"
-                                            alignItems="center"
-                                            aria-label={`Role instructions for ${item.summary}`}
-                                        >
-                                            <ConfluenceLogo height="2rem" />
-                                        </AppLink>
+                                    {item.endTime ? (
+                                        <>
+                                            {' –'}
+                                            <br />
+                                            <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
+                                        </>
                                     ) : null}
                                 </styled.td>
-                            ) : null}
-                        </styled.tr>
-                    )
-                })}
-            </tbody>
+                                <styled.td p="2" className={cellClass.summary}>
+                                    {item.source === 'agenda' ? (
+                                        <span role="img" aria-label="Agenda session">
+                                            📢{' '}
+                                        </span>
+                                    ) : null}
+                                    {item.sessionizeSessionId && onOpenSession ? (
+                                        <styled.button
+                                            type="button"
+                                            onClick={() => onOpenSession(item)}
+                                            aria-haspopup="dialog"
+                                            bg="transparent"
+                                            border="none"
+                                            p="0"
+                                            color="[inherit]"
+                                            font="inherit"
+                                            textAlign="left"
+                                            textDecoration="underline"
+                                            cursor="pointer"
+                                        >
+                                            {item.summary}
+                                        </styled.button>
+                                    ) : (
+                                        item.summary
+                                    )}
+                                    {summaryExtra?.(item)}
+                                </styled.td>
+                                <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
+                                    <RelatedList
+                                        locations={item.locations}
+                                        teams={item.teams.map((label, i) => ({
+                                            label,
+                                            icon: teamIcons[item.teamKeys[i]],
+                                        }))}
+                                    />
+                                </styled.td>
+                                {extraColumns.map((column) => {
+                                    const content = column.cell(item)
+                                    return content == null ? (
+                                        <td key={column.header} className={cellClass.emptyExtra} />
+                                    ) : (
+                                        <styled.td key={column.header} p="2" className={cellClass.extra}>
+                                            <span className={extraLabelClass}>{column.header}: </span>
+                                            {content}
+                                        </styled.td>
+                                    )
+                                })}
+                                {showRoleDetails ? (
+                                    <styled.td p="2" className={cellClass.details}>
+                                        {item.roleInstructionsUrl ? (
+                                            <AppLink
+                                                unstyled
+                                                to={item.roleInstructionsUrl}
+                                                display="inline-flex"
+                                                alignItems="center"
+                                                aria-label={`Role instructions for ${item.summary}`}
+                                            >
+                                                <ConfluenceLogo height="2rem" />
+                                            </AppLink>
+                                        ) : null}
+                                    </styled.td>
+                                ) : null}
+                            </styled.tr>
+                        )
+                    })}
+                </tbody>
+            ))}
         </styled.table>
     )
 }
