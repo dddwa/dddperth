@@ -5,10 +5,19 @@ import { data, redirect, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { AppLink } from '~/components/app-link'
+import { useRunsheetAutoRefresh } from '~/components/runsheet-freshness'
+import {
+    JumpToNowButton,
+    NowLabel,
+    runsheetNowRowClass,
+    runsheetRowId,
+    useRunsheetNow,
+} from '~/components/runsheet-now'
 import { RunsheetRefreshForm } from '~/components/runsheet-refresh-form'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
+import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { fetchRunsheet } from '~/lib/runsheets/runsheet-client.server'
 import { type BumpInItem, fetchSponsorBumpIn, sortByStartTime } from '~/lib/runsheets/sponsor-bump-in.server'
 import { noIndexMeta } from '~/lib/seo'
@@ -27,9 +36,10 @@ import type { Route } from './+types/_layout.runsheets.bump-in'
 export const meta = noIndexMeta
 
 /**
- * Bump-in is the day before, and plans move right up to it. A minute is short
- * enough that a reload shows a Jira edit almost straight away, so there is no
- * need for a refresh button, while still capping Jira at three calls a minute.
+ * Bump-in is the day before, and plans move right up to it. A minute matches
+ * how often an open page reloads itself, so a Jira edit reaches it within
+ * about two minutes with no refresh button, while still capping Jira at three
+ * calls a minute.
  */
 const CACHE_TTL_SECONDS = 60
 
@@ -60,12 +70,14 @@ async function loadBumpIn(context: LoadContext, cacheGeneration: string) {
 /** Admin-only: make both run sheets re-read Jira on their next load. */
 export async function action({ request, context }: Route.ActionArgs) {
     requireBumpInConfig()
+    requireRunsheetOpen(context)
     const admin = await requireAdmin(request, context)
     await invalidateRunsheetCache(getServices(context), admin.email)
     return redirect('/runsheets/bump-in')
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+    requireRunsheetOpen(context)
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
     const items = await loadBumpIn(context, cacheState.generation)
@@ -88,15 +100,18 @@ function formatTime(isoDateTime: string | null): string {
 
 export default function BumpInRunsheet() {
     const { items, canRefresh, refreshedAt } = useLoaderData<typeof loader>()
+    useRunsheetAutoRefresh()
+    const { nowIds, firstNowId } = useRunsheetNow(items)
 
     return (
-        <AdminLayout heading="Bump-in run sheet">
+        <AdminLayout heading="Bump-in run sheet" gutter>
             <Box maxW="6xl" mx="auto">
                 <AdminCard overflow="auto">
                     <Flex alignItems="center" justifyContent="space-between" gap="2" marginBottom="2" flexWrap="wrap">
                         <AppLink unstyled to="/runsheets" textDecoration="underline">
                             Conference day run sheet
                         </AppLink>
+                        {firstNowId ? <JumpToNowButton itemId={firstNowId} /> : null}
                         {canRefresh ? <RunsheetRefreshForm refreshedAt={refreshedAt} /> : null}
                     </Flex>
 
@@ -143,10 +158,18 @@ export default function BumpInRunsheet() {
                                               exhibitor.porterAssistance && `Porter: ${exhibitor.porterAssistance}`,
                                           ].filter((need): need is string => Boolean(need))
                                         : []
+                                    const isNow = nowIds.has(item.id)
 
                                     return (
-                                        <styled.tr key={item.id} border="admin-subtle">
+                                        <styled.tr
+                                            key={item.id}
+                                            id={runsheetRowId(item.id)}
+                                            aria-current={isNow ? 'time' : undefined}
+                                            border="admin-subtle"
+                                            className={isNow ? runsheetNowRowClass : undefined}
+                                        >
                                             <styled.td p="2" whiteSpace="nowrap">
+                                                {isNow ? <NowLabel /> : null}
                                                 {item.startTime
                                                     ? formatTime(item.startTime)
                                                     : (exhibitor?.slot ?? 'Slot not chosen')}

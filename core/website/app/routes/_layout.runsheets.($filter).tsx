@@ -15,6 +15,13 @@ import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
 import { FloatingPanel, floatingPanelAnchorClass } from '~/components/floating-panel'
 import { RunsheetFreshness } from '~/components/runsheet-freshness'
+import {
+    JumpToNowButton,
+    NowLabel,
+    runsheetNowRowClass,
+    runsheetRowId,
+    useRunsheetNow,
+} from '~/components/runsheet-now'
 import { RunsheetSessionModal } from '~/components/runsheet-session-modal'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
@@ -24,6 +31,7 @@ import { recordException } from '~/lib/record-exception'
 import { isVolunteerRole } from '~/lib/services/volunteers-store'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/lib/runsheets/runsheet-client.server'
+import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
@@ -46,12 +54,13 @@ import type { loader as sessionLoader } from './api.runsheets.session.$sessionId
 export const meta = noIndexMeta
 
 /**
- * How long Jira responses stay cached. Run sheets are edited right up to the
- * morning, so conference day refreshes quickly; the rest of the year the page
- * is consulted rarely and the data barely moves.
+ * How long Jira responses stay cached: the same minute an open page waits
+ * between refreshes (see RunsheetFreshness), so an edit in Jira reaches every
+ * open run sheet within about two minutes. The cache is shared per data
+ * centre, so Jira sees about two calls a minute however many volunteers have
+ * the page open.
  */
-const CACHE_TTL_CONFERENCE_DAY_SECONDS = 5 * 60
-const CACHE_TTL_DEFAULT_SECONDS = 30 * 60
+const CACHE_TTL_SECONDS = 60
 
 /**
  * Admin-only: every run sheet view re-reads Jira on its next load. The form
@@ -61,6 +70,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (!conferenceManifest.runsheets) {
         throw new Response('Not Found', { status: 404 })
     }
+    requireRunsheetOpen(context)
     const formData = await request.formData()
     if (formData.get('intent') === 'refresh') {
         const admin = await requireAdmin(request, context)
@@ -78,6 +88,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     if (!config) {
         throw new Response('Not Found', { status: 404 })
     }
+    requireRunsheetOpen(context)
 
     // The filter used to be a single `/runsheets/team.team-1` path segment,
     // and those links went out to volunteers — carry them over to the query
@@ -94,8 +105,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
 
     const conferenceState = getConferenceState(context)
-    const isConferenceDay = conferenceState.conferenceState === 'conference-day'
-    const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
     const { timezone } = conferenceManifest.public
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
@@ -108,7 +117,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             apiEmail,
             apiToken,
             apiBaseUrl,
-            cacheTtlSeconds,
+            cacheTtlSeconds: CACHE_TTL_SECONDS,
             cacheGeneration: cacheState.generation,
             timezone,
         }),
@@ -277,6 +286,7 @@ export default function Runsheets() {
     // works offline. The server renders the same filter first, from the URL.
     const filters = parseRunsheetFilters(searchParams, { teamLabels, locationLabels })
     const items = filterRunsheetItems(allItems, filters)
+    const { nowIds, firstNowId } = useRunsheetNow(items)
     const activeFilterCount = filters.teams.length + filters.locations.length
     // Hidden when nothing on screen has a link, rather than an empty column.
     const showRoleDetails = items.some((item) => item.roleInstructionsUrl)
@@ -325,6 +335,8 @@ export default function Runsheets() {
                 position="sticky"
                 zIndex="docked"
                 justifyContent="flex-end"
+                // Wraps on a phone: four buttons don't fit in one row at 390px.
+                flexWrap="wrap"
                 gap="2"
                 mb="2"
             >
@@ -335,6 +347,7 @@ export default function Runsheets() {
                         </AppLink>
                     </Button>
                 ) : null}
+                {firstNowId ? <JumpToNowButton itemId={firstNowId} boxShadow="md" /> : null}
                 <Button type="button" size="sm" boxShadow="md" popoverTarget={FILTER_PANEL_ID}>
                     Filter{activeFilterCount ? ` (${activeFilterCount})` : ''}
                 </Button>
@@ -344,7 +357,7 @@ export default function Runsheets() {
                     clearsJiraCache={canRefresh}
                 />
             </Flex>
-            <AdminLayout heading="Runsheets" fullWidth bareOnSmallScreens>
+            <AdminLayout heading="Runsheets" fullWidth bareOnSmallScreens gutter>
                 <AdminCard overflow="auto" bareOnSmallScreens>
                     {selectedTeamLinks.map((team) => (
                         <styled.section key={team.team} aria-labelledby={`team-links-${team.team}`} mb="4">
@@ -390,71 +403,81 @@ export default function Runsheets() {
                                 </tr>
                             </thead>
                             <tbody className={tbodyClass}>
-                                {items.map((item) => (
-                                    <styled.tr key={item.id} border="admin-subtle" className={rowClass}>
-                                        <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
-                                            {/* Start and end on their own lines, keeping the column narrow. */}
-                                            <span className={startTimeClass}>{formatTime(item.startTime)}</span>
-                                            {item.endTime ? (
-                                                <>
-                                                    {' –'}
-                                                    <br />
-                                                    <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
-                                                </>
-                                            ) : null}
-                                        </styled.td>
-                                        <styled.td p="2" className={cellClass.summary}>
-                                            {item.source === 'agenda' ? (
-                                                <span role="img" aria-label="Agenda session">
-                                                    📢{' '}
-                                                </span>
-                                            ) : null}
-                                            {item.sessionizeSessionId ? (
-                                                <styled.button
-                                                    type="button"
-                                                    onClick={() => openSession(item)}
-                                                    aria-haspopup="dialog"
-                                                    bg="transparent"
-                                                    border="none"
-                                                    p="0"
-                                                    color="[inherit]"
-                                                    font="inherit"
-                                                    textAlign="left"
-                                                    textDecoration="underline"
-                                                    cursor="pointer"
-                                                >
-                                                    {item.summary}
-                                                </styled.button>
-                                            ) : (
-                                                item.summary
-                                            )}
-                                        </styled.td>
-                                        <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
-                                            <RelatedList
-                                                locations={item.locations}
-                                                teams={item.teams.map((label, i) => ({
-                                                    label,
-                                                    icon: teamIcons[item.teamKeys[i]],
-                                                }))}
-                                            />
-                                        </styled.td>
-                                        {showRoleDetails ? (
-                                            <styled.td p="2" className={cellClass.details}>
-                                                {item.roleInstructionsUrl ? (
-                                                    <AppLink
-                                                        unstyled
-                                                        to={item.roleInstructionsUrl}
-                                                        display="inline-flex"
-                                                        alignItems="center"
-                                                        aria-label={`Role instructions for ${item.summary}`}
-                                                    >
-                                                        <ConfluenceLogo height="2rem" />
-                                                    </AppLink>
+                                {items.map((item) => {
+                                    const isNow = nowIds.has(item.id)
+                                    return (
+                                        <styled.tr
+                                            key={item.id}
+                                            id={runsheetRowId(item.id)}
+                                            aria-current={isNow ? 'time' : undefined}
+                                            border="admin-subtle"
+                                            className={cx(rowClass, isNow && runsheetNowRowClass)}
+                                        >
+                                            <styled.td p="2" whiteSpace="nowrap" className={cellClass.time}>
+                                                {isNow ? <NowLabel /> : null}
+                                                {/* Start and end on their own lines, keeping the column narrow. */}
+                                                <span className={startTimeClass}>{formatTime(item.startTime)}</span>
+                                                {item.endTime ? (
+                                                    <>
+                                                        {' –'}
+                                                        <br />
+                                                        <styled.span pl="[1ch]">{formatTime(item.endTime)}</styled.span>
+                                                    </>
                                                 ) : null}
                                             </styled.td>
-                                        ) : null}
-                                    </styled.tr>
-                                ))}
+                                            <styled.td p="2" className={cellClass.summary}>
+                                                {item.source === 'agenda' ? (
+                                                    <span role="img" aria-label="Agenda session">
+                                                        📢{' '}
+                                                    </span>
+                                                ) : null}
+                                                {item.sessionizeSessionId ? (
+                                                    <styled.button
+                                                        type="button"
+                                                        onClick={() => openSession(item)}
+                                                        aria-haspopup="dialog"
+                                                        bg="transparent"
+                                                        border="none"
+                                                        p="0"
+                                                        color="[inherit]"
+                                                        font="inherit"
+                                                        textAlign="left"
+                                                        textDecoration="underline"
+                                                        cursor="pointer"
+                                                    >
+                                                        {item.summary}
+                                                    </styled.button>
+                                                ) : (
+                                                    item.summary
+                                                )}
+                                            </styled.td>
+                                            <styled.td p="2" overflowWrap="anywhere" className={cellClass.related}>
+                                                <RelatedList
+                                                    locations={item.locations}
+                                                    teams={item.teams.map((label, i) => ({
+                                                        label,
+                                                        icon: teamIcons[item.teamKeys[i]],
+                                                    }))}
+                                                />
+                                            </styled.td>
+                                            {showRoleDetails ? (
+                                                <styled.td p="2" className={cellClass.details}>
+                                                    {item.roleInstructionsUrl ? (
+                                                        <AppLink
+                                                            unstyled
+                                                            to={item.roleInstructionsUrl}
+                                                            display="inline-flex"
+                                                            alignItems="center"
+                                                            aria-label={`Role instructions for ${item.summary}`}
+                                                        >
+                                                            <ConfluenceLogo height="2rem" />
+                                                        </AppLink>
+                                                    ) : null}
+                                                </styled.td>
+                                            ) : null}
+                                        </styled.tr>
+                                    )
+                                })}
                             </tbody>
                         </styled.table>
                     )}

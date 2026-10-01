@@ -20,18 +20,29 @@ const bareOnSmallScreensClass = css({
     '@media (min-width: 50em)': { p: '12', border: 'admin-subtle', borderRadius: '2xl', boxShadow: 'lg' },
 })
 
+/** 20px either side from 50em up, for `gutter`. */
+const gutterClass = css({ '@media (min-width: 50em)': { px: '[20px]' } })
+
 export function AdminLayout({
     heading,
     children,
     fullWidth,
     bareOnSmallScreens,
+    gutter,
 }: {
     heading: string
     children: ReactNode
     fullWidth?: boolean
     bareOnSmallScreens?: boolean
+    /**
+     * For a page in the public layout, which has no side padding of its own
+     * (the admin shell supplies it everywhere else): without it the card's
+     * edges and rounded corners run off the screen once it is as wide as the
+     * viewport.
+     */
+    gutter?: boolean
 }) {
-    return (
+    const layout = (
         <div
             className={cx(
                 bareOnSmallScreens ? bareOnSmallScreensClass : layoutClass,
@@ -44,4 +55,5 @@ export function AdminLayout({
             {children}
         </div>
     )
+    return gutter ? <div className={gutterClass}>{layout}</div> : layout
 }
