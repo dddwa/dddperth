@@ -24,6 +24,7 @@ import { recordException } from '~/lib/record-exception'
 import { isVolunteerRole } from '~/lib/services/volunteers-store'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/lib/runsheets/runsheet-client.server'
+import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { isRunsheetItemNow } from '~/lib/runsheets/runsheet-now'
 import { noIndexMeta } from '~/lib/seo'
@@ -47,12 +48,13 @@ import type { loader as sessionLoader } from './api.runsheets.session.$sessionId
 export const meta = noIndexMeta
 
 /**
- * How long Jira responses stay cached. Run sheets are edited right up to the
- * morning, so conference day refreshes quickly; the rest of the year the page
- * is consulted rarely and the data barely moves.
+ * How long Jira responses stay cached: the same minute an open page waits
+ * between refreshes (see RunsheetFreshness), so an edit in Jira reaches every
+ * open run sheet within about two minutes. The cache is shared per data
+ * centre, so Jira sees about two calls a minute however many volunteers have
+ * the page open.
  */
-const CACHE_TTL_CONFERENCE_DAY_SECONDS = 5 * 60
-const CACHE_TTL_DEFAULT_SECONDS = 30 * 60
+const CACHE_TTL_SECONDS = 60
 
 /**
  * Admin-only: every run sheet view re-reads Jira on its next load. The form
@@ -62,6 +64,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (!conferenceManifest.runsheets) {
         throw new Response('Not Found', { status: 404 })
     }
+    requireRunsheetOpen(context)
     const formData = await request.formData()
     if (formData.get('intent') === 'refresh') {
         const admin = await requireAdmin(request, context)
@@ -79,6 +82,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     if (!config) {
         throw new Response('Not Found', { status: 404 })
     }
+    requireRunsheetOpen(context)
 
     // The filter used to be a single `/runsheets/team.team-1` path segment,
     // and those links went out to volunteers — carry them over to the query
@@ -95,8 +99,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
 
     const conferenceState = getConferenceState(context)
-    const isConferenceDay = conferenceState.conferenceState === 'conference-day'
-    const cacheTtlSeconds = isConferenceDay ? CACHE_TTL_CONFERENCE_DAY_SECONDS : CACHE_TTL_DEFAULT_SECONDS
     const { timezone } = conferenceManifest.public
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
@@ -109,7 +111,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             apiEmail,
             apiToken,
             apiBaseUrl,
-            cacheTtlSeconds,
+            cacheTtlSeconds: CACHE_TTL_SECONDS,
             cacheGeneration: cacheState.generation,
             timezone,
         }),
@@ -198,10 +200,11 @@ const FILTER_PANEL_ID = 'runsheet-filters'
 /** Prefixed so a row id (a Jira key or Sessionize id) can't collide with the page's other ids. */
 const rowElementId = (itemId: string) => `runsheet-row-${itemId}`
 
-/** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
-const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]' })
-
 const WIDE = '@media (min-width: 50em)'
+
+/** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
+const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]', [WIDE]: { mr: '0' } })
+
 const tableClass = css({ display: 'block', [WIDE]: { display: 'table' } })
 const theadClass = css({ display: 'none', [WIDE]: { display: 'table-header-group' } })
 const tbodyClass = css({ display: 'block', [WIDE]: { display: 'table-row-group' } })
@@ -275,29 +278,35 @@ function RelatedList({
     )
 }
 
-/** "9:30 AM – 10:15 AM", or just the start when there's no end. */
 /**
- * The device clock, re-read every half minute and whenever the page comes
- * back into view (a phone's timers stall while it's locked). Null during
- * server rendering and hydration, so the server's clock never decides what
- * is highlighted and the first client render matches the server's HTML.
+ * The device clock, re-read on each minute boundary — run sheet times are
+ * whole minutes, so a row lights up as its minute starts rather than up to a
+ * tick late — and whenever the page comes back into view, since a phone's
+ * timers stall while it's locked. Null during server rendering and
+ * hydration, so the server's clock never decides what is highlighted and the
+ * first client render matches the server's HTML.
  */
-const NOW_TICK_MS = 30_000
 function useNow(): number | null {
     const [now, setNow] = useState<number | null>(null)
     useEffect(() => {
-        const tick = () => setNow(Date.now())
+        let timer: number | undefined
+        const tick = () => {
+            const current = Date.now()
+            setNow(current)
+            window.clearTimeout(timer)
+            timer = window.setTimeout(tick, 60_000 - (current % 60_000))
+        }
         tick()
-        const timer = window.setInterval(tick, NOW_TICK_MS)
         document.addEventListener('visibilitychange', tick)
         return () => {
-            window.clearInterval(timer)
+            window.clearTimeout(timer)
             document.removeEventListener('visibilitychange', tick)
         }
     }, [])
     return now
 }
 
+/** "9:30 AM – 10:15 AM", or just the start when there's no end. */
 function formatTimeRange(start: string | null, end: string | null): string {
     return end ? `${formatTime(start)} – ${formatTime(end)}` : formatTime(start)
 }
@@ -363,7 +372,10 @@ export default function Runsheets() {
     }
 
     return (
-        <>
+        // The public layout has no side padding of its own (the admin shell
+        // supplies it for other full-width pages), so without this the card's
+        // edges and rounded corners run off the screen.
+        <styled.div className={css({ [WIDE]: { px: '[20px]' } })}>
             {/* Just below the site header, sticking to the top once scrolled
                 past, so the filters and freshness stay to hand however far down
                 the run sheet a volunteer is. The panels open under it. */}
@@ -621,6 +633,6 @@ export default function Runsheets() {
                     onClose={() => setOpenItem(null)}
                 />
             </AdminLayout>
-        </>
+        </styled.div>
     )
 }

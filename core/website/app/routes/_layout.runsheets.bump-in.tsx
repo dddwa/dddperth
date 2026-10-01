@@ -9,6 +9,7 @@ import { RunsheetRefreshForm } from '~/components/runsheet-refresh-form'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
+import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { fetchRunsheet } from '~/lib/runsheets/runsheet-client.server'
 import { type BumpInItem, fetchSponsorBumpIn, sortByStartTime } from '~/lib/runsheets/sponsor-bump-in.server'
 import { noIndexMeta } from '~/lib/seo'
@@ -60,12 +61,14 @@ async function loadBumpIn(context: LoadContext, cacheGeneration: string) {
 /** Admin-only: make both run sheets re-read Jira on their next load. */
 export async function action({ request, context }: Route.ActionArgs) {
     requireBumpInConfig()
+    requireRunsheetOpen(context)
     const admin = await requireAdmin(request, context)
     await invalidateRunsheetCache(getServices(context), admin.email)
     return redirect('/runsheets/bump-in')
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+    requireRunsheetOpen(context)
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
     const items = await loadBumpIn(context, cacheState.generation)

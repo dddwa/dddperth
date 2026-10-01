@@ -5,8 +5,8 @@ import { FloatingPanel } from '~/components/floating-panel'
 import { Button } from '~/components/ui/styled/button'
 import { styled } from '~/styled-system/jsx'
 
-/** How often an open run sheet refreshes itself — the server's conference-day Jira cache time. */
-const AUTO_REFRESH_MS = 5 * 60 * 1000
+/** How often an open run sheet refreshes itself — the server's Jira cache time. */
+const AUTO_REFRESH_MS = 60 * 1000
 
 const PANEL_ID = 'runsheet-updates'
 
@@ -22,7 +22,7 @@ function subscribeToOnline(onChange: () => void) {
 /**
  * "Last updated" for the run sheet, a manual Refresh, and a notice when
  * offline — as a floating button that pops out a panel. The page holds the whole run sheet in memory, so it also refreshes
- * itself when the tab comes back into view and every few minutes while open —
+ * itself when the tab comes back into view and every minute while open —
  * otherwise a volunteer who opened it first thing would filter the morning's
  * run sheet all day.
  *

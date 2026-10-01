@@ -3,6 +3,7 @@ import { data, type LoaderFunctionArgs } from 'react-router'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getPublishedSchedule } from '~/lib/published-agenda.server'
 import { recordException } from '~/lib/record-exception'
+import { isRunsheetClosedNow } from '~/lib/runsheets/runsheet-availability.server'
 import { toRunsheetSessionDetail } from '~/lib/runsheets/runsheet-session.server'
 import { getConfSpeakers } from '~/lib/sessionize.server'
 import type { SpeakerProfile } from '~/lib/services/speakers-store'
@@ -21,7 +22,7 @@ import { getConferenceState, getConfig, getServices } from '~/remix-app-load-con
  * the whole run sheet for the route's error page.
  */
 export async function loader({ params, context }: LoaderFunctionArgs) {
-    if (!conferenceManifest.runsheets) {
+    if (!conferenceManifest.runsheets || isRunsheetClosedNow(context)) {
         return data(null, { status: 404 })
     }
 
