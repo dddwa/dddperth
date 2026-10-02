@@ -24,6 +24,8 @@ export interface RunsheetItem {
     source: 'jira' | 'agenda'
     /** Set for an agenda talk, whose details the page can open in a modal. */
     sessionizeSessionId: string | null
+    /** A break (see `isBreakSummary`), which the "Show Breaks" toggle keeps in view. */
+    isBreak?: boolean
 }
 
 /**
@@ -42,20 +44,37 @@ export const AGENDA_TEAM_FILTER = 'agenda'
 export const SHOW_AGENDA_PARAM = 'agenda'
 
 /**
+ * The "Show Breaks" toggle's query param: shows every break regardless of the
+ * other filters, so a team's own view still says when morning tea and lunch are.
+ */
+export const SHOW_BREAKS_PARAM = 'breaks'
+
+/**
+ * The committee marks a break by titling its Jira item "[Break] …". Most of
+ * those are placeholders for an agenda service session, so they're hidden and
+ * the session they overlap is the break shown instead (see
+ * `sessionsToRunsheetItems`). Other service sessions (changeovers,
+ * registration) aren't breaks.
+ */
+export const isBreakSummary = (summary: string) => /^\[break\]/i.test(summary.trim())
+
+/**
  * Configured labels to show. An empty list means no filter on that field, not
  * "match nothing". Values within a list are OR'd; the two lists are AND'd.
- * `showAgenda` keeps every agenda session in view whatever the lists select.
+ * `showAgenda` keeps every agenda session in view whatever the lists select,
+ * and `showBreaks` does the same for just the breaks.
  */
-export type RunsheetFilters = { teams: string[]; locations: string[]; showAgenda: boolean }
+export type RunsheetFilters = { teams: string[]; locations: string[]; showAgenda: boolean; showBreaks: boolean }
 
 /**
  * Parses the `team` and `location` query params into known labels. Any value
  * that isn't a configured label is dropped, so an unrecognised filter widens
  * the run sheet back towards unfiltered rather than emptying it. `agenda=1`
- * is the "Show Agenda" toggle.
+ * is the "Show Agenda" toggle and `breaks=1` the "Show Breaks" one.
  *
  * `agenda: false` is for a run sheet with no agenda sessions (bump-in), where
- * the "Agenda" team would filter to nothing and Show Agenda would do nothing.
+ * the "Agenda" team would filter to nothing and Show Agenda and Show Breaks
+ * would do nothing.
  */
 export function parseRunsheetFilters(
     searchParams: URLSearchParams,
@@ -69,6 +88,7 @@ export function parseRunsheetFilters(
         teams: known('team', agenda ? { ...labels.teamLabels, [AGENDA_TEAM_FILTER]: 'Agenda' } : labels.teamLabels),
         locations: known('location', labels.locationLabels),
         showAgenda: agenda && searchParams.get(SHOW_AGENDA_PARAM) === '1',
+        showBreaks: agenda && searchParams.get(SHOW_BREAKS_PARAM) === '1',
     }
 }
 
@@ -104,7 +124,7 @@ export function groupRunsheetSections<Item>(
  * (any selected team) AND (any selected location); an empty list matches
  * everything. An agenda session matches the Team filter when "Agenda" is one
  * of the selected teams, whatever teams it carries — and skips both filters
- * when `showAgenda` is on.
+ * when `showAgenda` is on, as a break does when `showBreaks` is.
  */
 export function filterRunsheetItems<Item extends RunsheetItem>(items: Item[], filters: RunsheetFilters): Item[] {
     const matches = (selected: string[], keys: string[]) =>
@@ -114,6 +134,7 @@ export function filterRunsheetItems<Item extends RunsheetItem>(items: Item[], fi
     return items.filter(
         (item) =>
             (filters.showAgenda && item.source === 'agenda') ||
+            (filters.showBreaks && item.isBreak) ||
             (matches(filters.teams, teamKeys(item)) && matches(filters.locations, item.locationKeys)),
     )
 }
