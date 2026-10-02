@@ -1,5 +1,5 @@
-// Offline copy of the volunteer run sheet, registered by the /runsheets page
-// with scope `/runsheets`. The page's HTML and data go to the network first;
+// Offline copy of the volunteer run sheets, registered by the /runsheets and
+// /runsheets/bump-in pages with scope `/runsheets`. The page's HTML and data go to the network first;
 // the last successful copy is kept, and served only when the network fails or
 // is too slow to answer. Network-first means an online volunteer never sees a
 // stale run sheet from here — the page's "last updated" time says how old any

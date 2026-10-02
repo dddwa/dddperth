@@ -20,7 +20,7 @@ import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
 import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { fetchRunsheet } from '~/lib/runsheets/runsheet-client.server'
-import { filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
+import { filterRunsheetItems, labelsInUse, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { type BumpInItem, fetchSponsorBumpIn, sortByStartTime } from '~/lib/runsheets/sponsor-bump-in.server'
 import { noIndexMeta } from '~/lib/seo'
 import { getConfig, getServices } from '~/remix-app-load-context'
@@ -156,24 +156,20 @@ export default function BumpInRunsheet() {
         fetchedAt,
     } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
-    // No agenda sessions on this run sheet, so nothing for Show Agenda to show.
-    const filters = { ...parseRunsheetFilters(searchParams, { teamLabels, locationLabels }), showAgenda: false }
+    // No agenda sessions on this run sheet, so no Agenda team or Show Agenda.
+    const filters = parseRunsheetFilters(searchParams, { teamLabels, locationLabels }, { agenda: false })
     const items = filterRunsheetItems(allItems, filters).map((item) =>
         item.exhibitor && item.locations.length === 0 ? { ...item, locations: ['Space TBC'] } : item,
     )
     const { nowIds, firstNowId } = useRunsheetNow(items)
     useRunsheetOffline()
-    // Only the teams and locations bump-in actually uses: the labels are the
-    // conference day's too, and most of those would filter to an empty sheet.
-    const used = (labels: Record<string, string>, keys: string[]) =>
-        Object.fromEntries(Object.entries(labels).filter(([key]) => keys.includes(key)))
     const filterOptions = runsheetFilterOptions({
-        teamLabels: used(
+        teamLabels: labelsInUse(
             teamLabels,
             allItems.flatMap((item) => item.teamKeys),
         ),
         teamIcons,
-        locationLabels: used(
+        locationLabels: labelsInUse(
             locationLabels,
             allItems.flatMap((item) => item.locationKeys),
         ),
@@ -228,7 +224,14 @@ export default function BumpInRunsheet() {
                         ]}
                     />
                 </AdminCard>
-                <RunsheetFilterPanel filters={filters} {...filterOptions} clearTo="/runsheets/bump-in" />
+                <RunsheetFilterPanel
+                    filters={filters}
+                    {...filterOptions}
+                    clearTo="/runsheets/bump-in"
+                    // Their room and space are free text from the sponsor
+                    // issue, so a location filter has nothing to match.
+                    hint="Exhibitor rows have no location to match, so a location filter hides them."
+                />
             </AdminLayout>
         </>
     )

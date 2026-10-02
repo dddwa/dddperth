@@ -5,7 +5,12 @@ import { FloatingPanel, floatingPanelAnchorClass } from '~/components/floating-p
 import { NowLabel, runsheetNowRowClass, runsheetRowId } from '~/components/runsheet-now'
 import { Button } from '~/components/ui/styled/button'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
-import { SHOW_AGENDA_PARAM, type RunsheetFilters, type RunsheetItem } from '~/lib/runsheets/runsheet-filters'
+import {
+    groupRunsheetSections,
+    SHOW_AGENDA_PARAM,
+    type RunsheetFilters,
+    type RunsheetItem,
+} from '~/lib/runsheets/runsheet-filters'
 import { css, cx } from '~/styled-system/css'
 import { Flex, styled } from '~/styled-system/jsx'
 
@@ -158,6 +163,7 @@ export function RunsheetFilterPanel({
     locationOptions,
     clearTo,
     showAgendaSwitch,
+    hint,
 }: {
     filters: RunsheetFilters
     teamOptions: FilterOption[]
@@ -166,6 +172,8 @@ export function RunsheetFilterPanel({
     clearTo: string
     /** Only for a run sheet that carries the agenda's sessions. */
     showAgendaSwitch?: boolean
+    /** A note on what this run sheet's filters can't match, under the usage hint. */
+    hint?: ReactNode
 }) {
     return (
         <FloatingPanel id={FILTER_PANEL_ID} label="Filter the run sheet">
@@ -264,6 +272,11 @@ export function RunsheetFilterPanel({
                 <styled.p id="runsheet-filter-hint" fontSize="sm" marginBottom="2">
                     Hold Ctrl (Cmd on a Mac) to select more than one.
                 </styled.p>
+                {hint ? (
+                    <styled.p fontSize="sm" marginBottom="2">
+                        {hint}
+                    </styled.p>
+                ) : null}
             </Form>
         </FloatingPanel>
     )
@@ -291,7 +304,9 @@ const rowClass = css({
     // text flips to white there: the dark admin text would be 2.96:1 on it,
     // under WCAG AA's 4.5:1 (white is 6.0:1; dark text on the dark theme's
     // shade is 8.6:1).
-    _even: { bg: 'indigo.11', _light: { color: 'white' } },
+    // Counted past a section's heading row, so every section starts unshaded,
+    // as an unsectioned table does. runsheetNowRowClass repeats this selector.
+    '&:nth-child(even of :not([data-section-heading]))': { bg: 'indigo.11', _light: { color: 'white' } },
     [WIDE]: { display: 'table-row', py: '0' },
 })
 // A section's heading row: a block above the stacked rows, a full-width cell in the table.
@@ -376,8 +391,8 @@ export function RunsheetTable<Item extends RunsheetItem>({
     /** Columns of this run sheet's own, between Related and Details. A null cell is left empty. */
     extraColumns?: Array<{ header: string; cell: (item: Item) => ReactNode }>
     /**
-     * Splits the table into headed sections, one per run of consecutive rows
-     * this gives the same heading — so the rows need to arrive sorted by it.
+     * Splits the table into headed sections, one per heading this gives, in
+     * the order each first appears.
      */
     sectionOf?: (item: Item) => string
     /** Makes an agenda talk's summary a button that opens its details. */
@@ -389,13 +404,7 @@ export function RunsheetTable<Item extends RunsheetItem>({
     const showRoleDetails = items.some((item) => item.roleInstructionsUrl)
     const columnCount = 3 + extraColumns.length + (showRoleDetails ? 1 : 0)
 
-    const sections: Array<{ heading: string | null; items: Item[] }> = []
-    for (const item of items) {
-        const heading = sectionOf?.(item) ?? null
-        const current = sections.at(-1)
-        if (current && current.heading === heading) current.items.push(item)
-        else sections.push({ heading, items: [item] })
-    }
+    const sections = groupRunsheetSections(items, sectionOf)
 
     return (
         <styled.table width="full" fontSize="sm" className={tableClass}>
@@ -429,7 +438,7 @@ export function RunsheetTable<Item extends RunsheetItem>({
             {sections.map((section) => (
                 <tbody key={section.heading} className={tbodyClass}>
                     {section.heading ? (
-                        <tr className={sectionRowClass}>
+                        <tr className={sectionRowClass} data-section-heading="">
                             <th colSpan={columnCount} scope="rowgroup" className={sectionHeadingClass}>
                                 {section.heading}
                             </th>
