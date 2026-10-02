@@ -14,6 +14,7 @@ import {
     useRunsheetNow,
 } from '~/components/runsheet-now'
 import { RunsheetRefreshForm } from '~/components/runsheet-refresh-form'
+import { useRunsheetOffline } from '~/components/runsheet-table'
 import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import { getUser, isAdminUser, requireAdmin } from '~/lib/auth.server'
 import { getRunsheetCacheState, invalidateRunsheetCache } from '~/lib/runsheets/cache-generation.server'
@@ -101,6 +102,7 @@ function formatTime(isoDateTime: string | null): string {
 export default function BumpInRunsheet() {
     const { items, canRefresh, refreshedAt } = useLoaderData<typeof loader>()
     useRunsheetAutoRefresh()
+    useRunsheetOffline()
     const { nowIds, firstNowId } = useRunsheetNow(items)
 
     return (
