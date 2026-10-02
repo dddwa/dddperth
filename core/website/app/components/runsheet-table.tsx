@@ -23,9 +23,49 @@ const FILTER_PANEL_ID = 'runsheet-filters'
 export function useRunsheetOffline() {
     useEffect(() => {
         if (import.meta.env.DEV || !('serviceWorker' in navigator)) return
-        navigator.serviceWorker.register('/runsheets-sw.js', { scope: '/runsheets' }).catch((error: unknown) => {
-            console.warn('Run sheet offline support unavailable', error)
-        })
+        let registration: ServiceWorkerRegistration | undefined
+
+        // The browser only checks for a new worker on a full page load, and
+        // volunteers keep this page open all day, so a fixed worker would
+        // otherwise wait until tomorrow.
+        const checkForUpdate = () => {
+            if (document.visibilityState === 'visible') void registration?.update().catch(() => {})
+        }
+
+        // Everything the page loaded, which the worker may have missed (see
+        // the worker's message handler). The `.data` URL is what the page's
+        // in-place refresh fetches, which a full page load never does — saved
+        // now, a refresh that fails on bad Wi-Fi gets this copy instead of an
+        // error page.
+        const sendUrls = () => {
+            navigator.serviceWorker.controller?.postMessage({
+                type: 'cache-urls',
+                urls: [
+                    location.href,
+                    `${location.pathname}.data${location.search}`,
+                    ...performance.getEntriesByType('resource').map((entry) => entry.name),
+                ],
+            })
+        }
+
+        document.addEventListener('visibilitychange', checkForUpdate)
+        // Again whenever a new worker takes over: it has just dropped the
+        // previous worker's copies.
+        navigator.serviceWorker.addEventListener('controllerchange', sendUrls)
+        navigator.serviceWorker
+            .register('/runsheets-sw.js', { scope: '/runsheets', updateViaCache: 'none' })
+            .then((registered) => {
+                registration = registered
+                sendUrls()
+            })
+            .catch((error: unknown) => {
+                console.warn('Run sheet offline support unavailable', error)
+            })
+
+        return () => {
+            document.removeEventListener('visibilitychange', checkForUpdate)
+            navigator.serviceWorker.removeEventListener('controllerchange', sendUrls)
+        }
     }, [])
 }
 
