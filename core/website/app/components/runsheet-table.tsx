@@ -49,8 +49,8 @@ export function useRunsheetOffline() {
         }
 
         document.addEventListener('visibilitychange', checkForUpdate)
-        // Again whenever a new worker takes over: it has just dropped the
-        // previous worker's copies.
+        // Fill any gaps when a new worker takes over. It also migrates
+        // allowed cached entries, so older tabs need not know this protocol.
         navigator.serviceWorker.addEventListener('controllerchange', sendUrls)
         navigator.serviceWorker
             .register('/runsheets-sw.js', { scope: '/runsheets', updateViaCache: 'none' })

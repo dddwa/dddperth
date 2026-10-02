@@ -29,9 +29,22 @@ self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         (async () => {
-            // Drop copies kept by an older version of this worker.
+            // Old tabs do not have the new page's cache-urls handler. Keep
+            // their offline copy without needing a network request or message.
+            // Copy only allowed URLs: v1 also cached unrelated pages' data.
+            const cache = await caches.open(CACHE)
             for (const name of await caches.keys()) {
-                if (name.startsWith('runsheets-') && name !== CACHE) await caches.delete(name)
+                if (!name.startsWith('runsheets-') || name === CACHE) continue
+                const previous = await caches.open(name)
+                for (const request of await previous.keys()) {
+                    const url = new URL(request.url)
+                    if (url.origin !== self.location.origin || !isCacheable(url)) continue
+                    if (await cache.match(request)) continue
+                    const response = await previous.match(request)
+                    if (response) await cache.put(request, response)
+                }
+                // Only discard the old cache after all allowed entries copied.
+                await caches.delete(name)
             }
             await self.clients.claim()
         })(),
@@ -57,9 +70,8 @@ self.addEventListener('fetch', (event) => {
 })
 
 // The page sends every URL it loaded, since this worker may not have seen
-// them: on a first visit it started after they loaded, and after an update the
-// previous worker's copies were dropped. Without this, a volunteer who opens
-// the run sheet once and then loses signal has nothing saved. The `.data` URL
+// them: on a first visit it started after they loaded. Without this, opening
+// the run sheet once and then losing signal leaves nothing saved. The `.data` URL
 // is always fetched, as the page only otherwise requests it when it refreshes.
 self.addEventListener('message', (event) => {
     if (event.data?.type !== 'cache-urls' || !Array.isArray(event.data.urls)) return
@@ -73,7 +85,7 @@ self.addEventListener('message', (event) => {
                     if (!url.pathname.endsWith('.data') && (await cache.match(url))) return
                     try {
                         const response = await fetch(url)
-                        if (response.ok) await cache.put(url, response)
+                        if (response.ok) await saveResponse(url, response)
                     } catch {
                         // Still offline-capable for whatever did save.
                     }
@@ -92,6 +104,26 @@ async function cacheFirst(request) {
     return response
 }
 
+// React Router's production HTML includes /assets/ URLs in stylesheet and
+// modulepreload links, inline imports, and its route manifest. That includes
+// the entry/route modules' eager dependencies. Read this response's URLs,
+// not the old tab's performance entries: a deployment may have changed them.
+async function saveResponse(request, response) {
+    if (response.headers.get('Content-Type')?.includes('text/html')) {
+        const html = await response.clone().text()
+        const assets = new Set(Array.from(html.matchAll(/["'](\/assets\/[^"'<>\\\s]+)["']/g), (match) => match[1]))
+        await Promise.all(
+            Array.from(assets, async (path) => {
+                const asset = await cacheFirst(new Request(new URL(path, self.location.origin)))
+                if (!asset.ok) throw new Error(`Could not save run sheet asset: ${path}`)
+            }),
+        )
+    }
+    // Commit HTML last. If a script/style failed or hung, the previous HTML
+    // and its hashed assets remain usable, even after the worker is stopped.
+    await (await caches.open(CACHE)).put(request, response)
+}
+
 async function cachedCopy(request) {
     const cache = await caches.open(CACHE)
     // Filters only change the query string, and every copy holds the whole
@@ -103,12 +135,17 @@ async function cachedCopy(request) {
 async function networkFirst(event) {
     const { request } = event
     const network = fetch(request).then(async (response) => {
-        if (response.ok) await (await caches.open(CACHE)).put(request, response.clone())
+        // Include a stalled response body in the four-second fallback, too.
+        // Asset downloads below are separate from this network deadline.
+        if (response.ok) await response.clone().arrayBuffer()
         return response
     })
-    // Keeps the worker alive to save the response if the timeout below
-    // answers first, so the next load has the newer copy.
-    event.waitUntil(network.catch(() => {}))
+    // Save in the background: downloading an offline bundle must not delay
+    // a good network response, or turn a cache-write failure into a page error.
+    // Clone before handing the response body to the browser.
+    event.waitUntil(
+        network.then((response) => (response.ok ? saveResponse(request, response.clone()) : undefined)).catch(() => {}),
+    )
 
     const cached = await cachedCopy(request)
     if (!cached) return network
