@@ -65,7 +65,11 @@ export const runsheetNowRowClass = css({
     bg: 'status.success.bg',
     color: 'status.success.fg',
     boxShadow: '[inset 6px 0 0 token(colors.status.success.emphasis)]',
-    _even: { bg: 'status.success.bg', _light: { color: 'status.success.fg' } },
+    // The table's even-row selector, repeated so this wins over its shading.
+    '&:nth-child(even of :not([data-section-heading]))': {
+        bg: 'status.success.bg',
+        _light: { color: 'status.success.fg' },
+    },
     // Scrolled to by "Jump to now": clear the sticky toolbar, two rows deep on a phone.
     scrollMarginTop: '[8rem]',
 })

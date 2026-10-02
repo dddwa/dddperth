@@ -2,7 +2,13 @@ import { conferenceManifest } from '@conference/manifest'
 import { describe, expect, it } from 'vitest'
 import type { RunsheetItem, RunsheetPlaceholder, RunsheetSession } from './runsheet-client.server'
 import { compareRunsheetItems, jiraCacheKey, sessionsToRunsheetItems } from './runsheet-client.server'
-import { filterRunsheetItems, parseRunsheetFilters, type RunsheetFilters } from './runsheet-filters'
+import {
+    filterRunsheetItems,
+    groupRunsheetSections,
+    labelsInUse,
+    parseRunsheetFilters,
+    type RunsheetFilters,
+} from './runsheet-filters'
 
 /**
  * `/runsheets` is a public, unauthenticated page, and its `team` and
@@ -54,6 +60,13 @@ describe('parseRunsheetFilters', () => {
     it('reads the Show Agenda toggle', () => {
         expect(parse('agenda=1&team=team-1')).toEqual({ teams: ['team-1'], locations: [], showAgenda: true })
         expect(parse('agenda=yes').showAgenda).toBe(false)
+    })
+
+    it('ignores the agenda filters on a run sheet without agenda sessions', () => {
+        // Bump-in: `?team=agenda` would otherwise filter it to nothing.
+        expect(
+            parseRunsheetFilters(new URLSearchParams('team=agenda&team=team-1&agenda=1'), config, { agenda: false }),
+        ).toEqual({ teams: ['team-1'], locations: [], showAgenda: false })
     })
 
     it('does not accept a label under the other kind', () => {
@@ -379,5 +392,36 @@ describe('filterRunsheetItems', () => {
 
     it('shows everything when nothing is selected', () => {
         expect(ids([], [])).toHaveLength(rows.length)
+    })
+})
+
+describe('labelsInUse', () => {
+    it('keeps only the labels some item carries, in config order', () => {
+        expect(labelsInUse(config.teamLabels, ['team-photographers', 'team-unknown', 'team-photographers'])).toEqual({
+            'team-photographers': 'Photographers',
+        })
+        expect(labelsInUse(config.locationLabels, [])).toEqual({})
+    })
+})
+
+describe('groupRunsheetSections', () => {
+    it('is one unheaded section without a sectionOf', () => {
+        expect(groupRunsheetSections(['a', 'b'], undefined)).toEqual([{ heading: null, items: ['a', 'b'] }])
+    })
+
+    it('splits by heading in first-appearance order', () => {
+        const day = (item: string) => item.split(' ')[0]
+        expect(groupRunsheetSections(['Fri 1', 'Fri 2', 'Sat 1'], day)).toEqual([
+            { heading: 'Fri', items: ['Fri 1', 'Fri 2'] },
+            { heading: 'Sat', items: ['Sat 1'] },
+        ])
+    })
+
+    it('gathers a heading that recurs into its first section, so no heading appears twice', () => {
+        const day = (item: string) => item.split(' ')[0]
+        expect(groupRunsheetSections(['Fri 1', 'TBC 1', 'Fri 2', 'TBC 2'], day)).toEqual([
+            { heading: 'Fri', items: ['Fri 1', 'Fri 2'] },
+            { heading: 'TBC', items: ['TBC 1', 'TBC 2'] },
+        ])
     })
 })

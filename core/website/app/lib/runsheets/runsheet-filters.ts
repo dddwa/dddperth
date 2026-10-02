@@ -53,19 +53,51 @@ export type RunsheetFilters = { teams: string[]; locations: string[]; showAgenda
  * that isn't a configured label is dropped, so an unrecognised filter widens
  * the run sheet back towards unfiltered rather than emptying it. `agenda=1`
  * is the "Show Agenda" toggle.
+ *
+ * `agenda: false` is for a run sheet with no agenda sessions (bump-in), where
+ * the "Agenda" team would filter to nothing and Show Agenda would do nothing.
  */
 export function parseRunsheetFilters(
     searchParams: URLSearchParams,
     labels: { teamLabels: Record<string, string>; locationLabels: Record<string, string> },
+    { agenda = true }: { agenda?: boolean } = {},
 ): RunsheetFilters {
     const known = (name: string, allowed: Record<string, string>) => [
         ...new Set(searchParams.getAll(name).filter((value) => Object.hasOwn(allowed, value))),
     ]
     return {
-        teams: known('team', { ...labels.teamLabels, [AGENDA_TEAM_FILTER]: 'Agenda' }),
+        teams: known('team', agenda ? { ...labels.teamLabels, [AGENDA_TEAM_FILTER]: 'Agenda' } : labels.teamLabels),
         locations: known('location', labels.locationLabels),
-        showAgenda: searchParams.get(SHOW_AGENDA_PARAM) === '1',
+        showAgenda: agenda && searchParams.get(SHOW_AGENDA_PARAM) === '1',
     }
+}
+
+/**
+ * The labels that at least one item carries. A run sheet that shares the
+ * conference day's labels (bump-in) would otherwise offer filters that empty it.
+ */
+export function labelsInUse(labels: Record<string, string>, keys: Iterable<string>): Record<string, string> {
+    const used = new Set(keys)
+    return Object.fromEntries(Object.entries(labels).filter(([key]) => used.has(key)))
+}
+
+/**
+ * Splits rows into headed sections, in the order each heading first appears.
+ * Rows sharing a heading are gathered into one section even when they don't
+ * arrive together, so a heading never appears twice.
+ */
+export function groupRunsheetSections<Item>(
+    items: Item[],
+    sectionOf: ((item: Item) => string) | undefined,
+): Array<{ heading: string | null; items: Item[] }> {
+    const sections = new Map<string | null, Item[]>()
+    for (const item of items) {
+        const heading = sectionOf?.(item) ?? null
+        const section = sections.get(heading)
+        if (section) section.push(item)
+        else sections.set(heading, [item])
+    }
+    return Array.from(sections, ([heading, sectionItems]) => ({ heading, items: sectionItems }))
 }
 
 /**
@@ -74,7 +106,7 @@ export function parseRunsheetFilters(
  * of the selected teams, whatever teams it carries — and skips both filters
  * when `showAgenda` is on.
  */
-export function filterRunsheetItems(items: RunsheetItem[], filters: RunsheetFilters): RunsheetItem[] {
+export function filterRunsheetItems<Item extends RunsheetItem>(items: Item[], filters: RunsheetFilters): Item[] {
     const matches = (selected: string[], keys: string[]) =>
         selected.length === 0 || keys.some((key) => selected.includes(key))
     const teamKeys = (item: RunsheetItem) =>
