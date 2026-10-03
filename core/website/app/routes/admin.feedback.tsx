@@ -79,6 +79,9 @@ export default function FeedbackAdmin() {
                                     Ideas or suggestions
                                 </styled.th>
                                 <styled.th {...cell} textAlign="left">
+                                    Meet the Experts
+                                </styled.th>
+                                <styled.th {...cell} textAlign="left">
                                     Other feedback
                                 </styled.th>
                                 <styled.th {...cell} textAlign="left">
@@ -97,6 +100,7 @@ export default function FeedbackAdmin() {
                                     </styled.td>
                                     <TextCell value={response.bestThing} />
                                     <TextCell value={response.ideas} />
+                                    <TextCell value={response.meetTheExperts} />
                                     <TextCell value={response.feedback} />
                                     <TextCell value={response.email} />
                                     <styled.td {...cell} whiteSpace="nowrap">

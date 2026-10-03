@@ -4,7 +4,7 @@ import { d1FromSqlite, migrate } from '../../sponsors/sponsor-portal-harness'
 import type { FeedbackStore } from '../feedback-store'
 import { createD1FeedbackStore } from './d1-feedback-store.server'
 
-const conference = { rating: 4, bestThing: 'The people', ideas: null, feedback: null, email: null }
+const conference = { rating: 4, bestThing: 'The people', ideas: null, meetTheExperts: null, feedback: null, email: null }
 const talk = { targetId: '123', rating: 5, speakerFeedback: 'Great demo', organiserFeedback: null, email: null }
 
 describe('D1 feedback store (real SQL)', () => {
@@ -14,6 +14,7 @@ describe('D1 feedback store (real SQL)', () => {
     beforeEach(() => {
         sqlite = new DatabaseSync(':memory:')
         migrate(sqlite, '0029_feedback.sql')
+        migrate(sqlite, '0030_conference_feedback_meet_the_experts.sql')
         store = createD1FeedbackStore(d1FromSqlite(sqlite))
     })
 
@@ -27,6 +28,14 @@ describe('D1 feedback store (real SQL)', () => {
         const rows = await store.listConferenceFeedback('2026')
         expect(rows).toHaveLength(3)
         expect(rows).toContainEqual(expect.objectContaining({ rating: 2, ideas: 'More coffee' }))
+    })
+
+    it('stores conference feedback on Meet the Experts', async () => {
+        await store.saveConferenceFeedback('2026', 'browser-a', { ...conference, meetTheExperts: 'Loved table 3' })
+
+        expect(await store.listConferenceFeedback('2026')).toEqual([
+            expect.objectContaining({ meetTheExperts: 'Loved table 3' }),
+        ])
     })
 
     it('lists the talks a browser has already reviewed, for that year only', async () => {

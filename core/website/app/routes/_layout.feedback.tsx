@@ -287,6 +287,12 @@ function ConferenceForm({ startedAt, fieldErrors }: { startedAt: number; fieldEr
                 error={fieldErrors.bestThing}
             />
             <TextArea name="ideas" label="Ideas or suggestions" error={fieldErrors.ideas} />
+            <TextArea
+                name="meetTheExperts"
+                label="Feedback on Meet the Experts"
+                hint="If you dropped by a Meet the Experts table: how did it go, and what would make it better?"
+                error={fieldErrors.meetTheExperts}
+            />
             <TextArea name="feedback" label="Any other feedback" error={fieldErrors.feedback} />
             <EmailField error={fieldErrors.email} />
         </FeedbackForm>

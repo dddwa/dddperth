@@ -5,6 +5,7 @@ interface ConferenceFeedbackRow {
     rating: number
     best_thing: string | null
     ideas: string | null
+    meet_the_experts: string | null
     feedback: string | null
     email: string | null
     updated_at: number
@@ -26,6 +27,7 @@ function toConferenceFeedback(row: ConferenceFeedbackRow): ConferenceFeedback {
         rating: row.rating,
         bestThing: row.best_thing,
         ideas: row.ideas,
+        meetTheExperts: row.meet_the_experts,
         feedback: row.feedback,
         email: row.email,
         submittedAt: row.updated_at,
@@ -51,8 +53,8 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
             await db
                 .prepare(
                     `INSERT INTO conference_feedback
-                        (id, year, submitter_id, rating, best_thing, ideas, feedback, email, created_at, updated_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        (id, year, submitter_id, rating, best_thing, ideas, meet_the_experts, feedback, email, created_at, updated_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 )
                 .bind(
                     crypto.randomUUID(),
@@ -61,6 +63,7 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
                     input.rating,
                     input.bestThing,
                     input.ideas,
+                    input.meetTheExperts,
                     input.feedback,
                     input.email,
                     now,
@@ -105,7 +108,7 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
         async listConferenceFeedback(year) {
             const { results } = await db
                 .prepare(
-                    `SELECT id, rating, best_thing, ideas, feedback, email, updated_at
+                    `SELECT id, rating, best_thing, ideas, meet_the_experts, feedback, email, updated_at
                      FROM conference_feedback WHERE year = ? ORDER BY updated_at DESC, id`,
                 )
                 .bind(year)

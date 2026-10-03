@@ -50,6 +50,7 @@ export const conferenceFeedbackSchema = z.object({
     rating,
     bestThing: optionalText,
     ideas: optionalText,
+    meetTheExperts: optionalText,
     feedback: optionalText,
     email: optionalEmail,
 }) satisfies z.ZodType<ConferenceFeedbackInput, unknown>
