@@ -6,6 +6,7 @@ import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { FeedbackStore } from './feedback-store'
 import type { MeetTheExpertsSchedulingStore } from './meet-the-experts-scheduling-store'
 import type { MeetTheExpertsStore } from './meet-the-experts-store'
 import type { NotificationLog } from './notification-log'
@@ -45,4 +46,5 @@ export interface AppServices {
     meetTheExpertsScheduling: MeetTheExpertsSchedulingStore
     adminSettings: AdminSettingsStore
     volunteers: VolunteersStore
+    feedback: FeedbackStore
 }
