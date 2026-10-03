@@ -435,7 +435,7 @@ function TextArea({ name, label, hint, error }: { name: string; label: string; h
     return (
         <Box>
             <styled.label htmlFor={id} display="block" fontWeight="semibold" mb="1">
-                {label}
+                {label} (optional)
             </styled.label>
             {hint ? (
                 <styled.p id={hintId} fontSize="sm" color="text.secondary" mb="2">
