@@ -44,6 +44,8 @@ const ADMIN_NAV: Array<{ heading?: string; links: Array<{ to: string; label: str
     { links: [{ to: '/admin/settings', label: 'Settings' }] },
 ]
 
+const ADMIN_THEME = 'light'
+
 /** Solid and token-only, so it stays visible on the dark sidebar (the `focus-ring` shadow is too faint there). */
 const focusOutline = {
     outlineStyle: 'solid',
@@ -66,7 +68,24 @@ export default function AdminLayout() {
     useEffect(() => setMenuOpen(false), [pathname])
 
     return (
-        <Box minH="screen" bg="admin.50" lg={{ display: 'flex', alignItems: 'flex-start' }}>
+        // Always the light theme, whatever the site toggle says. Admin pages are
+        // white cards on `admin.50`, but theme-dependent tokens (Park UI buttons'
+        // `colorPalette.*`, `indigo.1`-`12`) follow the site's dark default, which
+        // made solid buttons white-on-white. The theme tokens are declared on the
+        // `.light`/`.dark` element itself and inherit, so this class re-scopes the
+        // whole subtree without a specificity fight with `html.dark`.
+        // `colorPalette` is re-declared because `html { colorPalette: gray }`
+        // aliases `--colors-color-palette-*` to `var(--colors-gray-*)`, and a
+        // custom property's `var()` resolves where it's declared: on <html>, in
+        // dark. Declaring it again here resolves it inside the light scope.
+        <Box
+            className={ADMIN_THEME}
+            colorPalette="gray"
+            colorScheme="light"
+            minH="screen"
+            bg="admin.50"
+            lg={{ display: 'flex', alignItems: 'flex-start' }}
+        >
             <Flex
                 display={{ base: 'flex', lg: 'none' }}
                 align="center"
@@ -127,6 +146,9 @@ export default function AdminLayout() {
                     <Drawer.Backdrop position="fixed" inset="0" bg="overlay.scrim" zIndex="overlay" />
                     <Drawer.Positioner position="fixed" top="0" left="0" h="dvh" w="72" maxW="full" zIndex="modal">
                         <Drawer.Content
+                            // Portalled to <body>, outside the light wrapper above.
+                            className={ADMIN_THEME}
+                            colorPalette="gray"
                             display="flex"
                             flexDirection="column"
                             h="full"
