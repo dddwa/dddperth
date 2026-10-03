@@ -415,7 +415,7 @@ function Rating({ legend, error }: { legend: string; error?: string }) {
                         color={n <= value ? 'brand.primary' : 'text.muted'}
                         _hover={{ color: 'interactive.highlight' }}
                         css={{
-                            '&:has(input:focus-visible)': { boxShadow: 'focus-ring' },
+                            '&:has(input:focus-visible)': focusOutline,
                         }}
                     >
                         <styled.input
@@ -503,6 +503,14 @@ function FieldError({ id, error }: { id: string; error?: string }) {
     )
 }
 
+/** Solid rather than the `focus-ring` shadow, which is ~20% opacity and too faint to see on these surfaces. */
+const focusOutline = {
+    outlineStyle: 'solid',
+    outlineWidth: 'medium',
+    outlineColor: 'interactive.focus',
+    outlineOffset: '0.5',
+} as const
+
 const inputStyles = {
     display: 'block',
     w: 'full',
@@ -513,5 +521,5 @@ const inputStyles = {
     color: 'text.primary',
     border: 'default',
     fontSize: 'md',
-    _focusVisible: { outline: 'none', boxShadow: 'focus-ring' },
+    _focusVisible: focusOutline,
 } as const
