@@ -289,6 +289,16 @@ export default defineConfig({
                 animations: {
                     spin: { value: 'spin 1s linear infinite' },
                 },
+                // `dvh` rather than preset-panda's `screen` (100vh): on mobile
+                // `vh` includes the area behind the browser toolbar, so a
+                // full-screen panel sized with it hides its own bottom edge.
+                sizes: {
+                    dvh: { value: '100dvh' },
+                    'dialog-max-h': { value: '85vh' },
+                },
+                radii: {
+                    none: { value: '0' },
+                },
             },
             // Local `rotateText` keyframe merged with the Park UI animation set
             // (slide/scale/expand/collapse). The `spin` keyframe was previously

@@ -114,9 +114,9 @@ declare module "safe-routes" {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.($year).js').SearchParams>,
     },
-    "/agenda/:year/talk/:sessionId": {
-      params: {'year': string | number; 'sessionId': string | number},
-      query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
+    "/agenda/:year?/talk/:sessionId": {
+      params: {'year'?: string | number; 'sessionId': string | number},
+      query: ExportedQuery<import('app/routes/_layout.agenda.($year).talk.$sessionId.js').SearchParams>,
     },
     "/agenda/my": {
       params: never,
@@ -292,11 +292,11 @@ declare module "safe-routes" {
             | 'routes/auth.login'
             | 'routes/api.theme'
             | 'routes/_layout'
-            | 'routes/_layout.agenda.$year.talk.$sessionId'
             | 'routes/_layout.runsheets.($filter)'
             | 'routes/_layout.runsheets.bump-in'
             | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
+            | 'routes/_layout.agenda.($year).talk.$sessionId'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
             | 'routes/_layout.agenda.my'
