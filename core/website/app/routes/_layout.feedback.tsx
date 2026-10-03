@@ -102,6 +102,17 @@ export default function Feedback() {
     const loaderData = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
     const [searchParams, setSearchParams] = useSearchParams()
+    const thanksRef = useRef<HTMLDivElement>(null)
+    const submitted = actionData?.ok === true
+
+    // The form keeps its scroll position across submits (so an error stays in
+    // view), which would leave the thank-you below the fold. Go back to the top,
+    // and move focus there too: the submit button the focus was on has gone.
+    useEffect(() => {
+        if (!submitted) return
+        window.scrollTo({ top: 0 })
+        thanksRef.current?.focus({ preventScroll: true })
+    }, [submitted, actionData])
 
     const talkId = searchParams.get('talk') ?? ''
     const typeParam = searchParams.get('type')
@@ -135,7 +146,7 @@ export default function Feedback() {
             <PageLayout>
                 <Box maxW="2xl" mx="auto" w="full" py="8">
                     {heading}
-                    <Box role="status" bg="surface.card" rounded="md" p="6">
+                    <Box ref={thanksRef} tabIndex={-1} role="status" bg="surface.card" rounded="md" p="6">
                         <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
                             Thanks for your feedback!
                         </styled.h2>
