@@ -1,4 +1,5 @@
 import { conferenceManifest } from '@conference/manifest'
+import { DateTime } from 'luxon'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
 import { getPublishedSchedule, getScheduleForOrganisers, scheduleTalks } from '~/lib/published-agenda.server'
@@ -21,17 +22,58 @@ export async function getFeedbackTargets(
     year: Year,
     audience: 'public' | 'organisers',
 ): Promise<FeedbackTarget[]> {
-    const schedule =
-        audience === 'public'
-            ? await getPublishedSchedule(context, year)
-            : await getScheduleForOrganisers(context, year)
+    if (audience === 'public') return (await getPublicFeedbackTargets(context, year)).targets
+
+    const schedule = await getScheduleForOrganisers(context, year)
     if (!schedule) return []
+    const meetTheExperts = await getMeetTheExpertsAgenda(context, year)
+    return buildFeedbackTargets(scheduleTalks(schedule), meetTheExperts, conferenceManifest.public.timezone)
+}
+
+/** A published talk that can't take feedback yet because it hasn't finished. */
+export interface UpcomingFeedbackTalk {
+    id: string
+    title: string
+    /** `h:mm am`. */
+    endsAt: string
+}
+
+/**
+ * The public feedback targets, plus `upcomingTalkId`'s talk if it's on the
+ * agenda but not over yet, from one schedule fetch. That talk is how the form
+ * explains itself to someone who followed a link to it early (a QR code on
+ * the room door, say) instead of quietly showing an empty picker.
+ */
+export async function getPublicFeedbackTargets(
+    context: Context,
+    year: Year,
+    upcomingTalkId?: string | null,
+): Promise<{ targets: FeedbackTarget[]; upcomingTalk: UpcomingFeedbackTalk | undefined }> {
+    const schedule = await getPublishedSchedule(context, year)
+    if (!schedule) return { targets: [], upcomingTalk: undefined }
 
     const { timezone } = conferenceManifest.public
-    const talks = scheduleTalks(schedule)
     const now = getDateTimeProvider(context).now()
-    const offered = audience === 'public' ? talks.filter((talk) => hasTalkEnded(talk.endsAt, now, timezone)) : talks
+    const [ended, upcoming] = partition(scheduleTalks(schedule), (talk) => hasTalkEnded(talk.endsAt, now, timezone))
 
+    const upcomingTalk = upcomingTalkId ? upcoming.find((talk) => talk.id === upcomingTalkId) : undefined
     const meetTheExperts = await getMeetTheExpertsAgenda(context, year)
-    return buildFeedbackTargets(offered, meetTheExperts, timezone)
+    return {
+        targets: buildFeedbackTargets(ended, meetTheExperts, timezone),
+        // An upcoming talk always has an end time: one without counts as ended.
+        upcomingTalk: upcomingTalk?.endsAt
+            ? {
+                  id: upcomingTalk.id,
+                  title: upcomingTalk.title,
+                  endsAt: DateTime.fromISO(upcomingTalk.endsAt, { zone: timezone }).toFormat('h:mm a').toLowerCase(),
+              }
+            : undefined,
+    }
+}
+
+function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {
+    const yes: T[] = []
+    const no: T[] = []
+    for (const item of items) (predicate(item) ? yes : no).push(item)
+    return [yes, no]
 }

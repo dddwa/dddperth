@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
 import { FIXTURE_DATE } from './fixtures/sessionize/model'
 
@@ -46,7 +47,13 @@ test('the talk dialog follows the same rule', async ({ page }) => {
 
 test("a talk's link appears when it ends, without a reload", async ({ page }) => {
     await page.clock.install()
+    // The clock only starts once the agenda's effects have run. They're the
+    // same commit that asks which talks this browser has reviewed, so that
+    // request going out means it's running; before that, time moved on here
+    // would be lost.
+    const hydrated = page.waitForRequest((request) => request.url().includes('/api/feedback/reviewed'))
     await page.goto(AGENDA)
+    await hydrated
     await expect(feedbackLink(page, SECOND_SLOT_TALK)).toHaveCount(0)
 
     // 11:35 + 55 minutes is past the second slot's 12:25 end.
@@ -64,4 +71,28 @@ test('the server refuses feedback on a talk that has not finished, whatever the 
 
     expect(response.status()).toBe(400)
     expect(await response.text()).toContain('Please choose a talk.')
+})
+
+test("a link to a talk that has not finished explains why it can't be picked yet", async ({ page }) => {
+    await page.goto(`/feedback?talk=${SECOND_SLOT_TALK}`)
+
+    const select = page.getByLabel('Which talk?')
+    await expect(select).toHaveValue('')
+    const notice = page.getByText(/hasn.t finished yet/)
+    await expect(notice).toContainText('12:25 pm')
+    await expect(select).toHaveAccessibleDescription(/hasn.t finished yet/)
+
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
+    expect(results.violations.map((v) => v.id)).toEqual([])
+
+    // Picking a talk that has finished replaces the explanation with the form.
+    await select.selectOption(FIRST_SLOT_TALK)
+    await expect(notice).toHaveCount(0)
+})
+
+test('a link to a finished talk picks it, with no notice', async ({ page }) => {
+    await page.goto(`/feedback?talk=${FIRST_SLOT_TALK}`)
+
+    await expect(page.getByLabel('Which talk?')).toHaveValue(FIRST_SLOT_TALK)
+    await expect(page.getByText(/hasn.t finished yet/)).toHaveCount(0)
 })
