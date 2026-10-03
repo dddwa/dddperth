@@ -150,7 +150,7 @@ export default defineConfig({
         {
             name: 'chromium-light',
             use: { ...devices['Desktop Chrome'], ...themeCookie('light') },
-            testMatch: /(a11y|date-states|voting)\.spec\.ts/,
+            testMatch: /(a11y|date-states|voting|feedback-links)\.spec\.ts/,
         },
         ...visualProjects,
     ],

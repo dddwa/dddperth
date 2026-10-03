@@ -21,7 +21,11 @@ import {
     talkFeedbackSchema,
 } from '~/lib/feedback/feedback-submission'
 import type { FeedbackTarget } from '~/lib/feedback/feedback-targets'
-import { getFeedbackTargets } from '~/lib/feedback/feedback-targets.server'
+import {
+    getFeedbackTargets,
+    getPublicFeedbackTargets,
+    type UpcomingFeedbackTalk,
+} from '~/lib/feedback/feedback-targets.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
 import { noIndexMeta } from '~/lib/seo'
 import { getConferenceState, getServices } from '~/remix-app-load-context'
@@ -40,8 +44,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     const browserId = readFeedbackBrowserId(request)
-    const [targets, reviewedIds] = await Promise.all([
-        getFeedbackTargets(context, year, 'public'),
+    const [{ targets, upcomingTalk }, reviewedIds] = await Promise.all([
+        getPublicFeedbackTargets(context, year, new URL(request.url).searchParams.get('talk')),
         browserId ? getServices(context).feedback.listTalkFeedbackTargetIds(year, browserId) : Promise.resolve([]),
     ])
 
@@ -50,6 +54,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             open: true as const,
             year,
             targets,
+            /** The `?talk=` talk, when it's on the agenda but hasn't finished. */
+            upcomingTalk,
             /** Talks this browser has already reviewed, so the form can say so. */
             reviewedIds,
             // Rendered into the form for the minimum-fill-time check, so the page can't be cached.
@@ -216,7 +222,7 @@ export default function Feedback() {
                         {(
                             [
                                 ['conference', 'The conference'],
-                                ['talk', 'A talk or Meet the Experts session'],
+                                ['talk', 'A talk'],
                             ] as const
                         ).map(([value, label]) => (
                             <styled.label key={value} display="flex" alignItems="center" gap="2" cursor="pointer">
@@ -250,6 +256,7 @@ export default function Feedback() {
                         startedAt={loaderData.startedAt}
                         fieldErrors={fieldErrors}
                         targets={loaderData.targets}
+                        upcomingTalk={loaderData.upcomingTalk}
                         reviewedIds={loaderData.reviewedIds}
                         talkId={talkId}
                         onTalkChange={(id) =>
@@ -290,6 +297,7 @@ function TalkForm({
     startedAt,
     fieldErrors,
     targets,
+    upcomingTalk,
     reviewedIds,
     talkId,
     onTalkChange,
@@ -297,6 +305,7 @@ function TalkForm({
     startedAt: number
     fieldErrors: FieldErrors
     targets: FeedbackTarget[]
+    upcomingTalk: UpcomingFeedbackTalk | undefined
     reviewedIds: string[]
     talkId: string
     onTalkChange: (id: string) => void
@@ -304,10 +313,18 @@ function TalkForm({
     const selectId = useId()
     const errorId = useId()
     const reviewedNoticeId = useId()
+    const upcomingNoticeId = useId()
     const reviewed = new Set(reviewedIds)
     const selected = targets.find((target) => target.id === talkId)
     const alreadyReviewed = selected ? reviewed.has(selected.id) : false
-    const describedBy = [alreadyReviewed ? reviewedNoticeId : undefined, fieldErrors.targetId ? errorId : undefined]
+    // The loader only runs on arrival, so this is the talk the link pointed
+    // at; once another talk is picked, the notice no longer applies.
+    const notFinished = upcomingTalk && upcomingTalk.id === talkId ? upcomingTalk : undefined
+    const describedBy = [
+        alreadyReviewed ? reviewedNoticeId : undefined,
+        notFinished ? upcomingNoticeId : undefined,
+        fieldErrors.targetId ? errorId : undefined,
+    ]
         .filter(Boolean)
         .join(' ')
 
@@ -345,6 +362,21 @@ function TalkForm({
                             .join(' · ')}
                     </styled.p>
                 ) : null}
+                {notFinished ? (
+                    <styled.p
+                        id={upcomingNoticeId}
+                        mt="3"
+                        px="3"
+                        py="2"
+                        rounded="md"
+                        fontSize="sm"
+                        bg="status.info.bg"
+                        color="status.info.fg"
+                    >
+                        “{notFinished.title}” hasn&apos;t finished yet. Feedback on it opens when it ends, at{' '}
+                        {notFinished.endsAt}.
+                    </styled.p>
+                ) : null}
                 {alreadyReviewed ? (
                     <styled.p
                         id={reviewedNoticeId}
@@ -364,10 +396,7 @@ function TalkForm({
             </Box>
             {alreadyReviewed ? null : (
                 <>
-                    <Rating
-                        legend={`How much did you enjoy this ${selected?.kind === 'meet-the-experts' ? 'session' : 'talk'}?`}
-                        error={fieldErrors.rating}
-                    />
+                    <Rating legend="How much did you enjoy this talk?" error={fieldErrors.rating} />
                     <TextArea
                         name="speakerFeedback"
                         label="Constructive feedback for the speaker"
