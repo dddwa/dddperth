@@ -11,7 +11,7 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
-import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 import { NewTabHint } from '~/components/new-tab-hint'
@@ -63,6 +63,10 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
             })),
             session,
             talkSpeakers,
+            feedbackOpen:
+                !session.isServiceSession &&
+                year === getConferenceState(context).conference.year &&
+                getConferenceState(context).feedback === 'open',
             sessionStart: session.startsAt
                 ? DateTime.fromISO(session.startsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                       DateTime.TIME_SIMPLE,
@@ -81,7 +85,7 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
 }
 
 export default function Agenda() {
-    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers } =
+    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers, feedbackOpen } =
         useLoaderData<typeof loader>()
 
     return (
@@ -120,6 +124,18 @@ export default function Agenda() {
                         </styled.span>
                     ) : null}
                     <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
+                    {feedbackOpen ? (
+                        <AppLink
+                            to={`/feedback?talk=${encodeURIComponent(session.id)}`}
+                            unstyled
+                            display="inline-block"
+                            mb="3"
+                            color="text.highlight"
+                            textDecoration="underline"
+                        >
+                            Give feedback on this talk
+                        </AppLink>
+                    ) : null}
                     <styled.div>{session.description}</styled.div>
                     {session?.speakers?.length ? (
                         <styled.div display="block" color="text.secondary">

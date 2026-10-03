@@ -83,7 +83,10 @@ export const conference2026: ConferenceYear = {
         },
     ],
 
-    feedbackOpenUntilDateTime: undefined,
+    // The conference day and the day after.
+    feedbackOpenUntilDateTime: DateTime.fromISO('2026-10-04T23:59:59', {
+        zone: 'Australia/Perth',
+    }),
 
     ticketInfo: {
         type: 'tito',

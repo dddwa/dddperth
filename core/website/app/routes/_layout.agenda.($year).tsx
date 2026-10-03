@@ -46,6 +46,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         !!schedule &&
         conferenceYearConfig?.sessions?.kind === 'sessionize' &&
         year === getConferenceState(context).conference.year
+    // Feedback links go away again once the window closes (the page itself is
+    // cached for 5 minutes, so they can linger that long).
+    const feedbackOpen =
+        !!schedule &&
+        year === getConferenceState(context).conference.year &&
+        getConferenceState(context).feedback === 'open'
 
     return data(
         {
@@ -56,6 +62,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // linking to a sparse detail page.
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
             canPick,
+            feedbackOpen,
             meetTheExperts,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
@@ -89,7 +96,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick, meetTheExperts } =
+    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick, feedbackOpen, meetTheExperts } =
         useLoaderData<typeof loader>()
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
@@ -291,6 +298,7 @@ export default function Agenda() {
                                             pickable={canPick ? pickableTalks.get(room.session.id) : undefined}
                                             isPicked={picked.includes(room.session.id)}
                                             onToggle={onToggle}
+                                            feedbackOpen={feedbackOpen}
                                         />
                                     )
                                 })}
@@ -298,7 +306,7 @@ export default function Agenda() {
                         )
                     })}
                 </Box>
-                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} /> : null}
+                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} feedbackOpen={feedbackOpen} /> : null}
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
@@ -313,7 +321,7 @@ export default function Agenda() {
  * agenda. Empty seats are left out rather than drawn as blank cards.
  * Each person's name opens their registration bio in a modal.
  */
-function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
+function MeetTheExperts({ grid, feedbackOpen }: { grid: MeetTheExpertsAgenda; feedbackOpen: boolean }) {
     const [selected, setSelected] = useState<{ seat: MeetTheExpertsSeat; where: string } | null>(null)
 
     return (
@@ -396,6 +404,9 @@ function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
                                             <LocationIcon />
                                             {grid.tableLabels[i]}
                                         </Flex>
+                                        {feedbackOpen ? (
+                                            <FeedbackLink id={seat.feedbackId} title={seat.displayName} />
+                                        ) : null}
                                     </styled.li>
                                 ) : null,
                             )}
@@ -516,6 +527,7 @@ function RoomTimeSlot({
     pickable,
     isPicked,
     onToggle,
+    feedbackOpen,
 }: {
     schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
@@ -532,6 +544,7 @@ function RoomTimeSlot({
     pickable: AgendaTalk | undefined
     isPicked: boolean
     onToggle: (talk: AgendaTalk) => void
+    feedbackOpen: boolean
 }) {
     const fullSession = schedule.rooms
         .find((r) => r.id === room.id)
@@ -725,8 +738,28 @@ function RoomTimeSlot({
                         <styled.span>{fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}</styled.span>
                     </Flex>
                 ) : null}
+                {feedbackOpen && fullSession && !fullSession.isServiceSession ? (
+                    <FeedbackLink id={fullSession.id} title={fullSession.title} />
+                ) : null}
             </Box>
         </styled.div>
+    )
+}
+
+function FeedbackLink({ id, title }: { id: string; title: string }) {
+    return (
+        <AppLink
+            to={`/feedback?talk=${encodeURIComponent(id)}`}
+            unstyled
+            aria-label={`Give feedback on ${title}`}
+            display="inline-block"
+            mt="2"
+            color="text.highlight"
+            textDecoration="underline"
+            fontSize={{ base: 'xs', xl: 'sm' }}
+        >
+            Give feedback
+        </AppLink>
     )
 }
 

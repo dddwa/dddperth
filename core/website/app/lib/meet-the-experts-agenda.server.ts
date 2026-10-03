@@ -12,6 +12,20 @@ export interface MeetTheExpertsSeat {
     displayName: string
     /** Their registration's custom bio, or else their default (Sessionize bio / sponsor blurb). */
     bio?: string
+    /** Stable across reseating — see `meetTheExpertsFeedbackId`. */
+    feedbackId: string
+}
+
+/**
+ * The id feedback about a Meet the Experts registrant is stored under. It
+ * follows the person, not the seat, so moving them to another table or slot
+ * doesn't orphan feedback already given. Hashed because the raw registrant id
+ * of a sponsor is its Jira issue key, which has no business on a public page.
+ */
+export async function meetTheExpertsFeedbackId(type: MeetTheExpertsRegistrantType, id: string): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key(type, id)))
+    const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+    return `mte-${hex.slice(0, 16)}`
 }
 
 export type MeetTheExpertsAgenda = ScheduleGrid<MeetTheExpertsSeat>
@@ -62,16 +76,27 @@ export async function getMeetTheExpertsAgenda(context: Context, year: string): P
         })
     }
     const registrationByKey = new Map(registrations.map((r) => [key(r.registrantType, r.registrantId), r]))
+    const feedbackIds = await Promise.all(
+        assignments.map((a) => meetTheExpertsFeedbackId(a.registrantType, a.registrantId)),
+    )
 
     return buildScheduleGrid({
         slots,
         tables,
-        assignments: assignments.flatMap(({ tableId, slotId, registrantType, registrantId }) => {
+        assignments: assignments.flatMap(({ tableId, slotId, registrantType, registrantId }, i) => {
             const person = personByKey.get(key(registrantType, registrantId))
             if (!person) return []
             const registration = registrationByKey.get(key(registrantType, registrantId))
             const bio = registration?.bioUseDefault === false ? registration.bioCustomText : person.defaultBio
-            return [{ tableId, slotId, displayName: person.displayName, bio: bio?.trim() || undefined }]
+            return [
+                {
+                    tableId,
+                    slotId,
+                    displayName: person.displayName,
+                    bio: bio?.trim() || undefined,
+                    feedbackId: feedbackIds[i],
+                },
+            ]
         }),
     })
 }
