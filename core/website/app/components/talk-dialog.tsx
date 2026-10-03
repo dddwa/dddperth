@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AppLink } from '~/components/app-link'
 import { SponsorLogo } from '~/components/sponsor-logo'
+import { TalkRecording } from '~/components/talk-recording'
 import * as Dialog from '~/components/ui/dialog'
 import type { YearSponsors } from '~/lib/conference-state-client-safe'
 import { Box, type BoxProps, Flex, styled } from '~/styled-system/jsx'
@@ -59,6 +60,7 @@ export function TalkDialog({
     timeRange,
     roomSponsor,
     speakers,
+    recordingVideoId,
     feedback,
     onClose,
 }: {
@@ -67,6 +69,8 @@ export function TalkDialog({
     timeRange: string | null
     roomSponsor: RoomSponsor | undefined
     speakers: TalkDialogSpeaker[] | undefined
+    /** YouTube video id of the talk's recording, when there is one. */
+    recordingVideoId?: string
     /** The "give feedback" link, while the conference's feedback window is open. */
     feedback?: ReactNode
     onClose: () => void
@@ -155,6 +159,9 @@ export function TalkDialog({
                                 </Flex>
                                 {roomSponsor ? <RoomSponsorBadge sponsor={roomSponsor} /> : null}
                                 {feedback ? <Box mb="3">{feedback}</Box> : null}
+                                {recordingVideoId ? (
+                                    <TalkRecording videoId={recordingVideoId} talkTitle={session.title} />
+                                ) : null}
                                 {session.description ? (
                                     <Dialog.Description whiteSpace="pre-line" lineHeight="relaxed">
                                         {session.description}
