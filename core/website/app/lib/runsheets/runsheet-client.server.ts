@@ -1,7 +1,7 @@
 import type { RunsheetsConfig, sessionSchema } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
-import type { RunsheetItem } from './runsheet-filters'
+import { isBreakSummary, type RunsheetItem } from './runsheet-filters'
 
 export type { RunsheetItem } from './runsheet-filters'
 
@@ -69,6 +69,8 @@ export interface RunsheetPlaceholder {
     /** Raw Jira team labels, so they can be matched against the team filter. */
     teams: string[]
     roleInstructionsUrl: string | null
+    /** Titled "[Break] …", which makes the service sessions it overlaps breaks. */
+    isBreak?: boolean
 }
 
 /** The fields of a Sessionize session the run sheet renders. */
@@ -278,9 +280,10 @@ export async function fetchRunsheet({
         const startTime = asString(issue.fields[fields.startTime])
         const endTime = asString(issue.fields[fields.endTime])
         const roleInstructionsUrl = asString(issue.fields[fields.roleInstructions])
+        const isBreak = isBreakSummary(issue.fields.summary)
 
         if (config.sessionTeam && teams.includes(config.sessionTeam)) {
-            placeholders.push({ startTime, endTime, teams, roleInstructionsUrl })
+            placeholders.push({ startTime, endTime, teams, roleInstructionsUrl, isBreak })
             continue
         }
 
@@ -297,6 +300,7 @@ export async function fetchRunsheet({
             roleInstructionsUrl,
             source: 'jira',
             sessionizeSessionId: null,
+            isBreak,
         })
     }
 
@@ -372,6 +376,8 @@ export function sessionsToRunsheetItems(
             // Service sessions have nothing to open: their description is
             // location ids, and they have no speakers.
             sessionizeSessionId: session.isServiceSession ? null : session.id,
+            // Not `matched`: a break with no location is still a break.
+            isBreak: session.isServiceSession && overlapping(session).some((p) => p.isBreak),
         }
     })
 }

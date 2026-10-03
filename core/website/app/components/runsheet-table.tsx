@@ -8,6 +8,7 @@ import ConfluenceLogo from '~/images/svg/confluence-icon.svg?react'
 import {
     groupRunsheetSections,
     SHOW_AGENDA_PARAM,
+    SHOW_BREAKS_PARAM,
     type RunsheetFilters,
     type RunsheetItem,
 } from '~/lib/runsheets/runsheet-filters'
@@ -102,7 +103,8 @@ export function RunsheetToolbar({ children }: { children: ReactNode }) {
 
 /** Opens the filter panel, counting the filters in force. */
 export function RunsheetFilterButton({ filters }: { filters: RunsheetFilters }) {
-    const count = filters.teams.length + filters.locations.length + (filters.showAgenda ? 1 : 0)
+    const count =
+        filters.teams.length + filters.locations.length + (filters.showAgenda ? 1 : 0) + (filters.showBreaks ? 1 : 0)
     return (
         <Button type="button" size="sm" boxShadow="md" popoverTarget={FILTER_PANEL_ID}>
             Filter{count ? ` (${count})` : ''}
@@ -137,7 +139,7 @@ export function runsheetFilterOptions({
 }
 
 /**
- * The "Show Agenda" switch: an Off and an On segment, each a label over a
+ * The "Show Agenda" and "Show Breaks" switches: an Off and an On segment, each a label over a
  * visually hidden radio, with the checked one filled in. The panel is white
  * in both themes, so the colours don't need a light/dark pair.
  */
@@ -243,30 +245,38 @@ export function RunsheetFilterPanel({
                             </styled.select>
                         </Flex>
                     ))}
-                    {/* Keeps the agenda's sessions in view even when the
-                        team/location selection would filter them out. A switch
-                        drawn over two radios, so it submits with the GET form
-                        and works from the keyboard with no JS. */}
+                    {/* Keep the agenda's sessions, or just its breaks, in view
+                        even when the team/location selection would filter them
+                        out. Stacked, so the pair sits beside the lists as one column.
+                        Each a switch drawn over two radios, so it submits with
+                        the GET form and works from the keyboard with no JS. */}
                     {showAgendaSwitch ? (
-                        <fieldset className={switchClass}>
-                            <styled.legend fontWeight="medium" mb="1">
-                                Show Agenda
-                            </styled.legend>
+                        <Flex direction="column" gap="2">
                             {[
-                                { value: '0', label: 'Off' },
-                                { value: '1', label: 'On' },
-                            ].map((option) => (
-                                <label key={option.value}>
-                                    <input
-                                        type="radio"
-                                        name={SHOW_AGENDA_PARAM}
-                                        value={option.value}
-                                        defaultChecked={filters.showAgenda === (option.value === '1')}
-                                    />
-                                    {option.label}
-                                </label>
+                                { name: SHOW_AGENDA_PARAM, legend: 'Show Agenda', on: filters.showAgenda },
+                                { name: SHOW_BREAKS_PARAM, legend: 'Show Breaks', on: filters.showBreaks },
+                            ].map((field) => (
+                                <fieldset key={field.name} className={switchClass}>
+                                    <styled.legend fontWeight="medium" mb="1">
+                                        {field.legend}
+                                    </styled.legend>
+                                    {[
+                                        { value: '0', label: 'Off' },
+                                        { value: '1', label: 'On' },
+                                    ].map((option) => (
+                                        <label key={option.value}>
+                                            <input
+                                                type="radio"
+                                                name={field.name}
+                                                value={option.value}
+                                                defaultChecked={field.on === (option.value === '1')}
+                                            />
+                                            {option.label}
+                                        </label>
+                                    ))}
+                                </fieldset>
                             ))}
-                        </fieldset>
+                        </Flex>
                     ) : null}
                 </Flex>
                 <styled.p id="runsheet-filter-hint" fontSize="sm" marginBottom="2">
