@@ -30,18 +30,28 @@ import type { Route } from './+types/_layout.feedback'
 
 type FeedbackKind = 'conference' | 'talk'
 
-export async function loader({ context }: Route.LoaderArgs) {
+const ALREADY_REVIEWED = 'You have already submitted feedback for this session.'
+
+export async function loader({ request, context }: Route.LoaderArgs) {
     const state = getConferenceState(context)
     const year = state.conference.year
     if (state.feedback !== 'open') {
         return data({ open: false as const, year }, { headers: { 'Cache-Control': 'no-store' } })
     }
 
+    const browserId = readFeedbackBrowserId(request)
+    const [targets, reviewedIds] = await Promise.all([
+        getFeedbackTargets(context, year, 'public'),
+        browserId ? getServices(context).feedback.listTalkFeedbackTargetIds(year, browserId) : Promise.resolve([]),
+    ])
+
     return data(
         {
             open: true as const,
             year,
-            targets: await getFeedbackTargets(context, year, 'public'),
+            targets,
+            /** Talks this browser has already reviewed, so the form can say so. */
+            reviewedIds,
             // Rendered into the form for the minimum-fill-time check, so the page can't be cached.
             startedAt: Date.now(),
         },
@@ -82,7 +92,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (!targets.some((target) => target.id === parsed.data.targetId)) {
         return data({ ok: false as const, fieldErrors: { targetId: 'Please choose a talk.' } }, { status: 400 })
     }
-    await services.feedback.saveTalkFeedback(year, browserId, parsed.data)
+    if (!(await services.feedback.saveTalkFeedback(year, browserId, parsed.data))) {
+        return data({ ok: false as const, fieldErrors: { targetId: ALREADY_REVIEWED } }, { status: 409, headers })
+    }
     return data({ ok: true as const, kind }, { headers })
 }
 
@@ -91,7 +103,12 @@ export async function action({ request, context }: Route.ActionArgs) {
  * rewrites the query string. Re-running the loader for that would refetch the
  * agenda and reset `startedAt`, so it's skipped unless something was submitted.
  */
-export function shouldRevalidate({ currentUrl, nextUrl, formMethod, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+export function shouldRevalidate({
+    currentUrl,
+    nextUrl,
+    formMethod,
+    defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
     if (!formMethod && currentUrl.pathname === nextUrl.pathname) return false
     return defaultShouldRevalidate
 }
@@ -156,7 +173,12 @@ export default function Feedback() {
                                 : 'We read every response, and it shapes the next conference.'}
                         </styled.p>
                         <Flex gap="4" flexWrap="wrap">
-                            <AppLink to="/feedback?type=talk" unstyled color="text.highlight" textDecoration="underline">
+                            <AppLink
+                                to="/feedback?type=talk"
+                                unstyled
+                                color="text.highlight"
+                                textDecoration="underline"
+                            >
                                 {actionData.kind === 'talk' ? 'Review another talk' : 'Give feedback on a talk'}
                             </AppLink>
                             {actionData.kind === 'talk' ? (
@@ -183,8 +205,7 @@ export default function Feedback() {
             <Box maxW="2xl" mx="auto" w="full" py="8">
                 {heading}
                 <styled.p mb="6" color="text.secondary">
-                    Tell us what you thought of the day, or of a talk you saw. Everything except the rating is
-                    optional.
+                    Tell us what you thought of the day, or of a talk you saw. Everything except the rating is optional.
                 </styled.p>
 
                 <styled.fieldset mb="6">
@@ -206,7 +227,9 @@ export default function Feedback() {
                                     checked={kind === value}
                                     onChange={() =>
                                         setSearchParams(
-                                            value === 'talk' && talkId ? { type: value, talk: talkId } : { type: value },
+                                            value === 'talk' && talkId
+                                                ? { type: value, talk: talkId }
+                                                : { type: value },
                                             { replace: true, preventScrollReset: true },
                                         )
                                     }
@@ -227,6 +250,7 @@ export default function Feedback() {
                         startedAt={loaderData.startedAt}
                         fieldErrors={fieldErrors}
                         targets={loaderData.targets}
+                        reviewedIds={loaderData.reviewedIds}
                         talkId={talkId}
                         onTalkChange={(id) =>
                             setSearchParams(id ? { type: 'talk', talk: id } : { type: 'talk' }, {
@@ -246,7 +270,10 @@ type FieldErrors = Record<string, string>
 function ConferenceForm({ startedAt, fieldErrors }: { startedAt: number; fieldErrors: FieldErrors }) {
     return (
         <FeedbackForm kind="conference" startedAt={startedAt} fieldErrors={fieldErrors}>
-            <Rating legend={`How would you rate ${conferenceManifest.public.name} overall?`} error={fieldErrors.rating} />
+            <Rating
+                legend={`How would you rate ${conferenceManifest.public.name} overall?`}
+                error={fieldErrors.rating}
+            />
             <TextArea
                 name="bestThing"
                 label={`Why do you come to ${conferenceManifest.public.name}? What’s the best thing about it?`}
@@ -263,25 +290,33 @@ function TalkForm({
     startedAt,
     fieldErrors,
     targets,
+    reviewedIds,
     talkId,
     onTalkChange,
 }: {
     startedAt: number
     fieldErrors: FieldErrors
     targets: FeedbackTarget[]
+    reviewedIds: string[]
     talkId: string
     onTalkChange: (id: string) => void
 }) {
     const selectId = useId()
     const errorId = useId()
+    const reviewedNoticeId = useId()
+    const reviewed = new Set(reviewedIds)
     const selected = targets.find((target) => target.id === talkId)
+    const alreadyReviewed = selected ? reviewed.has(selected.id) : false
+    const describedBy = [alreadyReviewed ? reviewedNoticeId : undefined, fieldErrors.targetId ? errorId : undefined]
+        .filter(Boolean)
+        .join(' ')
 
     if (!targets.length) {
         return <styled.p>The agenda isn&apos;t available right now, so talk feedback can&apos;t be given yet.</styled.p>
     }
 
     return (
-        <FeedbackForm kind="talk" startedAt={startedAt} fieldErrors={fieldErrors}>
+        <FeedbackForm kind="talk" startedAt={startedAt} fieldErrors={fieldErrors} canSubmit={!alreadyReviewed}>
             <Box>
                 <styled.label htmlFor={selectId} display="block" fontWeight="semibold" mb="2">
                     Which talk?
@@ -293,13 +328,13 @@ function TalkForm({
                     value={selected ? selected.id : ''}
                     onChange={(event) => onTalkChange(event.target.value)}
                     aria-invalid={fieldErrors.targetId ? true : undefined}
-                    aria-describedby={fieldErrors.targetId ? errorId : undefined}
+                    aria-describedby={describedBy || undefined}
                     {...inputStyles}
                 >
                     <option value="">Choose a talk…</option>
                     {targets.map((target) => (
                         <option key={target.id} value={target.id}>
-                            {target.label}
+                            {reviewed.has(target.id) ? `${target.label} (feedback given)` : target.label}
                         </option>
                     ))}
                 </styled.select>
@@ -310,25 +345,44 @@ function TalkForm({
                             .join(' · ')}
                     </styled.p>
                 ) : null}
-                <FieldError id={errorId} error={fieldErrors.targetId} />
+                {alreadyReviewed ? (
+                    <styled.p
+                        id={reviewedNoticeId}
+                        mt="3"
+                        px="3"
+                        py="2"
+                        rounded="md"
+                        fontSize="sm"
+                        bg="status.info.bg"
+                        color="status.info.fg"
+                    >
+                        {ALREADY_REVIEWED} Thanks! Choose another talk to keep going.
+                    </styled.p>
+                ) : (
+                    <FieldError id={errorId} error={fieldErrors.targetId} />
+                )}
             </Box>
-            <Rating
-                legend={`How much did you enjoy this ${selected?.kind === 'meet-the-experts' ? 'session' : 'talk'}?`}
-                error={fieldErrors.rating}
-            />
-            <TextArea
-                name="speakerFeedback"
-                label="Constructive feedback for the speaker"
-                hint="Passed on to the speaker after the organising committee has read it. What worked, and what would make it even better?"
-                error={fieldErrors.speakerFeedback}
-            />
-            <TextArea
-                name="organiserFeedback"
-                label="Anything just for the organisers?"
-                hint="Never shared with the speaker."
-                error={fieldErrors.organiserFeedback}
-            />
-            <EmailField error={fieldErrors.email} />
+            {alreadyReviewed ? null : (
+                <>
+                    <Rating
+                        legend={`How much did you enjoy this ${selected?.kind === 'meet-the-experts' ? 'session' : 'talk'}?`}
+                        error={fieldErrors.rating}
+                    />
+                    <TextArea
+                        name="speakerFeedback"
+                        label="Constructive feedback for the speaker"
+                        hint="Passed on to the speaker after the organising committee has read it. What worked, and what would make it even better?"
+                        error={fieldErrors.speakerFeedback}
+                    />
+                    <TextArea
+                        name="organiserFeedback"
+                        label="Anything just for the organisers?"
+                        hint="Never shared with the speaker."
+                        error={fieldErrors.organiserFeedback}
+                    />
+                    <EmailField error={fieldErrors.email} />
+                </>
+            )}
         </FeedbackForm>
     )
 }
@@ -337,8 +391,9 @@ function FeedbackForm({
     kind,
     startedAt,
     fieldErrors,
+    canSubmit = true,
     children,
-}: React.PropsWithChildren<{ kind: FeedbackKind; startedAt: number; fieldErrors: FieldErrors }>) {
+}: React.PropsWithChildren<{ kind: FeedbackKind; startedAt: number; fieldErrors: FieldErrors; canSubmit?: boolean }>) {
     const navigation = useNavigation()
     const errorRef = useRef<HTMLDivElement>(null)
     const hasErrors = Object.keys(fieldErrors).length > 0
@@ -375,15 +430,13 @@ function FeedbackForm({
             ) : null}
             <Flex direction="column" gap="6">
                 {children}
-                <Box>
-                    <Button
-                        type="submit"
-                        colorPalette="brand.primary"
-                        loading={navigation.state === 'submitting'}
-                    >
-                        Send feedback
-                    </Button>
-                </Box>
+                {canSubmit ? (
+                    <Box>
+                        <Button type="submit" colorPalette="brand.primary" loading={navigation.state === 'submitting'}>
+                            Send feedback
+                        </Button>
+                    </Box>
+                ) : null}
             </Flex>
         </Form>
     )
@@ -497,7 +550,16 @@ function EmailField({ error }: { error?: string }) {
 function FieldError({ id, error }: { id: string; error?: string }) {
     if (!error) return null
     return (
-        <styled.p id={id} mt="1" fontSize="sm" color="status.danger.fg" bg="status.danger.bg" px="2" py="1" rounded="sm">
+        <styled.p
+            id={id}
+            mt="1"
+            fontSize="sm"
+            color="status.danger.fg"
+            bg="status.danger.bg"
+            px="2"
+            py="1"
+            rounded="sm"
+        >
             {error}
         </styled.p>
     )

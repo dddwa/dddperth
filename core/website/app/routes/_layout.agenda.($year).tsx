@@ -5,6 +5,7 @@ import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
+import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
 import { SpeakerModal } from '~/components/speaker-modal'
@@ -96,8 +97,18 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks, canPick, feedbackOpen, meetTheExperts } =
-        useLoaderData<typeof loader>()
+    const {
+        schedule,
+        sponsors,
+        conferences,
+        year,
+        cancelledMessage,
+        linkTalks,
+        canPick,
+        feedbackOpen,
+        meetTheExperts,
+    } = useLoaderData<typeof loader>()
+    const reviewedFeedback = useReviewedFeedback(feedbackOpen)
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
     const sessionsById = useMemo(
@@ -299,6 +310,7 @@ export default function Agenda() {
                                             isPicked={picked.includes(room.session.id)}
                                             onToggle={onToggle}
                                             feedbackOpen={feedbackOpen}
+                                            reviewedFeedback={reviewedFeedback}
                                         />
                                     )
                                 })}
@@ -306,7 +318,13 @@ export default function Agenda() {
                         )
                     })}
                 </Box>
-                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} feedbackOpen={feedbackOpen} /> : null}
+                {meetTheExperts ? (
+                    <MeetTheExperts
+                        grid={meetTheExperts}
+                        feedbackOpen={feedbackOpen}
+                        reviewedFeedback={reviewedFeedback}
+                    />
+                ) : null}
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
@@ -321,7 +339,15 @@ export default function Agenda() {
  * agenda. Empty seats are left out rather than drawn as blank cards.
  * Each person's name opens their registration bio in a modal.
  */
-function MeetTheExperts({ grid, feedbackOpen }: { grid: MeetTheExpertsAgenda; feedbackOpen: boolean }) {
+function MeetTheExperts({
+    grid,
+    feedbackOpen,
+    reviewedFeedback,
+}: {
+    grid: MeetTheExpertsAgenda
+    feedbackOpen: boolean
+    reviewedFeedback: ReadonlySet<string>
+}) {
     const [selected, setSelected] = useState<{ seat: MeetTheExpertsSeat; where: string } | null>(null)
 
     return (
@@ -382,7 +408,10 @@ function MeetTheExperts({ grid, feedbackOpen }: { grid: MeetTheExpertsAgenda; fe
                                         <styled.button
                                             type="button"
                                             onClick={() =>
-                                                setSelected({ seat, where: `${row.slotLabel} · ${grid.tableLabels[i]}` })
+                                                setSelected({
+                                                    seat,
+                                                    where: `${row.slotLabel} · ${grid.tableLabels[i]}`,
+                                                })
                                             }
                                             aria-haspopup="dialog"
                                             color="text.primary"
@@ -405,7 +434,11 @@ function MeetTheExperts({ grid, feedbackOpen }: { grid: MeetTheExpertsAgenda; fe
                                             {grid.tableLabels[i]}
                                         </Flex>
                                         {feedbackOpen ? (
-                                            <FeedbackLink id={seat.feedbackId} title={seat.displayName} />
+                                            <FeedbackLink
+                                                id={seat.feedbackId}
+                                                title={seat.displayName}
+                                                reviewed={reviewedFeedback.has(seat.feedbackId)}
+                                            />
                                         ) : null}
                                     </styled.li>
                                 ) : null,
@@ -528,6 +561,7 @@ function RoomTimeSlot({
     isPicked,
     onToggle,
     feedbackOpen,
+    reviewedFeedback,
 }: {
     schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
@@ -545,6 +579,7 @@ function RoomTimeSlot({
     isPicked: boolean
     onToggle: (talk: AgendaTalk) => void
     feedbackOpen: boolean
+    reviewedFeedback: ReadonlySet<string>
 }) {
     const fullSession = schedule.rooms
         .find((r) => r.id === room.id)
@@ -739,27 +774,14 @@ function RoomTimeSlot({
                     </Flex>
                 ) : null}
                 {feedbackOpen && fullSession && !fullSession.isServiceSession ? (
-                    <FeedbackLink id={fullSession.id} title={fullSession.title} />
+                    <FeedbackLink
+                        id={fullSession.id}
+                        title={fullSession.title}
+                        reviewed={reviewedFeedback.has(fullSession.id)}
+                    />
                 ) : null}
             </Box>
         </styled.div>
-    )
-}
-
-function FeedbackLink({ id, title }: { id: string; title: string }) {
-    return (
-        <AppLink
-            to={`/feedback?talk=${encodeURIComponent(id)}`}
-            unstyled
-            aria-label={`Give feedback on ${title}`}
-            display="inline-block"
-            mt="2"
-            color="text.highlight"
-            textDecoration="underline"
-            fontSize={{ base: 'xs', xl: 'sm' }}
-        >
-            Give feedback
-        </AppLink>
     )
 }
 

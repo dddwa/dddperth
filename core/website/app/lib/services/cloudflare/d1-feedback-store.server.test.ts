@@ -19,25 +19,35 @@ describe('D1 feedback store (real SQL)', () => {
 
     afterEach(() => sqlite.close())
 
-    it('replaces a browser’s earlier conference feedback rather than counting it twice', async () => {
+    it('keeps every conference submission, even from the same browser', async () => {
         await store.saveConferenceFeedback('2026', 'browser-a', conference)
         await store.saveConferenceFeedback('2026', 'browser-a', { ...conference, rating: 2, ideas: 'More coffee' })
         await store.saveConferenceFeedback('2026', 'browser-b', conference)
 
         const rows = await store.listConferenceFeedback('2026')
-        expect(rows).toHaveLength(2)
+        expect(rows).toHaveLength(3)
         expect(rows).toContainEqual(expect.objectContaining({ rating: 2, ideas: 'More coffee' }))
     })
 
-    it('keeps one talk response per browser per talk, and years apart', async () => {
+    it('lists the talks a browser has already reviewed, for that year only', async () => {
         await store.saveTalkFeedback('2026', 'browser-a', talk)
-        await store.saveTalkFeedback('2026', 'browser-a', { ...talk, rating: 3 })
-        await store.saveTalkFeedback('2026', 'browser-a', { ...talk, targetId: '456' })
-        await store.saveTalkFeedback('2027', 'browser-a', talk)
+        await store.saveTalkFeedback('2026', 'browser-a', { ...talk, targetId: 'mte-1' })
+        await store.saveTalkFeedback('2026', 'browser-b', { ...talk, targetId: '999' })
+        await store.saveTalkFeedback('2027', 'browser-a', { ...talk, targetId: '777' })
+
+        expect((await store.listTalkFeedbackTargetIds('2026', 'browser-a')).sort()).toEqual(['123', 'mte-1'])
+        expect(await store.listTalkFeedbackTargetIds('2026', 'browser-c')).toEqual([])
+    })
+
+    it('refuses a second response from the same browser for the same talk, keeping the first', async () => {
+        expect(await store.saveTalkFeedback('2026', 'browser-a', talk)).toBe(true)
+        expect(await store.saveTalkFeedback('2026', 'browser-a', { ...talk, rating: 3 })).toBe(false)
+        expect(await store.saveTalkFeedback('2026', 'browser-a', { ...talk, targetId: '456' })).toBe(true)
+        expect(await store.saveTalkFeedback('2027', 'browser-a', talk)).toBe(true)
 
         const rows = await store.listTalkFeedback('2026')
         expect(rows.map((r) => [r.targetId, r.rating]).sort()).toEqual([
-            ['123', 3],
+            ['123', 5],
             ['456', 5],
         ])
         expect(await store.listTalkFeedback('2027')).toHaveLength(1)

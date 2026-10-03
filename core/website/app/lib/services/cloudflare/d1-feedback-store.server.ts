@@ -52,14 +52,7 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
                 .prepare(
                     `INSERT INTO conference_feedback
                         (id, year, submitter_id, rating, best_thing, ideas, feedback, email, created_at, updated_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                     ON CONFLICT (year, submitter_id) DO UPDATE SET
-                        rating = excluded.rating,
-                        best_thing = excluded.best_thing,
-                        ideas = excluded.ideas,
-                        feedback = excluded.feedback,
-                        email = excluded.email,
-                        updated_at = excluded.updated_at`,
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 )
                 .bind(
                     crypto.randomUUID(),
@@ -78,17 +71,12 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
 
         async saveTalkFeedback(year, submitterId, input) {
             const now = Math.floor(Date.now() / 1000)
-            await db
+            const result = await db
                 .prepare(
                     `INSERT INTO talk_feedback
                         (id, year, target_id, submitter_id, rating, speaker_feedback, organiser_feedback, email, created_at, updated_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                     ON CONFLICT (year, target_id, submitter_id) DO UPDATE SET
-                        rating = excluded.rating,
-                        speaker_feedback = excluded.speaker_feedback,
-                        organiser_feedback = excluded.organiser_feedback,
-                        email = excluded.email,
-                        updated_at = excluded.updated_at`,
+                     ON CONFLICT (year, target_id, submitter_id) DO NOTHING`,
                 )
                 .bind(
                     crypto.randomUUID(),
@@ -103,6 +91,15 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
                     now,
                 )
                 .run()
+            return (result.meta.changes ?? 0) > 0
+        },
+
+        async listTalkFeedbackTargetIds(year, submitterId) {
+            const { results } = await db
+                .prepare(`SELECT target_id FROM talk_feedback WHERE year = ? AND submitter_id = ?`)
+                .bind(year, submitterId)
+                .all<{ target_id: string }>()
+            return results.map((row) => row.target_id)
         },
 
         async listConferenceFeedback(year) {

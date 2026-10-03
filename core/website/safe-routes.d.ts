@@ -130,6 +130,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
     },
+    "/api/feedback/reviewed": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.feedback.reviewed.js').SearchParams>,
+    },
     "/api/runsheets/session/:sessionId": {
       params: {'sessionId': string | number},
       query: ExportedQuery<import('app/routes/api.runsheets.session.$sessionId.js').SearchParams>,
@@ -266,6 +270,7 @@ declare module "safe-routes" {
   export type RouteId =
             | 'root'
             | 'routes/api.runsheets.session.$sessionId'
+            | 'routes/api.feedback.reviewed'
             | 'routes/api.tito-registration'
             | 'routes/api.agenda.shortlist'
             | 'routes/app-agenda-sessions'

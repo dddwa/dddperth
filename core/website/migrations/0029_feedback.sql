@@ -11,10 +11,14 @@
 -- names are deliberately *not* copied in: they're looked up from the agenda
 -- when feedback is read, so an agenda fix after the fact shows up everywhere.
 --
--- `submitter_id` is a random per-browser cookie id, not an identity. It exists
--- so someone who resubmits (double-tap, changed their mind) replaces their
--- earlier answer rather than counting twice. Clearing cookies gets around it;
--- it's a dedupe, not a defence.
+-- `submitter_id` is a random per-browser cookie id, not an identity. For talk
+-- feedback it's part of the unique key: one response per browser per talk, and
+-- a second attempt is refused (the form says "you have already submitted
+-- feedback for this session") rather than counted twice.
+-- Clearing cookies gets around it; it's a dedupe, not a defence.
+--
+-- Conference feedback deliberately has no such key: people come back with more
+-- to say, and every submission is kept.
 
 CREATE TABLE IF NOT EXISTS conference_feedback (
     id TEXT PRIMARY KEY,
@@ -26,9 +30,10 @@ CREATE TABLE IF NOT EXISTS conference_feedback (
     feedback TEXT,
     email TEXT,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    UNIQUE (year, submitter_id)
+    updated_at INTEGER NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_conference_feedback_year ON conference_feedback (year);
 
 CREATE TABLE IF NOT EXISTS talk_feedback (
     id TEXT PRIMARY KEY,

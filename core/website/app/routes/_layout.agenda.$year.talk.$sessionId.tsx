@@ -4,6 +4,7 @@ import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
+import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { SponsorLogo } from '~/components/sponsor-logo'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
@@ -87,6 +88,7 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
 export default function Agenda() {
     const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers, feedbackOpen } =
         useLoaderData<typeof loader>()
+    const reviewedFeedback = useReviewedFeedback(feedbackOpen)
 
     return (
         <Flex
@@ -125,16 +127,14 @@ export default function Agenda() {
                     ) : null}
                     <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
                     {feedbackOpen ? (
-                        <AppLink
-                            to={`/feedback?talk=${encodeURIComponent(session.id)}`}
-                            unstyled
-                            display="inline-block"
-                            mb="3"
-                            color="text.highlight"
-                            textDecoration="underline"
-                        >
-                            Give feedback on this talk
-                        </AppLink>
+                        <Box mb="3">
+                            <FeedbackLink
+                                id={session.id}
+                                title={session.title}
+                                reviewed={reviewedFeedback.has(session.id)}
+                                label="Give feedback on this talk"
+                            />
+                        </Box>
                     ) : null}
                     <styled.div>{session.description}</styled.div>
                     {session?.speakers?.length ? (
@@ -171,11 +171,7 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
     return (
         <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
             <styled.span>Room sponsored by</styled.span>
-            <AppLink unstyled
-                to={roomSponsor.website}
-                display="inline-flex"
-                alignItems="center"
-            >
+            <AppLink unstyled to={roomSponsor.website} display="inline-flex" alignItems="center">
                 <SponsorLogo
                     logoUrlDarkMode={roomSponsor.logoUrlDarkMode}
                     logoUrlLightMode={roomSponsor.logoUrlLightMode}

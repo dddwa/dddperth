@@ -29,10 +29,15 @@ export interface TalkFeedback extends TalkFeedbackInput {
 }
 
 export interface FeedbackStore {
-    /** One response per browser per year: a resubmission replaces the earlier one. */
+    /** Every submission is kept: someone can come back with more to say. */
     saveConferenceFeedback(year: string, submitterId: string, input: ConferenceFeedbackInput): Promise<void>
-    /** One response per browser per talk per year: a resubmission replaces the earlier one. */
-    saveTalkFeedback(year: string, submitterId: string, input: TalkFeedbackInput): Promise<void>
+    /**
+     * One response per browser per talk per year. Returns false, and changes
+     * nothing, if this browser has already given feedback on the talk.
+     */
+    saveTalkFeedback(year: string, submitterId: string, input: TalkFeedbackInput): Promise<boolean>
+    /** The talks this browser has already given feedback on in `year`. */
+    listTalkFeedbackTargetIds(year: string, submitterId: string): Promise<string[]>
     /** Newest first. */
     listConferenceFeedback(year: string): Promise<ConferenceFeedback[]>
     /** Newest first. */
