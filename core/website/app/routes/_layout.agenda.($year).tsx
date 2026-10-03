@@ -17,13 +17,14 @@ import {
 import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
-import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
+import { FeedbackLink, useFeedbackClock, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
 import { SpeakerModal } from '~/components/speaker-modal'
 import { TalkDialog } from '~/components/talk-dialog'
 import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import { hasTalkEnded } from '~/lib/feedback/talk-ended'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
 import type { MeetTheExpertsAgenda, MeetTheExpertsSeat } from '~/lib/meet-the-experts-agenda.server'
@@ -34,7 +35,7 @@ import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from
 import { formatDate } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
 import { useMyAgenda } from '~/lib/use-my-agenda'
-import { getConferenceState, getConfig } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
 import type { loader as talkLoader } from './_layout.agenda.($year).talk.$sessionId'
@@ -84,6 +85,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         !!schedule &&
         year === getConferenceState(context).conference.year &&
         getConferenceState(context).feedback === 'open'
+    // Each talk's link waits until that talk has finished; the page works out
+    // when that is from here, so the date overrides apply to it too.
+    const now = feedbackOpen ? getDateTimeProvider(context).nowDate().toISO() : undefined
 
     return data(
         {
@@ -95,6 +99,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
             canPick,
             feedbackOpen,
+            now,
             meetTheExperts,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
@@ -156,9 +161,16 @@ export default function Agenda() {
         linkTalks,
         canPick,
         feedbackOpen,
+        now,
         meetTheExperts,
     } = useLoaderData<typeof loader>()
     const reviewedFeedback = useReviewedFeedback(feedbackOpen)
+    const feedbackNow = useFeedbackClock(now)
+    const canGiveFeedback = (session: { endsAt: string | null; isServiceSession: boolean }) =>
+        feedbackOpen &&
+        !session.isServiceSession &&
+        feedbackNow !== undefined &&
+        hasTalkEnded(session.endsAt, feedbackNow, conferenceManifest.public.timezone)
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
     const sessionsById = useMemo(
@@ -382,7 +394,7 @@ export default function Agenda() {
                                             pickable={canPick ? pickableTalks.get(room.session.id) : undefined}
                                             isPicked={picked.includes(room.session.id)}
                                             onToggle={onToggle}
-                                            feedbackOpen={feedbackOpen}
+                                            canGiveFeedback={canGiveFeedback}
                                             reviewedFeedback={reviewedFeedback}
                                         />
                                     )
@@ -397,7 +409,7 @@ export default function Agenda() {
                     roomSponsor={openTalk ? sponsors.room?.find((r) => r.roomName === openTalk.room) : undefined}
                     speakers={talkData?.sessionId === openTalkId ? talkData?.speakers : undefined}
                     feedback={
-                        feedbackOpen && openTalk && !openTalk.isServiceSession ? (
+                        openTalk && canGiveFeedback(openTalk) ? (
                             <FeedbackLink
                                 id={openTalk.id}
                                 title={openTalk.title}
@@ -651,7 +663,7 @@ function RoomTimeSlot({
     pickable,
     isPicked,
     onToggle,
-    feedbackOpen,
+    canGiveFeedback,
     reviewedFeedback,
 }: {
     schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
@@ -669,7 +681,7 @@ function RoomTimeSlot({
     pickable: AgendaTalk | undefined
     isPicked: boolean
     onToggle: (talk: AgendaTalk) => void
-    feedbackOpen: boolean
+    canGiveFeedback: (session: { endsAt: string | null; isServiceSession: boolean }) => boolean
     reviewedFeedback: ReadonlySet<string>
 }) {
     const fullSession = schedule.rooms
@@ -867,7 +879,7 @@ function RoomTimeSlot({
                         <styled.span>{fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}</styled.span>
                     </Flex>
                 ) : null}
-                {feedbackOpen && fullSession && !fullSession.isServiceSession ? (
+                {fullSession && canGiveFeedback(fullSession) ? (
                     <FeedbackLink
                         id={fullSession.id}
                         title={fullSession.title}
