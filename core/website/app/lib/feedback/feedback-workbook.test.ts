@@ -13,6 +13,7 @@ describe('buildFeedbackWorkbook', () => {
                     rating: 5,
                     bestThing: '=HYPERLINK("x")',
                     ideas: null,
+                    meetTheExperts: null,
                     feedback: null,
                     email: null,
                     submittedAt: 1_791_000_000,

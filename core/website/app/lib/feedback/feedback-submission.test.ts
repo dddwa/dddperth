@@ -36,6 +36,7 @@ describe('feedback schemas', () => {
             rating: 5,
             bestThing: null,
             ideas: null,
+            meetTheExperts: null,
             feedback: null,
             email: null,
         })

@@ -19,11 +19,22 @@ export function buildFeedbackWorkbook(report: FeedbackReport, timezone: string):
                 Rating: response.rating,
                 'Why come / best thing': response.bestThing ?? '',
                 'Ideas or suggestions': response.ideas ?? '',
+                'Meet the Experts': response.meetTheExperts ?? '',
                 'Other feedback': response.feedback ?? '',
                 Email: response.email ?? '',
                 Submitted: submitted(response.submittedAt),
             })),
-            { header: ['Rating', 'Why come / best thing', 'Ideas or suggestions', 'Other feedback', 'Email', 'Submitted'] },
+            {
+                header: [
+                    'Rating',
+                    'Why come / best thing',
+                    'Ideas or suggestions',
+                    'Meet the Experts',
+                    'Other feedback',
+                    'Email',
+                    'Submitted',
+                ],
+            },
         ),
         'Conference',
     )

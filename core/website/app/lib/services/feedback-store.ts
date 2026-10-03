@@ -2,6 +2,7 @@ export interface ConferenceFeedbackInput {
     rating: number
     bestThing: string | null
     ideas: string | null
+    meetTheExperts: string | null
     feedback: string | null
     email: string | null
 }
