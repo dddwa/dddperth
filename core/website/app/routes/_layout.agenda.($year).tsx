@@ -1,7 +1,19 @@
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Fragment, useMemo, useState } from 'react'
-import { data, redirect, useLoaderData } from 'react-router'
+import {
+    data,
+    matchPath,
+    Outlet,
+    redirect,
+    type ShouldRevalidateFunctionArgs,
+    useLoaderData,
+    useLocation,
+    useNavigate,
+    useNavigation,
+    useParams,
+    useRouteLoaderData,
+} from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf, z } from 'zod'
 import { AppLink } from '~/components/app-link'
@@ -9,6 +21,7 @@ import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
 import { SpeakerModal } from '~/components/speaker-modal'
+import { TalkDialog } from '~/components/talk-dialog'
 import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -24,6 +37,24 @@ import { useMyAgenda } from '~/lib/use-my-agenda'
 import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
+import type { loader as talkLoader } from './_layout.agenda.($year).talk.$sessionId'
+
+const TALK_ROUTE_ID = 'routes/_layout.agenda.($year).talk.$sessionId'
+const TALK_PATH = '/agenda/:year/talk/:sessionId'
+
+/** Set on the link that opens a talk, so closing it can step back in history. */
+interface TalkLinkState {
+    fromAgenda: true
+}
+
+/**
+ * `location.state` is `any` in React Router: it's whatever the history entry
+ * holds, which can come from another page, an older deploy, or a reload. So
+ * check its shape rather than asserting it.
+ */
+function isTalkLinkState(state: unknown): state is TalkLinkState {
+    return typeof state === 'object' && state !== null && 'fromAgenda' in state && state.fromAgenda === true
+}
 
 export async function loader({ params, context }: Route.LoaderArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
@@ -96,6 +127,25 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     )
 }
 
+/**
+ * Opening or closing a talk only mounts or unmounts the child route; the
+ * agenda behind it doesn't change. Without this, opening a talk from the
+ * unpinned `/agenda` (talk links always carry the year) reads as a param
+ * change and refetches the whole agenda.
+ */
+export function shouldRevalidate({
+    currentParams,
+    nextParams,
+    formMethod,
+    defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+    const togglingTalk =
+        !formMethod &&
+        (!!currentParams.sessionId || !!nextParams.sessionId) &&
+        (!currentParams.year || !nextParams.year || currentParams.year === nextParams.year)
+    return togglingTalk ? false : defaultShouldRevalidate
+}
+
 export default function Agenda() {
     const {
         schedule,
@@ -125,6 +175,29 @@ export default function Agenda() {
         return talks
     }, [sessionsById])
     const { picked, toggle } = useMyAgenda(year, pickableTalks)
+
+    // The talk dialog opens as soon as a talk link is clicked, from the
+    // session already on this page; the talk route's loader only fills in the
+    // speakers' profiles. With `prefetch="intent"` on the links that has
+    // usually finished before the click lands anyway.
+    const params = useParams()
+    const location = useLocation()
+    const navigation = useNavigation()
+    const navigate = useNavigate()
+    const talkData = useRouteLoaderData<typeof talkLoader>(TALK_ROUTE_ID)
+    const pendingTalkId = navigation.location
+        ? matchPath(TALK_PATH, navigation.location.pathname)?.params.sessionId
+        : undefined
+    // Mid-navigation, go by where we're heading so closing is instant too.
+    const openTalkId = navigation.location ? pendingTalkId : params.sessionId
+    const openTalk = openTalkId ? sessionsById.get(openTalkId) : undefined
+    const closeTalk = () => {
+        if (params.sessionId && isTalkLinkState(location.state)) {
+            void navigate(-1)
+        } else {
+            void navigate($path('/agenda/:year?', { year: params.year }), { preventScrollReset: true, replace: true })
+        }
+    }
     const [announcement, setAnnouncement] = useState('')
 
     const onToggle = (talk: AgendaTalk) => {
@@ -318,6 +391,24 @@ export default function Agenda() {
                         )
                     })}
                 </Box>
+                <TalkDialog
+                    session={openTalk ?? null}
+                    timeRange={openTalk ? talkTimeRange(openTalk.startsAt, openTalk.endsAt) : null}
+                    roomSponsor={openTalk ? sponsors.room?.find((r) => r.roomName === openTalk.room) : undefined}
+                    speakers={talkData?.sessionId === openTalkId ? talkData?.speakers : undefined}
+                    feedback={
+                        feedbackOpen && openTalk && !openTalk.isServiceSession ? (
+                            <FeedbackLink
+                                id={openTalk.id}
+                                title={openTalk.title}
+                                reviewed={reviewedFeedback.has(openTalk.id)}
+                                label="Give feedback on this talk"
+                            />
+                        ) : null
+                    }
+                    onClose={closeTalk}
+                />
+                <Outlet />
                 {meetTheExperts ? (
                     <MeetTheExperts
                         grid={meetTheExperts}
@@ -371,7 +462,7 @@ function MeetTheExperts({
                         fontWeight="semibold"
                         textAlign="center"
                         padding="2"
-                        xl={{ display: 'block', position: 'sticky', top: '4', zIndex: 'modal' }}
+                        xl={{ display: 'block', position: 'sticky', top: '4', zIndex: 'sticky' }}
                     >
                         {label}
                     </Box>
@@ -508,7 +599,7 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                 display: 'block',
                 position: 'sticky',
                 top: '4',
-                zIndex: 'modal',
+                zIndex: 'sticky',
             }}
         >
             {room.name}
@@ -687,10 +778,13 @@ function RoomTimeSlot({
                             fullSession?.title
                         ) : (
                             <AppLink
-                                to={$path('/agenda/:year/talk/:sessionId', {
+                                to={$path('/agenda/:year?/talk/:sessionId', {
                                     year,
                                     sessionId: fullSession?.id ?? '#',
                                 })}
+                                state={{ fromAgenda: true } satisfies TalkLinkState}
+                                preventScrollReset
+                                prefetch="intent"
                                 // The default `primary` nav variant paints `text.on-brand` (white),
                                 // which disappears on the card's `surface.card` background in light
                                 // theme. Override to body text so it tracks the surrounding card.
@@ -783,6 +877,13 @@ function RoomTimeSlot({
             </Box>
         </styled.div>
     )
+}
+
+function talkTimeRange(startsAt: string | null, endsAt: string | null) {
+    if (!startsAt || !endsAt) return null
+    const format = (iso: string) =>
+        DateTime.fromISO(iso, { zone: conferenceManifest.public.timezone }).toFormat('h:mm a').toLowerCase()
+    return `${format(startsAt)} - ${format(endsAt)}`
 }
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {

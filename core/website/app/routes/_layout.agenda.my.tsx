@@ -146,7 +146,7 @@ export default function MyAgenda() {
                                                     lineHeight="tight"
                                                 >
                                                     <AppLink
-                                                        to={$path('/agenda/:year/talk/:sessionId', {
+                                                        to={$path('/agenda/:year?/talk/:sessionId', {
                                                             year,
                                                             sessionId: talk.id,
                                                         })}

@@ -1,204 +1,103 @@
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
-import { data, redirect, useLoaderData } from 'react-router'
+import { data, redirect } from 'react-router'
 import { $path } from 'safe-routes'
-import type { TypeOf } from 'zod'
-import { AppLink } from '~/components/app-link'
-import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
-import { SponsorSection } from '~/components/page-components/SponsorSection'
-import { SponsorLogo } from '~/components/sponsor-logo'
-import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import type { TalkDialogSpeaker } from '~/components/talk-dialog'
+import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
-import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
-import { Box, Flex, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
-import { NewTabHint } from '~/components/new-tab-hint'
+import { getPublishedSchedule } from '~/lib/published-agenda.server'
+import { getConfSpeakers } from '~/lib/sessionize.server'
+import { getConferenceState, getConfig } from '~/remix-app-load-context'
+import type { Route } from './+types/_layout.agenda.($year).talk.$sessionId'
 
-export async function loader({ params: { year, sessionId }, context }: Route.LoaderArgs) {
+/**
+ * A talk opened over the agenda. The agenda route renders the dialog: it
+ * already has the session from its own schedule, so it can open the dialog
+ * before this loader has finished. All this route adds is the speakers'
+ * profiles (bio, tagline, photo, links), which the agenda doesn't load.
+ */
+export async function loader({ params, context }: Route.LoaderArgs) {
+    const year =
+        params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
     const yearConfig = getYearConfig(year, getConfig(context))
 
     if (yearConfig.kind === 'cancelled') {
-        return redirect($path('/agenda/:year?', { year: undefined }))
+        throw redirect($path('/agenda/:year?', { year: undefined }))
     }
 
-    const now = getDateTimeProvider(context).nowDate()
-    const agendaPublished =
-        (yearConfig.agendaPublishedDateTime ? now >= yearConfig.agendaPublishedDateTime : false) ||
-        (!!yearConfig.conferenceDate && now >= yearConfig.conferenceDate)
-
-    let session: TypeOf<typeof gridRoomSchema>['sessions'][number] | undefined
-
-    if (yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint && agendaPublished) {
-        const sessions = await getConfSessions({
-            sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-        })
-        session = sessions.find((s) => s.id === sessionId)
-    } else if (yearConfig.sessions?.kind === 'session-data') {
-        const day = yearConfig.sessions.sessions[0]
-        session = day?.rooms.flatMap((room) => room.sessions).find((s) => s.id === sessionId)
-    }
+    // The same publication gate as the agenda, so a talk id can't be used to
+    // read an unannounced talk.
+    const schedule = await getPublishedSchedule(context, year)
+    const session = schedule?.rooms.flatMap((room) => room.sessions).find((s) => s.id === params.sessionId)
 
     if (!session) {
         throw new Response(JSON.stringify({ message: 'No session found' }), { status: 404 })
     }
 
-    const speakers: TypeOf<typeof speakersSchema> =
-        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint && agendaPublished
-            ? await getConfSpeakers({
-                  sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint,
-              })
+    const allSpeakers =
+        yearConfig.sessions?.kind === 'sessionize' && yearConfig.sessions.sessionizeEndpoint
+            ? await getConfSpeakers({ sessionizeEndpoint: yearConfig.sessions.sessionizeEndpoint })
             : []
-    const talkSpeakers = session.speakers
-        .map((speakerId) => speakers.find((speaker) => speaker.id === speakerId.id))
-        .filter((speaker): speaker is TypeOf<typeof speakersSchema>[number] => !!speaker)
+    const speakers: TalkDialogSpeaker[] = session.speakers.flatMap(({ id }) => {
+        const speaker = allSpeakers.find((s) => s.id === id)
+        return speaker
+            ? [
+                  {
+                      id: speaker.id,
+                      fullName: speaker.fullName,
+                      tagLine: speaker.tagLine ?? null,
+                      bio: speaker.bio ?? null,
+                      profilePicture: speaker.profilePicture ?? null,
+                      links: speaker.links.map(({ title, url }) => ({ title, url })),
+                  },
+              ]
+            : []
+    })
 
     return data(
         {
-            year: year as Year,
-            sponsors: yearConfig.sponsors,
-            conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
-                year: conf.year,
-            })),
-            session,
-            talkSpeakers,
-            feedbackOpen:
-                !session.isServiceSession &&
-                year === getConferenceState(context).conference.year &&
-                getConferenceState(context).feedback === 'open',
-            sessionStart: session.startsAt
-                ? DateTime.fromISO(session.startsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                      DateTime.TIME_SIMPLE,
-                      { locale: 'en-AU' },
-                  )
-                : null,
-            sessionEnd: session.endsAt
-                ? DateTime.fromISO(session.endsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
-                      DateTime.TIME_SIMPLE,
-                      { locale: 'en-AU' },
-                  )
-                : null,
+            year,
+            sessionId: session.id,
+            title: session.title,
+            description: session.description,
+            speakers,
         },
         { headers: { 'Cache-Control': CACHE_CONTROL.schedule } },
     )
 }
 
-export default function Agenda() {
-    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers, feedbackOpen } =
-        useLoaderData<typeof loader>()
-    const reviewedFeedback = useReviewedFeedback(feedbackOpen)
+export function meta({ loaderData, matches }: Route.MetaArgs) {
+    // A child route's `meta` replaces its parents' outright, so start from the
+    // parent's tags and override the ones that describe this page. Only the
+    // direct parent: a route without `meta` already carries its own parent's,
+    // so collecting every match would repeat them.
+    const inherited = matches.at(-2)?.meta ?? []
+    if (!loaderData) return inherited
 
-    return (
-        <Flex
-            flexDirection="column"
-            alignContent="center"
-            bgGradient="to-b"
-            gradientFrom="surface.hero"
-            gradientToPosition="99%"
-            gradientTo="surface.body"
-            mx="auto"
-            p="4"
-        >
-            <Box maxWidth="[1200px]" color="text.secondary" mx="auto" p="1" fontSize="sm">
-                <Box id="talk-detail-content">
-                    <AppLink to={$path(`/agenda/:year?`, { year })} mb="5" display="block" textDecoration="underline">
-                        Back to {year} Agenda
-                    </AppLink>
-                    <styled.h1 fontSize="lg" pb="3">
-                        {session.title}
-                    </styled.h1>
-                    {sessionStart && sessionEnd ? (
-                        <styled.span display="block" color="text.secondary" textWrap="nowrap" pb="3">
-                            🕓 {sessionStart} - {sessionEnd}
-                        </styled.span>
-                    ) : null}
-                    {session.room ? (
-                        <styled.span
-                            display="block"
-                            color="text.secondary"
-                            textOverflow="ellipsis"
-                            textWrap="nowrap"
-                            pb="3"
-                        >
-                            📍 {session.room}
-                        </styled.span>
-                    ) : null}
-                    <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
-                    {feedbackOpen ? (
-                        <Box mb="3">
-                            <FeedbackLink
-                                id={session.id}
-                                title={session.title}
-                                reviewed={reviewedFeedback.has(session.id)}
-                                label="Give feedback on this talk"
-                            />
-                        </Box>
-                    ) : null}
-                    <styled.div>{session.description}</styled.div>
-                    {session?.speakers?.length ? (
-                        <styled.div display="block" color="text.secondary">
-                            {talkSpeakers.map((speaker) => (
-                                <styled.div key={speaker.id} display="flex" alignItems="center">
-                                    {speaker.profilePicture ? (
-                                        <styled.img
-                                            src={speaker.profilePicture}
-                                            alt={speaker.fullName}
-                                            width="[120px]"
-                                            height="[120px]"
-                                            borderRightRadius="[50%]"
-                                            mr="2"
-                                        />
-                                    ) : null}
-                                    {speaker.fullName}
-                                </styled.div>
-                            ))}
-                        </styled.div>
-                    ) : null}
-                </Box>
-                <SponsorSection sponsors={sponsors} year={year} />
-                <ConferenceBrowser conferences={conferences} />
-            </Box>
-        </Flex>
-    )
+    const title = `${loaderData.title} | ${conferenceManifest.public.name} ${loaderData.year}`
+    const description = loaderData.description ?? undefined
+    const overridden: Record<string, string | undefined> = {
+        'og:title': title,
+        'twitter:title': title,
+        description,
+        'og:description': description,
+        'twitter:description': description,
+    }
+
+    return [
+        { title },
+        ...inherited.flatMap((tag) => {
+            if ('title' in tag) return []
+            const key = 'name' in tag ? tag.name : 'property' in tag ? tag.property : undefined
+            if (typeof key === 'string' && key in overridden) {
+                const content = overridden[key]
+                return content ? [{ ...tag, content }] : []
+            }
+            return [tag]
+        }),
+    ]
 }
 
-function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; roomName: string | null }) {
-    const roomSponsor = sponsors.room?.find((r) => r.roomName === roomName)
-    if (!roomSponsor) return null
-
-    return (
-        <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
-            <styled.span>Room sponsored by</styled.span>
-            <AppLink unstyled to={roomSponsor.website} display="inline-flex" alignItems="center">
-                <SponsorLogo
-                    logoUrlDarkMode={roomSponsor.logoUrlDarkMode}
-                    logoUrlLightMode={roomSponsor.logoUrlLightMode}
-                    name={roomSponsor.name}
-                    maxHeight="[40px]"
-                    maxWidth="[140px]"
-                    objectFit="contain"
-                />
-                <NewTabHint />
-            </AppLink>
-        </Flex>
-    )
-}
-
-function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
-    return (
-        <styled.div padding="4" color="text.primary">
-            <styled.h2 fontSize="xl" marginBottom="2">
-                Other Conferences
-            </styled.h2>
-            <styled.div display="flex" flexWrap="wrap" justifyContent="space-around" gap="4">
-                {conferences.map((conf) => (
-                    <styled.a key={conf.year} href={`/agenda/${conf.year}`}>
-                        <styled.span fontSize="lg">{conf.year}</styled.span>
-                    </styled.a>
-                ))}
-            </styled.div>
-        </styled.div>
-    )
+export default function Talk() {
+    return null
 }
