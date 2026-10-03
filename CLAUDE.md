@@ -187,7 +187,7 @@ Helpers live in `core/website/app/lib/seo.ts`; `core/website/e2e/seo.spec.ts` co
 
 - **`noIndexMeta()`** — export it as a route's `meta` to keep the page out of search results
   (`export const meta = noIndexMeta`). Applied to `/admin`, `/portal`, `/speaker-portal`, `/auth/login`,
-  `/auth/verify/:token`, `/voting` and `/share`.
+  `/auth/verify/:token`, `/voting`, `/feedback` and `/share`.
   - **A child route's `meta` replaces its parent's entirely** in React Router — it does not merge. That makes
     `export const meta = noIndexMeta` self-contained for a private page (there's nothing worth sharing), but if a
     page needs both, spread the tags: `[...noIndexMeta(), { title }]`. It also means it's easy to *accidentally*

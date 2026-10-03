@@ -77,7 +77,7 @@ export interface CloudflareEnv {
     /** "true" swaps the Jira client for fixture data — local dev without Jira. */
     JIRA_STUB?: string
 
-    SESSIONIZE_2026_SESSIONS: string
+    SESSIONIZE_2026_SESSIONS?: string
     SESSIONIZE_2026_ALL_SESSIONS?: string
 
     /**

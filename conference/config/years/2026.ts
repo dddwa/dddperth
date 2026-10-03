@@ -13,11 +13,12 @@ export const conference2026: ConferenceYear = {
     // New event ID each year — update for 2027.
     sessionizeOrganizerEventId: '24207',
 
-    // Endpoints are injected from env (SESSIONIZE_2026_SESSIONS / SESSIONIZE_2026_ALL_SESSIONS)
-    // by getYearConfig. Kept private because the unpublished agenda would otherwise leak.
+    // The accepted-sessions endpoint is public now the agenda is published.
+    // The all-sessions endpoint (every non-declined submission) stays private:
+    // it's injected from env (SESSIONIZE_2026_ALL_SESSIONS) by getYearConfig.
     sessions: {
         kind: 'sessionize',
-        sessionizeEndpoint: undefined,
+        sessionizeEndpoint: 'https://sessionize.com/api/v2/bmx845x3',
         allSessionsEndpoint: undefined,
         underrepresentedGroupsQuestionId: 131373,
     },
@@ -83,7 +84,10 @@ export const conference2026: ConferenceYear = {
         },
     ],
 
-    feedbackOpenUntilDateTime: undefined,
+    // The conference day and the day after.
+    feedbackOpenUntilDateTime: DateTime.fromISO('2026-10-04T23:59:59', {
+        zone: 'Australia/Perth',
+    }),
 
     ticketInfo: {
         type: 'tito',

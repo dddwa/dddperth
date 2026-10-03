@@ -4,6 +4,7 @@ import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import type { TypeOf } from 'zod'
 import { AppLink } from '~/components/app-link'
+import { FeedbackLink, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorSection } from '~/components/page-components/SponsorSection'
 import { SponsorLogo } from '~/components/sponsor-logo'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
@@ -11,7 +12,7 @@ import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import type { gridRoomSchema, speakersSchema } from '~/lib/sessionize.server'
 import { getConfSessions, getConfSpeakers } from '~/lib/sessionize.server'
-import { getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.$year.talk.$sessionId'
 import { NewTabHint } from '~/components/new-tab-hint'
@@ -63,6 +64,10 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
             })),
             session,
             talkSpeakers,
+            feedbackOpen:
+                !session.isServiceSession &&
+                year === getConferenceState(context).conference.year &&
+                getConferenceState(context).feedback === 'open',
             sessionStart: session.startsAt
                 ? DateTime.fromISO(session.startsAt, { zone: conferenceManifest.public.timezone }).toLocaleString(
                       DateTime.TIME_SIMPLE,
@@ -81,8 +86,9 @@ export async function loader({ params: { year, sessionId }, context }: Route.Loa
 }
 
 export default function Agenda() {
-    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers } =
+    const { session, sponsors, conferences, year, sessionStart, sessionEnd, talkSpeakers, feedbackOpen } =
         useLoaderData<typeof loader>()
+    const reviewedFeedback = useReviewedFeedback(feedbackOpen)
 
     return (
         <Flex
@@ -120,6 +126,16 @@ export default function Agenda() {
                         </styled.span>
                     ) : null}
                     <RoomSponsorBadge sponsors={sponsors} roomName={session.room} />
+                    {feedbackOpen ? (
+                        <Box mb="3">
+                            <FeedbackLink
+                                id={session.id}
+                                title={session.title}
+                                reviewed={reviewedFeedback.has(session.id)}
+                                label="Give feedback on this talk"
+                            />
+                        </Box>
+                    ) : null}
                     <styled.div>{session.description}</styled.div>
                     {session?.speakers?.length ? (
                         <styled.div display="block" color="text.secondary">
@@ -155,11 +171,7 @@ function RoomSponsorBadge({ sponsors, roomName }: { sponsors: YearSponsors; room
     return (
         <Flex alignItems="center" gap="2" color="text.secondary" fontSize="sm" pb="3">
             <styled.span>Room sponsored by</styled.span>
-            <AppLink unstyled
-                to={roomSponsor.website}
-                display="inline-flex"
-                alignItems="center"
-            >
+            <AppLink unstyled to={roomSponsor.website} display="inline-flex" alignItems="center">
                 <SponsorLogo
                     logoUrlDarkMode={roomSponsor.logoUrlDarkMode}
                     logoUrlLightMode={roomSponsor.logoUrlLightMode}
