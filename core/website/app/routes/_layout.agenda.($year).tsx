@@ -421,13 +421,7 @@ export default function Agenda() {
                     onClose={closeTalk}
                 />
                 <Outlet />
-                {meetTheExperts ? (
-                    <MeetTheExperts
-                        grid={meetTheExperts}
-                        feedbackOpen={feedbackOpen}
-                        reviewedFeedback={reviewedFeedback}
-                    />
-                ) : null}
+                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} /> : null}
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
@@ -442,15 +436,7 @@ export default function Agenda() {
  * agenda. Empty seats are left out rather than drawn as blank cards.
  * Each person's name opens their registration bio in a modal.
  */
-function MeetTheExperts({
-    grid,
-    feedbackOpen,
-    reviewedFeedback,
-}: {
-    grid: MeetTheExpertsAgenda
-    feedbackOpen: boolean
-    reviewedFeedback: ReadonlySet<string>
-}) {
+function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
     const [selected, setSelected] = useState<{ seat: MeetTheExpertsSeat; where: string } | null>(null)
 
     return (
@@ -536,13 +522,6 @@ function MeetTheExperts({
                                             <LocationIcon />
                                             {grid.tableLabels[i]}
                                         </Flex>
-                                        {feedbackOpen ? (
-                                            <FeedbackLink
-                                                id={seat.feedbackId}
-                                                title={seat.displayName}
-                                                reviewed={reviewedFeedback.has(seat.feedbackId)}
-                                            />
-                                        ) : null}
                                     </styled.li>
                                 ) : null,
                             )}

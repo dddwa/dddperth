@@ -15,7 +15,9 @@ type Context = Parameters<typeof getPublishedSchedule>[0] & Parameters<typeof ge
  * talk before it's announced, and leaves out talks that haven't finished yet.
  * The form's action checks submissions against this same list, so that's
  * what stops feedback on a talk that's still to come, not the hidden links.
- * The admin views read the organisers' copy, with every talk.
+ * Meet the Experts doesn't take feedback, so `public` leaves it out; the
+ * admin views read the organisers' copy, with every talk and Meet the Experts
+ * seat, so feedback stored before that change still has a name in reports.
  */
 export async function getFeedbackTargets(
     context: Context,
@@ -57,9 +59,8 @@ export async function getPublicFeedbackTargets(
     const [ended, upcoming] = partition(scheduleTalks(schedule), (talk) => hasTalkEnded(talk.endsAt, now, timezone))
 
     const upcomingTalk = upcomingTalkId ? upcoming.find((talk) => talk.id === upcomingTalkId) : undefined
-    const meetTheExperts = await getMeetTheExpertsAgenda(context, year)
     return {
-        targets: buildFeedbackTargets(ended, meetTheExperts, timezone),
+        targets: buildFeedbackTargets(ended, undefined, timezone),
         // An upcoming talk always has an end time: one without counts as ended.
         upcomingTalk: upcomingTalk?.endsAt
             ? {

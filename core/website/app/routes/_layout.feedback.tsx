@@ -222,7 +222,7 @@ export default function Feedback() {
                         {(
                             [
                                 ['conference', 'The conference'],
-                                ['talk', 'A talk or Meet the Experts session'],
+                                ['talk', 'A talk'],
                             ] as const
                         ).map(([value, label]) => (
                             <styled.label key={value} display="flex" alignItems="center" gap="2" cursor="pointer">
@@ -396,10 +396,7 @@ function TalkForm({
             </Box>
             {alreadyReviewed ? null : (
                 <>
-                    <Rating
-                        legend={`How much did you enjoy this ${selected?.kind === 'meet-the-experts' ? 'session' : 'talk'}?`}
-                        error={fieldErrors.rating}
-                    />
+                    <Rating legend="How much did you enjoy this talk?" error={fieldErrors.rating} />
                     <TextArea
                         name="speakerFeedback"
                         label="Constructive feedback for the speaker"
