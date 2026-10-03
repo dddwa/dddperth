@@ -15,6 +15,28 @@ export const conference2021: ConferenceYear = {
         allSessionsEndpoint: undefined,
         underrepresentedGroupsQuestionId: undefined,
     },
+    recordings: {
+        '271165': 'jlpLSN9A_X4', // Return code < human error >
+        '261412': '0bGEP6WWXQQ', // Unleash Your Inner CTO!
+        '261106': 'ZVaOQRWxqMA', // Stringly-Typed to Strongly-Typed with TypeScript
+        '259766': 'QjRFO3AMrUg', // Product Ownership - what is it?
+        '260665': 'jALETmi-mQY', // The Computer Science Behind Colour
+        '261278': 'ETJUi_aempM', // What can Indigenous thinking teach us about building sophisticated ethical technology?
+        '261107': '0ofzzga9MCg', // Show Your Work - Using Data Science to Peek inside the Black Box
+        '261410': 'W3kJx_dsXm8', // The Billion Event Challenge
+        '261125': '6tB2QAoVZPg', // Practical Performance
+        '256294': 'NOhVrVM1hEw', // Building a 6 million request per second web server
+        '256312': 'veQmRS_d15c', // Lets build a CarPlay app
+        '259762': 'dO3_C4uq_H8', // How to design tutorials your users won't ignore
+        '261414': 'mYnfRsyaug4', // ASX Trading vs. Machine Learning – ML Ops by accident
+        '259036': '-pQAUKmN0-w', // Everything is a Feature Toggle
+        '261431': '-qx6uDyA-8I', // Stop writing tests
+        '261365': 'jPVDOcqQAag', // Animation - a Whole Lottie Tools out There
+        '260914': 'PmQggXsPi4A', // Embedding Cybersecurity into your Business Culture
+        '261169': 'AGf1wXDUfTc', // Bye bye YAML, painless Kubernetes deployments with CDK8s
+        '261426': 'EFVeS4HyecA', // (Un)Anticipated Consequences: Rethinking artificial intelligence and automated systems
+        '270646': '66amcwsJa2I', // Your Unique Journey
+    },
 
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,

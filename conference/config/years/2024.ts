@@ -16,6 +16,48 @@ export const conference2024: ConferenceYear = {
         allSessionsEndpoint: undefined,
         underrepresentedGroupsQuestionId: undefined,
     },
+    recordings: {
+        '758184': 'Ncq3y7diHPQ', // Exploring the Latest in Multimodal Generative AI
+        '712358': 'd0Ps07uLVeY', // Crafting a Game Engine: Surprisingly Simple!
+        '717991': '9w6iP0v8sJ8', // Let's think block by block - Real world serverless AI, in a virtual world
+        '709682': 'Gg4r9Uh_R3s', // Mastering Full Stack with Azure: Effortless Infrastructure and Well-Architected Framework
+        '715883': 'r2AtdnnvuaM', // An Introduction to Server Components and the Future of Web Rendering
+        '714710': 'jCiVnYAB020', // State Machines & LLM's - Lightning in a bottle
+        '717419': 'fmpUZWpUEOo', // Structuring content so it's findable and usable
+        '719653': 'dMIIBrmEz4g', // Sun, Sand, and Sustainability: How does WA Hold Up on the Global ESG Stage?
+        '719182': 'AgjJBODnpEc', // How to build reliable AI Solutions
+        '718626': 'MdHVLyryzO8', // Computers crash so why don't they cause aircraft to crash..?!
+        '719149': 'A8u8t5FvozU', // Crafting a Path to Mastery: Designing Professional Development Programs for Graduate Developers
+        '718806': 'U___q5zlDHA', // The End of Microservices
+        '717614': 'hZeWrPpmYEM', // Neuroscience Meets Cybersecurity: Enhancing IT Operations Through Brain Science
+        '714157': 'r1a7AiPJrqA', // Cursed Things to do with Lambda Functions
+        '708613': 'p0-BdoksuuY', // Story Points Suck - Exploring a unique approach to estimation
+        '721827': 'iBYnGgavG3I', // Tech Whisperers
+        '719190': '9ZSjTScNbYU', // Web Gaming Unleashed: Architecture for Modern Browsers
+        '719138': '9gVGExxclPE', // The Soft Skill That Pays Hard Dividends: Facilitation in Tech
+        '719352': '69fkF7iOF8w', // Jailbreaking and Protecting LLM Apps: A Public Wargame Experiment
+        '713359': 'Ic-ih27iRFM', // Your new CSS BFFs
+        '720075': 'cvswmwH10Po', // Metrics That Matter: Measuring High Performance Teams
+        '721889': 'iIc0B-OEnWM', // GraphQL: I Don't Know What It Is And Now I'm Too Afraid To Ask
+        '784769': 'Owm1e5IYP7A', // Open Observability
+        '714287': 'Hdj8sqK2j0U', // Containerized Developer Environments: Helping Devs help Charities
+        '707921': 'f2xUyp8maxk', // Ready, Set, Respond: Mastering Incident Response Planning to Mitigate Cyber Attacks
+        '780607': 'prv6a11QzSI', // Developing our Next Generation of Tech Professionals
+        '719193': '2FgCarF0gdE', // HTMX - the new kid on the block that's making the web old again
+        '721003': 'xTjgFcDwpMY', // Ambition vs Ability: A Growth Guide for Leaders and their Technical Talent
+        '719100': 'zc-kfhMnYDM', // Fed up with manual repetitive manual process. Here comes RPA technology to the rescue!
+        '718444': 'qhmmU2GCcbg', // The "reassuring" new way to track React render performance
+        '721837': 'UIF_cFZ0vvo', // The world is wobbly - how can you protect your career?
+        '719056': 'H1MNIXvxWgw', // Leveraging LLMs to build Intelligent Applications
+        '722017': 'H3omWoK_i-M', // Dodging Silver Bullets: How to Approach New Paradigms in Software Development
+        '718472': 'nSFCUvsf4b0', // You think NULL was a big mistake...
+        '718354': 'SZPiCpNwUfY', // Building typesafe web forms
+        '718405': 'fDpLKeBX2GM', // Don't Cross The Streams: An introduction to streaming data in Node.JS
+        '721904': '6jBbPK_Cbk8', // Blueprints for Scaling: Practical Steps for Scaling Your Data Platform to Handle Exponential Growth
+        '711271': 'Qh51nwZnuBM', // Overcoming Your Imposter Syndrome with GitHub Copilot*
+        '717983': 'agYheBKMzIY', // How to work with generative AI in JavaScript
+        '721989': 'qgLfjxsn8BI', // How to make decisions quickly and move on, from an overthinker
+    },
 
     conferenceDate: DateTime.fromISO('2024-11-16'),
     agendaPublishedDateTime: DateTime.fromISO('2024-08-20T17:00:00', {

@@ -18,6 +18,37 @@ export const conference2025: ConferenceYear = {
         sessionizeEndpoint: SESSIONIZE_2025_SESSIONS,
         underrepresentedGroupsQuestionId: 102438,
     },
+    recordings: {
+        '1000132': 'prBeqQPw--w', // Dress Code: Designing Systems People Can Thrive In
+        '939411': 'vI0S2hvGIzs', // Delete 99% of Your Code – Yes, Really!
+        '939437': 'kNG2S3LVBnM', // Why aren't you usability testing?
+        '955392': 'Y9pgJK_cDk4', // People, Pizza, and Panic: What your playbook doesn’t prepare you for
+        '949607': 'jkIE6Xn_KpQ', // From 'Human Only' to 'AI First': How Canva Reimagined Tech Interviews
+        '956173': 'Z88geea9D2w', // Hobbyist to Open Source Founder: My Journey to Building Impactful Software
+        '956298': 'uHj2Hw8yTt0', // Career Growth Beyond "Senior"
+        '956142': 'yqk1N4zvVPE', // Crafting beautiful video frames with code
+        '925407': 'OVecyUF1W0A', // 14x Faster with 12x Less Compute: Sometimes Postgres Really Is All You Need
+        '956287': 'Czhy2NB9gHI', // Overcoming the Fear Factor: Public Speaking Strategies for Introverted Tech Professionals
+        '952179': 'YBgSfiEfbvw', // Artificial Intelligence vs Emotional Intelligence
+        '954286': 'BWrFVDaHMWM', // The highs and lows of teaching the next generation to code
+        '956679': 'eC3N5dgTlyw', // Butterfly Effect, When AI Listens for Meaning, Not Just Words
+        '956294': 'h7y0O6HCoqQ', // Leading Gen Z
+        '958237': 'rpLchW6Cw2k', // Bingo! Puzzle games and the design of the 'aha' moment
+        '956533': 'Dk9-gJa5Hho', // Python, SimPy and Espresso: Your First Steps into Practical Simulation Modelling
+        '925735': 'MkVAuHjmcLI', // Beyond the Interface: Designing Systems, Not Screens
+        '925648': 'miAIve1BuT4', // Leading successful remote teams
+        '949335': 'SbraBC_zZAk', // You should DIY your event store & event sourcing framework
+        '926177': 'lrGLc3OUqJc', // LEGO + Python + GPT = The Journey from Dad to Superdad with OpenAI and Robotics!
+        '926649': 'vc7Z80YWUoo', // What makes a real MVP?
+        '949315': 'sV_TxEzLE-I', // Doing Science in the Cloud
+        '956347': 'JFop2uNw6UM', // Super-Fullstack Product Development
+        '948811': 'npbaQKUDPrU', // Thicc thocc click clack: Diving into the history and science of the keyboard
+        '953076': '15KYiM9nm3M', // Making AI Systems You Can Trust in Production
+        '956693': 'xiP9BFeg0aM', // Open Observability
+        '953419': 'DzNdzZW8Wvg', // Building a life after burnout and breakdowns
+        '956534': 'G8jX5S73bBo', // Wait… Did I just automate myself out of a job?
+        '987321': 'tDed1jxlZO4', // Reasons To Be Cheerful: 0, 1, 2…
+    },
 
     conferenceDate: DateTime.fromISO('2025-09-20T09:00:00', {
         zone: 'Australia/Perth',
