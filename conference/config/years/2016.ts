@@ -1515,6 +1515,12 @@ export const conference2016: ConferenceYear = {
   }
 ],
     },
+    recordings: {
+        '477cabb8-4ca8-4f72-8e64-1cd11f6b2602': 'mgyOpZkVtQg', // CQRS and Event Sourcing For The Win!
+        '24a69d28-172d-4e77-90d3-190e221b7c60': '9HOy0I_l3Yk', // Random Failures of Architecture I Have Committed
+        '82988c58-8d9c-4518-a4f7-94cf7739299d': 'GFF9PlL5KPk', // The Force Awakens: Mastering Your Inner Developer
+        '8c3f3aaa-02a1-45ed-81f3-91233575c687': '-1t64twJjM4', // Low Latency designs from London Finance
+    },
 
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,

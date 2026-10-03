@@ -16,6 +16,35 @@ export const conference2023: ConferenceYear = {
         allSessionsEndpoint: undefined,
         underrepresentedGroupsQuestionId: undefined,
     },
+    recordings: {
+        '530801': 'VIY-IyzelU8', // The Visible Developer: Why You Shouldn't Blend In
+        '507975': '-f-pYAFFep8', // To Agile or Not to Agile: An Iterative Dilemma
+        '497057': 'ugNvN9ny-Io', // Demystifying Performance
+        '507977': 'Gk87PWaVrRE', // Stop writing fragile tests: Use SOLID Principles
+        '494876': 'bXJdZ3IIINU', // Journey of an Identity
+        '494314': 'ugm_Xo2Looc', // Falling off the Edge: Practical Uses for Edge Computing
+        '503672': 'Po8Nc4K17xA', // Investing in your Engineering Experience
+        '496926': '7r5eeBvT5gw', // The Schrodinger's paradox and metrics … does our curiosity kill the cat?
+        '501705': 'bx1OFD8oP-U', // The Problem with Problem Solving
+        '507918': 'jRNf-KDw8f8', // Less Boring Tests - An Introduction to Property-Based Testing
+        '505719': '_NyyA4Z0wSE', // Procedural Art with a Hacked IKEA Lamp
+        '501197': 'yP2Ry5Emxks', // Problem finding, not solving.
+        '504893': 'XntXxLkcj5s', // Dungeons, Dragons, and Data Breaches: Exploring the Synergy of Security Crisis Response
+        '505543': 'Hg_CoEQLlBU', // Trust but Verify: Ensuring Data Quality with CI/CD
+        '501529': 'A29QGhEXDI0', // The Stories We Don't Tell
+        '507492': 'ghUGJFRBcb4', // Do you get what I mean? Building a culture of shared understanding
+        '528193': 'kFFrsNHixjs', // Space Flight in 2023
+        '494475': 'qA3Cp7AMQJI', // Turning Dreaming into Doing - A Life Manual for Nerds
+        '503588': '6kt2vpmRpTY', // System Thinking and Event Driven Architecture
+        '508126': 'd1LXcmjB2OM', // The New Dimensions of Software Testing
+        '508117': 'vSKcqQc9iRU', // Advanced HTML for Good Developers
+        '499846': 'vUjhFkzzK-w', // Your Code is just a Detail
+        '508194': 'sX4DrL5GNsE', // SPAs: where did it all go wrong
+        '494781': 'VqiCrFhP-KY', // Nerds on a plane: what we can learn from the aviation industry
+        '508110': 'rUCAE_-4c40', // Navigating salary reviews and promotions in a climate of redundancies.
+        '505457': 'Vun2P3A_NB0', // Observability for Developers
+        '508055': 'uEHat7325ac', // A SOLID takedown of OOP
+    },
 
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,

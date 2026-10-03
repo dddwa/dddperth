@@ -193,6 +193,12 @@ export interface ConferenceYear {
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
 
+    /**
+     * YouTube video ids of talk recordings, keyed by session id. The talk
+     * detail page embeds the recording when its session has an entry.
+     */
+    recordings?: Record<string, string>
+
     sponsors: YearSponsors
 
     foodInfo?: {

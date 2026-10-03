@@ -1836,6 +1836,17 @@ export const conference2017: ConferenceYear = {
   }
 ],
     },
+    recordings: {
+        '44f64f98-53ef-4344-93f6-9d852f845ed2': 'tlA_4-dnDyk', // Five key challenges for software quality tomorrow
+        '684b7f57-fd87-4963-a7a3-b77715287347': 'fWN2zysDySQ', // Death By Good Intentions
+        '8c7a2d53-bc00-436f-9150-3f7db76b3610': 'TbeuzVUNpCk', // Web, Wellness and Getting Sh*t Done
+        '286930b8-ab3d-4a33-9b3a-ba863032aa1d': 'yikSzz9l2qU', // Congrats, You are a Solution Architect, now what?
+        '36bc7011-11a7-4c33-bb84-e0e49da88b39': '4S2tT8tqc-w', // Web Accessibility: Responsibilities, Laws and Policies, Australian Requirements
+        'd06d45de-de42-44da-83eb-ea1d9d14b6cc': 'zMReShyytQA', // The Campsite Rule - Leaving the Tech Industry Better than We Found It
+        '74ad268f-38ad-4dc5-814a-f7a0437360d6': 'WBEwoHyfp_E', // How feedback helped me get over myself
+        '20f26760-d2bf-400a-8a73-807502c11291': '-g2Ay7yaBco', // Pair Programming - Experience from the trenches
+        '83ce0668-9d21-41bb-802a-50a810abfa9a': 'LK-3YtMIel8', // Attraction and retention strategies for Women in tech
+    },
 
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,

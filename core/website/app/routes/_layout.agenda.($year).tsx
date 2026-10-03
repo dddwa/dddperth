@@ -91,8 +91,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // Talk-detail pages are only worth linking for live Sessionize years
             // (which fetch speaker profiles). Archived `session-data` years have no
             // speaker store, so their talk titles render as plain text instead of
-            // linking to a sparse detail page.
+            // linking to a sparse detail page — unless the talk has a recording.
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
+            recordings: conferenceYearConfig?.recordings ?? {},
             canPick,
             feedbackOpen,
             meetTheExperts,
@@ -154,6 +155,7 @@ export default function Agenda() {
         year,
         cancelledMessage,
         linkTalks,
+        recordings,
         canPick,
         feedbackOpen,
         meetTheExperts,
@@ -376,7 +378,7 @@ export default function Agenda() {
                                             timeSlotSimple={timeSlotSimple}
                                             timeSlot={timeSlot}
                                             year={year}
-                                            linkTalks={linkTalks}
+                                            linkTalks={linkTalks || !!recordings[room.session.id]}
                                             startTime12={startTime12}
                                             timeSlotIndex={timeSlotIndex}
                                             pickable={canPick ? pickableTalks.get(room.session.id) : undefined}
@@ -396,6 +398,7 @@ export default function Agenda() {
                     timeRange={openTalk ? talkTimeRange(openTalk.startsAt, openTalk.endsAt) : null}
                     roomSponsor={openTalk ? sponsors.room?.find((r) => r.roomName === openTalk.room) : undefined}
                     speakers={talkData?.sessionId === openTalkId ? talkData?.speakers : undefined}
+                    recordingVideoId={openTalk ? recordings[openTalk.id] : undefined}
                     feedback={
                         feedbackOpen && openTalk && !openTalk.isServiceSession ? (
                             <FeedbackLink
