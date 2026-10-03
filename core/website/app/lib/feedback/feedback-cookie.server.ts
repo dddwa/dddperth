@@ -24,7 +24,9 @@ export function readFeedbackBrowserId(request: Request): string | undefined {
 export function writeFeedbackCookie(browserId: string): string {
     return [
         `${FEEDBACK_COOKIE_NAME}=${browserId}`,
-        'Path=/feedback',
+        // Not `/feedback`: the form posts to React Router's `/feedback.data`,
+        // which that path doesn't match, so the id was never sent back.
+        'Path=/',
         'SameSite=Lax',
         'HttpOnly',
         'Secure',
