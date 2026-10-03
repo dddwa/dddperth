@@ -36,7 +36,6 @@ export const conference2022: ConferenceYear = {
         '343620': 'lwPqhSy7IzM', // Paying it forward
         '339320': 'HLHgHXqnhms', // How fast is your website really? Shining a light on web performance with real user monitoring
         '333736': 'LKoeAflDXaE', // How to Manage Your Ducks
-        '343984': 'YjFzm3V6nSg', // Web APIs for delightful two factor auth experiences
         '340959': 'otFzdQnpFnA', // How your simple application could lead to your customers losing their life savings!
         '344464': 'uW2jSO4SlRs', // Deep Fake's within Social Media: An Exploration of Fun and Profit in FinTech
         '343953': '2oakOtVlFcM', // From imposter life to imposter moments: Tips from a Psychologist turned Engineer
