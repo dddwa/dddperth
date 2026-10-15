@@ -6,7 +6,7 @@ import { styled } from '~/styled-system/jsx'
 import type { JsxStyleProps } from '~/styled-system/types'
 import { NewTabHint, newTabLabel } from './new-tab-hint'
 
-export type NavLinkVariant = 'primary' | 'chrome' | 'admin' | 'ghost' | 'accent' | 'onDark'
+export type NavLinkVariant = 'primary' | 'chrome' | 'admin' | 'portalTab' | 'ghost' | 'accent' | 'onDark'
 export type NavLinkSize = 'sm' | 'md' | 'lg'
 
 const StyledLink = styled(Link)

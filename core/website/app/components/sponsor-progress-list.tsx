@@ -24,21 +24,18 @@ export function SponsorProgressList({ sections }: { sections: SectionProgress[] 
                         to={section.href}
                         unstyled
                         display="block"
-                        p="3"
-                        borderRadius="md"
+                        py="3"
+                        px="4"
+                        bg="white"
+                        border="admin-subtle"
+                        borderRadius="lg"
                         textDecoration="none"
-                        bg={section.complete ? 'status.success.bg' : 'admin.100'}
-                        _hover={{ opacity: 0.85 }}
+                        transition="colors"
+                        _hover={{ bg: 'admin.50', borderColor: 'admin.400' }}
                     >
                         <Flex align="center" gap="3" flexWrap="wrap">
-                            <styled.span fontSize="lg" aria-hidden>
-                                {section.complete ? '✅' : '⬜️'}
-                            </styled.span>
-                            <styled.span
-                                fontSize="sm"
-                                fontWeight="medium"
-                                color={section.complete ? 'status.success.fg' : 'admin.900'}
-                            >
+                            <StatusIcon state={state} />
+                            <styled.span fontSize="sm" fontWeight="medium" color="admin.900">
                                 {section.label}
                             </styled.span>
 
@@ -53,7 +50,12 @@ export function SponsorProgressList({ sections }: { sections: SectionProgress[] 
                                 rather than untouched. Only shown for
                                 multi-item sections, where "1 of 1" would be
                                 noise. */}
-                            <styled.span ml="auto" fontSize="xs" color="admin.600">
+                            <styled.span
+                                ml="auto"
+                                fontSize="xs"
+                                fontWeight={state === 'complete' ? 'semibold' : 'normal'}
+                                color={state === 'complete' ? 'status.success.fg' : 'admin.600'}
+                            >
                                 {state === 'complete'
                                     ? 'Complete'
                                     : section.total > 1
@@ -62,14 +64,15 @@ export function SponsorProgressList({ sections }: { sections: SectionProgress[] 
                                         ? 'Not started'
                                         : 'In progress'}
                             </styled.span>
+                            <Chevron />
                         </Flex>
 
                         {!section.complete && section.total > 1 && (
-                            <Box mt="2" h="1.5" borderRadius="full" bg="admin.200" overflow="hidden">
+                            <Box mt="2" ml="8" h="1.5" borderRadius="full" bg="admin.200" overflow="hidden">
                                 <Box
                                     h="full"
                                     borderRadius="full"
-                                    bg="admin.900"
+                                    bg="admin.700"
                                     style={{ width: `${Math.round((section.done / section.total) * 100)}%` }}
                                 />
                             </Box>
@@ -78,5 +81,32 @@ export function SponsorProgressList({ sections }: { sections: SectionProgress[] 
                 )
             })}
         </Flex>
+    )
+}
+
+/** Decorative: the status is also spelled out in text at the end of the row. */
+function StatusIcon({ state }: { state: 'complete' | 'partial' | 'not-started' }) {
+    if (state === 'complete') {
+        return (
+            <styled.svg aria-hidden="true" viewBox="0 0 20 20" w="5" h="5" flexShrink="0" color="status.success.fg">
+                <circle cx="10" cy="10" r="10" fill="currentColor" />
+                <path d="M6 10.5l2.5 2.5L14 7.5" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </styled.svg>
+        )
+    }
+
+    return (
+        <styled.svg aria-hidden="true" viewBox="0 0 20 20" w="5" h="5" flexShrink="0" color="admin.500">
+            <circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+            {state === 'partial' && <path d="M10 1a9 9 0 0 1 0 18z" fill="currentColor" />}
+        </styled.svg>
+    )
+}
+
+function Chevron() {
+    return (
+        <styled.svg aria-hidden="true" viewBox="0 0 20 20" w="4" h="4" flexShrink="0" color="admin.500">
+            <path d="M7.5 5l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </styled.svg>
     )
 }

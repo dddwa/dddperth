@@ -81,6 +81,21 @@ const navLinkRecipe = defineRecipe({
                     borderColor: 'border.subtle',
                 },
             },
+            portalTab: {
+                // Tabs in the portal shell, which sits on `surface.drawer` (brand-dark
+                // in both themes) — so fixed white text, never a theme-varying token.
+                // Active state keys off NavLink's aria-current rather than the
+                // `active` prop, so a tab can't be marked current by hand and drift.
+                color: '[rgba(255, 255, 255, 0.8)]',
+                fontSize: 'sm',
+                whiteSpace: 'nowrap',
+                px: '1',
+                py: '3',
+                borderBottom: '[3px solid transparent]',
+                _hover: { color: 'white', borderBottomColor: '[rgba(255, 255, 255, 0.4)]' },
+                _currentPage: { color: 'white', borderBottomColor: 'brand.accent' },
+                _focus: { outline: '[2px solid white]', outlineOffset: '[2px]' },
+            },
             ghost: {
                 color: 'gray.7',
                 _hover: { color: 'gray.9' },

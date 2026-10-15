@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { Form, isRouteErrorResponse, Outlet, useLoaderData, useRouteError } from 'react-router'
 import { AppLink } from '~/components/app-link'
-import { AppNavLink } from '~/components/app-nav-link'
+import { PortalShell, TierBadge } from '~/components/portal-shell'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { isNotASponsorContact } from '~/lib/sponsors/not-a-sponsor-contact'
 import { Box, Flex, styled } from '~/styled-system/jsx'
@@ -53,82 +53,35 @@ export default function PortalLayout() {
     const { user, sponsor, year, conferenceName, sponsorshipEmail } = useLoaderData<typeof loader>()
 
     return (
-        <Box minH="screen" bg="admin.50">
-            <styled.nav bg="indigo.7" color="white" py="4" px="8" borderBottom="admin-emphasis">
-                <Flex justify="space-between" align="center" flexWrap="wrap" gap="3">
-                    <Flex align="center" gap="8">
-                        <styled.h1 m="0" fontSize="xl" fontWeight="bold">
-                            {conferenceName} {year} — Sponsor Portal
-                        </styled.h1>
-                        <Flex gap="4">
-                            <AppNavLink to="/sponsor-portal" variant="admin">
-                                Dashboard
-                            </AppNavLink>
-                            <AppNavLink to="/sponsor-portal/profile" variant="admin">
-                                Company profile
-                            </AppNavLink>
-                            <AppNavLink to="/sponsor-portal/logistics" variant="admin">
-                                Event logistics
-                            </AppNavLink>
-                            <AppNavLink to="/sponsor-portal/feedback" variant="admin">
-                                Feedback
-                            </AppNavLink>
-                        </Flex>
-                    </Flex>
-                    <Flex align="center" gap="4">
-                        <Box fontSize="sm">
-                            <styled.span fontWeight="semibold">{sponsor.companyName}</styled.span>
-                            <styled.span
-                                ml="2"
-                                py="0.5"
-                                px="2"
-                                borderRadius="md"
-                                bg="[rgba(255, 255, 255, 0.15)]"
-                                fontSize="xs"
-                                fontWeight="medium"
-                                textTransform="uppercase"
-                                letterSpacing="wide"
-                            >
-                                {sponsor.tier}
-                            </styled.span>
-                        </Box>
-                        <Box fontSize="sm" opacity="0.85">
-                            {user.email}
-                        </Box>
-                        <Form method="post" action="/auth/logout">
-                            <styled.button
-                                type="submit"
-                                bg="transparent"
-                                color="white"
-                                border="[1px solid rgba(255, 255, 255, 0.3)]"
-                                py="1.5"
-                                px="3"
-                                borderRadius="md"
-                                cursor="pointer"
-                                fontSize="sm"
-                                _hover={{ bg: '[rgba(255, 255, 255, 0.1)]' }}
-                            >
-                                Logout
-                            </styled.button>
-                        </Form>
-                    </Flex>
-                </Flex>
-            </styled.nav>
-            <styled.main p={{ base: '4', md: '8' }}>
-                <Outlet />
-            </styled.main>
-            <styled.footer px={{ base: '4', md: '8' }} pb="8" textAlign="center" fontSize="sm" color="admin.600">
-                Got an issue with our new sponsorship portal?{' '}
-                <AppLink
-                    unstyled
-                    to={supportMailto(sponsorshipEmail, sponsor.companyName)}
-                    color="admin.900"
-                    textDecoration="underline"
-                >
-                    Email {sponsorshipEmail}
-                </AppLink>
-            </styled.footer>
-        </Box>
+        <PortalShell
+            area="Sponsor portal"
+            homeLabel={`Visit the ${conferenceName} homepage`}
+            eyebrow={`${conferenceName} ${year} sponsor`}
+            heading={sponsor.companyName}
+            badge={<TierBadge tier={sponsor.tier} />}
+            tabs={[
+                { to: '/sponsor-portal', label: 'Dashboard', end: true },
+                { to: '/sponsor-portal/profile', label: 'Company profile' },
+                { to: '/sponsor-portal/logistics', label: 'Event logistics' },
+                { to: '/sponsor-portal/feedback', label: 'Feedback' },
+            ]}
+            email={user.email}
+            footer={
+                <>
+                    Got an issue with our new sponsorship portal?{' '}
+                    <AppLink
+                        unstyled
+                        to={supportMailto(sponsorshipEmail, sponsor.companyName)}
+                        color="admin.900"
+                        textDecoration="underline"
+                    >
+                        Email {sponsorshipEmail}
+                    </AppLink>
+                </>
+            }
+        >
+            <Outlet />
+        </PortalShell>
     )
 }
 
