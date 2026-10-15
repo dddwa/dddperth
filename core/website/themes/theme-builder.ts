@@ -37,6 +37,30 @@ function semanticTokenValue(dark: ThemeTokenValue, light: ThemeTokenValue) {
   }
 }
 
+type TokenTree = { [key: string]: TokenTree | object }
+
+/**
+ * Turns flat `'a.b'` keys into nested `{ a: { b } }`.
+ *
+ * The token maps below are easier to read flat, but Panda names a flat
+ * `'border.default'` key `--colors-border\.default`, while every reference to
+ * it (`{colors.border.default}`, `token(colors.border.default)`) resolves to
+ * `var(--colors-border-default)`. Left flat, those references point at a
+ * variable that is never defined and silently compute to nothing.
+ */
+function nest(flat: Record<string, object>): TokenTree {
+  const tree: TokenTree = {}
+  for (const [path, token] of Object.entries(flat)) {
+    const keys = path.split('.')
+    let node = tree
+    for (const key of keys.slice(0, -1)) {
+      node = (node[key] ??= {}) as TokenTree
+    }
+    node[keys[keys.length - 1]] = token
+  }
+  return tree
+}
+
 function statusGroupTokens(prefix: string, group: StatusColorGroup) {
   return {
     [`${prefix}.bg`]: tokenValue(group.bg),
@@ -86,7 +110,7 @@ export function createThemeColorSemanticTokens(darkTheme: ThemeDefinition, light
   const d = darkTheme.colors
   const l = lightTheme.colors
 
-  return {
+  return nest({
     // Brand colors
     'brand.primary': semanticTokenValue(d.brand.primary, l.brand.primary),
     'brand.secondary': semanticTokenValue(d.brand.secondary, l.brand.secondary),
@@ -162,7 +186,7 @@ export function createThemeColorSemanticTokens(darkTheme: ThemeDefinition, light
     'admin.700': semanticTokenValue(d.admin['700'], l.admin['700']),
     'admin.800': semanticTokenValue(d.admin['800'], l.admin['800']),
     'admin.900': semanticTokenValue(d.admin['900'], l.admin['900']),
-  }
+  })
 }
 
 /**
@@ -174,7 +198,7 @@ export function createThemeColorSemanticTokens(darkTheme: ThemeDefinition, light
  */
 export function createSemanticTokens(_theme: ThemeDefinition) {
   return {
-    colors: {
+    colors: nest({
       // Convenience aliases for common patterns
       'bg.body': { value: '{colors.surface.body}' },
       'bg.hero': { value: '{colors.surface.hero}' },
@@ -189,7 +213,7 @@ export function createSemanticTokens(_theme: ThemeDefinition) {
       // Link semantic tokens
       'link.default': { value: '{colors.text.highlight}' },
       'link.hover': { value: '{colors.interactive.highlight}' },
-    },
+    }),
   }
 }
 
