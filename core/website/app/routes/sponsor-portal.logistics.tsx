@@ -27,7 +27,7 @@ import { logSponsorPortalEvent } from '~/lib/sponsors/log.server'
 import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/portal.logistics'
+import type { Route } from './+types/sponsor-portal.logistics'
 
 /** Maps the sponsor's raw Jira tier through the manifest, so gating keys off
  * the stable category (`platinum`) rather than the Jira option label. */

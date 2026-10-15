@@ -25,7 +25,7 @@ import type { AppServices } from '~/lib/services/app-services'
 import type { SponsorRecord } from '~/lib/services/sponsors-store'
 import { css } from '~/styled-system/css'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/portal.profile'
+import type { Route } from './+types/sponsor-portal.profile'
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const { sponsor } = await requireSponsorContact(request, context)
@@ -243,7 +243,7 @@ export default function PortalProfile() {
                 {logo && (
                     <Flex mb="4" p="4" bg="admin.100" borderRadius="md" align="center" gap="4">
                         <styled.img
-                            src={`/portal/logo/${issueKey}`}
+                            src={`/sponsor-portal/logo/${issueKey}`}
                             alt="Current logo"
                             maxH="16"
                             maxW="48"

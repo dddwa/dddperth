@@ -482,9 +482,9 @@ export interface SponsorPortalJiraConfig {
 }
 
 /**
- * Sponsor self-service portal. When set, /portal routes come alive, sponsor
+ * Sponsor self-service portal. When set, /sponsor-portal routes come alive, sponsor
  * contacts can log in via the same magic-link flow as admins, and sponsor
- * records sync from Jira. Omit for forks without a sponsor portal — /portal
+ * records sync from Jira. Omit for forks without a sponsor portal — /sponsor-portal
  * returns 404 and the sync never runs.
  */
 /**
@@ -788,7 +788,7 @@ export interface ConferenceManifest {
     mobileApp?: MobileApp
     /** Public volunteer run sheet. Omit for forks without one — /runsheets returns 404 then. */
     runsheets?: RunsheetsConfig
-    /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
+    /** Sponsor portal config. Omit for forks without one — /sponsor-portal returns 404 then. */
     sponsorPortal?: SponsorPortalConfig
     /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
     speakerPortal?: SpeakerPortalConfig

@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createRoutesStub, data } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import PortalDashboard from './portal._index'
+import PortalDashboard from './sponsor-portal._index'
 
 afterEach(cleanup)
 
@@ -34,7 +34,7 @@ describe('sponsor Meet the Experts modal', () => {
     it('closes after every successful save, including an update after reopening', async () => {
         const Stub = createRoutesStub([
             {
-                path: '/portal',
+                path: '/sponsor-portal',
                 Component: PortalDashboard,
                 loader: () => loaderData,
                 // A fresh action-data object is returned for each successful
@@ -42,7 +42,7 @@ describe('sponsor Meet the Experts modal', () => {
                 action: () => data({ meetTheExpertsSaved: true as const }),
             },
         ])
-        render(<Stub initialEntries={['/portal']} />)
+        render(<Stub initialEntries={['/sponsor-portal']} />)
 
         await saveOpenModal()
         await saveOpenModal()

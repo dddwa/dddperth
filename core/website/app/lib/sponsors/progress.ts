@@ -142,7 +142,7 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
         })
     }
 
-    push('profile', 'Company profile', '/portal/profile', [
+    push('profile', 'Company profile', '/sponsor-portal/profile', [
         ['Company logo', Boolean(profile?.logo)],
         ['Company blurb', filled(answers.blurb)],
         ['Website URL', filled(answers.websiteUrl)],
@@ -152,7 +152,7 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
         push(
             'exhibition',
             'Exhibition & bump-in',
-            '/portal/logistics',
+            '/sponsor-portal/logistics',
             REQUIRED_EXHIBITION_KEYS.map((key) => [EXHIBITION_ITEM_LABELS[key], filled(logistics[key])]),
         )
     }
@@ -161,25 +161,25 @@ export function sponsorProgress(input: ProgressInput): SectionProgress[] {
     // valid finished answer. We can't tell "decided against screens" from
     // "hasn't looked yet", so this never blocks completion.
     if (visibility.screens) {
-        push('screens', 'TV screen orders', '/portal/logistics', [['TV screen order', filled(logistics.screenOrders)]], {
+        push('screens', 'TV screen orders', '/sponsor-portal/logistics', [['TV screen order', filled(logistics.screenOrders)]], {
             optional: true,
         })
     }
 
     if (visibility.raffle) {
-        push('raffle', 'Raffle prize', '/portal/logistics', [['Raffle prize', filled(logistics.rafflePrize)]], {
+        push('raffle', 'Raffle prize', '/sponsor-portal/logistics', [['Raffle prize', filled(logistics.rafflePrize)]], {
             optional: true,
         })
     }
 
     if (visibility.socialQuote) {
-        push('social', 'Quote for social media', '/portal/logistics', [['Quote for social media', filled(logistics.socialQuote)]], {
+        push('social', 'Quote for social media', '/sponsor-portal/logistics', [['Quote for social media', filled(logistics.socialQuote)]], {
             optional: true,
         })
     }
 
     if (meetTheExpertsOffered) {
-        push('meetTheExperts', 'Meet the Experts', '/portal', [['Meet the Experts response', meetTheExpertsResponded]], {
+        push('meetTheExperts', 'Meet the Experts', '/sponsor-portal', [['Meet the Experts response', meetTheExpertsResponded]], {
             optional: true,
         })
     }

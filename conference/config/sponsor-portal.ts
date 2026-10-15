@@ -79,7 +79,7 @@ export const sponsorPortal: SponsorPortalConfig = {
                 facebook: 'customfield_10144',
                 youtube: 'customfield_10145',
             },
-            // Sponsor-supplied logistics. Collected in /portal/logistics,
+            // Sponsor-supplied logistics. Collected in /sponsor-portal/logistics,
             // pushed to Jira on every save, and read back by Admin → Sponsors
             // → Export exhibitor list for the Optus Stadium form.
             logistics: {

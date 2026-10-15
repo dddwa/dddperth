@@ -108,7 +108,7 @@ they are the only remaining failures in the suite. Everything else passes in bot
   wall of undifferentiated text to a screen reader user navigating by structure.
   **Suggested fix:** Fold into whatever ticket eventually gives `/blog` real styling.
 
-## Sponsor portal (`/portal/*`)
+## Sponsor portal (`/sponsor-portal/*`)
 
 Deprioritised per the audit's stated ordering (public pages → speaker/sponsor portal → admin), and not covered by
 the automated e2e suite in this pass.

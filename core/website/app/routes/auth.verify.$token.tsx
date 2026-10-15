@@ -41,10 +41,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // to the right place regardless.
     if (redirectTo === '/admin' && !(await services.auth.isAdminEmail(result.email))) {
         redirectTo = (await services.sponsors.isSponsorContact(result.email))
-            ? '/portal'
+            ? '/sponsor-portal'
             : (await services.speakers.isSpeakerContact(result.email))
               ? '/speaker-portal'
-              : '/portal'
+              : '/sponsor-portal'
     }
 
     return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)

@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { createRoutesStub, data } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import PortalLayout, { ErrorBoundary } from './portal'
+import PortalLayout, { ErrorBoundary } from './sponsor-portal'
 
 afterEach(cleanup)
 
@@ -15,8 +15,8 @@ const loaderData = {
 }
 
 function renderLayout() {
-    const Stub = createRoutesStub([{ path: '/portal', Component: PortalLayout, loader: () => loaderData }])
-    render(<Stub initialEntries={['/portal']} />)
+    const Stub = createRoutesStub([{ path: '/sponsor-portal', Component: PortalLayout, loader: () => loaderData }])
+    render(<Stub initialEntries={['/sponsor-portal']} />)
 }
 
 describe('sponsor portal support link', () => {
@@ -51,7 +51,7 @@ describe('sponsor portal error page', () => {
     function renderThrowing(thrown: unknown) {
         const Stub = createRoutesStub([
             {
-                path: '/portal',
+                path: '/sponsor-portal',
                 Component: PortalLayout,
                 ErrorBoundary,
                 loader: () => {
@@ -59,7 +59,7 @@ describe('sponsor portal error page', () => {
                 },
             },
         ])
-        render(<Stub initialEntries={['/portal']} />)
+        render(<Stub initialEntries={['/sponsor-portal']} />)
     }
 
     it('names the signed-in email when it is not linked to a sponsor', async () => {
@@ -79,7 +79,7 @@ describe('sponsor portal error page', () => {
         const form = button.closest('form')
         expect(form?.getAttribute('action')).toBe('/auth/logout')
         const redirectTo = form?.querySelector<HTMLInputElement>('input[name="redirectTo"]')?.value
-        expect(redirectTo).toBe('/auth/login?redirectTo=%2Fportal')
+        expect(redirectTo).toBe('/auth/login?redirectTo=%2Fsponsor-portal')
     })
 
     it('keeps the generic message for anything else', async () => {

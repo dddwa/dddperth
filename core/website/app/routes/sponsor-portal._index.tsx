@@ -18,7 +18,7 @@ import {
 } from '~/lib/sponsors/progress'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/portal._index'
+import type { Route } from './+types/sponsor-portal._index'
 
 /** Maps the sponsor's raw Jira tier through the manifest, so section
  * visibility keys off the stable category rather than the Jira option label. */
@@ -143,7 +143,7 @@ export default function PortalDashboard() {
                         <styled.p mt="1">
                             Head to{' '}
                             <AppLink
-                                to={nextSection?.href ?? '/portal/profile'}
+                                to={nextSection?.href ?? '/sponsor-portal/profile'}
                                 color="status.info.fg"
                                 unstyled
                                 textDecoration="underline"
@@ -168,7 +168,7 @@ export default function PortalDashboard() {
                             <styled.p fontSize="sm" color="admin.600" mb="3">
                                 Based on your sponsorship level, these are the assets we'll need. Your website logo and
                                 blurb go in{' '}
-                                <AppLink to="/portal/profile" unstyled textDecoration="underline" color="admin.900">
+                                <AppLink to="/sponsor-portal/profile" unstyled textDecoration="underline" color="admin.900">
                                     Company profile
                                 </AppLink>
                                 {deliverables.assetUploadUrl
@@ -338,7 +338,7 @@ export default function PortalDashboard() {
                             : 'Tell us how sponsoring went, and what would make it more valuable for you next time.'}
                     </styled.p>
                     <AppLink
-                        to="/portal/feedback"
+                        to="/sponsor-portal/feedback"
                         unstyled
                         display="inline-block"
                         bg="admin.900"

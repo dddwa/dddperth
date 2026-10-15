@@ -12,7 +12,7 @@ import { sponsorFeedbackSchema, toSponsorFeedbackInput } from '~/lib/sponsors/fe
 import { logSponsorPortalEvent } from '~/lib/sponsors/log.server'
 import { getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/portal.feedback'
+import type { Route } from './+types/sponsor-portal.feedback'
 
 function portalYear(): string {
     const year = conferenceManifest.sponsorPortal?.year
@@ -60,11 +60,11 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!(await store.update(sponsor.issueKey, id, input, user.email))) {
             throw new Response('Not Found', { status: 404 })
         }
-        return redirect(`/portal/feedback?saved=${encodeURIComponent(id)}`)
+        return redirect(`/sponsor-portal/feedback?saved=${encodeURIComponent(id)}`)
     }
 
     const newId = await store.create(year, sponsor.issueKey, input, user.email)
-    return redirect(`/portal/feedback?saved=${encodeURIComponent(newId)}`)
+    return redirect(`/sponsor-portal/feedback?saved=${encodeURIComponent(newId)}`)
 }
 
 function formatDate(unixSeconds: number): string {
@@ -163,7 +163,7 @@ function SubmissionCard({
                 ) : (
                     <AppLink
                         unstyled
-                        to={`/portal/feedback?edit=${encodeURIComponent(submission.id)}#feedback-form`}
+                        to={`/sponsor-portal/feedback?edit=${encodeURIComponent(submission.id)}#feedback-form`}
                         fontSize="sm"
                         color="admin.900"
                         textDecoration="underline"
@@ -355,7 +355,7 @@ function FeedbackForm({
                     {editing && (
                         <AppLink
                             unstyled
-                            to="/portal/feedback"
+                            to="/sponsor-portal/feedback"
                             fontSize="sm"
                             color="admin.900"
                             textDecoration="underline"

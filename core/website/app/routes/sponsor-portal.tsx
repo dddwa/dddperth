@@ -5,7 +5,7 @@ import { AppNavLink } from '~/components/app-nav-link'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { isNotASponsorContact } from '~/lib/sponsors/not-a-sponsor-contact'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import type { Route } from './+types/portal'
+import type { Route } from './+types/sponsor-portal'
 import { noIndexMeta } from '~/lib/seo'
 
 /**
@@ -61,16 +61,16 @@ export default function PortalLayout() {
                             {conferenceName} {year} — Sponsor Portal
                         </styled.h1>
                         <Flex gap="4">
-                            <AppNavLink to="/portal" variant="admin">
+                            <AppNavLink to="/sponsor-portal" variant="admin">
                                 Dashboard
                             </AppNavLink>
-                            <AppNavLink to="/portal/profile" variant="admin">
+                            <AppNavLink to="/sponsor-portal/profile" variant="admin">
                                 Company profile
                             </AppNavLink>
-                            <AppNavLink to="/portal/logistics" variant="admin">
+                            <AppNavLink to="/sponsor-portal/logistics" variant="admin">
                                 Event logistics
                             </AppNavLink>
-                            <AppNavLink to="/portal/feedback" variant="admin">
+                            <AppNavLink to="/sponsor-portal/feedback" variant="admin">
                                 Feedback
                             </AppNavLink>
                         </Flex>
@@ -179,7 +179,7 @@ function NotLinkedMessage({ email }: { email: string }) {
             </styled.p>
             <Flex justify="center" align="center" gap="4" flexWrap="wrap">
                 <Form method="post" action="/auth/logout">
-                    <input type="hidden" name="redirectTo" value="/auth/login?redirectTo=%2Fportal" />
+                    <input type="hidden" name="redirectTo" value="/auth/login?redirectTo=%2Fsponsor-portal" />
                     <styled.button
                         type="submit"
                         bg="indigo.7"

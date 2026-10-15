@@ -37,7 +37,7 @@ export function PortalSavedBanner({
                     </styled.p>
                 </Box>
                 <AppLink
-                    to={next?.href ?? '/portal'}
+                    to={next?.href ?? '/sponsor-portal'}
                     unstyled
                     flexShrink="0"
                     display="inline-block"
