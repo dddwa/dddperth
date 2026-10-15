@@ -25,17 +25,11 @@ describe('sponsor feedback form', () => {
         expect(parsed).toEqual({ ok: false, fieldErrors: { _form: 'Answer at least one question before saving' } })
     })
 
-    it('refuses consent to publish a testimonial that was never written', () => {
-        const parsed = form({ experience: 'Good', testimonialConsent: 'on' })
-        expect(parsed.ok).toBe(false)
-        expect(!parsed.ok && parsed.fieldErrors.testimonial).toMatch(/quote/)
-    })
-
     it('refuses a rating outside 1–5', () => {
         expect(form({ rating: '9' }).ok).toBe(false)
     })
 
-    it('drops attribution and consent when there is no testimonial to attach them to', () => {
+    it('drops the attribution when there is no testimonial to attach them to', () => {
         const parsed = form({ experience: 'Good', testimonialAttribution: 'Sam, CTO' })
         if (!parsed.ok) throw new Error('expected a valid form')
         expect(toSponsorFeedbackInput(parsed.data)).toEqual({
@@ -44,15 +38,8 @@ describe('sponsor feedback form', () => {
             ideas: null,
             testimonial: null,
             testimonialAttribution: null,
-            testimonialConsent: false,
             portalFeedback: null,
         })
-    })
-
-    it('keeps consent off unless the box was ticked', () => {
-        const parsed = form({ testimonial: 'Loved it' })
-        if (!parsed.ok) throw new Error('expected a valid form')
-        expect(toSponsorFeedbackInput(parsed.data).testimonialConsent).toBe(false)
     })
 })
 

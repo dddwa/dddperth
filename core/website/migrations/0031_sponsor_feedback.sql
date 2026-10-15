@@ -9,8 +9,8 @@
 -- something to add, or they come back with a new idea — so there is no unique
 -- key on (year, issue_key).
 --
--- `testimonial_consent` is separate from the testimonial text because a quote
--- written into the form is not permission to publish it.
+-- There is no consent flag on the testimonial: the form says how a quote will
+-- be used, so providing one is agreement to that.
 
 CREATE TABLE IF NOT EXISTS sponsor_feedback (
     id TEXT PRIMARY KEY,
@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS sponsor_feedback (
     ideas TEXT,
     testimonial TEXT,
     testimonial_attribution TEXT,
-    testimonial_consent INTEGER NOT NULL DEFAULT 0,
     portal_feedback TEXT,
     submitted_by TEXT NOT NULL,
     updated_by TEXT NOT NULL,

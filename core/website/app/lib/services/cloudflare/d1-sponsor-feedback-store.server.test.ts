@@ -10,7 +10,6 @@ const input: SponsorFeedbackInput = {
     ideas: null,
     testimonial: 'Best hiring event of our year',
     testimonialAttribution: 'Sam, CTO',
-    testimonialConsent: true,
     portalFeedback: null,
 }
 
@@ -44,14 +43,14 @@ describe('D1 sponsor feedback store (real SQL)', () => {
         const updated = await store.update(
             'SPN-1',
             id,
-            { ...input, testimonialConsent: false, rating: null },
+            { ...input, ideas: 'A quiet room', rating: null },
             'b@acme.test',
         )
 
         expect(updated).toBe(true)
         expect(await store.listForSponsor('2026', 'SPN-1')).toEqual([
             expect.objectContaining({
-                testimonialConsent: false,
+                ideas: 'A quiet room',
                 rating: null,
                 submittedBy: 'a@acme.test',
                 updatedBy: 'b@acme.test',

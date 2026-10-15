@@ -8,7 +8,6 @@ interface SponsorFeedbackRow {
     ideas: string | null
     testimonial: string | null
     testimonial_attribution: string | null
-    testimonial_consent: number
     portal_feedback: string | null
     submitted_by: string
     updated_by: string
@@ -17,7 +16,7 @@ interface SponsorFeedbackRow {
 }
 
 const COLUMNS = `id, issue_key, rating, experience, ideas, testimonial, testimonial_attribution,
-    testimonial_consent, portal_feedback, submitted_by, updated_by, created_at, updated_at`
+    portal_feedback, submitted_by, updated_by, created_at, updated_at`
 
 function toSponsorFeedback(row: SponsorFeedbackRow): SponsorFeedback {
     return {
@@ -28,7 +27,6 @@ function toSponsorFeedback(row: SponsorFeedbackRow): SponsorFeedback {
         ideas: row.ideas,
         testimonial: row.testimonial,
         testimonialAttribution: row.testimonial_attribution,
-        testimonialConsent: row.testimonial_consent === 1,
         portalFeedback: row.portal_feedback,
         submittedBy: row.submitted_by,
         updatedBy: row.updated_by,
@@ -46,8 +44,8 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                 .prepare(
                     `INSERT INTO sponsor_feedback
                         (id, year, issue_key, rating, experience, ideas, testimonial, testimonial_attribution,
-                         testimonial_consent, portal_feedback, submitted_by, updated_by, created_at, updated_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         portal_feedback, submitted_by, updated_by, created_at, updated_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 )
                 .bind(
                     id,
@@ -58,7 +56,6 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                     input.ideas,
                     input.testimonial,
                     input.testimonialAttribution,
-                    input.testimonialConsent ? 1 : 0,
                     input.portalFeedback,
                     by,
                     by,
@@ -74,7 +71,7 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                 .prepare(
                     `UPDATE sponsor_feedback
                      SET rating = ?, experience = ?, ideas = ?, testimonial = ?, testimonial_attribution = ?,
-                         testimonial_consent = ?, portal_feedback = ?, updated_by = ?, updated_at = ?
+                         portal_feedback = ?, updated_by = ?, updated_at = ?
                      WHERE id = ? AND issue_key = ?`,
                 )
                 .bind(
@@ -83,7 +80,6 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                     input.ideas,
                     input.testimonial,
                     input.testimonialAttribution,
-                    input.testimonialConsent ? 1 : 0,
                     input.portalFeedback,
                     by,
                     Math.floor(Date.now() / 1000),

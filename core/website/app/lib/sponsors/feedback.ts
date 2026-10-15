@@ -26,18 +26,9 @@ export const sponsorFeedbackSchema = z
             (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
             z.string().trim().max(200, 'Keep this under 200 characters').optional(),
         ),
-        // A checkbox: present ("on") when ticked, absent otherwise.
-        testimonialConsent: z.preprocess((value) => value === 'on', z.boolean()),
         portalFeedback: optionalText,
     })
     .superRefine((value, ctx) => {
-        if (value.testimonialConsent && !value.testimonial) {
-            ctx.addIssue({
-                code: 'custom',
-                path: ['testimonial'],
-                message: 'Add the quote you are happy for us to share, or untick the box',
-            })
-        }
         const answered = [value.rating, value.experience, value.ideas, value.testimonial, value.portalFeedback]
         if (answered.every((answer) => answer === undefined)) {
             ctx.addIssue({ code: 'custom', path: ['_form'], message: 'Answer at least one question before saving' })
@@ -50,9 +41,8 @@ export function toSponsorFeedbackInput(parsed: z.infer<typeof sponsorFeedbackSch
         experience: parsed.experience ?? null,
         ideas: parsed.ideas ?? null,
         testimonial: parsed.testimonial ?? null,
-        // Without a quote there is nothing to attribute or consent to.
+        // Without a quote there is nothing to attribute.
         testimonialAttribution: parsed.testimonial ? (parsed.testimonialAttribution ?? null) : null,
-        testimonialConsent: parsed.testimonial ? parsed.testimonialConsent : false,
         portalFeedback: parsed.portalFeedback ?? null,
     }
 }

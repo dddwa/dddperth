@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react'
 import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AppLink } from '~/components/app-link'
-import { InfoToggletip } from '~/components/info-toggletip'
 import { FieldError, fieldLabelClass, inputClass, PrimaryButton, textareaClass } from '~/components/portal-form'
 import { requireSponsorContact } from '~/lib/auth.server'
 import { parseFormData } from '~/lib/forms/parse-form.server'
@@ -186,11 +185,6 @@ function SubmissionCard({
                     <Answer label="Testimonial">
                         “{submission.testimonial}”
                         {submission.testimonialAttribution && ` — ${submission.testimonialAttribution}`}
-                        <styled.span display="block" mt="1" fontSize="xs" color="admin.600">
-                            {submission.testimonialConsent
-                                ? 'You’ve said we can publish this with your company name.'
-                                : 'Not for publishing.'}
-                        </styled.span>
                     </Answer>
                 )}
                 {submission.portalFeedback && <Answer label="The sponsor portal">{submission.portalFeedback}</Answer>}
@@ -324,20 +318,20 @@ function FeedbackForm({
                     <TextArea
                         name="testimonial"
                         label="In a sentence or two, what did sponsoring do for you?"
-                        hint="We may use it on our website, socials or when we approach sponsors next year — only if you tick the box below."
+                        hint="We may use it on our website, socials or when we approach sponsors next year."
                         defaultValue={editing?.testimonial}
                         error={fieldErrors.testimonial}
                     />
                     <Box mb="4">
                         <label htmlFor="testimonialAttribution" className={fieldLabelClass}>
-                            Who should we credit it to?
+                            Name and role to show with the quote
                         </label>
                         <input
                             id="testimonialAttribution"
                             name="testimonialAttribution"
                             type="text"
                             autoComplete="off"
-                            placeholder="Name, role"
+                            placeholder="e.g. Sam Lee, Head of Engineering"
                             defaultValue={editing?.testimonialAttribution ?? ''}
                             aria-invalid={fieldErrors.testimonialAttribution ? true : undefined}
                             aria-describedby={
@@ -347,27 +341,12 @@ function FeedbackForm({
                         />
                         <FieldError id="testimonialAttribution-error" message={fieldErrors.testimonialAttribution} />
                     </Box>
-                    <styled.label display="flex" alignItems="flex-start" gap="2" fontSize="sm" color="admin.900">
-                        <styled.input
-                            type="checkbox"
-                            name="testimonialConsent"
-                            defaultChecked={editing?.testimonialConsent ?? false}
-                            mt="0.5"
-                        />
-                        You can publish this quote with our company name.
-                    </styled.label>
                 </styled.fieldset>
 
                 <TextArea
                     name="portalFeedback"
-                    label="How did you find this sponsor portal?"
-                    labelExtra={
-                        <InfoToggletip label="About the sponsor portal">
-                            The sponsor portal was a work in progress this year. We want to expand it for next year, so
-                            tell us what worked, what got in the way and what you'd like it to do.
-                        </InfoToggletip>
-                    }
-                    hint="Anything that was confusing, missing or would have saved you an email."
+                    label="Sponsor portal feedback"
+                    hint="The portal was a work in progress this year. We plan to fully adopt it next year, so your feedback on what was good will be helpful."
                     defaultValue={editing?.portalFeedback}
                     error={fieldErrors.portalFeedback}
                 />
@@ -396,14 +375,12 @@ function FeedbackForm({
 function TextArea({
     name,
     label,
-    labelExtra,
     hint,
     defaultValue,
     error,
 }: {
     name: string
     label: string
-    labelExtra?: React.ReactNode
     hint: string
     defaultValue: string | null | undefined
     error: string | undefined
@@ -412,12 +389,9 @@ function TextArea({
     const errorId = `${name}-error`
     return (
         <Box mb="6">
-            <Flex align="center">
-                <label htmlFor={name} className={fieldLabelClass}>
-                    {label}
-                </label>
-                {labelExtra}
-            </Flex>
+            <label htmlFor={name} className={fieldLabelClass}>
+                {label}
+            </label>
             <styled.p id={hintId} fontSize="xs" color="admin.600" mt="0.5">
                 {hint}
             </styled.p>

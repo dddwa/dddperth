@@ -423,16 +423,6 @@ export default function AdminSponsorFeedback() {
                                         <Answer label="Testimonial">
                                             “{entry.testimonial}”
                                             {entry.testimonialAttribution && ` — ${entry.testimonialAttribution}`}
-                                            <styled.span
-                                                display="block"
-                                                mt="1"
-                                                fontWeight="medium"
-                                                color={
-                                                    entry.testimonialConsent ? 'status.success.fg' : 'status.danger.fg'
-                                                }
-                                            >
-                                                {entry.testimonialConsent ? 'OK to publish' : 'Not for publishing'}
-                                            </styled.span>
                                         </Answer>
                                     )}
                                     {entry.portalFeedback && (

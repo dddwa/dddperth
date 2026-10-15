@@ -6,8 +6,6 @@ export interface SponsorFeedbackInput {
     testimonial: string | null
     /** Name and role to credit the testimonial to. */
     testimonialAttribution: string | null
-    /** The sponsor has agreed we may publish the testimonial. */
-    testimonialConsent: boolean
     portalFeedback: string | null
 }
 
