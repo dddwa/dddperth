@@ -30,12 +30,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const { sponsor } = await requireSponsorContact(request, context)
     const services = getServices(context)
 
-    const [profile, contacts, meetTheExpertsRegistration, deliverables, { meetTheExpertsSlots: slots }] = await Promise.all([
+    const [profile, contacts, meetTheExpertsRegistration, deliverables, { meetTheExpertsSlots: slots }, feedback] = await Promise.all([
         services.sponsors.getProfile(sponsor.issueKey),
         services.sponsors.getContactEmails(sponsor.issueKey),
         services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey),
         services.sponsorSync.getSponsorDeliverables(sponsor.issueKey),
         loadSpeakerSettings(context),
+        services.sponsorFeedback.listForSponsor(conferenceManifest.sponsorPortal?.year ?? '', sponsor.issueKey),
     ])
 
     const sections = sponsorProgress({
@@ -62,6 +63,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         meetTheExpertsBioUseDefault: meetTheExpertsRegistration?.bioUseDefault ?? true,
         meetTheExpertsBioCustomText: meetTheExpertsRegistration?.bioCustomText,
         blurb: profile?.blurb,
+        feedbackCount: feedback.length,
     }
 }
 
@@ -103,6 +105,7 @@ export default function PortalDashboard() {
         meetTheExpertsBioUseDefault,
         meetTheExpertsBioCustomText,
         blurb,
+        feedbackCount,
     } = useLoaderData<typeof loader>()
     const actionData = useActionData<typeof action>()
     const [meetTheExpertsOpen, setMeetTheExpertsOpen] = useState(false)
@@ -323,6 +326,35 @@ export default function PortalDashboard() {
                     </Flex>
                 </AdminCard>
             )}
+
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
+                    Your feedback
+                </styled.h2>
+                <Flex align="center" justify="space-between" gap="4" flexWrap="wrap">
+                    <styled.p fontSize="sm" color="admin.600">
+                        {feedbackCount > 0
+                            ? `You've shared feedback ${feedbackCount === 1 ? 'once' : `${feedbackCount} times`} — thank you. You can edit it or add more.`
+                            : 'Tell us how sponsoring went, and what would make it more valuable for you next time.'}
+                    </styled.p>
+                    <AppLink
+                        to="/portal/feedback"
+                        unstyled
+                        display="inline-block"
+                        bg="admin.900"
+                        color="white"
+                        py="2"
+                        px="4"
+                        borderRadius="md"
+                        fontSize="sm"
+                        fontWeight="semibold"
+                        textDecoration="none"
+                        _hover={{ bg: 'admin.800' }}
+                    >
+                        {feedbackCount > 0 ? 'View your feedback' : 'Share feedback'}
+                    </AppLink>
+                </Flex>
+            </AdminCard>
 
             <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">

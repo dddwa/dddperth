@@ -20,6 +20,7 @@ const loaderData = {
     meetTheExpertsBioUseDefault: true,
     meetTheExpertsBioCustomText: undefined,
     blurb: 'About Acme',
+    feedbackCount: 0,
 }
 
 async function saveOpenModal() {

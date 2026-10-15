@@ -165,6 +165,11 @@ export default function AdminSponsors() {
                                 Follow-up list
                             </AppLink>
                         </Button>
+                        <Button asChild>
+                            <AppLink unstyled to="/admin/sponsors/feedback">
+                                Feedback
+                            </AppLink>
+                        </Button>
                         <Button
                             asChild
                             variant="outline"

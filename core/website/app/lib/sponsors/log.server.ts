@@ -18,7 +18,7 @@
  * apply here.
  */
 type SponsorPortalEvent =
-    | { event: 'portal.save_rejected'; issueKey: string; form: 'profile' | 'logistics'; fields: string[] }
+    | { event: 'portal.save_rejected'; issueKey: string; form: 'profile' | 'logistics' | 'feedback'; fields: string[] }
     | { event: 'portal.logo_rejected'; issueKey: string; reason: string; contentType?: string; size?: number }
     | { event: 'portal.writeback_failed'; issueKey: string; form: 'profile' | 'logistics'; error: string }
 

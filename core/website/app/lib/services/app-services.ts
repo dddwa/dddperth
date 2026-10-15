@@ -13,6 +13,7 @@ import type { NotificationLog } from './notification-log'
 import type { SessionStorages } from './session-storages'
 import type { SpeakerSyncService } from './speaker-sync-service'
 import type { SpeakersStore } from './speakers-store'
+import type { SponsorFeedbackStore } from './sponsor-feedback-store'
 import type { SponsorSyncService } from './sponsor-sync-service'
 import type { SponsorsStore } from './sponsors-store'
 import type { TicketsService } from './tickets-service'
@@ -47,4 +48,5 @@ export interface AppServices {
     adminSettings: AdminSettingsStore
     volunteers: VolunteersStore
     feedback: FeedbackStore
+    sponsorFeedback: SponsorFeedbackStore
 }
