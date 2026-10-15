@@ -41,7 +41,12 @@ describe('D1 sponsor feedback store (real SQL)', () => {
     it('lets the sponsor edit their own submission, recording who edited it', async () => {
         const id = await store.create('2026', 'SPN-1', input, 'a@acme.test')
 
-        const updated = await store.update('SPN-1', id, { ...input, testimonialConsent: false, rating: null }, 'b@acme.test')
+        const updated = await store.update(
+            'SPN-1',
+            id,
+            { ...input, testimonialConsent: false, rating: null },
+            'b@acme.test',
+        )
 
         expect(updated).toBe(true)
         expect(await store.listForSponsor('2026', 'SPN-1')).toEqual([
@@ -70,7 +75,11 @@ describe('D1 sponsor feedback store (real SQL)', () => {
         await store.recordRequest('2027', 'SPN-1', ['a@acme.test'], 'admin@ddd.test')
 
         expect(await store.listRequests('2026')).toEqual([
-            expect.objectContaining({ issueKey: 'SPN-1', recipients: ['a@acme.test', 'b@acme.test'], sentBy: 'admin@ddd.test' }),
+            expect.objectContaining({
+                issueKey: 'SPN-1',
+                recipients: ['a@acme.test', 'b@acme.test'],
+                sentBy: 'admin@ddd.test',
+            }),
         ])
     })
 })

@@ -77,7 +77,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     const services = getServices(context)
 
     const portalConfig = conferenceManifest.sponsorPortal
-    if (!portalConfig) return data({ intent: 'error' as const, error: 'Sponsor portal not configured' }, { status: 400 })
+    if (!portalConfig)
+        return data({ intent: 'error' as const, error: 'Sponsor portal not configured' }, { status: 400 })
 
     const formData = await request.formData()
     const intent = formData.get('_action')
@@ -273,7 +274,9 @@ export default function AdminSponsorFeedback() {
                     </Notice>
                 )}
                 {actionData?.intent === 'error' && <Notice tone="danger">{actionData.error}</Notice>}
-                {actionData?.intent === 'test' && <Notice tone="success">Test email sent to {actionData.sentTo}.</Notice>}
+                {actionData?.intent === 'test' && (
+                    <Notice tone="success">Test email sent to {actionData.sentTo}.</Notice>
+                )}
                 {actionData?.intent === 'sent' && (
                     <>
                         {actionData.sent.length > 0 && (
@@ -292,7 +295,9 @@ export default function AdminSponsorFeedback() {
 
                 {plan && <ConfirmSend plan={plan} busy={busy} />}
 
-                <Form method="post">
+                {/* Keyed on the latest sends so the ticks reset to "not yet
+                    asked" after a send, instead of re-offering who was just emailed. */}
+                <Form method="post" key={sponsors.map((sponsor) => sponsor.lastRequest?.sentAt ?? 0).join()}>
                     <input type="hidden" name="_action" value="preview" />
                     <Box overflowX="auto">
                         <styled.table w="full" fontSize="sm">
@@ -352,7 +357,8 @@ export default function AdminSponsorFeedback() {
                                                     to={`#feedback-${sponsor.issueKey}`}
                                                     textDecoration="underline"
                                                 >
-                                                    {sponsor.feedbackCount} response{sponsor.feedbackCount === 1 ? '' : 's'}
+                                                    {sponsor.feedbackCount} response
+                                                    {sponsor.feedbackCount === 1 ? '' : 's'}
                                                 </AppLink>
                                             ) : (
                                                 <Muted>None yet</Muted>
@@ -421,13 +427,17 @@ export default function AdminSponsorFeedback() {
                                                 display="block"
                                                 mt="1"
                                                 fontWeight="medium"
-                                                color={entry.testimonialConsent ? 'status.success.fg' : 'status.danger.fg'}
+                                                color={
+                                                    entry.testimonialConsent ? 'status.success.fg' : 'status.danger.fg'
+                                                }
                                             >
                                                 {entry.testimonialConsent ? 'OK to publish' : 'Not for publishing'}
                                             </styled.span>
                                         </Answer>
                                     )}
-                                    {entry.portalFeedback && <Answer label="Sponsor portal">{entry.portalFeedback}</Answer>}
+                                    {entry.portalFeedback && (
+                                        <Answer label="Sponsor portal">{entry.portalFeedback}</Answer>
+                                    )}
                                 </styled.dl>
                             </Box>
                         ))}
@@ -488,7 +498,9 @@ function ConfirmSend({ plan, busy }: { plan: FeedbackRequestPlan; busy: boolean 
                         </span>
                     ))}
                     <Button type="submit" disabled={busy}>
-                        {busy ? 'Sending…' : `Send ${plan.requests.length} email${plan.requests.length === 1 ? '' : 's'}`}
+                        {busy
+                            ? 'Sending…'
+                            : `Send ${plan.requests.length} email${plan.requests.length === 1 ? '' : 's'}`}
                     </Button>
                 </Form>
             )}

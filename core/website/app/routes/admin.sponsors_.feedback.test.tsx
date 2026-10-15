@@ -25,7 +25,12 @@ const loaderData = {
             companyName: 'Globex',
             tier: 'Silver',
             contacts: ['g@globex.test'],
-            lastRequest: { issueKey: 'SPN-2', recipients: ['g@globex.test'], sentAt: 1_790_000_000, sentBy: 'admin@ddd.test' },
+            lastRequest: {
+                issueKey: 'SPN-2',
+                recipients: ['g@globex.test'],
+                sentAt: 1_790_000_000,
+                sentBy: 'admin@ddd.test',
+            },
             feedbackCount: 1,
         },
     ],
@@ -43,15 +48,15 @@ describe('admin sponsor feedback requests', () => {
     it("prefills each sponsor's To: field with all of their portal contacts", async () => {
         renderPage()
 
-        const to = (await screen.findByLabelText('Email addresses for Acme')) as HTMLTextAreaElement
+        const to = await screen.findByLabelText<HTMLTextAreaElement>('Email addresses for Acme')
         expect(to.value).toBe('a@acme.test,\nb@acme.test')
     })
 
     it("ticks only sponsors who haven't been asked or replied", async () => {
         renderPage()
 
-        expect(((await screen.findByLabelText('Send to Acme')) as HTMLInputElement).checked).toBe(true)
-        expect((screen.getByLabelText('Send to Globex') as HTMLInputElement).checked).toBe(false)
+        expect((await screen.findByLabelText<HTMLInputElement>('Send to Acme')).checked).toBe(true)
+        expect(screen.getByLabelText<HTMLInputElement>('Send to Globex').checked).toBe(false)
     })
 
     it('asks for confirmation of every address before sending, flagging ones that cannot sign in', async () => {
@@ -91,7 +96,10 @@ describe('admin sponsor feedback requests', () => {
         renderPage(() =>
             data({
                 intent: 'preview' as const,
-                plan: { requests: [], errors: [{ issueKey: 'SPN-1', companyName: 'Acme', message: 'Add at least one email address' }] },
+                plan: {
+                    requests: [],
+                    errors: [{ issueKey: 'SPN-1', companyName: 'Acme', message: 'Add at least one email address' }],
+                },
             }),
         )
 

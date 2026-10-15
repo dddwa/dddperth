@@ -91,9 +91,8 @@ export default function PortalFeedback() {
                     Your feedback
                 </styled.h2>
                 <styled.p fontSize="sm" color="admin.600">
-                    Tell us how sponsoring {conferenceName} {year} went for you. Everyone with access to this
-                    workspace can see and edit what's submitted here, and you can add more feedback as often as you
-                    like.
+                    Tell us how sponsoring {conferenceName} {year} went for you. Everyone with access to this workspace
+                    can see and edit what's submitted here, and you can add more feedback as often as you like.
                 </styled.p>
 
                 {savedId && (
@@ -121,8 +120,11 @@ export default function PortalFeedback() {
                 />
             ))}
 
+            {/* Keyed on the save too: the redirect after a save reuses this
+                component, so without a remount the "add more" form would still
+                hold the answers just sent, one click from a duplicate. */}
             <FeedbackForm
-                key={editing?.id ?? 'new'}
+                key={`${editing?.id ?? 'new'}:${savedId ?? ''}`}
                 editing={editing}
                 hasSubmissions={submissions.length > 0}
                 fieldErrors={fieldErrors}
@@ -338,7 +340,9 @@ function FeedbackForm({
                             placeholder="Name, role"
                             defaultValue={editing?.testimonialAttribution ?? ''}
                             aria-invalid={fieldErrors.testimonialAttribution ? true : undefined}
-                            aria-describedby={fieldErrors.testimonialAttribution ? 'testimonialAttribution-error' : undefined}
+                            aria-describedby={
+                                fieldErrors.testimonialAttribution ? 'testimonialAttribution-error' : undefined
+                            }
                             className={inputClass}
                         />
                         <FieldError id="testimonialAttribution-error" message={fieldErrors.testimonialAttribution} />
@@ -370,7 +374,13 @@ function FeedbackForm({
 
                 <Flex mt="8" justify="flex-end" align="center" gap="4" flexWrap="wrap">
                     {editing && (
-                        <AppLink unstyled to="/portal/feedback" fontSize="sm" color="admin.900" textDecoration="underline">
+                        <AppLink
+                            unstyled
+                            to="/portal/feedback"
+                            fontSize="sm"
+                            color="admin.900"
+                            textDecoration="underline"
+                        >
                             Cancel
                         </AppLink>
                     )}
