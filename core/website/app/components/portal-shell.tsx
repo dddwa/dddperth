@@ -142,8 +142,15 @@ export function PortalShell({
                                 listStyle="none"
                                 m="0"
                                 p="0"
-                                gap={{ base: '5', md: '7' }}
+                                gap={{ base: '4', md: '7' }}
                                 overflowX="auto"
+                                // On a phone the last tab scrolls off the edge with nothing
+                                // to say it's there; the fade is the cue to swipe.
+                                maskImage={{
+                                    base: 'linear-gradient(to right, black calc(100% - 32px), transparent)',
+                                    md: 'none',
+                                }}
+                                pr={{ base: '6', md: '0' }}
                             >
                                 {tabs.map((tab) => (
                                     <li key={tab.to}>

@@ -47,6 +47,41 @@ describe('sponsor portal support link', () => {
     })
 })
 
+describe('sponsor portal header', () => {
+    function renderAt(path: string) {
+        const Stub = createRoutesStub([
+            {
+                path: '/sponsor-portal',
+                Component: PortalLayout,
+                loader: () => loaderData,
+                children: [
+                    { index: true, Component: () => null },
+                    { path: 'profile', Component: () => null },
+                ],
+            },
+        ])
+        render(<Stub initialEntries={[path]} />)
+    }
+
+    it('names the sponsor as the page heading, with their tier', async () => {
+        renderAt('/sponsor-portal')
+
+        const heading = await screen.findByRole('heading', { level: 1 })
+        expect(heading.textContent).toBe('Acme & Co')
+        expect(screen.getByText('Gold')).toBeTruthy()
+    })
+
+    it('marks only the current tab as the current page', async () => {
+        // Dashboard is the index route, so without `end` it would stay
+        // current on every portal page.
+        renderAt('/sponsor-portal/profile')
+
+        const nav = await screen.findByRole('navigation', { name: 'Sponsor portal sections' })
+        const current = [...nav.querySelectorAll('[aria-current="page"]')].map((link) => link.textContent)
+        expect(current).toEqual(['Company profile'])
+    })
+})
+
 describe('sponsor portal error page', () => {
     function renderThrowing(thrown: unknown) {
         const Stub = createRoutesStub([

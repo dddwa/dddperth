@@ -49,22 +49,24 @@ export function SponsorProgressList({ sections }: { sections: SectionProgress[] 
                                 tells a sponsor a section is half-finished
                                 rather than untouched. Only shown for
                                 multi-item sections, where "1 of 1" would be
-                                noise. */}
-                            <styled.span
-                                ml="auto"
-                                fontSize="xs"
-                                fontWeight={state === 'complete' ? 'semibold' : 'normal'}
-                                color={state === 'complete' ? 'status.success.fg' : 'admin.600'}
-                            >
-                                {state === 'complete'
-                                    ? 'Complete'
-                                    : section.total > 1
-                                      ? `${section.done} of ${section.total} done`
-                                      : state === 'not-started'
-                                        ? 'Not started'
-                                        : 'In progress'}
-                            </styled.span>
-                            <Chevron />
+                                noise. Grouped with the chevron so neither
+                                wraps onto a line of its own. */}
+                            <Flex ml="auto" align="center" gap="2" flexShrink="0">
+                                <styled.span
+                                    fontSize="xs"
+                                    fontWeight={state === 'complete' ? 'semibold' : 'normal'}
+                                    color={state === 'complete' ? 'status.success.fg' : 'admin.600'}
+                                >
+                                    {state === 'complete'
+                                        ? 'Complete'
+                                        : section.total > 1
+                                          ? `${section.done} of ${section.total} done`
+                                          : state === 'not-started'
+                                            ? 'Not started'
+                                            : 'In progress'}
+                                </styled.span>
+                                <Chevron />
+                            </Flex>
                         </Flex>
 
                         {!section.complete && section.total > 1 && (
