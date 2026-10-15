@@ -78,6 +78,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.exhibitor-export.js').SearchParams>,
     },
+    "/admin/sponsors/feedback": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors_.feedback.js').SearchParams>,
+    },
     "/admin/sponsors/follow-up": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors_.follow-up.js').SearchParams>,
@@ -214,6 +218,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
     },
+    "/portal/feedback": {
+      params: never,
+      query: ExportedQuery<import('app/routes/portal.feedback.js').SearchParams>,
+    },
     "/portal/logistics": {
       params: never,
       query: ExportedQuery<import('app/routes/portal.logistics.js').SearchParams>,
@@ -309,6 +317,7 @@ declare module "safe-routes" {
             | 'routes/portal'
             | 'routes/portal.logo.$issueKey'
             | 'routes/portal.logistics'
+            | 'routes/portal.feedback'
             | 'routes/portal.profile'
             | 'routes/portal._index'
             | 'routes/admin'
@@ -320,6 +329,7 @@ declare module "safe-routes" {
             | 'routes/admin.settings_.volunteers'
             | 'routes/admin.sponsors_.follow-up'
             | 'routes/admin.settings_.speakers'
+            | 'routes/admin.sponsors_.feedback'
             | 'routes/admin.feedback_.export'
             | 'routes/admin.volunteers_.save'
             | 'routes/admin.volunteers'

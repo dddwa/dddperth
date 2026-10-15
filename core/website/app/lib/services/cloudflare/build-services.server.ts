@@ -12,6 +12,7 @@ import { createD1FeedbackStore } from './d1-feedback-store.server'
 import { createD1MeetTheExpertsSchedulingStore } from './d1-meet-the-experts-scheduling-store.server'
 import { createD1MeetTheExpertsStore } from './d1-meet-the-experts-store.server'
 import { createD1NotificationLog } from './d1-notification-log.server'
+import { createD1SponsorFeedbackStore } from './d1-sponsor-feedback-store.server'
 import { createD1SpeakersStore } from './d1-speakers-store.server'
 import { createD1SponsorsStore } from './d1-sponsors-store.server'
 import { createD1VolunteersStore } from './d1-volunteers-store.server'
@@ -64,5 +65,6 @@ export function buildCloudflareServices(config: AppConfig, env: CloudflareEnv): 
         adminSettings: createD1AdminSettingsStore(db),
         volunteers: createD1VolunteersStore(db),
         feedback: createD1FeedbackStore(db),
+        sponsorFeedback: createD1SponsorFeedbackStore(db),
     }
 }

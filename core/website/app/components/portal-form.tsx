@@ -99,10 +99,10 @@ export function PrimaryButton({ children, disabled }: { children: ReactNode; dis
     )
 }
 
-export function FieldError({ message }: { message?: string }) {
+export function FieldError({ message, id }: { message?: string; id?: string }) {
     if (!message) return null
     return (
-        <styled.p mt="1" fontSize="xs" color="status.danger.fg">
+        <styled.p id={id} mt="1" fontSize="xs" color="status.danger.fg">
             {message}
         </styled.p>
     )

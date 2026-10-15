@@ -14,7 +14,7 @@ export function createConsoleEmailService(): EmailService {
 
         async send(message: EmailMessage) {
             console.log('\n=== Email (no provider configured) ===')
-            console.log(`To:      ${message.to}`)
+            console.log(`To:      ${[message.to].flat().join(', ')}`)
             if (message.replyTo) console.log(`Reply-To: ${message.replyTo}`)
             console.log(`Subject: ${message.subject}`)
             console.log('---')
