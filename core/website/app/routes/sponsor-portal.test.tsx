@@ -2,7 +2,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { createRoutesStub, data } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import PortalLayout, { ErrorBoundary } from './portal'
+import PortalLayout, { ErrorBoundary } from './sponsor-portal'
 
 afterEach(cleanup)
 
@@ -15,8 +15,8 @@ const loaderData = {
 }
 
 function renderLayout() {
-    const Stub = createRoutesStub([{ path: '/portal', Component: PortalLayout, loader: () => loaderData }])
-    render(<Stub initialEntries={['/portal']} />)
+    const Stub = createRoutesStub([{ path: '/sponsor-portal', Component: PortalLayout, loader: () => loaderData }])
+    render(<Stub initialEntries={['/sponsor-portal']} />)
 }
 
 describe('sponsor portal support link', () => {
@@ -47,11 +47,46 @@ describe('sponsor portal support link', () => {
     })
 })
 
+describe('sponsor portal header', () => {
+    function renderAt(path: string) {
+        const Stub = createRoutesStub([
+            {
+                path: '/sponsor-portal',
+                Component: PortalLayout,
+                loader: () => loaderData,
+                children: [
+                    { index: true, Component: () => null },
+                    { path: 'profile', Component: () => null },
+                ],
+            },
+        ])
+        render(<Stub initialEntries={[path]} />)
+    }
+
+    it('names the sponsor as the page heading, with their tier', async () => {
+        renderAt('/sponsor-portal')
+
+        const heading = await screen.findByRole('heading', { level: 1 })
+        expect(heading.textContent).toBe('Acme & Co')
+        expect(screen.getByText('Gold')).toBeTruthy()
+    })
+
+    it('marks only the current tab as the current page', async () => {
+        // Dashboard is the index route, so without `end` it would stay
+        // current on every portal page.
+        renderAt('/sponsor-portal/profile')
+
+        const nav = await screen.findByRole('navigation', { name: 'Sponsor portal sections' })
+        const current = [...nav.querySelectorAll('[aria-current="page"]')].map((link) => link.textContent)
+        expect(current).toEqual(['Company profile'])
+    })
+})
+
 describe('sponsor portal error page', () => {
     function renderThrowing(thrown: unknown) {
         const Stub = createRoutesStub([
             {
-                path: '/portal',
+                path: '/sponsor-portal',
                 Component: PortalLayout,
                 ErrorBoundary,
                 loader: () => {
@@ -59,7 +94,7 @@ describe('sponsor portal error page', () => {
                 },
             },
         ])
-        render(<Stub initialEntries={['/portal']} />)
+        render(<Stub initialEntries={['/sponsor-portal']} />)
     }
 
     it('names the signed-in email when it is not linked to a sponsor', async () => {
@@ -79,7 +114,7 @@ describe('sponsor portal error page', () => {
         const form = button.closest('form')
         expect(form?.getAttribute('action')).toBe('/auth/logout')
         const redirectTo = form?.querySelector<HTMLInputElement>('input[name="redirectTo"]')?.value
-        expect(redirectTo).toBe('/auth/login?redirectTo=%2Fportal')
+        expect(redirectTo).toBe('/auth/login?redirectTo=%2Fsponsor-portal')
     })
 
     it('keeps the generic message for anything else', async () => {

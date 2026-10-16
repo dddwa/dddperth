@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRoutesStub, redirect } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { SponsorFeedback } from '~/lib/services/sponsor-feedback-store'
-import PortalFeedback from './portal.feedback'
+import PortalFeedback from './sponsor-portal.feedback'
 
 afterEach(cleanup)
 
@@ -22,9 +22,9 @@ const submission: SponsorFeedback = {
     updatedAt: 1_790_000_000,
 }
 
-function renderPage(loaderData: Partial<ReturnType<typeof baseData>> = {}, path = '/portal/feedback') {
+function renderPage(loaderData: Partial<ReturnType<typeof baseData>> = {}, path = '/sponsor-portal/feedback') {
     const Stub = createRoutesStub([
-        { path: '/portal/feedback', Component: PortalFeedback, loader: () => ({ ...baseData(), ...loaderData }) },
+        { path: '/sponsor-portal/feedback', Component: PortalFeedback, loader: () => ({ ...baseData(), ...loaderData }) },
     ])
     render(<Stub initialEntries={[path]} />)
 }
@@ -56,7 +56,7 @@ describe('sponsor portal feedback page', () => {
         expect(await screen.findByText('Busy booth all day')).toBeTruthy()
         expect(screen.getByText(/Our best hiring day/).textContent).toContain('Sam, CTO')
         expect(screen.getByRole('link', { name: 'Edit feedback 1' }).getAttribute('href')).toBe(
-            '/portal/feedback?edit=fb-1#feedback-form',
+            '/sponsor-portal/feedback?edit=fb-1#feedback-form',
         )
         expect(screen.getByRole('heading', { name: 'Add more feedback' })).toBeTruthy()
     })
@@ -89,16 +89,16 @@ describe('sponsor portal feedback page', () => {
     it('clears the form after a save, so the next submit is new feedback rather than a copy', async () => {
         const Stub = createRoutesStub([
             {
-                path: '/portal/feedback',
+                path: '/sponsor-portal/feedback',
                 Component: PortalFeedback,
                 loader: ({ request }) => ({
                     ...baseData(),
                     savedId: new URL(request.url).searchParams.get('saved'),
                 }),
-                action: () => redirect('/portal/feedback?saved=fb-2'),
+                action: () => redirect('/sponsor-portal/feedback?saved=fb-2'),
             },
         ])
-        render(<Stub initialEntries={['/portal/feedback']} />)
+        render(<Stub initialEntries={['/sponsor-portal/feedback']} />)
 
         const experience = await screen.findByLabelText('How was your experience as a sponsor?')
         fireEvent.change(experience, { target: { value: 'Loved it' } })

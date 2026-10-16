@@ -15,7 +15,7 @@ const NO_INDEX_ROUTES = [
     { name: 'voting', path: '/voting' },
     { name: 'login', path: '/auth/login' },
     { name: 'admin', path: '/admin' },
-    { name: 'sponsor portal', path: '/portal' },
+    { name: 'sponsor portal', path: '/sponsor-portal' },
     { name: 'speaker portal', path: '/speaker-portal' },
     { name: 'share', path: '/share' },
     { name: 'content fixture page', path: '/e2e-content-fixture' },
@@ -55,7 +55,7 @@ for (const route of INDEXABLE_ROUTES) {
 test('robots.txt disallows the auth-gated trees and points at the sitemap', async ({ request }) => {
     const body = await (await request.get('/robots.txt')).text()
 
-    for (const path of ['/admin', '/portal', '/speaker-portal', '/api/']) {
+    for (const path of ['/admin', '/sponsor-portal', '/speaker-portal', '/api/']) {
         expect(body, `robots.txt should disallow ${path}`).toContain(`Disallow: ${path}`)
     }
     expect(body).toContain('Sitemap:')
@@ -71,7 +71,7 @@ test('sitemap.xml lists public pages and omits noIndex ones', async ({ request }
 
     expect(body).toContain('/about')
     expect(body, 'a noIndex page must not be advertised in the sitemap').not.toContain('e2e-content-fixture')
-    for (const path of ['/admin', '/portal', '/speaker-portal']) {
+    for (const path of ['/admin', '/sponsor-portal', '/speaker-portal']) {
         expect(body, `${path} must not be in the sitemap`).not.toContain(`<loc>${path}`)
     }
 })

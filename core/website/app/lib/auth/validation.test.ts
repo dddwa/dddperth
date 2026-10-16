@@ -12,7 +12,7 @@ describe('sanitiseRedirect', () => {
     })
 
     it('passes through normal paths, keeping their query strings', () => {
-        expect(sanitiseRedirect('/portal')).toBe('/portal')
+        expect(sanitiseRedirect('/sponsor-portal')).toBe('/sponsor-portal')
         expect(sanitiseRedirect('/admin/voting')).toBe('/admin/voting')
         expect(sanitiseRedirect('/agenda/2026?view=grid')).toBe('/agenda/2026?view=grid')
     })

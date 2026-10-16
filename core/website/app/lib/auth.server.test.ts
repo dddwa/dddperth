@@ -49,7 +49,7 @@ describe('requireAdmin', () => {
 
     it('sends a sponsor contact to the sponsor portal', async () => {
         const thrown = await thrownBy(requireAdmin(request, contextFor({ sponsor: true })))
-        expect((thrown as Response).headers.get('Location')).toBe('/portal')
+        expect((thrown as Response).headers.get('Location')).toBe('/sponsor-portal')
     })
 
     it('sends a speaker to the speaker portal', async () => {
@@ -59,7 +59,7 @@ describe('requireAdmin', () => {
 
     it('answers a session with no role in the admin area, not the sponsor portal', async () => {
         // Seen in production: an admin whose allowlist row had gone missing
-        // was redirected to /portal and told their email "isn't linked to a
+        // was redirected to /sponsor-portal and told their email "isn't linked to a
         // sponsor" — true, but nothing to do with what they asked for.
         const thrown = await thrownBy(requireAdmin(request, contextFor({})))
 

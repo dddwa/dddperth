@@ -17,7 +17,7 @@ import { ROUTES } from './routes'
  * palette that passes in dark mode says nothing about the light one, and
  * until now only the default (dark) theme was ever scanned.
  *
- * This intentionally does not cover /admin or /portal (sponsor portal) —
+ * This intentionally does not cover /admin or /sponsor-portal (sponsor portal) —
  * see A11Y_BACKLOG.md for why those are deprioritised for this pass.
  */
 

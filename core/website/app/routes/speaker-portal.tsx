@@ -1,6 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
-import { Form, Outlet, useLoaderData } from 'react-router'
+import { Outlet, useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
+import { PortalShell } from '~/components/portal-shell'
 import { requireSpeaker } from '~/lib/auth.server'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/speaker-portal'
@@ -34,42 +35,15 @@ export default function SpeakerPortalLayout() {
     const { user, speaker, year, conferenceName } = useLoaderData<typeof loader>()
 
     return (
-        <Box minH="screen" bg="admin.50">
-            <styled.nav bg="indigo.7" color="white" py="4" px="8" borderBottom="admin-emphasis">
-                <Flex justify="space-between" align="center" flexWrap="wrap" gap="3">
-                    <styled.h1 m="0" fontSize="xl" fontWeight="bold">
-                        {conferenceName} {year} — Speaker Portal
-                    </styled.h1>
-                    <Flex align="center" gap="4">
-                        <Box fontSize="sm">
-                            <styled.span fontWeight="semibold">{speaker.fullName}</styled.span>
-                        </Box>
-                        <Box fontSize="sm" opacity="0.85">
-                            {user.email}
-                        </Box>
-                        <Form method="post" action="/auth/logout">
-                            <styled.button
-                                type="submit"
-                                bg="transparent"
-                                color="white"
-                                border="[1px solid rgba(255, 255, 255, 0.3)]"
-                                py="1.5"
-                                px="3"
-                                borderRadius="md"
-                                cursor="pointer"
-                                fontSize="sm"
-                                _hover={{ bg: '[rgba(255, 255, 255, 0.1)]' }}
-                            >
-                                Logout
-                            </styled.button>
-                        </Form>
-                    </Flex>
-                </Flex>
-            </styled.nav>
-            <styled.main p={{ base: '4', md: '8' }}>
-                <Outlet />
-            </styled.main>
-        </Box>
+        <PortalShell
+            area="Speaker portal"
+            homeLabel={`Visit the ${conferenceName} homepage`}
+            eyebrow={`${conferenceName} ${year} speaker`}
+            heading={speaker.fullName}
+            email={user.email}
+        >
+            <Outlet />
+        </PortalShell>
     )
 }
 

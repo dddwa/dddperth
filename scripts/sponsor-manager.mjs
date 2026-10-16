@@ -213,7 +213,7 @@ async function importSponsor(options) {
 
     // Update the configuration. The quote is dropped: last year's often
     // names last year ("returning in 2025"), and a stale quote on the live
-    // site is worse than none. Sponsors resupply it via /portal.
+    // site is worse than none. Sponsors resupply it via /sponsor-portal.
     const updatedConfig = match[0]
         .replace(new RegExp(`${from}-${sponsorNameSlug}`, 'g'), `${to}-${sponsorNameSlug}`)
         .replace(/,\s*quote:\s*(['"`])(?:\\.|(?!\1)[\s\S])*\1/, '')

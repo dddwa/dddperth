@@ -1,6 +1,6 @@
 import { isAdminUser, requireUser } from '~/lib/auth.server'
 import { getServices } from '~/remix-app-load-context'
-import type { Route } from './+types/portal.logo.$issueKey'
+import type { Route } from './+types/sponsor-portal.logo.$issueKey'
 
 /**
  * Streams a sponsor's uploaded logo back out of R2. Only that sponsor's own

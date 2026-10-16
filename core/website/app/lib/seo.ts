@@ -44,4 +44,4 @@ export function noIndexMeta() {
  * a human might legitimately land on — `/voting`, `/auth/login` — are left
  * crawlable *on purpose* so crawlers can actually read their `noindex` tag.
  */
-export const DISALLOWED_CRAWL_PATHS = ['/admin', '/portal', '/speaker-portal', '/api/']
+export const DISALLOWED_CRAWL_PATHS = ['/admin', '/sponsor-portal', '/speaker-portal', '/api/']
