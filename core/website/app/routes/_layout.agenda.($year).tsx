@@ -792,7 +792,6 @@ function RoomTimeSlot({
                     {pickable ? (
                         <Button
                             size="xs"
-                            colorPalette="brand.primary"
                             variant={isPicked ? 'solid' : 'outline'}
                             onClick={() => onToggle(pickable)}
                             aria-label={

@@ -163,7 +163,6 @@ export default function MyAgenda() {
                                             </Box>
                                             <Button
                                                 size="xs"
-                                                colorPalette="brand.primary"
                                                 variant="outline"
                                                 onClick={() => {
                                                     toggle(pickableById.get(talk.id) as AgendaTalk)
@@ -188,7 +187,6 @@ export default function MyAgenda() {
                                 </p>
                                 <Button
                                     size="xs"
-                                    colorPalette="brand.primary"
                                     variant="outline"
                                     onClick={() => {
                                         forget(stale)

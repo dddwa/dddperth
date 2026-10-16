@@ -467,7 +467,7 @@ function FeedbackForm({
                 {children}
                 {canSubmit ? (
                     <Box>
-                        <Button type="submit" colorPalette="brand.primary" loading={navigation.state === 'submitting'}>
+                        <Button type="submit" loading={navigation.state === 'submitting'}>
                             Send feedback
                         </Button>
                     </Box>

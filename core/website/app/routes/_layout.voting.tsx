@@ -318,7 +318,6 @@ function VotingPageWithSession({
                 <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="brand.primary"
                         onClick={() => void handleVote('A')}
                         disabled={!!voteSubmitted}
                     >
@@ -335,7 +334,6 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="brand.secondary"
                         onClick={() => void handleVote('B')}
                         disabled={!!voteSubmitted}
                     >
@@ -384,7 +382,6 @@ function VotingPageWithSession({
                 <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="brand.primary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
@@ -409,7 +406,6 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="brand.secondary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()

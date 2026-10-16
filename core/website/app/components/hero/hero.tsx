@@ -41,7 +41,7 @@ export function Hero({
                  */
                 css={{
                     bgImage:
-                        'linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--colors-surface\\.body) 50%, transparent) 60px, var(--colors-surface\\.body) 260px, var(--colors-surface\\.body) 100%)',
+                        'linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--colors-surface-body) 50%, transparent) 60px, var(--colors-surface-body) 260px, var(--colors-surface-body) 100%)',
                 }}
             >
                 <HeaderContainer>
