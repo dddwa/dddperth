@@ -53,13 +53,21 @@ function subscribe(listener: () => void) {
     }
 }
 
+// All hook instances share the queue: the first response establishes the
+// HttpOnly identity, and later add/remove requests must preserve edit order.
+let shortlistQueue: Promise<unknown> = Promise.resolve()
+
 function reportShortlist(year: string, talkId: string, action: 'add' | 'remove') {
-    void fetch('/api/agenda/shortlist', {
-        method: 'POST',
-        body: new URLSearchParams({ year, talkId, action }),
-        // Survives the person navigating away straight after picking.
-        keepalive: true,
-    }).catch(() => {})
+    shortlistQueue = shortlistQueue
+        .then(() =>
+            fetch('/api/agenda/shortlist', {
+                method: 'POST',
+                body: new URLSearchParams({ year, talkId, action }),
+                // Survives the person navigating away straight after picking.
+                keepalive: true,
+            }),
+        )
+        .catch(() => {})
 }
 
 export interface ToggleOutcome {
