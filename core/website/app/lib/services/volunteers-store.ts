@@ -40,6 +40,26 @@ export interface VolunteerAssignment {
     volunteerId: string
 }
 
+/** Conference-local times from the agenda, keyed like roster seats. */
+export interface VolunteerSession {
+    slotId: string
+    roomId: string
+    endsAt: string
+}
+
+export function volunteerSeatsOverlap(
+    a: Pick<VolunteerAssignment, 'slotId' | 'roomId'>,
+    b: Pick<VolunteerAssignment, 'slotId' | 'roomId'>,
+    sessions: readonly VolunteerSession[],
+): boolean {
+    if (a.slotId === b.slotId) return true
+    const end = (seat: typeof a) => sessions.find((s) => s.slotId === seat.slotId && s.roomId === seat.roomId)?.endsAt
+    const aEnd = end(a)
+    const bEnd = end(b)
+    // Orphaned assignments are reported separately by the planner.
+    return !!aEnd && !!bEnd && a.slotId < bEnd && b.slotId < aEnd
+}
+
 export interface VolunteersStore {
     listVolunteers(): Promise<Volunteer[]>
     addVolunteer(name: string, email: string | null, roles: VolunteerRole[]): Promise<Volunteer>
@@ -56,10 +76,15 @@ export interface VolunteersStore {
     /**
      * Adds a volunteer to a seat alongside anyone already there. No-op if
      * they're already on it. Throws if they don't hold `role`, or if they're
-     * somewhere *else* during `slotId` — a person can't be in two rooms, or
+     * somewhere *else* during the session's interval — a person can't be in two rooms, or
      * two roles, at once.
      */
-    assign(year: string, assignment: VolunteerAssignment, assignedBy: string): Promise<void>
+    assign(
+        year: string,
+        assignment: VolunteerAssignment,
+        assignedBy: string,
+        sessions: readonly VolunteerSession[],
+    ): Promise<void>
     /** No-op if they aren't on that seat. */
     unassign(year: string, assignment: VolunteerAssignment): Promise<void>
 }
