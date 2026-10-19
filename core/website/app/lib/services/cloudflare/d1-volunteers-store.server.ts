@@ -1,5 +1,6 @@
 import {
     isVolunteerRole,
+    volunteerSeatsOverlap,
     VOLUNTEER_ROLES,
     type Volunteer,
     type VolunteerAssignment,
@@ -95,7 +96,7 @@ export function createD1VolunteersStore(db: D1Database): VolunteersStore {
             return results.map(toAssignment)
         },
 
-        async assign(year, { slotId, roomId, role, volunteerId }, assignedBy) {
+        async assign(year, { slotId, roomId, role, volunteerId }, assignedBy, sessions) {
             const volunteer = await db
                 .prepare(`SELECT roles_json FROM volunteers WHERE id = ?`)
                 .bind(volunteerId)
@@ -106,13 +107,20 @@ export function createD1VolunteersStore(db: D1Database): VolunteersStore {
                 throw new Error(`That volunteer isn't down as a ${label.toLowerCase()}.`)
             }
 
-            const existing = await db
-                .prepare(`SELECT room_id, role FROM volunteer_assignments WHERE year = ? AND slot_id = ? AND volunteer_id = ?`)
-                .bind(year, slotId, volunteerId)
-                .first<{ room_id: string; role: string }>()
-            if (existing) {
-                if (existing.room_id === roomId && existing.role === role) return
-                throw new Error('That volunteer is already rostered somewhere else during this slot.')
+            if (!sessions.some((s) => s.slotId === slotId && s.roomId === roomId)) {
+                throw new Error('That session is no longer on the agenda.')
+            }
+            const { results: existing } = await db
+                .prepare(
+                    `SELECT slot_id, room_id, role, volunteer_id FROM volunteer_assignments WHERE year = ? AND volunteer_id = ?`,
+                )
+                .bind(year, volunteerId)
+                .all<AssignmentRow>()
+            for (const row of existing) {
+                if (row.slot_id === slotId && row.room_id === roomId && row.role === role) return
+                if (volunteerSeatsOverlap({ slotId, roomId }, toAssignment(row), sessions)) {
+                    throw new Error('That volunteer is already rostered somewhere else during this session.')
+                }
             }
 
             await db

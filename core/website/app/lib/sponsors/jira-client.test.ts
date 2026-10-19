@@ -320,3 +320,67 @@ describe('searchSponsorIssues', () => {
         expect(JSON.parse(requestBody).nextPageToken).toBe('page-2')
     })
 })
+
+describe('Jira rich-text round trips', () => {
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('keeps attendees on separate lines and inline formatting within a name', async () => {
+        const portalConfig = {
+            year: '2026',
+            jira: {
+                baseUrl: 'https://jira.example.test',
+                projectKey: 'SPN',
+                jql: 'project = SPN',
+                fields: {
+                    companyName: 'company',
+                    website: 'website',
+                    contactEmail: 'contacts',
+                    tier: 'tier',
+                    assetsStatus: 'assets',
+                    logistics: { loadingDockAttendees: 'attendees' },
+                },
+                assetsCompleteOptionId: 'done',
+                assetsPendingOptionIds: ['pending'],
+                tierMap: {},
+            },
+        }
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () =>
+                Response.json({
+                    isLast: true,
+                    issues: [
+                        {
+                            key: 'SPN-1',
+                            fields: {
+                                attendees: {
+                                    type: 'doc',
+                                    version: 1,
+                                    content: [
+                                        {
+                                            type: 'paragraph',
+                                            content: [
+                                                { type: 'text', text: 'Alice ' },
+                                                { type: 'text', text: 'Smith', marks: [{ type: 'strong' }] },
+                                                { type: 'hardBreak' },
+                                                { type: 'text', text: 'Bob Jones' },
+                                            ],
+                                        },
+                                        { type: 'paragraph', content: [{ type: 'text', text: 'Carol Adams' }] },
+                                    ],
+                                },
+                            },
+                        },
+                    ],
+                }),
+            ),
+        )
+        const client = createJiraClient({ portalConfig, apiEmail: 'test@example.com', apiToken: 'test' })
+        expect((await client.searchSponsorIssues())[0].logistics?.loadingDockAttendees).toBe(
+            'Alice Smith\nBob Jones\nCarol Adams',
+        )
+        expect((await client.getExhibitorLogistics()).get('SPN-1')?.loadingDockAttendees).toBe(
+            'Alice Smith\nBob Jones\nCarol Adams',
+        )
+    })
+})

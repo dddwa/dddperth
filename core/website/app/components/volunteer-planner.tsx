@@ -1,5 +1,10 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
-import { VOLUNTEER_ROLES, type VolunteerAssignment, type VolunteerRole } from '~/lib/services/volunteers-store'
+import {
+    volunteerSeatsOverlap,
+    VOLUNTEER_ROLES,
+    type VolunteerAssignment,
+    type VolunteerRole,
+} from '~/lib/services/volunteers-store'
 import { css, cx } from '~/styled-system/css'
 import { Box, styled } from '~/styled-system/jsx'
 
@@ -53,7 +58,10 @@ export interface VolunteerPlannerSlot {
      * how many rooms from this one it fills — more than one for a plenum
      * talk, whose shifts still belong to this room.
      */
-    sessions: Record<string, { title: string; rowSpan: number; colSpan: number; isService: boolean; endLabel: string }>
+    sessions: Record<
+        string,
+        { title: string; rowSpan: number; colSpan: number; isService: boolean; endLabel: string; endsAt: string }
+    >
 }
 
 export interface VolunteerPlannerVolunteer {
@@ -268,12 +276,13 @@ export function VolunteerPlanner({
         seats.set(key, a.intent === 'assign' ? [...others, a.volunteerId] : others)
     }
 
-    // Where each volunteer is during each slot.
-    const seatOf = new Map<string, string>()
-    for (const [key, ids] of seats) {
-        const [slotId] = key.split('|')
-        for (const id of ids) seatOf.set(`${slotId}|${id}`, key)
-    }
+    const sessionTimes = slots.flatMap((slot) =>
+        Object.entries(slot.sessions).map(([roomId, session]) => ({
+            slotId: slot.id,
+            roomId,
+            endsAt: session.endsAt,
+        })),
+    )
 
     const volunteerById = new Map(volunteers.map((v) => [v.id, v]))
     const keyOf = (seat: Seat) => seatKey(slots[seat.slotIndex].id, seat.roomId, seat.role)
@@ -340,10 +349,14 @@ export function VolunteerPlanner({
         }
     }
 
-    /** Somewhere else this slot. `leaving` is a seat they're being moved off. */
+    /** Somewhere else during any part of this session. */
     function busyElsewhere(volunteerId: string, seat: Seat, leaving?: Seat) {
-        const at = seatOf.get(`${slots[seat.slotIndex].id}|${volunteerId}`)
-        return at !== undefined && at !== keyOf(seat) && at !== (leaving && keyOf(leaving))
+        const target = { slotId: slots[seat.slotIndex].id, roomId: seat.roomId }
+        return [...seats].some(([key, ids]) => {
+            if (!ids.includes(volunteerId) || key === keyOf(seat) || (leaving && key === keyOf(leaving))) return false
+            const [slotId, roomId] = key.split('|')
+            return volunteerSeatsOverlap(target, { slotId, roomId }, sessionTimes)
+        })
     }
 
     function canAdd(volunteerId: string, seat: Seat, leaving?: Seat) {

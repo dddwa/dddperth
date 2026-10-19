@@ -183,18 +183,19 @@ function fieldAsText(fields: Record<string, unknown>, fieldId: string | undefine
         if ('value' in value && typeof value.value === 'string') {
             return value.value.trim() || undefined
         }
-        // Rich text (ADF): flatten every text node.
+        // ADF inline nodes concatenate directly; blocks and explicit breaks
+        // separate lines. Flattening with spaces merges attendee names and lists.
         if ('type' in value && value.type === 'doc') {
-            const texts: string[] = []
-            const walk = (node: unknown): void => {
-                if (!node || typeof node !== 'object') return
-                const n = node as { text?: unknown; content?: unknown }
-                if (typeof n.text === 'string') texts.push(n.text)
-                if (Array.isArray(n.content)) n.content.forEach(walk)
+            const blocks = new Set(['paragraph', 'heading', 'listItem', 'blockquote', 'tableRow'])
+            const text = (node: unknown): string => {
+                if (!node || typeof node !== 'object') return ''
+                const n = node as { type?: string; text?: unknown; content?: unknown }
+                if (n.type === 'hardBreak') return '\n'
+                if (typeof n.text === 'string') return n.text
+                const content = Array.isArray(n.content) ? n.content.map(text).join('') : ''
+                return blocks.has(n.type ?? '') && !content.endsWith('\n') ? content + '\n' : content
             }
-            walk(value)
-            const joined = texts.join(' ').trim()
-            return joined || undefined
+            return text(value).trim() || undefined
         }
     }
 

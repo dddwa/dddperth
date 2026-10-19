@@ -79,6 +79,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                         colSpan,
                         isService: room.session.isServiceSession,
                         endLabel: endsAt ? formatTime(endsAt) : '',
+                        endsAt: endsAt ?? timeSlots[slotIndex + 1]?.slotStart ?? '24:00:00',
                     },
                 ]
             }),
@@ -150,9 +151,25 @@ export async function action({ request, context }: Route.ActionArgs) {
             case 'unassign': {
                 const role = str('role')
                 if (!isVolunteerRole(role)) return { success: false as const, error: `Unknown role: ${role}` }
-                const assignment = { slotId: str('slotId'), roomId: str('roomId'), role, volunteerId: str('volunteerId') }
+                const assignment = {
+                    slotId: str('slotId'),
+                    roomId: str('roomId'),
+                    role,
+                    volunteerId: str('volunteerId'),
+                }
                 if (intent === 'assign') {
-                    await services.volunteers.assign(year, assignment, email)
+                    const schedule = await getScheduleForOrganisers(context, year)
+                    const slots = schedule?.timeSlots ?? []
+                    const sessions = slots.flatMap((slot, index) =>
+                        slot.rooms
+                            .filter((room) => !room.session.isServiceSession)
+                            .map((room) => ({
+                                slotId: slot.slotStart,
+                                roomId: String(room.id),
+                                endsAt: room.session.endsAt?.slice(11, 19) ?? slots[index + 1]?.slotStart ?? '24:00:00',
+                            })),
+                    )
+                    await services.volunteers.assign(year, assignment, email, sessions)
                 } else {
                     await services.volunteers.unassign(year, assignment)
                 }
@@ -200,7 +217,12 @@ export default function AdminVolunteers() {
         if (!checked) {
             const shifts = assignments.filter((a) => a.volunteerId === volunteer.id && a.role === role).length
             const label = VOLUNTEER_ROLES.find((r) => r.id === role)?.label.toLowerCase()
-            if (shifts && !confirm(`Take ${volunteer.name} off ${label}? They'll be taken off the ${shifts} ${shifts === 1 ? 'talk' : 'talks'} they're rostered for as a ${label}.`)) {
+            if (
+                shifts &&
+                !confirm(
+                    `Take ${volunteer.name} off ${label}? They'll be taken off the ${shifts} ${shifts === 1 ? 'talk' : 'talks'} they're rostered for as a ${label}.`,
+                )
+            ) {
                 return false
             }
         }
@@ -213,13 +235,22 @@ export default function AdminVolunteers() {
         const warning = volunteer.shifts
             ? ` They'll be taken off the ${volunteer.shifts} ${volunteer.shifts === 1 ? 'talk' : 'talks'} they're rostered for.`
             : ''
-        if (confirm(`Remove ${volunteer.name}?${warning}`)) save({ intent: 'remove_volunteer', volunteerId: volunteer.id })
+        if (confirm(`Remove ${volunteer.name}?${warning}`))
+            save({ intent: 'remove_volunteer', volunteerId: volunteer.id })
     }
 
     return (
         <AdminLayout heading={`Volunteers — ${year}`} fullWidth>
             {error && (
-                <Box role="alert" mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                <Box
+                    role="alert"
+                    mb="4"
+                    p="3"
+                    bg="status.danger.bg"
+                    borderRadius="md"
+                    fontSize="sm"
+                    color="status.danger.fg"
+                >
                     {error}
                 </Box>
             )}
@@ -348,12 +379,18 @@ export default function AdminVolunteers() {
                 </Flex>
                 <styled.p fontSize="sm" color="admin.600" mb="4">
                     Time slots and rooms come from the {year} agenda in Sessionize, including before it&apos;s
-                    published. Changes save as you make them. Several people can share a role in a room; volunteers
-                    only drop into roles they&apos;re down for, and not into a time slot they&apos;re already rostered
-                    in.
+                    published. Changes save as you make them. Several people can share a role in a room; volunteers only
+                    drop into roles they&apos;re down for, and not into a time slot they&apos;re already rostered in.
                 </styled.p>
                 {orphanedCount > 0 && (
-                    <styled.p fontSize="sm" color="status.warning.fg" bg="status.warning.bg" p="3" borderRadius="md" mb="4">
+                    <styled.p
+                        fontSize="sm"
+                        color="status.warning.fg"
+                        bg="status.warning.bg"
+                        p="3"
+                        borderRadius="md"
+                        mb="4"
+                    >
                         {orphanedCount} rostered {orphanedCount === 1 ? 'shift is' : 'shifts are'} for a time slot or
                         room that&apos;s no longer on the agenda, so {orphanedCount === 1 ? "it isn't" : "they aren't"}{' '}
                         shown below.

@@ -5,6 +5,11 @@ import type { VolunteersStore } from '../volunteers-store'
 import { createD1VolunteersStore } from './d1-volunteers-store.server'
 
 const seat = { slotId: '09:30:00', roomId: '101', role: 'room-coordinators' } as const
+const sessions = [
+    { slotId: '09:30:00', roomId: '101', endsAt: '10:30:00' },
+    { slotId: '09:30:00', roomId: '102', endsAt: '10:30:00' },
+    { slotId: '10:30:00', roomId: '101', endsAt: '11:30:00' },
+]
 const BOTH = ['room-coordinators', 'photographers'] as const
 
 describe('D1 volunteers store (real SQL)', () => {
@@ -19,6 +24,26 @@ describe('D1 volunteers store (real SQL)', () => {
 
     afterEach(() => sqlite.close())
 
+    it('rejects overlaps across different slot starts but permits adjacent sessions', async () => {
+        const volunteer = await store.addVolunteer('A', null, [...BOTH])
+        const sessions = [
+            { slotId: '09:00:00', roomId: '101', endsAt: '10:00:00' },
+            { slotId: '09:30:00', roomId: '102', endsAt: '10:00:00' },
+            { slotId: '10:00:00', roomId: '102', endsAt: '10:30:00' },
+        ]
+        await store.assign('2026', { ...seat, slotId: '09:00:00', volunteerId: volunteer.id }, 'admin', sessions)
+        await expect(
+            store.assign('2026', { ...seat, roomId: '102', volunteerId: volunteer.id }, 'admin', sessions),
+        ).rejects.toThrow(/somewhere else/)
+        await store.assign(
+            '2026',
+            { ...seat, slotId: '10:00:00', roomId: '102', volunteerId: volunteer.id },
+            'admin',
+            sessions,
+        )
+        expect(await store.listAssignments('2026')).toHaveLength(2)
+    })
+
     it('lists volunteers alphabetically, ignoring case, with their roles', async () => {
         await store.addVolunteer('zoe', null, ['photographers'])
         await store.addVolunteer('Alex', 'alex@example.com', [...BOTH])
@@ -32,9 +57,9 @@ describe('D1 volunteers store (real SQL)', () => {
         const a = await store.addVolunteer('A', null, [...BOTH])
         const b = await store.addVolunteer('B', null, [...BOTH])
 
-        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')
-        await store.assign('2026', { ...seat, volunteerId: b.id }, 'admin@example.com')
-        await store.assign('2027', { ...seat, volunteerId: a.id }, 'admin@example.com')
+        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
+        await store.assign('2026', { ...seat, volunteerId: b.id }, 'admin@example.com', sessions)
+        await store.assign('2027', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
 
         expect(await store.listAssignments('2026')).toEqual([
             { ...seat, volunteerId: a.id },
@@ -45,36 +70,37 @@ describe('D1 volunteers store (real SQL)', () => {
 
     it("refuses a role the volunteer doesn't hold", async () => {
         const a = await store.addVolunteer('A', null, ['photographers'])
-        await expect(store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')).rejects.toThrow(
-            /isn't down as a room coordinator/,
-        )
+        await expect(
+            store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions),
+        ).rejects.toThrow(/isn't down as a room coordinator/)
     })
 
     it('refuses to put someone in two places in the same slot, but allows re-saving the same seat', async () => {
         const a = await store.addVolunteer('A', null, [...BOTH])
-        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')
-        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')
+        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
+        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
 
         await expect(
-            store.assign('2026', { ...seat, role: 'photographers', volunteerId: a.id }, 'admin@example.com'),
+            store.assign('2026', { ...seat, role: 'photographers', volunteerId: a.id }, 'admin@example.com', sessions),
         ).rejects.toThrow(/somewhere else/)
         await expect(
-            store.assign('2026', { ...seat, roomId: '102', volunteerId: a.id }, 'admin@example.com'),
+            store.assign('2026', { ...seat, roomId: '102', volunteerId: a.id }, 'admin@example.com', sessions),
         ).rejects.toThrow(/somewhere else/)
 
         // A different slot is fine.
-        await store.assign('2026', { ...seat, slotId: '10:30:00', volunteerId: a.id }, 'admin@example.com')
+        await store.assign('2026', { ...seat, slotId: '10:30:00', volunteerId: a.id }, 'admin@example.com', sessions)
         expect(await store.listAssignments('2026')).toHaveLength(2)
     })
 
     it("dropping a role clears that year's shifts in it, and leaves other years alone", async () => {
         const a = await store.addVolunteer('A', null, [...BOTH])
-        await store.assign('2025', { ...seat, volunteerId: a.id }, 'admin@example.com')
-        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')
+        await store.assign('2025', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
+        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
         await store.assign(
             '2026',
             { ...seat, slotId: '10:30:00', role: 'photographers', volunteerId: a.id },
             'admin@example.com',
+            sessions,
         )
 
         await store.setVolunteerRoles(a.id, ['photographers'], '2026')
@@ -89,9 +115,9 @@ describe('D1 volunteers store (real SQL)', () => {
     it('unassigns one person from a seat, and removing a volunteer clears their shifts', async () => {
         const a = await store.addVolunteer('A', null, [...BOTH])
         const b = await store.addVolunteer('B', null, [...BOTH])
-        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com')
-        await store.assign('2026', { ...seat, volunteerId: b.id }, 'admin@example.com')
-        await store.assign('2026', { ...seat, slotId: '10:30:00', volunteerId: a.id }, 'admin@example.com')
+        await store.assign('2026', { ...seat, volunteerId: a.id }, 'admin@example.com', sessions)
+        await store.assign('2026', { ...seat, volunteerId: b.id }, 'admin@example.com', sessions)
+        await store.assign('2026', { ...seat, slotId: '10:30:00', volunteerId: a.id }, 'admin@example.com', sessions)
 
         await store.unassign('2026', { ...seat, volunteerId: a.id })
         expect(await store.listAssignments('2026')).toEqual([

@@ -134,6 +134,8 @@ export interface SponsorsStore {
      * planner can deactivate anything that left the sync query. */
     getAllSponsorsForSync(): Promise<Array<{ issueKey: string; active: boolean }>>
     getAllContacts(): Promise<Array<{ email: string; issueKey: string }>>
+    /** Capture before the Jira read so reconciliation can reject concurrent portal saves. */
+    getProfilesForSync(): Promise<SponsorProfile[]>
 
     saveDetails(
         issueKey: string,
@@ -153,7 +155,11 @@ export interface SponsorsStore {
      * did the stamping (i.e. the profile just became complete). */
     markProfileCompleted(issueKey: string): Promise<boolean>
 
-    applySyncPlan(plan: SponsorSyncPlan): Promise<{
+    /** With a pre-read snapshot, only unchanged profile fields are reconciled. */
+    applySyncPlan(
+        plan: SponsorSyncPlan,
+        profilesBeforeRead?: SponsorProfile[],
+    ): Promise<{
         sponsorsUpserted: number
         sponsorsDeactivated: number
         contactsAdded: number

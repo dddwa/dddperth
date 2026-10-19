@@ -281,11 +281,15 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
             return (result.meta.changes ?? 0) > 0
         },
 
-        async applySyncPlan(plan) {
-            const statements: D1PreparedStatement[] = []
+        async getProfilesForSync() {
+            const { results } = await db.prepare(`SELECT * FROM sponsor_profiles`).all<SponsorProfileRow>()
+            return results.map(toProfile)
+        },
 
-            const profileResult = await db.prepare(`SELECT * FROM sponsor_profiles`).all<SponsorProfileRow>()
-            const profilesByIssue = new Map((profileResult.results ?? []).map((row) => [row.issue_key, toProfile(row)]))
+        async applySyncPlan(plan, profilesBeforeRead) {
+            const statements: D1PreparedStatement[] = []
+            const profiles = profilesBeforeRead ?? (await this.getProfilesForSync())
+            const profilesByIssue = new Map(profiles.map((profile) => [profile.issueKey, profile]))
 
             for (const s of plan.upserts) {
                 const profile = profilesByIssue.get(s.issueKey)
@@ -297,13 +301,18 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                                 `UPDATE sponsor_profiles SET
                                      blurb = ?, website_url = ?, socials_json = ?,
                                      updated_at = unixepoch(), updated_by = 'jira-sync'
-                                 WHERE issue_key = ?`,
+                                 WHERE issue_key = ? AND details_updated_at IS ?
+                                   AND blurb IS ? AND website_url IS ? AND COALESCE(socials_json, '{}') = ?`,
                             )
                             .bind(
                                 reconciliation.details.blurb ?? null,
                                 reconciliation.details.websiteUrl ?? null,
                                 JSON.stringify(reconciliation.details.socials),
                                 s.issueKey,
+                                profile?.detailsUpdatedAt ?? null,
+                                profile?.blurb ?? null,
+                                profile?.websiteUrl ?? null,
+                                JSON.stringify(profile?.socials ?? {}),
                             ),
                     )
                 }
@@ -313,9 +322,15 @@ export function createD1SponsorsStore(db: D1Database): SponsorsStore {
                             .prepare(
                                 `UPDATE sponsor_profiles SET
                                      logistics_json = ?, updated_at = unixepoch(), updated_by = 'jira-sync'
-                                 WHERE issue_key = ?`,
+                                 WHERE issue_key = ? AND logistics_updated_at IS ?
+                                   AND COALESCE(logistics_json, '{}') = ?`,
                             )
-                            .bind(JSON.stringify(reconciliation.logistics), s.issueKey),
+                            .bind(
+                                JSON.stringify(reconciliation.logistics),
+                                s.issueKey,
+                                profile?.logisticsUpdatedAt ?? null,
+                                JSON.stringify(profile?.logistics ?? {}),
+                            ),
                     )
                 }
                 statements.push(
