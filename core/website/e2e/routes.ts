@@ -71,12 +71,16 @@ export const FIXTURE_YEAR = '2025'
 export const FIXTURE_TALK_ID = '1240238'
 
 /**
- * A blog slug from the active conference's committed content — conference-stub's
- * own post here. A fork repoints this at one of its own, and regenerates the
- * baselines in `__screenshots__/` to match: they capture whichever conference
- * the repo renders.
+ * A post from `e2e/fixtures/blog/posts/`. The suites never render the
+ * conference's real blog: `e2e/start-dev-server.mjs` sets `E2E_BLOG_FIXTURES`,
+ * and `vite.config.ts` then compiles the fixture posts and authors instead. So
+ * this is core-owned and the same in every fork, and publishing or editing a
+ * real post can't move the `blog index` or `blog post` baselines.
+ *
+ * The newest fixture, so it is also the post that leads the blog index. It
+ * carries every kind of content the template has to render.
  */
-export const FIXTURE_BLOG_SLUG = '2023-02-14-chairperson-report-for-2022'
+export const FIXTURE_BLOG_SLUG = '2022-11-20-fixture-post-latest'
 
 /**
  * The date the **visual** suite renders at, seeded as a `__devDateOverride`
@@ -89,7 +93,7 @@ export const FIXTURE_BLOG_SLUG = '2023-02-14-chairperson-report-for-2022'
  * regeneration for an unrelated change silently folded in "46 days left" ->
  * "44 days left".
  *
- * **Fork-owned, like `FIXTURE_BLOG_SLUG`.** Pick a date comfortably before
+ * **Fork-owned.** Pick a date comfortably before
  * your conference — far enough out that no date-driven window (CFP, voting,
  * agenda-published) has opened, so the pinned render is the quiet "save the
  * date" state rather than one that shifts as those windows are configured.
@@ -166,7 +170,7 @@ export const VISUAL_MASK_SELECTORS: string[] = []
  * structural suites don't set cookies per route). The live voting flow has
  * its own suite, `e2e/voting.spec.ts`.
  *
- * **`date` is fork-owned, like `FIXTURE_BLOG_SLUG`.** Core owns the *states*;
+ * **`date` is fork-owned.** Core owns the *states*;
  * a conference owns *when* they happen, so each date must fall inside that
  * conference's own voting / agenda-published window. Leave it `undefined`
  * when the conference has no such window — `conference-stub`'s current year

@@ -1,7 +1,7 @@
 import yaml from 'yaml'
-// Authors file lives in the fork's /conference/content/blog/. Resolved via
-// the @conference path alias so a fork doesn't need to edit core source.
-import authorsYamlFileContents from '@conference/content/blog/authors.yml?raw'
+// The fork's `content.blogAuthorsFile` from its build manifest, served by the
+// mdx-bundles Vite plugin alongside the posts that reference it.
+import authorsYamlFileContents from 'virtual:blog-authors'
 
 export interface BlogAuthor {
     name: string

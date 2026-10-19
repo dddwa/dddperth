@@ -25,7 +25,7 @@ export async function loader({ context }: Route.LoaderArgs) {
             id: postLink,
             title: post.title,
             link: postLink,
-            date: posts[0].date ? new Date(posts[0].date) : new Date(),
+            date: post.date ? new Date(post.date) : new Date(),
             description: post.summary,
         })
     })

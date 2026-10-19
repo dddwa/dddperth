@@ -33,6 +33,11 @@ const ITEM_RESOLVED_PREFIX = '\0virtual:mdx-bundle/'
 // can.
 const CODE_PREFIX = 'virtual:mdx-code/'
 const CODE_RESOLVED_PREFIX = '\0virtual:mdx-code/'
+// The blog authors YAML, as a raw string. Served from the same plugin as the
+// posts so the two always come from the same place — the e2e suites swap both
+// for fixtures together (see `vite.config.ts`).
+const AUTHORS_ID = 'virtual:blog-authors'
+const AUTHORS_RESOLVED = '\0virtual:blog-authors'
 
 type ContentType = 'page' | 'blog'
 
@@ -197,6 +202,11 @@ export interface MdxBundlesOptions {
      * (typically `<fork>/conference/content/blog/posts`).
      */
     blogDir: string
+    /**
+     * Absolute path to the blog authors.yml
+     * (typically `<fork>/conference/content/blog/authors.yml`).
+     */
+    blogAuthorsFile: string
 }
 
 /**
@@ -248,7 +258,7 @@ function parseCodeId(id: string): { type: ContentType; slug: string } | null {
     return { type, slug }
 }
 
-export function mdxBundlesPlugin({ pagesDir, blogDir }: MdxBundlesOptions): Plugin {
+export function mdxBundlesPlugin({ pagesDir, blogDir, blogAuthorsFile }: MdxBundlesOptions): Plugin {
     const pageDir = pagesDir
 
     const catalog: Catalog = { page: new Map(), blog: new Map() }
@@ -340,6 +350,7 @@ export function mdxBundlesPlugin({ pagesDir, blogDir }: MdxBundlesOptions): Plug
 
         resolveId(id) {
             if (id === INDEX_ID) return INDEX_RESOLVED
+            if (id === AUTHORS_ID) return AUTHORS_RESOLVED
             if (id.startsWith(ITEM_PREFIX)) return '\0' + id
             if (id.startsWith(CODE_PREFIX)) return '\0' + id
         },
@@ -348,6 +359,10 @@ export function mdxBundlesPlugin({ pagesDir, blogDir }: MdxBundlesOptions): Plug
             if (id === INDEX_RESOLVED) {
                 await ensureCatalog()
                 return await renderIndex()
+            }
+            if (id === AUTHORS_RESOLVED) {
+                this.addWatchFile(blogAuthorsFile)
+                return `export default ${JSON.stringify(await readFile(blogAuthorsFile, 'utf-8'))}`
             }
             const codeParsed = parseCodeId(id)
             if (codeParsed) {
