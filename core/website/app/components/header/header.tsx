@@ -4,7 +4,7 @@ import { useRouteLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
-import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
+import { getHeaderNavItems, type VenueNavPlacement } from '~/lib/header-nav'
 import type { Theme } from '~/lib/theme.server'
 import type { loader as rootLoader } from '~/root'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
@@ -17,24 +17,20 @@ export function Header({
     cfpOpen,
     votingOpen,
     ticketSalesOpen,
-    venue,
+    venueNavPlacement,
 }: {
     cfpOpen: boolean
     votingOpen: boolean
     ticketSalesOpen: boolean
-    venue: ConferenceVenue | undefined
+    venueNavPlacement: VenueNavPlacement
 }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const rootData = useRouteLoaderData<typeof rootLoader>('root')
     const theme: Theme = rootData?.theme ?? 'dark'
 
-    // Fork-owned base list, then splice in the venue link conditionally on
-    // having a published venue. We place /venue immediately before /about if
-    // both are present — matches existing visual order without needing the
-    // fork to know about runtime gating.
-    const navItems = venue
-        ? insertVenueBeforeAbout(conferenceManifest.nav)
-        : conferenceManifest.nav
+    // Fork-owned base list, with the venue link placed by runtime state (see
+    // `~/lib/header-nav`) so the fork doesn't need to know about the gating.
+    const navItems = getHeaderNavItems(conferenceManifest.nav, venueNavPlacement)
 
     // CTA layout:
     // - During voting: Vote is the only CTA (most urgent action)
@@ -259,13 +255,6 @@ export function Header({
             </Drawer.Root>
         </styled.header>
     )
-}
-
-function insertVenueBeforeAbout(items: typeof conferenceManifest.nav) {
-    const venueItem = { to: '/venue', label: 'Venue' }
-    const aboutIdx = items.findIndex((i) => i.to === '/about')
-    if (aboutIdx === -1) return [...items, venueItem]
-    return [...items.slice(0, aboutIdx), venueItem, ...items.slice(aboutIdx)]
 }
 
 function MenuButton({

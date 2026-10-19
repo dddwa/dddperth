@@ -10,7 +10,8 @@ import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
 import { SkipToContent } from '~/components/skip-to-content'
 import { getUser, isAdminUser } from '~/lib/auth.server'
-import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
+import { getVenueNavPlacement } from '~/lib/header-nav'
+import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout'
 
@@ -33,9 +34,20 @@ export async function loader({ context, request }: Route.LoaderArgs) {
         }
     }
 
+    const conferenceState = getConferenceState(context)
+    const { timezone } = conferenceManifest.public
+
     return {
         conferenceDescription: conferenceManifest.public.description,
-        conferenceState: getConferenceState(context),
+        conferenceState,
+        venueNavPlacement: getVenueNavPlacement({
+            venuePublished: !!conferenceState.conference.venue,
+            replacesAboutNearConference: !!conferenceManifest.public.features?.venueReplacesAboutNearConference,
+            now: getDateTimeProvider(context).nowDate().setZone(timezone),
+            conferenceDate: conferenceState.conference.date
+                ? DateTime.fromISO(conferenceState.conference.date, { zone: timezone })
+                : undefined,
+        }),
         webUrl: getConfig(context).webUrl,
         adminData,
     }
@@ -65,7 +77,8 @@ export function meta({ loaderData: data, location }: Route.MetaArgs) {
 }
 
 export default function Index() {
-    const { conferenceDescription, conferenceState, webUrl, adminData } = useLoaderData<typeof loader>()
+    const { conferenceDescription, conferenceState, venueNavPlacement, webUrl, adminData } =
+        useLoaderData<typeof loader>()
     const conference = conferenceState.conference
     const venue = conference.venue
 
@@ -101,7 +114,7 @@ export default function Index() {
                 cfpOpen={conferenceState.callForPapers.state === 'open'}
                 votingOpen={conferenceState.talkVoting.state === 'open'}
                 ticketSalesOpen={conferenceState.ticketSales.state === 'open'}
-                venue={conferenceState.conference.venue}
+                venueNavPlacement={venueNavPlacement}
             />
 
             {venue && (
@@ -153,7 +166,7 @@ export function ErrorBoundary() {
     return (
         <div>
             <SkipToContent />
-            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venue={undefined} />
+            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venueNavPlacement="hidden" />
 
             <styled.main id="main">
                 <ContentPageLayout>

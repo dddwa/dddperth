@@ -6,6 +6,7 @@ import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
 
 // Reference viewport width that the parallax distances were tuned for.
@@ -73,7 +74,19 @@ export function HomepageHeroPanel({
                         <styled.span>
                             {conferenceDayStart(conferenceDate).toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </styled.span>
-                        {venue ? <styled.span>{venue.name}</styled.span> : null}
+                        {venue ? (
+                            <AppLink
+                                to="/venue"
+                                unstyled
+                                color="inherit"
+                                textDecoration="underline"
+                                textDecorationThickness="[1px]"
+                                textUnderlineOffset="[0.2em]"
+                                _hover={{ color: 'text.primary' }}
+                            >
+                                {venue.name}
+                            </AppLink>
+                        ) : null}
                     </styled.p>
                 ) : null}
                 <styled.h1

@@ -1,6 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
+import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
@@ -128,6 +129,26 @@ export default function Sponsors() {
                     We are grateful to all the sponsors who have supported {conferenceManifest.public.name} over the
                     years. Their contribution makes it possible for us to run this community-driven conference.
                 </styled.p>
+
+                {isLatestConference ? (
+                    <Box textAlign="center" mb="10">
+                        <AppLink
+                            to="/sponsorship"
+                            unstyled
+                            display="inline-flex"
+                            alignItems="center"
+                            bgColor="brand.primary"
+                            color="text.on-brand"
+                            fontWeight="semibold"
+                            paddingX="6"
+                            paddingY="3"
+                            rounded="md"
+                            _hover={{ bgColor: 'brand.secondary' }}
+                        >
+                            Sponsor {conferenceManifest.public.name}
+                        </AppLink>
+                    </Box>
+                ) : null}
 
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
 
