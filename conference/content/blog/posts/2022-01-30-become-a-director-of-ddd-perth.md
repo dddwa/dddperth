@@ -3,7 +3,7 @@ title: "Become a Director of DDD Perth"
 date: 2022-01-30
 authors:
     - Rebecca Waters
-summary: "DDD Perth hopefully needs no introduction if you’re already reading this article. The largest tech conference in WA, we host a one-day…"
+summary: "DDD Perth is volunteer-run, and we’re looking for directors to lead logistics, audio visual and media for the 2022 conference."
 legacyPaths:
     - /become-a-director-of-ddd-perth-48324d48f58f
     - /p/48324d48f58f

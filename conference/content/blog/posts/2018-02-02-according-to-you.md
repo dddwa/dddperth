@@ -3,7 +3,7 @@ title: "According to You"
 date: 2018-02-02
 authors:
     - Rebecca Waters
-summary: "Following DDD Perth 2017, a bunch of attendees gave the internet their take on our conference. Apart from becoming one of the top five…"
+summary: "DDD Perth 2017 trended nationally on conference day. We round up the blog posts attendees, speakers and sponsors wrote about it afterwards."
 legacyPaths:
     - /according-to-you-b4d307293213
     - /p/b4d307293213

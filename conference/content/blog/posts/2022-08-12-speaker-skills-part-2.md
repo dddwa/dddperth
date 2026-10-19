@@ -3,7 +3,7 @@ title: "Speaker Skills Part 2 — Performance and Delivery Tips and Tricks"
 date: 2022-08-12
 authors:
     - Amy Kapernick
-summary: "In this series of blog posts, we’ll be talking about the skills and giving tips, tricks and feedback on planning, creating and presenting…"
+summary: "Part two of our speaker skills series covers delivery: timing, nerves, eye contact, questions, live demos and preparing for the day."
 legacyPaths:
     - /speaker-skills-part-2-fc63a0861ce5
     - /p/fc63a0861ce5
@@ -13,7 +13,7 @@ In this series of blog posts, we’ll be talking about the skills and giving tip
 
 In the [last part](/blog/2022-08-06-speaker-skills-part-1), we looked at the initial stage of preparing a presentation: planning it out, choosing your format, building out the structure, and then building your slide deck. In this part, we’ll be looking at the performance, tips, and tricks for delivery, and techniques on the day.
 
-![](/images/blog/2022-08-12-speaker-skills-part-2/01.jpeg)
+![DDD Perth title slide: Speaker Skills, Delivery Tips, Tricks and Techniques](/images/blog/2022-08-12-speaker-skills-part-2/01.jpeg)
 
 ## The Basics
 

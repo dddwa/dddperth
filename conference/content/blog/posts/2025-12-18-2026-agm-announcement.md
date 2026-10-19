@@ -3,7 +3,7 @@ title: "2026 AGM Announcement"
 date: 2025-12-18
 authors:
     - DDD Perth
-summary: "The DDDWA AGM will be held Monday 2nd February 2026 5:30pm with a venue TBD in the Perth CBD (and virtual). If you are interested in…"
+summary: "The DDD WA AGM is on 2 February 2026, in the Perth CBD and online. Nominations are open for office bearers and directors, along with what the director role involves."
 legacyPaths:
     - /2026-agm-announcement-afc2f9781a1c
     - /p/afc2f9781a1c

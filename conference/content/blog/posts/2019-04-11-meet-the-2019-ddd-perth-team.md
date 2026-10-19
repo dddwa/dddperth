@@ -5,7 +5,7 @@ authors:
     - Jaimee Nobbs
 summary: "DDD Perth 2018 was record breaking and we’re back again this year for more!"
 image: /images/blog/2019-04-11-meet-the-2019-ddd-perth-team/01.png
-imageAlt: ""
+imageAlt: "Grid of black-and-white line drawings of the 2019 DDD Perth team on pink, green, blue and grey tiles, beside the DDD Perth 2019 logo. The last tile is an alpaca saying \"Next year I will provide my profile pic in a timely manner.\""
 legacyPaths:
     - /meet-the-2019-ddd-perth-team-d45cec7f5539
     - /p/d45cec7f5539

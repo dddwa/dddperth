@@ -3,7 +3,7 @@ title: "DDD Perth 2017 Call For Presentations"
 date: 2017-05-28
 authors:
     - Rob Moore
-summary: "I’m pleased to announce the opening of the DDD Perth 2017 Call For Presentations. I’m particularly excited this year because we’ve spend a…"
+summary: "The DDD Perth 2017 call for presentations is open, with changes aimed at a more diverse line-up of speakers after 2016 drew no submissions from women."
 legacyPaths:
     - /ddd-perth-2017-call-for-presentations-141c92097b84
     - /p/141c92097b84

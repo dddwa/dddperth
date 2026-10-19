@@ -3,7 +3,7 @@ title: "What Does DDD Stand for?"
 date: 2017-06-28
 authors:
     - Michelle Sandford
-summary: "Anyone who knows me knows I am a huge fan of conferences. I love the opportunity to learn stuff on a wide range of topics all in one day. I…"
+summary: "A self-confessed conference fan worried their first DDD Perth would be too developer-heavy. Instead, it felt like home."
 legacyPaths:
     - /what-does-ddd-stand-for-57fe53808865
     - /p/57fe53808865

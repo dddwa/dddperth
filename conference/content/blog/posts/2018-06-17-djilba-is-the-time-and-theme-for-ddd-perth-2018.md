@@ -3,7 +3,7 @@ title: "Djilba is the time and theme for DDD Perth 2018"
 date: 2018-06-17
 authors:
     - Ashley Aitken
-summary: "Djilba is the time and theme for DDD Perth 2018"
+summary: "DDD Perth 2018 falls at the start of Djilba, the Noongar season of transition, and we’ve taken it as the conference’s theme."
 legacyPaths:
     - /https-blog-dddperth-com-djilba-and-ddd-perth-2018-f61aa947a843
     - /p/f61aa947a843

@@ -3,7 +3,7 @@ title: "Announcement: DDD Perth 2023 AGM"
 date: 2023-01-10
 authors:
     - Aidan Morgan
-summary: "After a successful 2022 conference and a much needed break, it’s time to start getting the process moving on organising the 2023…"
+summary: "The DDD WA AGM is on 21 February 2023. Nominations for office bearer and director roles on the 2023 committee close on 25 January."
 legacyPaths:
     - /announcement-ddd-perth-2023-agm-720a13578e2e
     - /p/720a13578e2e

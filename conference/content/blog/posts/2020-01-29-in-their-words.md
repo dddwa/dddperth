@@ -3,7 +3,7 @@ title: "In Their Words, Part One"
 date: 2020-01-29
 authors:
     - Rebecca Waters
-summary: "DDD Perth is proud to put our speaker community front and centre. We are very proud of their achievements, from seasoned speakers right…"
+summary: "Speakers from DDD Perth 2017 and 2018 on what speaking at the conference did for them, starting with Ming Johanson, Ben Lowry and Phil Delalande."
 legacyPaths:
     - /in-their-words-29f97491fac
     - /p/29f97491fac

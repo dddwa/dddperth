@@ -3,7 +3,7 @@ title: "DDD Perth Diversity & Inclusion 2018 Update"
 date: 2018-06-28
 authors:
     - Matt Ward
-summary: "The organising committee are proud of what DDD Perth achieved last year, but as we came together to organise this year’s conference we…"
+summary: "What we changed for 2018 to be more inclusive: a rewritten code of conduct, an accessibility review of the website, and a new logo for the whole software community."
 legacyPaths:
     - /ddd-perth-diversity-inclusion-2018-update-8ed9af094ff1
     - /p/8ed9af094ff1

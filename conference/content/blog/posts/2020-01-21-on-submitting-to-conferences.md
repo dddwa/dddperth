@@ -3,9 +3,9 @@ title: "On Submitting to Conferences"
 date: 2020-01-21
 authors:
     - Amy Kapernick
-summary: "Well Global Diversity CFP Day has wrapped up again for another year, and my head is still spinning with things I wish I’d remembered to…"
+summary: "Tips from Global Diversity CFP Day on writing a proposal, building your slides, and getting through the day of your talk."
 image: /images/blog/2020-01-21-on-submitting-to-conferences/01.jpeg
-imageAlt: ""
+imageAlt: "Amy Kapernick smiling at a Laracon Sydney lectern, in front of a projected slide of browser logos"
 legacyPaths:
     - /on-submitting-to-conferences-f2234cfd305f
     - /p/f2234cfd305f
@@ -41,13 +41,13 @@ One important note on submitting to conferences — it doesn’t hurt to try. I�
 
 - Try and keep it simple, don’t give the audience too much to read, give them a short snippet to remember, highlighting anything import (my slides are often something I think is “tweetable”)
 
-![](/images/blog/2020-01-21-on-submitting-to-conferences/02.png)
+![Example slide with one short highlighted message: \"Grid helps us write semantic HTML\"](/images/blog/2020-01-21-on-submitting-to-conferences/02.png)
 
 - Know what your timing is, and have points in the presentation where you mark what time you should be at (eg. at slide 50, have a note that you should be 10min in to the talk), practicing adding or taking out parts of your talk, without skipping through a bunch of slides. Have a longer explanation or a story you can tell to fill the time, or that can be omitted to make it up
 - Make sure everything can be read from the back of the room, and keep accessibility in mind when choosing the colours; red, deep blue, cyan and yellow are distinguishable from each other 99.9999% of the time. This is also important if the projector in the room isn’t great, colour shouldn’t be the only thing being used to demonstrate something
 - Code is often more readable on a dark background and if you’re using [highlight.js](https://highlightjs.org/) for your syntax highlighting, they have an accessible theme: [a11y-dark](https://github.com/highlightjs/highlight.js/blob/master/src/styles/a11y-dark.css) (there’s also a light version)
 
-![](/images/blog/2020-01-21-on-submitting-to-conferences/03.png)
+![Example code slide on a dark background, syntax highlighted: body \{ display: grid; grid-template-columns: repeat(5, 1fr); \}](/images/blog/2020-01-21-on-submitting-to-conferences/03.png)
 
 ## Before the Conference
 

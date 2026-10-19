@@ -3,9 +3,9 @@ title: "Speaker Skills Part 1 — Planning, Format, Structure, and Slides"
 date: 2022-08-06
 authors:
     - Amy Kapernick
-summary: "In this series of blog posts, we’ll be talking about the skills and giving tips, tricks and feedback on planning, creating and presenting…"
+summary: "The first part of our speaker skills series covers planning a talk: knowing your audience, choosing a format and structure, and building your slide deck."
 image: /images/blog/2022-08-06-speaker-skills-part-1/01.png
-imageAlt: ""
+imageAlt: "Speaker Skills Part 1: Planning, Format, Structure, and Slides"
 legacyPaths:
     - /speaker-skills-part-1-fc385913a26
     - /p/fc385913a26

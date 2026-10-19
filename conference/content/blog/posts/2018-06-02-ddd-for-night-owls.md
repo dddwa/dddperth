@@ -3,7 +3,7 @@ title: "DDD for Night Owls"
 date: 2018-06-02
 authors:
     - Rob Crowley
-summary: "As a member of the DDD Perth organising committee, it is with a significant degree of pride that I look back and see how the conference has…"
+summary: "Introducing DDD by Night: evening events that take a deeper look at a single topic, born from the variety of proposals the conference receives."
 legacyPaths:
     - /ddd-for-night-owls-cd94b7749692
     - /p/cd94b7749692
