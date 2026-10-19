@@ -77,6 +77,15 @@ export interface ConferenceFeatures {
     hideWorkshops?: boolean
 
     /**
+     * Show the header's Venue link *instead of* About, and only from a week
+     * before conference day until the day ends. The rest of the year the
+     * header shows About. Off by default: the venue link then sits beside
+     * About whenever a venue is published. For forks whose header is short
+     * of room, and whose venue only matters to people about to attend.
+     */
+    venueReplacesAboutNearConference?: boolean
+
+    /**
      * Give each minor sponsor tier (community, coffee cart, quiet room,
      * venue, prize, keynotes) its own heading instead of pooling them under
      * a single "Other Sponsors" block. Worth turning on once a fork has
