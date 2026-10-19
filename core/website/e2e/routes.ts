@@ -123,6 +123,27 @@ export const VISUAL_DATE = '2026-06-08'
  */
 export const VISUAL_EXPECTED_DAYS_LEFT = 117
 
+/**
+ * Dates at which the header's contents differ, for the horizontal-overflow
+ * sweep in `visual.spec.ts`. The header's width depends on which CTAs and nav
+ * links the conference state shows, so a single pinned date only proves one
+ * of them fits.
+ *
+ * **Fork-owned**, and date-only for the same cookie-encoding reason as
+ * `VISUAL_DATE`. Pick one date inside each window your conference configures;
+ * a state your conference never reaches can simply be left out.
+ */
+export const HEADER_DATE_STATES: Array<{ name: string; date: string }> = [
+    // CFP open and the first ticket release on sale: both header CTAs, the widest state.
+    { name: 'CFP open, tickets on sale', date: VISUAL_DATE },
+    { name: 'talk voting open', date: '2026-07-15' },
+    { name: 'agenda published', date: '2026-09-01' },
+    // Venue replaces About in the nav for the week before the conference.
+    { name: 'conference week', date: '2026-09-28' },
+    { name: 'conference day', date: '2026-10-03' },
+    { name: 'after the conference', date: '2026-11-15' },
+]
+
 export const ROUTES: E2eRoute[] = [
     // `home` deliberately stays a full-page capture: it is the only route
     // whose baseline covers the shared header, nav and footer chrome, and a

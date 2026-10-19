@@ -128,8 +128,7 @@ export function meta(args: Route.MetaArgs) {
     }
 
     // Generate a description if summary isn't available
-    const description =
-        frontmatter.summary || `${frontmatter.title} - ${conferenceManifest.public.description}`
+    const description = frontmatter.summary || `${frontmatter.title} - ${conferenceManifest.public.description}`
 
     // Generate keywords based on the content slug and title
     const baseKeywords = `${conferenceManifest.public.name}, Conference, Software Development`
@@ -238,9 +237,13 @@ function ContentPageWithSidebar({
         'conferenceState' | 'frontmatter' | 'currentPath' | 'importantDates'
     >
 >) {
+    // `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track can't shrink below its
+    // content's min-content width, so one unwrappable code block or table
+    // stretched the column past the viewport and the page scrolled sideways on
+    // phones. Caught by the overflow sweep in e2e/visual.spec.ts.
     return (
-        <Grid gridTemplateColumns={{ base: '1fr', lg: '1fr auto' }}>
-            <styled.div id="content" marginX={{ base: "6", lg: "0" }}>
+        <Grid gridTemplateColumns={{ base: 'minmax(0, 1fr)', lg: 'minmax(0, 1fr) auto' }}>
+            <styled.div id="content" marginX={{ base: '6', lg: '0' }}>
                 <styled.h1 fontSize="3xl">{frontmatter.title}</styled.h1>
                 <Box className={prose({ size: 'lg' })}>{children}</Box>
             </styled.div>
@@ -299,12 +302,12 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
             ) : null}
             <ul
                 className={css({
-                    paddingLeft: "5",
-                    marginBottom: "6",
-                    marginLeft: "6",
+                    paddingLeft: '5',
+                    marginBottom: '6',
+                    marginLeft: '6',
 
                     '&li': {
-                        paddingLeft: "2",
+                        paddingLeft: '2',
                         fill: 'brand.secondary',
                         listStyleImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M0 0h6v6H0z'/%3E%3C/svg%3E")`,
                         listStyleType: 'none',
