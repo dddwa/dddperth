@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { data, useLoaderData } from 'react-router'
 
 import { DateTime } from 'luxon'
@@ -175,6 +176,7 @@ export function meta(args: Route.MetaArgs) {
         { name: 'twitter:image', content: socialImageUrl },
         { name: 'robots', content: 'index, follow' },
         { name: 'canonical', content: canonicalUrl },
+        // eslint-disable-next-line dates/use-date-time-provider -- Publication metadata uses real time, independently of conference overrides.
         { name: 'article:published_time', content: new Date().toISOString() },
     ]
 }
@@ -215,7 +217,7 @@ export default function WebsiteContentPage() {
                     currentPath={currentPath}
                     frontmatter={frontmatter}
                     conferenceState={conferenceState}
-                    currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
+                    currentDate={conferenceDateTime.fromISO(currentDate)}
                     importantDates={importantDates}
                 >
                     <Component sponsors={sponsorPageData} />
@@ -290,7 +292,7 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                         {conferenceState.conferenceState === 'before-conference' ? 'Next event' : 'Previous event'}
                     </small>
                     <time>
-                        {DateTime.fromISO(relevantDate, { zone: conferenceManifest.public.timezone }).toLocaleString(
+                        {conferenceDateTime.fromISO(relevantDate).toLocaleString(
                             DateTime.DATE_HUGE,
                             { locale: 'en-AU' },
                         )}

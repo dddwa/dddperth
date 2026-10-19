@@ -1,3 +1,4 @@
+import { conferenceConfigPublic } from '../public.ts'
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 import { burswoodOnSwanVenue } from '../venues/burswood-on-swan.ts'
@@ -5,7 +6,7 @@ import { burswoodOnSwanVenue } from '../venues/burswood-on-swan.ts'
 export const conference2015: ConferenceYear = {
     kind: 'conference',
     year: '2015',
-    conferenceDate: DateTime.fromISO('2015-08-29'),
+    conferenceDate: DateTime.fromISO('2015-08-29', { zone: conferenceConfigPublic.timezone }),
     sessionizeUrl: undefined,
 
     venue: burswoodOnSwanVenue,

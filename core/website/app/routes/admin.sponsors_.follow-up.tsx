@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, useLoaderData } from 'react-router'
@@ -103,7 +104,7 @@ function summarise(rows: FollowUpRow[]) {
 }
 
 function formatDate(unixSeconds: number): string {
-    return DateTime.fromSeconds(unixSeconds, { zone: conferenceManifest.public.timezone }).toLocaleString(
+    return conferenceDateTime.fromSeconds(unixSeconds).toLocaleString(
         { day: 'numeric', month: 'short' },
         { locale: 'en-AU' },
     )

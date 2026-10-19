@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 import type { ImportantDate } from './important-dates'
@@ -62,5 +63,5 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
         })
     }
 
-    return importantDates.sort((a, b) => DateTime.fromISO(a.dateTime).diff(DateTime.fromISO(b.dateTime)).milliseconds)
+    return importantDates.sort((a, b) => conferenceDateTime.fromISO(a.dateTime).diff(conferenceDateTime.fromISO(b.dateTime)).milliseconds)
 }

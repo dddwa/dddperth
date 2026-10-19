@@ -1,3 +1,4 @@
+import { conferenceConfigPublic } from '../public.ts'
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 import agenda2018 from './2018-agenda-data.json' with { type: 'json' }
@@ -5,7 +6,7 @@ import agenda2018 from './2018-agenda-data.json' with { type: 'json' }
 export const conference2018: ConferenceYear = {
     kind: 'conference',
     year: '2018',
-    conferenceDate: DateTime.fromISO('2018-08-04'),
+    conferenceDate: DateTime.fromISO('2018-08-04', { zone: conferenceConfigPublic.timezone }),
     sessionizeUrl: 'https://sessionize.com/dddperth2018',
 
     venue: undefined,

@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import type { FeedbackReport } from './feedback-report'
@@ -9,7 +10,7 @@ import type { FeedbackReport } from './feedback-report'
  */
 export function buildFeedbackWorkbook(report: FeedbackReport, timezone: string): ArrayBuffer {
     const submitted = (seconds: number) =>
-        DateTime.fromSeconds(seconds, { zone: timezone }).toFormat('yyyy-MM-dd HH:mm')
+        conferenceDateTime.fromSeconds(seconds, { zone: timezone }).toFormat('yyyy-MM-dd HH:mm')
     const workbook = sheetUtils.book_new()
 
     sheetUtils.book_append_sheet(

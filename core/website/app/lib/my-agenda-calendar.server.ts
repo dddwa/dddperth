@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import type { ConferenceVenue } from '@ddd/conference-config'
 import { createEvents, type EventAttributes } from 'ics'
 import { DateTime } from 'luxon'
@@ -56,8 +57,8 @@ export function buildMyAgendaCalendar(args: {
         // Sessionize times are conference-local wall-clock times. Emit UTC so
         // the event lands at the right instant for someone whose calendar is
         // set to another timezone.
-        const start = DateTime.fromISO(talk.startsAt as string, { zone: args.timezone }).toUTC()
-        const end = DateTime.fromISO(talk.endsAt as string, { zone: args.timezone }).toUTC()
+        const start = conferenceDateTime.fromISO(talk.startsAt as string, { zone: args.timezone }).toUTC()
+        const end = conferenceDateTime.fromISO(talk.endsAt as string, { zone: args.timezone }).toUTC()
         const url = `${args.siteOrigin}/agenda/${args.year}/talk/${talk.id}`
         const speakers = talk.speakers.map((speaker) => speaker.name).join(', ')
 

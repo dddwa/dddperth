@@ -55,6 +55,7 @@ export function createD1AuthService(args: {
             logAuthEvent({ event: 'login.requested', email: normalised, allowed })
             if (!allowed) return
 
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
 
             // Per-email cap on outstanding tokens — stops a flood of magic
@@ -111,6 +112,7 @@ export function createD1AuthService(args: {
 
         async consumeMagicLink(rawToken) {
             const tokenHash = await sha256Hex(rawToken)
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
 
             // Atomic claim: only succeeds if the token is unconsumed and unexpired.
@@ -152,6 +154,7 @@ export function createD1AuthService(args: {
 
         async createSession({ email: emailAddress, userAgent }) {
             const id = generateToken()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             const expiresAt = now + SESSION_TTL_SECONDS
             const normalised = emailAddress.toLowerCase()
@@ -169,6 +172,7 @@ export function createD1AuthService(args: {
         },
 
         async getSessionUser(sessionId) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             const row = await db
                 .prepare(
@@ -186,6 +190,7 @@ export function createD1AuthService(args: {
         },
 
         async touchSession(sessionId) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             // Skip the write if last_seen_at is recent — every authenticated
             // request would otherwise hit D1 once just for this.

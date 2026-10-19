@@ -4,11 +4,13 @@ import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {
     nowDate(): DateTime {
+        // eslint-disable-next-line dates/use-date-time-provider -- The system provider is the real clock behind request overrides.
         return DateTime.local({
             zone: conferenceManifest.public.timezone,
         })
     }
     now() {
+        // eslint-disable-next-line dates/use-date-time-provider -- The system provider is the real clock behind request overrides.
         return DateTime.local({
             zone: conferenceManifest.public.timezone,
         }).toMillis()

@@ -14,6 +14,7 @@ export async function loader({ context }: Route.LoaderArgs) {
         description: conferenceManifest.public.blogDescription,
         link: blogUrl,
         language: 'en',
+        // eslint-disable-next-line dates/use-date-time-provider -- RSS metadata uses real time, independently of conference overrides.
         updated: posts.length > 0 && posts[0].date ? new Date(posts[0].date) : new Date(),
         generator: 'https://github.com/jpmonette/feed',
         copyright: `© ${conferenceManifest.brand.legalName}`,
@@ -25,6 +26,7 @@ export async function loader({ context }: Route.LoaderArgs) {
             id: postLink,
             title: post.title,
             link: postLink,
+            // eslint-disable-next-line dates/use-date-time-provider -- RSS metadata uses real time, independently of conference overrides.
             date: posts[0].date ? new Date(posts[0].date) : new Date(),
             description: post.summary,
         })

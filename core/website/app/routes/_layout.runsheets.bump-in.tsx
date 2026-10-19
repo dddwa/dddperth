@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import type { RunsheetsBumpInConfig, RunsheetsConfig } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
@@ -23,7 +24,7 @@ import { fetchRunsheet } from '~/lib/runsheets/runsheet-client.server'
 import { filterRunsheetItems, labelsInUse, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { type BumpInItem, fetchSponsorBumpIn, sortByStartTime } from '~/lib/runsheets/sponsor-bump-in.server'
 import { noIndexMeta } from '~/lib/seo'
-import { getConfig, getServices } from '~/remix-app-load-context'
+import { getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.bump-in'
 
@@ -96,6 +97,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return data(
         {
             items,
+            serverNow: getDateTimeProvider(context).nowDate().toISO(),
             canRefresh,
             teamLabels: config.teamLabels,
             teamIcons: config.teamIcons ?? {},
@@ -117,14 +119,14 @@ export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate 
 /** Time in the conference's zone. The day is the section's heading. */
 function formatTime(isoDateTime: string | null): string {
     if (!isoDateTime) return '-'
-    const dateTime = DateTime.fromISO(isoDateTime, { zone: conferenceManifest.public.timezone })
+    const dateTime = conferenceDateTime.fromISO(isoDateTime)
     return dateTime.isValid ? dateTime.toFormat('h:mm a') : '-'
 }
 
 /** "Friday 2 October" — bump-in spans Friday and Saturday morning. Untimed rows sort last, into their own section. */
 function dayOf(item: BumpInItem): string {
     const dateTime = item.startTime
-        ? DateTime.fromISO(item.startTime, { zone: conferenceManifest.public.timezone })
+        ? conferenceDateTime.fromISO(item.startTime)
         : null
     return dateTime?.isValid ? dateTime.toFormat('cccc d LLLL') : 'Time to be confirmed'
 }
@@ -154,6 +156,7 @@ export default function BumpInRunsheet() {
         teamIcons,
         locationLabels,
         fetchedAt,
+        serverNow,
     } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
     // No agenda sessions on this run sheet, so no Agenda team or Show Agenda.
@@ -161,7 +164,7 @@ export default function BumpInRunsheet() {
     const items = filterRunsheetItems(allItems, filters).map((item) =>
         item.exhibitor && item.locations.length === 0 ? { ...item, locations: ['Space TBC'] } : item,
     )
-    const { nowIds, firstNowId } = useRunsheetNow(items)
+    const { nowIds, firstNowId } = useRunsheetNow(items, serverNow)
     useRunsheetOffline()
     const filterOptions = runsheetFilterOptions({
         teamLabels: labelsInUse(

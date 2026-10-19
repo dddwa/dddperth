@@ -151,6 +151,7 @@ export interface AnnouncementRow {
 // can be used as a deterministic schedule seed for balanced voting sessions.
 export async function incrementSessionCounter(db: D1Database, year: string): Promise<number> {
     const id = `global_${year}`
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
 
     const row = await db
@@ -233,6 +234,7 @@ export async function updateVotingSessionIndex(
     newCurrentIndex: number,
     newRoundNumber?: number,
 ): Promise<boolean> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
 
     if (newRoundNumber !== undefined) {
@@ -275,6 +277,7 @@ export async function recordVote(
     indexInRound: number,
     vote: 'A' | 'B' | 'S',
 ): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
 
     await db

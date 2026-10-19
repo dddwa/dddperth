@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 /**
  * Which run sheet rows are happening now. Client-safe: the page works it out
  * in the browser against the device clock, so the highlight moves on its own
@@ -19,7 +20,7 @@ export const OPEN_ENDED_ITEM_MINUTES = 15
  */
 function toMillis(isoDateTime: string | null, timezone: string): number | null {
     if (!isoDateTime) return null
-    const dateTime = DateTime.fromISO(isoDateTime, { zone: timezone })
+    const dateTime = conferenceDateTime.fromISO(isoDateTime, { zone: timezone })
     return dateTime.isValid ? dateTime.toMillis() : null
 }
 

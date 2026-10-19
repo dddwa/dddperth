@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import type { DateTime } from 'luxon'
 
 /**
  * Coarse "how long ago" label for a past unix-seconds timestamp — Today,
@@ -10,7 +11,7 @@ import { DateTime } from 'luxon'
 export function formatRelativeTime(epochSeconds: number | undefined, now: DateTime): string | null {
     if (epochSeconds === undefined) return null
 
-    const then = DateTime.fromSeconds(epochSeconds, { zone: now.zone })
+    const then = conferenceDateTime.fromSeconds(epochSeconds, { zone: now.zone })
     const days = Math.floor(now.diff(then, 'days').days)
 
     if (days <= 0) return 'Today'

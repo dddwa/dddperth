@@ -36,6 +36,7 @@ export async function canStartValidation(db: D1Database): Promise<{
         // Check if the current run is stale (hasn't been updated in 30 minutes)
         if (row.current_run_id && row.last_started_at) {
             const lastUpdate = new Date(row.last_started_at)
+            // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
             const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
 
             if (lastUpdate < thirtyMinutesAgo) {
@@ -75,6 +76,7 @@ export async function canStartValidation(db: D1Database): Promise<{
 }
 
 export async function markValidationStarted(db: D1Database, runId: string): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const now = new Date().toISOString()
     await db
         .prepare(
@@ -90,6 +92,7 @@ export async function markValidationStarted(db: D1Database, runId: string): Prom
 }
 
 export async function markValidationCompleted(db: D1Database, runId: string): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const now = new Date().toISOString()
     await db
         .prepare(
@@ -115,6 +118,7 @@ export async function createValidationRunIndex(
     year: string,
     totalSessions: number,
 ): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const now = new Date().toISOString()
     const id = `run_${runId}`
     await db
@@ -142,6 +146,7 @@ export async function updateValidationRunProgress(
     processedVotes: number,
     status?: 'running' | 'completed' | 'incomplete',
 ): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const now = new Date().toISOString()
 
     if (status === 'completed') {
@@ -549,6 +554,7 @@ export async function saveTalkStatistics(
     runId: string,
     stats: Map<string, TalkStatsAccumulator>,
 ): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const timestamp = new Date().toISOString()
     const entries = Array.from(stats.entries())
 
@@ -830,6 +836,7 @@ export async function calculateAndSaveFairnessMetrics(
 
         if (appearances.length > 0) {
             const metrics = calculateFairnessMetrics(appearances)
+            // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
             const now = new Date().toISOString()
 
             await db
@@ -869,6 +876,7 @@ export async function getFairnessMetrics(db: D1Database, runId: string): Promise
 // ============================================================================
 
 export async function saveTalkResults(db: D1Database, runId: string, results: EloResultImport[]): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
     const timestamp = new Date().toISOString()
 
     // Ensure results are sorted by rank
@@ -968,6 +976,7 @@ export async function saveUnderrepresentedGroupsConfig(
     selectedGroups: string[],
 ): Promise<void> {
     try {
+        // eslint-disable-next-line dates/use-date-time-provider -- Validation worker heartbeats and audit timestamps must follow real time.
         const now = new Date().toISOString()
         await db
             .prepare(

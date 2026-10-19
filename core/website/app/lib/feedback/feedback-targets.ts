@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import type { DateTime } from 'luxon'
 
 /** Something an attendee can leave session feedback on: a talk, or a Meet the Experts seat. */
 export interface FeedbackTarget {
@@ -48,7 +49,7 @@ export function buildFeedbackTargets(
     const entries: Array<FeedbackTarget & { sortTime: string }> = []
 
     for (const talk of talks) {
-        const start = talk.startsAt ? DateTime.fromISO(talk.startsAt, { zone: timezone }) : undefined
+        const start = talk.startsAt ? conferenceDateTime.fromISO(talk.startsAt, { zone: timezone }) : undefined
         const time = start?.isValid ? start.toFormat('h:mm a').toLowerCase() : ''
         entries.push({
             id: talk.id,
@@ -97,6 +98,6 @@ function parseSlotStart(label: string): DateTime | undefined {
     if (!match) return undefined
     const hour12 = Number(match[1]) % 12
     const hour = match[3].toLowerCase() === 'pm' ? hour12 + 12 : hour12
-    const parsed = DateTime.fromObject({ hour, minute: Number(match[2] ?? 0) })
+    const parsed = conferenceDateTime.fromObject({ hour, minute: Number(match[2] ?? 0) })
     return parsed.isValid ? parsed : undefined
 }

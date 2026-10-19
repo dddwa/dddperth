@@ -31,6 +31,7 @@ export async function addShortlistPick(
                  ON CONFLICT(browser_id, year, talk_id) DO UPDATE SET
                      signed_in = excluded.signed_in`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(browserId, year, talkId, signedIn ? 1 : 0, Date.now())
             .run()
     } catch (error: any) {

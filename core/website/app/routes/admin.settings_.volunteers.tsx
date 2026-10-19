@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import {
@@ -77,7 +78,7 @@ export default function AdminVolunteerSettings() {
                 <Box my="6" p="4" borderRadius="md" fontSize="sm" bg="status.success.bg">
                     <styled.p color="status.success.fg">
                         Saved by {saved.updatedBy},{' '}
-                        {DateTime.fromISO(saved.updatedAt, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
+                        {conferenceDateTime.fromISO(saved.updatedAt, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
                             locale: 'en-AU',
                         })}
                         .

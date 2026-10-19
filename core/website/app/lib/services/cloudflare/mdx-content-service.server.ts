@@ -1,11 +1,11 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import bundles from 'virtual:mdx-bundles'
-import { conferenceManifest } from '@conference/manifest'
 import type { ContentListItem, ContentPage, ContentService } from '../content-service'
 import type { FrontmatterProperties } from '../../mdx-types'
 
 function formatDate(iso: string): string {
-    return DateTime.fromISO(iso, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATE_FULL, {
+    return conferenceDateTime.fromISO(iso).toLocaleString(DateTime.DATE_FULL, {
         locale: 'en-AU',
     })
 }

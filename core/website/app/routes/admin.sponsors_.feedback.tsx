@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useEffect, useRef } from 'react'
@@ -140,7 +141,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 function formatDate(unixSeconds: number): string {
-    return DateTime.fromSeconds(unixSeconds, { zone: conferenceManifest.public.timezone }).toLocaleString(
+    return conferenceDateTime.fromSeconds(unixSeconds).toLocaleString(
         { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' },
         { locale: 'en-AU' },
     )

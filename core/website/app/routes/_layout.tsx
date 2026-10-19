@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Outlet, useLoaderData } from 'react-router'
@@ -27,6 +28,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
                 name: user.name,
             },
             overrideDate: overrideDate || null,
+            // eslint-disable-next-line dates/use-date-time-provider -- The admin overlay explicitly displays real system time alongside the override.
             currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
             timezone: conferenceManifest.public.timezone,
         }
@@ -42,9 +44,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
 export function meta({ loaderData: data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
-        ? `${conferenceManifest.public.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
-              zone: conferenceManifest.public.timezone,
-          }).toLocaleString(DateTime.DATE_HUGE, {
+        ? `${conferenceManifest.public.name} | ${conferenceDateTime.fromISO(data.conferenceState.conference.date).toLocaleString(DateTime.DATE_HUGE, {
               locale: 'en-AU',
           })}`
         : conferenceManifest.public.name

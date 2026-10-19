@@ -1,7 +1,7 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
-import { conferenceManifest } from '@conference/manifest'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
@@ -72,9 +72,7 @@ export function HomepageHeroPanel({
                         width="full"
                     >
                         <styled.span>
-                            {DateTime.fromISO(conferenceDate, {
-                                zone: conferenceManifest.public.timezone,
-                            }).toLocaleString(DateTime.DATE_HUGE, {
+                            {conferenceDateTime.fromISO(conferenceDate).toLocaleString(DateTime.DATE_HUGE, {
                                 locale: 'en-AU',
                             })}
                         </styled.span>

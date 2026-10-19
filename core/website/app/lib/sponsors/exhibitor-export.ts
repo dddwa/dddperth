@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '../dates/conference-date-time'
 /**
  * Builds the venue's "Supplier & Exhibitor List" spreadsheet.
  *
@@ -135,17 +136,13 @@ export function splitBumpSlot(
     }
 
     const target = WEEKDAYS.indexOf(weekdayMatch[1].toLowerCase())
-    const date = new Date(conferenceDate)
+    const date = conferenceDateTime.fromJSDate(conferenceDate)
     // Walk back to that weekday on or before the conference date. Bump-in is
     // the days before; bump-out is the conference day itself.
-    const delta = (date.getDay() - target + 7) % 7
-    date.setDate(date.getDate() - delta)
+    const delta = (date.weekday % 7 - target + 7) % 7
+    const slotDate = date.minus({ days: delta })
 
-    const formattedDate = [
-        String(date.getDate()).padStart(2, '0'),
-        String(date.getMonth() + 1).padStart(2, '0'),
-        date.getFullYear(),
-    ].join('/')
+    const formattedDate = slotDate.toFormat('dd/MM/yyyy')
 
     if (!timeMatch) return { date: formattedDate, time: '' }
 
@@ -278,7 +275,7 @@ export function buildExhibitorSheet(args: {
     const { sources, conferenceName, conferenceDate } = args
     const dateLabel =
         conferenceDate && !Number.isNaN(conferenceDate.getTime())
-            ? conferenceDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+            ? conferenceDateTime.fromJSDate(conferenceDate).toFormat('d MMMM yyyy', { locale: 'en-AU' })
             : ''
 
     const title = `Supplier & Exhibitor List - ${conferenceName}${dateLabel ? ` - ${dateLabel}` : ''}`

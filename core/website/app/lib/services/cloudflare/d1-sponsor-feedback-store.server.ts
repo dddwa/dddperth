@@ -39,6 +39,7 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
     return {
         async create(year, issueKey, input, by) {
             const id = crypto.randomUUID()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             await db
                 .prepare(
@@ -82,6 +83,7 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                     input.testimonialAttribution,
                     input.portalFeedback,
                     by,
+                    // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
                     Math.floor(Date.now() / 1000),
                     id,
                     issueKey,
@@ -115,6 +117,7 @@ export function createD1SponsorFeedbackStore(db: D1Database): SponsorFeedbackSto
                     `INSERT INTO sponsor_feedback_requests (year, issue_key, recipients, sent_at, sent_by)
                      VALUES (?, ?, ?, ?, ?)`,
                 )
+                // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
                 .bind(year, issueKey, JSON.stringify(recipients), Math.floor(Date.now() / 1000), by)
                 .run()
         },

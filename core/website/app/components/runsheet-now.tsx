@@ -1,5 +1,5 @@
 import { conferenceManifest } from '@conference/manifest'
-import { useEffect, useState } from 'react'
+import { useConferenceClock } from '~/lib/dates/use-conference-clock'
 import { Button } from '~/components/ui/styled/button'
 import { isRunsheetItemNow } from '~/lib/runsheets/runsheet-now'
 import type { RunsheetItem } from '~/lib/runsheets/runsheet-filters'
@@ -12,40 +12,12 @@ import { styled } from '~/styled-system/jsx'
  * scrolls to them.
  */
 
-/**
- * The device clock, re-read on each minute boundary — run sheet times are
- * whole minutes, so a row lights up as its minute starts rather than up to a
- * tick late — and whenever the page comes back into view, since a phone's
- * timers stall while it's locked. Null during server rendering and
- * hydration, so the server's clock never decides what is highlighted and the
- * first client render matches the server's HTML.
- */
-function useNow(): number | null {
-    const [now, setNow] = useState<number | null>(null)
-    useEffect(() => {
-        let timer: number | undefined
-        const tick = () => {
-            const current = Date.now()
-            setNow(current)
-            window.clearTimeout(timer)
-            timer = window.setTimeout(tick, 60_000 - (current % 60_000))
-        }
-        tick()
-        document.addEventListener('visibilitychange', tick)
-        return () => {
-            window.clearTimeout(timer)
-            document.removeEventListener('visibilitychange', tick)
-        }
-    }, [])
-    return now
-}
-
 /** The ids of the rows happening now, and the first of them in display order. */
-export function useRunsheetNow(items: Array<Pick<RunsheetItem, 'id' | 'startTime' | 'endTime'>>) {
-    const now = useNow()
+export function useRunsheetNow(items: Array<Pick<RunsheetItem, 'id' | 'startTime' | 'endTime'>>, serverNow: string) {
+    const now = useConferenceClock(serverNow, 60_000)
     const { timezone } = conferenceManifest.public
     const nowIds = new Set(
-        now === null ? [] : items.filter((item) => isRunsheetItemNow(item, now, timezone)).map((item) => item.id),
+        now === undefined ? [] : items.filter((item) => isRunsheetItemNow(item, now, timezone)).map((item) => item.id),
     )
     const firstNowId = items.find((item) => nowIds.has(item.id))?.id
     return { nowIds, firstNowId }

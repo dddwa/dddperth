@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import type { FC, PropsWithChildren } from 'react'
 import { conferenceManifest } from '@conference/manifest'
@@ -33,8 +34,8 @@ const StartEventImportantDateBox: FC<{
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StartEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
-    const eventEndTime = DateTime.fromISO(dateInfo.endDateTime)
+    const eventDateTime = conferenceDateTime.fromISO(dateInfo.dateTime)
+    const eventEndTime = conferenceDateTime.fromISO(dateInfo.endDateTime)
 
     if (showOnlyLive) {
         // Only show if it's not yet started
@@ -104,7 +105,7 @@ const StandaloneEventImportantDateBox: FC<{
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StandaloneImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+    const eventDateTime = conferenceDateTime.fromISO(dateInfo.dateTime)
 
     if (showOnlyLive) {
         // Don't show when event has ended and has no ended href
@@ -173,7 +174,7 @@ const StandaloneEventImportantDateBox: FC<{
 }
 
 function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
-    return Math.floor(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
+    return Math.floor(conferenceDateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
 }
 
 /**
@@ -184,13 +185,17 @@ function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
  */
 function isPastDate(dateInfo: ImportantDate, currentDate: DateTime): boolean {
     if (dateInfo.type === 'start-event') {
-        return currentDate >= DateTime.fromISO(dateInfo.endDateTime)
+        return currentDate >= conferenceDateTime.fromISO(dateInfo.endDateTime)
     }
     // standalone
     if (dateInfo.eventClosedHref) {
         return false
     }
-    return currentDate > DateTime.fromISO(dateInfo.dateTime)
+    const event = conferenceDateTime.fromISO(dateInfo.dateTime)
+    if (dateInfo.onDayMessage) {
+        return currentDate >= event.plus({ days: 1 }).startOf('day')
+    }
+    return currentDate > event
 }
 
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
@@ -399,14 +404,14 @@ function EventInfo({
     smallSidebar: boolean | undefined
     currentDate: DateTime
 }) {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceManifest.public.timezone })
+    const eventDateTime = conferenceDateTime.fromISO(dateInfo.dateTime)
     // For windowed events (CFP / tickets / voting) that are currently open, fold
     // the close date into the same row instead of rendering a separate "closes"
     // entry. Before the window opens, keep the open date as the primary line
     // and tack the close date on as a secondary line.
     const closeDateTime =
         dateInfo.type === 'start-event'
-            ? DateTime.fromISO(dateInfo.endDateTime, { zone: conferenceManifest.public.timezone })
+            ? conferenceDateTime.fromISO(dateInfo.endDateTime)
             : null
     const isOpen = closeDateTime !== null && currentDate >= eventDateTime && currentDate < closeDateTime
 

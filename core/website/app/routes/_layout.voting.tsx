@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Suspense, useEffect, useRef, useState } from 'react'
@@ -235,13 +236,9 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, {
-                              zone: conferenceManifest.public.timezone,
-                          }).toLocaleString(DateTime.DATETIME_SHORT, {
+                        ? `Voting opens ${conferenceDateTime.fromISO(data.talkVoting.opens).toLocaleString(DateTime.DATETIME_SHORT, {
                               locale: 'en-AU',
-                          })} and closes ${DateTime.fromISO(data.talkVoting.closes, {
-                              zone: conferenceManifest.public.timezone,
-                          }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
+                          })} and closes ${conferenceDateTime.fromISO(data.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
                         : 'Voting is not available for this conference'
                 }
             />

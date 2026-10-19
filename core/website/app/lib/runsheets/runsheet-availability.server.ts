@@ -1,5 +1,6 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
+import type { DateTime } from 'luxon'
 import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
 
 /**
@@ -14,7 +15,7 @@ import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-contex
  */
 export function isRunsheetClosed(conferenceDate: string | undefined, now: DateTime, timezone: string): boolean {
     if (!conferenceDate) return false
-    const date = DateTime.fromISO(conferenceDate, { zone: timezone })
+    const date = conferenceDateTime.fromISO(conferenceDate, { zone: timezone })
     return date.isValid && now > date.endOf('week')
 }
 

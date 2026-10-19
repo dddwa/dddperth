@@ -1,7 +1,14 @@
+import dateRules from './core/eslint-rules/date-time.mjs'
 import nxEslintPlugin from '@nx/eslint-plugin'
 import ts from 'typescript-eslint'
 
 export default [
+    {
+        // Config builds the manifest; its bootstrap dates supply the public config zone explicitly.
+        files: ['conference/config/**/*.ts'],
+        plugins: { dates: dateRules },
+        rules: { 'dates/use-conference-date-time': ['error', { allowExplicitZone: true }] },
+    },
     {
         ignores: [
             '**/dist',

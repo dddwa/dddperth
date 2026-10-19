@@ -1,4 +1,4 @@
-import { conferenceManifest } from '@conference/manifest'
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFetcher, useLoaderData, useRevalidator } from 'react-router'
@@ -2016,9 +2016,7 @@ export default function VotingAgenda() {
                             <>
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
-                                    {DateTime.fromISO(runDetails.startedAt, {
-                                        zone: conferenceManifest.public.timezone,
-                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    {conferenceDateTime.fromISO(runDetails.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>

@@ -184,6 +184,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         const extension = logoExtensionForContentType(file.type)
+        // eslint-disable-next-line dates/use-date-time-provider -- Upload key uniqueness uses the actual write time.
         const key = `sponsors/${sponsor.year}/${sponsor.issueKey}/logo-${Date.now()}.${extension}`
         await services.assets.put(key, bytes.buffer, { contentType: file.type })
         await services.sponsors.saveLogo(

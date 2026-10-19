@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import type { RouterContext } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
@@ -74,7 +75,7 @@ export function buildSpeakerDashboardView(
     const now = getDateTimeProvider(context).nowDate()
     const conferenceDateIso = getConferenceState(context).conference.date
     const timezone = conferenceManifest.public.timezone
-    const conferenceDate = conferenceDateIso ? DateTime.fromISO(conferenceDateIso, { zone: timezone }) : null
+    const conferenceDate = conferenceDateIso ? conferenceDateTime.fromISO(conferenceDateIso, { zone: timezone }) : null
 
     const sessionDetailsSections = toSessionDetailsSections(workspace)
     const ownProfile =

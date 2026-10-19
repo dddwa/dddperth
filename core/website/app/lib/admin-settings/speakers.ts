@@ -1,5 +1,6 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
+import type { DateTime } from 'luxon'
 import { z } from 'zod'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, type SpeakerTrainingSession } from '../services/speakers-store'
 import type { SpeakerDinnerInfo, SpeakerTrainingSessionInfo } from '../speakers/checklist'
@@ -17,7 +18,7 @@ import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates, type ChecklistItemKey 
  * `resolveSpeakerSettings` turns them into the DateTimes the portal uses.
  */
 
-const isoDateTime = z.string().refine((value) => DateTime.fromISO(value).isValid, 'Invalid date/time')
+const isoDateTime = z.string().refine((value) => conferenceDateTime.fromISO(value).isValid, 'Invalid date/time')
 
 export const speakerSettingsSchema = z.object({
     dueDates: z.partialRecord(z.enum(SPEAKER_CHECKLIST_ITEMS.map((item) => item.key) as [ChecklistItemKey, ...ChecklistItemKey[]]), isoDateTime),
@@ -54,7 +55,7 @@ function toIso(dateTime: DateTime): string {
 }
 
 function fromIso(value: string): DateTime {
-    return DateTime.fromISO(value, { zone: timezone() })
+    return conferenceDateTime.fromISO(value, { zone: timezone() })
 }
 
 /** The values currently in the fork's config — what the portal uses until an
@@ -129,7 +130,7 @@ export function parseSpeakerSettingsForm(
     const dateTime = (name: string, label: string): string | undefined => {
         const raw = text(formData, name)
         if (!raw) return undefined
-        const parsed = DateTime.fromISO(raw, { zone: timezone() })
+        const parsed = conferenceDateTime.fromISO(raw, { zone: timezone() })
         if (!parsed.isValid) {
             errors.push(`${label}: not a valid date/time`)
             return undefined

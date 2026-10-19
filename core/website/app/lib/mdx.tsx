@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import type { MDXComponents } from 'mdx/types'
 import type { ComponentType } from 'react'
@@ -21,7 +22,6 @@ import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
 import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
-import { conferenceManifest } from '@conference/manifest'
 import { styled } from '~/styled-system/jsx'
 import type { ConferenceState } from './conference-state-client-safe'
 import { AppLink } from '~/components/app-link'
@@ -134,7 +134,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceManifest.public.timezone })} />
+                return <CFPNotOpenYet cfpOpens={conferenceDateTime.fromISO(conferenceState.callForPapers.opens)} />
             }
         },
         EditSession: () => {
@@ -155,7 +155,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={DateTime.fromISO(conferenceState.callForPapers.opens, { zone: conferenceManifest.public.timezone })} />
+                return <CFPNotOpenYet cfpOpens={conferenceDateTime.fromISO(conferenceState.callForPapers.opens)} />
             }
         },
         VolunteersNeeded: ({ children }) => {

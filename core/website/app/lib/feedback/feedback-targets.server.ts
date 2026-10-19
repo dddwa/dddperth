@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import type { Year } from '~/lib/conference-state-client-safe'
@@ -66,7 +67,7 @@ export async function getPublicFeedbackTargets(
             ? {
                   id: upcomingTalk.id,
                   title: upcomingTalk.title,
-                  endsAt: DateTime.fromISO(upcomingTalk.endsAt, { zone: timezone }).toFormat('h:mm a').toLowerCase(),
+                  endsAt: conferenceDateTime.fromISO(upcomingTalk.endsAt, { zone: timezone }).toFormat('h:mm a').toLowerCase(),
               }
             : undefined,
     }

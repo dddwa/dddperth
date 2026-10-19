@@ -4,6 +4,7 @@ import react from 'eslint-plugin-react'
 import jsonParser from 'jsonc-eslint-parser'
 import ts from 'typescript-eslint'
 import baseConfig from '../eslint.config.mjs'
+import dateRules from '../eslint-rules/date-time.mjs'
 
 const __dirname = import.meta.dirname
 
@@ -97,6 +98,7 @@ export default [
                         'lru-cache',
                         'msw',
                         'vitest',
+                        'eslint', // RuleTester is development tooling, declared at the workspace root.
                         '@testing-library/react',
                         // Workspace libraries — Vite consumes source directly via pnpm symlinks,
                         // so they don't need an Nx build target. The rule otherwise flags them as obsolete.
@@ -170,7 +172,22 @@ export default [
         },
     },
     {
-        files: ['*.json', '**/*.js', '**/*.jsx', '**/*.json', 'eslint.config.js'],
+        files: ['*.json', '**/*.js', '**/*.mjs', '**/*.jsx', '**/*.json', 'eslint.config.js'],
         ...ts.configs.disableTypeChecked,
+    },
+    {
+        files: ['app/**/*.{ts,tsx}'],
+        ignores: ['**/*.{test,spec}.{ts,tsx}', 'app/styled-system/**'],
+        plugins: { dates: dateRules },
+        rules: {
+            'dates/use-conference-date-time': 'error',
+            'dates/use-date-time-provider': 'error',
+            'dates/no-native-date-calendar': 'error',
+        },
+    },
+    {
+        // This is the single construction seam; feature code uses its defaults.
+        files: ['app/lib/dates/conference-date-time.ts'],
+        rules: { 'dates/use-conference-date-time': 'off' },
     },
 ]

@@ -177,6 +177,7 @@ export async function saveTalkPlanningField(
                      updated_at = excluded.updated_at,
                      updated_by_email = excluded.updated_by_email`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(runId, talkId, dbValue, new Date().toISOString(), email)
             .run()
     } catch (error: any) {
@@ -202,6 +203,7 @@ export async function addTrack(
                      ?, ?
                  )`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(args.runId, args.trackId, args.name, args.runId, new Date().toISOString(), args.email)
             .run()
     } catch (error: any) {
@@ -220,6 +222,7 @@ export async function renameTrack(
                 `UPDATE agenda_track SET name = ?, updated_at = ?, updated_by_email = ?
                  WHERE run_id = ? AND track_id = ?`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(args.name, new Date().toISOString(), args.email, args.runId, args.trackId)
             .run()
     } catch (error: any) {
@@ -274,6 +277,7 @@ export async function addSlot(
                 args.length,
                 args.runId,
                 args.trackId,
+                // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
                 new Date().toISOString(),
                 args.email,
                 args.kind ?? 'talk',
@@ -297,6 +301,7 @@ export async function updateSlotLabel(
                 `UPDATE agenda_slot SET label = ?, updated_at = ?, updated_by_email = ?
                  WHERE run_id = ? AND slot_id = ? AND kind = 'break'`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(args.label, new Date().toISOString(), args.email, args.runId, args.slotId)
             .run()
     } catch (error: any) {
@@ -342,6 +347,7 @@ export async function moveSlot(
         // Already at the top/bottom of its track.
         if (!neighbour) return
 
+        // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
         const now = new Date().toISOString()
         await db.batch([
             db
@@ -373,6 +379,7 @@ export async function updateSlotLength(
                 `UPDATE agenda_slot SET length = ?, updated_at = ?, updated_by_email = ?
                  WHERE run_id = ? AND slot_id = ?`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(args.length, new Date().toISOString(), args.email, args.runId, args.slotId)
             .run()
     } catch (error: any) {
@@ -402,6 +409,7 @@ export async function assignTalkToSlot(
     db: D1Database,
     args: { runId: string; slotId: string; talkId: string | null; email: string | null },
 ): Promise<void> {
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
     try {
         const statements = []
@@ -445,6 +453,7 @@ export async function setCapacity(
                      updated_at = excluded.updated_at,
                      updated_by_email = excluded.updated_by_email`,
             )
+            // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
             .bind(args.runId, args.length, args.capacity, new Date().toISOString(), args.email)
             .run()
     } catch (error: any) {
@@ -467,6 +476,7 @@ export async function importAgendaPlanning(
     args: { runId: string; payload: AgendaPlanningImport; email: string | null },
 ): Promise<{ statuses: number; overrides: number; tracks: number; slots: number }> {
     const { runId, payload, email } = args
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
     const board: PlannerBoard = payload.board ?? EMPTY_PLANNER_BOARD
 

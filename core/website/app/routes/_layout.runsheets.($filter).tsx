@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useState } from 'react'
@@ -33,7 +34,7 @@ import { compareRunsheetItems, fetchRunsheet, sessionsToRunsheetItems } from '~/
 import { requireRunsheetOpen } from '~/lib/runsheets/runsheet-availability.server'
 import { AGENDA_TEAM_FILTER, filterRunsheetItems, parseRunsheetFilters } from '~/lib/runsheets/runsheet-filters'
 import { noIndexMeta } from '~/lib/seo'
-import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
+import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.runsheets.($filter)'
 import type { loader as sessionLoader } from './api.runsheets.session.$sessionId'
@@ -152,6 +153,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     return data(
         {
             items,
+            serverNow: getDateTimeProvider(context).nowDate().toISO(),
             teamLinks,
             canRefresh,
             hasBumpIn: Boolean(config.bumpIn),
@@ -188,7 +190,7 @@ export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate 
  */
 function formatTime(isoDateTime: string | null): string {
     if (!isoDateTime) return '-'
-    const dateTime = DateTime.fromISO(isoDateTime, { zone: conferenceManifest.public.timezone })
+    const dateTime = conferenceDateTime.fromISO(isoDateTime)
     return dateTime.isValid ? dateTime.toFormat('h:mm a') : '-'
 }
 
@@ -207,13 +209,14 @@ export default function Runsheets() {
         fetchedAt,
         canRefresh,
         hasBumpIn,
+        serverNow,
     } = useLoaderData<typeof loader>()
     const [searchParams] = useSearchParams()
     // Filtered here, not in the loader, so a filter change is instant and
     // works offline. The server renders the same filter first, from the URL.
     const filters = parseRunsheetFilters(searchParams, { teamLabels, locationLabels })
     const items = filterRunsheetItems(allItems, filters)
-    const { nowIds, firstNowId } = useRunsheetNow(items)
+    const { nowIds, firstNowId } = useRunsheetNow(items, serverNow)
     const selectedTeamLinks = filters.teams.flatMap((team) =>
         teamLinks[team] ? [{ team, label: teamLabels[team] ?? team, links: teamLinks[team] }] : [],
     )
