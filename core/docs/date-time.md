@@ -1,6 +1,6 @@
 # Date and time patterns
 
-Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, date formatting, calendars, or time-dependent tests. These rules apply to the shared website and conference configuration. Existing violations are recorded in [the date audit](date-time-review.md); existing code is not always a safe example.
+Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, date formatting, calendars, or time-dependent tests. These rules apply to the shared website and conference configuration.
 
 ## Choose the clock
 
