@@ -4,6 +4,9 @@ date: 2022-09-09
 authors:
     - Allen Azemia
 summary: "Did anyone say bingo? This year DDD Perth will be introducing a new game on the day: Learn how to play!"
+legacyPaths:
+    - /speaker-pose-bingo-ddd-perth-2022-d1532d3d6ff3
+    - /p/d1532d3d6ff3
 ---
 
 Did anyone say bingo? This year DDD Perth will be introducing a new game on the day. That is the speaker pose bingo.

@@ -20,4 +20,10 @@ export interface FrontmatterProperties {
     image?: string
     imageAlt?: string
     authors?: string[]
+    /**
+     * Paths this post had on a host listed in the manifest's
+     * `blog.legacyHosts`, e.g. its old Medium URL path. Requests for them
+     * redirect here. See `~/lib/legacy-blog-redirect.server`.
+     */
+    legacyPaths?: string[]
 }

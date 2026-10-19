@@ -6,6 +6,9 @@ authors:
 summary: "Well Global Diversity CFP Day has wrapped up again for another year, and my head is still spinning with things I wish I’d remembered to…"
 image: /images/blog/2020-01-21-on-submitting-to-conferences/01.jpeg
 imageAlt: ""
+legacyPaths:
+    - /on-submitting-to-conferences-f2234cfd305f
+    - /p/f2234cfd305f
 ---
 
 Well [Global Diversity CFP Day](https://www.globaldiversitycfpday.com/) has wrapped up again for another year, and my head is still spinning with things I wish I’d remembered to share. So while it’s all still fresh (and while I can continue to postpone my other work 😂), I thought I’d take the chance to write them down.

@@ -4,6 +4,9 @@ date: 2018-06-27
 authors:
     - Rebecca Waters
 summary: "Running this conference would not happen without our sponsors. Find out why they support us!"
+legacyPaths:
+    - /why-sponsor-ddd-perth-39dbc973e374
+    - /p/39dbc973e374
 ---
 
 DDD Perth is an inclusive non-profit conference for the Perth software community. Our goal is to create an approachable event that appeals to the whole community, especially people that don’t normally get to attend or speak at conferences. We do this by:

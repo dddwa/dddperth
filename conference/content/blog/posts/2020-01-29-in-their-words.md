@@ -4,6 +4,9 @@ date: 2020-01-29
 authors:
     - Rebecca Waters
 summary: "DDD Perth is proud to put our speaker community front and centre. We are very proud of their achievements, from seasoned speakers right…"
+legacyPaths:
+    - /in-their-words-29f97491fac
+    - /p/29f97491fac
 ---
 
 DDD Perth is proud to put our speaker community front and centre. We are very proud of their achievements, from seasoned speakers right through to our first-time speakers in their first year out of university.

@@ -4,6 +4,9 @@ date: 2019-05-26
 authors:
     - Rebecca Waters
 summary: "DDD Perth takes our voting pretty seriously! Here are some guidelines"
+legacyPaths:
+    - /voting-rules-b06b25e0de2
+    - /p/b06b25e0de2
 ---
 
 ![Ian Hughes wants to tell you about Voting for DDD Perth’s agenda in 2019](/images/blog/2019-05-26-voting-rules/01.jpeg)

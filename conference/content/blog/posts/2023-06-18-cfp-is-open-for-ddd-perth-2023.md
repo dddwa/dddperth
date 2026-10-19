@@ -4,6 +4,9 @@ date: 2023-06-18
 authors:
     - David Meacock
 summary: "It’s that time of year again — the Call For Proposals for DDD Perth 2023 is on!"
+legacyPaths:
+    - /cfp-is-open-for-ddd-perth-2023-bb9098f70418
+    - /p/bb9098f70418
 ---
 
 It’s that time of year again — the Call For Proposals for DDD Perth 2023 is on!

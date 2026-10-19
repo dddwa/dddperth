@@ -6,6 +6,9 @@ authors:
 summary: "In this series of blog posts, we’ll be talking about the skills and giving tips, tricks and feedback on planning, creating and presenting…"
 image: /images/blog/2022-08-06-speaker-skills-part-1/01.png
 imageAlt: ""
+legacyPaths:
+    - /speaker-skills-part-1-fc385913a26
+    - /p/fc385913a26
 ---
 
 In this series of blog posts, we’ll be talking about the skills and giving tips, tricks, and feedback on planning, creating, and presenting a talk. This comes from our experience as tech conference speakers, but most of the advice can be applied in a wide variety of settings and talk topics.

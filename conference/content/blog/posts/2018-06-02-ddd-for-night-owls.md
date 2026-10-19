@@ -4,6 +4,9 @@ date: 2018-06-02
 authors:
     - Rob Crowley
 summary: "As a member of the DDD Perth organising committee, it is with a significant degree of pride that I look back and see how the conference has…"
+legacyPaths:
+    - /ddd-for-night-owls-cd94b7749692
+    - /p/cd94b7749692
 ---
 
 ![Rimma Shafikova wowing the crowd at DDD by Night (DDD by Night Flickr Album)](/images/blog/2018-06-02-ddd-for-night-owls/01.jpeg)

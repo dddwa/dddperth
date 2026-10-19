@@ -4,6 +4,9 @@ date: 2018-02-08
 authors:
     - Rebecca Waters
 summary: "February 3rd, 2018: Global Diversity Call for Proposals (CFP) Day. Around the globe, over 50 cities across 23 countries participated by…"
+legacyPaths:
+    - /global-diversity-call-for-proposals-day-49ecb498355c
+    - /p/49ecb498355c
 ---
 
 ![Photo by Hack Capital on Unsplash](/images/blog/2018-02-08-global-diversity-call-for-proposals-day/01.jpeg)

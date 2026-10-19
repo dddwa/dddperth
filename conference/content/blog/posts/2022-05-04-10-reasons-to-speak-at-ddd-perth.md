@@ -4,6 +4,9 @@ date: 2022-05-04
 authors:
     - Amy Kapernick
 summary: "It’s that time of year again, DDD Perth is open for CFPs! Here are 10 reasons why you should be a speaker at DDD Perth in 2022."
+legacyPaths:
+    - /10-reasons-to-speak-at-ddd-perth-fd2fb238f91a
+    - /p/fd2fb238f91a
 ---
 
 It’s that time of year again, DDD Perth is [open for CFPs](https://sessionize.com/ddd-perth-2022/)! After a slightly smaller event in 2021, we’re back for 2022 and this year we’re aiming for bigger and better than ever before, something we can’t do without an amazing lineup of talent to be our speakers.

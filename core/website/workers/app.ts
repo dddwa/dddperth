@@ -1,6 +1,7 @@
 import { createRequestHandler } from 'react-router'
 import type { CloudflareEnv } from '../app/remix-app-load-context'
 import { getLoadContext } from '../app/entry.server'
+import { getConferenceLegacyBlogRedirect } from '../app/lib/legacy-blog-redirect.server'
 import { buildAppConfigFromEnv } from '../app/lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from '../app/lib/services/cloudflare/build-services.server'
 
@@ -22,6 +23,11 @@ export default {
             const fixtureBaseUrl = getFixtureBaseUrl(env as unknown as Record<string, unknown>)
             if (fixtureBaseUrl) installSessionizeFixtureFetch(fixtureBaseUrl)
         }
+
+        // Before anything path-based: on an old blog host, every path —
+        // including `/` and trailing-slash ones — belongs to the old blog.
+        const legacyBlogRedirect = getConferenceLegacyBlogRedirect(request)
+        if (legacyBlogRedirect) return legacyBlogRedirect
 
         const url = new URL(request.url)
 

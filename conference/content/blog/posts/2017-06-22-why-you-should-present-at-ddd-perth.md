@@ -4,6 +4,9 @@ date: 2017-06-22
 authors:
     - Aidan Morgan
 summary: "One of the best things about DDD Perth is that it provides a forum for people who have never presented at a conference before to have a…"
+legacyPaths:
+    - /why-you-should-present-at-ddd-perth-8de407becbe
+    - /p/8de407becbe
 ---
 
 One of the best things about DDD Perth is that it provides a forum for people who have never presented at a conference before to have a chance to speak. The anonymous voting process used by DDD Perth ensures that everyone that submits a presentation abstract has the same chance of being selected to present.

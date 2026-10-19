@@ -795,6 +795,20 @@ export interface ConferenceManifest {
     /** Meet-the-Experts time slots — shared by the speaker and sponsor
      * portals. Omit to hide the feature entirely. */
     meetTheExperts?: MeetTheExpertsConfig
+    /** Blog config. Optional — the blog works without it. */
+    blog?: BlogConfig
+}
+
+export interface BlogConfig {
+    /**
+     * Hostnames the blog used to be served from (e.g. a Medium custom domain
+     * like `blog.example.com`), now pointed at this Worker. A request for one
+     * of them is permanently redirected to this site's `/blog`: to the post
+     * whose `legacyPaths` frontmatter lists the requested path, or to the
+     * blog index otherwise. The host is read from `X-Forwarded-Host` /
+     * `Forwarded` first, so it still matches behind a CDN or proxy.
+     */
+    legacyHosts?: string[]
 }
 
 /**

@@ -4,6 +4,9 @@ date: 2017-06-28
 authors:
     - Michelle Sandford
 summary: "Anyone who knows me knows I am a huge fan of conferences. I love the opportunity to learn stuff on a wide range of topics all in one day. I…"
+legacyPaths:
+    - /what-does-ddd-stand-for-57fe53808865
+    - /p/57fe53808865
 ---
 
 ![Raspberry Pi anyone?](/images/blog/2017-06-28-what-does-ddd-stand-for/01.jpeg)
