@@ -144,7 +144,7 @@ export interface FeedbackRequestEmailVars {
     companyName: string
     conferenceName: string
     year: string
-    /** Absolute URL of /portal/feedback. */
+    /** Absolute URL of /sponsor-portal/feedback. */
     feedbackUrl: string
     /** The admin sending it, for the sign-off. */
     senderName?: string

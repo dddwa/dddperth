@@ -61,7 +61,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const emailContext = {
         conferenceName: conferenceManifest.public.name,
-        portalUrl: `${new URL(request.url).origin}/portal`,
+        portalUrl: `${new URL(request.url).origin}/sponsor-portal`,
         senderName: user.name || undefined,
     }
 

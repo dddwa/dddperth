@@ -376,9 +376,9 @@ export interface SponsorPortalHarness {
     sync: SponsorSyncService
     /** Runs a full sync, as the cron and the admin button both do. */
     runSync(): Promise<void>
-    /** What `/portal/profile` would render for this sponsor. */
+    /** What `/sponsor-portal/profile` would render for this sponsor. */
     profileForm(issueKey: string): Promise<{ blurb: string; websiteUrl: string; socials: Record<string, string> }>
-    /** What `/portal/logistics` would render for this sponsor. */
+    /** What `/sponsor-portal/logistics` would render for this sponsor. */
     logisticsForm(issueKey: string): Promise<Record<string, string>>
     /** What the dashboard checklist would show: section key → progress. */
     dashboardProgress(issueKey: string): Promise<Record<string, { done: number; total: number; complete: boolean }>>

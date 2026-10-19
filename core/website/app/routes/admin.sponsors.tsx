@@ -257,7 +257,7 @@ export default function AdminSponsors() {
                                         <styled.td py="2" pr="4">
                                             {sponsor.hasLogo ? (
                                                 <styled.a
-                                                    href={`/portal/logo/${sponsor.issueKey}?download=1`}
+                                                    href={`/sponsor-portal/logo/${sponsor.issueKey}?download=1`}
                                                     textDecoration="underline"
                                                 >
                                                     Download

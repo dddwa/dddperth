@@ -8,7 +8,7 @@ reach the public website via the committee's import tool (`pnpm sponsor:add` →
 the public site keeps rendering from the static year config.
 
 Everything is driven by the optional `sponsorPortal` entry in the conference manifest
-(`conference/manifest.ts` → `conference/config/sponsor-portal.ts`). No entry → `/portal` 404s and
+(`conference/manifest.ts` → `conference/config/sponsor-portal.ts`). No entry → `/sponsor-portal` 404s and
 sync never runs.
 
 ## How access works
@@ -18,7 +18,7 @@ sync never runs.
 - **Roles are derived per request** — nothing is stored on the session. `requireAdmin` checks the
   allowlist; `requireSponsorContact` re-resolves email → sponsor on every portal request, so
   removing a contact email in Jira revokes access on the next sync even mid-session.
-- Sponsor contacts hitting `/admin` are bounced to `/portal` and vice versa.
+- Sponsor contacts hitting `/admin` are bounced to `/sponsor-portal` and vice versa.
 
 ## Jira conventions (committee)
 
@@ -102,7 +102,7 @@ pnpm start                          # http://localhost:3800
    open **Admin → Sponsors** and hit **Sync now**. Three fixture sponsors (Acme Rockets, Globex,
    Initech — see `app/lib/sponsors/stub-jira-client.server.ts`) land in local D1.
 2. Log out, request a magic link for `sponsor-acme@example.com`, and you're in that sponsor's
-   `/portal` workspace.
+   `/sponsor-portal` workspace.
 3. Upload a logo and fill in details. On completion the stub "write-back" logs
    `[jira-stub] setStatusOptionId(SPN-101, customfield_10205, 10202)` to the console instead of
    touching Jira. Saving the logistics form logs the same line for the social, exhibition, raffle
@@ -268,7 +268,7 @@ profile whose fields were deliberately cleared.
 - The blurb prefills from **Website Blurb** (`quote` in config), _not_ from **Quotes for Socials** —
   those are deliberately different copy, and the latter stays part of the logistics form.
 
-### Sponsor logistics (`/portal/logistics`)
+### Sponsor logistics (`/sponsor-portal/logistics`)
 
 Collects the sponsor-supplied half of those workstreams: exhibitor contact, bump-in/out,
 equipment, loading dock, induction attendees, Optus screen orders, raffle prize and the social

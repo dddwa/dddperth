@@ -85,7 +85,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const emailVars = {
         conferenceName: conferenceManifest.public.name,
         year: portalConfig.year,
-        feedbackUrl: `${new URL(request.url).origin}/portal/feedback`,
+        feedbackUrl: `${new URL(request.url).origin}/sponsor-portal/feedback`,
         senderName: user.name || undefined,
     }
     const replyTo = conferenceManifest.brand.sponsorshipEmail

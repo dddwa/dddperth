@@ -57,7 +57,7 @@ const fieldLabelClass = css({
  * "Register for Meet the Experts" modal for the sponsor portal — same
  * structure as `SpeakerMeetTheExpertsModal` (checkbox list of configured
  * slots + a bio toggle), submitting to `save-meet-the-experts` on
- * `/portal`. One registration per sponsor (company-level), unlike speakers
+ * `/sponsor-portal`. One registration per sponsor (company-level), unlike speakers
  * there's no preliminary opt-in question — a sponsor goes straight to
  * registering. The bio default is the sponsor's own submitted company blurb
  * rather than a Sessionize bio.
