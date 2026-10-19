@@ -59,8 +59,12 @@ export function Header({
                         base: '"menu logo cta"',
                         lg: '"logo nav cta"',
                     }}
+                    // `minmax(0, 1fr)` lets the logo track give way to the CTAs on
+                    // narrow phones; a bare `1fr` can't shrink below the logo, and
+                    // the row overflowed at 320-340px and again at 460-488px, where
+                    // the secondary CTA appears. The logo is fluid up to 110px below.
                     gridTemplateColumns={{
-                        base: 'auto 1fr auto',
+                        base: 'auto minmax(0, 1fr) auto',
                         lg: 'auto 1fr auto',
                     }}
                     gap={{ base: '3', lg: '4' }}
@@ -88,7 +92,8 @@ export function Header({
                             display="flex"
                             justifyContent={{ base: 'center', lg: 'flex-start' }}
                             alignItems="center"
-                            width={{ base: '[110px]', lg: '[150px]', xl: '[180px]' }}
+                            width={{ base: 'full', lg: '[150px]', xl: '[180px]' }}
+                            maxWidth={{ base: '[110px]', lg: '[none]' }}
                         >
                             <Logo />
                         </AppLink>
@@ -299,7 +304,15 @@ function MenuButton({
 
 function MenuIcon() {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+        >
             <line x1="4" y1="7" x2="20" y2="7" />
             <line x1="4" y1="12" x2="20" y2="12" />
             <line x1="4" y1="17" x2="20" y2="17" />
@@ -309,7 +322,15 @@ function MenuIcon() {
 
 function CloseIcon() {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+        >
             <line x1="6" y1="6" x2="18" y2="18" />
             <line x1="18" y1="6" x2="6" y2="18" />
         </svg>
