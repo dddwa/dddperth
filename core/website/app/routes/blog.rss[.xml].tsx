@@ -27,7 +27,7 @@ export async function loader({ context }: Route.LoaderArgs) {
             title: post.title,
             link: postLink,
             // eslint-disable-next-line dates/use-date-time-provider -- RSS metadata uses real time, independently of conference overrides.
-            date: posts[0].date ? new Date(posts[0].date) : new Date(),
+            date: post.date ? new Date(post.date) : new Date(),
             description: post.summary,
         })
     })

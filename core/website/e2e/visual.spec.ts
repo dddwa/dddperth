@@ -18,9 +18,10 @@ import { ROUTES, VISUAL_EXPECTED_DAYS_LEFT, VISUAL_MASK_SELECTORS } from './rout
  * conference-stub (DevConf Example) and guard core's own templates. A fork
  * renders different content, sponsors, theme and copy, so it regenerates the
  * whole set against its own conference — `pnpm vr --update-snapshots`, in the
- * container, never on the host — and points `FIXTURE_BLOG_SLUG` in
- * `routes.ts` at one of its own posts. Expect a `/core-pull` that changes
- * a template to need a regeneration on both sides.
+ * container, never on the host. The blog baselines are the exception to
+ * "different content": both sides render the fixture posts in
+ * `e2e/fixtures/blog/`. Expect a `/core-pull` that changes a template to need
+ * a regeneration on both sides.
  *
  * Two things narrow what each baseline covers, both configured per-route in
  * `routes.ts`:
