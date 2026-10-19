@@ -92,7 +92,7 @@ export function Header({
                             display="flex"
                             justifyContent={{ base: 'center', lg: 'flex-start' }}
                             alignItems="center"
-                            width={{ base: '[110px]', lg: '[180px]' }}
+                            width={{ base: '[110px]', lg: '[150px]', xl: '[180px]' }}
                         >
                             <Logo />
                         </AppLink>
@@ -105,7 +105,9 @@ export function Header({
                         display={{ base: 'none', lg: 'flex' }}
                         alignItems="center"
                         justifyContent="center"
-                        gap="12"
+                        // Six links plus two CTAs overflow a 1024px viewport at
+                        // the full gap, so it tightens until `xl`.
+                        gap={{ lg: '6', xl: '12' }}
                         fontSize="md"
                         fontWeight="semibold"
                     >

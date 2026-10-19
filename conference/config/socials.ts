@@ -8,7 +8,6 @@ export const socials: Socials = {
     Facebook: 'DDDPerth',
     Flickr: 'https://www.flickr.com/photos/135003652@N08/albums',
     Youtube: 'https://www.youtube.com/channel/UCj4UnNYakbLAh2xTWTjeoAQ',
-    Blog: 'https://blog.dddperth.com/',
     Email: 'info@dddperth.com',
     MailingList: 'http://eepurl.com/cRvaSf',
     GitHub: 'dddwa',
