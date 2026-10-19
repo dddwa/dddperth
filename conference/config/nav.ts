@@ -13,4 +13,5 @@ export const nav: NavConfig = [
     { to: '/sponsors', label: 'Sponsors' },
     { to: '/agenda', label: 'Agenda' },
     { to: '/about', label: 'About' },
+    { to: '/blog', label: 'Blog' },
 ]
