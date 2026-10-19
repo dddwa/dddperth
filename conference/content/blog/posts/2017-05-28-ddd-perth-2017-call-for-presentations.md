@@ -4,6 +4,9 @@ date: 2017-05-28
 authors:
     - Rob Moore
 summary: "I’m pleased to announce the opening of the DDD Perth 2017 Call For Presentations. I’m particularly excited this year because we’ve spend a…"
+legacyPaths:
+    - /ddd-perth-2017-call-for-presentations-141c92097b84
+    - /p/141c92097b84
 ---
 
 I’m pleased to announce the opening of the DDD Perth 2017 Call For Presentations. I’m particularly excited this year because we’ve spend a fair bit of time and effort to make a few key changes that I’m hopeful will positively influence the diversity of speakers we have in this year’s conference.

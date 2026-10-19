@@ -4,6 +4,9 @@ date: 2021-04-26
 authors:
     - Rebecca Waters
 summary: "DDD Perth is back again for 2021 and we are looking at our technology community for speakers for our August, in-person, conference."
+legacyPaths:
+    - /ddd-perth-2021-call-for-papers-1d1bfb333f01
+    - /p/1d1bfb333f01
 ---
 
 We are not about specific technologies or methodologies, and welcome anyone who is interested to talk to the Perth technology community about what they are working on or interested in. DDD Perth is a multi-track conference that is driven by the community. We strive to be an approachable event that is accessible to all members of the community.

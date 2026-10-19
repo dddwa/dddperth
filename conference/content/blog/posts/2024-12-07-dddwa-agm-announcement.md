@@ -4,6 +4,9 @@ date: 2024-12-07
 authors:
     - Aidan Morgan
 summary: "The DDDWA AGM will be held Monday 20th January 2025 5:30pm with a venue TBD in the Perth CBD (and virtual). If you are interested in…"
+legacyPaths:
+    - /dddwa-agm-announcement-56a3d5528952
+    - /p/56a3d5528952
 ---
 
 The DDDWA AGM will be held **Monday 20th January 2025 5:30pm** with a venue TBD in the Perth CBD (and virtual). If you are interested in attending then please email info (at) dddperth.com.

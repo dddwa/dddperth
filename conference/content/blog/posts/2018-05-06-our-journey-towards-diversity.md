@@ -4,6 +4,9 @@ date: 2018-05-06
 authors:
     - Rebecca Waters
 summary: "DDD Perth aims to be inclusive — so how are we doing?"
+legacyPaths:
+    - /our-journey-towards-diversity-1d9796475f24
+    - /p/1d9796475f24
 ---
 
 ![DDD Perth 2017 Speakers](/images/blog/2018-05-06-our-journey-towards-diversity/01.jpeg)

@@ -4,6 +4,9 @@ date: 2022-01-30
 authors:
     - Rebecca Waters
 summary: "DDD Perth hopefully needs no introduction if you’re already reading this article. The largest tech conference in WA, we host a one-day…"
+legacyPaths:
+    - /become-a-director-of-ddd-perth-48324d48f58f
+    - /p/48324d48f58f
 ---
 
 DDD Perth hopefully needs no introduction if you’re already reading this article. The largest tech conference in WA, we host a one-day event that focuses on four core values:

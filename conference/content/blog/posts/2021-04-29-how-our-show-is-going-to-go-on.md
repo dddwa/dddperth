@@ -4,6 +4,9 @@ date: 2021-04-29
 authors:
     - Rebecca Waters
 summary: "In the midst of a lockdown, Chair of DDD WA Rebecca Waters talks about what the plan is this year to bring the conference back online."
+legacyPaths:
+    - /how-our-show-is-going-to-go-on-c902f44706ec
+    - /p/c902f44706ec
 ---
 
 I’m sitting in my office on a public holiday, with the family baking bread in the kitchen and freshly brewed coffee at my fingertips. I’m also, incidentally, in the middle of a 3-day lockdown; Perth recorded community transmission of COVID-19, and the city was quick to respond.

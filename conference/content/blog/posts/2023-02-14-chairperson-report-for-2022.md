@@ -4,6 +4,9 @@ date: 2023-02-14
 authors:
     - Rebecca Waters
 summary: "Hello! I’m Rebecca Waters, the chairperson of DDD Perth in 2022. As part of our annual general meeting, I’m required to give a Chairperson…"
+legacyPaths:
+    - /chairperson-report-for-2022-c2604ddb0e80
+    - /p/c2604ddb0e80
 ---
 
 Hello! I’m Rebecca Waters, the chairperson of DDD Perth in 2022. As part of our annual general meeting, I’m required to give a Chairperson Report. Traditionally I present this for the first time at the AGM, but there are no rules against making it a blog post, and it’s an excellent reflection on the year that was.

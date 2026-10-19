@@ -4,6 +4,9 @@ date: 2022-04-11
 authors:
     - Aidan Morgan
 summary: "Please don’t ask me to play chess, I’m very bad at it."
+legacyPaths:
+    - /ddd-voting-2022-avoiding-feeling-stale-mate-cfb0a15db37b
+    - /p/cfb0a15db37b
 ---
 
 ![A black and white photo of two chess knights on a chessboard facing each other.](/images/blog/2022-04-11-ddd-voting-2022-avoiding-feeling-stale-mate/01.jpeg)

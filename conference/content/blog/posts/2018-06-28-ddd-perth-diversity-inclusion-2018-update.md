@@ -4,6 +4,9 @@ date: 2018-06-28
 authors:
     - Matt Ward
 summary: "The organising committee are proud of what DDD Perth achieved last year, but as we came together to organise this year’s conference we…"
+legacyPaths:
+    - /ddd-perth-diversity-inclusion-2018-update-8ed9af094ff1
+    - /p/8ed9af094ff1
 ---
 
 The organising committee are proud of what DDD Perth [achieved last year](/blog/2018-05-06-our-journey-towards-diversity), but as we came together to organise this year’s conference we didn’t want to rest on our laurels, we wanted to go further.

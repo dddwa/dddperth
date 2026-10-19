@@ -4,6 +4,9 @@ date: 2018-03-29
 authors:
     - Rebecca Waters
 summary: "We chatted to Donna about her experiences at DDD Perth 2017"
+legacyPaths:
+    - /speaker-profile-donna-edwards-fcf3a303a080
+    - /p/fcf3a303a080
 ---
 
 ![Donna Edwards presenting at DDD Perth 2017 (DDD Perth Flickr Album)](/images/blog/2018-03-29-speaker-profile-donna-edwards/01.jpeg)

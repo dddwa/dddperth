@@ -6,6 +6,9 @@ authors:
 summary: "DDD Perth 2018 was record breaking and we’re back again this year for more!"
 image: /images/blog/2019-04-11-meet-the-2019-ddd-perth-team/01.png
 imageAlt: ""
+legacyPaths:
+    - /meet-the-2019-ddd-perth-team-d45cec7f5539
+    - /p/d45cec7f5539
 ---
 
 ### DDD Perth 2018 was record breaking and we’re back again this year for more!

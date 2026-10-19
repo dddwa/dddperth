@@ -4,6 +4,9 @@ date: 2018-01-24
 authors:
     - Rebecca Waters
 summary: "The last 6 months at DDD Perth has seen us hit some amazing milestones."
+legacyPaths:
+    - /meet-the-team-35865433cb39
+    - /p/35865433cb39
 ---
 
 ![The 2017 DDD Perth team (credit: David Schokker)](/images/blog/2018-01-24-meet-the-team/01.jpeg)

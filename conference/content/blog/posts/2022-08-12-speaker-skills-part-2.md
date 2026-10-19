@@ -4,6 +4,9 @@ date: 2022-08-12
 authors:
     - Amy Kapernick
 summary: "In this series of blog posts, we’ll be talking about the skills and giving tips, tricks and feedback on planning, creating and presenting…"
+legacyPaths:
+    - /speaker-skills-part-2-fc63a0861ce5
+    - /p/fc63a0861ce5
 ---
 
 In this series of blog posts, we’ll be talking about the skills and giving tips, tricks and feedback on planning, creating and presenting a talk. This comes from our experience as tech conference speakers, but most of the advice is applicable in a wide variety of settings and talk topics.

@@ -1,5 +1,5 @@
 import { rehypeCodeBlocksShiki } from '@kentcdodds/md-temp'
-import remarkEmbedder, { type TransformerInfo } from '@remark-embedder/core'
+import remarkEmbedder, { type Transformer, type TransformerInfo } from '@remark-embedder/core'
 import oembedTransformer from '@remark-embedder/transformer-oembed'
 import type * as H from 'hast'
 import type { MdxJsxFlowElement } from 'mdast-util-mdx-jsx'
@@ -131,7 +131,16 @@ function unwrapDefault<T = any>(mod: unknown): T {
 }
 
 const remarkEmbedderPlugin = unwrapDefault(remarkEmbedder)
-const oembedTransformerResolved = unwrapDefault(oembedTransformer)
+const oembedTransformerBase: Transformer = unwrapDefault(oembedTransformer)
+// remark-embedder offers every one-word paragraph as a candidate URL — a
+// tight list item reading "Treasurer" becomes `https://treasurer/` — and the
+// oEmbed transformer fetches oembed.com's provider list to check each one. So
+// any post with a one-word list item made the build depend on oembed.com
+// being reachable. No oEmbed provider lives on a dotless hostname.
+const oembedTransformerResolved: Transformer = {
+    ...oembedTransformerBase,
+    shouldTransform: (url) => new URL(url).hostname.includes('.') && oembedTransformerBase.shouldTransform(url),
+}
 
 const remarkPlugins: U.PluggableList = [
     [

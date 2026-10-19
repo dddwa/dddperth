@@ -4,6 +4,9 @@ date: 2023-01-10
 authors:
     - Aidan Morgan
 summary: "After a successful 2022 conference and a much needed break, it’s time to start getting the process moving on organising the 2023…"
+legacyPaths:
+    - /announcement-ddd-perth-2023-agm-720a13578e2e
+    - /p/720a13578e2e
 ---
 
 After a successful 2022 conference and a much needed break, it’s time to start getting the process moving on organising the 2023 conference. Organising a conference the size of DDD Perth takes a large number of people to volunteer, and the first step in putting together another awesome conference is to form the committee that will steer us through everything 2023 has to offer.

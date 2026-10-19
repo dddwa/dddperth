@@ -4,6 +4,9 @@ date: 2020-02-05
 authors:
     - Rebecca Waters
 summary: "Without a doubt, DDD Perth 2019 was huge. Let’s meet our new team members for 2020!"
+legacyPaths:
+    - /ddd-perth-is-back-for-2020-c0082c372517
+    - /p/c0082c372517
 ---
 
 Without a doubt, DDD Perth 2019 was huge.

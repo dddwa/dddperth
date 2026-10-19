@@ -4,6 +4,9 @@ date: 2018-02-02
 authors:
     - Rebecca Waters
 summary: "Following DDD Perth 2017, a bunch of attendees gave the internet their take on our conference. Apart from becoming one of the top five…"
+legacyPaths:
+    - /according-to-you-b4d307293213
+    - /p/b4d307293213
 ---
 
 ![Ian Hughes presenting at DDD Perth 2017](/images/blog/2018-02-02-according-to-you/01.jpeg)

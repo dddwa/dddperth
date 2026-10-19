@@ -4,6 +4,9 @@ date: 2018-02-20
 authors:
     - Rebecca Waters
 summary: "Volunteers are the lifeblood of DDD Perth. In order to pull off such a conference, we need volunteers on the ground before, during and…"
+legacyPaths:
+    - /volunteer-spotlight-david-schokker-9f2e337d6ebb
+    - /p/9f2e337d6ebb
 ---
 
 ![View from the DDD Perth 2017 Speaker and Sponsor party (David Schokker)](/images/blog/2018-02-20-volunteer-spotlight-david-schokker/01.jpeg)

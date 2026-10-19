@@ -4,6 +4,9 @@ date: 2025-12-18
 authors:
     - DDD Perth
 summary: "The DDDWA AGM will be held Monday 2nd February 2026 5:30pm with a venue TBD in the Perth CBD (and virtual). If you are interested in…"
+legacyPaths:
+    - /2026-agm-announcement-afc2f9781a1c
+    - /p/afc2f9781a1c
 ---
 
 The DDDWA AGM will be held **Monday 2nd February 2026 5:30pm** with a venue TBD in the Perth CBD (and virtual). If you are interested in attending, then please email info (at) dddperth.com.

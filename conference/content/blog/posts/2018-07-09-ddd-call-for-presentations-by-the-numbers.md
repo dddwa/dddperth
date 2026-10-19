@@ -4,6 +4,9 @@ date: 2018-07-09
 authors:
     - Aidan Morgan
 summary: "As our agenda has just been announced, we thought it would be a good time to take a look back at the proposals we received for…"
+legacyPaths:
+    - /ddd-call-for-presentations-by-the-numbers-12475db7fc47
+    - /p/12475db7fc47
 ---
 
 As our agenda has just been announced, we thought it would be a good time to take a look back at the proposals we received for presentations this year and break some of the numbers down that we thought were interesting for 2018.

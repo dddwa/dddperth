@@ -4,6 +4,9 @@ date: 2023-01-17
 authors:
     - Rebecca Waters
 summary: "Boring organisational post in 3….2…"
+legacyPaths:
+    - /the-directors-behind-ddd-perth-2416612a0918
+    - /p/2416612a0918
 ---
 
 ![The DDD Perth neon sign on stage at PCEC. The photo is taken from a distance in a full theatre, and directly in front to the left of the camera is a person sitting with their back to the camera, facing the stage. They have their leg crossed.](/images/blog/2023-01-17-the-directors-behind-ddd-perth/01.jpeg)

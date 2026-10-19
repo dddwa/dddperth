@@ -4,6 +4,9 @@ date: 2018-06-17
 authors:
     - Ashley Aitken
 summary: "Djilba is the time and theme for DDD Perth 2018"
+legacyPaths:
+    - /https-blog-dddperth-com-djilba-and-ddd-perth-2018-f61aa947a843
+    - /p/f61aa947a843
 ---
 
 [DDD Perth](https://dddperth.com) is just around the corner and if you haven’t registered yet, get in quick before tickets sell out, as they did last year, for the best and biggest software community conference in Perth.
