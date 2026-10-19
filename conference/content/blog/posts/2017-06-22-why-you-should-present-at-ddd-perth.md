@@ -3,7 +3,7 @@ title: "Why you should present at DDD Perth"
 date: 2017-06-22
 authors:
     - Aidan Morgan
-summary: "One of the best things about DDD Perth is that it provides a forum for people who have never presented at a conference before to have a…"
+summary: "Six reasons to submit a talk, from gaining presenting experience to growing your network, and why anonymous voting gives first-time speakers the same chance as anyone."
 legacyPaths:
     - /why-you-should-present-at-ddd-perth-8de407becbe
     - /p/8de407becbe

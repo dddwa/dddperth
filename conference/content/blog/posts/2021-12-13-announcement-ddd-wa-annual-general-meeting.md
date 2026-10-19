@@ -3,7 +3,7 @@ title: "Announcement: DDD WA Annual General Meeting"
 date: 2021-12-13
 authors:
     - Aidan Morgan
-summary: "Well, after a successful conference in 2021 (more details on that to come!) it’s time for us to bunker down for Christmas with family and…"
+summary: "The DDD WA AGM is on 20 January 2022. We’re looking for nominations for the office bearer and director roles on the 2022 committee."
 legacyPaths:
     - /announcement-ddd-wa-annual-general-meeting-42191641ba66
     - /p/42191641ba66

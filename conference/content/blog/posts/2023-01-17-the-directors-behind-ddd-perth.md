@@ -3,7 +3,7 @@ title: "The Directors behind DDD Perth"
 date: 2023-01-17
 authors:
     - Rebecca Waters
-summary: "Boring organisational post in 3….2…"
+summary: "What each of the 12 roles on the recommended 2023 DDD Perth committee does, from chair and treasurer to sponsorship, technology and people."
 legacyPaths:
     - /the-directors-behind-ddd-perth-2416612a0918
     - /p/2416612a0918

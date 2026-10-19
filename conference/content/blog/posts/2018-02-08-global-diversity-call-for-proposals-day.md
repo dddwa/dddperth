@@ -3,7 +3,7 @@ title: "Global Diversity Call for Proposals Day"
 date: 2018-02-08
 authors:
     - Rebecca Waters
-summary: "February 3rd, 2018: Global Diversity Call for Proposals (CFP) Day. Around the globe, over 50 cities across 23 countries participated by…"
+summary: "On 3 February 2018, Fenders and DDD Perth joined more than 50 cities running workshops to help first-time speakers write their first talk proposals."
 legacyPaths:
     - /global-diversity-call-for-proposals-day-49ecb498355c
     - /p/49ecb498355c

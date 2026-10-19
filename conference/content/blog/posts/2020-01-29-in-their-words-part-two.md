@@ -3,7 +3,7 @@ title: "In Their Words, Part Two"
 date: 2020-01-29
 authors:
     - Rebecca Waters
-summary: "DDD Perth is proud to put our speaker community front and center. We are very proud of their achievements, from seasoned speakers right…"
+summary: "More from past speakers on what DDD Perth did for them, with Donna Edwards, Hadi Eskandari and Eumir Gaspar."
 legacyPaths:
     - /in-their-words-part-two-891a687bd0f
     - /p/891a687bd0f

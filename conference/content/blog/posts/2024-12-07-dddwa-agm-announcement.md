@@ -3,7 +3,7 @@ title: "DDDWA AGM Announcement"
 date: 2024-12-07
 authors:
     - Aidan Morgan
-summary: "The DDDWA AGM will be held Monday 20th January 2025 5:30pm with a venue TBD in the Perth CBD (and virtual). If you are interested in…"
+summary: "The DDD WA AGM is on 20 January 2025, in the Perth CBD and online. Nominations are open for office bearers and directors, along with what the director role involves."
 legacyPaths:
     - /dddwa-agm-announcement-56a3d5528952
     - /p/56a3d5528952

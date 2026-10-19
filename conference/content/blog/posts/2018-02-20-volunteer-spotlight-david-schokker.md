@@ -3,7 +3,7 @@ title: "Volunteer Spotlight: David Schokker"
 date: 2018-02-20
 authors:
     - Rebecca Waters
-summary: "Volunteers are the lifeblood of DDD Perth. In order to pull off such a conference, we need volunteers on the ground before, during and…"
+summary: "Volunteer photographer David Schokker on how he got involved with DDD Perth, what the day was like, and why he’d recommend volunteering."
 legacyPaths:
     - /volunteer-spotlight-david-schokker-9f2e337d6ebb
     - /p/9f2e337d6ebb
