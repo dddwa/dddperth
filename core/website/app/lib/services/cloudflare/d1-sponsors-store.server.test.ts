@@ -43,6 +43,40 @@ describe('sponsor two-way sync (real SQL)', () => {
         await store.applySyncPlan(plan)
     }
 
+    it('does not replace a save made during the Jira read, even within the same second', async () => {
+        await sync()
+        await store.saveDetails('SPN-1', { blurb: 'Original', websiteUrl: 'https://old.test', socials: {} }, 'sponsor')
+        await store.saveLogistics('SPN-1', { rafflePrize: 'Original prize' }, 'sponsor')
+        sqlite.exec('UPDATE sponsor_profiles SET details_updated_at = 100, logistics_updated_at = 100')
+        const beforeRead = await store.getProfilesForSync()
+        // Jira returns the old values, while the sponsor successfully saves new ones.
+        await store.saveDetails('SPN-1', { blurb: 'New', websiteUrl: 'https://new.test', socials: {} }, 'sponsor')
+        await store.saveLogistics('SPN-1', { rafflePrize: 'New prize' }, 'sponsor')
+        sqlite.exec('UPDATE sponsor_profiles SET details_updated_at = 100, logistics_updated_at = 100')
+        const plan = computeSyncPlan({
+            year: '2026',
+            source: [
+                {
+                    issueKey: 'SPN-1',
+                    companyName: 'Acme',
+                    tier: 'Gold',
+                    contactEmails: [],
+                    quote: 'Old',
+                    website: 'https://old.test',
+                    logistics: { rafflePrize: 'Old prize' },
+                    logisticsKeys: ['rafflePrize'],
+                },
+            ],
+            currentSponsors: await store.getAllSponsorsForSync(),
+            currentContacts: await store.getAllContacts(),
+        })
+        await store.applySyncPlan(plan, beforeRead)
+        expect(await store.getProfile('SPN-1')).toMatchObject({ blurb: 'New', logistics: { rafflePrize: 'New prize' } })
+        // A later read can still import deliberate committee changes immediately.
+        await store.applySyncPlan(plan, await store.getProfilesForSync())
+        expect(await store.getProfile('SPN-1')).toMatchObject({ blurb: 'Old', logistics: { rafflePrize: 'Old prize' } })
+    })
+
     it('stores Jira prefills without inventing a portal submission', async () => {
         await sync({ quote: 'From Jira', website: 'https://jira.test', socials: { linkedin: 'https://in.test' } })
         expect(await store.getProfile('SPN-1')).toBeNull()

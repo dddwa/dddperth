@@ -190,6 +190,7 @@ export function createJiraSponsorSyncService(args: {
 
             const runId = await sponsors.startSyncRun(trigger)
             try {
+                const profilesBeforeRead = await sponsors.getProfilesForSync()
                 const [source, currentSponsors, currentContacts] = await Promise.all([
                     client.searchSponsorIssues(),
                     sponsors.getAllSponsorsForSync(),
@@ -197,7 +198,7 @@ export function createJiraSponsorSyncService(args: {
                 ])
 
                 const plan = computeSyncPlan({ year: portalConfig.year, source, currentSponsors, currentContacts })
-                const counts = await sponsors.applySyncPlan(plan)
+                const counts = await sponsors.applySyncPlan(plan, profilesBeforeRead)
 
                 // After the plan is applied — the sponsor data landing in D1
                 // matters more than the label, and this must not fail the run.
