@@ -34,6 +34,23 @@ function luxonDateTime(context, node) {
     return false
 }
 
+function temporalNamespace(context, node) {
+    const supportedSource = (source) => source === 'temporal-polyfill' ||
+        source.startsWith('temporal-polyfill/') || source.endsWith('/temporal')
+    if (node?.type === 'Identifier') {
+        const binding = variable(context, node)
+        if (node.name === 'Temporal' && !binding?.defs.length) return true
+        return binding?.defs.some((def) => def.type === 'ImportBinding' &&
+            def.node.type === 'ImportSpecifier' && def.node.imported.name === 'Temporal' &&
+            supportedSource(def.parent.source.value))
+    }
+    if (property(node) === 'Temporal') {
+        return variable(context, node.object)?.defs.some((def) => def.type === 'ImportBinding' &&
+            def.node.type === 'ImportNamespaceSpecifier' && supportedSource(def.parent.source.value))
+    }
+    return false
+}
+
 const constructors = new Set(['fromISO', 'fromMillis', 'fromSeconds', 'fromJSDate', 'fromObject', 'fromFormat', 'fromSQL', 'fromHTTP', 'fromRFC2822', 'fromString'])
 const clocks = new Set(['now', 'local', 'utc'])
 
@@ -69,7 +86,8 @@ export default {
                 return {
                     MemberExpression(node) {
                         if ((globalDate(context, node.object) && property(node) === 'now') ||
-                            (luxonDateTime(context, node.object) && clocks.has(property(node)))) {
+                            (luxonDateTime(context, node.object) && clocks.has(property(node))) ||
+                            (property(node) === 'Now' && temporalNamespace(context, node.object))) {
                             context.report({ node, messageId: 'useProvider' })
                         }
                     },
