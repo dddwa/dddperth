@@ -23,6 +23,34 @@ export const conference2026: ConferenceYear = {
         underrepresentedGroupsQuestionId: 131373,
     },
 
+    recordings: {
+        '1276730': 'Zvlc-l4u5Aw', // When Agents Act, Who Answers?
+        '1240238': 'cj9iRf1ky8k', // Authentication for humans, why passkeys finally make sense.
+        '1271640': 'KC_kRrg05eQ', // Hacking GitHub Actions
+        '1273544': 'IUQTuJPZGHg', // 5 Years in the Trenches: Things I Wish I Knew as a Grad
+        '1242790': 'hExxo0snqCU', // To Be Interesting, Be Interested
+        '1232680': 'CbRTM6hfr-c', // The Billion Dollar Blindspot: What happens when everyone thinks alike
+        '1275205': 'B-2utk8mW-0', // Beyond the Hype: What Quantum Computing Can Teach Us About Responsible Technology Governance
+        '1274814': 'EmhhgnHJgFQ', // Psychological Safety in Uncertain Times: Leading When You Don't Have All the Answers
+        '1274981': 'oh906LH-Xhw', // Managing your Manager to get Ahead
+        '1274977': 'NsnGhMsUf2o', // Newly Acquired Powers of the Web Platform
+        '1275363': 'Jf0CZxIs70Y', // Beyond Arrows and Boxes: System Diagrams People Can Actually Understand and Use
+        '1275355': 'AAGq578C3Dk', // Rethinking Web: Can we do more with less?
+        '1275367': 'Yj_zOIQp6Ns', // Building Software for Humans Who Are Already Busy
+        '1274888': '_YZ60ovQ7_A', // The pursuit of spending $0 - building a zero-cost cloud data platform
+        '1275071': 'TXhQ1umGekA', // Building Software That Works for People Who Don't Look Like Your Team
+        '1274860': 'WLxfg_x9DjE', // The One True Law of Software Engineering
+        '1274379': 'H-yI1mi9zMk', // A PM and a Dev Walk Into an Epic
+        '1231798': 'UmKQ06peJ1s', // I Didn’t Need to Work Harder — I Needed Better Systems
+        '1270736': '3V3epk7a2Nw', // What Women Want: What Every Ally Needs to Hear
+        '1269744': 'hhiDSHDGc4A', // Showing is cheap, knowing isn't: What changes when the cost of prototyping collapses?
+        '1269920': 'k-bur6_sAPA', // AI-Induced Psychosis at Work: The hidden employee mental health risk organisations are ignoring
+        '1275351': 'Y5EbSQn-018', // Growth begins outside your comfort zone
+        '1258207': 'DIaVLD5crEs', // No Snakes on My Ladder: Winning at Software with Types
+        '1344676': 'kRV0QBO5Coc', // [Sponsor Talk] It Worked on My GPU: Tales from icetana AI Engineering
+        '1275236': '7E3d-8gwAPY', // Asynchronous Microservices in Practice
+    },
+
     conferenceDate: DateTime.fromISO('2026-10-03T09:00:00', {
         zone: 'Australia/Perth',
     }),
