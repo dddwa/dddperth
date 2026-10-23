@@ -92,7 +92,7 @@ export function HomepageHeroPanel({
                     A one day, fully inclusive, approachable and affordable tech conference for everyone.
                 </styled.h1>
             </HeaderContainer>
-            <Box width="full" position="relative" maxHeight={{ base: '[140px]', md: '[200px]', lg: '[260px]', xl: '[420px]' }}>
+            <Box width="full" position="relative" maxHeight={{ base: '36', md: '52', lg: '64', xl: 'md' }}>
                 {/* Sizing element: the green D establishes the container height.
                     Other Ds and the gradient overlay are absolutely positioned over it. */}
                 <Box width="[38%]" ml="[4%]" visibility="hidden" aria-hidden="true">
@@ -106,7 +106,7 @@ export function HomepageHeroPanel({
                     gradientFrom="transparent"
                     gradientTo="gradient.hero-end"
                     width="full"
-                    height="[60%]"
+                    height="3/5"
                 ></Box>
                 {/*
                  * Each parallax D carries a vertical fade mask + opacity so

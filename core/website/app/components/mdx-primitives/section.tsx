@@ -15,7 +15,7 @@ export function Section({ title, lede, children }: PropsWithChildren<SectionProp
                 </styled.h2>
             ) : null}
             {lede ? (
-                <styled.p color="text.secondary" maxWidth="[720px]" marginBottom="8">
+                <styled.p color="text.secondary" maxWidth="3xl" marginBottom="8">
                     {lede}
                 </styled.p>
             ) : null}

@@ -512,8 +512,8 @@ function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
                                             mb="2"
                                             _hover={{ color: 'text.highlight' }}
                                             _focusVisible={{
-                                                outline: '[3px solid token(colors.interactive.focus)]',
-                                                outlineOffset: '[2px]',
+                                                outline: 'focus',
+                                                outlineOffset: '0.5',
                                             }}
                                         >
                                             {seat.displayName}
@@ -614,8 +614,8 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                         src={roomSponsor.logoUrlDarkMode}
                         alt={roomSponsor.name}
                         title={roomSponsor.name}
-                        maxWidth="[110px]"
-                        maxHeight="[28px]"
+                        maxWidth="28"
+                        maxHeight="7"
                         mt="1"
                         display="inline-block"
                         objectFit="contain"

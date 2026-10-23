@@ -67,13 +67,13 @@ export function PortalShell({
                                 color="white"
                                 display="flex"
                                 flexShrink="0"
-                                w={{ base: '[96px]', md: '[120px]' }}
+                                w={{ base: '24', md: '32' }}
                                 borderRadius="sm"
-                                _focusVisible={{ outline: '[2px solid white]', outlineOffset: '[4px]' }}
+                                _focusVisible={{ outline: 'focus-on-dark', outlineOffset: '1' }}
                             >
                                 <Logo />
                             </AppLink>
-                            <Box aria-hidden="true" w="[1px]" h="5" bg="[rgba(255, 255, 255, 0.25)]" flexShrink="0" />
+                            <Box aria-hidden="true" w="px" h="5" bg="white.a5" flexShrink="0" />
                             <styled.span fontSize="sm" fontWeight="medium" whiteSpace="nowrap">
                                 {area}
                             </styled.span>
@@ -82,7 +82,7 @@ export function PortalShell({
                             <styled.span
                                 display={{ base: 'none', sm: 'inline' }}
                                 fontSize="sm"
-                                color="[rgba(255, 255, 255, 0.8)]"
+                                color="white.a10"
                                 overflow="hidden"
                                 textOverflow="ellipsis"
                                 whiteSpace="nowrap"
@@ -94,15 +94,16 @@ export function PortalShell({
                                     type="submit"
                                     bg="transparent"
                                     color="white"
-                                    border="[1px solid rgba(255, 255, 255, 0.35)]"
+                                    border="subtle"
+                                    borderColor="white.a6"
                                     py="1"
                                     px="3"
                                     borderRadius="md"
                                     cursor="pointer"
                                     fontSize="sm"
                                     whiteSpace="nowrap"
-                                    _hover={{ bg: '[rgba(255, 255, 255, 0.12)]', borderColor: 'white' }}
-                                    _focusVisible={{ outline: '[2px solid white]', outlineOffset: '[2px]' }}
+                                    _hover={{ bg: 'white.a2', borderColor: 'white' }}
+                                    _focusVisible={{ outline: 'focus-on-dark', outlineOffset: '0.5' }}
                                 >
                                     Sign out
                                 </styled.button>
@@ -116,7 +117,7 @@ export function PortalShell({
                             fontWeight="semibold"
                             textTransform="uppercase"
                             letterSpacing="wider"
-                            color="[rgba(255, 255, 255, 0.8)]"
+                            color="white.a10"
                             mb="1"
                         >
                             {eyebrow}
@@ -191,12 +192,12 @@ export function PortalShell({
  * Each pair clears 4.5:1.
  */
 const tierBadgeColours: Array<{ match: string; className: string }> = [
-    { match: 'platinum', className: css({ bg: '[#e2e8f0]', color: '[#1e293b]' }) },
-    { match: 'gold', className: css({ bg: '[#f6d77b]', color: '[#4a3500]' }) },
-    { match: 'silver', className: css({ bg: '[#cbd5e1]', color: '[#1e293b]' }) },
-    { match: 'bronze', className: css({ bg: '[#e9b48a]', color: '[#4a2208]' }) },
+    { match: 'platinum', className: css({ bg: 'tier.platinum.bg', color: 'tier.platinum.fg' }) },
+    { match: 'gold', className: css({ bg: 'tier.gold.bg', color: 'tier.gold.fg' }) },
+    { match: 'silver', className: css({ bg: 'tier.silver.bg', color: 'tier.silver.fg' }) },
+    { match: 'bronze', className: css({ bg: 'tier.bronze.bg', color: 'tier.bronze.fg' }) },
 ]
-const neutralTierBadge = css({ bg: '[rgba(255, 255, 255, 0.15)]', color: 'white' })
+const neutralTierBadge = css({ bg: 'white.a3', color: 'white' })
 
 export function TierBadge({ tier }: { tier: string }) {
     const lower = tier.toLowerCase()

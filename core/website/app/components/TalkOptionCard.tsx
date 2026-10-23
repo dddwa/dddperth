@@ -64,13 +64,14 @@ export function TalkOptionCard({ title, description, tags, onClick, highlight }:
                       }
                     : undefined
             }
-            // `admin.900`, not the theme-reactive `interactive.focus`. `[...]`
-            // is Panda's arbitrary-value escape hatch, needed because `outline`
-            // is a composite shorthand with no matching token type; `token(...)`
-            // still resolves through the design system.
+            // `admin.900`, not the theme-reactive `interactive.focus`. Longhands
+            // because no border token is 3px in this colour; the colour itself
+            // still comes from the design system.
             _focusVisible={{
-                outline: '[3px solid token(colors.admin.900)]',
-                outlineOffset: '[2px]',
+                outlineWidth: '3px',
+                outlineStyle: 'solid',
+                outlineColor: 'admin.900',
+                outlineOffset: '0.5',
             }}
             _disabled={{ cursor: 'default' }}
         >

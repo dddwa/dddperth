@@ -31,9 +31,8 @@ const mdxImage = cva({
             /**
              * Headshot, e.g. the team page. Narrows on small screens; the
              * fixed inline `150px` it replaces could not respond at all.
-             * Bracket syntax because there's no size token at these widths.
              */
-            portrait: { width: { base: '[100px]', md: '[150px]' }, flexShrink: '0' },
+            portrait: { width: { base: '24', md: '36' }, flexShrink: '0' },
         },
     },
     defaultVariants: { size: 'full' },

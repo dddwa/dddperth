@@ -38,10 +38,11 @@ export function SpeakerModal({
                     bgColor="overlay.scrim"
                     position="fixed"
                     inset="0"
-                    height="[100vh]"
-                    width="[100vw]"
+                    height="screen"
+                    width="screen"
                     zIndex="overlay"
-                    backdropFilter="[blur(4px)]"
+                    backdropFilter="auto"
+                    backdropBlur="xs"
                 />
                 <Dialog.Positioner
                     position="fixed"
@@ -58,8 +59,8 @@ export function SpeakerModal({
                         borderRadius="xl"
                         boxShadow="lg"
                         width="full"
-                        maxWidth={wide ? '[960px]' : '[560px]'}
-                        maxHeight="[85vh]"
+                        maxWidth={wide ? '5xl' : 'xl'}
+                        maxHeight="dialog-max-h"
                         display="flex"
                         flexDirection="column"
                     >
@@ -68,7 +69,7 @@ export function SpeakerModal({
                             justifyContent="space-between"
                             px="6"
                             py="4"
-                            borderBottom="[1px solid token(colors.border.subtle)]"
+                            borderBottom="subtle"
                             flexShrink="0"
                         >
                             <Dialog.Title fontSize="lg" fontWeight="semibold">

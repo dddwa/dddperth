@@ -25,7 +25,7 @@ const panelClass = css({
         right: '[anchor(right)]',
         mt: '2',
     },
-    w: '[max-content]',
+    w: 'max',
     maxW: '[calc(100vw - 2rem)]',
     maxH: '[70vh]',
     overflow: 'auto',

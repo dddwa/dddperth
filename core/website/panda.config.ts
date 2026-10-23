@@ -33,8 +33,8 @@ const navLinkRecipe = defineRecipe({
         textDecoration: 'none',
         transition: 'colors',
         _focus: {
-            outline: '[2px solid token(colors.indigo.7)]',
-            outlineOffset: '[2px]',
+            outline: 'focus-chrome',
+            outlineOffset: '0.5',
         },
     },
     variants: {
@@ -75,7 +75,7 @@ const navLinkRecipe = defineRecipe({
                 px: '4',
                 py: '2',
                 borderRadius: 'md',
-                border: '[1px solid transparent]',
+                border: 'transparent',
                 _hover: {
                     bg: 'overlay.subtle',
                     borderColor: 'border.subtle',
@@ -86,15 +86,15 @@ const navLinkRecipe = defineRecipe({
                 // in both themes) — so fixed white text, never a theme-varying token.
                 // Active state keys off NavLink's aria-current rather than the
                 // `active` prop, so a tab can't be marked current by hand and drift.
-                color: '[rgba(255, 255, 255, 0.8)]',
+                color: 'white.a10',
                 fontSize: 'sm',
                 whiteSpace: 'nowrap',
                 px: '1',
                 py: '3',
-                borderBottom: '[3px solid transparent]',
-                _hover: { color: 'white', borderBottomColor: '[rgba(255, 255, 255, 0.4)]' },
+                borderBottom: 'tab-indicator',
+                _hover: { color: 'white', borderBottomColor: 'white.a6' },
                 _currentPage: { color: 'white', borderBottomColor: 'brand.accent' },
-                _focus: { outline: '[2px solid white]', outlineOffset: '[2px]' },
+                _focus: { outline: 'focus-on-dark', outlineOffset: '0.5' },
             },
             ghost: {
                 color: 'gray.7',
@@ -278,11 +278,25 @@ export default defineConfig({
             tokens: {
                 // Park UI base raw tokens — black/white scales + the duration scale
                 // used by `durations: 'slowest'`. The local themeTokens layer on top.
-                colors: parkBaseColors,
+                colors: {
+                    ...parkBaseColors,
+                    // Sponsor tier badges in the portal header. Fixed rather than
+                    // themed: a tier's colour identifies it, so it shouldn't change
+                    // with the conference palette or the light/dark toggle.
+                    tier: {
+                        platinum: { bg: { value: '#e2e8f0' }, fg: { value: '#1e293b' } },
+                        gold: { bg: { value: '#f6d77b' }, fg: { value: '#4a3500' } },
+                        silver: { bg: { value: '#cbd5e1' }, fg: { value: '#1e293b' } },
+                        bronze: { bg: { value: '#e9b48a' }, fg: { value: '#4a2208' } },
+                    },
+                },
                 durations,
                 zIndex: {
                     ...parkZIndex,
                     '9999': { value: 9999 },
+                    // One step above its siblings, for local stacking inside a
+                    // component; `docked` (10) and up are for page-level layers.
+                    raised: { value: 1 },
                 },
 
                 // Non-color theme tokens (borders, shadows) - reference colour tokens
@@ -292,6 +306,25 @@ export default defineConfig({
                 borders: {
                     ...themeTokens.borders,
                     sponsor: { value: '6px solid {colors.border.sponsor}' },
+                    // Focus outlines. Each references a colour token, so a fork's
+                    // theme recolours them; a bracketed `[3px solid #…]` would not.
+                    focus: { value: '3px solid {colors.interactive.focus}' },
+                    'focus-chrome': { value: '2px solid {colors.indigo.7}' },
+                    'focus-admin': { value: '2px solid {colors.admin.900}' },
+                    // On `surface.drawer`, which is brand-dark in both themes.
+                    'focus-on-dark': { value: '2px solid {colors.white}' },
+                    // Reserves the space of a border that only gets a colour on
+                    // hover or when active, so the layout doesn't shift.
+                    transparent: { value: '1px solid transparent' },
+                    'tab-indicator': { value: '3px solid transparent' },
+                },
+                shadows: {
+                    ...themeTokens.shadows,
+                    'admin-card': {
+                        value: '0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.08)',
+                    },
+                    // Left accent bar on the runsheet's current session.
+                    'current-row': { value: 'inset 6px 0 0 {colors.status.success.emphasis}' },
                 },
                 fonts: {
                     display: { value: 'Ubuntu, sans-serif' },
@@ -310,6 +343,13 @@ export default defineConfig({
                 sizes: {
                     dvh: { value: '100dvh' },
                     'dialog-max-h': { value: '85vh' },
+                    'page-max-w': { value: '1200px' },
+                    // Hairlines and the visually-hidden pattern; the numeric scale
+                    // starts at 0.5 (2px).
+                    px: { value: '1px' },
+                },
+                spacing: {
+                    px: { value: '1px' },
                 },
                 radii: {
                     none: { value: '0' },

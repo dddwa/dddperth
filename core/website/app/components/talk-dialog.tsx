@@ -145,7 +145,7 @@ export function TalkDialog({
                                     borderRadius="md"
                                     _hover={{ bgColor: 'overlay.subtle', color: 'text.primary' }}
                                     _focusVisible={{
-                                        outline: '[3px solid token(colors.interactive.focus)]',
+                                        outline: 'focus',
                                         outlineOffset: '0.5',
                                     }}
                                 >

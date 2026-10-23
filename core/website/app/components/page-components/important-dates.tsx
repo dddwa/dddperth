@@ -256,9 +256,9 @@ function EventLink({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        rounded: smallSidebar ? '[0]' : ({ base: 'lg', sm: '[0]' } as const),
-        borderRightRadius: smallSidebar ? '[100px]' : ({ base: 'lg', sm: '[100px]' } as const),
-        width: smallSidebar ? '[100px]' : ({ base: 'full', sm: '[150px]' } as const),
+        rounded: smallSidebar ? 'none' : ({ base: 'lg', sm: 'none' } as const),
+        borderRightRadius: smallSidebar ? 'full' : ({ base: 'lg', sm: 'full' } as const),
+        width: smallSidebar ? '24' : ({ base: 'full', sm: '36' } as const),
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : ({ base: '2', sm: '1' } as const),
         ml: smallSidebar ? '6' : '0',
@@ -301,9 +301,9 @@ function EventCountdown({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        rounded: smallSidebar ? '[0]' : { base: 'lg', sm: '[0]' },
-        borderRightRadius: smallSidebar ? '[100px]' : { base: 'lg', sm: '[100px]' },
-        width: smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' },
+        rounded: smallSidebar ? 'none' : { base: 'lg', sm: 'none' },
+        borderRightRadius: smallSidebar ? 'full' : { base: 'lg', sm: 'full' },
+        width: smallSidebar ? '24' : { base: 'full', sm: '36' },
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : { base: '2', sm: '1' },
         ml: smallSidebar ? '6' : '0',
@@ -371,7 +371,7 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
             alignItems="center"
             justifyContent="center"
             rounded="lg"
-            width={smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' }}
+            width={smallSidebar ? '24' : { base: 'full', sm: '36' }}
             paddingY={smallSidebar ? '1' : { base: '2', sm: '1' }}
             color="text.muted"
             bgGradient="to-r"

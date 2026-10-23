@@ -274,7 +274,7 @@ function FeedbackForm({
                                     gap="2"
                                     py="2"
                                     px="3"
-                                    border="[1px solid]"
+                                    border="admin-subtle"
                                     borderColor="admin.400"
                                     borderRadius="md"
                                     fontSize="sm"

@@ -36,7 +36,7 @@ export function Hero({ eyebrow, title, lede, actions, children }: PropsWithChild
                 {title}
             </styled.h1>
             {lede ? (
-                <styled.p fontSize={{ base: 'lg', md: 'xl' }} color="text.secondary" maxWidth="[720px]">
+                <styled.p fontSize={{ base: 'lg', md: 'xl' }} color="text.secondary" maxWidth="3xl">
                     {lede}
                 </styled.p>
             ) : null}

@@ -77,7 +77,7 @@ export default function Login() {
     if (actionData && 'sent' in actionData) {
         return (
             <Flex minH="screen" align="center" justify="center" bg="surface.body">
-                <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
+                <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="md" w="full">
                     <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                         Check your inbox
                     </styled.h1>
@@ -106,7 +106,7 @@ export default function Login() {
 
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
-            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" maxW="[440px]" w="full">
+            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" maxW="md" w="full">
                 <styled.h1 mb="6" color="admin.900" fontSize="2xl" fontWeight="bold" textAlign="center">
                     Sign in
                 </styled.h1>

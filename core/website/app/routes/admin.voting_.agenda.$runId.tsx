@@ -17,7 +17,7 @@ import { getConfSessions, getConfSpeakers, getSpeakerUnderrepresentedGroup } fro
 import { useQueuedSave } from '~/lib/use-queued-save'
 import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
-import type { ColorToken } from '~/styled-system/tokens'
+import type { ColorToken, SizeToken } from '~/styled-system/tokens'
 import type { Route } from './+types/admin.voting_.agenda.$runId'
 
 const SESSION_FORMAT_CATEGORY = 'Session format'
@@ -674,7 +674,7 @@ function StatTile({
     return (
         <Box
             flex="1"
-            minW="[170px]"
+            minW="44"
             {...(onToggle
                 ? {
                       as: 'button' as const,
@@ -745,7 +745,7 @@ function CategoryStatTile({
     return (
         <Box
             flex="1"
-            minW="[170px]"
+            minW="44"
             // Tiles double as filter toggles — clicking one adds/removes its
             // value from the multi-select filter for that dimension.
             {...(onToggle
@@ -892,7 +892,7 @@ function TopicSelectBadge({
                     fontWeight="semibold"
                     opacity="0.75"
                     textDecoration="line-through"
-                    maxW="[110px]"
+                    maxW="28"
                     overflow="hidden"
                     textOverflow="ellipsis"
                     whiteSpace="nowrap"
@@ -944,7 +944,7 @@ interface ColumnDef {
     id: ColumnId
     label: string
     align?: 'left' | 'center'
-    headerWidth?: `[${string}]`
+    headerWidth?: SizeToken
     filter?: ColumnFilter
     cellProps?: Record<string, unknown>
     renderCell: (talk: AgendaTalk) => React.ReactNode
@@ -952,7 +952,7 @@ interface ColumnDef {
 
 // Narrow placeholder both header and body cells collapse to, so the table
 // stays column-aligned while freeing up horizontal space.
-const COLLAPSED_COLUMN_WIDTH = '[32px]'
+const COLLAPSED_COLUMN_WIDTH = '8'
 
 function ColumnHeaderCell({
     column,
@@ -1025,7 +1025,7 @@ function ColumnHeaderCell({
                     values={filter.values}
                     options={filter.options}
                     onChange={filter.onChange}
-                    minWidth="[80px]"
+                    minWidth="20"
                 />
             )}
         </styled.th>
@@ -1720,8 +1720,8 @@ export default function VotingAgenda() {
         {
             id: 'status',
             label: 'Status',
-            headerWidth: '[150px]',
-            cellProps: { minW: '[150px]' },
+            headerWidth: '36',
+            cellProps: { minW: '36' },
             filter: {
                 values: statusFilter,
                 onChange: setStatusFilter,
@@ -1776,15 +1776,15 @@ export default function VotingAgenda() {
             id: 'rank',
             label: 'Rank',
             align: 'center',
-            headerWidth: '[60px]',
+            headerWidth: '16',
             cellProps: { fontWeight: 'semibold' },
             renderCell: (talk) => `#${talk.rank}`,
         },
         {
             id: 'title',
             label: 'Talk Title',
-            headerWidth: '[420px]',
-            cellProps: { minW: '[420px]', maxW: '[560px]' },
+            headerWidth: 'md',
+            cellProps: { minW: 'md', maxW: 'xl' },
             renderCell: (talk) => (
                 <>
                     <styled.button
@@ -1794,7 +1794,7 @@ export default function VotingAgenda() {
                         width="full"
                         // Anchors the column's intrinsic width — an auto-layout
                         // <td> ignores minW, so the content has to carry it.
-                        minW="[380px]"
+                        minW="96"
                         textAlign="left"
                         whiteSpace="normal"
                         fontWeight="medium"
@@ -1826,7 +1826,7 @@ export default function VotingAgenda() {
                 onChange: setLevelFilter,
                 options: filterOptions.levels.map((l) => ({ value: l, label: l })),
             },
-            cellProps: { fontSize: 'xs', maxW: '[140px]' },
+            cellProps: { fontSize: 'xs', maxW: '36' },
             renderCell: (talk) => {
                 const displayLevel = formatLevel(talk.level)
                 return displayLevel ? (
@@ -1846,8 +1846,8 @@ export default function VotingAgenda() {
                 onChange: setTagFilter,
                 options: filterOptions.tags.map((t) => ({ value: t, label: t })),
             },
-            headerWidth: '[280px]',
-            cellProps: { minW: '[280px]', maxW: '[320px]' },
+            headerWidth: '72',
+            cellProps: { minW: '72', maxW: '80' },
             renderCell: (talk) => {
                 // Two visible tags keeps rows compact now the badges are
                 // larger; the rest stay in the "+N" tooltip.
@@ -1964,8 +1964,8 @@ export default function VotingAgenda() {
             id: 'info',
             label: 'Info',
             align: 'center',
-            headerWidth: '[130px]',
-            cellProps: { fontSize: 'xs', color: 'admin.600', maxW: '[130px]' },
+            headerWidth: '32',
+            cellProps: { fontSize: 'xs', color: 'admin.600', maxW: '32' },
             renderCell: (talk) => {
                 const hasInfo = talk.speakers.some((s) => s.additionalInfo)
                 if (!hasInfo) {
@@ -1982,7 +1982,7 @@ export default function VotingAgenda() {
                         // single-line text from forcing the whole table wide —
                         // an auto-layout <td> grows to its content's intrinsic
                         // width no matter what maxW the cell itself carries.
-                        maxW="[120px]"
+                        maxW="32"
                         textAlign="left"
                         whiteSpace="nowrap"
                         overflow="hidden"
@@ -2135,7 +2135,7 @@ export default function VotingAgenda() {
                     </Flex>
 
                     <Flex gap="6" direction={{ base: 'column', lg: 'row' }} alignItems="flex-start">
-                        <Box flex="[0.8]" minW="0" w="full">
+                        <Box flexGrow="0.8" flexBasis="0" minW="0" w="full">
                             <styled.h3 fontSize="md" fontWeight="semibold" mb="2" color="admin.600">
                                 By Length
                             </styled.h3>
@@ -2163,7 +2163,7 @@ export default function VotingAgenda() {
                             </Flex>
                         </Box>
 
-                        <Box flex="[1.6]" minW="0" w="full">
+                        <Box flexGrow="1.6" flexBasis="0" minW="0" w="full">
                             <styled.h3 fontSize="md" fontWeight="semibold" mb="2" color="admin.600">
                                 By Level
                             </styled.h3>
@@ -2191,7 +2191,7 @@ export default function VotingAgenda() {
                             </Flex>
                         </Box>
 
-                        <Box flex="[0.8]" minW="0" w="full">
+                        <Box flexGrow="0.8" flexBasis="0" minW="0" w="full">
                             <styled.h3 fontSize="md" fontWeight="semibold" mb="2" color="admin.600">
                                 Speakers ({stats.totalSpeakers} distinct locked speakers)
                             </styled.h3>
@@ -2277,7 +2277,7 @@ export default function VotingAgenda() {
                         {/* minWidth stops the browser squeezing every column to
                             fit the viewport — the wrapper scrolls instead, so
                             Status and Talk Title keep their intended widths. */}
-                        <styled.table width="full" minWidth="[1500px]" fontSize="sm">
+                        <styled.table width="full" minWidth="breakpoint-2xl" fontSize="sm">
                             <thead>
                                 <tr>
                                     {columns.map((column) => (
@@ -2345,9 +2345,9 @@ export default function VotingAgenda() {
                         bg="white"
                         borderRadius="xl"
                         boxShadow="lg"
-                        maxW="[640px]"
+                        maxW="2xl"
                         w="full"
-                        maxH="[85vh]"
+                        maxH="dialog-max-h"
                         overflowY="auto"
                         p="6"
                     >
@@ -2404,9 +2404,9 @@ export default function VotingAgenda() {
                         bg="white"
                         borderRadius="xl"
                         boxShadow="lg"
-                        maxW="[720px]"
+                        maxW="3xl"
                         w="full"
-                        maxH="[85vh]"
+                        maxH="dialog-max-h"
                         overflowY="auto"
                         p="6"
                     >

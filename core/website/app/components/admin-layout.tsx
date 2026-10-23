@@ -21,7 +21,7 @@ const bareOnSmallScreensClass = css({
 })
 
 /** 20px either side from 50em up, for `gutter`. */
-const gutterClass = css({ '@media (min-width: 50em)': { px: '[20px]' } })
+const gutterClass = css({ '@media (min-width: 50em)': { px: '5' } })
 
 export function AdminLayout({
     heading,

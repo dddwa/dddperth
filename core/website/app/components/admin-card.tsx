@@ -8,7 +8,7 @@ import { Box } from '~/styled-system/jsx'
  * (a 60% black drop), and admin cards are a light surface in both themes, where
  * it read as a hard smudge under every card.
  */
-const cardShadow = '[0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.08)]'
+const cardShadow = 'admin-card'
 
 const cardClass = css({
     bg: 'white',

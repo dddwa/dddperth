@@ -184,7 +184,7 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                         fontWeight="semibold"
                         color="text.secondary"
                         flexShrink="0"
-                        minWidth={{ sm: '[110px]' }}
+                        minWidth={{ sm: '28' }}
                         _hover={{ color: 'text.highlight', textDecoration: 'underline' }}
                     >
                         {group.title} →
@@ -206,9 +206,9 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     alt={sponsor.name}
                                     display="none"
                                     _dark={{ display: 'block' }}
-                                    height="[var(--logo-h)]"
+                                    height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="[120px]"
+                                    maxWidth="32"
                                     objectFit="contain"
                                 />
                                 <styled.img
@@ -217,9 +217,9 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     aria-hidden="true"
                                     display="block"
                                     _dark={{ display: 'none' }}
-                                    height="[var(--logo-h)]"
+                                    height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="[120px]"
+                                    maxWidth="32"
                                     objectFit="contain"
                                 />
                             </styled.a>
@@ -382,8 +382,8 @@ export function SponsorQuoteCard({
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                width={{ base: 'full', md: '[180px]' }}
-                height="[120px]"
+                width={{ base: 'full', md: '44' }}
+                height="32"
                 aria-label={`Visit ${sponsor.name}`}
             >
                 <SponsorLogo
@@ -474,8 +474,8 @@ function SponsorComponent({
                 zIndex: zIndex,
                 boxShadow: 'inset -1px 1px 0 0 rgba(255,255,255,0.21)',
             }}
-            width="[260px]"
-            height="[220px]"
+            width="64"
+            height="56"
             ml="-6"
             borderRightRadius="full"
         >
@@ -483,9 +483,9 @@ function SponsorComponent({
                 logoUrlDarkMode={sponsor.logoUrlDarkMode}
                 logoUrlLightMode={sponsor.logoUrlLightMode}
                 name={sponsor.name}
-                maxWidth="[150px]"
+                maxWidth="36"
                 width="full"
-                maxHeight="[90px]"
+                maxHeight="24"
                 ml="-3"
                 objectFit="contain"
             />

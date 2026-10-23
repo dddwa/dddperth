@@ -156,18 +156,19 @@ export function Header({
                         bgColor="overlay.scrim"
                         position="fixed"
                         inset="0"
-                        height="[100vh]"
-                        width="[100vw]"
+                        height="screen"
+                        width="screen"
                         zIndex="overlay"
-                        backdropFilter="[blur(4px)]"
+                        backdropFilter="auto"
+                        backdropBlur="xs"
                     />
                     <Drawer.Positioner
                         position="fixed"
                         top="0"
                         left="0"
-                        height="[100dvh]"
-                        width="[100vw]"
-                        maxWidth="[320px]"
+                        height="dvh"
+                        width="screen"
+                        maxWidth="xs"
                         zIndex="modal"
                     >
                         <Drawer.Content
@@ -188,7 +189,7 @@ export function Header({
                                 justifyContent="space-between"
                                 px="5"
                                 py="4"
-                                borderBottom="[1px solid token(colors.border.subtle)]"
+                                borderBottom="subtle"
                             >
                                 <Drawer.Title color="white" fontSize="lg" fontWeight="semibold">
                                     Menu
@@ -216,7 +217,7 @@ export function Header({
                                     gap="3"
                                     px="5"
                                     py="5"
-                                    borderBottom="[1px solid token(colors.border.subtle)]"
+                                    borderBottom="subtle"
                                 >
                                     {ctas.map((cta) => (
                                         <CtaSquareLink
@@ -298,7 +299,7 @@ function MenuButton({
             cursor="pointer"
             borderRadius="md"
             _hover={{ bgColor: 'overlay.subtle' }}
-            _focus={{ outline: '[2px solid token(colors.indigo.7)]', outlineOffset: '[2px]' }}
+            _focus={{ outline: 'focus-chrome', outlineOffset: '0.5' }}
         >
             <MenuIcon />
         </styled.button>
