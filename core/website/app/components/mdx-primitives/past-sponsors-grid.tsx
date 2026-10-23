@@ -41,7 +41,7 @@ export function PastSponsorsGrid({
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
-                        height="24"
+                        height="25"
                         bgColor="surface.card"
                         borderWidth="1px"
                         borderColor="border.default"

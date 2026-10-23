@@ -83,7 +83,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 src="/images/get-app-store.svg"
                                 alt="Download on the App Store"
                                 height={{ base: '12', md: '14' }}
-                                width="52"
+                                width="50"
                                 objectFit="contain"
                             />
                         </AppLink>
@@ -98,7 +98,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                                 src="/images/get-google-play.png"
                                 alt="Get it on Google Play"
                                 height={{ base: '12', md: '14' }}
-                                width="52"
+                                width="50"
                                 objectFit="contain"
                             />
                         </AppLink>

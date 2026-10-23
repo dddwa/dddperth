@@ -184,7 +184,7 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                         fontWeight="semibold"
                         color="text.secondary"
                         flexShrink="0"
-                        minWidth={{ sm: '28' }}
+                        minWidth={{ sm: '27.5' }}
                         _hover={{ color: 'text.highlight', textDecoration: 'underline' }}
                     >
                         {group.title} →
@@ -208,7 +208,7 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     _dark={{ display: 'block' }}
                                     height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="32"
+                                    maxWidth="30"
                                     objectFit="contain"
                                 />
                                 <styled.img
@@ -219,7 +219,7 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     _dark={{ display: 'none' }}
                                     height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="32"
+                                    maxWidth="30"
                                     objectFit="contain"
                                 />
                             </styled.a>
@@ -382,8 +382,8 @@ export function SponsorQuoteCard({
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                width={{ base: 'full', md: '44' }}
-                height="32"
+                width={{ base: 'full', md: '45' }}
+                height="30"
                 aria-label={`Visit ${sponsor.name}`}
             >
                 <SponsorLogo
@@ -474,8 +474,8 @@ function SponsorComponent({
                 zIndex: zIndex,
                 boxShadow: 'inset -1px 1px 0 0 rgba(255,255,255,0.21)',
             }}
-            width="64"
-            height="56"
+            width="65"
+            height="55"
             ml="-6"
             borderRightRadius="full"
         >
@@ -483,9 +483,9 @@ function SponsorComponent({
                 logoUrlDarkMode={sponsor.logoUrlDarkMode}
                 logoUrlLightMode={sponsor.logoUrlLightMode}
                 name={sponsor.name}
-                maxWidth="36"
+                maxWidth="37.5"
                 width="full"
-                maxHeight="24"
+                maxHeight="22.5"
                 ml="-3"
                 objectFit="contain"
             />

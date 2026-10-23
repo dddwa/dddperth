@@ -73,7 +73,7 @@ export function TitoTicketForm({ accountId, eventId }: { eventId: string; accoun
                 rounded="lg"
                 p="6"
                 textAlign="center"
-                minHeight="96"
+                minHeight="100"
             >
                 <styled.p fontWeight="semibold">Ticket form failed to load</styled.p>
                 <styled.p color="text.secondary" fontSize="sm">

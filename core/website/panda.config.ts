@@ -344,6 +344,24 @@ export default defineConfig({
                     dvh: { value: '100dvh' },
                     'dialog-max-h': { value: '85vh' },
                     'page-max-w': { value: '1200px' },
+                    // Steps on preset-panda's 4px scale (key = px / 4) that it
+                    // doesn't ship. Public pages were laid out at these widths
+                    // before they became tokens; rounding them to the nearest
+                    // preset step moved the home, sponsors and agenda baselines.
+                    '22.5': { value: '5.625rem' },
+                    '25': { value: '6.25rem' },
+                    '27.5': { value: '6.875rem' },
+                    '30': { value: '7.5rem' },
+                    '35': { value: '8.75rem' },
+                    '37.5': { value: '9.375rem' },
+                    '45': { value: '11.25rem' },
+                    '50': { value: '12.5rem' },
+                    '55': { value: '13.75rem' },
+                    '65': { value: '16.25rem' },
+                    '100': { value: '25rem' },
+                    '105': { value: '26.25rem' },
+                    '180': { value: '45rem' },
+                    '200': { value: '50rem' },
                     // Hairlines and the visually-hidden pattern; the numeric scale
                     // starts at 0.5 (2px).
                     px: { value: '1px' },

@@ -40,8 +40,8 @@ import { SponsorInlineLogo } from '../sponsor-inline-logo'
  * values — passing them through a variable as plain style props generates
  * the class names but not the CSS rules, silently dropping the cells.
  */
-const PLATINUM_CELL = css.raw({ width: '44', height: '16' })
-const GOLD_CELL = css.raw({ width: '36', height: '12' })
+const PLATINUM_CELL = css.raw({ width: '45', height: '16' })
+const GOLD_CELL = css.raw({ width: '35', height: '12' })
 
 function SponsorRow({ sponsors, cell, children }: {
     sponsors: Sponsor[]

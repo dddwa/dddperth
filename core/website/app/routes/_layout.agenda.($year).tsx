@@ -614,7 +614,7 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                         src={roomSponsor.logoUrlDarkMode}
                         alt={roomSponsor.name}
                         title={roomSponsor.name}
-                        maxWidth="28"
+                        maxWidth="27.5"
                         maxHeight="7"
                         mt="1"
                         display="inline-block"

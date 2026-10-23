@@ -32,7 +32,7 @@ export function SponsorInlineLogo({
     const baseStyle: JsxStyleProps = {
         height: '[1.25em]',
         width: 'auto',
-        maxWidth: '36',
+        maxWidth: '35',
         objectFit: 'contain',
         verticalAlign: 'middle',
     }

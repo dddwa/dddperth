@@ -258,7 +258,7 @@ function EventLink({
         justifyContent: 'center',
         rounded: smallSidebar ? 'none' : ({ base: 'lg', sm: 'none' } as const),
         borderRightRadius: smallSidebar ? 'full' : ({ base: 'lg', sm: 'full' } as const),
-        width: smallSidebar ? '24' : ({ base: 'full', sm: '36' } as const),
+        width: smallSidebar ? '25' : ({ base: 'full', sm: '37.5' } as const),
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : ({ base: '2', sm: '1' } as const),
         ml: smallSidebar ? '6' : '0',
@@ -303,7 +303,7 @@ function EventCountdown({
         justifyContent: 'center',
         rounded: smallSidebar ? 'none' : { base: 'lg', sm: 'none' },
         borderRightRadius: smallSidebar ? 'full' : { base: 'lg', sm: 'full' },
-        width: smallSidebar ? '24' : { base: 'full', sm: '36' },
+        width: smallSidebar ? '25' : { base: 'full', sm: '37.5' },
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : { base: '2', sm: '1' },
         ml: smallSidebar ? '6' : '0',
@@ -371,7 +371,7 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
             alignItems="center"
             justifyContent="center"
             rounded="lg"
-            width={smallSidebar ? '24' : { base: 'full', sm: '36' }}
+            width={smallSidebar ? '25' : { base: 'full', sm: '37.5' }}
             paddingY={smallSidebar ? '1' : { base: '2', sm: '1' }}
             color="text.muted"
             bgGradient="to-r"
