@@ -80,8 +80,8 @@ export function HomepageHeroPanel({
                                 unstyled
                                 color="inherit"
                                 textDecoration="underline"
-                                textDecorationThickness="[1px]"
-                                textUnderlineOffset="[0.2em]"
+                                textDecorationThickness="1px"
+                                textUnderlineOffset="0.2em"
                                 _hover={{ color: 'text.primary' }}
                             >
                                 {venue.name}
