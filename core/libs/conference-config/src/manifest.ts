@@ -77,6 +77,15 @@ export interface ConferenceFeatures {
     hideWorkshops?: boolean
 
     /**
+     * Show the header's Venue link *instead of* About, and only from a week
+     * before conference day until the day ends. The rest of the year the
+     * header shows About. Off by default: the venue link then sits beside
+     * About whenever a venue is published. For forks whose header is short
+     * of room, and whose venue only matters to people about to attend.
+     */
+    venueReplacesAboutNearConference?: boolean
+
+    /**
      * Give each minor sponsor tier (community, coffee cart, quiet room,
      * venue, prize, keynotes) its own heading instead of pooling them under
      * a single "Other Sponsors" block. Worth turning on once a fork has
@@ -795,6 +804,20 @@ export interface ConferenceManifest {
     /** Meet-the-Experts time slots — shared by the speaker and sponsor
      * portals. Omit to hide the feature entirely. */
     meetTheExperts?: MeetTheExpertsConfig
+    /** Blog config. Optional — the blog works without it. */
+    blog?: BlogConfig
+}
+
+export interface BlogConfig {
+    /**
+     * Hostnames the blog used to be served from (e.g. a Medium custom domain
+     * like `blog.example.com`), now pointed at this Worker. A request for one
+     * of them is permanently redirected to this site's `/blog`: to the post
+     * whose `legacyPaths` frontmatter lists the requested path, or to the
+     * blog index otherwise. The host is read from `X-Forwarded-Host` /
+     * `Forwarded` first, so it still matches behind a CDN or proxy.
+     */
+    legacyHosts?: string[]
 }
 
 /**

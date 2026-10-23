@@ -49,7 +49,7 @@ export function createMdxContentService(): ContentService {
         },
 
         async getPagesList(type): Promise<ContentListItem[]> {
-            return Object.entries(bundles[type]).map(([slug, entry]) => {
+            const items = Object.entries(bundles[type]).map(([slug, entry]) => {
                 const frontmatter = coerceFrontmatter(entry.frontmatter)
                 return {
                     title: frontmatter.title ?? slug,
@@ -63,6 +63,11 @@ export function createMdxContentService(): ContentService {
                     imageAlt: frontmatter.imageAlt,
                 }
             })
+            // The bundle index lists files in directory order, which for
+            // date-prefixed post filenames is oldest first. The blog index
+            // features the first entry and the RSS feed dates itself from it.
+            if (type === 'blog') items.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+            return items
         },
     }
 }

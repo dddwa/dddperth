@@ -11,5 +11,6 @@ export const conferenceConfigPublic = {
 
     features: {
         sponsorOverview: true,
+        venueReplacesAboutNearConference: true,
     },
 } satisfies ConferenceConfigPublic

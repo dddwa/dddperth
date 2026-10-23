@@ -63,9 +63,10 @@ Core reads everything fork-specific through four path aliases defined in `websit
 | `@conference/manifest` | `<conference>/manifest.ts` | Runtime manifest. Importable from anywhere — server, client, components. |
 | `@conference/build-manifest` | `<conference>/build-manifest.ts` | Build manifest. Importable from `vite.config.ts`, `panda.config.ts`, build scripts. Has Node-only fields. |
 | `@conference/theme` | `<conference>/theme/index.ts` | Theme barrel. Imported by `panda.config.ts`. Separated from `build-manifest` because Panda CJS-bundles `panda.config.ts` and that strips `import.meta`. |
-| `@conference/content/*` | `<conference>/content/*` | Used by `app/lib/authors.server.ts` to import the blog authors YAML via Vite's `?raw` loader. |
 
 In `ddd-core` standalone, those aliases point at `../conference-stub/`. In a fork, the fork's `tsconfig.json` overrides them to point at the fork's own `./conference/`. Each repo only knows about one conference — there's no runtime switching.
+
+Content is deliberately *not* reached through an alias. Pages, posts and the blog authors YAML all come from the build manifest's `content.*` paths via the mdx-bundles Vite plugin (`virtual:mdx-bundles`, `virtual:blog-authors`), so one place decides where content lives — which is what lets the e2e suites swap in fixture blog content (see `vite.config.ts`).
 
 `vite.config.ts` and `panda.config.ts` are loaded by Node directly (before `vite-tsconfig-paths` is wired up), so they import the build-manifest and theme barrel via relative paths. The `/new-conference` skill sets these paths when it scaffolds a fork.
 

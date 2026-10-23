@@ -134,7 +134,15 @@ if (!viteBin) {
 const vite = spawn(viteBin, ['--port', port, ...process.argv.slice(2)], {
     cwd: websiteDir,
     stdio: 'inherit',
-    env: { ...process.env, WRANGLER_CONFIG: 'e2e/e2e.jsonc' },
+    env: {
+        ...process.env,
+        WRANGLER_CONFIG: 'e2e/e2e.jsonc',
+        // Blog posts and authors from e2e/fixtures/blog/ instead of the
+        // conference's real blog. A process env var rather than a .dev.vars
+        // entry: the posts are compiled by a Vite plugin in this process,
+        // not read by the Worker. See vite.config.ts.
+        E2E_BLOG_FIXTURES: 'true',
+    },
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
