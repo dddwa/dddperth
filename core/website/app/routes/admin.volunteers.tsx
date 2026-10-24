@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useEffect, useRef, useState } from 'react'
@@ -20,7 +21,7 @@ import type { Route } from './+types/admin.volunteers'
 
 /** "09:30:00" → "9:30 am". */
 function formatTime(time: string) {
-    return DateTime.fromFormat(time, 'HH:mm:ss').toFormat('h:mm a').toLowerCase()
+    return conferenceDateTime.fromFormat(time, 'HH:mm:ss').toFormat('h:mm a').toLowerCase()
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

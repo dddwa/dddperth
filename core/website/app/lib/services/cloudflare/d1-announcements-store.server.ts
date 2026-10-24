@@ -23,6 +23,7 @@ export function createD1AnnouncementsStore(db: D1Database): AnnouncementsStore {
         },
 
         async upsert(year, message) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = new Date().toISOString()
             await db
                 .prepare(
@@ -38,6 +39,7 @@ export function createD1AnnouncementsStore(db: D1Database): AnnouncementsStore {
         },
 
         async clear(year) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = new Date().toISOString()
             await db
                 .prepare(

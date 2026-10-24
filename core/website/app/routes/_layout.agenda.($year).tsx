@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { Fragment, useMemo, useState } from 'react'
@@ -336,9 +337,7 @@ export default function Agenda() {
                     })}
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
-                        const startTime12 = DateTime.fromISO(timeSlot.slotStart, {
-                            zone: conferenceManifest.public.timezone,
-                        })
+                        const startTime12 = conferenceDateTime.fromISO(timeSlot.slotStart)
                             .toFormat('h:mm a')
                             .toLowerCase()
                         const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
@@ -369,9 +368,7 @@ export default function Agenda() {
                                         <styled.span display={{ base: 'inline', xl: 'none' }}>
                                             {' '}
                                             -{' '}
-                                            {DateTime.fromISO(nextTimeSlot.slotStart, {
-                                                zone: conferenceManifest.public.timezone,
-                                            })
+                                            {conferenceDateTime.fromISO(nextTimeSlot.slotStart)
                                                 .toFormat('h:mm a')
                                                 .toLowerCase()}
                                         </styled.span>
@@ -671,11 +668,11 @@ function RoomTimeSlot({
         ?.sessions.find((session) => session.id === room.session.id)
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
-        ? DateTime.fromISO(fullSession.endsAt, { zone: conferenceManifest.public.timezone })
+        ? conferenceDateTime.fromISO(fullSession.endsAt)
               .toFormat('h:mm a')
               .toLowerCase()
         : nextTimeSlotIso
-          ? DateTime.fromISO(nextTimeSlotIso, { zone: conferenceManifest.public.timezone })
+          ? conferenceDateTime.fromISO(nextTimeSlotIso)
                 .toFormat('h:mm a')
                 .toLowerCase()
           : undefined
@@ -875,7 +872,7 @@ function RoomTimeSlot({
 function talkTimeRange(startsAt: string | null, endsAt: string | null) {
     if (!startsAt || !endsAt) return null
     const format = (iso: string) =>
-        DateTime.fromISO(iso, { zone: conferenceManifest.public.timezone }).toFormat('h:mm a').toLowerCase()
+        conferenceDateTime.fromISO(iso).toFormat('h:mm a').toLowerCase()
     return `${format(startsAt)} - ${format(endsAt)}`
 }
 

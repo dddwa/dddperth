@@ -1,8 +1,8 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { LRUCache } from 'lru-cache'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
 import { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema } from '@ddd/conference-config'
-import { conferenceManifest } from '@conference/manifest'
 
 export { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema }
 
@@ -223,7 +223,7 @@ export function getSpeakerUnderrepresentedGroup(
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {
-    return DateTime.fromISO(date, { zone: conferenceManifest.public.timezone }).toLocaleString(opts, {
+    return conferenceDateTime.fromISO(date).toLocaleString(opts, {
         locale: 'en-AU',
     })
 }

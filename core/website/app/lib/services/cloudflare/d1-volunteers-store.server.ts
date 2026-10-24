@@ -52,6 +52,7 @@ export function createD1VolunteersStore(db: D1Database): VolunteersStore {
 
         async addVolunteer(name, email, roles) {
             const id = crypto.randomUUID()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             await db
                 .prepare(
@@ -67,6 +68,7 @@ export function createD1VolunteersStore(db: D1Database): VolunteersStore {
             await db.batch([
                 db
                     .prepare(`UPDATE volunteers SET roles_json = ?, updated_at = ? WHERE id = ?`)
+                    // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
                     .bind(JSON.stringify(roles), Math.floor(Date.now() / 1000), volunteerId),
                 ...dropped.map((role) =>
                     db

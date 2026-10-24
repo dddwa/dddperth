@@ -49,6 +49,7 @@ export function createD1AdminSettingsStore(db: D1Database): AdminSettingsStore {
                          updated_at = excluded.updated_at,
                          updated_by = excluded.updated_by`,
                 )
+                // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
                 .bind(section, valueJson, new Date().toISOString(), updatedBy)
                 .run()
         },

@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, useLoaderData } from 'react-router'
@@ -40,7 +41,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     const rows = buildShortlistReport(talks, counts, sort).map((row) => ({
         ...row,
         time: row.talk?.startsAt
-            ? DateTime.fromISO(row.talk.startsAt, { zone: conferenceManifest.public.timezone })
+            ? conferenceDateTime.fromISO(row.talk.startsAt)
                   .toFormat('h:mm a')
                   .toLowerCase()
             : undefined,

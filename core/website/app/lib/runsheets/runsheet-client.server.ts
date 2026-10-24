@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import type { RunsheetsConfig, sessionSchema } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
@@ -138,6 +139,7 @@ export async function jiraFetch(
     if (cached) {
         return {
             body: await cached.json(),
+            // eslint-disable-next-line dates/use-date-time-provider -- Cache freshness records actual fetch time.
             fetchedAt: cached.headers.get(FETCHED_AT_HEADER) ?? new Date().toISOString(),
         }
     }
@@ -155,6 +157,7 @@ export async function jiraFetch(
     }
 
     const body: unknown = await res.json()
+    // eslint-disable-next-line dates/use-date-time-provider -- Cache freshness records actual fetch time.
     const fetchedAt = new Date().toISOString()
     await cache.put(
         cacheKey,
@@ -389,7 +392,7 @@ export function sessionsToRunsheetItems(
  * Jira break can start a few minutes off the Sessionize one.
  */
 function overlappingPlaceholders(placeholders: RunsheetPlaceholder[], timezone: string) {
-    const toMillis = (iso: string | null) => (iso ? DateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+    const toMillis = (iso: string | null) => (iso ? conferenceDateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
     const windows = placeholders
         .map((placeholder) => ({
             placeholder,
@@ -425,7 +428,7 @@ function sessionLocationKeys(session: RunsheetSession, config: SessionConfig): s
  * conference, so the two only line up once both are read in its timezone.
  */
 export function compareRunsheetItems(timezone: string) {
-    const toMillis = (iso: string | null) => (iso ? DateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+    const toMillis = (iso: string | null) => (iso ? conferenceDateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
     return (a: RunsheetItem, b: RunsheetItem) => {
         const aStart = toMillis(a.startTime)
         const bStart = toMillis(b.startTime)

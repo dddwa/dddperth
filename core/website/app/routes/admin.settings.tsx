@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData } from 'react-router'
@@ -28,6 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data({
         overrideDate,
+        // eslint-disable-next-line dates/use-date-time-provider -- The settings page explicitly displays real system time alongside the override.
         currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
         timezone: conferenceManifest.public.timezone,
         importantDates,
@@ -63,9 +65,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ error: 'Date and time are required' }, { status: 400 })
         }
 
-        const override = DateTime.fromISO(`${dateStr}T${timeStr}`, {
-            zone: conferenceManifest.public.timezone,
-        })
+        const override = conferenceDateTime.fromISO(`${dateStr}T${timeStr}`)
 
         if (!override.isValid) {
             return data({ error: 'Invalid date/time format' }, { status: 400 })
@@ -81,9 +81,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ error: 'Jump date is required' }, { status: 400 })
         }
 
-        const override = DateTime.fromISO(jumpDate, {
-            zone: conferenceManifest.public.timezone,
-        })
+        const override = conferenceDateTime.fromISO(jumpDate)
 
         if (!override.isValid) {
             return data({ error: 'Invalid jump date format' }, { status: 400 })
@@ -104,9 +102,9 @@ export default function AdminSettings() {
     const actionData = useActionData<typeof action>()
 
     const overrideDateTime = overrideDate
-        ? DateTime.fromISO(overrideDate, { zone: conferenceManifest.public.timezone })
+        ? conferenceDateTime.fromISO(overrideDate)
         : null
-    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })
+    const currentDateTime = conferenceDateTime.fromISO(currentDate)
 
     return (
         <AdminLayout heading="Admin Settings">
@@ -293,9 +291,7 @@ export default function AdminSettings() {
                         </styled.p>
                         <styled.p color="status.success.emphasis" fontSize="xs">
                             Last updated:{' '}
-                            {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, {
-                                zone: conferenceManifest.public.timezone,
-                            }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                            {conferenceDateTime.fromISO(announcement.updatedTime || announcement.createdTime).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
                         </styled.p>
                     </Box>
                 )}
@@ -416,7 +412,8 @@ function QuickJumpButton({
     dateISO: string | undefined
     timezone: string
 }) {
-    const date = dateISO ? DateTime.fromISO(dateISO, { zone: timezone }) : DateTime.now().setZone(timezone)
+    if (!dateISO) return null
+    const date = conferenceDateTime.fromISO(dateISO)
 
     return (
         <Form method="post">

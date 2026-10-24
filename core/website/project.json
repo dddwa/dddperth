@@ -5,6 +5,9 @@
     "projectType": "application",
     "tags": [],
     "targets": {
+        "lint": {
+            "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs", "{projectRoot}/../eslint.config.mjs", "{projectRoot}/eslint.config.mjs", "{projectRoot}/../eslint-rules/**/*", {"externalDependencies": ["eslint"]}]
+        },
         "panda": {
             "executor": "nx:run-commands",
             "options": {
@@ -121,6 +124,7 @@
             "cache": true,
             "inputs": [
                 "default",
+                "{projectRoot}/../eslint-rules/**/*",
                 "^production",
                 {
                     "dependentTasksOutputFiles": "**/build/server/**/*.js"

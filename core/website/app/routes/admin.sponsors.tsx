@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
@@ -33,6 +34,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const tokenExpiry = tokenExpiresAt
         ? {
               expiresOn: new Date(tokenExpiresAt).toISOString().slice(0, 10),
+              // eslint-disable-next-line dates/use-date-time-provider -- External token expiry must follow real time, independently of conference overrides.
               daysLeft: Math.ceil((tokenExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)),
           }
         : null
@@ -88,7 +90,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 function formatRunTime(unixSeconds: number, timezone: string): string {
-    return DateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
+    return conferenceDateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
         locale: 'en-AU',
     })
 }

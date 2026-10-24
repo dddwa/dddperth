@@ -1,3 +1,4 @@
+import { conferenceConfigPublic } from '../public.ts'
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 
@@ -6,7 +7,7 @@ import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 export const conference2023: ConferenceYear = {
     kind: 'conference',
     year: '2023',
-    conferenceDate: DateTime.fromISO('2023-10-07'),
+    conferenceDate: DateTime.fromISO('2023-10-07', { zone: conferenceConfigPublic.timezone }),
     venue: optusStadiumVenue,
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2023',
 

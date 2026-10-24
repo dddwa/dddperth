@@ -1,6 +1,6 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import { Link } from 'react-router'
-import { conferenceManifest } from '@conference/manifest'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 interface AdminOverlayProps {
@@ -12,9 +12,9 @@ interface AdminOverlayProps {
 
 export function AdminOverlay({ user, overrideDate, currentDate, timezone }: AdminOverlayProps) {
     const overrideDateTime = overrideDate
-        ? DateTime.fromISO(overrideDate, { zone: conferenceManifest.public.timezone })
+        ? conferenceDateTime.fromISO(overrideDate)
         : null
-    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })
+    const currentDateTime = conferenceDateTime.fromISO(currentDate)
 
     return (
         <Box

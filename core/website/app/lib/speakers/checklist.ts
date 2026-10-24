@@ -1,4 +1,5 @@
-import { DateTime } from 'luxon'
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import type { DateTime } from 'luxon'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates, type ChecklistItemDefinition } from './checklist-items'
 import type { SpeakerProfile } from '../services/speakers-store'
 
@@ -82,7 +83,7 @@ export type ChecklistUrgency = 'normal' | 'upcoming' | 'overdue'
  * `speakerChecklist` (its items' due dates are fixed, in checklist-items.ts). */
 export function urgencyFor(dueDateIso: string | undefined, done: boolean, now: DateTime): ChecklistUrgency {
     if (done || !dueDateIso) return 'normal'
-    const due = DateTime.fromISO(dueDateIso)
+    const due = conferenceDateTime.fromISO(dueDateIso)
     if (due <= now.plus({ days: 1 })) return 'overdue'
     if (due <= now.plus({ days: 7 })) return 'upcoming'
     return 'normal'
@@ -94,7 +95,7 @@ export function urgencyFor(dueDateIso: string | undefined, done: boolean, now: D
  * no due date. */
 export function dueDateRemainingLabel(dueDateIso: string | undefined, now: DateTime): string | null {
     if (!dueDateIso) return null
-    const due = DateTime.fromISO(dueDateIso)
+    const due = conferenceDateTime.fromISO(dueDateIso)
     const days = Math.round(due.diff(now, 'days').days)
     if (days === 0) return 'Due today'
     if (days > 0) return `${days} day${days === 1 ? '' : 's'} left`
@@ -159,7 +160,7 @@ export function speakerChecklist(
     profile: SpeakerProfile | null,
     sessions: SpeakerSessionChecklistInput[],
     meetTheExpertsResponded: boolean,
-    now: DateTime = DateTime.now(),
+    now: DateTime,
     dueDates: ChecklistDueDates = {},
 ): SpeakerChecklistItem[] {
     const backup = isBackupSpeaker(sessions)
@@ -176,7 +177,7 @@ export function speakerChecklist(
                 ? isMeetTheExpertsRegistrationComplete(meetTheExpertsResponded ? 1 : undefined)
                 : CHECKLIST_DONE_PREDICATES[definition.key](profile, sessions)
         const dueDateIso = dueDates[definition.key]?.toISO() ?? undefined
-        const isPastDue = Boolean(dueDateIso && DateTime.fromISO(dueDateIso) < now)
+        const isPastDue = Boolean(dueDateIso && conferenceDateTime.fromISO(dueDateIso) < now)
         return {
             key: definition.key,
             label: definition.label,
@@ -217,7 +218,7 @@ export interface UpcomingRsvpedEvent {
 export function upcomingRsvpedEvents(
     profile: SpeakerProfile | null,
     config: { speakerTrainingSessions?: SpeakerTrainingSessionInfo[]; speakerDinner?: SpeakerDinnerInfo },
-    now: DateTime = DateTime.now(),
+    now: DateTime,
 ): UpcomingRsvpedEvent[] {
     if (!profile) return []
 

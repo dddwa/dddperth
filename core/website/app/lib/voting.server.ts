@@ -115,6 +115,7 @@ export async function createUserVotingSessionAndRedirect(
     const totalPairs = tempGenerator.getTotalPairs()
     const maxPairsPerRound = tempGenerator.getMaxPairsPerRound()
 
+    // eslint-disable-next-line dates/use-date-time-provider -- Persisted audit timestamps record actual writes.
     const now = new Date().toISOString()
 
     await services.voting.createVotingSession({

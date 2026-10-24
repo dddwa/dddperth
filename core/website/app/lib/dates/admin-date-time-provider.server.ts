@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { conferenceManifest } from '@conference/manifest'
+import { conferenceDateTime } from './conference-date-time'
+import type { DateTime } from 'luxon'
 import { getUser, isAdminUser } from '../auth.server'
 import type { AppServices } from '../services/app-services'
 import type { DateTimeProvider } from './date-time-provider.server'
@@ -21,9 +21,7 @@ export class AdminDateTimeProvider implements DateTimeProvider {
         const overrideDate = session.get('adminDateOverride')
 
         if (overrideDate) {
-            provider._override = DateTime.fromISO(overrideDate, {
-                zone: conferenceManifest.public.timezone,
-            })
+            provider._override = conferenceDateTime.fromISO(overrideDate)
             console.log('Admin date override active:', provider._override.toISO())
         }
 

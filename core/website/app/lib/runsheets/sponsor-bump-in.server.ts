@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import type { RunsheetsBumpInConfig, RunsheetsConfig } from '@ddd/conference-config'
 import { DateTime } from 'luxon'
 import { z } from 'zod'
@@ -182,7 +183,7 @@ export function sortByStartTime<T extends { startTime: string | null; summary: s
         if (b.startTime === null) return -1
         // Jira writes `+0800` and the config `+08:00`, so compare instants,
         // not strings. `Date.parse` isn't specified for the colon-less form.
-        const difference = DateTime.fromISO(a.startTime).toMillis() - DateTime.fromISO(b.startTime).toMillis()
+        const difference = conferenceDateTime.fromISO(a.startTime).toMillis() - conferenceDateTime.fromISO(b.startTime).toMillis()
         return difference || a.summary.localeCompare(b.summary)
     })
 }

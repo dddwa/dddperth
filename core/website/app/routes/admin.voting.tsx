@@ -1,4 +1,4 @@
-import { conferenceManifest } from '@conference/manifest'
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import { useEffect, useRef, useState } from 'react'
 import { Form, useActionData, useFetcher, useLoaderData, useNavigation, useRevalidator } from 'react-router'
@@ -96,6 +96,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         // offer it for resume once it stops looking actively driven, and once
         // it's been dead for long enough stop letting it disable Start.
         const runningRun = mappedRuns.find((run) => run.status === 'running')
+        // eslint-disable-next-line dates/use-date-time-provider -- Worker heartbeat staleness must follow real time, independently of conference overrides.
         const msSinceUpdate = runningRun ? Date.now() - new Date(runningRun.lastUpdatedAt).getTime() : 0
 
         validationRuns = {
@@ -377,9 +378,7 @@ export default function AdminVoting() {
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
-                                {DateTime.fromISO(conferenceState.talkVoting.closes, {
-                                    zone: conferenceManifest.public.timezone,
-                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                {conferenceDateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, {
                                     locale: 'en-AU',
                                 })}
                             </styled.p>
@@ -393,9 +392,7 @@ export default function AdminVoting() {
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.opens, {
-                                        zone: conferenceManifest.public.timezone,
-                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    {conferenceDateTime.fromISO(conferenceState.talkVoting.opens).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
@@ -405,9 +402,7 @@ export default function AdminVoting() {
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {DateTime.fromISO(conferenceState.talkVoting.closes, {
-                                        zone: conferenceManifest.public.timezone,
-                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                    {conferenceDateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, {
                                         locale: 'en-AU',
                                     })}
                                 </styled.p>
@@ -667,9 +662,7 @@ export default function AdminVoting() {
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
                                             <styled.td p="2" border="admin-subtle">
-                                                {DateTime.fromISO(run.startedAt, {
-                                                    zone: conferenceManifest.public.timezone,
-                                                }).toLocaleString(DateTime.DATETIME_SHORT, {
+                                                {conferenceDateTime.fromISO(run.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
                                                     locale: 'en-AU',
                                                 })}
                                             </styled.td>

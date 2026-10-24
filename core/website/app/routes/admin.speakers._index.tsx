@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useEffect, useId, useState } from 'react'
@@ -416,7 +417,7 @@ const IMPORT_STATUS_LABEL: Record<string, string> = {
 }
 
 function formatRunTime(unixSeconds: number, timezone: string): string {
-    return DateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
+    return conferenceDateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
         locale: 'en-AU',
     })
 }
@@ -429,7 +430,7 @@ const URGENCY_TEXT_COLOR = {
 
 function dueDateLabel(dueDateIso: string | undefined): string | null {
     if (!dueDateIso) return null
-    return `Due ${DateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
+    return `Due ${conferenceDateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
 }
 
 export default function AdminSpeakers() {

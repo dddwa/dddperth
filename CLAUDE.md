@@ -414,6 +414,8 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
     macOS-rendered images that CI can't reproduce). Review the resulting diff like any other code change.
   - **This job is a real merge gate** — unlike `a11y-e2e`, it is not `continue-on-error`.
 
+Before adding or reviewing dates, clocks, deadlines, date inputs, formatting, calendars, or time-dependent tests, read [Date and time patterns](core/docs/date-time.md).
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 

@@ -73,6 +73,8 @@ Read each skill's `SKILL.md` before changes that affect the cross-layer contract
 
 ## Key application patterns
 
+Before adding or reviewing dates, clocks, deadlines, date inputs, formatting, calendars, or time-dependent tests, read [Date and time patterns](docs/date-time.md).
+
 1. **Routing**: React Router v7 file-based routing in `website/app/routes/`. Layout routes use `_layout` prefix; dynamic segments use `$param` syntax.
 2. **Conference data**: Year-based. Each year config lives in the fork's `conference/config/years/`. The stub mirrors the same shape.
 3. **Content**: MDX compiled at build time via the `mdx-bundles` Vite plugin. Pages discovered from `conference/content/pages/` (path resolved through `@conference/build-manifest`).

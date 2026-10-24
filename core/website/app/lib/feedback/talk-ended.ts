@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 
 /**
@@ -14,7 +15,7 @@ export function hasTalkEnded(endsAt: string | null | undefined, nowMillis: numbe
     // The app sets `Settings.throwOnInvalid` (app/root.tsx), so a bad value
     // throws rather than coming back invalid.
     try {
-        const end = DateTime.fromISO(endsAt, { zone: timezone })
+        const end = conferenceDateTime.fromISO(endsAt, { zone: timezone })
         return !end.isValid || end.toMillis() <= nowMillis
     } catch {
         return true

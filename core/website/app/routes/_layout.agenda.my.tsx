@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { conferenceManifest } from '@conference/manifest'
 import { DateTime } from 'luxon'
 import { useMemo, useState } from 'react'
@@ -26,7 +27,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     const year = getConferenceState(context).conference.year
     const schedule = await getPublishedSchedule(context, year)
     const timeOf = (iso: string) =>
-        DateTime.fromISO(iso, { zone: conferenceManifest.public.timezone }).toFormat('h:mm a').toLowerCase()
+        conferenceDateTime.fromISO(iso).toFormat('h:mm a').toLowerCase()
 
     const talks = schedule
         ? scheduleTalks(schedule).flatMap((talk) =>

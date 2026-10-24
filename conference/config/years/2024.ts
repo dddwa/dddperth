@@ -1,3 +1,4 @@
+import { conferenceConfigPublic } from '../public.ts'
 import { DateTime } from 'luxon'
 import type { ConferenceYear } from '@ddd/conference-config'
 
@@ -59,7 +60,7 @@ export const conference2024: ConferenceYear = {
         '721989': 'qgLfjxsn8BI', // How to make decisions quickly and move on, from an overthinker
     },
 
-    conferenceDate: DateTime.fromISO('2024-11-16'),
+    conferenceDate: DateTime.fromISO('2024-11-16', { zone: conferenceConfigPublic.timezone }),
     agendaPublishedDateTime: DateTime.fromISO('2024-08-20T17:00:00', {
         zone: 'Australia/Perth',
     }),

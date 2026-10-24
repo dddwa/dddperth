@@ -1,3 +1,4 @@
+import { conferenceDateTime } from '~/lib/dates/conference-date-time'
 import { DateTime } from 'luxon'
 import { useEffect, useSyncExternalStore } from 'react'
 import { useFetcher, useRevalidator } from 'react-router'
@@ -74,7 +75,7 @@ export function RunsheetFreshness({
         () => true,
     )
 
-    const updated = DateTime.fromISO(fetchedAt, { zone: timezone })
+    const updated = conferenceDateTime.fromISO(fetchedAt, { zone: timezone })
     const refreshing = revalidator.state === 'loading' || cacheClear.state !== 'idle'
     const refresh = () => {
         // A fetcher action revalidates the page's loaders, so this reloads its data too.

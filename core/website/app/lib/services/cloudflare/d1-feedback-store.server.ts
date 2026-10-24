@@ -49,6 +49,7 @@ function toTalkFeedback(row: TalkFeedbackRow): TalkFeedback {
 export function createD1FeedbackStore(db: D1Database): FeedbackStore {
     return {
         async saveConferenceFeedback(year, submitterId, input) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             await db
                 .prepare(
@@ -73,6 +74,7 @@ export function createD1FeedbackStore(db: D1Database): FeedbackStore {
         },
 
         async saveTalkFeedback(year, submitterId, input) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             const result = await db
                 .prepare(

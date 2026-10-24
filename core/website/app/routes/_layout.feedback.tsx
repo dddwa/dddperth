@@ -59,6 +59,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             /** Talks this browser has already reviewed, so the form can say so. */
             reviewedIds,
             // Rendered into the form for the minimum-fill-time check, so the page can't be cached.
+            // eslint-disable-next-line dates/use-date-time-provider -- Anti-spam timing must follow real elapsed time, independently of conference overrides.
             startedAt: Date.now(),
         },
         { headers: { 'Cache-Control': 'no-store' } },
@@ -75,6 +76,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData()
     const kind: FeedbackKind = formData.get('kind') === 'talk' ? 'talk' : 'conference'
 
+    // eslint-disable-next-line dates/use-date-time-provider -- Anti-spam timing must follow real elapsed time, independently of conference overrides.
     if (looksLikeSpam(formData, Date.now())) {
         return data({ ok: true as const, kind })
     }

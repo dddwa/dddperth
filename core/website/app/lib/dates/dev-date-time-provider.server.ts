@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { conferenceManifest } from '@conference/manifest'
+import { conferenceDateTime } from './conference-date-time'
+import type { DateTime } from 'luxon'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 /**
@@ -49,9 +49,7 @@ export class DevDateTimeProvider implements DateTimeProvider {
         // until the user worked out which cookie to clear.
         let override: DateTime
         try {
-            override = DateTime.fromISO(decodeURIComponent(raw), {
-                zone: conferenceManifest.public.timezone,
-            })
+            override = conferenceDateTime.fromISO(decodeURIComponent(raw))
         } catch {
             console.warn(`[dev] ignoring unparseable ${DEV_DATE_OVERRIDE_COOKIE} cookie: ${raw}`)
             return null
