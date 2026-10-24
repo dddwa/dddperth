@@ -35,7 +35,6 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     }
 
     const conferenceState = getConferenceState(context)
-    const { timezone } = conferenceManifest.public
 
     return {
         conferenceDescription: conferenceManifest.public.description,
@@ -43,9 +42,9 @@ export async function loader({ context, request }: Route.LoaderArgs) {
         venueNavPlacement: getVenueNavPlacement({
             venuePublished: !!conferenceState.conference.venue,
             replacesAboutNearConference: !!conferenceManifest.public.features?.venueReplacesAboutNearConference,
-            now: getDateTimeProvider(context).nowDate().setZone(timezone),
+            now: getDateTimeProvider(context).nowDate(),
             conferenceDate: conferenceState.conference.date
-                ? DateTime.fromISO(conferenceState.conference.date, { zone: timezone })
+                ? conferenceDateTime.fromISO(conferenceState.conference.date)
                 : undefined,
         }),
         webUrl: getConfig(context).webUrl,
