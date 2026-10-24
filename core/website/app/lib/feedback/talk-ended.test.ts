@@ -1,9 +1,9 @@
-import { DateTime, Settings } from 'luxon'
-import { afterEach, describe, expect, it } from 'vitest'
+import { Temporal } from '~/lib/dates/temporal'
+import { describe, expect, it } from 'vitest'
 import { hasTalkEnded } from './talk-ended'
 
 const TZ = 'Australia/Perth'
-const at = (iso: string) => DateTime.fromISO(iso, { zone: TZ }).toMillis()
+const at = (iso: string) => Temporal.Instant.from(`${iso}+08:00`).epochMilliseconds
 
 describe('hasTalkEnded', () => {
     it('is false before the talk ends', () => {
@@ -30,15 +30,8 @@ describe('hasTalkEnded', () => {
         expect(hasTalkEnded('not a date', at('2026-10-03T08:00:00'), TZ)).toBe(true)
     })
 
-    describe('with Luxon set to throw on invalid dates, as the app is', () => {
-        afterEach(() => {
-            Settings.throwOnInvalid = false
-        })
-
-        it('still treats an unparseable end time as over rather than throwing', () => {
-            const now = at('2026-10-03T08:00:00')
-            Settings.throwOnInvalid = true
-            expect(hasTalkEnded('not a date', now, TZ)).toBe(true)
-        })
+    it('defaults to the configured conference timezone', () => {
+        expect(hasTalkEnded('2026-10-03T10:30:00', at('2026-10-03T10:29:59'))).toBe(false)
+        expect(hasTalkEnded('2026-10-03T10:30:00', at('2026-10-03T10:30:00'))).toBe(true)
     })
 })

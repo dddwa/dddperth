@@ -173,7 +173,7 @@ export default function Agenda() {
         feedbackOpen &&
         !session.isServiceSession &&
         feedbackNow !== undefined &&
-        hasTalkEnded(session.endsAt, feedbackNow, conferenceManifest.public.timezone)
+        hasTalkEnded(session.endsAt, feedbackNow)
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
 
     const sessionsById = useMemo(

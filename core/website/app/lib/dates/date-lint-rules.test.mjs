@@ -24,11 +24,15 @@ tester.run('use-conference-date-time', plugin.rules['use-conference-date-time'],
 tester.run('use-date-time-provider', plugin.rules['use-date-time-provider'], {
     valid: [
         'clock.now(); clock.nowDate();',
+        'function f(Temporal) { return Temporal.Now.instant(); }',
         'new Date(epochMillis);',
         'function f(Date) { return Date.now(); }',
         "import { DateTime } from 'luxon'; function f(DateTime) { return DateTime.now(); }",
     ],
     invalid: [
+        'Temporal.Now.instant();',
+        "import { Temporal as T } from 'temporal-polyfill'; T.Now.instant();",
+        "import * as time from './temporal'; time.Temporal.Now.zonedDateTimeISO();",
         'Date.now();', 'const now = Date["now"];', 'new Date();', 'Date();', 'Date(123);',
         "import { DateTime as DT } from 'luxon'; DT.now();",
         "import * as luxon from 'luxon'; luxon.DateTime.local();",

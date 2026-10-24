@@ -2,6 +2,35 @@
 
 Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, date formatting, calendars, or time-dependent tests. These rules apply to the shared website and conference configuration.
 
+## Temporal for new date logic
+
+Use [the Temporal module](../website/app/lib/dates/temporal.ts) for new code. It selects native Temporal where available and the `temporal-polyfill` implementation elsewhere, without installing globals. It returns standard Temporal values:
+
+```ts
+import { conferenceDate, conferenceTime, Temporal } from '~/lib/dates/temporal'
+import { getDateTimeProvider } from '~/remix-app-load-context'
+
+const day = conferenceDate('2026-10-03') // Temporal.PlainDate
+const event = conferenceTime('2026-10-03T09:00') // Temporal.ZonedDateTime, configured IANA zone
+const now = Temporal.Instant.fromEpochMilliseconds(getDateTimeProvider(context).now())
+const hasStarted = Temporal.Instant.compare(event.toInstant(), now) <= 0
+
+// Explicit overrides only when the domain needs a different zone or DST policy.
+const elsewhere = conferenceTime('2026-04-05T02:30', {
+    timeZone: 'Australia/Sydney', disambiguation: 'later',
+})
+```
+
+Keep calendar dates as `PlainDate`, scheduled local events as `ZonedDateTime`, and exact timestamps as `Instant`. `conferenceDate` accepts only date-only ISO strings; `conferenceTime` accepts datetimes, defaults offset-free inputs to the public config IANA zone, and preserves explicit instants. It rejects ambiguous/nonexistent wall times unless a disambiguation policy is supplied. Invalid values throw `RangeError`; handle these at input boundaries.
+
+Use `.add()`/`.subtract()` for arithmetic and `.until()`/`.since()` for differences. Compare dates and instants with their standard `.compare()` methods; Temporal objects deliberately reject implicit `<`/`>` or numeric coercion. Calendar-day comparisons use `.toPlainDate()` in the conference zone.
+
+Serialize loader values to ISO strings and reconstruct on the client. `ZonedDateTime.toString()` includes the IANA annotation; `Instant.toString()` returns an offset-bearing instant compatible with existing `Date.parse` consumers. Keep using the request provider for now, including when constructing an `Instant`; direct `Temporal.Now` calls are lint errors.
+
+This migration is incremental: the existing conference-config contract and `nowDate()` still expose Luxon. Existing consumers may retain the legacy patterns below while they are migrated. New Temporal code can use provider epoch milliseconds without changing that contract or wrapping standard Temporal objects in a Luxon-compatible interface.
+
+Run `pnpm nx temporal-check website` to verify native/polyfilled agreement, Workers execution, and React SSR hydration across Chromium, Firefox, and WebKit. Install those engines with `pnpm nx setup-temporal-browsers website` first. The check prints isolated minified/gzip sizes for Temporal and the legacy Luxon helper; those are dependency comparisons, not whole-site savings while both libraries coexist.
+
 ## Choose the clock
 
 Conference behaviour uses the request's `DateTimeProvider`, including CFP/voting/ticket windows, agenda publication, speaker deadlines, feedback availability, countdowns, and run-sheet highlights.
@@ -88,7 +117,7 @@ For manual date-gated checks, use `/admin/settings` rather than changing confere
 The existing Nx lint targets enforce three local rules:
 
 - `dates/use-conference-date-time`: use the configured-zone helper for application construction, including aliased and namespace Luxon imports. Config bootstrap files must supply their explicit zone.
-- `dates/use-date-time-provider`: feature code obtains now from the request provider. Operational reads need a narrow `eslint-disable-next-line` with the reason the clock must remain real. The system provider implements that real clock.
+- `dates/use-date-time-provider`: feature code obtains now from the request provider, including code using Temporal. Operational reads need a narrow `eslint-disable-next-line` with the reason the clock must remain real. The system provider implements that real clock.
 - `dates/no-native-date-calendar`: retain Luxon for calendar arithmetic; native Date formatting must supply an explicit `timeZone`. This rule uses type information when available so unrelated methods are not reported.
 
 Tests may construct independent clocks/zones directly. Date constructors are not auto-fixed: choosing whether a value is a wall time, calendar date, instant, or operational timestamp requires intent. Lint protects construction and clock patterns; calendar-day semantics still need behaviour tests.

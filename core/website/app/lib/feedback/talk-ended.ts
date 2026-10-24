@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 
 /**
  * Whether a talk is over, so asking for feedback on it makes sense. A talk
@@ -8,15 +7,13 @@ import { DateTime } from 'luxon'
  * that talk's feedback from the agenda at all.
  *
  * Sessionize times are event-local with no offset, so they're read in the
- * conference timezone; one that does carry an offset keeps it.
+ * conference timezone; an explicit offset identifies the exact instant.
  */
-export function hasTalkEnded(endsAt: string | null | undefined, nowMillis: number, timezone: string): boolean {
+export function hasTalkEnded(endsAt: string | null | undefined, nowMillis: number, timezone?: string): boolean {
     if (!endsAt) return true
-    // The app sets `Settings.throwOnInvalid` (app/root.tsx), so a bad value
-    // throws rather than coming back invalid.
     try {
-        const end = conferenceDateTime.fromISO(endsAt, { zone: timezone })
-        return !end.isValid || end.toMillis() <= nowMillis
+        const end = conferenceTime(endsAt, { timeZone: timezone })
+        return end.epochMilliseconds <= nowMillis
     } catch {
         return true
     }
