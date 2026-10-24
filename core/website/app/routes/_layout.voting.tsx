@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
@@ -236,9 +235,7 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${conferenceDateTime.fromISO(data.talkVoting.opens).toLocaleString(DateTime.DATETIME_SHORT, {
-                              locale: 'en-AU',
-                          })} and closes ${conferenceDateTime.fromISO(data.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
+                        ? `Voting opens ${conferenceTime(data.talkVoting.opens).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })} and closes ${conferenceTime(data.talkVoting.closes).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
                         : 'Voting is not available for this conference'
                 }
             />

@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from 'temporal-polyfill'
 import type { z } from 'zod'
 import type { gridSmartSchema } from './sessionize-schema.ts'
 
@@ -121,8 +121,8 @@ export interface SessionData {
 }
 
 export interface DateTimeRange {
-    opens: DateTime
-    closes: DateTime
+    opens: Temporal.ZonedDateTime
+    closes: Temporal.ZonedDateTime
 }
 
 export interface TicketRelease {
@@ -183,12 +183,12 @@ export interface ConferenceYear {
         releaseTitlePrefixes?: string[]
     }
 
-    conferenceDate: DateTime | undefined
-    agendaPublishedDateTime: DateTime | undefined
+    conferenceDate: Temporal.ZonedDateTime | undefined
+    agendaPublishedDateTime: Temporal.ZonedDateTime | undefined
     cfpDates: DateTimeRange | undefined
     ticketReleases: Array<TicketRelease>
     talkVotingDates: DateTimeRange | undefined
-    feedbackOpenUntilDateTime: DateTime | undefined
+    feedbackOpenUntilDateTime: Temporal.ZonedDateTime | undefined
     venue: ConferenceVenue | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined

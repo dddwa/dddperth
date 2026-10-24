@@ -1,3 +1,4 @@
+import { conferenceDayStart, conferenceInstant, tryConferenceTime } from '~/lib/dates/temporal'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Temporal, conferenceDate, conferenceTime } from './temporal'
 
@@ -45,6 +46,17 @@ describe('conference Temporal values', () => {
         expect(() => conferenceDate('2026-10-03T09:00')).toThrow(RangeError)
         expect(() => conferenceTime('2026-10-03')).toThrow(RangeError)
         expect(() => conferenceTime('not a date')).toThrow(RangeError)
+    })
+
+    it('makes date-to-instant conversion explicit and defaults epoch values to the configured zone', () => {
+        const midnight = conferenceDayStart('2026-10-04')
+        expect(midnight.hour).toBe(0)
+        expect(midnight.timeZoneId).toBe('Australia/Sydney')
+        expect(conferenceInstant(midnight.epochMilliseconds).equals(midnight)).toBe(true)
+        expect(conferenceInstant(midnight.epochMilliseconds, { timeZone: undefined }).equals(midnight)).toBe(true)
+        expect(conferenceDayStart('2026-10-04', { timeZone: 'Europe/London' }).timeZoneId).toBe('Europe/London')
+        expect(tryConferenceTime('not a date')).toBeUndefined()
+        expect(tryConferenceTime('2026-10-04T02:30')).toBeUndefined()
     })
 
     it('round-trips through the strings loaders send to browsers', () => {

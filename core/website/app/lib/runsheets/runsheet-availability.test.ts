@@ -1,9 +1,9 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { isRunsheetClosed } from './runsheet-availability.server'
 
 const timezone = 'Australia/Perth'
-const at = (local: string) => DateTime.fromISO(local, { zone: timezone })
+const at = (local: string) => conferenceTime(local, { timeZone: timezone })
 
 describe('isRunsheetClosed', () => {
     // A Saturday, as DDD Perth always is.
@@ -18,7 +18,7 @@ describe('isRunsheetClosed', () => {
     it('closes from midnight on the Monday after, in the conference timezone', () => {
         expect(isRunsheetClosed(conferenceDate, at('2026-11-16T00:00:00'), timezone)).toBe(true)
         // 23:30 Sunday in UTC is already Monday morning in Perth.
-        expect(isRunsheetClosed(conferenceDate, DateTime.fromISO('2026-11-15T16:30:00Z'), timezone)).toBe(true)
+        expect(isRunsheetClosed(conferenceDate, conferenceTime('2026-11-15T16:30:00Z'), timezone)).toBe(true)
         expect(isRunsheetClosed(conferenceDate, at('2027-03-01T09:00'), timezone)).toBe(true)
     })
 

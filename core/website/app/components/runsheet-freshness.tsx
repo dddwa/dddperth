@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { tryConferenceTime } from '~/lib/dates/temporal'
 import { useEffect, useSyncExternalStore } from 'react'
 import { useFetcher, useRevalidator } from 'react-router'
 import { FloatingPanel } from '~/components/floating-panel'
@@ -56,7 +55,7 @@ export function RunsheetFreshness({
     clearsJiraCache,
 }: {
     fetchedAt: string
-    timezone: string
+    timezone?: string
     /**
      * An admin's Refresh also clears the server's Jira cache (the page's
      * `intent=refresh` action), so it shows Jira as it is right now. Everyone
@@ -75,7 +74,7 @@ export function RunsheetFreshness({
         () => true,
     )
 
-    const updated = conferenceDateTime.fromISO(fetchedAt, { zone: timezone })
+    const updated = tryConferenceTime(fetchedAt, { timeZone: timezone })
     const refreshing = revalidator.state === 'loading' || cacheClear.state !== 'idle'
     const refresh = () => {
         // A fetcher action revalidates the page's loaders, so this reloads its data too.
@@ -83,7 +82,7 @@ export function RunsheetFreshness({
         else void revalidator.revalidate()
     }
 
-    const time = updated.isValid ? updated.toFormat('h:mm a') : 'unknown'
+    const time = updated ? updated.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'unknown'
 
     return (
         <>
@@ -105,7 +104,7 @@ export function RunsheetFreshness({
                         <>
                             Last updated{' '}
                             <time dateTime={fetchedAt}>
-                                {updated.isValid ? updated.toFormat('ccc d LLL, h:mm a') : 'unknown'}
+                                {updated ? updated.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true }) : 'unknown'}
                             </time>
                             {online ? null : (
                                 <>

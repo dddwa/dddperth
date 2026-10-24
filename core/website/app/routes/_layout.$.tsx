@@ -1,7 +1,6 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import type { Temporal } from '~/lib/dates/temporal'
+import { conferenceDayStart, conferenceTime } from '~/lib/dates/temporal'
 import { data, useLoaderData } from 'react-router'
-
-import { DateTime } from 'luxon'
 import type { PropsWithChildren } from 'react'
 import { ImportantDates } from '~/components/page-components/important-dates'
 import { Button } from '~/components/ui/button'
@@ -90,7 +89,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 
     return data(
         {
-            currentDate: getDateTimeProvider(context).nowDate().toISO(),
+            currentDate: getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             currentPath: contentSlug,
             siteUrl,
             frontmatter: post.frontmatter,
@@ -217,7 +216,7 @@ export default function WebsiteContentPage() {
                     currentPath={currentPath}
                     frontmatter={frontmatter}
                     conferenceState={conferenceState}
-                    currentDate={conferenceDateTime.fromISO(currentDate)}
+                    currentDate={conferenceTime(currentDate)}
                     importantDates={importantDates}
                 >
                     <Component sponsors={sponsorPageData} />
@@ -235,7 +234,7 @@ function ContentPageWithSidebar({
     currentDate,
     children,
 }: PropsWithChildren<
-    { currentDate: DateTime } & Pick<
+    { currentDate: Temporal.ZonedDateTime } & Pick<
         Awaited<ReturnType<typeof useLoaderData<typeof loader>>>,
         'conferenceState' | 'frontmatter' | 'currentPath' | 'importantDates'
     >
@@ -292,10 +291,7 @@ export const EventDetailsSummary = ({ className, conferenceState, currentPath }:
                         {conferenceState.conferenceState === 'before-conference' ? 'Next event' : 'Previous event'}
                     </small>
                     <time>
-                        {conferenceDateTime.fromISO(relevantDate).toLocaleString(
-                            DateTime.DATE_HUGE,
-                            { locale: 'en-AU' },
-                        )}
+                        {conferenceDayStart(relevantDate).toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </time>
                 </h2>
             ) : null}

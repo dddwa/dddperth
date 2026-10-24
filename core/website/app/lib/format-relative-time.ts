@@ -1,5 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
+import { conferenceInstant } from '~/lib/dates/temporal'
 
 /**
  * Coarse "how long ago" label for a past unix-seconds timestamp — Today,
@@ -8,11 +8,11 @@ import type { DateTime } from 'luxon'
  * column. `undefined` (never happened) renders as `null` so callers can
  * choose their own "Never" copy.
  */
-export function formatRelativeTime(epochSeconds: number | undefined, now: DateTime): string | null {
+export function formatRelativeTime(epochSeconds: number | undefined, now: Temporal.ZonedDateTime): string | null {
     if (epochSeconds === undefined) return null
 
-    const then = conferenceDateTime.fromSeconds(epochSeconds, { zone: now.zone })
-    const days = Math.floor(now.diff(then, 'days').days)
+    const then = conferenceInstant(epochSeconds * 1000, { timeZone: now.timeZoneId })
+    const days = Math.floor(then.until(now, { largestUnit: 'day' }).total({ unit: 'day', relativeTo: then }))
 
     if (days <= 0) return 'Today'
     if (days === 1) return 'Yesterday'

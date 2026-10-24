@@ -1,7 +1,6 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime } from '~/lib/dates/temporal'
 import type { ConferenceVenue } from '@ddd/conference-config'
 import { createEvents, type EventAttributes } from 'ics'
-import { DateTime } from 'luxon'
 import type { z } from 'zod'
 import type { sessionSchema } from '~/lib/sessionize.server'
 
@@ -41,7 +40,7 @@ export function parseRequestedTalkIds(raw: string | null): string[] {
 export function buildMyAgendaCalendar(args: {
     talks: readonly Session[]
     requestedIds: readonly string[]
-    timezone: string
+    timezone?: string
     conferenceName: string
     year: string
     siteOrigin: string
@@ -57,8 +56,8 @@ export function buildMyAgendaCalendar(args: {
         // Sessionize times are conference-local wall-clock times. Emit UTC so
         // the event lands at the right instant for someone whose calendar is
         // set to another timezone.
-        const start = conferenceDateTime.fromISO(talk.startsAt as string, { zone: args.timezone }).toUTC()
-        const end = conferenceDateTime.fromISO(talk.endsAt as string, { zone: args.timezone }).toUTC()
+        const start = conferenceTime(talk.startsAt as string, { timeZone: args.timezone }).withTimeZone('UTC')
+        const end = conferenceTime(talk.endsAt as string, { timeZone: args.timezone }).withTimeZone('UTC')
         const url = `${args.siteOrigin}/agenda/${args.year}/talk/${talk.id}`
         const speakers = talk.speakers.map((speaker) => speaker.name).join(', ')
 

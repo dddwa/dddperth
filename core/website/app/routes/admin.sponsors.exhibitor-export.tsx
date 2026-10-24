@@ -48,7 +48,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         ? conferenceManifest.conferences.conferences[portalConfig.year]
         : undefined
     const conferenceDate =
-        conference && conference.kind === 'conference' ? conference.conferenceDate?.toJSDate() : undefined
+        conference?.kind === 'conference' ? conference.conferenceDate?.toPlainDate() : undefined
 
     const sources = exhibitors.map((sponsor) => buildExhibitorSource(sponsor, logistics.get(sponsor.issueKey) ?? {}))
 

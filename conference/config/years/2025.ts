@@ -1,5 +1,5 @@
 import type { ConferenceYear } from '@ddd/conference-config'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 
 const SESSIONIZE_2025_SESSIONS = 'https://sessionize.com/api/v2/vhwwzm15'
@@ -50,39 +50,23 @@ export const conference2025: ConferenceYear = {
         '987321': 'tDed1jxlZO4', // Reasons To Be Cheerful: 0, 1, 2…
     },
 
-    conferenceDate: DateTime.fromISO('2025-09-20T09:00:00', {
-        zone: 'Australia/Perth',
-    }),
-    agendaPublishedDateTime: DateTime.fromISO('2025-08-11T00:00:00', {
-        zone: 'Australia/Perth',
-    }),
+    conferenceDate: conferenceTime('2025-09-20T09:00:00'),
+    agendaPublishedDateTime: conferenceTime('2025-08-11T00:00:00'),
     cfpDates: {
-        opens: DateTime.fromISO('2025-05-05T00:00:00', {
-            zone: 'Australia/Perth',
-        }),
-        closes: DateTime.fromISO('2025-06-15T23:59:59', {
-            zone: 'Australia/Perth',
-        }),
+        opens: conferenceTime('2025-05-05T00:00:00'),
+        closes: conferenceTime('2025-06-15T23:59:59'),
     },
     talkVotingDates: {
-        opens: DateTime.fromISO('2025-07-01T09:00:00', {
-            zone: 'Australia/Perth',
-        }),
-        closes: DateTime.fromISO('2025-07-20T23:59:59', {
-            zone: 'Australia/Perth',
-        }),
+        opens: conferenceTime('2025-07-01T09:00:00'),
+        closes: conferenceTime('2025-07-20T23:59:59'),
     },
     ticketReleases: [
         {
             releaseName: 'Early Bird',
             price: '$60',
             range: {
-                opens: DateTime.fromISO('2025-03-13T05:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2025-04-30T23:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2025-03-13T05:00:00'),
+                closes: conferenceTime('2025-04-30T23:59:59'),
             },
         },
         {
@@ -90,12 +74,8 @@ export const conference2025: ConferenceYear = {
             // Probably
             price: '$80',
             range: {
-                opens: DateTime.fromISO('2025-05-01T00:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2025-09-12T07:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2025-05-01T00:00:00'),
+                closes: conferenceTime('2025-09-12T07:59:59'),
             },
         },
         {
@@ -103,12 +83,8 @@ export const conference2025: ConferenceYear = {
             // Probably
             price: '$100',
             range: {
-                opens: DateTime.fromISO('2025-09-12T08:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2025-09-19T23:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2025-09-12T08:00:00'),
+                closes: conferenceTime('2025-09-19T23:59:59'),
             },
         },
     ],

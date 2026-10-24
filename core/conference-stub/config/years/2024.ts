@@ -4,7 +4,7 @@
 // feedback window closed, sponsors retained for archive browsing. Forks
 // can copy this structure when they roll over to a new conference year.
 
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 import type { ConferenceYear } from '@ddd/conference-config'
 import { exampleConventionCentre } from '../venues/example-convention-centre.ts'
 
@@ -21,11 +21,11 @@ export const conference2024: ConferenceYear = {
         underrepresentedGroupsQuestionId: undefined,
     },
 
-    conferenceDate: DateTime.fromISO('2024-10-19T09:00:00', { zone: 'Etc/UTC' }),
-    agendaPublishedDateTime: DateTime.fromISO('2024-09-15T00:00:00', { zone: 'Etc/UTC' }),
+    conferenceDate: conferenceTime('2024-10-19T09:00:00'),
+    agendaPublishedDateTime: conferenceTime('2024-09-15T00:00:00'),
     cfpDates: {
-        opens: DateTime.fromISO('2024-06-01T00:00:00', { zone: 'Etc/UTC' }),
-        closes: DateTime.fromISO('2024-07-15T23:59:59', { zone: 'Etc/UTC' }),
+        opens: conferenceTime('2024-06-01T00:00:00'),
+        closes: conferenceTime('2024-07-15T23:59:59'),
     },
     talkVotingDates: undefined,
     ticketReleases: [
@@ -33,12 +33,12 @@ export const conference2024: ConferenceYear = {
             releaseName: 'General',
             price: '$70',
             range: {
-                opens: DateTime.fromISO('2024-06-01T00:00:00', { zone: 'Etc/UTC' }),
-                closes: DateTime.fromISO('2024-10-18T23:59:59', { zone: 'Etc/UTC' }),
+                opens: conferenceTime('2024-06-01T00:00:00'),
+                closes: conferenceTime('2024-10-18T23:59:59'),
             },
         },
     ],
-    feedbackOpenUntilDateTime: DateTime.fromISO('2024-10-26T23:59:59', { zone: 'Etc/UTC' }),
+    feedbackOpenUntilDateTime: conferenceTime('2024-10-26T23:59:59'),
 
     ticketInfo: {
         type: 'tito',

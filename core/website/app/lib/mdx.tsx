@@ -1,10 +1,9 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
+import { conferenceTime } from '~/lib/dates/temporal'
 import type { MDXComponents } from 'mdx/types'
 import type { ComponentType } from 'react'
 import { use } from 'react'
 import bundles from 'virtual:mdx-bundles'
-import type { Sponsor, Year } from './conference-state-client-safe'
 import { MdxImage } from '~/components/mdx-image'
 import {
     Bullet,
@@ -23,7 +22,7 @@ import { TicketForm } from '~/components/page-components/TicketForm'
 import { VolunteerForm } from '~/components/page-components/VolunteerForm'
 import { Button } from '~/components/ui/button'
 import { styled } from '~/styled-system/jsx'
-import type { ConferenceState } from './conference-state-client-safe'
+import type { ConferenceState, Sponsor, Year } from './conference-state-client-safe'
 import { AppLink } from '~/components/app-link'
 import { NewTabHint } from '~/components/new-tab-hint'
 
@@ -134,7 +133,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={conferenceDateTime.fromISO(conferenceState.callForPapers.opens)} />
+                return <CFPNotOpenYet cfpOpens={conferenceTime(conferenceState.callForPapers.opens)} />
             }
         },
         EditSession: () => {
@@ -155,7 +154,7 @@ function wrapMdxComponent(
             }
 
             if (conferenceState.callForPapers.state === 'not-open-yet') {
-                return <CFPNotOpenYet cfpOpens={conferenceDateTime.fromISO(conferenceState.callForPapers.opens)} />
+                return <CFPNotOpenYet cfpOpens={conferenceTime(conferenceState.callForPapers.opens)} />
             }
         },
         VolunteersNeeded: ({ children }) => {
@@ -202,14 +201,12 @@ function wrapMdxComponent(
     return MdxComponent
 }
 
-export function CFPNotOpenYet({ cfpOpens }: { cfpOpens: DateTime }) {
+export function CFPNotOpenYet({ cfpOpens }: { cfpOpens: Temporal.ZonedDateTime }) {
     return (
         <styled.div>
             <Button disabled>
                 Call for Papers not open yet, it opens on{' '}
-                {cfpOpens.toLocaleString(DateTime.DATETIME_SHORT, {
-                    locale: 'en-AU',
-                })}
+                {cfpOpens.toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
             </Button>
         </styled.div>
     )

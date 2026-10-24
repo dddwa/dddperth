@@ -36,7 +36,7 @@ function luxonDateTime(context, node) {
 
 function temporalNamespace(context, node) {
     const supportedSource = (source) => source === 'temporal-polyfill' ||
-        source.startsWith('temporal-polyfill/') || source.endsWith('/temporal')
+        source.startsWith('temporal-polyfill/') || source === '@ddd/conference-config' || source.endsWith('/temporal')
     if (node?.type === 'Identifier') {
         const binding = variable(context, node)
         if (node.name === 'Temporal' && !binding?.defs.length) return true
@@ -51,28 +51,48 @@ function temporalNamespace(context, node) {
     return false
 }
 
-const constructors = new Set(['fromISO', 'fromMillis', 'fromSeconds', 'fromJSDate', 'fromObject', 'fromFormat', 'fromSQL', 'fromHTTP', 'fromRFC2822', 'fromString'])
-const clocks = new Set(['now', 'local', 'utc'])
-
 export default {
     rules: {
         'use-conference-date-time': {
             meta: {
-                type: 'problem', schema: [{ type: 'object', properties: { allowExplicitZone: { type: 'boolean' } }, additionalProperties: false }],
-                messages: { useHelper: `Use conferenceDateTime.{{method}}() so the configured IANA timezone is automatic. ${guide}` },
+                type: 'problem', schema: [],
+                messages: { useHelper: `Use standard Temporal values from the configured conference date helpers. ${guide}` },
             },
             create(context) {
                 return {
+                    ImportDeclaration(node) {
+                        if (node.source.value === 'luxon') context.report({ node, messageId: 'useHelper' })
+                    },
                     MemberExpression(node) {
-                        const method = property(node)
-                        if (constructors.has(method) && luxonDateTime(context, node.object)) {
-                            const call = node.parent
-                            const options = call.type === 'CallExpression' && call.callee === node
-                                ? call.arguments[method === 'fromFormat' || method === 'fromString' ? 2 : 1] : undefined
-                            if (context.options[0]?.allowExplicitZone && options?.type === 'ObjectExpression' &&
-                                options.properties.some((p) => p.type === 'Property' && (p.key.name ?? p.key.value) === 'zone')) return
-                            context.report({ node, messageId: 'useHelper', data: { method } })
+                        if (node.object.type === 'Identifier' && node.object.name === 'Temporal' &&
+                            !variable(context, node.object)?.defs.length && property(node) !== 'Now') {
+                            context.report({ node, messageId: 'useHelper' })
                         }
+                    },
+                }
+            },
+        },
+        'no-temporal-coercion': {
+            meta: {
+                type: 'problem', schema: [],
+                messages: { compare: `Use Temporal's compare(), equals(), until()/since(), or explicit epoch values; implicit Temporal coercion throws. ${guide}` },
+            },
+            create(context) {
+                function isTemporal(node) {
+                    const services = context.sourceCode.parserServices
+                    if (!services?.program || !services.esTreeNodeToTSNodeMap) return false
+                    const type = services.program.getTypeChecker().getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
+                    return (type.isUnion() ? type.types : [type]).some((part) =>
+                        part.getSymbol()?.declarations?.some((declaration) =>
+                            /(?:temporal-spec|lib\..*temporal).*\.d\.ts$/.test(declaration.getSourceFile().fileName)))
+                }
+                return {
+                    BinaryExpression(node) {
+                        if (['<', '<=', '>', '>=', '+', '-', '*', '/', '%', '**', '==', '!='].includes(node.operator) &&
+                            (isTemporal(node.left) || isTemporal(node.right))) context.report({ node, messageId: 'compare' })
+                    },
+                    UnaryExpression(node) {
+                        if (['+', '-', '~'].includes(node.operator) && isTemporal(node.argument)) context.report({ node, messageId: 'compare' })
                     },
                 }
             },
@@ -86,7 +106,7 @@ export default {
                 return {
                     MemberExpression(node) {
                         if ((globalDate(context, node.object) && property(node) === 'now') ||
-                            (luxonDateTime(context, node.object) && clocks.has(property(node))) ||
+                            (luxonDateTime(context, node.object) && ['now', 'local', 'utc'].includes(property(node))) ||
                             (property(node) === 'Now' && temporalNamespace(context, node.object))) {
                             context.report({ node, messageId: 'useProvider' })
                         }
@@ -106,7 +126,7 @@ export default {
         'no-native-date-calendar': {
             meta: {
                 type: 'problem', schema: [],
-                messages: { useLuxon: `Keep calendar arithmetic and formatting in conferenceDateTime/Luxon so the host timezone cannot change the date. ${guide}` },
+                messages: { useTemporal: `Use Temporal for calendar arithmetic and formatting so the host timezone cannot change the date. ${guide}` },
             },
             create(context) {
                 const methods = new Set(['getDate', 'getDay', 'getFullYear', 'getMonth', 'getHours', 'getMinutes', 'getSeconds', 'setDate', 'setFullYear', 'setMonth', 'setHours', 'setMinutes', 'setSeconds', 'toLocaleDateString', 'toLocaleTimeString', 'toLocaleString', 'toDateString', 'toTimeString', 'getYear', 'setYear'])
@@ -132,7 +152,7 @@ export default {
                             if (options?.type === 'ObjectExpression' && options.properties.some((p) =>
                                 p.type === 'Property' && (p.key.name ?? p.key.value) === 'timeZone')) return
                         }
-                        context.report({ node, messageId: 'useLuxon' })
+                        context.report({ node, messageId: 'useTemporal' })
                     },
                 }
             },

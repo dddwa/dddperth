@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from './dates.ts'
 import type { SpeakerPortalConfig } from '@ddd/conference-config'
 
 /**
@@ -25,33 +25,33 @@ export const speakerPortal: SpeakerPortalConfig = {
         // The ticket claim URL is deliberately absent — it's a secret,
         // SPEAKER_TICKET_CLAIM_URL_<YEAR>. See docs/runbooks/new-year.md.
         dueDates: {
-            confirmSession: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Etc/UTC' }),
-            acceptBackupSpeaker: DateTime.fromISO('2026-08-21T17:00:00', { zone: 'Etc/UTC' }),
-            claimTicket: DateTime.fromISO('2026-09-11T22:00:00', { zone: 'Etc/UTC' }),
-            meetTheExperts: DateTime.fromISO('2026-09-18T22:00:00', { zone: 'Etc/UTC' }),
-            speakerTraining: DateTime.fromISO('2026-08-28T22:00:00', { zone: 'Etc/UTC' }),
-            speakerDinner: DateTime.fromISO('2026-09-25T17:00:00', { zone: 'Etc/UTC' }),
+            confirmSession: conferenceTime('2026-08-21T17:00:00'),
+            acceptBackupSpeaker: conferenceTime('2026-08-21T17:00:00'),
+            claimTicket: conferenceTime('2026-09-11T22:00:00'),
+            meetTheExperts: conferenceTime('2026-09-18T22:00:00'),
+            speakerTraining: conferenceTime('2026-08-28T22:00:00'),
+            speakerDinner: conferenceTime('2026-09-25T17:00:00'),
             // Deliberately later than confirmSession — the checklist's
             // past-due logic is per-item, and the tests rely on this ordering.
-            sessionDetails: DateTime.fromISO('2026-09-25T22:00:00', { zone: 'Etc/UTC' }),
+            sessionDetails: conferenceTime('2026-09-25T22:00:00'),
         },
         speakerTrainingSessions: [
             {
                 id: 'Session 1',
                 title: 'Planning, building and writing your talk',
-                dateTime: DateTime.fromISO('2026-09-02T17:30:00', { zone: 'Etc/UTC' }),
-                endDateTime: DateTime.fromISO('2026-09-02T20:00:00', { zone: 'Etc/UTC' }),
+                dateTime: conferenceTime('2026-09-02T17:30:00'),
+                endDateTime: conferenceTime('2026-09-02T20:00:00'),
             },
             {
                 id: 'Session 2',
                 title: 'Presentation skills, tips and tricks',
-                dateTime: DateTime.fromISO('2026-09-09T17:30:00', { zone: 'Etc/UTC' }),
-                endDateTime: DateTime.fromISO('2026-09-09T20:00:00', { zone: 'Etc/UTC' }),
+                dateTime: conferenceTime('2026-09-09T17:30:00'),
+                endDateTime: conferenceTime('2026-09-09T20:00:00'),
             },
         ],
         speakerDinner: {
-            dateTime: DateTime.fromISO('2026-10-16T18:00:00', { zone: 'Etc/UTC' }),
-            endDateTime: DateTime.fromISO('2026-10-16T20:00:00', { zone: 'Etc/UTC' }),
+            dateTime: conferenceTime('2026-10-16T18:00:00'),
+            endDateTime: conferenceTime('2026-10-16T20:00:00'),
         },
     },
     sessionConfirmationNotifyEmail: 'speakers@example.test',
