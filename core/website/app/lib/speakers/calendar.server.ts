@@ -1,5 +1,5 @@
+import type { Temporal } from '~/lib/dates/temporal'
 import { createEvent } from 'ics'
-import type { DateTime } from 'luxon'
 
 /**
  * Builds a downloadable "Add to calendar" link for an RSVP'd event
@@ -12,12 +12,12 @@ import type { DateTime } from 'luxon'
 export function buildCalendarDataUrl(event: {
     title: string
     description?: string
-    start: DateTime
-    end: DateTime
+    start: Temporal.ZonedDateTime
+    end: Temporal.ZonedDateTime
     location?: string
 }): string {
-    const startUtc = event.start.toUTC()
-    const endUtc = event.end.toUTC()
+    const startUtc = event.start.withTimeZone('UTC')
+    const endUtc = event.end.withTimeZone('UTC')
 
     const { error, value } = createEvent({
         title: event.title,

@@ -1,11 +1,11 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { formatRelativeTime } from './format-relative-time'
 
-const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
+const NOW = conferenceTime('2026-08-20T09:00:00', { timeZone: 'Australia/Perth' })
 
 function secondsAgo(duration: object): number {
-    return Math.floor(NOW.minus(duration).toSeconds())
+    return Math.floor(NOW.subtract(duration).epochMilliseconds / 1000)
 }
 
 describe('formatRelativeTime', () => {
@@ -15,8 +15,8 @@ describe('formatRelativeTime', () => {
 
     it('says Today for anything within the last 24 hours (or in the future)', () => {
         expect(formatRelativeTime(secondsAgo({ hours: 2 }), NOW)).toBe('Today')
-        expect(formatRelativeTime(Math.floor(NOW.toSeconds()), NOW)).toBe('Today')
-        expect(formatRelativeTime(Math.floor(NOW.plus({ hours: 1 }).toSeconds()), NOW)).toBe('Today')
+        expect(formatRelativeTime(Math.floor(NOW.epochMilliseconds / 1000), NOW)).toBe('Today')
+        expect(formatRelativeTime(Math.floor(NOW.add({ hours: 1 }).epochMilliseconds / 1000), NOW)).toBe('Today')
     })
 
     it('says Yesterday for 1-2 days ago', () => {

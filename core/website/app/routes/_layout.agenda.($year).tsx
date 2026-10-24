@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime, Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { Fragment, useMemo, useState } from 'react'
 import {
     data,
@@ -16,7 +15,7 @@ import {
     useRouteLoaderData,
 } from 'react-router'
 import { $path } from 'safe-routes'
-import type { TypeOf, z } from 'zod'
+import type { z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { FeedbackLink, useFeedbackClock, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
@@ -27,12 +26,12 @@ import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { hasTalkEnded } from '~/lib/feedback/talk-ended'
 import { getYearConfig } from '~/lib/get-year-config.server'
-import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
 import type { MeetTheExpertsAgenda, MeetTheExpertsSeat } from '~/lib/meet-the-experts-agenda.server'
+import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
 import type { AgendaTalk } from '~/lib/my-agenda'
 import { getPublishedSchedule } from '~/lib/published-agenda.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
+import type { gridRoomSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
 import { formatDate } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
 import { useMyAgenda } from '~/lib/use-my-agenda'
@@ -88,7 +87,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         getConferenceState(context).feedback === 'open'
     // Each talk's link waits until that talk has finished; the page works out
     // when that is from here, so the date overrides apply to it too.
-    const now = feedbackOpen ? getDateTimeProvider(context).nowDate().toISO() : undefined
+    const now = feedbackOpen ? getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) : undefined
 
     return data(
         {
@@ -337,8 +336,8 @@ export default function Agenda() {
                     })}
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
-                        const startTime12 = conferenceDateTime.fromISO(timeSlot.slotStart)
-                            .toFormat('h:mm a')
+                        const startTime12 = Temporal.PlainTime.from(timeSlot.slotStart)
+                            .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                             .toLowerCase()
                         const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
                         const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
@@ -368,8 +367,8 @@ export default function Agenda() {
                                         <styled.span display={{ base: 'inline', xl: 'none' }}>
                                             {' '}
                                             -{' '}
-                                            {conferenceDateTime.fromISO(nextTimeSlot.slotStart)
-                                                .toFormat('h:mm a')
+                                            {Temporal.PlainTime.from(nextTimeSlot.slotStart)
+                                                .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                                                 .toLowerCase()}
                                         </styled.span>
                                     ) : null}
@@ -668,12 +667,12 @@ function RoomTimeSlot({
         ?.sessions.find((session) => session.id === room.session.id)
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
-        ? conferenceDateTime.fromISO(fullSession.endsAt)
-              .toFormat('h:mm a')
+        ? conferenceTime(fullSession.endsAt)
+              .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
               .toLowerCase()
         : nextTimeSlotIso
-          ? conferenceDateTime.fromISO(nextTimeSlotIso)
-                .toFormat('h:mm a')
+          ? Temporal.PlainTime.from(nextTimeSlotIso)
+                .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                 .toLowerCase()
           : undefined
 
@@ -872,7 +871,7 @@ function RoomTimeSlot({
 function talkTimeRange(startsAt: string | null, endsAt: string | null) {
     if (!startsAt || !endsAt) return null
     const format = (iso: string) =>
-        conferenceDateTime.fromISO(iso).toFormat('h:mm a').toLowerCase()
+        conferenceTime(iso).toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
     return `${format(startsAt)} - ${format(endsAt)}`
 }
 

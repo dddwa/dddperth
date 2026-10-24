@@ -1,5 +1,5 @@
 import type { ConferenceYear } from '@ddd/conference-config'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 
 import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 
@@ -23,71 +23,45 @@ export const conference2026: ConferenceYear = {
         underrepresentedGroupsQuestionId: 131373,
     },
 
-    conferenceDate: DateTime.fromISO('2026-10-03T09:00:00', {
-        zone: 'Australia/Perth',
-    }),
-    agendaPublishedDateTime: DateTime.fromISO('2026-08-24T00:00:00', {
-        zone: 'Australia/Perth',
-    }),
+    conferenceDate: conferenceTime('2026-10-03T09:00:00'),
+    agendaPublishedDateTime: conferenceTime('2026-08-24T00:00:00'),
     cfpDates: {
-        opens: DateTime.fromISO('2026-05-05T17:00:00', {
-            zone: 'Australia/Perth',
-        }),
-        closes: DateTime.fromISO('2026-06-28T23:59:59', {
-            zone: 'Australia/Perth',
-        }),
+        opens: conferenceTime('2026-05-05T17:00:00'),
+        closes: conferenceTime('2026-06-28T23:59:59'),
     },
     talkVotingDates: {
-        opens: DateTime.fromISO('2026-07-13T00:00:00', {
-            zone: 'Australia/Perth',
-        }),
-        closes: DateTime.fromISO('2026-07-26T23:59:59', {
-            zone: 'Australia/Perth',
-        }),
+        opens: conferenceTime('2026-07-13T00:00:00'),
+        closes: conferenceTime('2026-07-26T23:59:59'),
     },
     ticketReleases: [
         {
             releaseName: 'Early Bird',
             price: '$60',
             range: {
-                opens: DateTime.fromISO('2026-04-20T00:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2026-05-17T23:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2026-04-20T00:00:00'),
+                closes: conferenceTime('2026-05-17T23:59:59'),
             },
         },
         {
             releaseName: 'General',
             price: '$80',
             range: {
-                opens: DateTime.fromISO('2026-05-18T00:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2026-09-06T23:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2026-05-18T00:00:00'),
+                closes: conferenceTime('2026-09-06T23:59:59'),
             },
         },
         {
             releaseName: 'Final Release',
             price: '$100',
             range: {
-                opens: DateTime.fromISO('2026-09-07T00:00:00', {
-                    zone: 'Australia/Perth',
-                }),
-                closes: DateTime.fromISO('2026-10-02T23:59:59', {
-                    zone: 'Australia/Perth',
-                }),
+                opens: conferenceTime('2026-09-07T00:00:00'),
+                closes: conferenceTime('2026-10-02T23:59:59'),
             },
         },
     ],
 
     // The conference day and the day after.
-    feedbackOpenUntilDateTime: DateTime.fromISO('2026-10-04T23:59:59', {
-        zone: 'Australia/Perth',
-    }),
+    feedbackOpenUntilDateTime: conferenceTime('2026-10-04T23:59:59'),
 
     ticketInfo: {
         type: 'tito',

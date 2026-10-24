@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { z } from 'zod'
@@ -418,14 +417,12 @@ export default function VotingValidationStats() {
                             <>
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
-                                    {conferenceDateTime.fromISO(runDetails.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
-                                        locale: 'en-AU',
-                                    })}
+                                    {conferenceTime(runDetails.startedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </styled.p>
                                 {runDetails.completedAt && (
                                     <styled.p fontSize="sm" color="admin.600" mb="1">
                                         Completed:{' '}
-                                        {conferenceDateTime.fromISO(runDetails.completedAt).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                                        {conferenceTime(runDetails.completedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                     </styled.p>
                                 )}
                                 <styled.p fontSize="sm" color="admin.600">

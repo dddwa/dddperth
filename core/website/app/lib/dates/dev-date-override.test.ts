@@ -1,7 +1,8 @@
+import { conferenceConfigPublic } from '@conference/config/public'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { DEV_DATE_OVERRIDE_COOKIE } from './dev-date-time-provider.server'
+import { DEV_DATE_OVERRIDE_COOKIE, DevDateTimeProvider } from './dev-date-time-provider.server'
 
 /**
  * Marker strings that must never reach a production bundle. Both sit behind
@@ -71,5 +72,27 @@ describe('dev-only seams are absent from production builds', () => {
             `"${value}" leaked into the production build. The production-mode guard in ` +
                 `${guard} must stay statically evaluable so Vite can drop the branch.`,
         ).toEqual([])
+    })
+})
+
+describe('dev override parsing', () => {
+    const headers = (value: string) => new Headers({ cookie: `${DEV_DATE_OVERRIDE_COOKIE}=${encodeURIComponent(value)}` })
+
+    it('keeps date-only visual fixtures at local midnight', () => {
+        const date = DevDateTimeProvider.fromRequest(headers('2026-10-03'))?.nowDate()
+        expect(date?.toPlainDate().toString()).toBe('2026-10-03')
+        expect(date?.hour).toBe(0)
+        expect(date?.timeZoneId).toBe(conferenceConfigPublic.timezone)
+    })
+
+    it('preserves offset-bearing override instants', () => {
+        const provider = DevDateTimeProvider.fromRequest(headers('2026-10-03T00:00Z'))
+        expect(provider?.now()).toBe(Date.parse('2026-10-03T00:00Z'))
+        expect(provider?.nowDate().timeZoneId).toBe(conferenceConfigPublic.timezone)
+    })
+
+    it('ignores impossible dates and malformed encodings', () => {
+        expect(DevDateTimeProvider.fromRequest(headers('2026-02-30'))).toBeNull()
+        expect(DevDateTimeProvider.fromRequest(new Headers({ cookie: `${DEV_DATE_OVERRIDE_COOKIE}=%invalid` }))).toBeNull()
     })
 })

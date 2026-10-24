@@ -1,13 +1,11 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceDate, conferenceTime } from '~/lib/dates/temporal'
 import bundles from 'virtual:mdx-bundles'
 import type { ContentListItem, ContentPage, ContentService } from '../content-service'
 import type { FrontmatterProperties } from '../../mdx-types'
 
 function formatDate(iso: string): string {
-    return conferenceDateTime.fromISO(iso).toLocaleString(DateTime.DATE_FULL, {
-        locale: 'en-AU',
-    })
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? conferenceDate(iso) : conferenceTime(iso)
+    return date.toLocaleString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 function coerceFrontmatter(frontmatter: Record<string, unknown>): FrontmatterProperties {

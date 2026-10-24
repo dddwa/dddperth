@@ -58,7 +58,7 @@ nx graph                           # workspace dependency graph
     - `app/theme/` — token primitives (colors, durations, shadows, recipes)
     - `vite-plugins/`, `panda.config.ts`, `vite.config.ts` — build pipeline
     - `tsconfig.json` — defines `@conference/*` path aliases (pointing at `../conference-stub/` here; forks override these to point at their own `/conference/`)
-- **`/libs/conference-config`** — types-only shared package (`@ddd/conference-config`). The manifest contract every conference satisfies.
+- **`/libs/conference-config`** — shared manifest types and Temporal constructors (`@ddd/conference-config`). The manifest contract every conference satisfies.
 - **`/conference-stub`** — working sample conference. Two jobs: (1) lets `ddd-core` build standalone; (2) is the seed that `/new-conference` copies into a new fork's `/conference/`.
 
 ## Working with the fork ecosystem

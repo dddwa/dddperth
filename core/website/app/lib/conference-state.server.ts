@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import { Temporal } from '~/lib/dates/temporal'
 import type {
     ConferenceConfig,
     ConferenceConfigYear,
@@ -32,8 +32,8 @@ export function getCurrentConferenceState(
     ).filter((year): year is [Year, ConferenceYear] => year[1].kind === 'conference')
     const [latestConference, previousConference] = conferenceList
         .sort(([, a], [, b]) => {
-            const dateA = a.conferenceDate?.valueOf() ?? Infinity
-            const dateB = b.conferenceDate?.valueOf() ?? Infinity
+            const dateA = a.conferenceDate?.epochMilliseconds ?? Infinity
+            const dateB = b.conferenceDate?.epochMilliseconds ?? Infinity
             return dateB - dateA
         })
         .slice(0, 2)
@@ -53,7 +53,7 @@ export function getCurrentConferenceState(
             previousConference:
                 previousConference && previousConference[1].conferenceDate
                     ? {
-                          date: previousConference[1].conferenceDate.toISO(),
+                          date: previousConference[1].conferenceDate.toPlainDate().toString(),
                           year: previousConference[0],
                           sponsors: previousConference[1].sponsors,
                           venue: previousConference[1].venue,
@@ -74,13 +74,12 @@ export function getCurrentConferenceState(
 
     // Conference day!
     if (
-        currentDate.hasSame(latestConference[1].conferenceDate, 'day') &&
-        currentDate.hasSame(latestConference[1].conferenceDate, 'year')
+        currentDate.toPlainDate().equals(latestConference[1].conferenceDate.toPlainDate())
     ) {
         return {
             conferenceState: 'conference-day',
             conference: {
-                date: latestConference[1].conferenceDate.toISODate(),
+                date: latestConference[1].conferenceDate.toPlainDate().toString(),
                 year: latestConference[0],
                 sponsors: latestConference[1].sponsors,
                 venue: latestConference[1].venue,
@@ -89,7 +88,7 @@ export function getCurrentConferenceState(
             previousConference:
                 previousConference && previousConference[1].conferenceDate
                     ? {
-                          date: previousConference[1].conferenceDate.toISODate(),
+                          date: previousConference[1].conferenceDate.toPlainDate().toString(),
                           year: previousConference[0],
                           sponsors: previousConference[1].sponsors,
                           venue: previousConference[1].venue,
@@ -113,11 +112,11 @@ export function getCurrentConferenceState(
     }
 
     // Conference is over, and no conference setup yet
-    if (currentDate > latestConference[1].conferenceDate) {
+    if (Temporal.ZonedDateTime.compare(currentDate, latestConference[1].conferenceDate) > 0) {
         return {
             conferenceState: 'conference-over',
             conference: {
-                date: latestConference[1].conferenceDate.toISODate(),
+                date: latestConference[1].conferenceDate.toPlainDate().toString(),
                 year: latestConference[0],
                 sponsors: latestConference[1].sponsors,
                 venue: latestConference[1].venue,
@@ -142,19 +141,19 @@ export function getCurrentConferenceState(
     }
 
     const currentTicketRelease = latestConference[1].ticketReleases.find(
-        (release) => currentDate >= release.range.opens && currentDate <= release.range.closes,
+        (release) => Temporal.ZonedDateTime.compare(currentDate, release.range.opens) >= 0 && Temporal.ZonedDateTime.compare(currentDate, release.range.closes) <= 0,
     )
     // Conference is coming up
     return {
         conferenceState: 'before-conference',
         conference: {
-            date: latestConference[1].conferenceDate.toISODate(),
+            date: latestConference[1].conferenceDate.toPlainDate().toString(),
             year: latestConference[0],
             sponsors: latestConference[1].sponsors,
             venue: latestConference[1].venue,
             currentTicketSale: currentTicketRelease
                 ? {
-                      closes: currentTicketRelease.range.closes.toISO(),
+                      closes: currentTicketRelease.range.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
                       price: currentTicketRelease.price,
                   }
                 : undefined,
@@ -162,7 +161,7 @@ export function getCurrentConferenceState(
         previousConference:
             previousConference && previousConference[1].conferenceDate
                 ? {
-                      date: previousConference[1].conferenceDate.toISODate(),
+                      date: previousConference[1].conferenceDate.toPlainDate().toString(),
                       year: previousConference[0],
                       sponsors: previousConference[1].sponsors,
                       venue: previousConference[1].venue,
@@ -182,35 +181,35 @@ export function getCurrentConferenceState(
 }
 
 function getFeedbackState(
-    currentDate: DateTime,
-    feedbackOpenUntilDate: DateTime | undefined,
-    conferenceDate: DateTime,
+    currentDate: Temporal.ZonedDateTime,
+    feedbackOpenUntilDate: Temporal.ZonedDateTime | undefined,
+    conferenceDate: Temporal.ZonedDateTime,
 ): 'open' | 'closed' {
-    return !feedbackOpenUntilDate || currentDate < conferenceDate
+    return !feedbackOpenUntilDate || Temporal.ZonedDateTime.compare(currentDate, conferenceDate) < 0
         ? 'closed'
-        : currentDate < feedbackOpenUntilDate
+        : Temporal.ZonedDateTime.compare(currentDate, feedbackOpenUntilDate) < 0
           ? 'open'
           : 'closed'
 }
 
 function getAgendaState(
-    currentDate: DateTime,
-    agendaPublishedDate: DateTime | undefined,
+    currentDate: Temporal.ZonedDateTime,
+    agendaPublishedDate: Temporal.ZonedDateTime | undefined,
 ): 'not-released' | 'published' {
-    return !agendaPublishedDate || currentDate < agendaPublishedDate ? 'not-released' : 'published'
+    return !agendaPublishedDate || Temporal.ZonedDateTime.compare(currentDate, agendaPublishedDate) < 0 ? 'not-released' : 'published'
 }
 
-function getTalkVotingState(currentDate: DateTime, talkVotingDates: DateTimeRange | undefined): TalkVotingStates {
-    return !talkVotingDates || currentDate < talkVotingDates.opens
+function getTalkVotingState(currentDate: Temporal.ZonedDateTime, talkVotingDates: DateTimeRange | undefined): TalkVotingStates {
+    return !talkVotingDates || Temporal.ZonedDateTime.compare(currentDate, talkVotingDates.opens) < 0
         ? 'not-open-yet'
-        : currentDate < talkVotingDates.closes
+        : Temporal.ZonedDateTime.compare(currentDate, talkVotingDates.closes) < 0
           ? 'open'
           : 'closed'
 }
 
 /** This function assumes an upcoming conference */
 function getTicketSalesState(
-    currentDate: DateTime,
+    currentDate: Temporal.ZonedDateTime,
     ticketRelease: TicketRelease | undefined,
     ticketInfo: TicketInfo | undefined,
 ): TicketSalesState {
@@ -218,39 +217,39 @@ function getTicketSalesState(
         return { state: 'not-open-yet', opens: undefined }
     }
 
-    return currentDate < ticketRelease.range.opens
-        ? { state: 'not-open-yet', opens: ticketRelease.range?.opens.toISO() }
-        : currentDate < ticketRelease.range.closes
-          ? { state: 'open', closes: ticketRelease.range.closes.toISO(), ticketInfo }
+    return Temporal.ZonedDateTime.compare(currentDate, ticketRelease.range.opens) < 0
+        ? { state: 'not-open-yet', opens: ticketRelease.range?.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) }
+        : Temporal.ZonedDateTime.compare(currentDate, ticketRelease.range.closes) < 0
+          ? { state: 'open', closes: ticketRelease.range.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }), ticketInfo }
           : { state: 'closed' }
 }
 
 function getCfpState(
-    currentDate: DateTime,
+    currentDate: Temporal.ZonedDateTime,
     cfpDates: DateTimeRange | undefined,
     sessionizeUrl: string | undefined,
 ): CFPOpen | CFPClosed | CFPNotOpenYet {
-    return cfpDates && currentDate < cfpDates.opens
-        ? { state: 'not-open-yet', opens: cfpDates.opens.toISO() }
-        : cfpDates && currentDate < cfpDates.closes && sessionizeUrl
-          ? { state: 'open', closes: cfpDates.closes.toISO(), sessionizeUrl }
+    return cfpDates && Temporal.ZonedDateTime.compare(currentDate, cfpDates.opens) < 0
+        ? { state: 'not-open-yet', opens: cfpDates.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) }
+        : cfpDates && Temporal.ZonedDateTime.compare(currentDate, cfpDates.closes) < 0 && sessionizeUrl
+          ? { state: 'open', closes: cfpDates.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }), sessionizeUrl }
           : { state: 'closed' }
 }
 
 function getTalkVotingForBeforeConference(
-    currentDate: DateTime<true>,
+    currentDate: Temporal.ZonedDateTime,
     talkVotingDates: DateTimeRange | undefined,
 ): TalkVotingOpen | TalkVotingClosed | TalkVotingNotOpenYet {
     if (!talkVotingDates) {
         return { state: 'closed' }
     }
 
-    if (currentDate < talkVotingDates.opens) {
-        return { state: 'not-open-yet', opens: talkVotingDates.opens.toISO(), closes: talkVotingDates.closes.toISO() }
+    if (Temporal.ZonedDateTime.compare(currentDate, talkVotingDates.opens) < 0) {
+        return { state: 'not-open-yet', opens: talkVotingDates.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }), closes: talkVotingDates.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) }
     }
 
-    if (currentDate < talkVotingDates.closes) {
-        return { state: 'open', closes: talkVotingDates.closes.toISO() }
+    if (Temporal.ZonedDateTime.compare(currentDate, talkVotingDates.closes) < 0) {
+        return { state: 'open', closes: talkVotingDates.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) }
     }
 
     return { state: 'closed' }

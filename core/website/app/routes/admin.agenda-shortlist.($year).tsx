@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { data, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
@@ -41,8 +40,8 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
     const rows = buildShortlistReport(talks, counts, sort).map((row) => ({
         ...row,
         time: row.talk?.startsAt
-            ? conferenceDateTime.fromISO(row.talk.startsAt)
-                  .toFormat('h:mm a')
+            ? conferenceTime(row.talk.startsAt)
+                  .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                   .toLowerCase()
             : undefined,
     }))
