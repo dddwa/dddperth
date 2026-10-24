@@ -111,7 +111,7 @@ export function MultiSelectFilter({
             {open && (
                 <Box
                     position="absolute"
-                    top="[100%]"
+                    top="full"
                     left="0"
                     mt="1"
                     zIndex="dropdown"

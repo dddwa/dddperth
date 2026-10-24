@@ -34,7 +34,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) =>
 Button.displayName = 'Button'
 
 const ButtonSpinner = () => (
-    <Center inline position="absolute" transform="translate(-50%, -50%)" top="[50%]" insetStart="[50%]">
+    <Center inline position="absolute" transform="translate(-50%, -50%)" top="half" insetStart="half">
         <Spinner colorPalette="gray" />
     </Center>
 )

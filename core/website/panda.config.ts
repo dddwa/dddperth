@@ -166,6 +166,17 @@ export default defineConfig({
     // Enable strict tokens mode - forces usage of design tokens instead of arbitrary values
     strictTokens: true,
 
+    // Percentage offsets for absolute positioning (centring, a dropdown below
+    // its trigger), which the spacing scale they otherwise draw from lacks.
+    utilities: {
+        extend: Object.fromEntries(
+            ['top', 'right', 'bottom', 'left', 'insetInlineStart', 'insetInlineEnd'].map((property) => [
+                property,
+                { values: (theme: (path: string) => object) => ({ ...theme('spacing'), half: '50%', full: '100%' }) },
+            ]),
+        ),
+    },
+
     // Default colorPalette so Park UI recipes (button, spinner) can resolve
     // `colorPalette.solid.bg`, `colorPalette.surface.border`, etc., without
     // every consumer having to set it explicitly. `gray` aliases to slate in
@@ -362,11 +373,7 @@ export default defineConfig({
                     '105': { value: '26.25rem' },
                     '180': { value: '45rem' },
                     '200': { value: '50rem' },
-                    // Hairlines and the visually-hidden pattern; the numeric scale
-                    // starts at 0.5 (2px).
-                    px: { value: '1px' },
-                },
-                spacing: {
+                    // Hairlines; the numeric scale starts at 0.5 (2px).
                     px: { value: '1px' },
                 },
                 radii: {
