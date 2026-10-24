@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { tryConferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { useState } from 'react'
 import {
     data,
@@ -104,7 +103,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     const { apiEmail, apiToken, apiBaseUrl } = getConfig(context).jira
 
     const conferenceState = getConferenceState(context)
-    const { timezone } = conferenceManifest.public
     const services = getServices(context)
     const [cacheState, user] = await Promise.all([getRunsheetCacheState(services), getUser(request.headers, services)])
 
@@ -118,7 +116,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
             apiBaseUrl,
             cacheTtlSeconds: CACHE_TTL_SECONDS,
             cacheGeneration: cacheState.generation,
-            timezone,
         }),
         // The *published* schedule only: this page is public, so a draft
         // agenda here would announce talks early. A Sessionize outage drops
@@ -135,8 +132,8 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     ])
 
     const sessions = schedule?.rooms.flatMap((room) => room.sessions) ?? []
-    const sessionItems = sessionsToRunsheetItems(sessions, config, { placeholders: jira.placeholders, timezone })
-    const items = [...jira.items, ...sessionItems].sort(compareRunsheetItems(timezone))
+    const sessionItems = sessionsToRunsheetItems(sessions, config, { placeholders: jira.placeholders })
+    const items = [...jira.items, ...sessionItems].sort(compareRunsheetItems())
 
     // Every team's admin-entered info links, keyed by team label. A team's
     // volunteer role id is its label minus `team-` (see VOLUNTEER_ROLES).
@@ -153,7 +150,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     return data(
         {
             items,
-            serverNow: getDateTimeProvider(context).nowDate().toISO(),
+            serverNow: getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             teamLinks,
             canRefresh,
             hasBumpIn: Boolean(config.bumpIn),
@@ -190,8 +187,8 @@ export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate 
  */
 function formatTime(isoDateTime: string | null): string {
     if (!isoDateTime) return '-'
-    const dateTime = conferenceDateTime.fromISO(isoDateTime)
-    return dateTime.isValid ? dateTime.toFormat('h:mm a') : '-'
+    const dateTime = tryConferenceTime(isoDateTime)
+    return dateTime ? dateTime.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-'
 }
 
 /** "9:30 AM – 10:15 AM", or just the start when there's no end. */
@@ -245,7 +242,6 @@ export default function Runsheets() {
                 <RunsheetFilterButton filters={filters} />
                 <RunsheetFreshness
                     fetchedAt={fetchedAt}
-                    timezone={conferenceManifest.public.timezone}
                     clearsJiraCache={canRefresh}
                 />
             </RunsheetToolbar>

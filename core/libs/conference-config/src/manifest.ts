@@ -1,3 +1,4 @@
+import type { Temporal } from 'temporal-polyfill'
 /**
  * The ConferenceManifest is the contract between core and a fork.
  *
@@ -15,7 +16,6 @@
  * making them optional + having a sensible default in core.
  */
 
-import type { DateTime } from 'luxon'
 import type { ConferenceConfig, MinorSponsorTier } from './types.ts'
 
 /**
@@ -580,13 +580,13 @@ export interface SpeakerPortalConfig {
 export interface SpeakerTrainingSessionConfig {
     id: string
     title: string
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
 }
 
 export interface SpeakerDinnerConfig {
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
     location?: string
 }
 
@@ -597,7 +597,7 @@ export interface SpeakerDinnerConfig {
  * types, matching `SpeakerTrainingSessionConfig.id`. Omit an entry to show
  * that item undated.
  */
-export type SpeakerChecklistDueDates = Record<string, DateTime>
+export type SpeakerChecklistDueDates = Record<string, Temporal.ZonedDateTime>
 
 export interface SpeakerPortalChecklistConfig {
     /** When each checklist item is due. Omit to show every item undated. */

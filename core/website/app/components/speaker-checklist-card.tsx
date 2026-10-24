@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { Form } from 'react-router'
 import type { ChecklistUrgency, SpeakerChecklistItem } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemAction, type ChecklistModalKey } from '~/lib/speakers/checklist-items'
@@ -52,7 +51,7 @@ const URGENCY_DATE_COLOR = {
 
 function dueDateLabel(dueDateIso?: string): string | null {
     if (!dueDateIso) return null
-    return `Due ${conferenceDateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
+    return `Due ${conferenceTime(dueDateIso).toLocaleString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}`
 }
 
 /** Which modal reopens a completed item for editing — only items whose

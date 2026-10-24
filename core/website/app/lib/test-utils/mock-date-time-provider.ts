@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
 import type { DateTimeProvider } from '../dates/date-time-provider.server'
 
 /**
@@ -6,14 +6,14 @@ import type { DateTimeProvider } from '../dates/date-time-provider.server'
  * Use this in tests to simulate specific dates and test time-dependent logic.
  */
 export class MockDateTimeProvider implements DateTimeProvider {
-    constructor(private mockDate: DateTime) {}
+    constructor(private mockDate: Temporal.ZonedDateTime) {}
 
-    nowDate(): DateTime {
+    nowDate(): Temporal.ZonedDateTime {
         return this.mockDate
     }
 
     now(): number {
-        return this.mockDate.toMillis()
+        return this.mockDate.epochMilliseconds
     }
 
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout

@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceInstant, conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { useEffect, useId, useState } from 'react'
 import { data, Form, useActionData, useFetcher, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
@@ -136,7 +135,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     )
     const rsvpLists = buildRsvpLists(activeSpeakers, trainingSessions)
     const followUps = SPEAKER_CHECKLIST_ITEMS.map((definition) => {
-        const dueDateIso = settings.dueDates[definition.key]?.toISO() ?? undefined
+        const dueDateIso = settings.dueDates[definition.key]?.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined
         return {
             key: definition.key,
             label: definition.label,
@@ -363,7 +362,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             portalUrl: new URL('/speaker-portal', getConfig(context).webUrl).toString(),
             conferenceName: conferenceManifest.public.name,
             dateLabel: conferenceDate
-                ? `${conferenceDate.toFormat('cccc d LLLL yyyy', { locale: 'en-AU' })}, from ${conferenceDate.toFormat('h:mma', { locale: 'en-AU' }).toLowerCase()}`
+                ? `${conferenceDate.toLocaleString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}, from ${conferenceDate.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()}`
                 : undefined,
             venueLabel: venue
                 ? [venue.name, venue.address?.streetAddress, venue.address?.addressLocality].filter(Boolean).join(', ')
@@ -417,9 +416,7 @@ const IMPORT_STATUS_LABEL: Record<string, string> = {
 }
 
 function formatRunTime(unixSeconds: number, timezone: string): string {
-    return conferenceDateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
-        locale: 'en-AU',
-    })
+    return conferenceInstant(unixSeconds * 1000).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 const URGENCY_TEXT_COLOR = {
@@ -430,7 +427,7 @@ const URGENCY_TEXT_COLOR = {
 
 function dueDateLabel(dueDateIso: string | undefined): string | null {
     if (!dueDateIso) return null
-    return `Due ${conferenceDateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
+    return `Due ${conferenceTime(dueDateIso).toLocaleString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}`
 }
 
 export default function AdminSpeakers() {

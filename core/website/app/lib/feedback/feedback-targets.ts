@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import type { DateTime } from 'luxon'
+import { Temporal, tryConferenceTime } from '~/lib/dates/temporal'
 
 /** Something an attendee can leave session feedback on: a talk, or a Meet the Experts seat. */
 export interface FeedbackTarget {
@@ -44,13 +43,13 @@ export interface FeedbackMeetTheExpertsInput {
 export function buildFeedbackTargets(
     talks: FeedbackTalkInput[],
     meetTheExperts: FeedbackMeetTheExpertsInput | undefined,
-    timezone: string,
+    timezone?: string,
 ): FeedbackTarget[] {
     const entries: Array<FeedbackTarget & { sortTime: string }> = []
 
     for (const talk of talks) {
-        const start = talk.startsAt ? conferenceDateTime.fromISO(talk.startsAt, { zone: timezone }) : undefined
-        const time = start?.isValid ? start.toFormat('h:mm a').toLowerCase() : ''
+        const start = talk.startsAt ? tryConferenceTime(talk.startsAt, { timeZone: timezone }) : undefined
+        const time = start ? start.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase() : ''
         entries.push({
             id: talk.id,
             kind: 'talk',
@@ -59,7 +58,7 @@ export function buildFeedbackTargets(
             time,
             room: talk.room ?? '',
             label: time ? `${time} – ${talk.title}` : talk.title,
-            sortTime: start?.isValid ? start.toFormat('HH:mm') : '99:99',
+            sortTime: start ? start.toPlainTime().toString({ smallestUnit: 'minute' }) : '99:99',
         })
     }
 
@@ -70,7 +69,7 @@ export function buildFeedbackTargets(
             if (!seat || seen.has(seat.feedbackId)) return
             seen.add(seat.feedbackId)
             const title = `Meet the Experts: ${seat.displayName}`
-            const time = start ? start.toFormat('h:mm a').toLowerCase() : ''
+            const time = start ? start.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase() : ''
             entries.push({
                 id: seat.feedbackId,
                 kind: 'meet-the-experts',
@@ -79,7 +78,7 @@ export function buildFeedbackTargets(
                 time,
                 room: meetTheExperts?.tableLabels[i] ?? '',
                 label: time ? `${time} – ${title}` : title,
-                sortTime: start ? start.toFormat('HH:mm') : '99:99',
+                sortTime: start ? start.toString({ smallestUnit: 'minute' }) : '99:99',
             })
         })
     }
@@ -93,11 +92,14 @@ export function buildFeedbackTargets(
  * Meet the Experts slot labels are free text typed into admin settings
  * ("10:30am – 11:25am"). The first time in the label is taken as the start.
  */
-function parseSlotStart(label: string): DateTime | undefined {
+function parseSlotStart(label: string): Temporal.PlainTime | undefined {
     const match = label.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i)
     if (!match) return undefined
     const hour12 = Number(match[1]) % 12
     const hour = match[3].toLowerCase() === 'pm' ? hour12 + 12 : hour12
-    const parsed = conferenceDateTime.fromObject({ hour, minute: Number(match[2] ?? 0) })
-    return parsed.isValid ? parsed : undefined
+    try {
+        return Temporal.PlainTime.from({ hour, minute: Number(match[2] ?? 0) }, { overflow: 'reject' })
+    } catch {
+        return undefined
+    }
 }

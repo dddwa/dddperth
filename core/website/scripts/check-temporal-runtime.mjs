@@ -14,7 +14,7 @@ const wranglerRequire = createRequire(require.resolve('wrangler/package.json'))
 const { Miniflare } = wranglerRequire('miniflare')
 const temporalModule = path.join(websiteRoot, 'app/lib/dates/temporal.ts')
 const sample = `
-import { conferenceDate, conferenceTime } from ${JSON.stringify(temporalModule)}
+import { conferenceDate, conferenceTime, Temporal } from ${JSON.stringify(temporalModule)}
 export function snapshot() {
     const day = conferenceDate('2026-10-03')
     const event = conferenceTime('2026-10-03T09:00+08:00')
@@ -26,6 +26,9 @@ export function snapshot() {
         day: day.toString(), weekday: day.dayOfWeek,
         instant: event.toInstant().toString(),
         zone: event.timeZoneId,
+        dateLabel: event.toLocaleString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+        timeLabel: event.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit' }),
+        slotLabel: Temporal.PlainTime.from('09:30').toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit' }),
         dayHours: start.until(start.add({ days: 1 }), { largestUnit: 'hours' }).hours,
         rejectsGap,
     }
@@ -40,23 +43,7 @@ async function bundle(contents, globalName = 'TemporalProbe') {
 }
 const code = await bundle(sample)
 const sizes = (source) => ({ minifiedBytes: Buffer.byteLength(source), gzipBytes: gzipSync(source).byteLength })
-const legacyCode = await bundle(`
-import { conferenceDateTime } from './app/lib/dates/conference-date-time'
-export function snapshot() {
-    const day = conferenceDateTime.fromISO('2026-10-03')
-    const event = conferenceDateTime.fromISO('2026-10-03T09:00+08:00')
-    const start = conferenceDateTime.fromISO('2026-10-04T00:00', { zone: 'Australia/Sydney' })
-    const gap = conferenceDateTime.fromISO('2026-10-04T02:30', { zone: 'Australia/Sydney' })
-    return {
-        day: day.toISODate(), weekday: day.weekday,
-        instant: event.toUTC().toISO({ suppressMilliseconds: true }),
-        zone: event.zoneName,
-        dayHours: start.plus({ days: 1 }).diff(start, 'hours').hours,
-        rejectsGap: gap.hour !== 2,
-    }
-}
-`)
-console.log(JSON.stringify({ temporal: sizes(code), luxon: sizes(legacyCode) }))
+console.log(JSON.stringify({ temporal: sizes(code) }))
 
 assert.ok(globalThis.Temporal, 'Run the native comparison with Node 26+')
 const native = vm.createContext({ Temporal: globalThis.Temporal, Intl })

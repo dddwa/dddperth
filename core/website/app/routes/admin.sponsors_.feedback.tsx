@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceInstant } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { useEffect, useRef } from 'react'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
@@ -141,9 +140,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 function formatDate(unixSeconds: number): string {
-    return conferenceDateTime.fromSeconds(unixSeconds).toLocaleString(
-        { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' },
-        { locale: 'en-AU' },
+    return conferenceInstant(unixSeconds * 1000).toLocaleString(
+        'en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' },
     )
 }
 

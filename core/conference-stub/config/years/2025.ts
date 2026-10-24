@@ -7,7 +7,7 @@
 // page locally, swap `sessions` to `kind: 'session-data'` with a static
 // JSON dump.
 
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 import type { ConferenceYear } from '@ddd/conference-config'
 import { exampleConventionCentre } from '../venues/example-convention-centre.ts'
 
@@ -27,44 +27,44 @@ export const conference2025: ConferenceYear = {
         underrepresentedGroupsQuestionId: undefined,
     },
 
-    conferenceDate: DateTime.fromISO('2025-10-18T09:00:00', { zone: 'Etc/UTC' }),
-    agendaPublishedDateTime: DateTime.fromISO('2025-09-15T00:00:00', { zone: 'Etc/UTC' }),
+    conferenceDate: conferenceTime('2025-10-18T09:00:00'),
+    agendaPublishedDateTime: conferenceTime('2025-09-15T00:00:00'),
     cfpDates: {
-        opens: DateTime.fromISO('2025-06-01T00:00:00', { zone: 'Etc/UTC' }),
-        closes: DateTime.fromISO('2025-07-15T23:59:59', { zone: 'Etc/UTC' }),
+        opens: conferenceTime('2025-06-01T00:00:00'),
+        closes: conferenceTime('2025-07-15T23:59:59'),
     },
     talkVotingDates: {
-        opens: DateTime.fromISO('2025-08-01T00:00:00', { zone: 'Etc/UTC' }),
-        closes: DateTime.fromISO('2025-08-20T23:59:59', { zone: 'Etc/UTC' }),
+        opens: conferenceTime('2025-08-01T00:00:00'),
+        closes: conferenceTime('2025-08-20T23:59:59'),
     },
     ticketReleases: [
         {
             releaseName: 'Early Bird',
             price: '$50',
             range: {
-                opens: DateTime.fromISO('2025-04-01T00:00:00', { zone: 'Etc/UTC' }),
-                closes: DateTime.fromISO('2025-06-30T23:59:59', { zone: 'Etc/UTC' }),
+                opens: conferenceTime('2025-04-01T00:00:00'),
+                closes: conferenceTime('2025-06-30T23:59:59'),
             },
         },
         {
             releaseName: 'General',
             price: '$80',
             range: {
-                opens: DateTime.fromISO('2025-07-01T00:00:00', { zone: 'Etc/UTC' }),
-                closes: DateTime.fromISO('2025-10-10T23:59:59', { zone: 'Etc/UTC' }),
+                opens: conferenceTime('2025-07-01T00:00:00'),
+                closes: conferenceTime('2025-10-10T23:59:59'),
             },
         },
         {
             releaseName: 'Last Minute',
             price: '$120',
             range: {
-                opens: DateTime.fromISO('2025-10-11T00:00:00', { zone: 'Etc/UTC' }),
-                closes: DateTime.fromISO('2025-10-17T23:59:59', { zone: 'Etc/UTC' }),
+                opens: conferenceTime('2025-10-11T00:00:00'),
+                closes: conferenceTime('2025-10-17T23:59:59'),
             },
         },
     ],
 
-    feedbackOpenUntilDateTime: DateTime.fromISO('2025-10-25T23:59:59', { zone: 'Etc/UTC' }),
+    feedbackOpenUntilDateTime: conferenceTime('2025-10-25T23:59:59'),
 
     // Placeholder Tito account — won't resolve, but exercises the
     // ticket-info shape so forks can see the wiring.

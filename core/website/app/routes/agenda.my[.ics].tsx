@@ -28,8 +28,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         ? buildMyAgendaCalendar({
               talks: scheduleTalks(schedule),
               requestedIds: parseRequestedTalkIds(url.searchParams.get('talks')),
-              timezone: conferenceManifest.public.timezone,
-              conferenceName: conferenceManifest.public.name,
+                    conferenceName: conferenceManifest.public.name,
               year,
               siteOrigin: url.origin,
               venue: yearConfig.kind === 'conference' ? yearConfig.venue : undefined,

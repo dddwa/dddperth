@@ -1,6 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
 import { getPublishedSchedule, getScheduleForOrganisers, scheduleTalks } from '~/lib/published-agenda.server'
@@ -30,7 +28,7 @@ export async function getFeedbackTargets(
     const schedule = await getScheduleForOrganisers(context, year)
     if (!schedule) return []
     const meetTheExperts = await getMeetTheExpertsAgenda(context, year)
-    return buildFeedbackTargets(scheduleTalks(schedule), meetTheExperts, conferenceManifest.public.timezone)
+    return buildFeedbackTargets(scheduleTalks(schedule), meetTheExperts)
 }
 
 /** A published talk that can't take feedback yet because it hasn't finished. */
@@ -55,19 +53,18 @@ export async function getPublicFeedbackTargets(
     const schedule = await getPublishedSchedule(context, year)
     if (!schedule) return { targets: [], upcomingTalk: undefined }
 
-    const { timezone } = conferenceManifest.public
     const now = getDateTimeProvider(context).now()
-    const [ended, upcoming] = partition(scheduleTalks(schedule), (talk) => hasTalkEnded(talk.endsAt, now, timezone))
+    const [ended, upcoming] = partition(scheduleTalks(schedule), (talk) => hasTalkEnded(talk.endsAt, now))
 
     const upcomingTalk = upcomingTalkId ? upcoming.find((talk) => talk.id === upcomingTalkId) : undefined
     return {
-        targets: buildFeedbackTargets(ended, undefined, timezone),
+        targets: buildFeedbackTargets(ended, undefined),
         // An upcoming talk always has an end time: one without counts as ended.
         upcomingTalk: upcomingTalk?.endsAt
             ? {
                   id: upcomingTalk.id,
                   title: upcomingTalk.title,
-                  endsAt: conferenceDateTime.fromISO(upcomingTalk.endsAt, { zone: timezone }).toFormat('h:mm a').toLowerCase(),
+                  endsAt: conferenceTime(upcomingTalk.endsAt).toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(),
               }
             : undefined,
     }

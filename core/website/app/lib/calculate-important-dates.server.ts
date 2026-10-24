@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { Temporal, conferenceTime } from '~/lib/dates/temporal'
 import type { ConferenceYear } from '@ddd/conference-config'
 import type { ImportantDate } from './important-dates'
 
@@ -9,8 +8,8 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
     if (year.cfpDates) {
         importantDates.push({
             type: 'start-event',
-            dateTime: year.cfpDates.opens.toISO(),
-            endDateTime: year.cfpDates.closes.toISO(),
+            dateTime: year.cfpDates.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
+            endDateTime: year.cfpDates.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             event: 'Call for presentations open',
             eventActiveMessage: 'Submit Talk ↗',
             eventActiveHref: '/call-for-presentations',
@@ -21,8 +20,8 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
     for (const ticketSale of year.ticketReleases) {
         importantDates.push({
             type: 'start-event',
-            dateTime: ticketSale.range.opens.toISO(),
-            endDateTime: ticketSale.range.closes.toISO(),
+            dateTime: ticketSale.range.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
+            endDateTime: ticketSale.range.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             event: `${ticketSale.releaseName} Tickets Open`,
             eventActiveMessage: 'Buy Tickets ↗',
             eventActiveHref: '/tickets',
@@ -33,8 +32,8 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
     if (year.talkVotingDates) {
         importantDates.push({
             type: 'start-event',
-            dateTime: year.talkVotingDates.opens.toISO(),
-            endDateTime: year.talkVotingDates.closes.toISO(),
+            dateTime: year.talkVotingDates.opens.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
+            endDateTime: year.talkVotingDates.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             event: 'Voting Opens',
             eventClosedMessage: 'Voting Closed',
             eventActiveMessage: 'Vote for Agenda',
@@ -45,7 +44,7 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
     if (year.agendaPublishedDateTime) {
         importantDates.push({
             type: 'important-date',
-            dateTime: year.agendaPublishedDateTime.toISO(),
+            dateTime: year.agendaPublishedDateTime.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             event: 'Agenda published',
             eventClosedMessage: 'View Agenda',
             eventClosedHref: '/agenda',
@@ -55,7 +54,7 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
     if (year.conferenceDate) {
         importantDates.push({
             type: 'important-date',
-            dateTime: year.conferenceDate.toISO(),
+            dateTime: year.conferenceDate.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             event: 'Conference day',
             onDayMessage: 'Important Info',
             onDayHref: '/conference-day',
@@ -63,5 +62,5 @@ export function calculateImportantDates(year: ConferenceYear): ImportantDate[] {
         })
     }
 
-    return importantDates.sort((a, b) => conferenceDateTime.fromISO(a.dateTime).diff(conferenceDateTime.fromISO(b.dateTime)).milliseconds)
+    return importantDates.sort((a, b) => Temporal.ZonedDateTime.compare(conferenceTime(a.dateTime), conferenceTime(b.dateTime)))
 }

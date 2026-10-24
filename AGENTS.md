@@ -37,7 +37,7 @@ Prefer the dedicated targets where they exist (`d1-migrate-local|staging|product
 
 # Testing time-gated features (voting, CFP, ticket releases, agenda)
 
-Before adding or reviewing dates, clocks, deadlines, date inputs, formatting, calendars, or time-dependent tests, read [Date and time patterns](core/docs/date-time.md). Use the request datetime provider for conference behaviour and the documented timezone and operational-clock rules.
+Before adding or reviewing dates, clocks, deadlines, date inputs, formatting, calendars, or time-dependent tests, read [Date and time patterns](core/docs/date-time.md). Use standard Temporal values, the configured IANA timezone, and the request datetime provider as documented.
 
 Admins can override the website's current date/time at `/admin/settings` ("Set Override" / "Quick Jump to Important Dates"). The override is stored in the `__adminDateTime` cookie and only affects that admin's own session — the public site is untouched, so it is safe to use in production too.
 

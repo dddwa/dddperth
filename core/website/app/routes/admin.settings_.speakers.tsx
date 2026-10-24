@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
@@ -118,9 +117,7 @@ export default function AdminSpeakerSettings() {
                 {saved ? (
                     <styled.p color="status.success.fg">
                         Saved by {saved.updatedBy},{' '}
-                        {conferenceDateTime.fromISO(saved.updatedAt, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
-                            locale: 'en-AU',
-                        })}
+                        {conferenceTime(saved.updatedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         . The speaker and sponsor portals use these values.
                     </styled.p>
                 ) : (

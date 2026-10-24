@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime, Temporal, tryConferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import type { DateTime } from 'luxon'
 import { z } from 'zod'
 import { SPEAKER_TRAINING_SESSION_OPTIONS, type SpeakerTrainingSession } from '../services/speakers-store'
 import type { SpeakerDinnerInfo, SpeakerTrainingSessionInfo } from '../speakers/checklist'
@@ -15,10 +14,10 @@ import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates, type ChecklistItemKey 
  * exactly as before. Once saved, the stored values replace all of those.
  *
  * Stored as ISO strings (with offset) since it round-trips through JSON;
- * `resolveSpeakerSettings` turns them into the DateTimes the portal uses.
+ * `resolveSpeakerSettings` turns them into the Temporal values the portal uses.
  */
 
-const isoDateTime = z.string().refine((value) => conferenceDateTime.fromISO(value).isValid, 'Invalid date/time')
+const isoDateTime = z.string().refine((value) => Boolean(tryConferenceTime(value)), 'Invalid date/time')
 
 export const speakerSettingsSchema = z.object({
     dueDates: z.partialRecord(z.enum(SPEAKER_CHECKLIST_ITEMS.map((item) => item.key) as [ChecklistItemKey, ...ChecklistItemKey[]]), isoDateTime),
@@ -47,15 +46,12 @@ export interface ResolvedSpeakerSettings {
     meetTheExpertsSlots: Array<{ id: string; label: string }>
 }
 
-const timezone = () => conferenceManifest.public.timezone
-
-function toIso(dateTime: DateTime): string {
-    // Only ever handed valid DateTimes, so toISO() can't return null here.
-    return dateTime.toISO() ?? ''
+function toIso(dateTime: Temporal.ZonedDateTime): string {
+    return dateTime.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 })
 }
 
-function fromIso(value: string): DateTime {
-    return conferenceDateTime.fromISO(value, { zone: timezone() })
+function fromIso(value: string): Temporal.ZonedDateTime {
+    return conferenceTime(value)
 }
 
 /** The values currently in the fork's config — what the portal uses until an
@@ -109,7 +105,7 @@ export function resolveSpeakerSettings(settings: SpeakerSettings): ResolvedSpeak
 /** ISO → the `yyyy-MM-ddTHH:mm` a `datetime-local` input takes, in the
  * conference's timezone (not the admin's browser's). */
 export function toDateTimeLocal(iso: string | undefined): string {
-    return iso ? fromIso(iso).toFormat("yyyy-MM-dd'T'HH:mm") : ''
+    return iso ? fromIso(iso).toPlainDateTime().toString({ smallestUnit: 'minute' }) : ''
 }
 
 const asText = (value: FormDataEntryValue | null) => (typeof value === 'string' ? value.trim() : '')
@@ -130,8 +126,8 @@ export function parseSpeakerSettingsForm(
     const dateTime = (name: string, label: string): string | undefined => {
         const raw = text(formData, name)
         if (!raw) return undefined
-        const parsed = conferenceDateTime.fromISO(raw, { zone: timezone() })
-        if (!parsed.isValid) {
+        const parsed = tryConferenceTime(raw)
+        if (!parsed) {
             errors.push(`${label}: not a valid date/time`)
             return undefined
         }
@@ -145,7 +141,7 @@ export function parseSpeakerSettingsForm(
             errors.push(`${label}: needs both a start and an end`)
             return undefined
         }
-        if (fromIso(end) <= fromIso(start)) {
+        if (Temporal.ZonedDateTime.compare(fromIso(end), fromIso(start)) <= 0) {
             errors.push(`${label}: end must be after start`)
             return undefined
         }

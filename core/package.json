@@ -31,7 +31,6 @@
         "@playwright/test": "^1.62.1",
         "@svitejs/changesets-changelog-github-compact": "^1.2.0",
         "@types/hast": "^3.0.4",
-        "@types/luxon": "^3.7.5",
         "@types/mdx": "^2.0.13",
         "@types/node": "^25.8.0",
         "@types/react": "^19.2.14",

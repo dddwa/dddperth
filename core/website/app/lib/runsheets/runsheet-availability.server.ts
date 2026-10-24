@@ -1,6 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { conferenceManifest } from '@conference/manifest'
-import type { DateTime } from 'luxon'
+import { conferenceDayStart, Temporal } from '~/lib/dates/temporal'
 import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
 
 /**
@@ -13,10 +11,11 @@ import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-contex
  * The end of the conference's ISO week (Monday–Sunday), so bump-out on the
  * Sunday still has it. Open when there's no conference date to measure from.
  */
-export function isRunsheetClosed(conferenceDate: string | undefined, now: DateTime, timezone: string): boolean {
+export function isRunsheetClosed(conferenceDate: string | undefined, now: Temporal.ZonedDateTime, timezone?: string): boolean {
     if (!conferenceDate) return false
-    const date = conferenceDateTime.fromISO(conferenceDate, { zone: timezone })
-    return date.isValid && now > date.endOf('week')
+    const date = conferenceDayStart(conferenceDate, { timeZone: timezone })
+    const nextMonday = date.add({ days: 8 - date.dayOfWeek }).startOfDay()
+    return Temporal.ZonedDateTime.compare(now, nextMonday) >= 0
 }
 
 type Context = Parameters<typeof getConferenceState>[0]
@@ -25,7 +24,7 @@ type Context = Parameters<typeof getConferenceState>[0]
 export function isRunsheetClosedNow(context: Context): boolean {
     const { conference } = getConferenceState(context)
     const now = getDateTimeProvider(context).nowDate()
-    return isRunsheetClosed(conference.date, now, conferenceManifest.public.timezone)
+    return isRunsheetClosed(conference.date, now)
 }
 
 /** 404s a run sheet route once closed, before anything reaches Jira. */
