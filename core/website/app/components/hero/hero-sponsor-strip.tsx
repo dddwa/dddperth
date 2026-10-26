@@ -36,12 +36,12 @@ import { SponsorInlineLogo } from '../sponsor-inline-logo'
  * Cell dimensions per tier. Width caps stop wide wordmarks from sprawling;
  * height caps stop portrait/stacked marks from over-towering.
  *
- * Defined via css.raw so Panda's static extraction sees the arbitrary
+ * Defined via css.raw so Panda's static extraction sees the
  * values — passing them through a variable as plain style props generates
  * the class names but not the CSS rules, silently dropping the cells.
  */
-const PLATINUM_CELL = css.raw({ width: '[180px]', height: '[64px]' })
-const GOLD_CELL = css.raw({ width: '[140px]', height: '[48px]' })
+const PLATINUM_CELL = css.raw({ width: '45', height: '16' })
+const GOLD_CELL = css.raw({ width: '35', height: '12' })
 
 function SponsorRow({ sponsors, cell, children }: {
     sponsors: Sponsor[]
@@ -121,7 +121,7 @@ export function HeroSponsorStrip({
                             fontSize="md"
                             fontWeight="semibold"
                             textDecoration="underline"
-                            textUnderlineOffset="[3px]"
+                            textUnderlineOffset="3px"
                             _hover={{ color: 'interactive.active' }}
                         >
                             Join them — sponsor {currentYear} →

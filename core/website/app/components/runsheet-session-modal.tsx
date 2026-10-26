@@ -120,7 +120,7 @@ function Details({ rows }: { rows: Row[] }) {
     const shown = rows.filter((row): row is [string, string] => !!row[1])
     if (shown.length === 0) return null
     return (
-        <styled.dl display="grid" gridTemplateColumns="[max-content 1fr]" columnGap="4" rowGap="1">
+        <styled.dl display="grid" gridTemplateColumns="max-content 1fr" columnGap="4" rowGap="1">
             {shown.map(([term, value]) => (
                 <DetailsRow key={term} term={term} value={value} />
             ))}

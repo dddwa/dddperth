@@ -62,7 +62,7 @@ export function Hero({
                                     to="/about"
                                     color="text.highlight"
                                     textDecoration="underline"
-                                    textUnderlineOffset="[6px]"
+                                    textUnderlineOffset="6px"
                                     _hover={{ color: 'brand.primary' }}
                                 >
                                     Read more about {conferenceManifest.public.name} →

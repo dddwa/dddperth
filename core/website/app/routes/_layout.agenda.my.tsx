@@ -77,7 +77,7 @@ export default function MyAgenda() {
 
     return (
         <PageLayout>
-            <Box maxWidth="[800px]" mx="auto" p="4" color="text.secondary">
+            <Box maxWidth="200" mx="auto" p="4" color="text.secondary">
                 <styled.h1 fontSize="3xl" fontWeight="semibold" color="text.primary" mb="2">
                     My agenda
                 </styled.h1>

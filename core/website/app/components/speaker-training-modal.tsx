@@ -117,7 +117,7 @@ export function SpeakerTrainingModal({
             )}
 
             {hasResponded && selectedSessionIds.length > 0 && (
-                <Box mt="6" pt="5" borderTop="[1px solid token(colors.border.subtle)]">
+                <Box mt="6" pt="5" borderTop="subtle">
                     <styled.h4 fontSize="sm" fontWeight="semibold" color="admin.900" mb="2">
                         Add to your calendar
                     </styled.h4>

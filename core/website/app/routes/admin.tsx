@@ -310,7 +310,7 @@ export function ErrorBoundary() {
 
     return (
         <Flex minH="screen" align="center" justify="center" bg="admin.50">
-            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[480px]" w="full">
+            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="lg" w="full">
                 <styled.h1 mb="4" fontSize="2xl" fontWeight="bold" color="admin.900">
                     DDD Admin
                 </styled.h1>

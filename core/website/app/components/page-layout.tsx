@@ -46,7 +46,7 @@ export function PageLayout({
         >
             <Box
                 w="full"
-                maxW="[1200px]"
+                maxW="page-max-w"
                 mx="auto"
                 px={{ base: '4', md: '4' }} // Consistent responsive padding
                 {...{
@@ -75,7 +75,7 @@ export function ContentPageLayout({ children, ...props }: PropsWithChildren<Page
  */
 export function HeaderContainer({ children }: PropsWithChildren) {
     return (
-        <Box w="full" maxW="[1200px]" mx="auto" px={{ base: '4', md: '4' }}>
+        <Box w="full" maxW="page-max-w" mx="auto" px={{ base: '4', md: '4' }}>
             {children}
         </Box>
     )

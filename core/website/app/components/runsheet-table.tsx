@@ -77,7 +77,7 @@ export function useRunsheetOffline() {
 }
 
 /** 20px in from the right edge and 20px down, and 20px from the top once stuck. */
-const toolbarClass = css({ mt: '[20px]', mr: '[20px]', top: '[20px]' })
+const toolbarClass = css({ mt: '5', mr: '5', top: '5' })
 
 /**
  * Just below the site header, sticking to the top once scrolled past, so the
@@ -154,7 +154,7 @@ const switchClass = css({
         _last: { borderRightRadius: 'full' },
         '&:has(:checked)': { bg: 'admin.900', color: 'white' },
         // The radio holding focus is hidden, so its segment shows the outline.
-        '&:has(:focus-visible)': { outline: '[2px solid token(colors.admin.900)]', outlineOffset: '[2px]' },
+        '&:has(:focus-visible)': { outline: 'focus-admin', outlineOffset: '0.5' },
     },
     '& input': { srOnly: true },
 })
@@ -494,7 +494,7 @@ export function RunsheetTable<Item extends RunsheetItem>({
                                             bg="transparent"
                                             border="none"
                                             p="0"
-                                            color="[inherit]"
+                                            color="current"
                                             font="inherit"
                                             textAlign="left"
                                             textDecoration="underline"

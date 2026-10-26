@@ -239,7 +239,7 @@ function RegistrationShare({ sharecastUrl, registration }: { sharecastUrl: strin
 
 function ShareContainer({ children }: { children: React.ReactNode }) {
     return (
-        <styled.div mx={{ base: '5', md: 'auto' }} mt="[5vh]" maxW="[555px]">
+        <styled.div mx={{ base: '5', md: 'auto' }} mt="[5vh]" maxW="xl">
             {children}
         </styled.div>
     )

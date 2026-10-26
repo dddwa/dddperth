@@ -306,7 +306,7 @@ export function MeetTheExpertsPlanner({
                                             opacity={draggingRegistrant && !isValidTarget && !occupant ? '0.5' : '1'}
                                             borderRadius="md"
                                             p="2"
-                                            minH="[52px]"
+                                            minH="14"
                                             onDragOver={(e) => {
                                                 if (isValidTarget) e.preventDefault()
                                             }}
@@ -353,7 +353,7 @@ export function MeetTheExpertsPlanner({
                     Drag onto a seat above. Chips show the slots they registered as available; the count shows how
                     many seats they currently hold — red means they aren't scheduled anywhere yet.
                 </styled.p>
-                <Flex gap="2" flexWrap="wrap" maxH="[280px]" overflowY="auto">
+                <Flex gap="2" flexWrap="wrap" maxH="72" overflowY="auto">
                     {registrants.length === 0 ? (
                         <styled.p fontSize="sm" color="admin.600">
                             No one has registered a slot preference yet.
@@ -378,7 +378,7 @@ export function MeetTheExpertsPlanner({
                                     borderRadius="md"
                                     px="2"
                                     py="1"
-                                    maxW="[260px]"
+                                    maxW="64"
                                     cursor="grab"
                                     opacity={isDragging ? '0.5' : '1'}
                                 >

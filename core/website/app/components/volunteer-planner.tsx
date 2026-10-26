@@ -205,7 +205,7 @@ const zoneClass = css({
 const shiftClass = css({
     position: 'relative',
     // Above the drop zones, below the sticky volunteer pool.
-    zIndex: '[1]',
+    zIndex: 'raised',
     // Side by side with anyone sharing the lane at the same time.
     width: '[calc(100% / var(--stack_count))]',
     marginLeft: '[calc(100% * var(--stack) / var(--stack_count))]',
