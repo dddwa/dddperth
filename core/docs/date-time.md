@@ -1,6 +1,6 @@
 # Date and time patterns
 
-Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently.
+Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently. Selection uses feature detection at module evaluation. The package statically imports its fallback, so native browsers still receive and evaluate the polyfill code; this is not conditional loading.
 
 ## Choose the value and timezone
 
