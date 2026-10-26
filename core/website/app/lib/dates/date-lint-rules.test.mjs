@@ -1,6 +1,6 @@
 import ts from 'typescript-eslint'
 import path from 'node:path'
-import { Linter, RuleTester } from 'eslint'
+import { ESLint, Linter, RuleTester } from 'eslint'
 import { describe, expect, it } from 'vitest'
 import plugin from '../../../../eslint-rules/date-time.mjs'
 
@@ -19,6 +19,10 @@ tester.run('use-conference-date-time', plugin.rules['use-conference-date-time'],
         "import * as luxon from 'luxon'; luxon.DateTime.fromSeconds(value);",
         "import { Duration } from 'luxon'; Duration.fromISO('P1D');",
         "Temporal.PlainDate.from(value);",
+        "globalThis.Temporal.PlainDate.from(value);",
+        "import { Temporal as T } from 'temporal-polyfill'; T.PlainDate.from(value);",
+        "import 'temporal-polyfill/global';",
+
     ].map((code) => ({ code, errors: [{ messageId: 'useHelper' }] })),
 })
 
@@ -32,6 +36,10 @@ tester.run('use-date-time-provider', plugin.rules['use-date-time-provider'], {
     ],
     invalid: [
         'Temporal.Now.instant();',
+        'globalThis.Temporal.Now.instant();',
+        'window.Temporal.Now.instant();',
+        'globalThis.Date.now();',
+        'new globalThis.Date();',
         "import { Temporal as T } from 'temporal-polyfill'; T.Now.instant();",
         "import * as time from './temporal'; time.Temporal.Now.zonedDateTimeISO();",
         'Date.now();', 'const now = Date["now"];', 'new Date();', 'Date();', 'Date(123);',
@@ -47,9 +55,12 @@ tester.run('no-native-date-calendar', plugin.rules['no-native-date-calendar'], {
         'const date = new Date(epoch); date.getTime();',
         "const date = new Date(epoch); date.toLocaleDateString('en-AU', { timeZone: 'Australia/Perth' });",
         'list.toLocaleString();',
+        'function f(Date) { return new Date(2026, 9, 3); }',
     ],
     invalid: [
         'new Date(epoch).getDay();',
+        'new Date(2026, 9, 3);',
+        'new globalThis.Date(2026, 9, 3);',
         'const date = new Date(epoch); date.setDate(1);',
         "const date = new Date(epoch); date.toLocaleDateString('en-AU');",
     ].map((code) => ({ code, errors: [{ messageId: 'useTemporal' }] })),
@@ -75,9 +86,50 @@ const typedTester = new RuleTester({
 const typedCase = (expression) => ({
     filename: path.join(process.cwd(), 'date-rule-fixture.ts'),
     code: `import { conferenceTime, Temporal } from './app/lib/dates/temporal';
-const a = conferenceTime('2026-10-03T09:00'); const b = a.add({ hours: 1 }); ${expression}`,
+let a = conferenceTime('2026-10-03T09:00'); const b = a.add({ hours: 1 }); ${expression}`,
 })
 typedTester.run('no-temporal-coercion', plugin.rules['no-temporal-coercion'], {
-    valid: [typedCase('Temporal.ZonedDateTime.compare(a, b) < 0; a.epochMilliseconds - b.epochMilliseconds;')],
-    invalid: ['a < b;', 'a - b;', '+a;'].map((expression) => ({ ...typedCase(expression), errors: [{ messageId: 'compare' }] })),
+    valid: [
+        typedCase('Temporal.ZonedDateTime.compare(a, b) < 0; a.epochMilliseconds - b.epochMilliseconds;'),
+        typedCase('a === b; String(a); `${a}`; let millis = a.epochMilliseconds; millis += 1; millis++;'),
+    ],
+    invalid: ['a < b;', 'a - b;', '+a;', 'a += b;', 'a++;', 'a | 0;', '0 - a;'].map((expression) => ({ ...typedCase(expression), errors: [{ messageId: 'compare' }] })),
+})
+
+// Check the shipped configurations as well as the rules: an unregistered rule
+// silently leaves conference config outside the application enforcement.
+it.each([
+    ['../../../../..', 'conference/config/years/2026.ts'],
+    ['../../../..', 'conference-stub/config/years/2026.ts'],
+    ['../../..', 'app/lib/conference-state.server.ts'],
+])('enforces the date contract in %s/%s', async (root, file) => {
+    const cwd = path.resolve(import.meta.dirname, root)
+    const eslint = new ESLint({ cwd, overrideConfigFile: path.join(cwd, 'eslint.config.mjs') })
+    const config = await eslint.calculateConfigForFile(path.join(cwd, file))
+    for (const rule of Object.keys(plugin.rules)) {
+        expect(config.rules[`dates/${rule}`][0]).toBe(2)
+    }
+    expect(config.languageOptions.parserOptions.projectService).toBe(true)
+    // The reference conference is excluded from a fork's pnpm workspace, so
+    // resolve the shared implementation directly for this synthetic fixture.
+    const dates = path.relative(path.dirname(path.join(cwd, file)), path.resolve(import.meta.dirname, '../../../../libs/conference-config/src/dates.ts'))
+    const [result] = await eslint.lintText(`
+        import { Temporal } from '${dates}';
+        import 'luxon';
+        const day = Temporal.PlainDate.from('2026-10-03');
+        day < day;
+        Date.now();
+        new Date(2026, 9, 3);
+    `, { filePath: path.join(cwd, file) })
+    expect(result.messages.filter((message) => message.ruleId?.startsWith('dates/')).map((message) => message.ruleId).sort())
+        .toEqual(Object.keys(plugin.rules).map((rule) => `dates/${rule}`).sort())
+})
+
+typedTester.run('no-temporal-coercion across Temporal types', plugin.rules['no-temporal-coercion'], {
+    valid: [typedCase('const count = a.day; count < 4;')],
+    invalid: ['Instant', 'PlainDate', 'PlainDateTime', 'PlainTime', 'PlainYearMonth', 'PlainMonthDay', 'Duration']
+        .map((type) => ({
+            ...typedCase(`declare const value: Temporal.${type} | undefined; value < 0;`),
+            errors: [{ messageId: 'compare' }],
+        })),
 })

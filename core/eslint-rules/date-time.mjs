@@ -14,8 +14,14 @@ function variable(context, node) {
     }
 }
 
+function globalObject(context, node) {
+    return node?.type === 'Identifier' && ['globalThis', 'window', 'self'].includes(node.name) &&
+        !variable(context, node)?.defs.length
+}
+
 function globalDate(context, node) {
-    return node?.type === 'Identifier' && node.name === 'Date' && !variable(context, node)?.defs.length
+    return (node?.type === 'Identifier' && node.name === 'Date' && !variable(context, node)?.defs.length) ||
+        (property(node) === 'Date' && globalObject(context, node.object))
 }
 
 // Resolve the binding, rather than spelling: handles import aliases and avoids
@@ -45,6 +51,7 @@ function temporalNamespace(context, node) {
             supportedSource(def.parent.source.value))
     }
     if (property(node) === 'Temporal') {
+        if (globalObject(context, node.object)) return true
         return variable(context, node.object)?.defs.some((def) => def.type === 'ImportBinding' &&
             def.node.type === 'ImportNamespaceSpecifier' && supportedSource(def.parent.source.value))
     }
@@ -61,11 +68,13 @@ export default {
             create(context) {
                 return {
                     ImportDeclaration(node) {
-                        if (node.source.value === 'luxon') context.report({ node, messageId: 'useHelper' })
+                        if (node.source.value === 'luxon' || node.source.value === 'temporal-polyfill' ||
+                            node.source.value.startsWith('temporal-polyfill/')) context.report({ node, messageId: 'useHelper' })
                     },
                     MemberExpression(node) {
-                        if (node.object.type === 'Identifier' && node.object.name === 'Temporal' &&
-                            !variable(context, node.object)?.defs.length && property(node) !== 'Now') {
+                        if (((node.object.type === 'Identifier' && node.object.name === 'Temporal' &&
+                            !variable(context, node.object)?.defs.length) ||
+                            (property(node.object) === 'Temporal' && globalObject(context, node.object.object))) && property(node) !== 'Now') {
                             context.report({ node, messageId: 'useHelper' })
                         }
                     },
@@ -88,8 +97,15 @@ export default {
                 }
                 return {
                     BinaryExpression(node) {
-                        if (['<', '<=', '>', '>=', '+', '-', '*', '/', '%', '**', '==', '!='].includes(node.operator) &&
+                        if (['<', '<=', '>', '>=', '+', '-', '*', '/', '%', '**', '==', '!=', '|', '&', '^', '<<', '>>', '>>>'].includes(node.operator) &&
                             (isTemporal(node.left) || isTemporal(node.right))) context.report({ node, messageId: 'compare' })
+                    },
+                    AssignmentExpression(node) {
+                        if (['+=', '-=', '*=', '/=', '%=', '**=', '|=', '&=', '^=', '<<=', '>>=', '>>>='].includes(node.operator) &&
+                            (isTemporal(node.left) || isTemporal(node.right))) context.report({ node, messageId: 'compare' })
+                    },
+                    UpdateExpression(node) {
+                        if (isTemporal(node.argument)) context.report({ node, messageId: 'compare' })
                     },
                     UnaryExpression(node) {
                         if (['+', '-', '~'].includes(node.operator) && isTemporal(node.argument)) context.report({ node, messageId: 'compare' })
@@ -143,6 +159,12 @@ export default {
                         globalDate(context, def.node.init.callee))
                 }
                 return {
+                    NewExpression(node) {
+                        // Numeric calendar components use the host timezone; epoch milliseconds are safe.
+                        if (globalDate(context, node.callee) && node.arguments.length > 1) {
+                            context.report({ node, messageId: 'useTemporal' })
+                        }
+                    },
                     CallExpression(node) {
                         const method = property(node.callee)
                         if (!methods.has(method)) return

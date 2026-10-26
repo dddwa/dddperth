@@ -90,11 +90,11 @@ For manual date-gated checks use `/admin/settings`, rather than editing config d
 
 ## Lint enforcement
 
-Nx lint enforces:
+Nx lint enforces these rules in application code and conference configuration (both forks and standalone core):
 
-- `dates/use-conference-date-time`: Temporal replaces Luxon, including in config.
+- `dates/use-conference-date-time`: import Temporal through the date module; direct polyfill imports and global Temporal access bypass the shared runtime seam. Luxon is forbidden.
 - `dates/use-date-time-provider`: obtain now from the request provider; operational reads need a narrow documented exception.
-- `dates/no-native-date-calendar`: Temporal handles calendar arithmetic; native Date formatters require an explicit timezone.
-- `dates/no-temporal-coercion`: typed checks reject implicit Temporal arithmetic and ordering.
+- `dates/no-native-date-calendar`: Temporal handles calendar arithmetic and component-based constructors such as `new Date(year, month, day)`; native Date formatters require an explicit timezone.
+- `dates/no-temporal-coercion`: typed checks reject implicit Temporal arithmetic and ordering, including compound assignments, increment/decrement, and bitwise operators. Explicit string formatting and epoch arithmetic remain valid.
 
 Tests may construct independent clocks and zones. Choosing a calendar date, wall time, instant, or operational timestamp requires intent, so lint does not automatically rewrite dates. Boundary semantics also need behaviour tests.

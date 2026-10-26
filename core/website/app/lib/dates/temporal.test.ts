@@ -1,4 +1,5 @@
 import { conferenceDayStart, conferenceInstant, tryConferenceTime } from '~/lib/dates/temporal'
+import { createConferenceDates } from '@ddd/conference-config'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Temporal, conferenceDate, conferenceTime } from './temporal'
 
@@ -30,6 +31,19 @@ describe('conference Temporal values', () => {
         const after = before.add({ days: 1 })
         expect(before.until(after, { largestUnit: 'hours' }).hours).toBe(23)
         expect(before.toPlainDate().until(after.toPlainDate()).days).toBe(1)
+    })
+
+    it('binds independent conference zones without leaking per-call overrides', () => {
+        const perth = createConferenceDates('Australia/Perth')
+        const sydney = createConferenceDates('Australia/Sydney')
+        const wallTime = '2026-10-04T09:00'
+        expect(perth.conferenceTime(wallTime).hour).toBe(9)
+        expect(sydney.conferenceTime(wallTime).epochMilliseconds).toBe(perth.conferenceTime(wallTime).epochMilliseconds - 3 * 3_600_000)
+        expect(perth.conferenceTime(wallTime, { timeZone: 'UTC' }).timeZoneId).toBe('UTC')
+        expect(perth.conferenceTime(wallTime, { timeZone: undefined }).timeZoneId).toBe('Australia/Perth')
+        expect(perth.conferenceDayStart('2026-10-04', { timeZone: undefined }).timeZoneId).toBe('Australia/Perth')
+        const before = sydney.conferenceDayStart('2026-04-05')
+        expect(before.until(before.add({ days: 1 }), { largestUnit: 'hours' }).hours).toBe(25)
     })
 
     it('rejects ambiguous and nonexistent wall times unless the caller chooses a policy', () => {
