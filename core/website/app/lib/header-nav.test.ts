@@ -31,6 +31,12 @@ describe('getVenueNavPlacement', () => {
         expect(getVenueNavPlacement({ ...base, now: at('2026-10-03T23:59') })).toBe('replaces-about')
         expect(getVenueNavPlacement({ ...base, now: at('2026-10-04T00:00') })).toBe('hidden')
     })
+
+    it("takes the window's day boundaries from the conference's zone, not now's", () => {
+        // 01:00 on 4 October in Perth, but still 3 October in UTC.
+        const now = DateTime.fromISO('2026-10-03T17:00:00Z', { zone: 'UTC' })
+        expect(getVenueNavPlacement({ ...base, now })).toBe('hidden')
+    })
 })
 
 describe('getHeaderNavItems', () => {

@@ -25,9 +25,9 @@ export function getVenueNavPlacement({
     if (!venuePublished) return 'hidden'
     if (!replacesAboutNearConference) return 'before-about'
     if (!conferenceDate) return 'hidden'
-    const day = conferenceDate.setZone(now.zone)
-    const opens = day.startOf('day').minus({ days: 7 })
-    const closes = day.endOf('day')
+    // Day boundaries in the conference's own zone, whatever zone `now` is in.
+    const opens = conferenceDate.startOf('day').minus({ days: 7 })
+    const closes = conferenceDate.endOf('day')
     return now >= opens && now <= closes ? 'replaces-about' : 'hidden'
 }
 
