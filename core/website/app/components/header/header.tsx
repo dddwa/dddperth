@@ -62,7 +62,7 @@ export function Header({
                     // `minmax(0, 1fr)` lets the logo track give way to the CTAs on
                     // narrow phones; a bare `1fr` can't shrink below the logo, and
                     // the row overflowed at 320-340px and again at 460-488px, where
-                    // the secondary CTA appears. The logo is fluid up to `sizes.28` below.
+                    // the secondary CTA appears. The logo is fluid up to `sizes.27.5` below.
                     gridTemplateColumns={{
                         base: 'auto minmax(0, 1fr) auto',
                         lg: 'auto 1fr auto',
@@ -92,8 +92,8 @@ export function Header({
                             display="flex"
                             justifyContent={{ base: 'center', lg: 'flex-start' }}
                             alignItems="center"
-                            width={{ base: 'full', lg: '36', xl: '44' }}
-                            maxWidth={{ base: '28', lg: '36', xl: '44' }}
+                            width={{ base: 'full', lg: '37.5', xl: '45' }}
+                            maxWidth={{ base: '27.5', lg: '37.5', xl: '45' }}
                         >
                             <Logo />
                         </AppLink>
@@ -106,7 +106,7 @@ export function Header({
                         display={{ base: 'none', lg: 'flex' }}
                         alignItems="center"
                         justifyContent="center"
-                        // Six links plus two CTAs overflow a 1024px viewport at
+                        // With both CTAs the header overflowed a 1024px viewport at
                         // the full gap, so it tightens until `xl`.
                         gap={{ lg: '6', xl: '12' }}
                         fontSize="md"
