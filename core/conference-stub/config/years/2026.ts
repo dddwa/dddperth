@@ -16,7 +16,9 @@ export const conference2026: ConferenceYear = {
     sessionizeUrl: undefined,
     sessions: undefined,
 
-    conferenceDate: conferenceTime('2026-10-17T09:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2026-10-17T09:00:00')
+    },
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,
     talkVotingDates: undefined,

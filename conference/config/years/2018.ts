@@ -5,7 +5,9 @@ import agenda2018 from './2018-agenda-data.json' with { type: 'json' }
 export const conference2018: ConferenceYear = {
     kind: 'conference',
     year: '2018',
-    conferenceDate: conferenceTime('2018-08-04T00:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2018-08-04T00:00:00')
+    },
     sessionizeUrl: 'https://sessionize.com/dddperth2018',
 
     venue: undefined,

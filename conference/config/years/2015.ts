@@ -5,7 +5,9 @@ import { burswoodOnSwanVenue } from '../venues/burswood-on-swan.ts'
 export const conference2015: ConferenceYear = {
     kind: 'conference',
     year: '2015',
-    conferenceDate: conferenceTime('2015-08-29T00:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2015-08-29T00:00:00')
+    },
     sessionizeUrl: undefined,
 
     venue: burswoodOnSwanVenue,

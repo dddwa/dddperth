@@ -4,7 +4,9 @@ import type { ConferenceYear } from '@ddd/conference-config'
 export const conference2022: ConferenceYear = {
     kind: 'conference',
     year: '2022',
-    conferenceDate: conferenceTime('2022-09-10T00:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2022-09-10T00:00:00')
+    },
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2022',
 
     venue: undefined,

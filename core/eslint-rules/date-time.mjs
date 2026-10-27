@@ -62,11 +62,31 @@ export default {
     rules: {
         'use-conference-date-time': {
             meta: {
-                type: 'problem', schema: [],
-                messages: { useHelper: `Use standard Temporal values from the configured conference date helpers. ${guide}` },
+                type: 'problem',
+                schema: [{ type: 'object', properties: { deferConstruction: { type: 'boolean' } }, additionalProperties: false }],
+                messages: {
+                    useHelper: `Use standard Temporal values from the configured conference date helpers. ${guide}`,
+                    deferConstruction: `Construct config dates in property getters or functions, after initializeTemporal() has completed. ${guide}`,
+                },
             },
             create(context) {
                 return {
+                    'CallExpression, NewExpression'(node) {
+                        if (!context.options[0]?.deferConstruction) return
+                        if (context.sourceCode.getAncestors(node).some((ancestor) =>
+                            ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(ancestor.type))) return
+                        const helpers = ['conferenceDate', 'conferenceTime', 'conferenceDayStart', 'conferenceInstant']
+                        const callee = node.callee
+                        const helperImport = callee.type === 'Identifier' && variable(context, callee)?.defs.some((def) =>
+                            def.type === 'ImportBinding' && def.node.type === 'ImportSpecifier' && helpers.includes(def.node.imported.name))
+                        const namespaceHelper = helpers.includes(property(callee)) && variable(context, callee.object)?.defs.some((def) =>
+                            def.type === 'ImportBinding' && def.node.type === 'ImportNamespaceSpecifier')
+                        let temporalCall = false
+                        for (let member = callee; member?.type === 'MemberExpression'; member = member.object) {
+                            if (temporalNamespace(context, member.object)) temporalCall = true
+                        }
+                        if (helperImport || namespaceHelper || temporalCall) context.report({ node, messageId: 'deferConstruction' })
+                    },
                     'ImportDeclaration, ImportExpression'(node) {
                         const source = node.source.value
                         if (source === 'luxon' || source === 'temporal-polyfill' ||

@@ -21,11 +21,19 @@ export const conference2024: ConferenceYear = {
         underrepresentedGroupsQuestionId: undefined,
     },
 
-    conferenceDate: conferenceTime('2024-10-19T09:00:00'),
-    agendaPublishedDateTime: conferenceTime('2024-09-15T00:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2024-10-19T09:00:00')
+    },
+    get agendaPublishedDateTime() {
+        return conferenceTime('2024-09-15T00:00:00')
+    },
     cfpDates: {
-        opens: conferenceTime('2024-06-01T00:00:00'),
-        closes: conferenceTime('2024-07-15T23:59:59'),
+        get opens() {
+            return conferenceTime('2024-06-01T00:00:00')
+        },
+        get closes() {
+            return conferenceTime('2024-07-15T23:59:59')
+        },
     },
     talkVotingDates: undefined,
     ticketReleases: [
@@ -33,12 +41,18 @@ export const conference2024: ConferenceYear = {
             releaseName: 'General',
             price: '$70',
             range: {
-                opens: conferenceTime('2024-06-01T00:00:00'),
-                closes: conferenceTime('2024-10-18T23:59:59'),
+                get opens() {
+                    return conferenceTime('2024-06-01T00:00:00')
+                },
+                get closes() {
+                    return conferenceTime('2024-10-18T23:59:59')
+                },
             },
         },
     ],
-    feedbackOpenUntilDateTime: conferenceTime('2024-10-26T23:59:59'),
+    get feedbackOpenUntilDateTime() {
+        return conferenceTime('2024-10-26T23:59:59')
+    },
 
     ticketInfo: {
         type: 'tito',

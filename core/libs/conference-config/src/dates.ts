@@ -1,9 +1,22 @@
 import type { Temporal as TemporalTypes } from 'temporal-polyfill'
 
-// Module initialization waits only when a fallback is needed. Keeping the
-// import inside this branch lets browsers with native Temporal skip its chunk.
-const nativeTemporal = (globalThis as typeof globalThis & { Temporal?: typeof TemporalTypes }).Temporal
-export const Temporal: typeof TemporalTypes = nativeTemporal ?? (await import('temporal-polyfill')).Temporal
+// Native runtimes are ready synchronously. Other runtimes initialize once at
+// the client/Worker boundary, before hydration or conference calculations.
+export let Temporal: typeof TemporalTypes = (globalThis as typeof globalThis & { Temporal?: typeof TemporalTypes }).Temporal!
+let initialization: Promise<void> | undefined
+
+export function initializeTemporal(): Promise<void> {
+    if (Temporal) return Promise.resolve()
+    return initialization ??= import('temporal-polyfill').then(
+        (fallback) => { Temporal = fallback.Temporal },
+        (error: unknown) => { initialization = undefined; throw error },
+    )
+}
+
+function requireTemporal(): typeof TemporalTypes {
+    if (!Temporal) throw new Error('Call initializeTemporal() before using conference dates')
+    return Temporal
+}
 
 // Preserve the standard instance types alongside the selected constructors.
 export declare namespace Temporal {
@@ -27,7 +40,7 @@ export function conferenceDate(isoDate: string): Temporal.PlainDate {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
         throw new RangeError('Expected a calendar date in YYYY-MM-DD format')
     }
-    return Temporal.PlainDate.from(isoDate)
+    return requireTemporal().PlainDate.from(isoDate)
 }
 
 /**
@@ -39,6 +52,7 @@ function parseConferenceTime(
     isoDateTime: string,
     { timeZone, disambiguation = 'reject' }: ConferenceTimeOptions & { timeZone: string },
 ): Temporal.ZonedDateTime {
+    const Temporal = requireTemporal()
     if (!/[Tt ]\d{2}:\d{2}/.test(isoDateTime)) {
         throw new RangeError('Expected a datetime; use conferenceDate for calendar dates')
     }
@@ -61,7 +75,7 @@ export function createConferenceDates(timeZone: string) {
             return conferenceDate(value).toZonedDateTime(options.timeZone ?? timeZone)
         },
         conferenceInstant(epochMilliseconds: number, options: Pick<ConferenceTimeOptions, 'timeZone'> = {}): Temporal.ZonedDateTime {
-            return Temporal.Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(options.timeZone ?? timeZone)
+            return requireTemporal().Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(options.timeZone ?? timeZone)
         },
     }
 }

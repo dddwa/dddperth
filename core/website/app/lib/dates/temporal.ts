@@ -1,7 +1,7 @@
 import { createConferenceDates, type ConferenceTimeOptions } from '@ddd/conference-config'
 import { conferenceConfigPublic } from '@conference/config/public'
 
-export { conferenceDate, Temporal } from '@ddd/conference-config'
+export { conferenceDate, initializeTemporal, Temporal } from '@ddd/conference-config'
 export type { ConferenceTimeOptions } from '@ddd/conference-config'
 
 export const { conferenceTime, conferenceDayStart, conferenceInstant } = createConferenceDates(conferenceConfigPublic.timezone)

@@ -5,7 +5,9 @@ import { mercureHotelVenue } from '../venues/mercure-hotel.ts'
 export const conference2016: ConferenceYear = {
     kind: 'conference',
     year: '2016',
-    conferenceDate: conferenceTime('2016-08-27T08:30:00'),
+    get conferenceDate() {
+        return conferenceTime('2016-08-27T08:30:00')
+    },
     sessionizeUrl: undefined,
 
     venue: mercureHotelVenue,

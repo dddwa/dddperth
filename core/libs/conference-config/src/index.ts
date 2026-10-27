@@ -62,5 +62,5 @@ export {
     timeSlotSchema,
 } from './sessionize-schema.ts'
 
-export { Temporal, conferenceDate, createConferenceDates } from './dates.ts'
+export { Temporal, initializeTemporal, conferenceDate, createConferenceDates } from './dates.ts'
 export type { ConferenceTimeOptions } from './dates.ts'

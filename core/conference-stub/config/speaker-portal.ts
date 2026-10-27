@@ -25,33 +25,59 @@ export const speakerPortal: SpeakerPortalConfig = {
         // The ticket claim URL is deliberately absent — it's a secret,
         // SPEAKER_TICKET_CLAIM_URL_<YEAR>. See docs/runbooks/new-year.md.
         dueDates: {
-            confirmSession: conferenceTime('2026-08-21T17:00:00'),
-            acceptBackupSpeaker: conferenceTime('2026-08-21T17:00:00'),
-            claimTicket: conferenceTime('2026-09-11T22:00:00'),
-            meetTheExperts: conferenceTime('2026-09-18T22:00:00'),
-            speakerTraining: conferenceTime('2026-08-28T22:00:00'),
-            speakerDinner: conferenceTime('2026-09-25T17:00:00'),
+            get confirmSession() {
+                return conferenceTime('2026-08-21T17:00:00')
+            },
+            get acceptBackupSpeaker() {
+                return conferenceTime('2026-08-21T17:00:00')
+            },
+            get claimTicket() {
+                return conferenceTime('2026-09-11T22:00:00')
+            },
+            get meetTheExperts() {
+                return conferenceTime('2026-09-18T22:00:00')
+            },
+            get speakerTraining() {
+                return conferenceTime('2026-08-28T22:00:00')
+            },
+            get speakerDinner() {
+                return conferenceTime('2026-09-25T17:00:00')
+            },
             // Deliberately later than confirmSession — the checklist's
             // past-due logic is per-item, and the tests rely on this ordering.
-            sessionDetails: conferenceTime('2026-09-25T22:00:00'),
+            get sessionDetails() {
+                return conferenceTime('2026-09-25T22:00:00')
+            },
         },
         speakerTrainingSessions: [
             {
                 id: 'Session 1',
                 title: 'Planning, building and writing your talk',
-                dateTime: conferenceTime('2026-09-02T17:30:00'),
-                endDateTime: conferenceTime('2026-09-02T20:00:00'),
+                get dateTime() {
+                    return conferenceTime('2026-09-02T17:30:00')
+                },
+                get endDateTime() {
+                    return conferenceTime('2026-09-02T20:00:00')
+                },
             },
             {
                 id: 'Session 2',
                 title: 'Presentation skills, tips and tricks',
-                dateTime: conferenceTime('2026-09-09T17:30:00'),
-                endDateTime: conferenceTime('2026-09-09T20:00:00'),
+                get dateTime() {
+                    return conferenceTime('2026-09-09T17:30:00')
+                },
+                get endDateTime() {
+                    return conferenceTime('2026-09-09T20:00:00')
+                },
             },
         ],
         speakerDinner: {
-            dateTime: conferenceTime('2026-10-16T18:00:00'),
-            endDateTime: conferenceTime('2026-10-16T20:00:00'),
+            get dateTime() {
+                return conferenceTime('2026-10-16T18:00:00')
+            },
+            get endDateTime() {
+                return conferenceTime('2026-10-16T20:00:00')
+            },
         },
     },
     sessionConfirmationNotifyEmail: 'speakers@example.test',

@@ -19,7 +19,8 @@ const wranglerRequire = createRequire(require.resolve('wrangler/package.json'))
 const { Miniflare } = wranglerRequire('miniflare')
 const temporalModule = path.join(websiteRoot, 'app/lib/dates/temporal.ts')
 const sample = `
-import { conferenceDate, conferenceTime, Temporal } from ${JSON.stringify(temporalModule)}
+import { conferenceDate, conferenceTime, initializeTemporal, Temporal } from ${JSON.stringify(temporalModule)}
+export { initializeTemporal }
 export function snapshot() {
     const day = conferenceDate('2026-10-03')
     const event = conferenceTime('2026-10-03T09:00+08:00')
@@ -40,12 +41,13 @@ export function snapshot() {
 }`
 const entries = {
     'probe:sample': sample,
-    'probe:worker': `import { snapshot } from 'probe:sample'
-        export default { fetch() { return Response.json(snapshot()) } }`,
-    'probe:client': `import { snapshot } from 'probe:sample'
+    'probe:worker': `import { snapshot, initializeTemporal } from 'probe:sample'
+        export default { async fetch() { await initializeTemporal(); return Response.json(snapshot()) } }`,
+    'probe:client': `import { snapshot, initializeTemporal } from 'probe:sample'
         import { createElement } from 'react'
         import { hydrateRoot } from 'react-dom/client'
         export async function hydrate() {
+            await initializeTemporal()
             const errors = []
             hydrateRoot(document.getElementById('root'), createElement('output', { id: 'snapshot' }, JSON.stringify(snapshot())), {
                 onRecoverableError: (error) => errors.push(error.message),
@@ -55,7 +57,7 @@ const entries = {
         }`,
 }
 
-// ESM splitting keeps the conditional import intact, just like the real build.
+// ES2020 rejects top-level await; ESM splitting preserves conditional imports.
 // The previous single IIFE bundled the fallback into every runtime's payload.
 const directory = await mkdtemp(path.join(tmpdir(), 'temporal-runtime-'))
 try {
@@ -63,7 +65,7 @@ try {
         entryPoints: { probe: 'probe:sample', client: 'probe:client', worker: 'probe:worker' },
         bundle: true, splitting: true, minify: true, format: 'esm', metafile: true,
         outdir: directory, outExtension: { '.js': '.mjs' },
-        platform: 'browser', target: 'es2022', tsconfig: path.join(websiteRoot, 'tsconfig.json'),
+        platform: 'browser', target: 'es2020', tsconfig: path.join(websiteRoot, 'tsconfig.json'),
         plugins: [{
             name: 'runtime-probes',
             setup(builder) {
@@ -102,7 +104,11 @@ try {
     const nodeSnapshot = async (forceFallback) => {
         const { stdout } = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `
             ${forceFallback ? "Object.defineProperty(globalThis, 'Temporal', { value: undefined, configurable: true });" : ''}
-            const { snapshot } = await import(${JSON.stringify(pathToFileURL(path.join(directory, 'probe.mjs')).href)});
+            const { snapshot, initializeTemporal } = await import(${JSON.stringify(pathToFileURL(path.join(directory, 'probe.mjs')).href)});
+            const first = initializeTemporal();
+            const second = initializeTemporal();
+            if (${forceFallback} && first !== second) throw new Error('Concurrent startup must share one initialization');
+            await first;
             process.stdout.write(JSON.stringify({ result: snapshot(), hasGlobal: typeof globalThis.Temporal !== 'undefined' }));
         `])
         return JSON.parse(stdout)

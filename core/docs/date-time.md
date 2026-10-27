@@ -1,6 +1,6 @@
 # Date and time patterns
 
-Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently. The shared module checks for native Temporal and conditionally imports the fallback using top-level `await`. Importers wait for initialization, then use synchronous helpers as before. Vite emits the fallback as a separate chunk; native browsers do not download or evaluate it. No globals are installed.
+Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently. The shared module uses native Temporal immediately when available. Client startup and Worker fetch/scheduled handlers call `initializeTemporal()` before hydration or conference calculations; otherwise it imports the fallback once. There is no top-level `await` in browser modules. Vite emits the fallback as a separate chunk; native browsers do not download or evaluate it. No globals are installed.
 
 ## Choose the value and timezone
 
@@ -21,7 +21,7 @@ The [date module](../website/app/lib/dates/temporal.ts) defaults to the IANA tim
 - Ambiguous or nonexistent wall times throw `RangeError`. The default disambiguation is `reject`; explicitly choose `earlier`, `later`, or `compatible` only when the requirement defines that policy.
 - `conferenceInstant` takes epoch **milliseconds**. Provider `now()` returns milliseconds; many database timestamps are **seconds**. Make units explicit.
 
-Conference config bootstraps the manifest. Its `config/dates.ts` binds [createConferenceDates](../libs/conference-config/src/dates.ts) to the sibling public config once. Year and speaker configs import `conferenceTime` there. Keep this seam independent of the full manifest and website to avoid dependency cycles. The reference conference uses the same pattern.
+Conference config bootstraps the manifest. Its `config/dates.ts` binds [createConferenceDates](../libs/conference-config/src/dates.ts) to the sibling public config once. Year and speaker configs import `conferenceTime` there and construct dates in property getters, so React Router can evaluate route modules before client initialization. The getters return standard Temporal values once the runtime is ready; do not eagerly construct dates during config module evaluation. Keep this seam independent of the full manifest and website to avoid dependency cycles. The reference conference uses the same pattern.
 
 ## Choose the clock
 
@@ -84,7 +84,7 @@ Components receive a serialized provider instant from loaders. [useConferenceClo
 
 Use [MockDateTimeProvider](../website/app/lib/test-utils/mock-date-time-provider.ts) for fixed-clock tests. Check UTC and America/Los_Angeles hosts, conference midnight, opening/closing instants, and a daylight-saving conference zone when changing shared arithmetic. Browser tests should use a different timezone and verify hydration agreement.
 
-Run `pnpm nx temporal-check website` for native/polyfilled agreement, Workers execution, and SSR hydration in Chromium, Firefox, and WebKit. Install engines with `pnpm nx setup-temporal-browsers website`. The check asserts that native browsers make no fallback-chunk requests and missing-native browsers load it on demand. It reports isolated date-operation entry and fallback sizes, not whole-site payload.
+Run `pnpm nx temporal-check website` for native/polyfilled agreement, Workers execution, and SSR hydration in Chromium, Firefox, and WebKit. Install engines with `pnpm nx setup-temporal-browsers website`. The probe compiles for ES2020, which rejects top-level `await`, and production-bundle tests verify that shipped client modules contain none. The check asserts that native browsers make no fallback-chunk requests and missing-native browsers load it on demand. It reports isolated date-operation entry and fallback sizes, not whole-site payload.
 
 For manual date-gated checks use `/admin/settings`, rather than editing config dates. The signed `__adminDateTime` cookie affects only that admin session. E2E may use `__devDateOverride` through the existing development guards (`E2E_DATE_OVERRIDE=true` and a non-production build); preserve the production-bundle exclusion test.
 
@@ -92,7 +92,7 @@ For manual date-gated checks use `/admin/settings`, rather than editing config d
 
 Nx lint enforces these rules in application code and conference configuration (both forks and standalone core):
 
-- `dates/use-conference-date-time`: import Temporal through the date module; direct polyfill imports and global Temporal access bypass the shared runtime seam. Luxon is forbidden.
+- `dates/use-conference-date-time`: config dates must be constructed in getters or functions after initialization; import Temporal through the date module; direct polyfill imports and global Temporal access bypass the shared runtime seam. Luxon is forbidden.
 - `dates/use-date-time-provider`: obtain now from the request provider; operational reads need a narrow documented exception.
 - `dates/no-native-date-calendar`: Temporal handles calendar arithmetic and component-based constructors such as `new Date(year, month, day)`; native Date formatters require an explicit timezone.
 - `dates/no-temporal-coercion`: typed checks reject implicit Temporal arithmetic and ordering, including compound assignments, increment/decrement, and bitwise operators. Explicit string formatting and epoch arithmetic remain valid.

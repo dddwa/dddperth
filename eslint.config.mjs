@@ -9,7 +9,7 @@ export default [
         plugins: { dates: dateRules },
         languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
         rules: {
-            'dates/use-conference-date-time': 'error',
+            'dates/use-conference-date-time': ['error', { deferConstruction: true }],
             'dates/use-date-time-provider': 'error',
             'dates/no-native-date-calendar': 'error',
             'dates/no-temporal-coercion': 'error',

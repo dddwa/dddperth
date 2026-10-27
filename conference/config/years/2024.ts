@@ -59,27 +59,45 @@ export const conference2024: ConferenceYear = {
         '721989': 'qgLfjxsn8BI', // How to make decisions quickly and move on, from an overthinker
     },
 
-    conferenceDate: conferenceTime('2024-11-16T00:00:00'),
-    agendaPublishedDateTime: conferenceTime('2024-08-20T17:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2024-11-16T00:00:00')
+    },
+    get agendaPublishedDateTime() {
+        return conferenceTime('2024-08-20T17:00:00')
+    },
     cfpDates: {
-        opens: conferenceTime('2024-06-14T08:00:00'),
-        closes: conferenceTime('2024-07-12T23:59:59'),
+        get opens() {
+            return conferenceTime('2024-06-14T08:00:00')
+        },
+        get closes() {
+            return conferenceTime('2024-07-12T23:59:59')
+        },
     },
     talkVotingDates: {
-        opens: conferenceTime('2024-07-23T00:00:00'),
-        closes: conferenceTime('2024-08-06T23:59:59'),
+        get opens() {
+            return conferenceTime('2024-07-23T00:00:00')
+        },
+        get closes() {
+            return conferenceTime('2024-08-06T23:59:59')
+        },
     },
     ticketReleases: [
         {
             releaseName: 'General Tickets',
             price: '$60',
             range: {
-                opens: conferenceTime('2024-06-21T08:00:00'),
-                closes: conferenceTime('2024-11-15T23:59:59'),
+                get opens() {
+                    return conferenceTime('2024-06-21T08:00:00')
+                },
+                get closes() {
+                    return conferenceTime('2024-11-15T23:59:59')
+                },
             },
         },
     ],
-    feedbackOpenUntilDateTime: conferenceTime('2024-11-21T23:59:59'),
+    get feedbackOpenUntilDateTime() {
+        return conferenceTime('2024-11-21T23:59:59')
+    },
 
     ticketInfo: {
         type: 'tito',

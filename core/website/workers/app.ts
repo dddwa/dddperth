@@ -1,3 +1,4 @@
+import { initializeTemporal } from '../app/lib/dates/temporal'
 import { createRequestHandler } from 'react-router'
 import type { CloudflareEnv } from '../app/remix-app-load-context'
 import { getLoadContext } from '../app/entry.server'
@@ -8,6 +9,7 @@ const requestHandler = createRequestHandler(() => import('virtual:react-router/s
 
 export default {
     async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
+        await initializeTemporal()
         // Dev-only: point every Sessionize request at the committed fixtures.
         // `import.meta.env.MODE` is statically replaced with `"production"`
         // in a production build, so this and the dynamic import are removed
@@ -67,6 +69,7 @@ export default {
     // secrets; speaker sync no-ops without a manifest entry or a configured
     // Sessionize endpoint for that year.
     async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        await initializeTemporal()
         const config = buildAppConfigFromEnv(env)
         const services = buildCloudflareServices(config, env)
 

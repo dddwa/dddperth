@@ -6,7 +6,9 @@ import { optusStadiumVenue } from '../venues/optus-stadium.ts'
 export const conference2023: ConferenceYear = {
     kind: 'conference',
     year: '2023',
-    conferenceDate: conferenceTime('2023-10-07T00:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2023-10-07T00:00:00')
+    },
     venue: optusStadiumVenue,
     sessionizeUrl: 'https://sessionize.com/ddd-perth-2023',
 

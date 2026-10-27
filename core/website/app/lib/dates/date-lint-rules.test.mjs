@@ -28,6 +28,21 @@ tester.run('use-conference-date-time', plugin.rules['use-conference-date-time'],
     ].map((code) => ({ code, errors: [{ messageId: 'useHelper' }] })),
 })
 
+const deferredConfig = { options: [{ deferConstruction: true }] }
+tester.run('deferred config dates', plugin.rules['use-conference-date-time'], {
+    valid: [
+        { ...deferredConfig, code: "import { conferenceTime } from './dates.ts'; const config = { get conferenceDate() { return conferenceTime('2026-10-03T09:00') } };" },
+        { ...deferredConfig, code: "import { Temporal } from './temporal'; function day() { return Temporal.PlainDate.from('2026-10-03') }" },
+        { ...deferredConfig, code: "function conferenceTime(value) { return value }; conferenceTime('unrelated');" },
+    ],
+    invalid: [
+        "import { conferenceTime } from './dates.ts'; const config = { conferenceDate: conferenceTime('2026-10-03T09:00') };",
+        "import { conferenceTime as at } from './dates.ts'; const date = at('2026-10-03T09:00');",
+        "import * as dates from './dates.ts'; const date = dates.conferenceTime('2026-10-03T09:00');",
+        "import { Temporal } from './temporal'; const day = Temporal.PlainDate.from('2026-10-03');",
+    ].map((code) => ({ ...deferredConfig, code, errors: [{ messageId: 'deferConstruction' }] })),
+})
+
 tester.run('use-date-time-provider', plugin.rules['use-date-time-provider'], {
     valid: [
         'clock.now(); clock.nowDate();',
@@ -118,10 +133,12 @@ it.each([
     const [result] = await eslint.lintText(`
         import { Temporal } from '${dates}';
         import 'luxon';
-        const day = Temporal.PlainDate.from('2026-10-03');
-        day < day;
-        Date.now();
-        new Date(2026, 9, 3);
+        function example() {
+            const day = Temporal.PlainDate.from('2026-10-03');
+            day < day;
+            Date.now();
+            new Date(2026, 9, 3);
+        }
     `, { filePath: path.join(cwd, file) })
     expect(result.messages.filter((message) => message.ruleId?.startsWith('dates/')).map((message) => message.ruleId).sort())
         .toEqual(Object.keys(plugin.rules).map((rule) => `dates/${rule}`).sort())

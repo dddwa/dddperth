@@ -4,8 +4,8 @@ import { FIXTURE_DATE } from './fixtures/sessionize/model'
 for (const forceFallback of [false, true]) {
     test(`date-dependent pages have no browser errors (${forceFallback ? 'forced polyfill' : 'native when available'})`, async ({ context, page, baseURL }) => {
         if (forceFallback) {
-            // Must run before any module evaluates: the package selects its
-            // implementation once, when it first reads globalThis.Temporal.
+            // Must run before route modules or the startup entry evaluate:
+            // initialization selects native Temporal or the fallback once.
             await context.addInitScript(() => {
                 Object.defineProperty(globalThis, 'Temporal', { value: undefined, configurable: true })
             })

@@ -5,7 +5,9 @@ import { pcecVenue } from '../venues/pcec.ts'
 export const conference2017: ConferenceYear = {
     kind: 'conference',
     year: '2017',
-    conferenceDate: conferenceTime('2017-09-16T08:00:00'),
+    get conferenceDate() {
+        return conferenceTime('2017-09-16T08:00:00')
+    },
     sessionizeUrl: undefined,
 
     venue: pcecVenue,
