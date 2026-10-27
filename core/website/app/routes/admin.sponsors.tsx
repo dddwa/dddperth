@@ -140,6 +140,34 @@ export default function AdminSponsors() {
                 </Box>
             )}
             <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                    Sponsor tools
+                </styled.h2>
+                <Flex gap="2" align="center" flexWrap="wrap">
+                    <Button asChild>
+                        <AppLink unstyled to="/admin/sponsors/follow-up">
+                            Follow-up list
+                        </AppLink>
+                    </Button>
+                    <Button asChild>
+                        <AppLink unstyled to="/admin/sponsors/feedback">
+                            Sponsor feedback
+                        </AppLink>
+                    </Button>
+                    <Button
+                        asChild
+                        variant="outline"
+                        color="admin.900"
+                        borderColor="admin.400"
+                        bg="white"
+                        _hover={{ bg: 'admin.100' }}
+                    >
+                        <a href="/admin/sponsors/exhibitor-export">Export exhibitor list</a>
+                    </Button>
+                </Flex>
+            </AdminCard>
+
+            <AdminCard>
                 <Flex justify="space-between" align="center" flexWrap="wrap" gap="4" mb="4">
                     <Box>
                         <styled.h2 fontSize="xl" fontWeight="semibold">
@@ -161,34 +189,12 @@ export default function AdminSponsors() {
                             )}
                         </styled.p>
                     </Box>
-                    <Flex gap="2" align="center">
-                        <Button asChild>
-                            <AppLink unstyled to="/admin/sponsors/follow-up">
-                                Follow-up list
-                            </AppLink>
+                    <Form method="post">
+                        <input type="hidden" name="_action" value="sync-now" />
+                        <Button type="submit" disabled={isSyncing || !syncAvailable}>
+                            {isSyncing ? 'Syncing…' : 'Sync now'}
                         </Button>
-                        <Button asChild>
-                            <AppLink unstyled to="/admin/sponsors/feedback">
-                                Feedback
-                            </AppLink>
-                        </Button>
-                        <Button
-                            asChild
-                            variant="outline"
-                            color="admin.900"
-                            borderColor="admin.400"
-                            bg="white"
-                            _hover={{ bg: 'admin.100' }}
-                        >
-                            <a href="/admin/sponsors/exhibitor-export">Export exhibitor list</a>
-                        </Button>
-                        <Form method="post">
-                            <input type="hidden" name="_action" value="sync-now" />
-                            <Button type="submit" disabled={isSyncing || !syncAvailable}>
-                                {isSyncing ? 'Syncing…' : 'Sync now'}
-                            </Button>
-                        </Form>
-                    </Flex>
+                    </Form>
                 </Flex>
 
                 {!syncAvailable && (
