@@ -1,8 +1,21 @@
-import { Temporal } from 'temporal-polyfill'
+import type { Temporal as TemporalTypes } from 'temporal-polyfill'
 
-// Uses native Temporal when available and a spec-compatible implementation
-// otherwise, without installing or replacing globals.
-export { Temporal }
+// Module initialization waits only when a fallback is needed. Keeping the
+// import inside this branch lets browsers with native Temporal skip its chunk.
+const nativeTemporal = (globalThis as typeof globalThis & { Temporal?: typeof TemporalTypes }).Temporal
+export const Temporal: typeof TemporalTypes = nativeTemporal ?? (await import('temporal-polyfill')).Temporal
+
+// Preserve the standard instance types alongside the selected constructors.
+export declare namespace Temporal {
+    type Duration = TemporalTypes.Duration
+    type Instant = TemporalTypes.Instant
+    type PlainDate = TemporalTypes.PlainDate
+    type PlainDateTime = TemporalTypes.PlainDateTime
+    type PlainMonthDay = TemporalTypes.PlainMonthDay
+    type PlainTime = TemporalTypes.PlainTime
+    type PlainYearMonth = TemporalTypes.PlainYearMonth
+    type ZonedDateTime = TemporalTypes.ZonedDateTime
+}
 
 export interface ConferenceTimeOptions {
     timeZone?: string

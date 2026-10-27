@@ -124,7 +124,8 @@
                 "{projectRoot}/app/**/*.*",
                 "{projectRoot}/workers/**/*.*",
                 "{projectRoot}/vite-plugins/**/*.*",
-                "{projectRoot}/vite.config.ts"
+                "{projectRoot}/vite.config.ts",
+                "^production"
             ],
             "outputs": ["{projectRoot}/build/**/*.*"],
             "options": {

@@ -22,6 +22,8 @@ tester.run('use-conference-date-time', plugin.rules['use-conference-date-time'],
         "globalThis.Temporal.PlainDate.from(value);",
         "import { Temporal as T } from 'temporal-polyfill'; T.PlainDate.from(value);",
         "import 'temporal-polyfill/global';",
+        "await import('temporal-polyfill');",
+        "await import('temporal-polyfill/implementation');",
 
     ].map((code) => ({ code, errors: [{ messageId: 'useHelper' }] })),
 })

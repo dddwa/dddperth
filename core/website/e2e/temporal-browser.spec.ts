@@ -14,6 +14,10 @@ for (const forceFallback of [false, true]) {
             { name: '__devDateOverride', value: `${FIXTURE_DATE}T11:35:00`, url: baseURL ?? 'http://localhost:3801' },
         ])
         const errors: string[] = []
+        const fallbackRequests: string[] = []
+        page.on('request', (request) => {
+            if (/temporal-polyfill[./_-]/.test(request.url())) fallbackRequests.push(request.url())
+        })
         page.on('pageerror', (error) => errors.push(`Uncaught: ${error.message}`))
         page.on('console', (message) => {
             if (message.type() === 'error') errors.push(`Console: ${message.text()}`)
@@ -38,5 +42,7 @@ for (const forceFallback of [false, true]) {
             }
         }
         expect(errors).toEqual([])
+        const hasNative = await page.evaluate(() => typeof Reflect.get(globalThis, 'Temporal') !== 'undefined')
+        expect(fallbackRequests.length > 0, 'only browsers without native Temporal should download the fallback').toBe(!hasNative)
     })
 }

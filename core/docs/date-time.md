@@ -1,6 +1,6 @@
 # Date and time patterns
 
-Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently. Selection uses feature detection at module evaluation. The package statically imports its fallback, so native browsers still receive and evaluate the polyfill code; this is not conditional loading.
+Read this before adding or reviewing clocks, conference dates, deadlines, date inputs, formatting, calendars, or time-dependent tests. The website and conference configuration use standard Temporal values. Import Temporal through the date module: it selects native support or `temporal-polyfill`, without installing globals, so browsers and Workers behave consistently. The shared module checks for native Temporal and conditionally imports the fallback using top-level `await`. Importers wait for initialization, then use synchronous helpers as before. Vite emits the fallback as a separate chunk; native browsers do not download or evaluate it. No globals are installed.
 
 ## Choose the value and timezone
 
@@ -84,7 +84,7 @@ Components receive a serialized provider instant from loaders. [useConferenceClo
 
 Use [MockDateTimeProvider](../website/app/lib/test-utils/mock-date-time-provider.ts) for fixed-clock tests. Check UTC and America/Los_Angeles hosts, conference midnight, opening/closing instants, and a daylight-saving conference zone when changing shared arithmetic. Browser tests should use a different timezone and verify hydration agreement.
 
-Run `pnpm nx temporal-check website` for native/polyfilled agreement, Workers execution, and SSR hydration in Chromium, Firefox, and WebKit. Install engines with `pnpm nx setup-temporal-browsers website`. The check reports an isolated date-operation bundle size, not whole-site payload.
+Run `pnpm nx temporal-check website` for native/polyfilled agreement, Workers execution, and SSR hydration in Chromium, Firefox, and WebKit. Install engines with `pnpm nx setup-temporal-browsers website`. The check asserts that native browsers make no fallback-chunk requests and missing-native browsers load it on demand. It reports isolated date-operation entry and fallback sizes, not whole-site payload.
 
 For manual date-gated checks use `/admin/settings`, rather than editing config dates. The signed `__adminDateTime` cookie affects only that admin session. E2E may use `__devDateOverride` through the existing development guards (`E2E_DATE_OVERRIDE=true` and a non-production build); preserve the production-bundle exclusion test.
 

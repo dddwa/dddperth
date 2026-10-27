@@ -67,9 +67,10 @@ export default {
             },
             create(context) {
                 return {
-                    ImportDeclaration(node) {
-                        if (node.source.value === 'luxon' || node.source.value === 'temporal-polyfill' ||
-                            node.source.value.startsWith('temporal-polyfill/')) context.report({ node, messageId: 'useHelper' })
+                    'ImportDeclaration, ImportExpression'(node) {
+                        const source = node.source.value
+                        if (source === 'luxon' || source === 'temporal-polyfill' ||
+                            (typeof source === 'string' && source.startsWith('temporal-polyfill/'))) context.report({ node, messageId: 'useHelper' })
                     },
                     MemberExpression(node) {
                         if (((node.object.type === 'Identifier' && node.object.name === 'Temporal' &&
