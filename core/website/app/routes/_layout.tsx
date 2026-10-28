@@ -43,8 +43,8 @@ export async function loader({ context, request }: Route.LoaderArgs) {
             venuePublished: !!conferenceState.conference.venue,
             replacesAboutNearConference: !!conferenceManifest.public.features?.venueReplacesAboutNearConference,
             now: getDateTimeProvider(context).nowDate(),
-            conferenceDate: conferenceState.conference.date
-                ? conferenceDateTime.fromISO(conferenceState.conference.date)
+            conferenceDayStart: conferenceState.conference.date
+                ? conferenceDayStart(conferenceState.conference.date)
                 : undefined,
         }),
         webUrl: getConfig(context).webUrl,

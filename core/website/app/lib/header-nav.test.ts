@@ -1,10 +1,10 @@
-import { DateTime } from 'luxon'
+import { Temporal } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { getHeaderNavItems, getVenueNavPlacement } from './header-nav'
 
 const zone = 'Australia/Perth'
-const conferenceDate = DateTime.fromISO('2026-10-03T09:00:00', { zone })
-const at = (iso: string) => DateTime.fromISO(iso, { zone })
+const conferenceDayStart = Temporal.PlainDate.from('2026-10-03').toZonedDateTime(zone)
+const at = (iso: string) => Temporal.PlainDateTime.from(iso).toZonedDateTime(zone)
 
 const nav = [
     { to: '/agenda', label: 'Agenda' },
@@ -13,7 +13,7 @@ const nav = [
 ]
 
 describe('getVenueNavPlacement', () => {
-    const base = { venuePublished: true, replacesAboutNearConference: true, conferenceDate }
+    const base = { venuePublished: true, replacesAboutNearConference: true, conferenceDayStart }
 
     it('hides the venue link until a venue is published', () => {
         expect(getVenueNavPlacement({ ...base, venuePublished: false, now: at('2026-10-01T12:00') })).toBe('hidden')
@@ -34,7 +34,7 @@ describe('getVenueNavPlacement', () => {
 
     it("takes the window's day boundaries from the conference's zone, not now's", () => {
         // 01:00 on 4 October in Perth, but still 3 October in UTC.
-        const now = DateTime.fromISO('2026-10-03T17:00:00Z', { zone: 'UTC' })
+        const now = Temporal.Instant.from('2026-10-03T17:00:00Z').toZonedDateTimeISO('UTC')
         expect(getVenueNavPlacement({ ...base, now })).toBe('hidden')
     })
 })
