@@ -4,10 +4,16 @@ import ts from 'typescript-eslint'
 
 export default [
     {
-        // Config builds the manifest; its bootstrap dates supply the public config zone explicitly.
+        // Conference configuration uses the same Temporal contract as the application.
         files: ['conference-stub/config/**/*.ts'],
         plugins: { dates: dateRules },
-        rules: { 'dates/use-conference-date-time': ['error', { allowExplicitZone: true }] },
+        languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+        rules: {
+            'dates/use-conference-date-time': ['error', { deferConstruction: true }],
+            'dates/use-date-time-provider': 'error',
+            'dates/no-native-date-calendar': 'error',
+            'dates/no-temporal-coercion': 'error',
+        },
     },
     {
         ignores: [

@@ -14,8 +14,14 @@ function variable(context, node) {
     }
 }
 
+function globalObject(context, node) {
+    return node?.type === 'Identifier' && ['globalThis', 'window', 'self'].includes(node.name) &&
+        !variable(context, node)?.defs.length
+}
+
 function globalDate(context, node) {
-    return node?.type === 'Identifier' && node.name === 'Date' && !variable(context, node)?.defs.length
+    return (node?.type === 'Identifier' && node.name === 'Date' && !variable(context, node)?.defs.length) ||
+        (property(node) === 'Date' && globalObject(context, node.object))
 }
 
 // Resolve the binding, rather than spelling: handles import aliases and avoids
@@ -34,28 +40,96 @@ function luxonDateTime(context, node) {
     return false
 }
 
-const constructors = new Set(['fromISO', 'fromMillis', 'fromSeconds', 'fromJSDate', 'fromObject', 'fromFormat', 'fromSQL', 'fromHTTP', 'fromRFC2822', 'fromString'])
-const clocks = new Set(['now', 'local', 'utc'])
+function temporalNamespace(context, node) {
+    const supportedSource = (source) => source === 'temporal-polyfill' ||
+        source.startsWith('temporal-polyfill/') || source === '@ddd/conference-config' || source.endsWith('/temporal')
+    if (node?.type === 'Identifier') {
+        const binding = variable(context, node)
+        if (node.name === 'Temporal' && !binding?.defs.length) return true
+        return binding?.defs.some((def) => def.type === 'ImportBinding' &&
+            def.node.type === 'ImportSpecifier' && def.node.imported.name === 'Temporal' &&
+            supportedSource(def.parent.source.value))
+    }
+    if (property(node) === 'Temporal') {
+        if (globalObject(context, node.object)) return true
+        return variable(context, node.object)?.defs.some((def) => def.type === 'ImportBinding' &&
+            def.node.type === 'ImportNamespaceSpecifier' && supportedSource(def.parent.source.value))
+    }
+    return false
+}
 
 export default {
     rules: {
         'use-conference-date-time': {
             meta: {
-                type: 'problem', schema: [{ type: 'object', properties: { allowExplicitZone: { type: 'boolean' } }, additionalProperties: false }],
-                messages: { useHelper: `Use conferenceDateTime.{{method}}() so the configured IANA timezone is automatic. ${guide}` },
+                type: 'problem',
+                schema: [{ type: 'object', properties: { deferConstruction: { type: 'boolean' } }, additionalProperties: false }],
+                messages: {
+                    useHelper: `Use standard Temporal values from the configured conference date helpers. ${guide}`,
+                    deferConstruction: `Construct config dates in property getters or functions, after initializeTemporal() has completed. ${guide}`,
+                },
             },
             create(context) {
                 return {
-                    MemberExpression(node) {
-                        const method = property(node)
-                        if (constructors.has(method) && luxonDateTime(context, node.object)) {
-                            const call = node.parent
-                            const options = call.type === 'CallExpression' && call.callee === node
-                                ? call.arguments[method === 'fromFormat' || method === 'fromString' ? 2 : 1] : undefined
-                            if (context.options[0]?.allowExplicitZone && options?.type === 'ObjectExpression' &&
-                                options.properties.some((p) => p.type === 'Property' && (p.key.name ?? p.key.value) === 'zone')) return
-                            context.report({ node, messageId: 'useHelper', data: { method } })
+                    'CallExpression, NewExpression'(node) {
+                        if (!context.options[0]?.deferConstruction) return
+                        if (context.sourceCode.getAncestors(node).some((ancestor) =>
+                            ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(ancestor.type))) return
+                        const helpers = ['conferenceDate', 'conferenceTime', 'conferenceDayStart', 'conferenceInstant']
+                        const callee = node.callee
+                        const helperImport = callee.type === 'Identifier' && variable(context, callee)?.defs.some((def) =>
+                            def.type === 'ImportBinding' && def.node.type === 'ImportSpecifier' && helpers.includes(def.node.imported.name))
+                        const namespaceHelper = helpers.includes(property(callee)) && variable(context, callee.object)?.defs.some((def) =>
+                            def.type === 'ImportBinding' && def.node.type === 'ImportNamespaceSpecifier')
+                        let temporalCall = false
+                        for (let member = callee; member?.type === 'MemberExpression'; member = member.object) {
+                            if (temporalNamespace(context, member.object)) temporalCall = true
                         }
+                        if (helperImport || namespaceHelper || temporalCall) context.report({ node, messageId: 'deferConstruction' })
+                    },
+                    'ImportDeclaration, ImportExpression'(node) {
+                        const source = node.source.value
+                        if (source === 'luxon' || source === 'temporal-polyfill' ||
+                            (typeof source === 'string' && source.startsWith('temporal-polyfill/'))) context.report({ node, messageId: 'useHelper' })
+                    },
+                    MemberExpression(node) {
+                        if (((node.object.type === 'Identifier' && node.object.name === 'Temporal' &&
+                            !variable(context, node.object)?.defs.length) ||
+                            (property(node.object) === 'Temporal' && globalObject(context, node.object.object))) && property(node) !== 'Now') {
+                            context.report({ node, messageId: 'useHelper' })
+                        }
+                    },
+                }
+            },
+        },
+        'no-temporal-coercion': {
+            meta: {
+                type: 'problem', schema: [],
+                messages: { compare: `Use Temporal's compare(), equals(), until()/since(), or explicit epoch values; implicit Temporal coercion throws. ${guide}` },
+            },
+            create(context) {
+                function isTemporal(node) {
+                    const services = context.sourceCode.parserServices
+                    if (!services?.program || !services.esTreeNodeToTSNodeMap) return false
+                    const type = services.program.getTypeChecker().getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
+                    return (type.isUnion() ? type.types : [type]).some((part) =>
+                        part.getSymbol()?.declarations?.some((declaration) =>
+                            /(?:temporal-spec|lib\..*temporal).*\.d\.ts$/.test(declaration.getSourceFile().fileName)))
+                }
+                return {
+                    BinaryExpression(node) {
+                        if (['<', '<=', '>', '>=', '+', '-', '*', '/', '%', '**', '==', '!=', '|', '&', '^', '<<', '>>', '>>>'].includes(node.operator) &&
+                            (isTemporal(node.left) || isTemporal(node.right))) context.report({ node, messageId: 'compare' })
+                    },
+                    AssignmentExpression(node) {
+                        if (['+=', '-=', '*=', '/=', '%=', '**=', '|=', '&=', '^=', '<<=', '>>=', '>>>='].includes(node.operator) &&
+                            (isTemporal(node.left) || isTemporal(node.right))) context.report({ node, messageId: 'compare' })
+                    },
+                    UpdateExpression(node) {
+                        if (isTemporal(node.argument)) context.report({ node, messageId: 'compare' })
+                    },
+                    UnaryExpression(node) {
+                        if (['+', '-', '~'].includes(node.operator) && isTemporal(node.argument)) context.report({ node, messageId: 'compare' })
                     },
                 }
             },
@@ -69,7 +143,8 @@ export default {
                 return {
                     MemberExpression(node) {
                         if ((globalDate(context, node.object) && property(node) === 'now') ||
-                            (luxonDateTime(context, node.object) && clocks.has(property(node)))) {
+                            (luxonDateTime(context, node.object) && ['now', 'local', 'utc'].includes(property(node))) ||
+                            (property(node) === 'Now' && temporalNamespace(context, node.object))) {
                             context.report({ node, messageId: 'useProvider' })
                         }
                     },
@@ -88,7 +163,7 @@ export default {
         'no-native-date-calendar': {
             meta: {
                 type: 'problem', schema: [],
-                messages: { useLuxon: `Keep calendar arithmetic and formatting in conferenceDateTime/Luxon so the host timezone cannot change the date. ${guide}` },
+                messages: { useTemporal: `Use Temporal for calendar arithmetic and formatting so the host timezone cannot change the date. ${guide}` },
             },
             create(context) {
                 const methods = new Set(['getDate', 'getDay', 'getFullYear', 'getMonth', 'getHours', 'getMinutes', 'getSeconds', 'setDate', 'setFullYear', 'setMonth', 'setHours', 'setMinutes', 'setSeconds', 'toLocaleDateString', 'toLocaleTimeString', 'toLocaleString', 'toDateString', 'toTimeString', 'getYear', 'setYear'])
@@ -105,6 +180,12 @@ export default {
                         globalDate(context, def.node.init.callee))
                 }
                 return {
+                    NewExpression(node) {
+                        // Numeric calendar components use the host timezone; epoch milliseconds are safe.
+                        if (globalDate(context, node.callee) && node.arguments.length > 1) {
+                            context.report({ node, messageId: 'useTemporal' })
+                        }
+                    },
                     CallExpression(node) {
                         const method = property(node.callee)
                         if (!methods.has(method)) return
@@ -114,7 +195,7 @@ export default {
                             if (options?.type === 'ObjectExpression' && options.properties.some((p) =>
                                 p.type === 'Property' && (p.key.name ?? p.key.value) === 'timeZone')) return
                         }
-                        context.report({ node, messageId: 'useLuxon' })
+                        context.report({ node, messageId: 'useTemporal' })
                     },
                 }
             },

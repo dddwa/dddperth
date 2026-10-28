@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceInstant } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { data, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
@@ -104,9 +103,8 @@ function summarise(rows: FollowUpRow[]) {
 }
 
 function formatDate(unixSeconds: number): string {
-    return conferenceDateTime.fromSeconds(unixSeconds).toLocaleString(
-        { day: 'numeric', month: 'short' },
-        { locale: 'en-AU' },
+    return conferenceInstant(unixSeconds * 1000).toLocaleString(
+        'en-AU', { day: 'numeric', month: 'short' },
     )
 }
 

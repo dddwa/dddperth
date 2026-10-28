@@ -1,9 +1,9 @@
-import { DateTime } from 'luxon'
+import { Temporal } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { isRunsheetItemNow, OPEN_ENDED_ITEM_MINUTES } from './runsheet-now'
 
 const timezone = 'Australia/Perth'
-const at = (local: string) => DateTime.fromISO(local, { zone: timezone }).toMillis()
+const at = (local: string) => Temporal.Instant.from(`${local}+08:00`).epochMilliseconds
 
 describe('isRunsheetItemNow', () => {
     const item = { startTime: '2026-11-14T09:00:00+08:00', endTime: '2026-11-14T09:45:00+08:00' }
@@ -25,6 +25,10 @@ describe('isRunsheetItemNow', () => {
         const openEnded = { startTime: '2026-11-14T09:00:00+08:00', endTime: null }
         expect(isRunsheetItemNow(openEnded, at('2026-11-14T09:14:59'), timezone)).toBe(true)
         expect(isRunsheetItemNow(openEnded, at('2026-11-14T09:15:00'), timezone)).toBe(false)
+    })
+
+    it('uses the configured timezone without requiring it at the call site', () => {
+        expect(isRunsheetItemNow(item, at('2026-11-14T09:10:00'))).toBe(true)
     })
 
     it('never highlights a row with no usable start', () => {

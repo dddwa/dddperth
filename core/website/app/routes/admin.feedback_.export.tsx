@@ -1,4 +1,3 @@
-import { conferenceManifest } from '@conference/manifest'
 import { requireAdmin } from '~/lib/auth.server'
 import { loadFeedbackReport, resolveFeedbackYear } from '~/lib/feedback/feedback-report.server'
 import { buildFeedbackWorkbook } from '~/lib/feedback/feedback-workbook'
@@ -9,7 +8,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const year = resolveFeedbackYear(context, new URL(request.url).searchParams.get('year'))
     const report = await loadFeedbackReport(context, year)
 
-    return new Response(buildFeedbackWorkbook(report, conferenceManifest.public.timezone), {
+    return new Response(buildFeedbackWorkbook(report), {
         headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition': `attachment; filename="feedback-${year}.xlsx"`,

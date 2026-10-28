@@ -19,7 +19,7 @@ ddd-core/                    ← shared layer (its own repo)
     panda.config.ts          reads theme via @conference/theme
     vite.config.ts           reads content paths + wrangler config via @conference/build-manifest
     tsconfig.json            defines @conference/* path aliases
-  libs/conference-config/    types-only shared package
+  libs/conference-config/    shared manifest types and Temporal constructors
     src/types.ts             ConferenceYear, Sponsor, ConferenceVenue, ...
     src/manifest.ts          ConferenceManifest (runtime) + ConferenceBuildManifest (build)
     src/sessionize-schema.ts Zod schemas

@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceTime } from '~/lib/dates/temporal'
 import type { RunsheetsConfig, sessionSchema } from '@ddd/conference-config'
-import { DateTime } from 'luxon'
 import { z } from 'zod'
 import { isBreakSummary, type RunsheetItem } from './runsheet-filters'
 
@@ -190,7 +189,7 @@ export interface FetchRunsheetOptions {
     /** From `getRunsheetCacheGeneration`; changes when an admin refreshes. */
     cacheGeneration: string
     /** The conference's IANA timezone, for ordering items by start time. */
-    timezone: string
+    timezone?: string
 }
 
 /** Basic auth header for the committee's Jira service account. */
@@ -338,7 +337,7 @@ type SessionConfig = Pick<
 export function sessionsToRunsheetItems(
     sessions: RunsheetSession[],
     config: SessionConfig,
-    { placeholders, timezone }: { placeholders: RunsheetPlaceholder[]; timezone: string },
+    { placeholders, timezone }: { placeholders: RunsheetPlaceholder[]; timezone?: string },
 ): RunsheetItem[] {
     const overlapping = overlappingPlaceholders(placeholders, timezone)
 
@@ -391,8 +390,8 @@ export function sessionsToRunsheetItems(
  * slot placeholder "Session 1" covers all five talks in that slot, and a
  * Jira break can start a few minutes off the Sessionize one.
  */
-function overlappingPlaceholders(placeholders: RunsheetPlaceholder[], timezone: string) {
-    const toMillis = (iso: string | null) => (iso ? conferenceDateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+function overlappingPlaceholders(placeholders: RunsheetPlaceholder[], timezone?: string) {
+    const toMillis = (iso: string | null) => (iso ? conferenceTime(iso, { timeZone: timezone }).epochMilliseconds : NaN)
     const windows = placeholders
         .map((placeholder) => ({
             placeholder,
@@ -427,8 +426,8 @@ function sessionLocationKeys(session: RunsheetSession, config: SessionConfig): s
  * Jira datetimes carry an offset and Sessionize's are local to the
  * conference, so the two only line up once both are read in its timezone.
  */
-export function compareRunsheetItems(timezone: string) {
-    const toMillis = (iso: string | null) => (iso ? conferenceDateTime.fromISO(iso, { zone: timezone }).toMillis() : NaN)
+export function compareRunsheetItems(timezone?: string) {
+    const toMillis = (iso: string | null) => (iso ? conferenceTime(iso, { timeZone: timezone }).epochMilliseconds : NaN)
     return (a: RunsheetItem, b: RunsheetItem) => {
         const aStart = toMillis(a.startTime)
         const bStart = toMillis(b.startTime)

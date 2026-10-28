@@ -1,4 +1,3 @@
-import { conferenceManifest } from '@conference/manifest'
 import { useConferenceClock } from '~/lib/dates/use-conference-clock'
 import { Button } from '~/components/ui/styled/button'
 import { isRunsheetItemNow } from '~/lib/runsheets/runsheet-now'
@@ -15,9 +14,8 @@ import { styled } from '~/styled-system/jsx'
 /** The ids of the rows happening now, and the first of them in display order. */
 export function useRunsheetNow(items: Array<Pick<RunsheetItem, 'id' | 'startTime' | 'endTime'>>, serverNow: string) {
     const now = useConferenceClock(serverNow, 60_000)
-    const { timezone } = conferenceManifest.public
     const nowIds = new Set(
-        now === undefined ? [] : items.filter((item) => isRunsheetItemNow(item, now, timezone)).map((item) => item.id),
+        now === undefined ? [] : items.filter((item) => isRunsheetItemNow(item, now)).map((item) => item.id),
     )
     const firstNowId = items.find((item) => nowIds.has(item.id))?.id
     return { nowIds, firstNowId }

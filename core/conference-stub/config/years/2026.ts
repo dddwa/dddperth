@@ -4,7 +4,7 @@
 // agenda, CFP, and tickets are all undefined or empty. Forks can copy
 // this when they kick off planning for a new year.
 
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 import type { ConferenceYear } from '@ddd/conference-config'
 import { exampleConventionCentre } from '../venues/example-convention-centre.ts'
 
@@ -16,7 +16,9 @@ export const conference2026: ConferenceYear = {
     sessionizeUrl: undefined,
     sessions: undefined,
 
-    conferenceDate: DateTime.fromISO('2026-10-17T09:00:00', { zone: 'Etc/UTC' }),
+    get conferenceDate() {
+        return conferenceTime('2026-10-17T09:00:00')
+    },
     agendaPublishedDateTime: undefined,
     cfpDates: undefined,
     talkVotingDates: undefined,

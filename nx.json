@@ -43,7 +43,17 @@
             }
         }
     ],
-    "targetDefaults": {},
+    "targetDefaults": {
+        "lint": {
+            "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/eslint.config.mjs",
+                "{workspaceRoot}/core/eslint-rules/**/*",
+                { "externalDependencies": ["eslint"] }
+            ]
+        }
+    },
     "projects": {
         "infra": "infra-archive"
     },

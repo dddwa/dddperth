@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceInstant } from '~/lib/dates/temporal'
 import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import type { FeedbackReport } from './feedback-report'
 
@@ -8,9 +7,9 @@ import type { FeedbackReport } from './feedback-report'
  * written as typed values (strings stay strings), so free text that starts
  * with `=` can't become a formula the way it could in a CSV.
  */
-export function buildFeedbackWorkbook(report: FeedbackReport, timezone: string): ArrayBuffer {
+export function buildFeedbackWorkbook(report: FeedbackReport, timezone?: string): ArrayBuffer {
     const submitted = (seconds: number) =>
-        conferenceDateTime.fromSeconds(seconds, { zone: timezone }).toFormat('yyyy-MM-dd HH:mm')
+        conferenceInstant(seconds * 1000, { timeZone: timezone }).toPlainDateTime().toString({ smallestUnit: 'minute' }).replace('T', ' ')
     const workbook = sheetUtils.book_new()
 
     sheetUtils.book_append_sheet(

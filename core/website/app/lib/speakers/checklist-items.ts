@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
 
 /**
  * Declarative list of the speaker dashboard checklist items — one place to
@@ -68,7 +68,7 @@ export interface ChecklistItemDefinition {
  * lib/admin-settings/speakers.ts). Core owns the item definitions, the admin
  * owns the calendar. A missing key renders that item undated.
  */
-export type ChecklistDueDates = Partial<Record<ChecklistItemKey, DateTime>>
+export type ChecklistDueDates = Partial<Record<ChecklistItemKey, Temporal.ZonedDateTime>>
 
 export const SPEAKER_CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     {

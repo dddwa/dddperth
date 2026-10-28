@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { conferenceTime } from '~/lib/dates/temporal'
+import { useEffect, useMemo, useState } from 'react'
 import { useFetcher, useLoaderData, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AgendaPlanner, type PlannerTalk } from '~/components/agenda-planner'
@@ -2016,9 +2015,7 @@ export default function VotingAgenda() {
                             <>
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
-                                    {conferenceDateTime.fromISO(runDetails.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
-                                        locale: 'en-AU',
-                                    })}
+                                    {conferenceTime(runDetails.startedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </styled.p>
                                 <styled.p fontSize="sm" color="admin.600">
                                     Status:{' '}

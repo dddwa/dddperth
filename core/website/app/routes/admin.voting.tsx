@@ -1,5 +1,4 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { useEffect, useRef, useState } from 'react'
 import { Form, useActionData, useFetcher, useLoaderData, useNavigation, useRevalidator } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
@@ -378,9 +377,7 @@ export default function AdminVoting() {
                                 Closes
                             </styled.p>
                             <styled.p fontSize="lg" fontWeight="medium">
-                                {conferenceDateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, {
-                                    locale: 'en-AU',
-                                })}
+                                {conferenceTime(conferenceState.talkVoting.closes).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                             </styled.p>
                         </Box>
                     )}
@@ -392,9 +389,7 @@ export default function AdminVoting() {
                                     Opens
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {conferenceDateTime.fromISO(conferenceState.talkVoting.opens).toLocaleString(DateTime.DATETIME_SHORT, {
-                                        locale: 'en-AU',
-                                    })}
+                                    {conferenceTime(conferenceState.talkVoting.opens).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </styled.p>
                             </Box>
                             <Box flex="1">
@@ -402,9 +397,7 @@ export default function AdminVoting() {
                                     Closes
                                 </styled.p>
                                 <styled.p fontSize="lg" fontWeight="medium">
-                                    {conferenceDateTime.fromISO(conferenceState.talkVoting.closes).toLocaleString(DateTime.DATETIME_SHORT, {
-                                        locale: 'en-AU',
-                                    })}
+                                    {conferenceTime(conferenceState.talkVoting.closes).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </styled.p>
                             </Box>
                         </>
@@ -662,9 +655,7 @@ export default function AdminVoting() {
                                     {validationRuns.runs.map((run) => (
                                         <tr key={run.runId}>
                                             <styled.td p="2" border="admin-subtle">
-                                                {conferenceDateTime.fromISO(run.startedAt).toLocaleString(DateTime.DATETIME_SHORT, {
-                                                    locale: 'en-AU',
-                                                })}
+                                                {conferenceTime(run.startedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                             </styled.td>
                                             <styled.td p="2" border="admin-subtle">
                                                 <styled.span

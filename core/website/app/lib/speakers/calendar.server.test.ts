@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { buildCalendarDataUrl } from './calendar.server'
 
@@ -7,8 +7,8 @@ describe('buildCalendarDataUrl', () => {
         const url = buildCalendarDataUrl({
             title: 'Speaker Training — Session 1',
             description: 'Planning, building and writing your talk',
-            start: DateTime.fromISO('2026-09-02T17:30:00', { zone: 'Australia/Perth' }),
-            end: DateTime.fromISO('2026-09-02T20:00:00', { zone: 'Australia/Perth' }),
+            start: conferenceTime('2026-09-02T17:30:00', { timeZone: 'Australia/Perth' }),
+            end: conferenceTime('2026-09-02T20:00:00', { timeZone: 'Australia/Perth' }),
         })
 
         expect(url.startsWith('data:text/calendar;charset=utf8,')).toBe(true)
@@ -24,8 +24,8 @@ describe('buildCalendarDataUrl', () => {
     it('includes the location when given', () => {
         const url = buildCalendarDataUrl({
             title: 'Speaker Dinner',
-            start: DateTime.fromISO('2026-10-02T18:00:00', { zone: 'Australia/Perth' }),
-            end: DateTime.fromISO('2026-10-02T20:00:00', { zone: 'Australia/Perth' }),
+            start: conferenceTime('2026-10-02T18:00:00', { timeZone: 'Australia/Perth' }),
+            end: conferenceTime('2026-10-02T20:00:00', { timeZone: 'Australia/Perth' }),
             location: 'TBC',
         })
         const ics = decodeURIComponent(url.slice('data:text/calendar;charset=utf8,'.length))

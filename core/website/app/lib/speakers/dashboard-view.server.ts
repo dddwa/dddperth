@@ -1,5 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
-import { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
+import { conferenceDayStart } from '~/lib/dates/temporal'
 import type { RouterContext } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
 import { getConferenceState, getDateTimeProvider } from '~/remix-app-load-context'
@@ -75,7 +75,7 @@ export function buildSpeakerDashboardView(
     const now = getDateTimeProvider(context).nowDate()
     const conferenceDateIso = getConferenceState(context).conference.date
     const timezone = conferenceManifest.public.timezone
-    const conferenceDate = conferenceDateIso ? conferenceDateTime.fromISO(conferenceDateIso, { zone: timezone }) : null
+    const conferenceDate = conferenceDateIso ? conferenceDayStart(conferenceDateIso) : null
 
     const sessionDetailsSections = toSessionDetailsSections(workspace)
     const ownProfile =
@@ -130,8 +130,8 @@ export function buildSpeakerDashboardView(
         backupSessionIds,
 
         conferenceName: conferenceManifest.public.name,
-        conferenceDateLabel: conferenceDate?.toLocaleString(DateTime.DATE_HUGE, { locale: 'en-AU' }) ?? null,
-        daysUntilConference: conferenceDate ? Math.floor(conferenceDate.diff(now, 'days').days) : null,
+        conferenceDateLabel: conferenceDate?.toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) ?? null,
+        daysUntilConference: conferenceDate ? Math.floor(now.until(conferenceDate, { largestUnit: 'day' }).total({ unit: 'day', relativeTo: now })) : null,
 
         reminders,
 
@@ -161,6 +161,6 @@ export function buildSpeakerDashboardView(
     }
 }
 
-function formatEventDate(dateTime: DateTime): string {
-    return `${dateTime.weekdayShort} ${dateTime.toFormat('d LLL')}, ${dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}`
+function formatEventDate(dateTime: Temporal.ZonedDateTime): string {
+    return `${dateTime.toLocaleString('en-AU', { weekday: 'short' })} ${dateTime.toLocaleString('en-AU', { day: 'numeric', month: 'short' })}, ${dateTime.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
 }

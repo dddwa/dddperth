@@ -99,6 +99,7 @@ export default [
                         'msw',
                         'vitest',
                         'eslint', // RuleTester is development tooling, declared at the workspace root.
+                        'typescript-eslint', // Parser for typed date-rule regression tests, declared at the workspace root.
                         '@testing-library/react',
                         // Workspace libraries — Vite consumes source directly via pnpm symlinks,
                         // so they don't need an Nx build target. The rule otherwise flags them as obsolete.
@@ -183,11 +184,7 @@ export default [
             'dates/use-conference-date-time': 'error',
             'dates/use-date-time-provider': 'error',
             'dates/no-native-date-calendar': 'error',
+            'dates/no-temporal-coercion': 'error',
         },
-    },
-    {
-        // This is the single construction seam; feature code uses its defaults.
-        files: ['app/lib/dates/conference-date-time.ts'],
-        rules: { 'dates/use-conference-date-time': 'off' },
     },
 ]

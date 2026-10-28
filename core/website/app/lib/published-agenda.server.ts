@@ -1,3 +1,4 @@
+import { Temporal } from '~/lib/dates/temporal'
 import type { z } from 'zod'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -28,8 +29,8 @@ export async function getPublishedSchedule(context: ContextReader, year: Year): 
     if (yearConfig.sessions?.kind === 'sessionize') {
         const now = getDateTimeProvider(context).nowDate()
         const published =
-            (yearConfig.agendaPublishedDateTime ? now >= yearConfig.agendaPublishedDateTime : false) ||
-            (!!yearConfig.conferenceDate && now >= yearConfig.conferenceDate)
+            (yearConfig.agendaPublishedDateTime ? Temporal.ZonedDateTime.compare(now, yearConfig.agendaPublishedDateTime) >= 0 : false) ||
+            (!!yearConfig.conferenceDate && Temporal.ZonedDateTime.compare(now, yearConfig.conferenceDate) >= 0)
         if (!published) return undefined
     }
 

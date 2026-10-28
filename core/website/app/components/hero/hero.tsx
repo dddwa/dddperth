@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
 import { AppLink } from '~/components/app-link'
 import type { ConferenceState, Year } from '~/lib/conference-state-client-safe'
@@ -19,7 +19,7 @@ export function Hero({
     currentYear,
     conferenceState,
 }: {
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     conferenceDate: string | undefined
     importantDates: ImportantDate[]
     sponsors: ResolvedSponsors

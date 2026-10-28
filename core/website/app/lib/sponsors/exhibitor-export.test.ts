@@ -1,3 +1,4 @@
+import { conferenceDate } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import {
     buildExhibitorRow,
@@ -11,7 +12,7 @@ import {
 } from './exhibitor-export'
 
 // DDD Perth 2026 — a Saturday. Bump-in options are the Friday before.
-const CONFERENCE_DATE = new Date('2026-10-03T09:00:00')
+const CONFERENCE_DATE = conferenceDate('2026-10-03')
 
 describe('splitBumpSlot', () => {
     it('splits a Friday afternoon slot into the Friday date and a 24h start time', () => {

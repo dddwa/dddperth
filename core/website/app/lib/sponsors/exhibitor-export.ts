@@ -1,4 +1,4 @@
-import { conferenceDateTime } from '../dates/conference-date-time'
+import type { Temporal } from '~/lib/dates/temporal'
 /**
  * Builds the venue's "Supplier & Exhibitor List" spreadsheet.
  *
@@ -120,7 +120,7 @@ const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frida
  */
 export function splitBumpSlot(
     slot: string | undefined,
-    conferenceDate: Date | undefined,
+    conferenceDate: Temporal.PlainDate | undefined,
 ): { date: string; time: string } {
     if (!slot?.trim()) return { date: '', time: '' }
 
@@ -131,18 +131,18 @@ export function splitBumpSlot(
     const afterWeekday = weekdayMatch ? text.slice(weekdayMatch.index + weekdayMatch[0].length) : ''
     const timeMatch = /^[\s,]*(\d{1,2})([.:](\d{2}))?\s*(am|pm)\b/i.exec(afterWeekday)
 
-    if (!weekdayMatch || !conferenceDate || Number.isNaN(conferenceDate.getTime())) {
+    if (!weekdayMatch || !conferenceDate) {
         return { date: text, time: '' }
     }
 
     const target = WEEKDAYS.indexOf(weekdayMatch[1].toLowerCase())
-    const date = conferenceDateTime.fromJSDate(conferenceDate)
+    const date = conferenceDate
     // Walk back to that weekday on or before the conference date. Bump-in is
     // the days before; bump-out is the conference day itself.
-    const delta = (date.weekday % 7 - target + 7) % 7
-    const slotDate = date.minus({ days: delta })
+    const delta = (date.dayOfWeek % 7 - target + 7) % 7
+    const slotDate = date.subtract({ days: delta })
 
-    const formattedDate = slotDate.toFormat('dd/MM/yyyy')
+    const formattedDate = slotDate.toLocaleString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
     if (!timeMatch) return { date: formattedDate, time: '' }
 
@@ -235,7 +235,7 @@ export function formatLoadingDockAttendees(attendees: string | undefined, knownE
 }
 
 /** One spreadsheet row (header order) for an exhibitor. */
-export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date | undefined): string[] {
+export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Temporal.PlainDate | undefined): string[] {
     const bumpIn = splitBumpSlot(source.bumpInSlot, conferenceDate)
     const bumpOut = splitBumpSlot(source.bumpOutWindow, conferenceDate)
     const { trolley, forklift } = splitTrolleyForklift(source.trolleyOrForklift)
@@ -270,12 +270,12 @@ export function buildExhibitorRow(source: ExhibitorSource, conferenceDate: Date 
 export function buildExhibitorSheet(args: {
     sources: ExhibitorSource[]
     conferenceName: string
-    conferenceDate: Date | undefined
+    conferenceDate: Temporal.PlainDate | undefined
 }): string[][] {
     const { sources, conferenceName, conferenceDate } = args
     const dateLabel =
-        conferenceDate && !Number.isNaN(conferenceDate.getTime())
-            ? conferenceDateTime.fromJSDate(conferenceDate).toFormat('d MMMM yyyy', { locale: 'en-AU' })
+        conferenceDate
+            ? conferenceDate.toLocaleString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
             : ''
 
     const title = `Supplier & Exhibitor List - ${conferenceName}${dateLabel ? ` - ${dateLabel}` : ''}`

@@ -1,11 +1,13 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '../dates.ts'
 import type { ConferenceYear } from '@ddd/conference-config'
 import { pcecVenue } from '../venues/pcec.ts'
 
 export const conference2017: ConferenceYear = {
     kind: 'conference',
     year: '2017',
-    conferenceDate: DateTime.fromISO('2017-09-16T08:00:00', { zone: 'Australia/Perth' }),
+    get conferenceDate() {
+        return conferenceTime('2017-09-16T08:00:00')
+    },
     sessionizeUrl: undefined,
 
     venue: pcecVenue,

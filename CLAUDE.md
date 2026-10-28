@@ -96,7 +96,7 @@ This repo is split into a **core** layer (shared infrastructure) and a **fork** 
     - `app/theme/` — token primitives (colors, durations, shadows, recipes)
     - `vite-plugins/`, `panda.config.ts`, `vite.config.ts` — build pipeline
     - `tsconfig.json` — defines `@conference/*` path aliases
-- **`/libs/conference-config`** — CORE: types-only shared package (`@ddd/conference-config`)
+- **`/libs/conference-config`** — CORE: shared manifest types and Temporal constructors (`@ddd/conference-config`)
     - `src/types.ts`, `src/manifest.ts`, `src/sessionize-schema.ts`
 - **`/conference`** — FORK: DDD Perth's owned content + config
     - `manifest.ts`, `build-manifest.ts` — wired into core via `@conference/manifest` and `@conference/build-manifest`

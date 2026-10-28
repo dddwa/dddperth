@@ -1,6 +1,5 @@
-import { conferenceDateTime } from '~/lib/dates/conference-date-time'
+import { conferenceDayStart } from '~/lib/dates/temporal'
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
-import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import DGreen from '~/images/hero/d-green.svg?react'
@@ -72,9 +71,7 @@ export function HomepageHeroPanel({
                         width="full"
                     >
                         <styled.span>
-                            {conferenceDateTime.fromISO(conferenceDate).toLocaleString(DateTime.DATE_HUGE, {
-                                locale: 'en-AU',
-                            })}
+                            {conferenceDayStart(conferenceDate).toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </styled.span>
                         {venue ? <styled.span>{venue.name}</styled.span> : null}
                     </styled.p>

@@ -1,19 +1,15 @@
-import { DateTime } from 'luxon'
+import { Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 export class SystemDateTimeProvider implements DateTimeProvider {
-    nowDate(): DateTime {
+    nowDate(): Temporal.ZonedDateTime {
         // eslint-disable-next-line dates/use-date-time-provider -- The system provider is the real clock behind request overrides.
-        return DateTime.local({
-            zone: conferenceManifest.public.timezone,
-        })
+        return Temporal.Now.zonedDateTimeISO(conferenceManifest.public.timezone)
     }
     now() {
         // eslint-disable-next-line dates/use-date-time-provider -- The system provider is the real clock behind request overrides.
-        return DateTime.local({
-            zone: conferenceManifest.public.timezone,
-        }).toMillis()
+        return Temporal.Now.instant().epochMilliseconds
     }
 
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout

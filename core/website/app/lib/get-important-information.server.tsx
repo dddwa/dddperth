@@ -1,3 +1,4 @@
+import { Temporal } from '~/lib/dates/temporal'
 import type { ConferenceConfigYear } from '@ddd/conference-config'
 import type { ConferenceImportantInformation } from './conference-state-client-safe'
 import type { DateTimeProvider } from './dates/date-time-provider.server'
@@ -19,15 +20,15 @@ export function getImportantInformation(
     }
 
     const currentTicketRelease = yearConfig.ticketReleases.find((release) => {
-        return now >= release.range.opens && now <= release.range.closes
+        return Temporal.ZonedDateTime.compare(now, release.range.opens) >= 0 && Temporal.ZonedDateTime.compare(now, release.range.closes) <= 0
     })
 
     return {
-        date: yearConfig.conferenceDate?.toISO(),
+        date: yearConfig.conferenceDate?.toPlainDate().toString(),
         year: yearConfig.year,
         sponsors: yearConfig.sponsors,
         currentTicketSale: currentTicketRelease
-            ? { closes: currentTicketRelease.range.closes.toISO(), price: currentTicketRelease.price }
+            ? { closes: currentTicketRelease.range.closes.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }), price: currentTicketRelease.price }
             : undefined,
         venue: yearConfig.venue,
     }
