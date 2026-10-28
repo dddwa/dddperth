@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 import { DATE_DEPENDENT_ROUTES, FIXTURE_YEAR } from './routes'
 
 /**
@@ -182,6 +182,43 @@ test.describe('before the agenda is published', () => {
         await page.goto('/agenda/my')
 
         await expect(page.getByText(/agenda hasn't been announced yet/)).toBeVisible()
+    })
+})
+
+test.describe('after the conference', () => {
+    // The fixture conference is 2026-10-03; this is a week later.
+    const afterConference = async (context: BrowserContext, baseURL: string | undefined) =>
+        context.addCookies([
+            { name: '__devDateOverride', value: '2026-10-10T10:00:00', url: baseURL ?? 'http://localhost:3800' },
+        ])
+
+    test('the agenda offers no picker, and no link when nothing was picked', async ({ page, context, baseURL }) => {
+        await afterConference(context, baseURL)
+        await page.reload()
+        await page.waitForLoadState('networkidle').catch(() => {})
+
+        await expect(page.getByText(/Fixture Talk/).first()).toBeVisible()
+        await expect(page.getByRole('button', { name: /to my agenda$/ })).toHaveCount(0)
+        await expect(page.getByRole('link', { name: /^My agenda/ })).toHaveCount(0)
+    })
+
+    test('someone who built an agenda can still get to it', async ({ page, context, baseURL }) => {
+        await addButton(page, 'Fixture Talk 02').click()
+        await expect(removeButton(page, 'Fixture Talk 02')).toBeVisible()
+
+        await afterConference(context, baseURL)
+        await page.reload()
+
+        await expect(page.getByRole('button', { name: /my agenda$/ })).toHaveCount(0)
+        await page.getByRole('link', { name: 'My agenda (1)' }).click()
+        await expect(page.getByRole('heading', { level: 2, name: 'Fixture Talk 02' })).toBeVisible()
+    })
+
+    test('the personal agenda says it is over when nothing was picked', async ({ page, context, baseURL }) => {
+        await afterConference(context, baseURL)
+        await page.goto('/agenda/my')
+
+        await expect(page.getByText(/is over, and you didn't pick any talks/)).toBeVisible()
     })
 })
 

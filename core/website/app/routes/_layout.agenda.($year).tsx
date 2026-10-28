@@ -72,13 +72,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     // Held back with the rest of the agenda until it's published.
     const meetTheExperts = schedule ? await getMeetTheExpertsAgenda(context, year) : undefined
 
-    // Only the current conference's agenda can be built from: past years are
-    // an archive, and the shortlist counts are only useful while there is
-    // still a day to plan for.
-    const canPick =
+    // Only the current conference's agenda can be built from, and only until
+    // the day is over: past years are an archive, and the shortlist counts
+    // are only useful while there is still a day to plan for.
+    const hasMyAgenda =
         !!schedule &&
         conferenceYearConfig?.sessions?.kind === 'sessionize' &&
         year === getConferenceState(context).conference.year
+    const canPick = hasMyAgenda && getConferenceState(context).conferenceState !== 'conference-over'
+    // Once picking closes, the link to someone's agenda stays for those who
+    // built one; whether they did is only known in the browser.
+    const myAgendaClosed = hasMyAgenda && !canPick
     // Feedback links go away again once the window closes (the page itself is
     // cached for 5 minutes, so they can linger that long).
     const feedbackOpen =
@@ -99,6 +103,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
             recordings: conferenceYearConfig?.recordings ?? {},
             canPick,
+            myAgendaClosed,
             feedbackOpen,
             now,
             meetTheExperts,
@@ -162,6 +167,7 @@ export default function Agenda() {
         linkTalks,
         recordings,
         canPick,
+        myAgendaClosed,
         feedbackOpen,
         now,
         meetTheExperts,
@@ -282,7 +288,7 @@ export default function Agenda() {
                     {announcement}
                 </styled.div>
             ) : null}
-            {canPick ? (
+            {canPick || (myAgendaClosed && picked.length > 0) ? (
                 <Flex justifyContent="flex-end" px="1" py="2">
                     <AppLink to="/agenda/my" unstyled color="text.highlight" textDecoration="underline" fontSize="sm">
                         My agenda{picked.length ? ` (${picked.length})` : ''}
