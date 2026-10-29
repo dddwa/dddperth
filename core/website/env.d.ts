@@ -24,3 +24,8 @@ declare module 'virtual:mdx-bundles' {
     }
     export default bundles
 }
+
+declare module 'virtual:blog-authors' {
+    const authorsYaml: string
+    export default authorsYaml
+}

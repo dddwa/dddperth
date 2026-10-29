@@ -392,6 +392,13 @@ applies to new code and to fixes/refactors of existing code you touch, not just 
     stays full-page so the shared header/nav/footer chrome keeps visual coverage somewhere. This matters because
     `maxDiffPixelRatio` is a *ratio*: a 10,000px-tall capture absorbs several times more real regression before
     it trips than a 2,000px one.
+  - **The header has its own baseline and an overflow sweep.** `/` alone let a nav-link change pass, since the header
+    is a small share of a ~3200px capture. `site-header` captures `#header` at the pinned date, which shows both CTAs.
+    The sweep resizes from 320 to 1600px (every 8px, plus each Panda breakpoint exactly) in every state in
+    `HEADER_DATE_STATES` (`e2e/routes.ts`, fork-owned), once per engine, and fails if the page scrolls horizontally.
+    It also names the element that sticks out. Its first run found two overflows already on `main`: the mobile header
+    at 320-340px and 460-488px with CTAs, and any content page with a code block on phones (a bare `1fr` grid track
+    can't shrink below its content; use `minmax(0, 1fr)`).
   - **Masking is deliberately unused.** `VISUAL_MASK_SELECTORS` exists but is empty. Masking paints a solid
     block over a region, so it only suits something small and genuinely non-deterministic (a live clock, a
     random avatar). It was briefly applied to sponsor logo grids and turned the largest, most content-rich part

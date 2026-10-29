@@ -60,4 +60,9 @@ export const conferenceManifest: ConferenceManifest = {
     sponsorPortal,
     speakerPortal,
     runsheets,
+    blog: {
+        // The old Medium publication's custom domain. Pointed at this Worker
+        // so links shared before the move land on the migrated posts.
+        legacyHosts: ['blog.dddperth.com'],
+    },
 }

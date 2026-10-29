@@ -33,13 +33,30 @@ const mdxImage = cva({
              * fixed inline `150px` it replaces could not respond at all.
              */
             portrait: { width: { base: '25', md: '37.5' }, flexShrink: '0' },
+            /**
+             * Small round headshot that sits inline before a name, e.g. the
+             * team page's past-committee tables. `aspectRatio` + `objectFit`
+             * because the source photos aren't all square. The negative
+             * block margin keeps it within one line of text, so table rows
+             * with and without an avatar stay the same height.
+             */
+            avatar: {
+                display: 'inline-block',
+                width: '8',
+                aspectRatio: 'square',
+                objectFit: 'cover',
+                rounded: 'full',
+                verticalAlign: 'middle',
+                my: '-1',
+                me: '2',
+            },
         },
     },
     defaultVariants: { size: 'full' },
 })
 
 type MdxImageProps = Omit<ComponentProps<typeof styled.img>, 'width' | 'height'> & {
-    size?: 'full' | 'portrait'
+    size?: 'full' | 'portrait' | 'avatar'
 }
 
 export function MdxImage({ ref, size, className, ...props }: MdxImageProps) {

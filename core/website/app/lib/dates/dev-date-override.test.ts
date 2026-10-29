@@ -18,6 +18,9 @@ const DEV_ONLY_MARKERS = [
     // anyone who can set a Worker var blank the site's sponsors — the people
     // paying for the conference.
     { name: 'sponsor fixtures', value: 'E2E_SPONSOR_FIXTURES', guard: 'cloudflare/build-config.server.ts' },
+    // Fixture blog posts replace the real blog. Unlike the others this is a
+    // build-time switch, so a leak would publish the fixtures as the blog.
+    { name: 'fixture blog posts', value: 'Fixture Post: The Latest One', guard: 'vite.config.ts' },
     // The local-dev session secret is public (it's in the repo). Shipping it
     // as a fallback would let anyone forge an admin session cookie on a
     // deployment whose SESSION_SECRET went missing.
