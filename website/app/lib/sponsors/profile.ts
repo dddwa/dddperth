@@ -18,7 +18,10 @@ export type SocialPlatformKey = (typeof SOCIAL_PLATFORMS)[number]['key']
 
 const optionalUrl = z.preprocess(
     (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-    z.url({ protocol: /^https?$/, error: 'Enter a full URL, including https://' }).max(500).optional(),
+    z
+        .url({ protocol: /^https?$/, error: 'Enter a full URL, including https://' })
+        .max(500)
+        .optional(),
 )
 
 /** The "save details" form. Social fields are named `social_<platform>`. */
@@ -51,9 +54,43 @@ export function socialsFromForm(data: Record<string, unknown>): Record<string, s
 }
 
 /**
+ * What the profile form starts out showing, given what the sponsor has saved
+ * and what the committee already captured in Jira.
+ *
+ * Sponsors who answered the sponsorship team by email before the portal
+ * existed already have their quote and socials on the Jira issue; without
+ * this they were shown an empty form and asked to type it all again.
+ *
+ * Only relevant *before* the sponsor's first submission, where it fills the
+ * form from Jira. Afterwards `sponsor_profiles` is a local copy of Jira —
+ * portal saves write Jira first, and each sync refreshes the copy — so the
+ * stored values are returned untouched rather than merged against a snapshot
+ * that may be an hour old.
+ */
+export function prefilledProfileFields(args: {
+    profile: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials' | 'detailsUpdatedAt'> | null
+    /** Committee-entered values synced from Jira onto the sponsor record. */
+    jira: { quote?: string; website?: string; socials?: Record<string, string> }
+}): { blurb: string; websiteUrl: string; socials: Record<string, string> } {
+    const { profile, jira } = args
+    if (profile?.detailsUpdatedAt !== undefined) {
+        return {
+            blurb: profile.blurb ?? '',
+            websiteUrl: profile.websiteUrl ?? '',
+            socials: profile.socials,
+        }
+    }
+    return {
+        blurb: profile?.blurb ?? jira.quote ?? '',
+        websiteUrl: profile?.websiteUrl ?? jira.website ?? '',
+        socials: { ...(jira.socials ?? {}), ...(profile?.socials ?? {}) },
+    }
+}
+
+/**
  * Phase 1 completion = logo + blurb + website. Socials are optional —
  * this mirrors what the public site renders for a sponsor (logo, link,
- * optional quote). Completing flips the Jira "Assets for Conference" task.
+ * optional quote). Completing advances the Jira assets status field.
  */
 export function isProfileComplete(profile: SponsorProfile | null): boolean {
     if (!profile) return false

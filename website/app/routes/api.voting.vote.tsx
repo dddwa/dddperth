@@ -76,7 +76,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data(errorResponse, { status: 401 })
         }
 
-        const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+        const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
         if (
             yearConfig.kind === 'cancelled' ||
             yearConfig.sessions?.kind !== 'sessionize' ||

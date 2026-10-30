@@ -59,6 +59,7 @@ export function createD1MeetTheExpertsSchedulingStore(
 
         async addTable(label) {
             const id = crypto.randomUUID()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             await db
                 .prepare(
@@ -78,6 +79,7 @@ export function createD1MeetTheExpertsSchedulingStore(
         async renameTable(tableId, label) {
             await db
                 .prepare(`UPDATE meet_the_experts_tables SET label = ?, updated_at = ? WHERE id = ?`)
+                // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
                 .bind(label, Math.floor(Date.now() / 1000), tableId)
                 .run()
         },
@@ -110,6 +112,7 @@ export function createD1MeetTheExpertsSchedulingStore(
             // Already at the start/end of the table list.
             if (!neighbour) return
 
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = Math.floor(Date.now() / 1000)
             await db.batch([
                 db

@@ -1,0 +1,22 @@
+-- Committee-entered logistics pulled from Jira, used to prefill the portal's
+-- Event logistics form.
+--
+-- The sponsorship team collects bump-in times, screen orders, raffle prizes
+-- and the social quote by email long before a sponsor opens the portal, and
+-- files them straight onto the Jira issue. Until now none of that reached the
+-- sponsor: the logistics form read only `sponsor_profiles.logistics_json`, so
+-- a sponsor saw empty fields and their first save overwrote everything the
+-- committee had gathered.
+--
+-- Stored as one JSON blob, matching `sponsor_profiles.logistics_json` and for
+-- the same reason: the venue's form changes shape between years, nothing
+-- queries an individual answer, and a column per field would mean a migration
+-- every time a question is added.
+--
+-- PREFILL ONLY. Authority still flips on `sponsor_profiles.logistics_updated_at`
+-- exactly as the exhibitor export already does (`buildExhibitorSource`):
+-- before the sponsor's first full submission these Jira values fill the form,
+-- afterwards D1 wins wholesale so a cleared answer can't be masked by a stale
+-- non-empty Jira value. The sync writes only this column on `sponsors`, never
+-- `sponsor_profiles`, so it has no mechanism to overwrite a sponsor's answer.
+ALTER TABLE sponsors ADD COLUMN jira_logistics_json TEXT;

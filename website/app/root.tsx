@@ -1,21 +1,14 @@
 import type { LinksFunction } from 'react-router'
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router'
 
-import { Settings } from 'luxon'
 import { useRef } from 'react'
 import { requireUser } from '~/lib/auth.server'
-import { readThemeCookie } from '~/lib/theme.server'
 import type { Theme } from '~/lib/theme.server'
+import { readThemeCookie } from '~/lib/theme.server'
+import { getConfig } from '~/remix-app-load-context'
 import type { Route } from './+types/root'
 import './index.css'
-import { getConfig } from '~/remix-app-load-context'
 
-Settings.throwOnInvalid = true
-declare module 'luxon' {
-    interface TSSettings {
-        throwOnInvalid: true
-    }
-}
 
 /**
  * When `WEBSITE_AUTH_REQUIRED` is on (staging) the entire site is gated.

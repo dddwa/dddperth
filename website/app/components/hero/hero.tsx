@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
 import { AppLink } from '~/components/app-link'
 import type { ConferenceState, Year } from '~/lib/conference-state-client-safe'
@@ -19,7 +19,7 @@ export function Hero({
     currentYear,
     conferenceState,
 }: {
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     conferenceDate: string | undefined
     importantDates: ImportantDate[]
     sponsors: ResolvedSponsors
@@ -41,7 +41,7 @@ export function Hero({
                  */
                 css={{
                     bgImage:
-                        'linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--colors-surface\\.body) 50%, transparent) 60px, var(--colors-surface\\.body) 260px, var(--colors-surface\\.body) 100%)',
+                        'linear-gradient(to bottom, transparent 0, color-mix(in srgb, var(--colors-surface-body) 50%, transparent) 60px, var(--colors-surface-body) 260px, var(--colors-surface-body) 100%)',
                 }}
             >
                 <HeaderContainer>
@@ -62,7 +62,7 @@ export function Hero({
                                     to="/about"
                                     color="text.highlight"
                                     textDecoration="underline"
-                                    textUnderlineOffset="[6px]"
+                                    textUnderlineOffset="6px"
                                     _hover={{ color: 'brand.primary' }}
                                 >
                                     Read more about {conferenceManifest.public.name} →

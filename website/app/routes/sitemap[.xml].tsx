@@ -4,6 +4,7 @@ import { getContentPages } from '~/lib/get-content-pages.server'
 export async function loader() {
     const siteUrl = `https://${conferenceManifest.brand.domain}`
     // Get the current date in ISO format for the lastmod field
+    // eslint-disable-next-line dates/use-date-time-provider -- Sitemap metadata uses real time, independently of conference overrides.
     const today = new Date().toISOString().split('T')[0]
 
     // Define your main routes

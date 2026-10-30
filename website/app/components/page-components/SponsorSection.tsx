@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
+import { MINOR_SPONSOR_TIERS } from '@ddd/conference-config'
 import type { MinorSponsorTier, Sponsor, Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { Flex, styled } from '~/styled-system/jsx'
 import { token } from '~/styled-system/tokens'
@@ -30,6 +31,7 @@ const sponsorStyles = {
     venue: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     prize: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
     keynotes: { gradientFrom: 'sponsor.community', logoSize: 'sm' },
+    inKind: { gradientFrom: 'sponsor.community', logoSize: 'xs' },
 } as const
 
 function getSponsorStyle(category: keyof typeof sponsorStyles) {
@@ -37,18 +39,12 @@ function getSponsorStyle(category: keyof typeof sponsorStyles) {
 }
 
 /**
- * Order the minor tiers render in, and their default headings. A fork
- * renames any of them via `public.sponsorTierLabels` rather than us baking
- * regional wording ("SA Sponsors", "WA Sponsors") into core.
+ * Order the minor tiers render in, and their default headings — shared with the
+ * sponsor tooling so a new tier only has to be declared once. A fork renames any
+ * of them via `public.sponsorTierLabels` rather than us baking regional wording
+ * ("SA Sponsors", "WA Sponsors") into core.
  */
-const MINOR_TIERS: { tier: MinorSponsorTier; defaultLabel: string }[] = [
-    { tier: 'community', defaultLabel: 'Community' },
-    { tier: 'coffeeCart', defaultLabel: 'Coffee Cart' },
-    { tier: 'quietRoom', defaultLabel: 'Quiet Room' },
-    { tier: 'venue', defaultLabel: 'Venue' },
-    { tier: 'prize', defaultLabel: 'Prize' },
-    { tier: 'keynotes', defaultLabel: 'Keynotes' },
-]
+const MINOR_TIERS: readonly { tier: MinorSponsorTier; defaultLabel: string }[] = MINOR_SPONSOR_TIERS
 
 function minorTierLabel(tier: MinorSponsorTier, defaultLabel: string) {
     return conferenceManifest.public.sponsorTierLabels?.[tier] ?? defaultLabel
@@ -188,7 +184,7 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                         fontWeight="semibold"
                         color="text.secondary"
                         flexShrink="0"
-                        minWidth={{ sm: '[110px]' }}
+                        minWidth={{ sm: '27.5' }}
                         _hover={{ color: 'text.highlight', textDecoration: 'underline' }}
                     >
                         {group.title} →
@@ -210,9 +206,9 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     alt={sponsor.name}
                                     display="none"
                                     _dark={{ display: 'block' }}
-                                    height="[var(--logo-h)]"
+                                    height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="[120px]"
+                                    maxWidth="30"
                                     objectFit="contain"
                                 />
                                 <styled.img
@@ -221,9 +217,9 @@ export function SponsorOverview({ sponsors }: { sponsors: YearSponsors }) {
                                     aria-hidden="true"
                                     display="block"
                                     _dark={{ display: 'none' }}
-                                    height="[var(--logo-h)]"
+                                    height="var(--logo-h)"
                                     width="auto"
-                                    maxWidth="[120px]"
+                                    maxWidth="30"
                                     objectFit="contain"
                                 />
                             </styled.a>
@@ -386,8 +382,8 @@ export function SponsorQuoteCard({
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                width={{ base: 'full', md: '[180px]' }}
-                height="[120px]"
+                width={{ base: 'full', md: '45' }}
+                height="30"
                 aria-label={`Visit ${sponsor.name}`}
             >
                 <SponsorLogo
@@ -478,8 +474,8 @@ function SponsorComponent({
                 zIndex: zIndex,
                 boxShadow: 'inset -1px 1px 0 0 rgba(255,255,255,0.21)',
             }}
-            width="[260px]"
-            height="[220px]"
+            width="65"
+            height="55"
             ml="-6"
             borderRightRadius="full"
         >
@@ -487,9 +483,9 @@ function SponsorComponent({
                 logoUrlDarkMode={sponsor.logoUrlDarkMode}
                 logoUrlLightMode={sponsor.logoUrlLightMode}
                 name={sponsor.name}
-                maxWidth="[150px]"
+                maxWidth="37.5"
                 width="full"
-                maxHeight="[90px]"
+                maxHeight="22.5"
                 ml="-3"
                 objectFit="contain"
             />

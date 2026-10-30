@@ -41,10 +41,10 @@ export async function action({ request, context, params }: Route.ActionArgs) {
     // to the right place regardless.
     if (redirectTo === '/admin' && !(await services.auth.isAdminEmail(result.email))) {
         redirectTo = (await services.sponsors.isSponsorContact(result.email))
-            ? '/portal'
+            ? '/sponsor-portal'
             : (await services.speakers.isSpeakerContact(result.email))
               ? '/speaker-portal'
-              : '/portal'
+              : '/sponsor-portal'
     }
 
     return await createUserSession(request.headers, services, { email: result.email, name: null }, redirectTo)
@@ -61,7 +61,7 @@ export default function Verify() {
 
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
-            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
+            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="md" w="full">
                 <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Confirm sign-in
                 </styled.h1>
@@ -109,7 +109,7 @@ export default function Verify() {
 export function ErrorBoundary() {
     return (
         <Flex minH="screen" align="center" justify="center" bg="surface.body">
-            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="[440px]" w="full">
+            <Box bg="white" p="8" borderRadius="lg" boxShadow="lg" textAlign="center" maxW="md" w="full">
                 <styled.h1 mb="4" color="admin.900" fontSize="2xl" fontWeight="bold">
                     Sign-in failed
                 </styled.h1>

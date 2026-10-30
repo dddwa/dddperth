@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { conferenceManifest } from '@conference/manifest'
+import type { Temporal } from '~/lib/dates/temporal'
+import { conferenceDayStart, conferenceTime } from '~/lib/dates/temporal'
 import type { DateTimeProvider } from './date-time-provider.server'
 
 /**
@@ -30,7 +30,7 @@ import type { DateTimeProvider } from './date-time-provider.server'
 export const DEV_DATE_OVERRIDE_COOKIE = '__devDateOverride'
 
 export class DevDateTimeProvider implements DateTimeProvider {
-    private constructor(private readonly _override: DateTime) {}
+    private constructor(private readonly _override: Temporal.ZonedDateTime) {}
 
     /**
      * Returns a provider only when a valid override cookie is present;
@@ -43,34 +43,25 @@ export class DevDateTimeProvider implements DateTimeProvider {
         const raw = parseCookie(cookieHeader, DEV_DATE_OVERRIDE_COOKIE)
         if (!raw) return null
 
-        // The app sets `Settings.throwOnInvalid = true` (app/root.tsx), so an
-        // unparseable value throws here rather than returning an invalid
-        // DateTime — a malformed cookie would otherwise 500 every request
-        // until the user worked out which cookie to clear.
-        let override: DateTime
+        // Malformed cookies must fall back to the real clock.
+        let override: Temporal.ZonedDateTime
         try {
-            override = DateTime.fromISO(decodeURIComponent(raw), {
-                zone: conferenceManifest.public.timezone,
-            })
+            const value = decodeURIComponent(raw)
+            override = /^\d{4}-\d{2}-\d{2}$/.test(value) ? conferenceDayStart(value) : conferenceTime(value)
         } catch {
             console.warn(`[dev] ignoring unparseable ${DEV_DATE_OVERRIDE_COOKIE} cookie: ${raw}`)
-            return null
-        }
-
-        if (!override.isValid) {
-            console.warn(`[dev] ignoring invalid ${DEV_DATE_OVERRIDE_COOKIE} cookie: ${raw}`)
             return null
         }
 
         return new DevDateTimeProvider(override)
     }
 
-    nowDate(): DateTime {
+    nowDate(): Temporal.ZonedDateTime {
         return this._override
     }
 
     now(): number {
-        return this._override.toMillis()
+        return this._override.epochMilliseconds
     }
 
     setTimeout<TArgs extends any[]>(callback: (...args: TArgs) => void, ms?: number, ...args: TArgs): NodeJS.Timeout

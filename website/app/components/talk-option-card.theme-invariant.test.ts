@@ -50,10 +50,10 @@ function block(selector: string): string {
 const baseBlock = block(':where(:root, :host)')
 const darkBlock = block('.dark')
 
-/** Panda escapes dots in token names: `--colors-admin\.50`. */
+/** `admin.50` is emitted as `--colors-admin-50`. */
 function readVar(source: string, token: string): string | undefined {
-    const escaped = token.replace(/\./g, '\\\\.')
-    return new RegExp(`--colors-${escaped}:\\s*([^;\\n}]+)`).exec(source)?.[1].trim()
+    const name = token.replace(/\./g, '-')
+    return new RegExp(`--colors-${name}:\\s*([^;\\n}]+)`).exec(source)?.[1].trim()
 }
 
 describe('TalkOptionCard colour contract', () => {

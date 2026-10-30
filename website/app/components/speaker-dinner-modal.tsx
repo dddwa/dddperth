@@ -126,7 +126,7 @@ export function SpeakerDinnerModal({
             </Form>
 
             {(currentResponse === 'Yes' || currentResponse === 'Maybe') && calendarUrl && (
-                <Box mt="6" pt="5" borderTop="[1px solid token(colors.border.subtle)]">
+                <Box mt="6" pt="5" borderTop="subtle">
                     <styled.a
                         href={calendarUrl}
                         download="Speaker Dinner.ics"

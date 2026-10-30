@@ -38,10 +38,10 @@
  *
  * ## Editing
  *
- * Change the data here, then run `pnpm nx generate-sessionize-fixtures website`
- * to rewrite the committed JSON. The JSON stays committed because the fixture
- * server is a plain static file server and the worker fetches over HTTP — see
- * `../sessionize-server.ts`.
+ * Change the data here and that is the whole edit — there are no fixture
+ * files and nothing to regenerate. `../sessionize-server.ts` projects the
+ * three views in-process at startup and serves them over HTTP, because the
+ * worker fetches them rather than importing them.
  *
  * Everything here is synthetic. The shape was derived from a live response for
  * **unannounced** CFP submissions, so no real speaker, title or abstract
@@ -65,6 +65,7 @@ export const ROOMS = [
     { id: 84524, name: 'River Room 3 (Lv 3)' },
     { id: 84525, name: 'Cygnet room (Lv 2)' },
     { id: 84526, name: 'Black Swan (Lv 2)' },
+    { id: 84528, name: 'Pelican Room (Lv 2)' },
 ] as const satisfies readonly FixtureRoom[]
 
 export interface FixtureRoom {
@@ -93,6 +94,7 @@ export const CATEGORY_GROUPS = {
         items: {
             keynote: { id: 10, name: 'Keynote' },
             fortyFiveMins: { id: 11, name: '45 mins' },
+            twentyMins: { id: 12, name: '20 mins' },
         },
     },
     level: {
@@ -164,8 +166,15 @@ export interface FixtureSpeaker {
     n: number
 }
 
-/** The 28 synthetic speakers, numbered 1-28. */
-export const SPEAKERS: readonly FixtureSpeaker[] = Array.from({ length: 28 }, (_, i) => ({ n: i + 1 }))
+/**
+ * The synthetic speakers.
+ *
+ * The count tracks the timetable rather than being chosen: every talk takes
+ * one speaker, the co-presented ones take two, and a test asserts no speaker
+ * is left unreferenced — so this is `assignSpeakers()`'s total, and adding a
+ * talk means raising it.
+ */
+export const SPEAKERS: readonly FixtureSpeaker[] = Array.from({ length: 33 }, (_, i) => ({ n: i + 1 }))
 
 /** Zero-padded fixture number, matching the `Fixture Talk 01` naming convention. */
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -276,6 +285,35 @@ const TALK_SLOTS: readonly { start: string; end: string }[] = [
 ]
 
 /**
+ * The short-talk track: {@link SHORT_TALK_ROOM} splits each of the long 45
+ * minute slots into two 20 minute talks with a changeover between them.
+ *
+ * This exists so the fixture stops being a uniform rectangle. Every other
+ * room moves in lockstep, which meant a session's *time slot* and its *time
+ * span* were interchangeable — and anything relying on that (an agenda
+ * builder that allows one pick per slot, say) looked correct against a
+ * fixture that could not tell the two apart. Here one 45 minute talk overlaps
+ * two separate short talks that live in different `timeSlots` entries, so
+ * slot identity and interval overlap give different answers and code that
+ * confuses them fails.
+ *
+ * Deliberately only the first two long slots are split: the later ones stay
+ * aligned so the fixture covers both shapes rather than trading one uniform
+ * timetable for another.
+ */
+const SHORT_TALK_SLOTS: readonly { start: string; end: string }[] = [
+    // Inside the 10:45-11:30 long slot.
+    { start: '10:45', end: '11:05' },
+    { start: '11:10', end: '11:30' },
+    // Inside the 11:40-12:25 long slot.
+    { start: '11:40', end: '12:00' },
+    { start: '12:05', end: '12:25' },
+]
+
+/** The room running {@link SHORT_TALK_SLOTS} instead of the long-slot grid. */
+const SHORT_TALK_ROOM = 84528 satisfies RoomId
+
+/**
  * Sessionize's numeric ids for the 25 talks, in talk-number order.
  *
  * These are arbitrary and carry no meaning, but they must stay stable:
@@ -308,6 +346,12 @@ const TALK_IDS: readonly string[] = [
     '1261542', // 23
     '1273177', // 24
     '1274981', // 25
+    '1277104', // 26
+    // 27-30 are the short-talk track in the Pelican Room; see SHORT_TALK_SLOTS.
+    '1277219', // 27
+    '1277350', // 28
+    '1277488', // 29
+    '1277512', // 30
 ]
 
 /**
@@ -405,6 +449,9 @@ function buildTalks(): FixtureTalk[] {
     let n = 2
 
     for (const room of ROOMS) {
+        // The short-talk room runs its own timetable, laid out below.
+        if (room.id === SHORT_TALK_ROOM) continue
+
         for (const slot of TALK_SLOTS) {
             if (n > TALK_IDS.length) break
             talks.push({
@@ -420,6 +467,27 @@ function buildTalks(): FixtureTalk[] {
             })
             n++
         }
+    }
+
+    // The short-talk track. Its gaps (11:05-11:10, 12:00-12:05) are
+    // deliberately not service sessions: a changeover in one room while every
+    // other room is mid-talk is not a venue-wide break, and marking it plenum
+    // — as the real changeovers in SERVICE_SESSIONS are — would claim the
+    // whole conference pauses. They are simply unscheduled minutes.
+    for (const slot of SHORT_TALK_SLOTS) {
+        if (n > TALK_IDS.length) break
+        talks.push({
+            kind: 'talk',
+            id: TALK_IDS[n - 1],
+            n,
+            start: slot.start,
+            end: slot.end,
+            room: SHORT_TALK_ROOM,
+            speakers: SPEAKERS_BY_TALK.get(n) ?? [],
+            categories: categoriesForTalk(n, 'twentyMins'),
+            isConfirmed: !UNCONFIRMED.has(n),
+        })
+        n++
     }
 
     return talks

@@ -2,13 +2,13 @@
 
 The sponsor portal lets sponsor contacts log in (same magic-link auth as `/admin`), upload their
 logo, and fill in blurb/website/socials. Sponsor records and contact emails sync **from** the
-conference's Jira project; when a sponsor completes their profile the portal ticks the
-"Assets for Conference" checkbox **back** onto their Jira issue. Uploaded assets live in R2 and
+conference's Jira project; when a sponsor completes their profile the portal advances the
+**Asset Creation Status** field **back** on their Jira issue. Uploaded assets live in R2 and
 reach the public website via the committee's import tool (`pnpm sponsor:add` → Portal Import tab) —
 the public site keeps rendering from the static year config.
 
 Everything is driven by the optional `sponsorPortal` entry in the conference manifest
-(`conference/manifest.ts` → `conference/config/sponsor-portal.ts`). No entry → `/portal` 404s and
+(`conference/manifest.ts` → `conference/config/sponsor-portal.ts`). No entry → `/sponsor-portal` 404s and
 sync never runs.
 
 ## How access works
@@ -18,18 +18,40 @@ sync never runs.
 - **Roles are derived per request** — nothing is stored on the session. `requireAdmin` checks the
   allowlist; `requireSponsorContact` re-resolves email → sponsor on every portal request, so
   removing a contact email in Jira revokes access on the next sync even mid-session.
-- Sponsor contacts hitting `/admin` are bounced to `/portal` and vice versa.
+- Sponsor contacts hitting `/admin` are bounced to `/sponsor-portal` and vice versa.
 
 ## Jira conventions (committee)
 
 - One **Sponsor** issue per sponsorship per year in the sponsors project (DDD Perth: `SPN`).
-- Label each issue with the conference year (e.g. `2026`) — the sync JQL filters on it.
+- **Year labels are maintained by the sync, not by hand.** The JQL matches issues labelled with
+  the current year _or_ not yet labelled with any year, and the sync then stamps the current year
+  onto the unlabelled ones. So a sponsor issue created without a label is never silently missed,
+  and by the time the year is archived every issue carries its year — making the archive step a
+  bulk label edit. Tier labels (`Platinum`, `Gold`, …) sit alongside year labels and are ignored.
+    - Because JQL has no "label shaped like a year" predicate, this is expressed as _not labelled
+      with a past year_ — `{pastYears}` in the JQL expands to the ten years before the configured
+      one. Set `writeYearLabel: false` to opt out and go back to labelling by hand.
+    - Label write-back is gated on `JIRA_WRITEBACK_ENABLED` like every other write, so **only
+      production stamps labels**; elsewhere the unlabelled arm of the JQL carries the load.
 - **Contact Email** holds comma/semicolon-separated addresses; those people get portal access.
 - **Additional Sponsor Portal Emails** (optional field) takes the same format and grants the
   same access — for extra logins that shouldn't sit in the primary contact field.
-- **Level of Sponsorship** is the tier shown in the portal (read-only for sponsors).
-- The portal ticks **Sponsor Tasks → "Assets for Conference"** when a profile completes
-  (logo + blurb + website).
+- **Level of Sponsorship** is the tier shown in the portal (read-only for sponsors). Sponsors on
+  the **Raffle Only** tier sync and appear in the admin/portal lists but map to no website
+  category, so they never render on the public sponsors page.
+- The portal advances **Asset Creation Status** when a profile completes (logo + blurb + website),
+  moving it to _"Assets partially received, creation underway"_ — deliberately not _"All Assets
+  received"_, since the portal only collects the website logo and blurb while **Assets Required**
+  also covers screens, print, video and the treasure map.
+    - Each workstream has its **own single-select status field** (assets, social, exhibition,
+      raffle) rather than one multi-checkbox, because checkbox fields can't be filtered in JQL and
+      the committee filters boards by where each sponsor is up to.
+- **Asset Upload URL** is where the committee pastes the sponsor's upload folder (SharePoint).
+  Filling it in reveals an "Upload your assets" button on that sponsor's dashboard; leaving it
+  empty hides the button, so it can be filled in per sponsor whenever the folder is ready.
+- **Website Blurb** and the per-platform social URL fields are sponsor-supplied, but the committee
+  can also edit them in Jira. Portal saves write Jira; later Jira syncs update the portal copy.
+  See _Prefilling the profile from Jira_ below.
 
 Field/option ids live in `conference/config/sponsor-portal.ts`; update them if the Jira custom
 fields are ever recreated.
@@ -47,12 +69,12 @@ test and production data strictly separated:
   write-back only ever targets issue keys that exist in that environment's D1, a test environment
   scoped to `portal-test` physically cannot touch a real sponsor's issue even with write-back on.
 
-| Environment | Sync sees | Write-back |
-|---|---|---|
-| Local (stub, default) | Fixture data, no Jira | Logged only |
-| Local (real Jira via `pnpm jira:auth`) | `portal-test` issues only | Off unless opted in — then test issues only |
-| Staging | `portal-test` issues only (`JIRA_SYNC_JQL` var) | Off |
-| Production | Real sponsors, `portal-test` excluded | On |
+| Environment                            | Sync sees                                       | Write-back                                  |
+| -------------------------------------- | ----------------------------------------------- | ------------------------------------------- |
+| Local (stub, default)                  | Fixture data, no Jira                           | Logged only                                 |
+| Local (real Jira via `pnpm jira:auth`) | `portal-test` issues only                       | Off unless opted in — then test issues only |
+| Staging                                | `portal-test` issues only (`JIRA_SYNC_JQL` var) | Off                                         |
+| Production                             | Real sponsors, `portal-test` excluded           | On                                          |
 
 **To create a test sponsor**: add a Sponsor issue to SPN with the `portal-test` label (no year
 label needed), a tier, and your own email in Contact Email. Sync from the environment you're
@@ -80,9 +102,12 @@ pnpm start                          # http://localhost:3800
    open **Admin → Sponsors** and hit **Sync now**. Three fixture sponsors (Acme Rockets, Globex,
    Initech — see `app/lib/sponsors/stub-jira-client.server.ts`) land in local D1.
 2. Log out, request a magic link for `sponsor-acme@example.com`, and you're in that sponsor's
-   `/portal` workspace.
+   `/sponsor-portal` workspace.
 3. Upload a logo and fill in details. On completion the stub "write-back" logs
-   `[jira-stub] setSponsorTaskOptionIds(SPN-101, [10078])` to the console instead of touching Jira.
+   `[jira-stub] setStatusOptionId(SPN-101, customfield_10205, 10202)` to the console instead of
+   touching Jira. Saving the logistics form logs the same line for the social, exhibition, raffle
+   and induction status fields as each becomes complete — see `statusFlips` in
+   `conference/config/sponsor-portal.ts`.
 
 R2 is simulated locally by miniflare (objects under `core/website/.wrangler/state`) — no real
 bucket needed.
@@ -180,25 +205,25 @@ a phantom update.
 ## Deployment checklist (per environment)
 
 1. **R2 buckets** (once):
-   ```bash
-   pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-staging
-   pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-prod
-   ```
-   (names referenced from `conference/wrangler/{staging,production}.jsonc`). Requires R2 to be
-   enabled on the Cloudflare account and a `wrangler login` token that includes the R2 scope —
-   if you get `[code: 10042]` or a permission error, check both (log in via
-   `pnpm nx wrangler website -- login`; verify the account with `… -- whoami`).
+    ```bash
+    pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-staging
+    pnpm nx wrangler website -- r2 bucket create dddperth-sponsor-assets-prod
+    ```
+    (names referenced from `conference/wrangler/{staging,production}.jsonc`). Requires R2 to be
+    enabled on the Cloudflare account and a `wrangler login` token that includes the R2 scope —
+    if you get `[code: 10042]` or a permission error, check both (log in via
+    `pnpm nx wrangler website -- login`; verify the account with `… -- whoami`).
 2. **Secrets** (once, per env):
-   ```bash
-   pnpm jira:auth --secrets staging
-   pnpm jira:auth --secrets production
-   ```
-   Validates the credentials against Jira first, then pushes `JIRA_API_EMAIL`, `JIRA_API_TOKEN`
-   and `JIRA_API_BASE_URL` via `wrangler secret put`. Use the committee service account here (it
-   needs permission to read and edit issues in the sponsors project), not a personal token — a
-   scoped token with `read:jira-work` + `write:jira-work` is the least-privilege option.
+    ```bash
+    pnpm jira:auth --secrets staging
+    pnpm jira:auth --secrets production
+    ```
+    Validates the credentials against Jira first, then pushes `JIRA_API_EMAIL`, `JIRA_API_TOKEN`
+    and `JIRA_API_BASE_URL` via `wrangler secret put`. Use the committee service account here (it
+    needs permission to read and edit issues in the sponsors project), not a personal token — a
+    scoped token with `read:jira-work` + `write:jira-work` is the least-privilege option.
 3. **D1 migrations**: `pnpm nx d1-migrate-staging website` / `d1-migrate-production website`
-   (applies `0004_sponsor_portal.sql` and `0005_notification_log.sql`).
+   (includes `0023_sponsor_two_way_sync.sql`, which backfills existing profile submissions).
 4. **Deploy**: the usual `nx deploy-staging|deploy-production website`.
    `prepare-deploy-config.mjs` carries the env's R2 binding and cron triggers into the built
    wrangler config (staging deliberately has no cron, `JIRA_WRITEBACK_ENABLED=false`, and a
@@ -207,31 +232,123 @@ a phantom update.
 
 ## Data ownership & write-back semantics
 
-Each piece of sponsor data has one owner, which resolves every "who wins" question:
+Each piece of sponsor data has an explicit sync rule:
 
-| Data | Owner | Flow |
-|---|---|---|
-| Tier, contact emails, company name | Committee (Jira) | Jira → portal on sync; read-only for sponsors |
-| Quote, website, socials, logo | Sponsor (portal) | Portal → Jira on every save; the portal's value overrides Jira's |
+| Data                                                           | Owner               | Flow                                                                            |
+| -------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------- |
+| Tier, contact emails, company name                             | Committee (Jira)    | Jira → portal on sync; read-only for sponsors                                   |
+| Quote, website, socials                                        | Sponsor + committee | Portal → Jira on save; latest Jira values → portal on sync, including clears    |
+| Logo                                                           | Sponsor (portal)    | Stored in R2; attached to Jira on upload                                        |
+| Logistics (bump-in/out, equipment, screens, raffle, induction) | Sponsor + committee | Portal → Jira for submitted fields; latest mapped Jira values → portal on sync  |
+| Screen ordering notes (`customfield_10163`)                    | Committee (Jira)    | Never touched by the portal — deliberately unmapped                             |
+| The six `… Status` fields                                      | Committee (Jira)    | Committee-managed; the portal only advances Asset Creation Status on completion |
+
+**How to tell which is which:** Jira's status options say so. Every workstream whose default
+option reads "… Pending **(Sponsor)**" — assets, social media, exhibition, raffle, screens,
+induction — is data the _sponsor_ supplies, so it belongs in the portal and flows portal → Jira.
+The status field tracking that workstream stays committee-owned.
+
+### Prefilling the profile from Jira
+
+Sponsors often answer the sponsorship team by email before they ever open the portal, so the
+committee already holds their blurb and socials on the Jira issue. The sync pulls those onto the
+sponsor record (`sponsors.jira_quote`, `sponsors.jira_socials_json`) and the profile form falls
+back to them, so nobody is asked to type in what they've already sent.
+
+**Jira is canonical at sync time.** Portal saves write the submitted values into Jira. On each
+hourly or manual sync, the latest Jira values replace the corresponding submitted portal
+details, including fields cleared by the committee. Before the first profile submission, Jira
+values remain display-only prefills. `detailsUpdatedAt` distinguishes that state from a submitted
+profile whose fields were deliberately cleared.
+
+- **An empty Jira field clears the submitted portal copy.** Before submission it prefills nothing.
+- Social prefills fill gaps before submission. Afterwards the local snapshot stands alone, so a
+  sponsor removing a URL cannot have it resurrected by the stale Jira cache before the next sync.
+- Detail and logistics fields without a Jira mapping retain their portal values.
+- The blurb prefills from **Website Blurb** (`quote` in config), _not_ from **Quotes for Socials** —
+  those are deliberately different copy, and the latter stays part of the logistics form.
+
+### Sponsor logistics (`/sponsor-portal/logistics`)
+
+Collects the sponsor-supplied half of those workstreams: exhibitor contact, bump-in/out,
+equipment, loading dock, induction attendees, Optus screen orders, raffle prize and the social
+quote. Field ids live in `conference/config/sponsor-portal.ts` under `fields.logistics`; omit the
+block entirely and the page still works, it just pushes nothing.
+
+**Prefilled from Jira until the sponsor's first submission.** The committee collects most of this
+by email long before a sponsor opens the portal, so the form falls back to whatever is on the Jira
+issue (`prefilledLogistics()`). After submission the form and venue export read the local snapshot,
+which each sync refreshes from Jira. Jira-side clears remove mapped answers from that snapshot;
+portal-only additional notes are preserved. Between a portal save and the next sync, stale Jira
+prefills cannot resurrect something the sponsor just cleared.
+
+**"Screen ordering notes" (`customfield_10163`) is deliberately unmapped.** It's the committee's
+own running note ("informed PAV - 23/8"), not something the sponsor supplies. It has no schema key,
+no form field and no config mapping — and an unmapped field can never be written by a portal save.
+If you ever want sponsors to see it, all three have to come back together.
+
+- **Tier-gated.** Exhibition, screens and induction show only for tiers in `BOOTH_TIERS`
+  (`app/lib/sponsors/logistics.ts`) — currently platinum, gold, room and community. Community is
+  included because community groups run stands. Digital and in-kind sponsors are excluded: they
+  have no physical presence for the venue to plan around, so the exhibitor export leaves them off
+  too. In-kind needs an "In Kind" option on Jira's tier field, mapped to `inKind`. Raffle and the social quote show for everyone, including Raffle Only. **An unmapped tier
+  sees the exhibition sections**: a sponsor shown an irrelevant section can skip it, but one who
+  never sees bump-in has no way to tell us when they're arriving.
+- Visibility is re-derived server-side in the action, so a tier change (or a hand-crafted POST)
+  can't write exhibition answers against a sponsor without a booth.
+- **The write-back only touches fields the sponsor actually submitted.** `pushLogistics` takes a
+  `submittedKeys` set alongside the values, so three states stay distinct (`buildLogisticsPayload`):
+  a field **never answered** is omitted from the payload entirely and Jira keeps the committee's
+  value; a field **submitted empty** is cleared, because that's a deliberate removal; an
+  **answered** field is set. Getting this wrong is not theoretical — the push used to loop over
+  every mapped field and plan `undefined` as a clear, so a sponsor's first save wiped every
+  logistics value the committee had gathered but the sponsor hadn't retyped.
+    - The key set is captured from `FormData` **before** the schema runs: `logisticsSchema`
+      preprocesses `''` to `undefined`, which collapses "cleared" and "never answered" into one
+      state. It's then narrowed by `visibleLogisticsKeys()`, so a crafted POST naming a hidden
+      section's field can't clear it in Jira any more than it can write one.
+    - The hourly retry only reconciles statuses. Replaying portal fields would overwrite later
+      committee edits. Detail and logistics forms write Jira before D1; a Jira failure returns an
+      error to the sponsor and leaves the portal snapshot unchanged so they can submit again.
+- **Write-back converts per field type.** These Jira fields are a mix of plain text,
+  single-selects, multi-checkboxes and rich text, and Jira rejects a plain string for a select.
+  `pushLogistics` reads the issue's `editmeta` and converts each value accordingly, matching
+  select answers against the field's allowed options. Two consequences worth knowing:
+    - A submitted answer that matches no allowed option **fails the save visibly**. Bump-in/out
+      are free-text in the portal but single-selects in Jira, so a sponsor typing "Friday
+      afternoon" is asked to correct it rather than being shown a false success.
+    - A submitted mapped field missing from `editmeta` (not on the screen, or no permission) also
+      fails the save. Unsubmitted legacy values are left alone.
+- Answers are stored as one `logistics_json` column rather than ~19 columns: the venue's form
+  changes shape between years, nothing queries an individual answer, and Jira stays the
+  committee's queryable copy.
 
 **On every portal save**, sponsor-owned values are pushed into the Jira fields (`Company
 Website`, plus the `quote` paragraph field and per-platform `socials` URL fields if configured
 in `conference/config/sponsor-portal.ts` — omit them and the push skips those). A save with
-unchanged values produces no Jira history noise. A logo replaced *after* completion is
-re-attached to the issue with a note in the activity feed. All pushes are best-effort — Jira
-being down never fails a sponsor's save.
+unchanged values produces no Jira history noise. A logo replaced _after_ completion is
+re-attached to the issue with a note in the activity feed.
+
+**Field writes are no longer best-effort.** The details and logistics forms write Jira *before*
+D1, and a rejection aborts the save: the sponsor sees an error and nothing is persisted, rather
+than a success banner over an answer Jira refused. Only the two genuinely optional side effects
+stay best-effort — the logo re-attachment (the file is already safe in R2) and the status flips
+(retried by `retryPendingStatusFlips` on the next sync).
 
 - "Complete" = logo + blurb + website URL (socials optional) — `isProfileComplete()` in
   `app/lib/sponsors/profile.ts`.
 - The write-back happens **on the save that completes the profile** (the hourly cron / manual
   sync only retries flips that failed, e.g. Jira was down — the sponsor's save always succeeds
-  regardless). It does three things, all append-only snapshots so nothing in Jira is ever
-  overwritten and the portal stays the source of truth:
-    1. **Ticks "Assets for Conference"** on Sponsor Tasks — reads the current options first and
-       adds to them, never clobbering the committee's other ticks.
+  regardless). It does three things, the latter two append-only snapshots so the portal stays the
+  source of truth:
+    1. **Advances "Asset Creation Status"** to the configured completion option. Unlike the
+       append-only checkbox this replaced, a single-select is overwritten wholesale — so the
+       portal only moves it off the values listed in `assetsPendingOptionIds` ("Asset Information
+       Pending"). If the committee has already advanced the status, the portal logs it and leaves
+       theirs alone rather than dragging it backwards.
     2. **Attaches the logo file** to the issue.
     3. **Posts a comment** with what was submitted (blurb, website, socials, logo) — lands in the
        activity feed and notifies watchers.
-  Steps 2–3 are best-effort and fire exactly once per completion (guarded by the checkbox state,
-  so retries can't duplicate them). Later profile *updates* don't re-comment — change detection
-  for the committee lives in the import tool's update tracking.
+       Steps 2–3 are best-effort and fire exactly once per completion (guarded by the status value,
+       so retries can't duplicate them). Later profile _updates_ don't re-comment — change detection
+       for the committee lives in the import tool's update tracking.

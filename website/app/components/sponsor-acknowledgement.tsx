@@ -67,7 +67,7 @@ export function SponsorAcknowledgement({ prefix, sponsors, cta }: SponsorAcknowl
                         logoUrlLightMode={sponsor.logoUrlLightMode}
                         name={sponsor.name}
                         height="[1.5em]"
-                        maxWidth="[110px]"
+                        maxWidth="27.5"
                     />
                 </AppLink>
             ))}
@@ -78,7 +78,7 @@ export function SponsorAcknowledgement({ prefix, sponsors, cta }: SponsorAcknowl
                     fontSize="sm"
                     fontWeight="semibold"
                     textDecoration="underline"
-                    textUnderlineOffset="[3px]"
+                    textUnderlineOffset="3px"
                     _hover={{ color: 'interactive.active' }}
                 >
                     {cta.label} →

@@ -50,7 +50,7 @@ export default function Blog() {
                             src={latestPost.image}
                             alt={latestPost.imageAlt ?? ''}
                             width="full"
-                            maxH="[28rem]"
+                            maxH="md"
                             objectFit="cover"
                             rounded="lg"
                             mb="5"
@@ -68,7 +68,7 @@ export default function Blog() {
                                         src={post.image}
                                         alt={post.imageAlt ?? ''}
                                         width="full"
-                                        aspectRatio="[16/9]"
+                                        aspectRatio="wide"
                                         objectFit="cover"
                                         rounded="md"
                                         mb="4"
@@ -114,7 +114,7 @@ const BlogPostLink = styled(Link, {
         textDecoration: 'none',
         transition: 'all',
         _hover: { borderColor: 'border.emphasis', transform: 'translateY(-2px)', shadow: 'lg' },
-        _focusVisible: { outline: '[3px solid token(colors.interactive.focus)]', outlineOffset: '[3px]' },
+        _focusVisible: { outline: 'focus', outlineOffset: '1' },
     },
 })
 
@@ -125,7 +125,7 @@ const FeaturedLink = styled(Link, {
         p: '4',
         fontWeight: 'semibold',
         _hover: { color: 'text.highlight' },
-        _focusVisible: { outline: '[3px solid token(colors.interactive.focus)]', outlineOffset: '[-3px]' },
+        _focusVisible: { outline: 'focus', outlineOffset: '-1' },
     },
 })
 

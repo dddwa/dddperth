@@ -123,7 +123,7 @@ export default function BlogPost() {
                         src={frontmatter.image}
                         alt={frontmatter.imageAlt ?? ''}
                         width="full"
-                        maxH="[32rem]"
+                        maxH="lg"
                         objectFit="cover"
                         rounded="xl"
                         mb="6"

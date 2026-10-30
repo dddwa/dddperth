@@ -1,4 +1,5 @@
 import { createContext, type RouterContext } from 'react-router'
+import type { ConferenceConfig } from '@ddd/conference-config'
 import type { ConferenceState } from './lib/conference-state-client-safe'
 import type { DateTimeProvider } from './lib/dates/date-time-provider.server'
 import type { AppConfig } from './lib/services/app-config'
@@ -36,6 +37,19 @@ export interface CloudflareEnv {
      * `app/lib/sessionize-fixture-fetch.server.ts`.
      */
     SESSIONIZE_FIXTURE_URL?: string
+    /**
+     * Renders the sponsor strip from `e2e/fixtures/sponsors.ts` instead of the
+     * conference config, so the home page's baseline doesn't move every time a
+     * sponsor is signed. Set only by `e2e/start-dev-server.mjs`.
+     */
+    E2E_SPONSOR_FIXTURES?: string
+    /**
+     * "true" lets a browser context opt into the synthetic conference year in
+     * `e2e/fixtures/conference-year.ts` via its cookie. Set only by
+     * `e2e/start-dev-server.mjs`; read behind a production-mode guard — see
+     * `lib/e2e-fixture-conference.server.ts`.
+     */
+    E2E_FIXTURE_CONFERENCE?: string
     /** Resend API key. Optional locally — if absent, magic links are logged to the console. */
     RESEND_API_KEY?: string
     /** From-address for outgoing magic-link emails. */
@@ -71,7 +85,7 @@ export interface CloudflareEnv {
     /** "true" swaps the Jira client for fixture data — local dev without Jira. */
     JIRA_STUB?: string
 
-    SESSIONIZE_2026_SESSIONS: string
+    SESSIONIZE_2026_SESSIONS?: string
     SESSIONIZE_2026_ALL_SESSIONS?: string
 
     /**
@@ -91,16 +105,23 @@ export interface CloudflareEnv {
  */
 export const configContext = createContext<AppConfig>()
 export const servicesContext = createContext<AppServices>()
+export const conferencesContext = createContext<ConferenceConfig>()
 export const conferenceStateContext = createContext<ConferenceState>()
 export const dateTimeProviderContext = createContext<DateTimeProvider>()
 export const executionContext = createContext<ExecutionContext>()
 
-interface ContextReader {
+export interface ContextReader {
     get<T>(context: RouterContext<T>): T
 }
 
 export const getConfig = (context: ContextReader): AppConfig => context.get(configContext)
 export const getServices = (context: ContextReader): AppServices => context.get(servicesContext)
+/**
+ * The conferences this request sees. Normally the manifest's, but an e2e test
+ * can swap in a fixture year (`lib/e2e-fixture-conference.server.ts`), so read
+ * years through this rather than `conferenceManifest.conferences` directly.
+ */
+export const getConferences = (context: ContextReader): ConferenceConfig => context.get(conferencesContext)
 export const getConferenceState = (context: ContextReader): ConferenceState => context.get(conferenceStateContext)
 export const getDateTimeProvider = (context: ContextReader): DateTimeProvider => context.get(dateTimeProviderContext)
 export const getExecutionContext = (context: ContextReader): ExecutionContext => context.get(executionContext)

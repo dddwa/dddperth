@@ -5,7 +5,7 @@ import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import type { Route } from './+types/app-agenda-sessions'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
 
     const sessions =
         yearConfig.kind !== 'cancelled' &&

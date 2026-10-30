@@ -1,13 +1,11 @@
-import { DateTime } from 'luxon'
+import { conferenceDate, conferenceTime } from '~/lib/dates/temporal'
 import bundles from 'virtual:mdx-bundles'
-import { conferenceManifest } from '@conference/manifest'
 import type { ContentListItem, ContentPage, ContentService } from '../content-service'
 import type { FrontmatterProperties } from '../../mdx-types'
 
 function formatDate(iso: string): string {
-    return DateTime.fromISO(iso, { zone: conferenceManifest.public.timezone }).toLocaleString(DateTime.DATE_FULL, {
-        locale: 'en-AU',
-    })
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? conferenceDate(iso) : conferenceTime(iso)
+    return date.toLocaleString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 function coerceFrontmatter(frontmatter: Record<string, unknown>): FrontmatterProperties {
@@ -49,7 +47,7 @@ export function createMdxContentService(): ContentService {
         },
 
         async getPagesList(type): Promise<ContentListItem[]> {
-            return Object.entries(bundles[type]).map(([slug, entry]) => {
+            const items = Object.entries(bundles[type]).map(([slug, entry]) => {
                 const frontmatter = coerceFrontmatter(entry.frontmatter)
                 return {
                     title: frontmatter.title ?? slug,
@@ -63,6 +61,11 @@ export function createMdxContentService(): ContentService {
                     imageAlt: frontmatter.imageAlt,
                 }
             })
+            // The bundle index lists files in directory order, which for
+            // date-prefixed post filenames is oldest first. The blog index
+            // features the first entry and the RSS feed dates itself from it.
+            if (type === 'blog') items.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+            return items
         },
     }
 }

@@ -1,8 +1,10 @@
+import { SystemDateTimeProvider } from '~/lib/dates/system-date-time-provider.server'
+import { conferenceTime, tryConferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { data, Form, redirect, useActionData, useLoaderData } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
+import { AppLink } from '~/components/app-link'
 import { Button } from '~/components/ui/button'
 import { requireAdmin } from '~/lib/auth.server'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
@@ -18,7 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
     const overrideDate = session.get('adminDateOverride')
 
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     const year = getConferenceState(context).conference.year
 
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
@@ -27,7 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data({
         overrideDate,
-        currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
+        currentDate: new SystemDateTimeProvider().nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
         timezone: conferenceManifest.public.timezone,
         importantDates,
         year,
@@ -62,15 +64,13 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ error: 'Date and time are required' }, { status: 400 })
         }
 
-        const override = DateTime.fromISO(`${dateStr}T${timeStr}`, {
-            zone: conferenceManifest.public.timezone,
-        })
+        const override = tryConferenceTime(`${dateStr}T${timeStr}`)
 
-        if (!override.isValid) {
+        if (!override) {
             return data({ error: 'Invalid date/time format' }, { status: 400 })
         }
 
-        session.set('adminDateOverride', override.toISO())
+        session.set('adminDateOverride', override.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }))
     } else if (action === 'clearDate') {
         session.unset('adminDateOverride')
     } else if (action === 'jumpToDate') {
@@ -80,15 +80,13 @@ export async function action({ request, context }: Route.ActionArgs) {
             return data({ error: 'Jump date is required' }, { status: 400 })
         }
 
-        const override = DateTime.fromISO(jumpDate, {
-            zone: conferenceManifest.public.timezone,
-        })
+        const override = tryConferenceTime(jumpDate)
 
-        if (!override.isValid) {
+        if (!override) {
             return data({ error: 'Invalid jump date format' }, { status: 400 })
         }
 
-        session.set('adminDateOverride', override.toISO())
+        session.set('adminDateOverride', override.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }))
     }
 
     return redirect('/admin/settings', {
@@ -103,12 +101,32 @@ export default function AdminSettings() {
     const actionData = useActionData<typeof action>()
 
     const overrideDateTime = overrideDate
-        ? DateTime.fromISO(overrideDate, { zone: conferenceManifest.public.timezone })
+        ? conferenceTime(overrideDate)
         : null
-    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })
+    const currentDateTime = conferenceTime(currentDate)
 
     return (
         <AdminLayout heading="Admin Settings">
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                    Sections
+                </styled.h2>
+                <styled.ul listStyle="none">
+                    <li>
+                        <AppLink to="/admin/settings/speakers" unstyled color="indigo.9" textDecoration="underline">
+                            Speakers
+                        </AppLink>{' '}
+                        — checklist due dates, training, dinner, links and Meet the Experts slots
+                    </li>
+                    <li>
+                        <AppLink to="/admin/settings/volunteers" unstyled color="indigo.9" textDecoration="underline">
+                            Volunteers
+                        </AppLink>{' '}
+                        — info links for each volunteer role
+                    </li>
+                </styled.ul>
+            </AdminCard>
+
             <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="6">
                     Date Override
@@ -133,7 +151,7 @@ export default function AdminSettings() {
                         Current System Time ({timezone})
                     </styled.p>
                     <styled.p color="status.info.fg">
-                        {currentDateTime.toLocaleString(DateTime.DATETIME_FULL, { locale: 'en-AU' })}
+                        {currentDateTime.toLocaleString('en-AU', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
                     </styled.p>
                 </Box>
 
@@ -143,7 +161,7 @@ export default function AdminSettings() {
                             Override Active
                         </styled.p>
                         <styled.p color="status.warning.fg">
-                            {overrideDateTime.toLocaleString(DateTime.DATETIME_FULL, { locale: 'en-AU' })}
+                            {overrideDateTime.toLocaleString('en-AU', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
                         </styled.p>
                     </Box>
                 )}
@@ -169,7 +187,7 @@ export default function AdminSettings() {
                                 id="date"
                                 name="date"
                                 type="date"
-                                defaultValue={overrideDateTime?.toISODate() || ''}
+                                defaultValue={overrideDateTime?.toPlainDate().toString() || ''}
                                 px="3"
                                 py="2"
                                 border="admin-subtle"
@@ -198,7 +216,7 @@ export default function AdminSettings() {
                                 id="time"
                                 name="time"
                                 type="time"
-                                defaultValue={overrideDateTime?.toFormat('HH:mm') || ''}
+                                defaultValue={overrideDateTime?.toPlainTime().toString({ smallestUnit: 'minute' }) || ''}
                                 px="3"
                                 py="2"
                                 border="admin-subtle"
@@ -272,9 +290,7 @@ export default function AdminSettings() {
                         </styled.p>
                         <styled.p color="status.success.emphasis" fontSize="xs">
                             Last updated:{' '}
-                            {DateTime.fromISO(announcement.updatedTime || announcement.createdTime, {
-                                zone: conferenceManifest.public.timezone,
-                            }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                            {conferenceTime(announcement.updatedTime || announcement.createdTime).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </styled.p>
                     </Box>
                 )}
@@ -395,7 +411,8 @@ function QuickJumpButton({
     dateISO: string | undefined
     timezone: string
 }) {
-    const date = dateISO ? DateTime.fromISO(dateISO, { zone: timezone }) : DateTime.now().setZone(timezone)
+    if (!dateISO) return null
+    const date = conferenceTime(dateISO)
 
     return (
         <Form method="post">
@@ -406,7 +423,7 @@ function QuickJumpButton({
                     {label}
                 </styled.div>
                 <styled.div fontSize="xs" opacity="0.9">
-                    {date.toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })} ({timezone})
+                    {date.toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ({timezone})
                 </styled.div>
             </Button>
         </Form>

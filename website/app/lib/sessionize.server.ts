@@ -1,8 +1,7 @@
+import { conferenceTime } from '~/lib/dates/temporal'
 import { LRUCache } from 'lru-cache'
-import { DateTime } from 'luxon'
 import { z } from 'zod'
 import { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema } from '@ddd/conference-config'
-import { conferenceManifest } from '@conference/manifest'
 
 export { gridRoomSchema, gridSmartSchema, roomSchema, sessionSchema, timeSlotSchema }
 
@@ -59,7 +58,10 @@ export const speakersSchema = z.array(
         fullName: z.string(),
         bio: z.string().nullable().optional(),
         profilePicture: z.string().url().nullable().optional(),
-        tagLine: z.string(),
+        // Nullable like `bio` beside it: Sessionize returns null for a speaker
+        // who never filled it in. Three 2022 speakers have one, which made
+        // every /agenda/2022/talk/* page 500 on a schema parse.
+        tagLine: z.string().nullable().optional(),
         sessions: z.array(
             z.object({
                 id: z.number(),
@@ -220,5 +222,5 @@ export function getSpeakerUnderrepresentedGroup(
 }
 
 export function formatDate(date: string, opts: Intl.DateTimeFormatOptions): string {
-    return DateTime.fromISO(date, { zone: conferenceManifest.public.timezone }).toLocaleString(opts, { locale: 'en-AU' })
+    return conferenceTime(date).toLocaleString('en-AU', opts)
 }

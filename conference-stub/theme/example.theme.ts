@@ -136,7 +136,7 @@ export const exampleTheme = defineTheme({
 
     shadows: {
         focusRing: {
-            value: '0 0 0 3px {colors.interactive.focus}33',
+            value: '0 0 0 3px color-mix(in srgb, {colors.interactive.focus} 20%, transparent)',
             description: 'Focus ring using interactive focus colour at ~20% opacity',
         },
     },

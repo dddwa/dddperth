@@ -16,7 +16,8 @@ export interface EmailService {
 }
 
 export interface EmailMessage {
-    to: string
+    /** Several addresses all go in the one To: line, so every recipient sees who else was sent it. */
+    to: string | string[]
     subject: string
     html: string
     text: string

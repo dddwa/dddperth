@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { computeSyncPlan, parseContactEmails, type SyncSourceSponsor } from './sync-plan'
+import {
+    computeSyncPlan,
+    parseContactEmails,
+    planStatusWrite,
+    reconcileLogisticsFromJira,
+    reconcileProfileFromJira,
+    type SyncSourceSponsor,
+} from './sync-plan'
 
 describe('parseContactEmails', () => {
     it('splits on commas and semicolons', () => {
@@ -68,7 +75,17 @@ describe('computeSyncPlan', () => {
         })
 
         expect(plan.upserts).toEqual([
-            { issueKey: 'SPN-1', year: '2026', companyName: 'Acme', tier: 'Gold', website: undefined, jiraStatus: undefined },
+            {
+                issueKey: 'SPN-1',
+                year: '2026',
+                companyName: 'Acme',
+                tier: 'Gold',
+                website: undefined,
+                jiraStatus: undefined,
+                quote: undefined,
+                socials: undefined,
+                logistics: undefined,
+            },
         ])
         expect(plan.contactAdds).toEqual([{ email: 'a@example.com', issueKey: 'SPN-1' }])
         expect(plan.deactivateIssueKeys).toEqual([])
@@ -137,6 +154,49 @@ describe('computeSyncPlan', () => {
         expect(plan.contactRemoves).toEqual([{ email: 'old@example.com', issueKey: 'SPN-1' }])
     })
 
+    it('carries the committee-entered quote and socials through for prefill', () => {
+        // What the sponsorship team captured by email before the sponsor ever
+        // opened the portal. Stored on `sponsors`, never on the profile, so a
+        // later sync can't overwrite what the sponsor themselves submitted.
+        const plan = computeSyncPlan({
+            year: '2026',
+            source: [
+                sponsor({
+                    issueKey: 'SPN-1',
+                    quote: 'Proud to support the community.',
+                    socials: { linkedin: 'https://linkedin.com/company/acme' },
+                }),
+            ],
+            currentSponsors: [],
+            currentContacts: [],
+        })
+
+        expect(plan.upserts[0].quote).toBe('Proud to support the community.')
+        expect(plan.upserts[0].socials).toEqual({ linkedin: 'https://linkedin.com/company/acme' })
+    })
+
+    it('carries committee-entered logistics through for prefill', () => {
+        // Bump-in times, screen orders and the social quote are collected by
+        // email; without this they never leave Jira and the sponsor's first
+        // save overwrites them.
+        const plan = computeSyncPlan({
+            year: '2026',
+            source: [
+                sponsor({
+                    issueKey: 'SPN-1',
+                    logistics: { bumpInSlot: 'Friday 1pm - 2pm', socialQuote: 'Delighted to sponsor.' },
+                }),
+            ],
+            currentSponsors: [],
+            currentContacts: [],
+        })
+
+        expect(plan.upserts[0].logistics).toEqual({
+            bumpInSlot: 'Friday 1pm - 2pm',
+            socialQuote: 'Delighted to sponsor.',
+        })
+    })
+
     it('handles tier changes through upsert', () => {
         const plan = computeSyncPlan({
             year: '2026',
@@ -161,5 +221,165 @@ describe('computeSyncPlan', () => {
             { email: 'shared@example.com', issueKey: 'SPN-1' },
             { email: 'shared@example.com', issueKey: 'SPN-2' },
         ])
+    })
+})
+
+describe('reconcileLogisticsFromJira', () => {
+    it('applies Jira edits and clears across every Jira-backed field', () => {
+        expect(
+            reconcileLogisticsFromJira({
+                current: {
+                    bumpInSlot: 'Friday 1pm - 2pm',
+                    rafflePrize: 'Old prize',
+                    additionalNotes: 'Portal-only note',
+                },
+                fromJira: { bumpInSlot: 'Friday 4pm - 5pm' },
+                jiraKeys: ['bumpInSlot', 'rafflePrize'],
+            }),
+        ).toEqual({
+            bumpInSlot: 'Friday 4pm - 5pm',
+            additionalNotes: 'Portal-only note',
+        })
+    })
+
+    it('clears all mapped fields when Jira has no values', () => {
+        expect(
+            reconcileLogisticsFromJira({
+                current: { bumpInSlot: 'Friday 1pm - 2pm', rafflePrize: 'Keyboard' },
+                fromJira: undefined,
+                jiraKeys: ['bumpInSlot', 'rafflePrize'],
+            }),
+        ).toEqual({})
+    })
+})
+
+describe('reconcileProfileFromJira', () => {
+    const source = {
+        quote: 'Edited in Jira',
+        website: 'https://jira.example.com',
+        socials: { linkedin: 'https://linkedin.com/company/jira' },
+        logistics: { rafflePrize: 'Jira prize' },
+        logisticsKeys: ['rafflePrize', 'socialQuote'],
+    }
+
+    it('does not turn Jira prefills into sponsor submissions', () => {
+        expect(
+            reconcileProfileFromJira(
+                { issueKey: 'SPN-1', socials: {}, logistics: {}, updatedBy: 'sponsor@example.com' },
+                source,
+            ),
+        ).toEqual({ details: undefined, logistics: undefined })
+    })
+
+    it('replaces submitted details with the latest Jira values', () => {
+        expect(
+            reconcileProfileFromJira(
+                {
+                    issueKey: 'SPN-1',
+                    blurb: 'Old portal value',
+                    websiteUrl: 'https://old.example.com',
+                    socials: { twitter: 'https://x.com/old' },
+                    detailsUpdatedAt: 1,
+                },
+                source,
+            ).details,
+        ).toEqual({
+            blurb: 'Edited in Jira',
+            websiteUrl: 'https://jira.example.com',
+            socials: { linkedin: 'https://linkedin.com/company/jira' },
+        })
+    })
+
+    it('propagates Jira clears into a submitted profile', () => {
+        expect(
+            reconcileProfileFromJira(
+                {
+                    issueKey: 'SPN-1',
+                    blurb: 'Old portal value',
+                    websiteUrl: 'https://old.example.com',
+                    socials: { twitter: 'https://x.com/old' },
+                    detailsUpdatedAt: 1,
+                },
+                { logisticsKeys: [] },
+            ).details,
+        ).toEqual({ blurb: undefined, websiteUrl: undefined, socials: {} })
+    })
+
+    it('preserves detail fields that have no Jira mapping', () => {
+        expect(
+            reconcileProfileFromJira(
+                {
+                    issueKey: 'SPN-1',
+                    blurb: 'Portal-only blurb',
+                    websiteUrl: 'https://old.example.com',
+                    socials: { twitter: 'https://x.com/portal' },
+                    detailsUpdatedAt: 1,
+                },
+                { website: 'https://jira.example.com', detailsKeys: ['websiteUrl'] },
+            ).details,
+        ).toEqual({
+            blurb: 'Portal-only blurb',
+            websiteUrl: 'https://jira.example.com',
+            socials: { twitter: 'https://x.com/portal' },
+        })
+    })
+
+    it('updates and clears Jira-backed logistics while preserving portal-only notes', () => {
+        expect(
+            reconcileProfileFromJira(
+                {
+                    issueKey: 'SPN-1',
+                    socials: {},
+                    logistics: { rafflePrize: 'Old', socialQuote: 'Old quote', additionalNotes: 'Keep this' },
+                    logisticsUpdatedAt: 1,
+                },
+                source,
+            ).logistics,
+        ).toEqual({ rafflePrize: 'Jira prize', additionalNotes: 'Keep this' })
+    })
+})
+
+describe('planStatusWrite', () => {
+    const completeOptionId = '10202'
+    const pendingOptionIds = ['10201']
+    const plan = (current: string | undefined) =>
+        planStatusWrite({ current, targetOptionId: completeOptionId, pendingOptionIds })
+
+    it('sets the status when the sponsor is still pending', () => {
+        expect(plan('10201')).toBe('set')
+    })
+
+    it('treats an unset field as pending — a fresh issue nobody has touched', () => {
+        expect(plan(undefined)).toBe('set')
+    })
+
+    it('does nothing when the completion value is already there', () => {
+        expect(plan(completeOptionId)).toBe('already-set')
+    })
+
+    it('never drags the committee backwards once they have advanced it', () => {
+        // "All Assets received" / "Asset Creation complete" — the portal has
+        // no business overwriting these with "partially received".
+        expect(plan('10203')).toBe('committee-advanced')
+        expect(plan('10204')).toBe('committee-advanced')
+    })
+
+    it('can replace another portal-owned outcome without replacing committee progress', () => {
+        expect(
+            planStatusWrite({
+                current: 'not-required',
+                targetOptionId: 'required',
+                pendingOptionIds,
+                portalOwnedOptionIds: ['required', 'not-required'],
+            }),
+        ).toBe('set')
+        expect(
+            planStatusWrite({
+                current: 'committee-complete',
+                targetOptionId: 'required',
+                pendingOptionIds,
+                portalOwnedOptionIds: ['required', 'not-required'],
+            }),
+        ).toBe('committee-advanced')
     })
 })

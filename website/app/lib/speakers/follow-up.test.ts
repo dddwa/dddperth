@@ -1,9 +1,9 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import type { SpeakerListEntry } from '../services/speakers-store'
 import { speakersMissingChecklistItem } from './follow-up'
 
-const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
+const NOW = conferenceTime('2026-08-20T09:00:00', { timeZone: 'Australia/Perth' })
 
 function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
     return {
@@ -18,6 +18,7 @@ function speaker(overrides: Partial<SpeakerListEntry> = {}): SpeakerListEntry {
         sessionDetailsComplete: {},
         meetTheExpertsResponded: false,
         sessionBackupAccepted: {},
+        sessionOptedOutOfRecording: {},
         ...overrides,
     }
 }

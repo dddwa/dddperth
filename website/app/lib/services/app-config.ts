@@ -16,6 +16,14 @@ export interface AppConfig {
      */
     websiteAuthRequired: boolean
 
+    /**
+     * Renders the sponsor strip from `e2e/fixtures/sponsors.ts` instead of the
+     * conference config, so the home page's visual baseline doesn't move every
+     * time a sponsor is signed. Set only by `e2e/start-dev-server.mjs`; the
+     * branch reading it is dead-code-eliminated from production builds.
+     */
+    useSponsorFixtures: boolean
+
     auth: {
         /** From-address for outgoing magic-link emails, e.g. "DDD Perth <noreply@dddperth.com>". */
         emailFrom: string

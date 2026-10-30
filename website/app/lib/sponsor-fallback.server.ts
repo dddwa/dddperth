@@ -14,7 +14,8 @@
  * FooterSponsorRow / TicketSponsorAcknowledgement.
  */
 
-import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceConfig } from '@ddd/conference-config'
+import { FIXTURE_SPONSORS } from '../../e2e/fixtures/sponsors'
 import type { Year, YearSponsors } from './conference-state-client-safe'
 
 export type ResolvedSponsors =
@@ -33,15 +34,29 @@ function hasAnySponsors(sponsors: YearSponsors | undefined): boolean {
  * reported by `conferenceState.conference.year`.
  */
 export function resolveSponsorsWithFallback(
+    conferences: ConferenceConfig,
     currentYear: Year,
     currentSponsors: YearSponsors | undefined,
+    useFixtures = false,
 ): ResolvedSponsors {
+    // Visual-regression seam. `useFixtures` comes from `AppConfig`, where it is
+    // built behind a statically-folded production-mode check — so in a
+    // production build this is `false` at every call site and Vite drops the
+    // branch along with the `e2e/fixtures` import above.
+    //
+    // Reported as `current`, not `fallback`: the strip renders different copy
+    // and an extra CTA in fallback mode, and the baseline should cover the
+    // state a conference with signed sponsors is actually in.
+    if (import.meta.env.MODE !== 'production' && useFixtures) {
+        return { kind: 'current', year: currentYear, sponsors: FIXTURE_SPONSORS }
+    }
+
     if (currentSponsors && hasAnySponsors(currentSponsors)) {
         return { kind: 'current', year: currentYear, sponsors: currentSponsors }
     }
 
     const currentYearNum = parseInt(currentYear, 10)
-    const priorYears = Object.values(conferenceManifest.conferences.conferences)
+    const priorYears = Object.values(conferences.conferences)
         .filter((conf) => conf.kind === 'conference')
         .filter((conf) => parseInt(conf.year, 10) < currentYearNum)
         .sort((a, b) => parseInt(b.year, 10) - parseInt(a.year, 10))

@@ -260,7 +260,7 @@ export function projectSpeakers(): Speakers {
         // third party staying online. A test asserts no fixture references a
         // live host.
         profilePicture: null,
-        tagLine: `Fixture speaker, ${String(n).padStart(2, '0')}`,
+        tagLine: `Tagline for ${speakerName(n)}`,
         sessions: TALKS.filter((talk) => talk.speakers.includes(n)).map((talk) => ({
             // Sessionize types the id as a number in this view and a string in
             // the others. That inconsistency is theirs, and the app's schemas

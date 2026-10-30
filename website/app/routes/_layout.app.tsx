@@ -3,6 +3,11 @@
 // get a 404 here — the route never tells visitors to download something
 // that doesn't exist.
 //
+// A retired app (`mobileApp.retired`) 404s for the same reason: it still
+// exists in the stores, but it's no longer maintained, so sending new
+// visitors to install it is worse than sending them nowhere. The installed
+// copies are served by /app-config, which keeps answering.
+//
 // The page copy is intentionally generic ("the official conference app");
 // if a fork has app-specific marketing copy, the right place for it is an
 // MDX page under conference/content/pages/, not this layout component.
@@ -21,8 +26,9 @@ export const headers: HeadersFunction = () => {
 
 export function loader() {
     const mobileApp = conferenceManifest.mobileApp
-    if (!mobileApp) {
-        // No app for this fork — pretend the route doesn't exist.
+    if (!mobileApp || mobileApp.retired) {
+        // No app for this fork, or one we've stopped maintaining — pretend
+        // the route doesn't exist either way.
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
     // Loader-returned values are serialised, so we only ship the URL strings
@@ -46,7 +52,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
     const { iosUrl, androidUrl } = loaderData
     return (
         <ContentPageLayout>
-            <styled.main id="content" marginX={{ base: '6', lg: '0' }}>
+            <styled.div id="content" marginX={{ base: '6', lg: '0' }}>
                 <styled.div display="flex" flexDirection="column" alignItems="center" gap="8" py="8">
                     <styled.div textAlign="center" maxW="3xl" mb="4">
                         <styled.h1 fontSize="3xl" fontWeight="bold" mb="6">
@@ -76,8 +82,8 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                             <styled.img
                                 src="/images/get-app-store.svg"
                                 alt="Download on the App Store"
-                                height={{ base: '[48px]', md: '[56px]' }}
-                                width="[200px]"
+                                height={{ base: '12', md: '14' }}
+                                width="50"
                                 objectFit="contain"
                             />
                         </AppLink>
@@ -91,8 +97,8 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                             <styled.img
                                 src="/images/get-google-play.png"
                                 alt="Get it on Google Play"
-                                height={{ base: '[48px]', md: '[56px]' }}
-                                width="[200px]"
+                                height={{ base: '12', md: '14' }}
+                                width="50"
                                 objectFit="contain"
                             />
                         </AppLink>
@@ -119,7 +125,7 @@ export default function AppDownloadPage({ loaderData }: Route.ComponentProps) {
                         </styled.p>
                     </Box>
                 </styled.div>
-            </styled.main>
+            </styled.div>
         </ContentPageLayout>
     )
 }

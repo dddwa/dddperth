@@ -110,7 +110,14 @@ Values come from the Sessionize event admin page → API:
 - `_SESSIONS` is the bare endpoint: `https://sessionize.com/api/v2/<event-id>`
 - `_ALL_SESSIONS` appends the all-sessions view: `https://sessionize.com/api/v2/<event-id>/view/All`
 
-Once the speaker portal opens, also set the Tito speaker ticket claim link:
+Once the speaker portal opens, set the year's speaker values at
+**/admin/settings/speakers**: checklist due dates, training sessions, the
+speaker dinner, the info pack and Tito ticket claim links, and the Meet the
+Experts slots. "Clear saved settings" first to drop last year's values. Until
+that page is saved, the portal falls back to `speakerPortal` /
+`meetTheExperts` in `conference/config/` and the ticket claim secret below.
+
+The ticket claim link can instead still be set as a secret:
 
 ```bash
 pnpm nx wrangler website -- secret put SPEAKER_TICKET_CLAIM_URL_<YEAR> -c ../../conference/wrangler/staging.jsonc

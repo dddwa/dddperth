@@ -5,6 +5,23 @@
     "projectType": "application",
     "tags": [],
     "targets": {
+        "setup-temporal-browsers": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm exec playwright install chromium firefox webkit",
+                "cwd": "core/website"
+            }
+        },
+        "temporal-check": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/check-temporal-runtime.mjs",
+                "cwd": "core/website"
+            }
+        },
+        "lint": {
+            "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs", "{projectRoot}/../eslint.config.mjs", "{projectRoot}/eslint.config.mjs", "{projectRoot}/../eslint-rules/**/*", {"externalDependencies": ["eslint"]}]
+        },
         "panda": {
             "executor": "nx:run-commands",
             "options": {
@@ -33,6 +50,8 @@
         },
         "setup-panda": {
             "executor": "nx:run-commands",
+            "// parallelism": "All four setup targets generate into website/, and `react-router typegen` clears and rewrites .react-router/types/ as it goes. Run concurrently (which `setup` did, having no ordering in its dependsOn) that rmdir races another generator repopulating the tree, and CI dies with ENOTEMPTY before the suite runs a single test. It hit three PRs in a row, each passing on a plain re-run, which is exactly what a race looks like.",
+            "parallelism": false,
             "options": {
                 "command": "pnpm panda setup",
                 "cwd": "website"
@@ -40,6 +59,7 @@
         },
         "setup-react-router": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm react-router typegen",
                 "cwd": "website"
@@ -47,6 +67,7 @@
         },
         "setup-safe-routes": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm safe-routes typegen",
                 "cwd": "website"
@@ -54,6 +75,7 @@
         },
         "setup-cf-types": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm exec wrangler types -c ../conference-stub/wrangler/local.jsonc",
                 "cwd": "website"
@@ -107,7 +129,8 @@
                 "{projectRoot}/app/**/*.*",
                 "{projectRoot}/workers/**/*.*",
                 "{projectRoot}/vite-plugins/**/*.*",
-                "{projectRoot}/vite.config.ts"
+                "{projectRoot}/vite.config.ts",
+                "^production"
             ],
             "outputs": ["{projectRoot}/build/**/*.*"],
             "options": {
@@ -121,6 +144,7 @@
             "cache": true,
             "inputs": [
                 "default",
+                "{projectRoot}/../eslint-rules/**/*",
                 "^production",
                 {
                     "dependentTasksOutputFiles": "**/build/server/**/*.js"

@@ -27,9 +27,17 @@ interface AppConfig {
 }
 
 export function loader({ context }: Route.LoaderArgs) {
-    if (!conferenceManifest.mobileApp) {
+    const mobileApp = conferenceManifest.mobileApp
+    if (!mobileApp) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
+    // NOTE: a *retired* app deliberately still gets a config response, and
+    // exactly the same one as a maintained app. The copies installed on
+    // people's phones poll this endpoint on launch, and 404ing it breaks
+    // them rather than retiring them. /app is where the advertising stops.
+    // To actually tell those users something, post an announcement in
+    // /admin/settings — the installed builds already render those, which a
+    // new field here would not.
 
     const { githubOrg, domain } = conferenceManifest.brand
     // The fork's repo name is conventionally its slug; we approximate with

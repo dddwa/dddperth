@@ -34,6 +34,28 @@ if (!wranglerDir) {
     )
 }
 
+/**
+ * Blog content for the e2e and visual suites. `e2e/start-dev-server.mjs` sets
+ * `E2E_BLOG_FIXTURES` so the suites render a small, frozen set of synthetic
+ * posts and authors instead of the conference's real blog. Without it, every
+ * new post moved the `blog index` baselines, and the `blog post` baseline was
+ * pinned to a real post that an editorial fix would break.
+ *
+ * Read here in Node rather than as a Worker var because the content is
+ * compiled by a Vite plugin, before the Worker exists.
+ */
+const e2eBlogFixtures = process.env.E2E_BLOG_FIXTURES === 'true'
+const e2eBlogFixturesDir = path.resolve(import.meta.dirname, 'e2e', 'fixtures', 'blog')
+const blogContent = e2eBlogFixtures
+    ? {
+          blogDir: path.join(e2eBlogFixturesDir, 'posts'),
+          blogAuthorsFile: path.join(e2eBlogFixturesDir, 'authors.yml'),
+      }
+    : {
+          blogDir: conferenceBuildManifest.content.blogDir,
+          blogAuthorsFile: conferenceBuildManifest.content.blogAuthorsFile,
+      }
+
 export default defineConfig({
     root: import.meta.dirname,
 
@@ -129,8 +151,20 @@ export default defineConfig({
         }),
         mdxBundlesPlugin({
             pagesDir: conferenceBuildManifest.content.pagesDir,
-            blogDir: conferenceBuildManifest.content.blogDir,
+            ...blogContent,
         }),
+        ...(e2eBlogFixtures
+            ? [
+                  {
+                      name: 'e2e-blog-fixtures-guard',
+                      config(_config: unknown, { command }: { command: string }) {
+                          if (command === 'build') {
+                              throw new Error('E2E_BLOG_FIXTURES is set: refusing to build the site with fixture blog posts.')
+                          }
+                      },
+                  },
+              ]
+            : []),
         ...(conferenceBuildManifest.content.publicDir
             ? [conferencePublicPlugin({ publicDir: conferenceBuildManifest.content.publicDir })]
             : []),

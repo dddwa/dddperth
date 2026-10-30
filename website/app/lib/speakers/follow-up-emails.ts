@@ -135,3 +135,31 @@ ${conferenceName} team`,
 <p>Thanks,<br/>${conferenceName} team</p>`,
     },
 }
+
+export interface DayDetailsEmailVars extends FollowUpEmailVars {
+    /** e.g. "Saturday 3 October 2026, from 9:00am" — undefined if the year has no date configured. */
+    dateLabel?: string
+    /** Venue name + street address, undefined if the year has no venue configured. */
+    venueLabel?: string
+}
+
+/**
+ * Last-minute "see you on the day" check-in to every active speaker — not
+ * tied to a checklist item, and only ever sent manually (copied into an
+ * external mail client from the admin speakers list), since it usually
+ * gets a line or two of day-specific news added before it goes out.
+ */
+export const DAY_DETAILS_EMAIL = {
+    subject: 'See you at the conference — day details',
+    text: ({ firstName, portalUrl, conferenceName, dateLabel, venueLabel }: DayDetailsEmailVars) => `Hi ${firstName},
+
+${conferenceName} is almost here! A quick last check-in before the day:
+${dateLabel ? `\nWhen: ${dateLabel}` : ''}${venueLabel ? `\nWhere: ${venueLabel}` : ''}
+
+Your session time and room, plus everything else you've told us, are in the speaker portal: ${portalUrl}
+
+Please come to the registration desk when you arrive. If anything has changed and you can no longer make it, reply to this email as soon as possible so we can arrange a backup.
+
+See you there,
+${conferenceName} team`,
+}

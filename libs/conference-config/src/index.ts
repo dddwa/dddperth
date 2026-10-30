@@ -9,6 +9,7 @@ export type {
     ConferenceVenue,
     ConferenceYear,
     DateTimeRange,
+    MajorSponsorTier,
     MinorSponsorTier,
     SessionData,
     SessionizeConferenceSessions,
@@ -20,6 +21,8 @@ export type {
     Year,
     YearSponsors,
 } from './types.ts'
+
+export { MAJOR_SPONSOR_TIERS, MINOR_SPONSOR_TIERS, SPONSOR_TIERS } from './types.ts'
 
 export type {
     Brand,
@@ -35,6 +38,9 @@ export type {
     MeetTheExpertsSlotConfig,
     NavConfig,
     NavItem,
+    RunsheetsBumpInConfig,
+    RunsheetsConfig,
+    RunsheetsJiraConfig,
     Socials,
     SpeakerDinnerConfig,
     SpeakerPortalChecklistConfig,
@@ -55,3 +61,6 @@ export {
     sessionSchema,
     timeSlotSchema,
 } from './sessionize-schema.ts'
+
+export { Temporal, initializeTemporal, conferenceDate, createConferenceDates } from './dates.ts'
+export type { ConferenceTimeOptions } from './dates.ts'

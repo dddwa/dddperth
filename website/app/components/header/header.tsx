@@ -4,7 +4,7 @@ import { useRouteLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { conferenceManifest } from '@conference/manifest'
 import Logo from '~/images/svg/logo.svg?react'
-import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
+import { getHeaderNavItems, type VenueNavPlacement } from '~/lib/header-nav'
 import type { Theme } from '~/lib/theme.server'
 import type { loader as rootLoader } from '~/root'
 import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
@@ -17,24 +17,20 @@ export function Header({
     cfpOpen,
     votingOpen,
     ticketSalesOpen,
-    venue,
+    venueNavPlacement,
 }: {
     cfpOpen: boolean
     votingOpen: boolean
     ticketSalesOpen: boolean
-    venue: ConferenceVenue | undefined
+    venueNavPlacement: VenueNavPlacement
 }) {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const rootData = useRouteLoaderData<typeof rootLoader>('root')
     const theme: Theme = rootData?.theme ?? 'dark'
 
-    // Fork-owned base list, then splice in the venue link conditionally on
-    // having a published venue. We place /venue immediately before /about if
-    // both are present — matches existing visual order without needing the
-    // fork to know about runtime gating.
-    const navItems = venue
-        ? insertVenueBeforeAbout(conferenceManifest.nav)
-        : conferenceManifest.nav
+    // Fork-owned base list, with the venue link placed by runtime state (see
+    // `~/lib/header-nav`) so the fork doesn't need to know about the gating.
+    const navItems = getHeaderNavItems(conferenceManifest.nav, venueNavPlacement)
 
     // CTA layout:
     // - During voting: Vote is the only CTA (most urgent action)
@@ -63,8 +59,12 @@ export function Header({
                         base: '"menu logo cta"',
                         lg: '"logo nav cta"',
                     }}
+                    // `minmax(0, 1fr)` lets the logo track give way to the CTAs on
+                    // narrow phones; a bare `1fr` can't shrink below the logo, and
+                    // the row overflowed at 320-340px and again at 460-488px, where
+                    // the secondary CTA appears. The logo is fluid up to `sizes.27.5` below.
                     gridTemplateColumns={{
-                        base: 'auto 1fr auto',
+                        base: 'auto minmax(0, 1fr) auto',
                         lg: 'auto 1fr auto',
                     }}
                     gap={{ base: '3', lg: '4' }}
@@ -92,7 +92,8 @@ export function Header({
                             display="flex"
                             justifyContent={{ base: 'center', lg: 'flex-start' }}
                             alignItems="center"
-                            width={{ base: '[110px]', lg: '[180px]' }}
+                            width={{ base: 'full', lg: '37.5', xl: '45' }}
+                            maxWidth={{ base: '27.5', lg: '37.5', xl: '45' }}
                         >
                             <Logo />
                         </AppLink>
@@ -105,7 +106,9 @@ export function Header({
                         display={{ base: 'none', lg: 'flex' }}
                         alignItems="center"
                         justifyContent="center"
-                        gap="12"
+                        // With both CTAs the header overflowed a 1024px viewport at
+                        // the full gap, so it tightens until `xl`.
+                        gap={{ lg: '6', xl: '12' }}
                         fontSize="md"
                         fontWeight="semibold"
                     >
@@ -156,18 +159,19 @@ export function Header({
                         bgColor="overlay.scrim"
                         position="fixed"
                         inset="0"
-                        height="[100vh]"
-                        width="[100vw]"
+                        height="screen"
+                        width="screen"
                         zIndex="overlay"
-                        backdropFilter="[blur(4px)]"
+                        backdropFilter="auto"
+                        backdropBlur="xs"
                     />
                     <Drawer.Positioner
                         position="fixed"
                         top="0"
                         left="0"
-                        height="[100dvh]"
-                        width="[100vw]"
-                        maxWidth="[320px]"
+                        height="dvh"
+                        width="screen"
+                        maxWidth="xs"
                         zIndex="modal"
                     >
                         <Drawer.Content
@@ -188,7 +192,7 @@ export function Header({
                                 justifyContent="space-between"
                                 px="5"
                                 py="4"
-                                borderBottom="[1px solid token(colors.border.subtle)]"
+                                borderBottom="subtle"
                             >
                                 <Drawer.Title color="white" fontSize="lg" fontWeight="semibold">
                                     Menu
@@ -216,7 +220,7 @@ export function Header({
                                     gap="3"
                                     px="5"
                                     py="5"
-                                    borderBottom="[1px solid token(colors.border.subtle)]"
+                                    borderBottom="subtle"
                                 >
                                     {ctas.map((cta) => (
                                         <CtaSquareLink
@@ -258,13 +262,6 @@ export function Header({
     )
 }
 
-function insertVenueBeforeAbout(items: typeof conferenceManifest.nav) {
-    const venueItem = { to: '/venue', label: 'Venue' }
-    const aboutIdx = items.findIndex((i) => i.to === '/about')
-    if (aboutIdx === -1) return [...items, venueItem]
-    return [...items.slice(0, aboutIdx), venueItem, ...items.slice(aboutIdx)]
-}
-
 function MenuButton({
     id,
     onClick,
@@ -298,7 +295,7 @@ function MenuButton({
             cursor="pointer"
             borderRadius="md"
             _hover={{ bgColor: 'overlay.subtle' }}
-            _focus={{ outline: '[2px solid token(colors.indigo.7)]', outlineOffset: '[2px]' }}
+            _focus={{ outline: 'focus-chrome', outlineOffset: '0.5' }}
         >
             <MenuIcon />
         </styled.button>
@@ -307,7 +304,15 @@ function MenuButton({
 
 function MenuIcon() {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+        >
             <line x1="4" y1="7" x2="20" y2="7" />
             <line x1="4" y1="12" x2="20" y2="12" />
             <line x1="4" y1="17" x2="20" y2="17" />
@@ -317,7 +322,15 @@ function MenuIcon() {
 
 function CloseIcon() {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+        >
             <line x1="6" y1="6" x2="18" y2="18" />
             <line x1="18" y1="6" x2="6" y2="18" />
         </svg>

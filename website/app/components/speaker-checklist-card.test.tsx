@@ -21,14 +21,14 @@ const CLAIM_TICKET: SpeakerChecklistItem = {
     isPastDue: false,
 }
 
-function renderCard(ticketClaimUrl?: string) {
+function renderCard(ticketClaimUrl?: string, item: SpeakerChecklistItem = CLAIM_TICKET) {
     const Stub = createRoutesStub([
         {
             path: '/',
             Component: () => (
                 <SpeakerChecklistCard
                     sessionizeId="spk-1"
-                    checklist={[CLAIM_TICKET]}
+                    checklist={[item]}
                     ticketClaimUrl={ticketClaimUrl}
                     onOpenModal={vi.fn()}
                 />
@@ -58,5 +58,15 @@ describe('SpeakerChecklistCard ticket claim link', () => {
 
         // Posts to the server, so it's unaffected by the missing URL.
         expect(screen.getByRole('button', { name: /i've claimed it/i })).toBeTruthy()
+    })
+
+    it('keeps the ticket link after the speaker has self-reported claiming it', () => {
+        // "I've claimed it" is easy to click by mistake, and has no undo.
+        renderCard('https://ti.to/example/2026/with/speaker', { ...CLAIM_TICKET, done: true })
+
+        expect(screen.getByRole('link', { name: /ticket link/i }).getAttribute('href')).toBe(
+            'https://ti.to/example/2026/with/speaker',
+        )
+        expect(screen.queryByRole('button', { name: /i've claimed it/i })).toBeNull()
     })
 })

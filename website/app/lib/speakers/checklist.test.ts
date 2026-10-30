@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { conferenceInstant, conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
 import {
@@ -17,9 +17,16 @@ import {
     urgencyFor,
     type SpeakerSessionChecklistInput,
 } from './checklist'
-import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate } from './checklist-items'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates } from './checklist-items'
 
-const NOW = DateTime.fromISO('2026-08-20T09:00:00', { zone: 'Australia/Perth' })
+const DUE_DATES: ChecklistDueDates = {
+    confirmSession: conferenceTime('2026-08-21T17:00:00', { timeZone: 'Australia/Perth' }),
+    sessionDetails: conferenceTime('2026-09-25T22:00:00', { timeZone: 'Australia/Perth' }),
+}
+
+// The app's clock is always in the conference zone, whatever zone the due dates
+// were written in; Temporal refuses day arithmetic across zones.
+const NOW = conferenceInstant(conferenceTime('2026-08-20T09:00:00', { timeZone: 'Australia/Perth' }).epochMilliseconds)
 
 function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
     return {
@@ -209,11 +216,11 @@ describe('speakerChecklist', () => {
     })
 
     it("carries each item's configured due date through as an ISO string", () => {
-        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW)
+        const items = speakerChecklist(profile({ registerMeetTheExperts: 'Yes' }), [], false, NOW, DUE_DATES)
         for (const definition of SPEAKER_CHECKLIST_ITEMS) {
             const item = items.find((i) => i.key === definition.key)
             if (!item) continue // filtered out in this scenario, e.g. acceptBackupSpeaker (not a backup speaker)
-            expect(item.dueDateIso).toBe(checklistDueDate(definition.key)?.toISO())
+            expect(item.dueDateIso).toBe(DUE_DATES[definition.key]?.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined)
         }
     })
 
@@ -229,11 +236,11 @@ describe('speakerChecklist', () => {
     })
 
     it('flags isPastDue only once an item\'s own due date has actually passed', () => {
-        expect(speakerChecklist(null, [], false, NOW).every((i) => !i.isPastDue)).toBe(true)
+        expect(speakerChecklist(null, [], false, NOW, DUE_DATES).every((i) => !i.isPastDue)).toBe(true)
 
-        const confirmSessionDueDate = checklistDueDate('confirmSession')
+        const confirmSessionDueDate = DUE_DATES.confirmSession
         if (!confirmSessionDueDate) throw new Error('confirmSession is expected to have a due date')
-        const items = speakerChecklist(null, [], false, confirmSessionDueDate.plus({ minutes: 1 }))
+        const items = speakerChecklist(null, [], false, confirmSessionDueDate.add({ minutes: 1 }), DUE_DATES)
         expect(items.find((i) => i.key === 'confirmSession')?.isPastDue).toBe(true)
         // sessionDetails is due later than confirmSession, so it isn't past due yet.
         expect(items.find((i) => i.key === 'sessionDetails')?.isPastDue).toBe(false)
@@ -243,20 +250,20 @@ describe('speakerChecklist', () => {
 describe('urgencyFor', () => {
     it('is normal with no due date or when far away', () => {
         expect(urgencyFor(undefined, false, NOW)).toBe('normal')
-        expect(urgencyFor(NOW.plus({ days: 30 }).toISO() ?? undefined, false, NOW)).toBe('normal')
+        expect(urgencyFor(NOW.add({ days: 30 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, false, NOW)).toBe('normal')
     })
 
     it('is upcoming when due within a week', () => {
-        expect(urgencyFor(NOW.plus({ days: 5 }).toISO() ?? undefined, false, NOW)).toBe('upcoming')
+        expect(urgencyFor(NOW.add({ days: 5 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, false, NOW)).toBe('upcoming')
     })
 
     it('is overdue when due within a day or already past', () => {
-        expect(urgencyFor(NOW.plus({ hours: 12 }).toISO() ?? undefined, false, NOW)).toBe('overdue')
-        expect(urgencyFor(NOW.minus({ days: 2 }).toISO() ?? undefined, false, NOW)).toBe('overdue')
+        expect(urgencyFor(NOW.add({ hours: 12 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, false, NOW)).toBe('overdue')
+        expect(urgencyFor(NOW.subtract({ days: 2 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, false, NOW)).toBe('overdue')
     })
 
     it('ignores urgency once the item is done', () => {
-        expect(urgencyFor(NOW.minus({ days: 2 }).toISO() ?? undefined, true, NOW)).toBe('normal')
+        expect(urgencyFor(NOW.subtract({ days: 2 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, true, NOW)).toBe('normal')
     })
 })
 
@@ -266,18 +273,18 @@ describe('dueDateRemainingLabel', () => {
     })
 
     it('counts whole days left, rounding to the nearest day', () => {
-        expect(dueDateRemainingLabel(NOW.plus({ days: 5 }).toISO() ?? undefined, NOW)).toBe('5 days left')
-        expect(dueDateRemainingLabel(NOW.plus({ days: 1 }).toISO() ?? undefined, NOW)).toBe('1 day left')
+        expect(dueDateRemainingLabel(NOW.add({ days: 5 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('5 days left')
+        expect(dueDateRemainingLabel(NOW.add({ days: 1 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('1 day left')
     })
 
     it('says "Due today" within half a day either side', () => {
-        expect(dueDateRemainingLabel(NOW.plus({ hours: 6 }).toISO() ?? undefined, NOW)).toBe('Due today')
-        expect(dueDateRemainingLabel(NOW.minus({ hours: 6 }).toISO() ?? undefined, NOW)).toBe('Due today')
+        expect(dueDateRemainingLabel(NOW.add({ hours: 6 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('Due today')
+        expect(dueDateRemainingLabel(NOW.subtract({ hours: 6 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('Due today')
     })
 
     it('counts whole days overdue once it has passed', () => {
-        expect(dueDateRemainingLabel(NOW.minus({ days: 3 }).toISO() ?? undefined, NOW)).toBe('Overdue by 3 days')
-        expect(dueDateRemainingLabel(NOW.minus({ days: 1 }).toISO() ?? undefined, NOW)).toBe('Overdue by 1 day')
+        expect(dueDateRemainingLabel(NOW.subtract({ days: 3 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('Overdue by 3 days')
+        expect(dueDateRemainingLabel(NOW.subtract({ days: 1 }).toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined, NOW)).toBe('Overdue by 1 day')
     })
 })
 
@@ -287,17 +294,17 @@ describe('upcomingRsvpedEvents', () => {
             {
                 id: 'Session 1',
                 title: 'Planning, building and writing your talk',
-                dateTime: NOW.plus({ days: 3 }),
-                endDateTime: NOW.plus({ days: 3, hours: 2 }),
+                dateTime: NOW.add({ days: 3 }),
+                endDateTime: NOW.add({ days: 3, hours: 2 }),
             },
             {
                 id: 'Session 2',
                 title: 'Presentation skills, tips and tricks',
-                dateTime: NOW.plus({ days: 20 }),
-                endDateTime: NOW.plus({ days: 20, hours: 2 }),
+                dateTime: NOW.add({ days: 20 }),
+                endDateTime: NOW.add({ days: 20, hours: 2 }),
             },
         ],
-        speakerDinner: { dateTime: NOW.plus({ days: 6 }), endDateTime: NOW.plus({ days: 6, hours: 2 }) },
+        speakerDinner: { dateTime: NOW.add({ days: 6 }), endDateTime: NOW.add({ days: 6, hours: 2 }) },
     }
 
     it('returns nothing for a missing profile', () => {

@@ -7,7 +7,7 @@ import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 const sessionSectionClass = css({
-    borderTop: '[1px solid token(colors.border.subtle)]',
+    borderTop: 'subtle',
     _first: { borderTop: 'none' },
     pt: '6',
     mt: '6',
@@ -15,7 +15,7 @@ const sessionSectionClass = css({
 })
 
 const presenterDetailsClass = css({
-    borderTop: '[1px solid token(colors.border.subtle)]',
+    borderTop: 'subtle',
     _first: { borderTop: 'none' },
     pt: '4',
     mt: '4',
@@ -115,7 +115,7 @@ export function SpeakerSessionDetailsModal({
                         </Box>
                     ))}
 
-                    <Flex justify="flex-end" mt="6" pt="6" borderTop="[1px solid token(colors.border.subtle)]">
+                    <Flex justify="flex-end" mt="6" pt="6" borderTop="subtle">
                         <styled.button
                             type="submit"
                             disabled={isSubmitting}

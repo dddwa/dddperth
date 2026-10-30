@@ -56,4 +56,10 @@ export const conferenceManifest: ConferenceManifest = {
     // mobileApp intentionally left undefined — DevConf Example doesn't have
     // a mobile app, so /app returns 404. This shows the opt-in pattern:
     // forks add mobileApp only after publishing to the app stores.
+
+    // runsheets intentionally left undefined — the volunteer run sheet reads
+    // a fork's own Jira board (site, project, custom field ids and the
+    // committee's label vocabulary), none of which a stub can invent, so
+    // /runsheets returns 404 here. A fork adds it once its board exists;
+    // see /conference/config/runsheets.ts in DDD Perth's repo.
 }

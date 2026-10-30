@@ -19,7 +19,7 @@ ddd-core/                    ← shared layer (its own repo)
     panda.config.ts          reads theme via @conference/theme
     vite.config.ts           reads content paths + wrangler config via @conference/build-manifest
     tsconfig.json            defines @conference/* path aliases
-  libs/conference-config/    types-only shared package
+  libs/conference-config/    shared manifest types and Temporal constructors
     src/types.ts             ConferenceYear, Sponsor, ConferenceVenue, ...
     src/manifest.ts          ConferenceManifest (runtime) + ConferenceBuildManifest (build)
     src/sessionize-schema.ts Zod schemas
@@ -63,9 +63,10 @@ Core reads everything fork-specific through four path aliases defined in `websit
 | `@conference/manifest` | `<conference>/manifest.ts` | Runtime manifest. Importable from anywhere — server, client, components. |
 | `@conference/build-manifest` | `<conference>/build-manifest.ts` | Build manifest. Importable from `vite.config.ts`, `panda.config.ts`, build scripts. Has Node-only fields. |
 | `@conference/theme` | `<conference>/theme/index.ts` | Theme barrel. Imported by `panda.config.ts`. Separated from `build-manifest` because Panda CJS-bundles `panda.config.ts` and that strips `import.meta`. |
-| `@conference/content/*` | `<conference>/content/*` | Used by `app/lib/authors.server.ts` to import the blog authors YAML via Vite's `?raw` loader. |
 
 In `ddd-core` standalone, those aliases point at `../conference-stub/`. In a fork, the fork's `tsconfig.json` overrides them to point at the fork's own `./conference/`. Each repo only knows about one conference — there's no runtime switching.
+
+Content is deliberately *not* reached through an alias. Pages, posts and the blog authors YAML all come from the build manifest's `content.*` paths via the mdx-bundles Vite plugin (`virtual:mdx-bundles`, `virtual:blog-authors`), so one place decides where content lives — which is what lets the e2e suites swap in fixture blog content (see `vite.config.ts`).
 
 `vite.config.ts` and `panda.config.ts` are loaded by Node directly (before `vite-tsconfig-paths` is wired up), so they import the build-manifest and theme barrel via relative paths. The `/new-conference` skill sets these paths when it scaffolds a fork.
 
@@ -96,7 +97,7 @@ D1 database names are duplicated between the wrangler files and `build-manifest.
 | New page added for one conference only | `conference/content/pages/<slug>.mdx` (auto-discovered by mdx-bundles) |
 | Hero blurb on the homepage | `conference/content/pages/_home-hero.mdx`, referenced by `manifest.homepage.heroBlurbSlug` |
 | Country / land acknowledgement | `conference/content/pages/_acknowledgement.mdx`, referenced by `manifest.homepage.acknowledgementSlug` |
-| Mobile app download page (`/app`) | `manifest.mobileApp` (iOS + Android URLs). Omit to 404 the route |
+| Mobile app download page (`/app`) | `manifest.mobileApp` (iOS + Android URLs). Omit to 404 the route; set `mobileApp.retired` to 404 it while keeping `/app-config` alive |
 | New manifest field | `core/libs/conference-config/src/manifest.ts` (interface) + every fork's `conference/manifest.ts` (value) |
 | D1 migration | `core/website/migrations/` (schema is core; data is per-fork at runtime) |
 | Sessionize/Tito secret | env var (set per environment via `wrangler secret put`) |
@@ -111,6 +112,10 @@ The runtime manifest has two opt-in slots for fork-owned MDX rendered by core co
 Slugs starting with `_` are excluded from the sitemap and the catchall route (they're fragments embedded in other pages, not navigable pages).
 
 Mobile-app advertising follows a different pattern — `manifest.mobileApp` either exists (route renders) or doesn't (route + JSON endpoint both 404). No fallback rendering, because pointing visitors at a non-existent app is worse than no link at all.
+
+Retiring an app is a third state, and it splits those two routes apart. Once a fork stops maintaining its app there are still copies installed on people's phones polling `/app-config` on launch, so 404ing that endpoint breaks them rather than retiring them. Setting `manifest.mobileApp.retired` keeps the store URLs in the manifest (the endpoint needs the rest of the block) while `/app` starts 404ing like a fork with no app at all. `/app-config` is untouched — a retired app receives a byte-identical payload, which a test asserts. Don't retire an app by deleting `mobileApp` — that takes the installed copies down with it.
+
+**`retired` is deliberately a bare flag, not a place for banner copy.** Telling a retired app's remaining users something is what `/app-announcements` already does — editable at `/admin/settings`, stored in D1, and, decisively, *already understood by the installed builds*. A new config field would only reach a build shipped after it was added, which for an app nobody is rebuilding is nobody. Note the announcement slot is a single current message per year, so a standing retirement notice and a day-of update compete for it.
 
 When a new per-fork extension point is needed, the same pattern applies: add an optional manifest field in `core/libs/conference-config/src/manifest.ts`, have the core component check + branch on it, ship an `.mdx` in `conference/content/pages/` if the fork wants the content. Avoid baking conference-specific strings into components.
 

@@ -83,6 +83,17 @@ writeFileSync(
         // Enables the __devDateOverride cookie. Scoped to this file so the
         // cookie does nothing during ordinary local dev.
         'E2E_DATE_OVERRIDE=true',
+        // Renders the sponsor strip from e2e/fixtures/sponsors.ts. The home
+        // page is the only visual baseline that renders the *current*
+        // conference, so without this its baselines move every time a sponsor
+        // is signed, re-tiered or re-logoed. Real sponsor content stays
+        // covered by the year-pinned /sponsors/<year> baseline.
+        'E2E_SPONSOR_FIXTURES=true',
+        // Lets a test opt its browser context into the synthetic conference
+        // year in e2e/fixtures/conference-year.ts, via a cookie. Conference-day
+        // behaviour (feedback links) is then tested against the fixture day
+        // rather than whichever real year the conference happens to configure.
+        'E2E_FIXTURE_CONFERENCE=true',
         // Interception: the worker rewrites any sessionize.com request to the
         // fixtures (app/lib/sessionize-fixture-fetch.server.ts). Host-based, so
         // it covers every year — including 2021-2025, which hardcode their
@@ -128,7 +139,15 @@ if (!viteBin) {
 const vite = spawn(viteBin, ['--port', port, ...process.argv.slice(2)], {
     cwd: websiteDir,
     stdio: 'inherit',
-    env: { ...process.env, WRANGLER_CONFIG: 'e2e/e2e.jsonc' },
+    env: {
+        ...process.env,
+        WRANGLER_CONFIG: 'e2e/e2e.jsonc',
+        // Blog posts and authors from e2e/fixtures/blog/ instead of the
+        // conference's real blog. A process env var rather than a .dev.vars
+        // entry: the posts are compiled by a Vite plugin in this process,
+        // not read by the Worker. See vite.config.ts.
+        E2E_BLOG_FIXTURES: 'true',
+    },
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -2,14 +2,16 @@ import { conferenceManifest } from '@conference/manifest'
 import type { JiraClient } from '../../sponsors/jira-client.server'
 import { createJiraClient, textToAdf } from '../../sponsors/jira-client.server'
 import { createStubJiraClient } from '../../sponsors/stub-jira-client.server'
-import { computeSyncPlan } from '../../sponsors/sync-plan'
+import { logisticsVisibility } from '../../sponsors/logistics'
+import { statusFlipReadiness } from '../../sponsors/progress'
+import { computeSyncPlan, planStatusWrite } from '../../sponsors/sync-plan'
 import { dueExpiryReminder } from '../../sponsors/token-expiry'
 import type { AppConfig } from '../app-config'
 import type { AssetStorage } from '../asset-storage'
 import type { EmailService } from '../email-service'
 import type { NotificationLog } from '../notification-log'
 import type { SponsorSyncService } from '../sponsor-sync-service'
-import type { SponsorsStore } from '../sponsors-store'
+import type { SponsorProfile, SponsorsStore } from '../sponsors-store'
 
 /**
  * If a sync run has been "running" longer than this it's considered crashed
@@ -19,18 +21,44 @@ const STALE_RUN_SECONDS = 5 * 60
 
 const TOKEN_URL = 'https://id.atlassian.com/manage-profile/security/api-tokens'
 
+interface SponsorOwnedJiraFields {
+    website: string
+    quote?: string
+    socials?: Record<string, string>
+}
+
+/** Builds a complete replacement for the sponsor-owned profile fields.
+ * Details are only eligible after the required blurb and website form has
+ * been submitted; once they are, every configured social field is included
+ * so deleting an optional URL clears the corresponding Jira value. */
+export function buildSponsorDetailsPayload(
+    profile: Pick<SponsorProfile, 'blurb' | 'websiteUrl' | 'socials'>,
+    fields: SponsorOwnedJiraFields,
+): Record<string, unknown> {
+    if (!profile.blurb || !profile.websiteUrl) return {}
+
+    const payload: Record<string, unknown> = { [fields.website]: profile.websiteUrl }
+    if (fields.quote) payload[fields.quote] = textToAdf(profile.blurb)
+    for (const [platform, fieldId] of Object.entries(fields.socials ?? {})) {
+        payload[fieldId] = profile.socials[platform] || null
+    }
+    return payload
+}
+
 export function createJiraSponsorSyncService(args: {
     config: AppConfig
     sponsors: SponsorsStore
     assets: AssetStorage
     email: EmailService
     notifications: NotificationLog
+    /** Test seam for exercising orchestration without real Jira I/O. */
+    jiraClient?: JiraClient
 }): SponsorSyncService {
     const { config, sponsors, assets, email, notifications } = args
     const portalConfig = conferenceManifest.sponsorPortal
 
-    let client: JiraClient | null = null
-    if (portalConfig) {
+    let client: JiraClient | null = args.jiraClient ?? null
+    if (portalConfig && !client) {
         if (config.jira.stub) {
             client = createStubJiraClient()
         } else if (config.jira.apiEmail && config.jira.apiToken) {
@@ -46,15 +74,42 @@ export function createJiraSponsorSyncService(args: {
 
     // The stub always "writes back" (it just logs) so the full flow can be
     // walked locally; the real client is gated behind JIRA_WRITEBACK_ENABLED
-    // so staging can never tick checkboxes on real issues.
+    // so staging can never write to real issues.
     const writebackEnabled = config.jira.stub || config.jira.writebackEnabled
+
+    /**
+     * Stamps the current year onto issues that synced without a year label.
+     * The JQL picks those up deliberately (a sponsor added mid-year is never
+     * silently missed); labelling them here means every issue is labelled by
+     * the time the year is archived, so archiving stays a bulk label edit.
+     *
+     * Best-effort per issue and never throws: the sponsor data is already
+     * synced by this point, and a label that fails to stamp is picked up
+     * again by the next run — the JQL keeps matching it until it sticks.
+     */
+    async function stampMissingYearLabels(source: Awaited<ReturnType<JiraClient['searchSponsorIssues']>>) {
+        if (!portalConfig?.jira.writeYearLabel || !client || !writebackEnabled) return
+
+        const unlabelled = source.filter((s) => s.hasYearLabel === false)
+        for (const sponsor of unlabelled) {
+            try {
+                await client.addLabel(sponsor.issueKey, portalConfig.year)
+                console.log(`Sponsor sync: stamped year label ${portalConfig.year} on ${sponsor.issueKey}`)
+            } catch (error) {
+                console.error(
+                    `Sponsor sync: could not stamp year label on ${sponsor.issueKey}:`,
+                    error instanceof Error ? error.message : error,
+                )
+            }
+        }
+    }
 
     /** Snapshot of what the sponsor submitted, for the completion comment. */
     function buildCompletionComment(
         profile: Awaited<ReturnType<SponsorsStore['getProfile']>>,
         logoAttached: boolean,
     ): string {
-        const lines = ['Sponsor portal: profile complete — "Assets for Conference" has been ticked automatically.']
+        const lines = ['Sponsor portal: profile complete — "Asset Creation Status" has been updated automatically.']
 
         if (profile) {
             lines.push('Submitted via the portal:')
@@ -90,6 +145,7 @@ export function createJiraSponsorSyncService(args: {
         if (!expiresAt) return
 
         try {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const reminder = dueExpiryReminder(expiresAt, Date.now())
             if (!reminder || (await notifications.wasSent(reminder.key))) return
 
@@ -129,12 +185,14 @@ export function createJiraSponsorSyncService(args: {
             await maybeSendTokenExpiryReminder()
 
             const latest = await sponsors.getLatestSyncRun()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             if (latest?.status === 'running' && latest.startedAt > Math.floor(Date.now() / 1000) - STALE_RUN_SECONDS) {
                 return { ok: false, reason: 'already-running' }
             }
 
             const runId = await sponsors.startSyncRun(trigger)
             try {
+                const profilesBeforeRead = await sponsors.getProfilesForSync()
                 const [source, currentSponsors, currentContacts] = await Promise.all([
                     client.searchSponsorIssues(),
                     sponsors.getAllSponsorsForSync(),
@@ -142,7 +200,11 @@ export function createJiraSponsorSyncService(args: {
                 ])
 
                 const plan = computeSyncPlan({ year: portalConfig.year, source, currentSponsors, currentContacts })
-                const counts = await sponsors.applySyncPlan(plan)
+                const counts = await sponsors.applySyncPlan(plan, profilesBeforeRead)
+
+                // After the plan is applied — the sponsor data landing in D1
+                // matters more than the label, and this must not fail the run.
+                await stampMissingYearLabels(source)
 
                 await sponsors.finishSyncRun(runId, { status: 'ok', ...counts })
                 console.log(
@@ -164,16 +226,30 @@ export function createJiraSponsorSyncService(args: {
             if (!portalConfig || !client || !writebackEnabled) return
 
             try {
-                const optionIds = await client.getSponsorTaskOptionIds(issueKey)
-                const alreadyTicked = optionIds.includes(portalConfig.jira.assetsTaskOptionId)
-                if (!alreadyTicked) {
-                    await client.setSponsorTaskOptionIds(issueKey, [
-                        ...optionIds,
-                        portalConfig.jira.assetsTaskOptionId,
-                    ])
+                const completeOptionId = portalConfig.jira.assetsCompleteOptionId
+                const assetsField = portalConfig.jira.fields.assetsStatus
+                const currentOptionId = await client.getStatusOptionId(issueKey, assetsField)
+                const action = planStatusWrite({
+                    current: currentOptionId,
+                    targetOptionId: completeOptionId,
+                    pendingOptionIds: portalConfig.jira.assetsPendingOptionIds,
+                })
+
+                if (action === 'set') {
+                    await client.setStatusOptionId(issueKey, assetsField, completeOptionId)
+                } else if (action === 'committee-advanced') {
+                    console.log(
+                        `Sponsor write-back: assets status on ${issueKey} already advanced by the committee ` +
+                            `(option ${currentOptionId}) — leaving it alone`,
+                    )
                 }
+                // Attach + comment only alongside a status we actually moved.
+                // 'already-set' means a previous run did it; 'committee-advanced'
+                // means they're past this point and already have the assets.
+                // Re-announcing in either case just spams the activity feed.
+                const alreadyTicked = action !== 'set'
                 await sponsors.markAssetsTaskFlipped(issueKey)
-                console.log(`Sponsor write-back: ticked "Assets for Conference" on ${issueKey}`)
+                console.log(`Sponsor write-back: moved assets status on ${issueKey}`)
 
                 // Field edits are near-invisible in the Jira UI, so also
                 // attach the logo and announce completion in the activity
@@ -198,7 +274,7 @@ export function createJiraSponsorSyncService(args: {
                             }
                         } catch (attachError) {
                             console.error(
-                                `Sponsor write-back: logo attachment on ${issueKey} failed (checkbox still ticked):`,
+                                `Sponsor write-back: logo attachment on ${issueKey} failed (status still updated):`,
                                 attachError instanceof Error ? attachError.message : attachError,
                             )
                         }
@@ -208,7 +284,7 @@ export function createJiraSponsorSyncService(args: {
                         await client.addComment(issueKey, buildCompletionComment(profile, logoAttached))
                     } catch (commentError) {
                         console.error(
-                            `Sponsor write-back: comment on ${issueKey} failed (checkbox still ticked):`,
+                            `Sponsor write-back: comment on ${issueKey} failed (status still updated):`,
                             commentError instanceof Error ? commentError.message : commentError,
                         )
                     }
@@ -223,68 +299,208 @@ export function createJiraSponsorSyncService(args: {
             }
         },
 
-        async retryPendingWritebacks() {
+        async flipWorkstreamStatuses(issueKey) {
             if (!portalConfig || !client || !writebackEnabled) return
 
-            const pending = await sponsors.getPendingWritebacks()
-            for (const issueKey of pending) {
-                await this.flipAssetsTask(issueKey)
-            }
-        },
+            const flips = portalConfig.jira.statusFlips
+            const fields = portalConfig.jira.fields
+            if (!flips) return
 
-        async pushSponsorOwnedData(issueKey, change) {
-            if (!portalConfig || !client || !writebackEnabled) return
-
-            const profile = await sponsors.getProfile(issueKey).catch(() => null)
-            if (!profile) return
-            const jiraFields = portalConfig.jira.fields
-
-            // Sponsor-owned fields: the portal's value wins, every save.
-            // (Committee-owned fields — tier, contacts, company name — are
-            // never written from here.) A PUT with unchanged values creates
-            // no Jira history entry, so redundant saves stay quiet.
             try {
-                const payload: Record<string, unknown> = {}
-                if (profile.websiteUrl) payload[jiraFields.website] = profile.websiteUrl
-                if (jiraFields.quote && profile.blurb) payload[jiraFields.quote] = textToAdf(profile.blurb)
-                for (const [platform, fieldId] of Object.entries(jiraFields.socials ?? {})) {
-                    const url = profile.socials[platform]
-                    if (url) payload[fieldId] = url
-                }
-                if (Object.keys(payload).length > 0) {
-                    await client.updateIssueFields(issueKey, payload)
+                const sponsor = await sponsors.getSponsor(issueKey)
+                const profile = await sponsors.getProfile(issueKey)
+                const visibility = logisticsVisibility(portalConfig.jira.tierMap[sponsor?.tier ?? ''])
+                const readiness = statusFlipReadiness({ profile, sponsor, visibility })
+
+                // Each entry: the Jira field, the option to write, and the
+                // values the portal is allowed to overwrite. `undefined`
+                // target = not ready yet, so nothing is written.
+                const writes: Array<{
+                    name: string
+                    fieldId: string | undefined
+                    targetOptionId: string | undefined
+                    pendingOptionIds: string[]
+                    portalOwnedOptionIds?: string[]
+                }> = [
+                    {
+                        name: 'social',
+                        fieldId: fields.socialStatus,
+                        targetOptionId: readiness.social ? flips.social?.targetOptionId : undefined,
+                        pendingOptionIds: flips.social?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'exhibition',
+                        fieldId: fields.exhibitionStatus,
+                        targetOptionId: readiness.exhibition ? flips.exhibition?.targetOptionId : undefined,
+                        pendingOptionIds: flips.exhibition?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'raffle',
+                        fieldId: fields.raffleStatus,
+                        targetOptionId: readiness.raffle ? flips.raffle?.targetOptionId : undefined,
+                        pendingOptionIds: flips.raffle?.pendingOptionIds ?? [],
+                    },
+                    {
+                        name: 'induction',
+                        fieldId: fields.inductionStatus,
+                        targetOptionId:
+                            readiness.induction === 'required'
+                                ? flips.induction?.requiredOptionId
+                                : readiness.induction === 'not-required'
+                                  ? flips.induction?.notRequiredOptionId
+                                  : undefined,
+                        pendingOptionIds: flips.induction?.pendingOptionIds ?? [],
+                        portalOwnedOptionIds: [
+                            flips.induction?.requiredOptionId,
+                            flips.induction?.notRequiredOptionId,
+                        ].filter((optionId): optionId is string => Boolean(optionId)),
+                    },
+                ]
+
+                for (const write of writes) {
+                    if (!write.fieldId || !write.targetOptionId) continue
+
+                    // Each flip is independent: one failing field (or one the
+                    // committee has advanced) must not stop the others.
+                    try {
+                        const current = await client.getStatusOptionId(issueKey, write.fieldId)
+                        const action = planStatusWrite({
+                            current,
+                            targetOptionId: write.targetOptionId,
+                            pendingOptionIds: write.pendingOptionIds,
+                            portalOwnedOptionIds: write.portalOwnedOptionIds,
+                        })
+
+                        if (action === 'set') {
+                            await client.setStatusOptionId(issueKey, write.fieldId, write.targetOptionId)
+                            console.log(`Sponsor write-back: moved ${write.name} status on ${issueKey}`)
+                        } else if (action === 'committee-advanced') {
+                            console.log(
+                                `Sponsor write-back: ${write.name} status on ${issueKey} already advanced by the ` +
+                                    `committee (option ${current}) — leaving it alone`,
+                            )
+                        }
+                    } catch (error) {
+                        console.error(
+                            `Sponsor write-back: ${write.name} status on ${issueKey} failed:`,
+                            error instanceof Error ? error.message : error,
+                        )
+                    }
                 }
             } catch (error) {
                 console.error(
-                    `Sponsor push: field update on ${issueKey} failed:`,
+                    `Sponsor write-back: workstream statuses on ${issueKey} failed:`,
                     error instanceof Error ? error.message : error,
                 )
             }
+        },
 
-            // A logo replaced after completion won't go through the
-            // completion write-back again — attach the new file with a note
-            // so the committee sees the change in the activity feed.
-            if (change === 'logo' && profile.logo) {
-                const sponsor = await sponsors.getSponsor(issueKey).catch(() => null)
-                if (!sponsor?.assetsTaskFlippedAt) return // completion write-back will attach it
+        async getSponsorDeliverables(issueKey) {
+            if (!portalConfig || !client) return {}
+            try {
+                return await client.getSponsorDeliverables(issueKey)
+            } catch (error) {
+                // Informational only — the dashboard hides these sections
+                // rather than failing to load because Jira is down.
+                console.error(
+                    `Sponsor deliverables lookup for ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
+                return {}
+            }
+        },
 
-                try {
-                    const asset = await assets.get(profile.logo.r2Key)
-                    if (asset) {
-                        const content = await new Response(asset.body).arrayBuffer()
-                        await client.addAttachment(issueKey, profile.logo.filename, content, asset.contentType)
-                        await client.addComment(
-                            issueKey,
-                            `Sponsor portal: the sponsor updated their logo — ${profile.logo.filename} ` +
-                                `(${(profile.logo.size / 1024).toFixed(0)} KB) attached.`,
-                        )
-                    }
-                } catch (error) {
-                    console.error(
-                        `Sponsor push: logo re-attach on ${issueKey} failed:`,
-                        error instanceof Error ? error.message : error,
-                    )
+        async getExhibitorLogistics() {
+            // Deliberately not caught: the caller is building a document for
+            // the venue, and a blank spreadsheet is worse than an error page.
+            if (!portalConfig || !client) {
+                throw new Error('Sponsor portal Jira client is not configured')
+            }
+            return client.getExhibitorLogistics()
+        },
+
+        async getAssetTracking() {
+            if (!portalConfig || !client) return null
+            try {
+                return await client.getAssetTracking()
+            } catch (error) {
+                console.error('Sponsor asset tracking lookup failed:', error instanceof Error ? error.message : error)
+                return null
+            }
+        },
+
+        async pushLogistics(issueKey, logistics, submittedKeys) {
+            if (!portalConfig || !client || !writebackEnabled) return
+            // Deliberately uncaught, like pushSponsorDetails: the route aborts
+            // the save on a throw and owns the message the sponsor sees.
+            await client.pushLogistics(issueKey, logistics, submittedKeys)
+        },
+
+        async retryPendingStatusFlips() {
+            if (!portalConfig || !client || !writebackEnabled) return
+
+            const pendingAssets = new Set(await sponsors.getPendingWritebacks())
+            const activeSponsors = (await sponsors.listSponsors(portalConfig.year)).filter((sponsor) => sponsor.active)
+
+            // Statuses only. Jira is canonical at sync time, so replaying the
+            // stored profile/logistics values here would overwrite a committee
+            // edit the sync just pulled in.
+            for (const sponsor of activeSponsors) {
+                // Owed from a completion whose flip failed — independent of
+                // whether the sponsor has a profile row yet.
+                if (pendingAssets.has(sponsor.issueKey)) {
+                    await this.flipAssetsTask(sponsor.issueKey)
                 }
+
+                // The remaining flips read the profile's answers, so there is
+                // nothing to derive them from without one.
+                if (sponsor.profile) {
+                    await this.flipWorkstreamStatuses(sponsor.issueKey)
+                }
+            }
+        },
+
+        async pushSponsorDetails(issueKey, details) {
+            if (!portalConfig || !client || !writebackEnabled) return
+
+            const payload = buildSponsorDetailsPayload(details, portalConfig.jira.fields)
+            if (Object.keys(payload).length === 0) return
+
+            // Deliberately not caught: the route aborts the save on a throw, so
+            // swallowing it here would persist to D1 as though Jira had
+            // accepted it. The route logs and reports.
+            await client.updateIssueFields(issueKey, payload)
+        },
+
+        async attachUpdatedLogo(issueKey) {
+            if (!portalConfig || !client || !writebackEnabled) return
+
+            const profile = await sponsors.getProfile(issueKey).catch(() => null)
+            if (!profile?.logo) return
+
+            const sponsor = await sponsors.getSponsor(issueKey).catch(() => null)
+            // Before completion the assets write-back attaches the logo itself,
+            // so attaching here too would duplicate it.
+            if (!sponsor?.assetsTaskFlippedAt) return
+
+            try {
+                const asset = await assets.get(profile.logo.r2Key)
+                if (!asset) return
+
+                const content = await new Response(asset.body).arrayBuffer()
+                await client.addAttachment(issueKey, profile.logo.filename, content, asset.contentType)
+                await client.addComment(
+                    issueKey,
+                    `Sponsor portal: the sponsor updated their logo — ${profile.logo.filename} ` +
+                        `(${(profile.logo.size / 1024).toFixed(0)} KB) attached.`,
+                )
+            } catch (error) {
+                // Best-effort: the file is already in R2 and the upload really
+                // did succeed, so a failed attachment must not fail the save.
+                console.error(
+                    `Sponsor push: logo re-attach on ${issueKey} failed:`,
+                    error instanceof Error ? error.message : error,
+                )
             }
         },
     }

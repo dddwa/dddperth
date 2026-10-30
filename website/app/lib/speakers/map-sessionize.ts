@@ -1,7 +1,7 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { sessionSchema } from '@ddd/conference-config'
 import type { z } from 'zod'
-import { getYearConfig } from '../get-year-config.server'
+import { resolveYearConfig } from '../get-year-config.server'
 import type { speakersSchema } from '../sessionize.server'
 import type { AppConfig } from '../services/app-config'
 import type { SpeakerLink } from '../services/speakers-store'
@@ -63,7 +63,7 @@ export interface PortalSessionContent {
 export function toPortalSpeaker(speaker: SessionizeSpeaker): PortalSpeakerContent {
     return {
         fullName: speaker.fullName,
-        tagLine: speaker.tagLine,
+        tagLine: speaker.tagLine ?? undefined,
         bio: speaker.bio ?? undefined,
         profilePictureUrl: speaker.profilePicture ?? undefined,
         links: speaker.links,
@@ -98,7 +98,7 @@ export function resolveSpeakerPortalSessionizeEndpoint(config: AppConfig): strin
     const portalConfig = conferenceManifest.speakerPortal
     if (!portalConfig) return undefined
 
-    const yearConfig = getYearConfig(portalConfig.year, config)
+    const yearConfig = resolveYearConfig(conferenceManifest.conferences, portalConfig.year, config)
     if (yearConfig.kind !== 'conference' || yearConfig.sessions?.kind !== 'sessionize') return undefined
     return yearConfig.sessions.allSessionsEndpoint ?? yearConfig.sessions.sessionizeEndpoint
 }

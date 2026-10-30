@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { Form } from 'react-router'
 import type { ChecklistUrgency, SpeakerChecklistItem } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemAction, type ChecklistModalKey } from '~/lib/speakers/checklist-items'
@@ -51,7 +51,7 @@ const URGENCY_DATE_COLOR = {
 
 function dueDateLabel(dueDateIso?: string): string | null {
     if (!dueDateIso) return null
-    return `Due ${DateTime.fromISO(dueDateIso).toLocaleString(DateTime.DATE_MED, { locale: 'en-AU' })}`
+    return `Due ${conferenceTime(dueDateIso).toLocaleString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' })}`
 }
 
 /** Which modal reopens a completed item for editing — only items whose
@@ -285,9 +285,25 @@ export function SpeakerChecklistCard({
                             )
 
                             if (!editModalKey) {
+                                // Ticket link stays reachable after "I've claimed it" —
+                                // speakers click that by mistake, and there's no undo.
+                                const keepsConfiguredLink =
+                                    ticketClaimUrl &&
+                                    SPEAKER_CHECKLIST_ITEMS.find((d) => d.key === item.key)?.actions.some(
+                                        (a) => 'configuredHref' in a,
+                                    )
                                 return (
                                     <Flex key={item.key} align="center" gap="2" py="1.5" px="1">
                                         {content}
+                                        {keepsConfiguredLink && (
+                                            <AppLink
+                                                unstyled
+                                                to={ticketClaimUrl}
+                                                className={css({ fontSize: 'xs', color: 'admin.700', textDecoration: 'underline', flexShrink: '0' })}
+                                            >
+                                                Ticket link
+                                            </AppLink>
+                                        )}
                                     </Flex>
                                 )
                             }

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { conferenceTime, Temporal } from '~/lib/dates/temporal'
 import type { FC, PropsWithChildren } from 'react'
 import { conferenceManifest } from '@conference/manifest'
 import type { ImportantDate, StandaloneImportantDate, StartEventImportantDate } from '~/lib/important-dates'
@@ -9,7 +9,7 @@ import { Flex, styled } from '~/styled-system/jsx'
 
 
 const ImportantDateBox: FC<{
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: ImportantDate
@@ -28,23 +28,23 @@ const ImportantDateBox: FC<{
 }
 
 const StartEventImportantDateBox: FC<{
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StartEventImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
-    const eventEndTime = DateTime.fromISO(dateInfo.endDateTime)
+    const eventDateTime = conferenceTime(dateInfo.dateTime)
+    const eventEndTime = conferenceTime(dateInfo.endDateTime)
 
     if (showOnlyLive) {
         // Only show if it's not yet started
-        if (currentDate >= eventDateTime) {
+        if (Temporal.ZonedDateTime.compare(currentDate, eventDateTime) >= 0) {
             return null
         }
     }
 
     // When the event is coming up, we should countdown with an active row
-    if (currentDate < eventDateTime) {
+    if (Temporal.ZonedDateTime.compare(currentDate, eventDateTime) < 0) {
         const daysLeft = getDaysLeft(dateInfo, currentDate)
 
         return (
@@ -56,7 +56,7 @@ const StartEventImportantDateBox: FC<{
                         highlighted
                         smallSidebar={smallSidebar}
                         eventHref={dateInfo.eventActiveHref}
-                        message={currentDate.hasSame(eventDateTime, 'day') ? 'Today!' : 'Tomorrow!'}
+                        message={currentDate.toPlainDate().equals(eventDateTime.toPlainDate()) ? 'Today!' : 'Tomorrow!'}
                     />
                 ) : (
                     <EventCountdown smallSidebar={smallSidebar} daysLeft={daysLeft} />
@@ -65,8 +65,8 @@ const StartEventImportantDateBox: FC<{
         )
     }
 
-    if (currentDate < eventEndTime) {
-        const daysUntilClose = Math.floor(eventEndTime.diff(currentDate, 'days').days)
+    if (Temporal.ZonedDateTime.compare(currentDate, eventEndTime) < 0) {
+        const daysUntilClose = Math.floor(currentDate.until(eventEndTime, { largestUnit: 'day' }).total({ unit: 'day', relativeTo: currentDate }))
 
         return (
             <ActiveRow smallSidebar={smallSidebar}>
@@ -99,21 +99,21 @@ const StartEventImportantDateBox: FC<{
 }
 
 const StandaloneEventImportantDateBox: FC<{
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     smallSidebar?: boolean // New prop for small sidebar
     showOnlyLive?: boolean // New prop to filter only live events
     dateInfo: StandaloneImportantDate
 }> = ({ currentDate, smallSidebar, showOnlyLive, dateInfo }) => {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime)
+    const eventDateTime = conferenceTime(dateInfo.dateTime)
 
     if (showOnlyLive) {
         // Don't show when event has ended and has no ended href
-        if (currentDate > eventDateTime && !dateInfo.eventClosedHref) {
+        if (Temporal.ZonedDateTime.compare(currentDate, eventDateTime) > 0 && !dateInfo.eventClosedHref) {
             return null
         }
     }
 
-    if (currentDate.hasSame(eventDateTime, 'day') && dateInfo.onDayMessage) {
+    if (currentDate.toPlainDate().equals(eventDateTime.toPlainDate()) && dateInfo.onDayMessage) {
         return (
             <ActiveRow smallSidebar={smallSidebar}>
                 <EventInfo dateInfo={dateInfo} smallSidebar={smallSidebar} currentDate={currentDate} />
@@ -129,7 +129,7 @@ const StandaloneEventImportantDateBox: FC<{
     }
 
     // When the event is coming up, we should countdown with an active row
-    if (currentDate < eventDateTime) {
+    if (Temporal.ZonedDateTime.compare(currentDate, eventDateTime) < 0) {
         const daysLeft = getDaysLeft(dateInfo, currentDate)
         return (
             <ActiveRow smallSidebar={smallSidebar}>
@@ -138,7 +138,7 @@ const StandaloneEventImportantDateBox: FC<{
                 {daysLeft === 0 ? (
                     <EventLink
                         smallSidebar={smallSidebar}
-                        message={currentDate.hasSame(eventDateTime, 'day') ? 'Today!' : 'Tomorrow!'}
+                        message={currentDate.toPlainDate().equals(eventDateTime.toPlainDate()) ? 'Today!' : 'Tomorrow!'}
                     />
                 ) : (
                     <EventCountdown smallSidebar={smallSidebar} daysLeft={daysLeft} />
@@ -172,8 +172,8 @@ const StandaloneEventImportantDateBox: FC<{
     )
 }
 
-function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
-    return Math.floor(DateTime.fromISO(dateInfo.dateTime).diff(currentDate, 'days').days)
+function getDaysLeft(dateInfo: ImportantDate, currentDate: Temporal.ZonedDateTime) {
+    return Math.floor(currentDate.until(conferenceTime(dateInfo.dateTime), { largestUnit: 'day' }).total({ unit: 'day', relativeTo: currentDate }))
 }
 
 /**
@@ -182,15 +182,19 @@ function getDaysLeft(dateInfo: ImportantDate, currentDate: DateTime<true>) {
  * standalone dates with an `eventClosedHref` we keep them visible because they
  * stay actionable after the date (e.g. "View Agenda").
  */
-function isPastDate(dateInfo: ImportantDate, currentDate: DateTime): boolean {
+function isPastDate(dateInfo: ImportantDate, currentDate: Temporal.ZonedDateTime): boolean {
     if (dateInfo.type === 'start-event') {
-        return currentDate >= DateTime.fromISO(dateInfo.endDateTime)
+        return Temporal.ZonedDateTime.compare(currentDate, conferenceTime(dateInfo.endDateTime)) >= 0
     }
     // standalone
     if (dateInfo.eventClosedHref) {
         return false
     }
-    return currentDate > DateTime.fromISO(dateInfo.dateTime)
+    const event = conferenceTime(dateInfo.dateTime)
+    if (dateInfo.onDayMessage) {
+        return Temporal.ZonedDateTime.compare(currentDate, event.add({ days: 1 }).startOfDay()) >= 0
+    }
+    return Temporal.ZonedDateTime.compare(currentDate, event) > 0
 }
 
 function ActiveRow({ children, smallSidebar }: PropsWithChildren<{ smallSidebar?: boolean }>) {
@@ -251,9 +255,9 @@ function EventLink({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        rounded: smallSidebar ? '[0]' : ({ base: 'lg', sm: '[0]' } as const),
-        borderRightRadius: smallSidebar ? '[100px]' : ({ base: 'lg', sm: '[100px]' } as const),
-        width: smallSidebar ? '[100px]' : ({ base: 'full', sm: '[150px]' } as const),
+        rounded: smallSidebar ? 'none' : ({ base: 'lg', sm: 'none' } as const),
+        borderRightRadius: smallSidebar ? 'full' : ({ base: 'lg', sm: 'full' } as const),
+        width: smallSidebar ? '25' : ({ base: 'full', sm: '37.5' } as const),
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : ({ base: '2', sm: '1' } as const),
         ml: smallSidebar ? '6' : '0',
@@ -296,9 +300,9 @@ function EventCountdown({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        rounded: smallSidebar ? '[0]' : { base: 'lg', sm: '[0]' },
-        borderRightRadius: smallSidebar ? '[100px]' : { base: 'lg', sm: '[100px]' },
-        width: smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' },
+        rounded: smallSidebar ? 'none' : { base: 'lg', sm: 'none' },
+        borderRightRadius: smallSidebar ? 'full' : { base: 'lg', sm: 'full' },
+        width: smallSidebar ? '25' : { base: 'full', sm: '37.5' },
         fontSize: smallSidebar ? 'xs' : 'md',
         paddingY: smallSidebar ? '1' : { base: '2', sm: '1' },
         ml: smallSidebar ? '6' : '0',
@@ -366,7 +370,7 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
             alignItems="center"
             justifyContent="center"
             rounded="lg"
-            width={smallSidebar ? '[100px]' : { base: 'full', sm: '[150px]' }}
+            width={smallSidebar ? '25' : { base: 'full', sm: '37.5' }}
             paddingY={smallSidebar ? '1' : { base: '2', sm: '1' }}
             color="text.muted"
             bgGradient="to-r"
@@ -378,8 +382,8 @@ function DisabledButton({ smallSidebar, dateInfo }: { smallSidebar: boolean | un
     )
 }
 
-function formatEventDateTime(dateTime: DateTime) {
-    const datePart = `${dateTime.weekdayLong} ${dateTime.toFormat('LLL dd')}`
+function formatEventDateTime(dateTime: Temporal.ZonedDateTime) {
+    const datePart = `${dateTime.toLocaleString('en-AU', { weekday: 'long' })} ${dateTime.toLocaleString('en-AU', { month: 'short', day: '2-digit' })}`
     // A midnight (00:00:00) time means "this whole day", not a specific time —
     // show the date alone rather than a meaningless "12:00 am".
     const isMidnight =
@@ -387,7 +391,7 @@ function formatEventDateTime(dateTime: DateTime) {
     if (isMidnight) {
         return datePart
     }
-    return `${datePart}, ${dateTime.toLocaleString(DateTime.TIME_SIMPLE, { locale: 'en-AU' })}`
+    return `${datePart}, ${dateTime.toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
 }
 
 function EventInfo({
@@ -397,22 +401,22 @@ function EventInfo({
 }: {
     dateInfo: ImportantDate
     smallSidebar: boolean | undefined
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
 }) {
-    const eventDateTime = DateTime.fromISO(dateInfo.dateTime, { zone: conferenceManifest.public.timezone })
+    const eventDateTime = conferenceTime(dateInfo.dateTime)
     // For windowed events (CFP / tickets / voting) that are currently open, fold
     // the close date into the same row instead of rendering a separate "closes"
     // entry. Before the window opens, keep the open date as the primary line
     // and tack the close date on as a secondary line.
     const closeDateTime =
         dateInfo.type === 'start-event'
-            ? DateTime.fromISO(dateInfo.endDateTime, { zone: conferenceManifest.public.timezone })
+            ? conferenceTime(dateInfo.endDateTime)
             : null
-    const isOpen = closeDateTime !== null && currentDate >= eventDateTime && currentDate < closeDateTime
+    const isOpen = closeDateTime !== null && Temporal.ZonedDateTime.compare(currentDate, eventDateTime) >= 0 && Temporal.ZonedDateTime.compare(currentDate, closeDateTime) < 0
 
     return (
         <Flex flexDirection="column">
-            <time dateTime={isOpen && closeDateTime ? closeDateTime.toISO() ?? undefined : dateInfo.dateTime} />
+            <time dateTime={isOpen && closeDateTime ? closeDateTime.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined : dateInfo.dateTime} />
             <styled.p fontSize={smallSidebar ? 'xs' : 'sm'} color="text.secondary">
                 {isOpen && closeDateTime
                     ? `Closes ${formatEventDateTime(closeDateTime)}`
@@ -436,7 +440,7 @@ function EventInfo({
 export const ImportantDates: React.FC<{
     smallSidebar?: boolean
     showOnlyLive?: boolean
-    currentDate: DateTime
+    currentDate: Temporal.ZonedDateTime
     importantDates: ImportantDate[]
 }> = ({ smallSidebar, showOnlyLive, currentDate, importantDates }) => {
     const upcomingDates = importantDates.filter((dateInfo) => !isPastDate(dateInfo, currentDate))

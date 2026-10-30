@@ -1,3 +1,4 @@
+import type { Temporal } from 'temporal-polyfill'
 /**
  * The ConferenceManifest is the contract between core and a fork.
  *
@@ -15,7 +16,6 @@
  * making them optional + having a sensible default in core.
  */
 
-import type { DateTime } from 'luxon'
 import type { ConferenceConfig, MinorSponsorTier } from './types.ts'
 
 /**
@@ -75,6 +75,15 @@ export interface ConferenceFeatures {
      * workshops in a given year can set this to drop the section entirely.
      */
     hideWorkshops?: boolean
+
+    /**
+     * Show the header's Venue link *instead of* About, and only from a week
+     * before conference day until the day ends. The rest of the year the
+     * header shows About. Off by default: the venue link then sits beside
+     * About whenever a venue is published. For forks whose header is short
+     * of room, and whose venue only matters to people about to attend.
+     */
+    venueReplacesAboutNearConference?: boolean
 
     /**
      * Give each minor sponsor tier (community, coffee cart, quiet room,
@@ -241,6 +250,14 @@ export type NavConfig = NavItem[]
  * Optional mobile app advertising. When set, /app is reachable and links to
  * the app stores. When absent, /app returns 404 (most forks don't have a
  * mobile app and shouldn't surface a dead route).
+ *
+ * `retired` splits those two behaviours apart. A fork that has stopped
+ * maintaining its app still has copies installed on people's phones, and
+ * those copies poll /app-config on launch — so the endpoint must keep
+ * answering even once the website stops advertising the app. Set `retired`
+ * and /app 404s like a fork with no app at all, while /app-config continues
+ * to serve and carries a `notice` telling the app to point its users back
+ * at the website.
  */
 export interface MobileApp {
     iosUrl: string
@@ -248,6 +265,19 @@ export interface MobileApp {
     /** Bundle ID surfaced via /app-config to the mobile app itself. */
     iosBundleId?: string
     androidBundleId?: string
+    /**
+     * Set once the app is no longer maintained. Stops the website
+     * advertising it (/app 404s, store links disappear) without cutting off
+     * the installed copies that still depend on /app-config.
+     *
+     * Deliberately a bare flag and not a place to put banner copy. Telling
+     * the app's remaining users anything is what `/app-announcements`
+     * already does, and that channel has the decisive advantage: the
+     * installed builds already know how to render it. A new config field
+     * would only reach a build shipped after it was added — which, for an
+     * app nobody is rebuilding, is no one.
+     */
+    retired?: boolean
 }
 
 /**
@@ -287,8 +317,57 @@ export interface SponsorPortalJiraConfig {
         additionalContactEmails?: string
         /** Single-select holding the sponsorship tier. */
         tier: string
-        /** Multi-checkbox "tasks" field the portal writes completion into. */
-        sponsorTasks: string
+        /**
+         * Single-select status field the portal moves when a profile
+         * completes. Committee convention is one status field per workstream
+         * (assets, social, exhibition, raffle) so each is JQL-filterable —
+         * multi-checkbox fields aren't, which is why this replaced the old
+         * "Sponsor Tasks" checklist.
+         */
+        assetsStatus: string
+        /**
+         * The other single-select workstream statuses the portal advances as
+         * the sponsor completes the matching part of the portal. Each follows
+         * the same ownership rule as `assetsStatus` (see `statusFlips`): the
+         * portal only moves it off a "pending (sponsor)" value, so committee
+         * progress is never dragged backwards. Omit any field the fork's Jira
+         * doesn't have and that flip is skipped.
+         */
+        socialStatus?: string
+        exhibitionStatus?: string
+        raffleStatus?: string
+        inductionStatus?: string
+        /**
+         * Read-only fields backing the dashboard's tickets and assets
+         * sections. The committee fills these in; the portal only displays
+         * them, so a missing field just hides that section.
+         */
+        freeTicketCount?: string
+        ticketClaimUrl?: string
+        /** Multi-checkbox of the assets this sponsor owes ("Assets Required"). */
+        assetsRequired?: string
+        /**
+         * URL of a per-sponsor upload folder (SharePoint) the committee
+         * creates and pastes in. Surfaced as an "upload your assets" link;
+         * hidden until the committee fills it in.
+         */
+        assetUploadUrl?: string
+        /**
+         * Which room a room sponsor's sponsorship covers. Committee-assigned,
+         * so the portal only displays it — and it feeds the venue's exhibitor
+         * spreadsheet and the public site's `roomName`.
+         *
+         * The field may carry a Jira default, which would make every sponsor
+         * look assigned. Treat a value equal to `unassignedRoomValue` as "not
+         * yet decided" so the portal stays honest until someone chooses.
+         */
+        exhibitorRoom?: string
+        /**
+         * The committee-assigned stand number within the exhibition space.
+         * Read-only, like `exhibitorRoom`: it only feeds the venue's exhibitor
+         * spreadsheet, so AV and the venue can find each sponsor's spot.
+         */
+        exhibitorSpaceNumber?: string
         /**
          * Paragraph field the sponsor's quote/blurb is pushed into on every
          * portal save (sponsor-owned — the portal's value overrides Jira's).
@@ -302,9 +381,107 @@ export interface SponsorPortalJiraConfig {
          * field id are skipped.
          */
         socials?: Record<string, string>
+        /**
+         * Sponsor-supplied logistics: exhibition/bump-in, Optus screen
+         * orders, raffle prize, induction and the social quote.
+         *
+         * Sponsor-owned in both directions — the portal collects these and
+         * pushes them into Jira on every save (the portal's value wins), and
+         * the admin exhibitor-list export reads them back. Jira's own status
+         * options label each of these workstreams "… Pending (Sponsor)",
+         * which is what marks them sponsor-owned rather than committee-owned.
+         *
+         * Every entry is optional, keyed by the portal's field name: a fork
+         * without a venue form omits the block entirely, and a fork whose
+         * Jira lacks one field just skips that field in both directions.
+         */
+        logistics?: {
+            exhibitorContactName?: string
+            exhibitorContactPhone?: string
+            exhibitorContactEmail?: string
+            /** Single-select combining bump-in day and start time. */
+            bumpInSlot?: string
+            /** Single-select bump-out window. */
+            bumpOutWindow?: string
+            bumpInAttendees?: string
+            /** Named individuals needing venue safety induction. */
+            loadingDockAttendees?: string
+            equipmentList?: string
+            nonLaptopElectrical?: string
+            /** Free text covering trolley *and* forklift in one field. */
+            trolleyOrForklift?: string
+            loadingDockAssistance?: string
+            porterAssistance?: string
+            /** Multi-checkbox: under-stadium drop-off/pick-up. */
+            parking?: string
+            screenOrders?: string
+            screenNotes?: string
+            screenInvoicingEmail?: string
+            rafflePrize?: string
+            raffleLocation?: string
+            socialQuote?: string
+        }
     }
-    /** Option id on `fields.sponsorTasks` flipped when a profile completes. */
-    assetsTaskOptionId: string
+    /**
+     * Option id `fields.assetsStatus` is set to when a profile completes
+     * (logo + blurb + website supplied). The portal only ever moves the
+     * status forward to this one value — the committee owns it from there.
+     */
+    assetsCompleteOptionId: string
+    /**
+     * Option ids on `fields.assetsStatus` that mean "still waiting on the
+     * sponsor" — the only values the portal will move off. A single-select
+     * is overwritten wholesale (unlike the append-only checkbox this
+     * replaced), so if the committee has already advanced the status past
+     * these, the portal leaves it alone rather than dragging it backwards.
+     */
+    assetsPendingOptionIds: string[]
+    /**
+     * The `exhibitorRoom` value meaning "no room assigned yet".
+     *
+     * Jira single-selects can carry a default, so every issue would read back
+     * as the first room whether or not anyone chose it. Naming that value here
+     * lets the portal tell "assigned" from "untouched" and stay quiet until the
+     * committee actually decides — a sponsor sent to the wrong room is worse
+     * than one told nothing yet. Omit when the field has no default, and every
+     * non-empty value counts as assigned.
+     */
+    unassignedRoomValue?: string
+    /**
+     * The remaining workstream status flips, each triggered by the sponsor
+     * finishing the matching part of the portal:
+     *
+     *   - `social`     — logo uploaded AND a social quote supplied
+     *   - `exhibition` — every required exhibition logistics answer given
+     *   - `raffle`     — a raffle prize described
+     *   - `induction`  — resolves to `requiredOptionId` when the sponsor names
+     *                    anyone needing loading dock access, and
+     *                    `notRequiredOptionId` when they've answered the
+     *                    logistics form but named nobody
+     *
+     * `pendingOptionIds` carries the same meaning as `assetsPendingOptionIds`:
+     * the only values the portal is allowed to move off. Omit a block (or its
+     * matching field id) to disable that flip.
+     */
+    statusFlips?: {
+        social?: StatusFlipConfig
+        exhibition?: StatusFlipConfig
+        raffle?: StatusFlipConfig
+        induction?: InductionStatusFlipConfig
+    }
+    /**
+     * Year label maintenance. The sync selects issues labelled with the
+     * current year *or* carrying no year label at all, so a sponsor issue
+     * created without one still syncs; `writeYearLabel` then stamps the
+     * missing label back on. That keeps every issue labelled by the time
+     * the year is archived, without the committee having to remember.
+     *
+     * A "year label" is any label of four digits — tier labels like
+     * `Platinum` sit alongside them and must not be mistaken for one.
+     * Label write-back rides on JIRA_WRITEBACK_ENABLED like every other
+     * write, so only production actually stamps labels.
+     */
+    writeYearLabel?: boolean
     /**
      * Raw Jira tier option value → `YearSponsors` category key (e.g.
      * `{ Coffee: 'coffeeCart' }`). Unmapped values still sync and display
@@ -314,11 +491,36 @@ export interface SponsorPortalJiraConfig {
 }
 
 /**
- * Sponsor self-service portal. When set, /portal routes come alive, sponsor
+ * Sponsor self-service portal. When set, /sponsor-portal routes come alive, sponsor
  * contacts can log in via the same magic-link flow as admins, and sponsor
- * records sync from Jira. Omit for forks without a sponsor portal — /portal
+ * records sync from Jira. Omit for forks without a sponsor portal — /sponsor-portal
  * returns 404 and the sync never runs.
  */
+/**
+ * One portal-driven status flip: the value to write once the sponsor has
+ * finished that workstream, and the values the portal may overwrite.
+ */
+export interface StatusFlipConfig {
+    /** Option id set when the sponsor completes this workstream. */
+    targetOptionId: string
+    /** Option ids meaning "still waiting on the sponsor" — the only values
+     * the portal will move off. */
+    pendingOptionIds: string[]
+}
+
+/**
+ * The induction flip is the one that isn't a simple "done → advance": the
+ * sponsor's own answer decides *which* value is correct, so it carries two
+ * targets instead of one.
+ */
+export interface InductionStatusFlipConfig {
+    /** Set when the sponsor names people needing loading dock access. */
+    requiredOptionId: string
+    /** Set when the sponsor has answered but named nobody. */
+    notRequiredOptionId: string
+    pendingOptionIds: string[]
+}
+
 export interface SponsorPortalConfig {
     /** Conference year the portal is collecting assets for, e.g. "2026". */
     year: string
@@ -387,13 +589,13 @@ export interface SpeakerPortalConfig {
 export interface SpeakerTrainingSessionConfig {
     id: string
     title: string
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
 }
 
 export interface SpeakerDinnerConfig {
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
     location?: string
 }
 
@@ -404,7 +606,7 @@ export interface SpeakerDinnerConfig {
  * types, matching `SpeakerTrainingSessionConfig.id`. Omit an entry to show
  * that item undated.
  */
-export type SpeakerChecklistDueDates = Record<string, DateTime>
+export type SpeakerChecklistDueDates = Record<string, Temporal.ZonedDateTime>
 
 export interface SpeakerPortalChecklistConfig {
     /** When each checklist item is due. Omit to show every item undated. */
@@ -440,6 +642,148 @@ export interface MeetTheExpertsConfig {
  * The fork's /conference/manifest.ts exports an object of this shape as
  * `conferenceManifest`.
  */
+/**
+ * Jira wiring for the public volunteer run sheet. Like the sponsor portal's
+ * config, every value here is fork-owned: the Jira site, the project, the
+ * custom field ids and the committee's label vocabulary all differ per fork,
+ * so none of it can live in core. Credentials are NOT here; they're host
+ * secrets (wrangler `JIRA_API_EMAIL` / `JIRA_API_TOKEN`).
+ */
+export interface RunsheetsJiraConfig {
+    /** Jira site, e.g. "https://dddperth.atlassian.net" */
+    baseUrl: string
+    /**
+     * JQL selecting the run sheet items to display. Written out in full
+     * rather than assembled from parts, because which issue type, time
+     * bracket or board convention marks "the run sheet" is a committee
+     * decision, not something core should presume.
+     */
+    jql: string
+    /** Custom field ids on the run sheet issue type. */
+    fields: {
+        /** Datetime field for when the item starts. */
+        startTime: string
+        /** Datetime field for when the item ends. */
+        endTime: string
+        /** Labels field naming the location(s) the item happens at. */
+        location: string
+        /** Labels field naming the volunteer team(s) responsible. */
+        team: string
+        /** URL field linking to the role instructions (a Confluence page here). */
+        roleInstructions: string
+    }
+}
+
+/**
+ * The public volunteer run sheet at /runsheets. Omit for forks without a
+ * volunteer Jira board — the route returns 404 then.
+ *
+ * The page is deliberately anonymous, so the label maps below are also the
+ * page's allowlist: the `$filter` path segment is only ever matched against
+ * these keys, and anything else is rejected rather than reaching the JQL.
+ * A label missing from these maps is still *displayed* (it falls back to the
+ * raw Jira label) — it just can't be filtered on.
+ */
+export interface RunsheetsConfig {
+    jira: RunsheetsJiraConfig
+    /** Jira "Volunteer Team" label -> display name, e.g. `'team-1': 'Team 1'`. */
+    teamLabels: Record<string, string>
+    /**
+     * Jira "Volunteer Team" label -> an emoji shown in place of the team's name
+     * in the run sheet's Related column, e.g. `'team-1': '1️⃣'`. The name stays
+     * its accessible label and hover text. Teams without one show their name.
+     */
+    teamIcons?: Record<string, string>
+    /** Jira "Location" label -> display name, e.g. `'loc-cygnet-room': 'Cygnet Room'`. */
+    locationLabels: Record<string, string>
+    /**
+     * Sessionize room name -> a `locationLabels` key, e.g.
+     * `'Cygnet room (Lv 2)': 'loc-cygnet-room'`. The run sheet lists the
+     * published agenda's talks alongside the Jira items, located by their
+     * Sessionize room; this map puts them under the same location names and
+     * filter as the Jira items. An unmapped room still displays (by its
+     * Sessionize name) but can't be filtered on.
+     */
+    sessionizeRoomLocations?: Record<string, string>
+    /**
+     * `locationLabels` keys a plenum session (one the whole conference
+     * attends) is held across. Sessionize files every plenum under its first
+     * room, which is rarely the whole story — a keynote usually fills the
+     * main room with its partition walls opened.
+     */
+    plenumLocations?: string[]
+    /**
+     * Jira "Volunteer Team" label marking a placeholder for agenda sessions.
+     * Those items are left off the page (the agenda itself fills the slots);
+     * their other teams and role instructions are carried onto the sessions
+     * they overlap. Internal only: not a `teamLabels` key, so it's never shown
+     * or offered as a filter.
+     */
+    sessionTeam?: string
+    /**
+     * The Sessionize *speaker* category holding pronouns, shown beside each
+     * speaker's name in the session modal. `withheldAnswers` are answers that
+     * decline to say (e.g. "I'd rather not answer"), which show as nothing.
+     */
+    speakerPronouns?: { category: string; withheldAnswers: string[] }
+    /** Bump-in run sheet at /runsheets/bump-in. Omit and that page returns 404. */
+    bumpIn?: RunsheetsBumpInConfig
+}
+
+/**
+ * The bump-in run sheet: the committee's own bump-in items from the
+ * volunteer board, plus one generated row per exhibiting sponsor read from
+ * the sponsors board, so exhibitor arrivals don't have to be re-typed as
+ * volunteer tickets.
+ *
+ * The page is as public as /runsheets, and a sponsor issue holds contact
+ * names, phone numbers, emails, the deal value (in the summary) and private
+ * links. `sponsors.fields` is therefore the allowlist: only these field ids
+ * are ever requested from Jira, so nothing else can reach the page even by
+ * mistake. Don't add a field here without checking it is safe to publish.
+ */
+export interface RunsheetsBumpInConfig {
+    /** JQL for the committee's bump-in items on the volunteer board. Same issue type and fields as `jira`. */
+    volunteerJql: string
+    sponsors: {
+        /** JQL selecting this year's sponsor issues. */
+        jql: string
+        fields: {
+            /** Text field — the public company name. Not the issue summary, which carries the deal value. */
+            companyName: string
+            /** Single-select — sponsorship level, as shown on the sponsors page. */
+            tier: string
+            /** Single-select — the sponsor's chosen bump-in slot. */
+            bumpInSlot: string
+            /** Multi-checkbox — under-stadium (ring road) drop-off, e.g. "For Bump In". */
+            underStadiumDropOff: string
+            /** Free text — trolley or forklift needs. */
+            trolley: string
+            /** Free text — loading dock assistance needs. */
+            loadingDockAssistance: string
+            /** Free text — venue porter assistance needs. */
+            porterAssistance: string
+            /** Single-select — the room a room sponsor exhibits in. */
+            exhibitorRoom?: string
+            /** Text — the exhibitor's space number on the floor map. */
+            exhibitorSpaceNumber?: string
+        }
+        /** The `underStadiumDropOff` option meaning "needed at bump-in". */
+        underStadiumBumpInOption: string
+        /**
+         * Bump-in slot option value -> when it runs and which volunteer team
+         * meets it. A slot missing here still shows, untimed, at the end.
+         * Times are ISO datetimes with offset.
+         */
+        slots: Record<string, { start: string; end: string; team: string }>
+        /**
+         * Raw Jira tier values that exhibit. A sponsor on one of these tiers
+         * with no slot chosen yet still gets a row, so the gap is visible.
+         */
+        exhibitingTiers: string[]
+    }
+}
+
 export interface ConferenceManifest {
     public: ConferenceConfigPublic
     socials: Socials
@@ -451,13 +795,29 @@ export interface ConferenceManifest {
     homepage?: HomepageContentSlots
     /** Mobile app config. Omit for forks without an app — /app returns 404 then. */
     mobileApp?: MobileApp
-    /** Sponsor portal config. Omit for forks without one — /portal returns 404 then. */
+    /** Public volunteer run sheet. Omit for forks without one — /runsheets returns 404 then. */
+    runsheets?: RunsheetsConfig
+    /** Sponsor portal config. Omit for forks without one — /sponsor-portal returns 404 then. */
     sponsorPortal?: SponsorPortalConfig
     /** Speaker portal config. Omit for forks without one — /speaker-portal returns 404 then. */
     speakerPortal?: SpeakerPortalConfig
     /** Meet-the-Experts time slots — shared by the speaker and sponsor
      * portals. Omit to hide the feature entirely. */
     meetTheExperts?: MeetTheExpertsConfig
+    /** Blog config. Optional — the blog works without it. */
+    blog?: BlogConfig
+}
+
+export interface BlogConfig {
+    /**
+     * Hostnames the blog used to be served from (e.g. a Medium custom domain
+     * like `blog.example.com`), now pointed at this Worker. A request for one
+     * of them is permanently redirected to this site's `/blog`: to the post
+     * whose `legacyPaths` frontmatter lists the requested path, or to the
+     * blog index otherwise. The host is read from `X-Forwarded-Host` /
+     * `Forwarded` first, so it still matches behind a CDN or proxy.
+     */
+    legacyHosts?: string[]
 }
 
 /**

@@ -1,31 +1,32 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import type { HeadersFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
-import { conferenceManifest } from '@conference/manifest'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
 import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { Hero } from '../components/hero/hero'
 import type { Route } from './+types/_layout._index'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     const heroSponsors = resolveSponsorsWithFallback(
+        getConferences(context),
         getConferenceState(context).conference.year,
         getConferenceState(context).conference.sponsors,
+        getConfig(context).useSponsorFixtures,
     )
 
     return data(
         {
-            currentDate: getDateTimeProvider(context).nowDate().toISO(),
+            currentDate: getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             conferenceDate: getConferenceState(context).conference.date,
             importantDates,
             heroSponsors,
@@ -44,7 +45,7 @@ export default function Index() {
 
     return (
         <Hero
-            currentDate={DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })}
+            currentDate={conferenceTime(currentDate)}
             conferenceDate={conferenceDate}
             importantDates={importantDates}
             sponsors={heroSponsors}

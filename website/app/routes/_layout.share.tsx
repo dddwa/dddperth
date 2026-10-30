@@ -8,7 +8,7 @@ import type { Route } from './+types/_layout.share'
 import { noIndexMeta } from '~/lib/seo'
 
 export function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year)
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     return {
         conferenceName: conferenceManifest.public.name,
         sharecastUrl: yearConfig.kind === 'conference' ? (yearConfig.sharecast?.url ?? null) : null,
@@ -239,7 +239,7 @@ function RegistrationShare({ sharecastUrl, registration }: { sharecastUrl: strin
 
 function ShareContainer({ children }: { children: React.ReactNode }) {
     return (
-        <styled.div mx={{ base: '5', md: 'auto' }} mt="[5vh]" maxW="[555px]">
+        <styled.div mx={{ base: '5', md: 'auto' }} mt="[5vh]" maxW="xl">
             {children}
         </styled.div>
     )

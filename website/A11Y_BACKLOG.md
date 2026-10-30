@@ -108,12 +108,12 @@ they are the only remaining failures in the suite. Everything else passes in bot
   wall of undifferentiated text to a screen reader user navigating by structure.
   **Suggested fix:** Fold into whatever ticket eventually gives `/blog` real styling.
 
-## Sponsor portal (`/portal/*`)
+## Sponsor portal (`/sponsor-portal/*`)
 
 Deprioritised per the audit's stated ordering (public pages → speaker/sponsor portal → admin), and not covered by
 the automated e2e suite in this pass.
 
-- **File:** `core/website/app/routes/portal.tsx`, `portal.profile.tsx`, `portal._index.tsx`
+- **File:** `core/website/app/routes/sponsor-portal.tsx`, `sponsor-portal.profile.tsx`, `sponsor-portal._index.tsx`
   **Description:** Not audited in this pass beyond a structural skim. Should get the same heading-order,
   landmark, and focus-visible review the public pages got here.
 

@@ -1,5 +1,5 @@
-import { DateTime } from 'luxon'
-import { SPEAKER_CHECKLIST_ITEMS, checklistDueDate, type ChecklistItemDefinition } from './checklist-items'
+import { conferenceTime, Temporal } from '~/lib/dates/temporal'
+import { SPEAKER_CHECKLIST_ITEMS, type ChecklistDueDates, type ChecklistItemDefinition } from './checklist-items'
 import type { SpeakerProfile } from '../services/speakers-store'
 
 /**
@@ -80,11 +80,11 @@ export type ChecklistUrgency = 'normal' | 'upcoming' | 'overdue'
  * otherwise or when there's no due date. Exported so urgency thresholds are
  * unit-testable without needing to inject a due date through
  * `speakerChecklist` (its items' due dates are fixed, in checklist-items.ts). */
-export function urgencyFor(dueDateIso: string | undefined, done: boolean, now: DateTime): ChecklistUrgency {
+export function urgencyFor(dueDateIso: string | undefined, done: boolean, now: Temporal.ZonedDateTime): ChecklistUrgency {
     if (done || !dueDateIso) return 'normal'
-    const due = DateTime.fromISO(dueDateIso)
-    if (due <= now.plus({ days: 1 })) return 'overdue'
-    if (due <= now.plus({ days: 7 })) return 'upcoming'
+    const due = conferenceTime(dueDateIso)
+    if (Temporal.ZonedDateTime.compare(due, now.add({ days: 1 })) <= 0) return 'overdue'
+    if (Temporal.ZonedDateTime.compare(due, now.add({ days: 7 })) <= 0) return 'upcoming'
     return 'normal'
 }
 
@@ -92,10 +92,10 @@ export function urgencyFor(dueDateIso: string | undefined, done: boolean, now: D
  * follow-up list, so it's obvious at a glance whether there's a week to go
  * or the deadline already passed. Rounds to the nearest whole day; null with
  * no due date. */
-export function dueDateRemainingLabel(dueDateIso: string | undefined, now: DateTime): string | null {
+export function dueDateRemainingLabel(dueDateIso: string | undefined, now: Temporal.ZonedDateTime): string | null {
     if (!dueDateIso) return null
-    const due = DateTime.fromISO(dueDateIso)
-    const days = Math.round(due.diff(now, 'days').days)
+    const due = conferenceTime(dueDateIso)
+    const days = Math.round(now.until(due, { largestUnit: 'day' }).total({ unit: 'day', relativeTo: now }))
     if (days === 0) return 'Due today'
     if (days > 0) return `${days} day${days === 1 ? '' : 's'} left`
     const overdueDays = Math.abs(days)
@@ -128,7 +128,7 @@ export interface SpeakerChecklistItem {
     key: ChecklistItemDefinition['key']
     label: string
     done: boolean
-    /** ISO 8601 — loaders can't hand DateTime instances across the wire. */
+    /** ISO 8601 — loaders can't hand Temporal.ZonedDateTime instances across the wire. */
     dueDateIso?: string
     urgency: ChecklistUrgency
     /** True once the due date has actually passed (not just "close to it" —
@@ -159,7 +159,8 @@ export function speakerChecklist(
     profile: SpeakerProfile | null,
     sessions: SpeakerSessionChecklistInput[],
     meetTheExpertsResponded: boolean,
-    now: DateTime = DateTime.now(),
+    now: Temporal.ZonedDateTime,
+    dueDates: ChecklistDueDates = {},
 ): SpeakerChecklistItem[] {
     const backup = isBackupSpeaker(sessions)
     return SPEAKER_CHECKLIST_ITEMS.filter((definition) => {
@@ -174,8 +175,8 @@ export function speakerChecklist(
             definition.key === 'meetTheExperts'
                 ? isMeetTheExpertsRegistrationComplete(meetTheExpertsResponded ? 1 : undefined)
                 : CHECKLIST_DONE_PREDICATES[definition.key](profile, sessions)
-        const dueDateIso = checklistDueDate(definition.key)?.toISO() ?? undefined
-        const isPastDue = Boolean(dueDateIso && DateTime.fromISO(dueDateIso) < now)
+        const dueDateIso = dueDates[definition.key]?.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) ?? undefined
+        const isPastDue = Boolean(dueDateIso && Temporal.ZonedDateTime.compare(conferenceTime(dueDateIso), now) < 0)
         return {
             key: definition.key,
             label: definition.label,
@@ -193,20 +194,20 @@ export function speakerChecklist(
 export interface SpeakerTrainingSessionInfo {
     id: string
     title: string
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
 }
 
 export interface SpeakerDinnerInfo {
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
     location?: string
 }
 
 export interface UpcomingRsvpedEvent {
     label: string
-    dateTime: DateTime
-    endDateTime: DateTime
+    dateTime: Temporal.ZonedDateTime
+    endDateTime: Temporal.ZonedDateTime
     location?: string
 }
 
@@ -216,7 +217,7 @@ export interface UpcomingRsvpedEvent {
 export function upcomingRsvpedEvents(
     profile: SpeakerProfile | null,
     config: { speakerTrainingSessions?: SpeakerTrainingSessionInfo[]; speakerDinner?: SpeakerDinnerInfo },
-    now: DateTime = DateTime.now(),
+    now: Temporal.ZonedDateTime,
 ): UpcomingRsvpedEvent[] {
     if (!profile) return []
 
@@ -245,8 +246,8 @@ export function upcomingRsvpedEvents(
         })
     }
 
-    const weekFromNow = now.plus({ days: 7 })
+    const weekFromNow = now.add({ days: 7 })
     return events
-        .filter((e) => e.dateTime >= now && e.dateTime <= weekFromNow)
-        .sort((a, b) => a.dateTime.toMillis() - b.dateTime.toMillis())
+        .filter((e) => Temporal.ZonedDateTime.compare(e.dateTime, now) >= 0 && Temporal.ZonedDateTime.compare(e.dateTime, weekFromNow) <= 0)
+        .sort((a, b) => a.dateTime.epochMilliseconds - b.dateTime.epochMilliseconds)
 }

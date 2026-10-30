@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from 'temporal-polyfill'
 import type { z } from 'zod'
 import type { gridSmartSchema } from './sessionize-schema.ts'
 
@@ -27,15 +27,46 @@ export interface Sponsor {
 }
 
 /**
- * Tiers rendered outside the headline platinum/gold/silver/bronze ladder —
- * sponsors who fund a specific thing rather than buying a tier.
+ * The headline tier ladder, in render order.
+ */
+export const MAJOR_SPONSOR_TIERS = ['platinum', 'gold', 'silver', 'bronze', 'digital'] as const
+
+/**
+ * Tiers rendered outside the headline ladder — sponsors who fund a specific
+ * thing rather than buying a tier — in render order, with the default heading
+ * each one gets.
  *
  * By default these all render together under one "Other Sponsors" heading.
  * A fork with enough of them to be worth separating can set
  * `features.separateOtherSponsorTiers` to give each its own heading, and
  * rename any of them via `public.sponsorTierLabels`.
  */
-export type MinorSponsorTier = 'community' | 'coffeeCart' | 'quietRoom' | 'venue' | 'prize' | 'keynotes'
+export const MINOR_SPONSOR_TIERS = [
+    { tier: 'community', defaultLabel: 'Community' },
+    { tier: 'coffeeCart', defaultLabel: 'Coffee Cart' },
+    { tier: 'quietRoom', defaultLabel: 'Quiet Room' },
+    { tier: 'venue', defaultLabel: 'Venue' },
+    { tier: 'prize', defaultLabel: 'Prize' },
+    { tier: 'keynotes', defaultLabel: 'Keynotes' },
+    { tier: 'inKind', defaultLabel: 'In Kind' },
+] as const
+
+export type MajorSponsorTier = (typeof MAJOR_SPONSOR_TIERS)[number]
+export type MinorSponsorTier = (typeof MINOR_SPONSOR_TIERS)[number]['tier']
+
+/**
+ * Every tier key a year config can carry, in render order. `room` is last
+ * because it's the one tier whose entries need an extra field.
+ *
+ * Sponsor tooling derives its tier list from this rather than keeping its own
+ * copy — three hand-maintained copies had already drifted from the type
+ * (missing `venue`/`prize`, carrying a `lunch` tier that never existed).
+ */
+export const SPONSOR_TIERS = [
+    ...MAJOR_SPONSOR_TIERS,
+    ...MINOR_SPONSOR_TIERS.map(({ tier }) => tier),
+    'room',
+] as const satisfies readonly (keyof YearSponsors)[]
 
 export interface YearSponsors {
     platinum?: Sponsor[]
@@ -52,6 +83,8 @@ export interface YearSponsors {
     prize?: Sponsor[]
 
     keynotes?: Sponsor[]
+    /** Goods or services provided instead of cash (lighting, venue hire, AV). */
+    inKind?: Sponsor[]
     room?: Array<Sponsor & { roomName: string }>
 }
 
@@ -88,8 +121,8 @@ export interface SessionData {
 }
 
 export interface DateTimeRange {
-    opens: DateTime
-    closes: DateTime
+    opens: Temporal.ZonedDateTime
+    closes: Temporal.ZonedDateTime
 }
 
 export interface TicketRelease {
@@ -150,15 +183,21 @@ export interface ConferenceYear {
         releaseTitlePrefixes?: string[]
     }
 
-    conferenceDate: DateTime | undefined
-    agendaPublishedDateTime: DateTime | undefined
+    conferenceDate: Temporal.ZonedDateTime | undefined
+    agendaPublishedDateTime: Temporal.ZonedDateTime | undefined
     cfpDates: DateTimeRange | undefined
     ticketReleases: Array<TicketRelease>
     talkVotingDates: DateTimeRange | undefined
-    feedbackOpenUntilDateTime: DateTime | undefined
+    feedbackOpenUntilDateTime: Temporal.ZonedDateTime | undefined
     venue: ConferenceVenue | undefined
 
     sessions: SessionizeConferenceSessions | SessionData | undefined
+
+    /**
+     * YouTube video ids of talk recordings, keyed by session id. The talk
+     * detail page embeds the recording when its session has an entry.
+     */
+    recordings?: Record<string, string>
 
     sponsors: YearSponsors
 

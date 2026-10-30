@@ -6,7 +6,7 @@
  * because of the surrounding selector); we reference it the same way.
  */
 body {
-    background-color: var(--colors-surface\.body);
+    background-color: var(--colors-surface-body);
 }
 
 .sideBySideImages {

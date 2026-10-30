@@ -1,7 +1,20 @@
+import dateRules from './eslint-rules/date-time.mjs'
 import nxEslintPlugin from '@nx/eslint-plugin'
 import ts from 'typescript-eslint'
 
 export default [
+    {
+        // Conference configuration uses the same Temporal contract as the application.
+        files: ['conference-stub/config/**/*.ts'],
+        plugins: { dates: dateRules },
+        languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+        rules: {
+            'dates/use-conference-date-time': ['error', { deferConstruction: true }],
+            'dates/use-date-time-provider': 'error',
+            'dates/no-native-date-calendar': 'error',
+            'dates/no-temporal-coercion': 'error',
+        },
+    },
     {
         ignores: [
             '**/dist',

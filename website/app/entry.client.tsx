@@ -1,12 +1,10 @@
-import { HydratedRouter } from 'react-router/dom'
-import { startTransition, StrictMode } from 'react'
-import { hydrateRoot } from 'react-dom/client'
+import { initializeTemporal } from '~/lib/dates/temporal'
 
-startTransition(() => {
-    hydrateRoot(
-        document,
-        <StrictMode>
-            <HydratedRouter />
-        </StrictMode>,
-    )
+async function start() {
+    await initializeTemporal()
+    await import('./hydrate.client')
+}
+
+void start().catch((error: unknown) => {
+    console.error('Unable to start the application', error)
 })

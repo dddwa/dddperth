@@ -1,12 +1,12 @@
+import { conferenceDayStart } from '~/lib/dates/temporal'
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
-import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
-import { conferenceManifest } from '@conference/manifest'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import DGreen from '~/images/hero/d-green.svg?react'
 import DPink from '~/images/hero/d-pink.svg?react'
 import DPurple from '~/images/hero/d-purple.svg?react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
 
 // Reference viewport width that the parallax distances were tuned for.
@@ -72,13 +72,21 @@ export function HomepageHeroPanel({
                         width="full"
                     >
                         <styled.span>
-                            {DateTime.fromISO(conferenceDate, {
-                                zone: conferenceManifest.public.timezone,
-                            }).toLocaleString(DateTime.DATE_HUGE, {
-                                locale: 'en-AU',
-                            })}
+                            {conferenceDayStart(conferenceDate).toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </styled.span>
-                        {venue ? <styled.span>{venue.name}</styled.span> : null}
+                        {venue ? (
+                            <AppLink
+                                to="/venue"
+                                unstyled
+                                color="inherit"
+                                textDecoration="underline"
+                                textDecorationThickness="1px"
+                                textUnderlineOffset="0.2em"
+                                _hover={{ color: 'text.primary' }}
+                            >
+                                {venue.name}
+                            </AppLink>
+                        ) : null}
                     </styled.p>
                 ) : null}
                 <styled.h1
@@ -94,7 +102,7 @@ export function HomepageHeroPanel({
                     A one day, fully inclusive, approachable and affordable tech conference for everyone.
                 </styled.h1>
             </HeaderContainer>
-            <Box width="full" position="relative" maxHeight={{ base: '[140px]', md: '[200px]', lg: '[260px]', xl: '[420px]' }}>
+            <Box width="full" position="relative" maxHeight={{ base: '35', md: '50', lg: '65', xl: '105' }}>
                 {/* Sizing element: the green D establishes the container height.
                     Other Ds and the gradient overlay are absolutely positioned over it. */}
                 <Box width="[38%]" ml="[4%]" visibility="hidden" aria-hidden="true">
@@ -108,7 +116,7 @@ export function HomepageHeroPanel({
                     gradientFrom="transparent"
                     gradientTo="gradient.hero-end"
                     width="full"
-                    height="[60%]"
+                    height="3/5"
                 ></Box>
                 {/*
                  * Each parallax D carries a vertical fade mask + opacity so

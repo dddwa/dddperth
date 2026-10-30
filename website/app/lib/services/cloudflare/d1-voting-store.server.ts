@@ -50,6 +50,7 @@ export function createD1VotingStore(db: D1Database): VotingStore {
         },
 
         async createVotingSession(session) {
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             const now = new Date().toISOString()
             await d1CreateVotingSession(db, {
                 session_id: session.sessionId,
@@ -197,6 +198,7 @@ async function startD1ValidationRun(
     // Any run still marked running has lost its driver — canStartValidation
     // vetoed genuinely-active runs before we got here — so record it honestly
     // rather than leaving a permanent 'running' row.
+    // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
     const now = new Date().toISOString()
     await db
         .prepare(`UPDATE voting_validation_runs SET status = 'incomplete', last_updated_at = ? WHERE status = 'running'`)

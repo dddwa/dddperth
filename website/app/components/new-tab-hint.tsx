@@ -59,7 +59,7 @@ export function NewTabArrow() {
         <styled.span
             aria-hidden="true"
             fontSize="[0.85em]"
-            lineHeight="[1]"
+            lineHeight="none"
             whiteSpace="nowrap"
             // Prose links are underlined, and the underline would otherwise run
             // under the gap and the glyph, making the link look like it has a

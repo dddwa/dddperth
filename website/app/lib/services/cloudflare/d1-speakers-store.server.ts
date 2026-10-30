@@ -416,13 +416,13 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                     .all<SpeakerProfileRow>(),
                 db
                     .prepare(
-                        `SELECT DISTINCT sd.sessionize_session_id, sd.questions_preference
+                        `SELECT DISTINCT sd.sessionize_session_id, sd.questions_preference, sd.opt_out_of_recording
                          FROM session_details sd
                          JOIN speaker_sessions ss ON ss.sessionize_session_id = sd.sessionize_session_id
                          JOIN speakers s ON s.sessionize_id = ss.sessionize_speaker_id WHERE s.year = ?`,
                     )
                     .bind(year)
-                    .all<{ sessionize_session_id: string; questions_preference: string | null }>(),
+                    .all<{ sessionize_session_id: string; questions_preference: string | null; opt_out_of_recording: number }>(),
                 db
                     .prepare(
                         `SELECT m.registrant_id FROM meet_the_experts_registrations m
@@ -464,6 +464,9 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
             const sessionDetailsCompleteById = new Map(
                 (sessionDetailsRows.results ?? []).map((r) => [r.sessionize_session_id, Boolean(r.questions_preference)]),
             )
+            const optedOutOfRecordingIds = new Set(
+                (sessionDetailsRows.results ?? []).filter((r) => r.opt_out_of_recording === 1).map((r) => r.sessionize_session_id),
+            )
             const meetTheExpertsRespondedBySpeaker = new Set((meetTheExpertsRows.results ?? []).map((r) => r.registrant_id))
             const backupAcceptedSessionIds = new Set((backupAcceptanceRows.results ?? []).map((r) => r.sessionize_session_id))
 
@@ -483,6 +486,9 @@ export function createD1SpeakersStore(args: { db: D1Database; config: AppConfig 
                     meetTheExpertsResponded: meetTheExpertsRespondedBySpeaker.has(row.sessionize_id),
                     sessionBackupAccepted: Object.fromEntries(
                         speakerSessions.map((s) => [s.sessionizeSessionId, backupAcceptedSessionIds.has(s.sessionizeSessionId)]),
+                    ),
+                    sessionOptedOutOfRecording: Object.fromEntries(
+                        speakerSessions.map((s) => [s.sessionizeSessionId, optedOutOfRecordingIds.has(s.sessionizeSessionId)]),
                     ),
                 }
             })

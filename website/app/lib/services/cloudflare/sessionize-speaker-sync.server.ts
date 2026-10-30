@@ -31,6 +31,7 @@ export function createSessionizeSpeakerSyncService(args: { config: AppConfig; sp
             }
 
             const latest = await speakers.getLatestSyncRun()
+            // eslint-disable-next-line dates/use-date-time-provider -- Operational expiry, locks, and persisted audit records must follow real time.
             if (latest?.status === 'running' && latest.startedAt > Math.floor(Date.now() / 1000) - STALE_RUN_SECONDS) {
                 return { ok: false, reason: 'already-running' }
             }

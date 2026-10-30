@@ -1,6 +1,5 @@
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { Link } from 'react-router'
-import { conferenceManifest } from '@conference/manifest'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 
 interface AdminOverlayProps {
@@ -12,9 +11,9 @@ interface AdminOverlayProps {
 
 export function AdminOverlay({ user, overrideDate, currentDate, timezone }: AdminOverlayProps) {
     const overrideDateTime = overrideDate
-        ? DateTime.fromISO(overrideDate, { zone: conferenceManifest.public.timezone })
+        ? conferenceTime(overrideDate)
         : null
-    const currentDateTime = DateTime.fromISO(currentDate, { zone: conferenceManifest.public.timezone })
+    const currentDateTime = conferenceTime(currentDate)
 
     return (
         <Box
@@ -41,16 +40,12 @@ export function AdminOverlay({ user, overrideDate, currentDate, timezone }: Admi
                     {overrideDateTime ? (
                         <Box px="3" py="1" bg="status.warning.bg" borderRadius="md" fontWeight="medium">
                             Date Override Active:{' '}
-                            {overrideDateTime.toLocaleString(DateTime.DATETIME_SHORT, {
-                                locale: 'en-AU',
-                            })}
+                            {overrideDateTime.toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </Box>
                     ) : (
                         <Box px="3" py="1" bg="gray.7" borderRadius="md">
                             System Time:{' '}
-                            {currentDateTime.toLocaleString(DateTime.DATETIME_SHORT, {
-                                locale: 'en-AU',
-                            })}
+                            {currentDateTime.toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         </Box>
                     )}
 

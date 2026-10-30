@@ -1,5 +1,4 @@
-import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
+import { conferenceTime } from '~/lib/dates/temporal'
 import { useState } from 'react'
 import { useFetcher, useLoaderData } from 'react-router'
 import { z } from 'zod'
@@ -42,7 +41,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     }
 
     const year = runYear ?? getConferenceState(context).conference.year
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })
@@ -418,18 +417,12 @@ export default function VotingValidationStats() {
                             <>
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Started:{' '}
-                                    {DateTime.fromISO(runDetails.startedAt, {
-                                        zone: conferenceManifest.public.timezone,
-                                    }).toLocaleString(DateTime.DATETIME_SHORT, {
-                                        locale: 'en-AU',
-                                    })}
+                                    {conferenceTime(runDetails.startedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                 </styled.p>
                                 {runDetails.completedAt && (
                                     <styled.p fontSize="sm" color="admin.600" mb="1">
                                         Completed:{' '}
-                                        {DateTime.fromISO(runDetails.completedAt, {
-                                            zone: conferenceManifest.public.timezone,
-                                        }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}
+                                        {conferenceTime(runDetails.completedAt).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                     </styled.p>
                                 )}
                                 <styled.p fontSize="sm" color="admin.600">
@@ -527,7 +520,7 @@ export default function VotingValidationStats() {
                                 </Button>
                             </Flex>
                             {uploadFetcher.state === 'idle' && uploadFetcher.data && !uploadFetcher.data.success ? (
-                                <styled.p fontSize="sm" color="status.danger.fg" mt="2" maxW="[400px]">
+                                <styled.p fontSize="sm" color="status.danger.fg" mt="2" maxW="96">
                                     {uploadFetcher.data.error}
                                 </styled.p>
                             ) : null}
@@ -561,7 +554,7 @@ export default function VotingValidationStats() {
                         <styled.table width="full" fontSize="sm">
                             <thead>
                                 <tr>
-                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[60px]">
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="16">
                                         Rank
                                     </styled.th>
                                     <styled.th textAlign="left" p="2" border="admin-emphasis">
@@ -570,16 +563,16 @@ export default function VotingValidationStats() {
                                     <styled.th textAlign="left" p="2" border="admin-emphasis">
                                         Speaker(s)
                                     </styled.th>
-                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="20">
                                         Wins
                                     </styled.th>
-                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="20">
                                         Losses
                                     </styled.th>
-                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="20">
                                         Total
                                     </styled.th>
-                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="[80px]">
+                                    <styled.th textAlign="center" p="2" border="admin-emphasis" width="20">
                                         Win %
                                     </styled.th>
                                 </tr>
@@ -618,7 +611,7 @@ export default function VotingValidationStats() {
                                                 >
                                                     #{result.rank}
                                                 </styled.td>
-                                                <styled.td p="2" border="admin-subtle" maxW="[400px]">
+                                                <styled.td p="2" border="admin-subtle" maxW="96">
                                                     <styled.div
                                                         overflow="hidden"
                                                         textOverflow="ellipsis"
@@ -729,7 +722,7 @@ export default function VotingValidationStats() {
                         </styled.h3>
 
                         <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="4">
-                            <Box flex="1" minW="[150px]">
+                            <Box flex="1" minW="36">
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Mean Appearances
                                 </styled.p>
@@ -738,7 +731,7 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="[150px]">
+                            <Box flex="1" minW="36">
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Standard Deviation
                                 </styled.p>
@@ -747,7 +740,7 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="[150px]">
+                            <Box flex="1" minW="36">
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Gini Coefficient
                                 </styled.p>
@@ -765,7 +758,7 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="[150px]">
+                            <Box flex="1" minW="36">
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     CV (Variation)
                                 </styled.p>
@@ -774,7 +767,7 @@ export default function VotingValidationStats() {
                                 </styled.p>
                             </Box>
 
-                            <Box flex="1" minW="[150px]">
+                            <Box flex="1" minW="36">
                                 <styled.p fontSize="sm" color="admin.600" mb="1">
                                     Distribution
                                 </styled.p>
@@ -801,7 +794,7 @@ export default function VotingValidationStats() {
                 )}
 
                 <Flex gap="4" direction={{ base: 'column', sm: 'row' }} flexWrap="wrap" mb="6">
-                    <Box flex="1" minW="[120px]">
+                    <Box flex="1" minW="32">
                         <styled.p fontSize="sm" color="admin.600" mb="1">
                             Talks with Votes
                         </styled.p>
@@ -810,7 +803,7 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="[120px]">
+                    <Box flex="1" minW="32">
                         <styled.p fontSize="sm" color="admin.600" mb="1">
                             Total Votes
                         </styled.p>
@@ -819,7 +812,7 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="[120px]">
+                    <Box flex="1" minW="32">
                         <styled.p fontSize="sm" color="admin.600" mb="1">
                             Times Seen (Avg)
                         </styled.p>
@@ -828,7 +821,7 @@ export default function VotingValidationStats() {
                         </styled.p>
                     </Box>
 
-                    <Box flex="1" minW="[120px]">
+                    <Box flex="1" minW="32">
                         <styled.p fontSize="sm" color="admin.600" mb="1">
                             Range (Min - Max)
                         </styled.p>
@@ -893,7 +886,7 @@ export default function VotingValidationStats() {
                                 const stats = getStatsForVersion(talk)
                                 return (
                                     <tr key={talk.talkId}>
-                                        <styled.td p="2" border="admin-subtle" maxW="[300px]">
+                                        <styled.td p="2" border="admin-subtle" maxW="72">
                                             <styled.div
                                                 overflow="hidden"
                                                 textOverflow="ellipsis"

@@ -1,6 +1,8 @@
+import { initializeTemporal } from '../app/lib/dates/temporal'
 import { createRequestHandler } from 'react-router'
 import type { CloudflareEnv } from '../app/remix-app-load-context'
 import { getLoadContext } from '../app/entry.server'
+import { getConferenceLegacyBlogRedirect } from '../app/lib/legacy-blog-redirect.server'
 import { buildAppConfigFromEnv } from '../app/lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from '../app/lib/services/cloudflare/build-services.server'
 
@@ -8,6 +10,7 @@ const requestHandler = createRequestHandler(() => import('virtual:react-router/s
 
 export default {
     async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
+        await initializeTemporal()
         // Dev-only: point every Sessionize request at the committed fixtures.
         // `import.meta.env.MODE` is statically replaced with `"production"`
         // in a production build, so this and the dynamic import are removed
@@ -22,6 +25,11 @@ export default {
             const fixtureBaseUrl = getFixtureBaseUrl(env as unknown as Record<string, unknown>)
             if (fixtureBaseUrl) installSessionizeFixtureFetch(fixtureBaseUrl)
         }
+
+        // Before anything path-based: on an old blog host, every path —
+        // including `/` and trailing-slash ones — belongs to the old blog.
+        const legacyBlogRedirect = getConferenceLegacyBlogRedirect(request)
+        if (legacyBlogRedirect) return legacyBlogRedirect
 
         const url = new URL(request.url)
 
@@ -67,6 +75,7 @@ export default {
     // secrets; speaker sync no-ops without a manifest entry or a configured
     // Sessionize endpoint for that year.
     async scheduled(_controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext): Promise<void> {
+        await initializeTemporal()
         const config = buildAppConfigFromEnv(env)
         const services = buildCloudflareServices(config, env)
 
@@ -74,7 +83,7 @@ export default {
             ctx.waitUntil(
                 services.sponsorSync
                     .syncNow('cron')
-                    .then(() => services.sponsorSync.retryPendingWritebacks())
+                    .then(() => services.sponsorSync.retryPendingStatusFlips())
                     .catch((error) => console.error('Scheduled sponsor sync failed:', error)),
             )
         } else {

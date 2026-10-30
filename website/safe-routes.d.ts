@@ -18,6 +18,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin._index.js').SearchParams>,
     },
+    "/admin/agenda-shortlist/:year?": {
+      params: {'year'?: string | number},
+      query: ExportedQuery<import('app/routes/admin.agenda-shortlist.($year).js').SearchParams>,
+    },
     "/admin/content": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.content.js').SearchParams>,
@@ -26,9 +30,25 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.dashboard.js').SearchParams>,
     },
+    "/admin/feedback": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.feedback.js').SearchParams>,
+    },
+    "/admin/feedback/export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.feedback_.export.js').SearchParams>,
+    },
     "/admin/settings": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.settings.js').SearchParams>,
+    },
+    "/admin/settings/speakers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.settings_.speakers.js').SearchParams>,
+    },
+    "/admin/settings/volunteers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.settings_.volunteers.js').SearchParams>,
     },
     "/admin/speakers": {
       params: never,
@@ -42,6 +62,10 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers.experts.js').SearchParams>,
     },
+    "/admin/speakers/experts/save": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.speakers.experts_.save.js').SearchParams>,
+    },
     "/admin/speakers/export": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.speakers.export.js').SearchParams>,
@@ -49,6 +73,26 @@ declare module "safe-routes" {
     "/admin/sponsors": {
       params: never,
       query: ExportedQuery<import('app/routes/admin.sponsors.js').SearchParams>,
+    },
+    "/admin/sponsors/exhibitor-export": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors.exhibitor-export.js').SearchParams>,
+    },
+    "/admin/sponsors/feedback": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors_.feedback.js').SearchParams>,
+    },
+    "/admin/sponsors/follow-up": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.sponsors_.follow-up.js').SearchParams>,
+    },
+    "/admin/volunteers": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers.js').SearchParams>,
+    },
+    "/admin/volunteers/save": {
+      params: never,
+      query: ExportedQuery<import('app/routes/admin.volunteers_.save.js').SearchParams>,
     },
     "/admin/voting": {
       params: never,
@@ -66,13 +110,37 @@ declare module "safe-routes" {
       params: {'runId': string | number},
       query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId.js').SearchParams>,
     },
+    "/admin/voting/agenda/:runId/save": {
+      params: {'runId': string | number},
+      query: ExportedQuery<import('app/routes/admin.voting_.agenda.$runId_.save.js').SearchParams>,
+    },
     "/agenda/:year?": {
       params: {'year'?: string | number},
       query: ExportedQuery<import('app/routes/_layout.agenda.($year).js').SearchParams>,
     },
-    "/agenda/:year/talk/:sessionId": {
-      params: {'year': string | number; 'sessionId': string | number},
-      query: ExportedQuery<import('app/routes/_layout.agenda.$year.talk.$sessionId.js').SearchParams>,
+    "/agenda/:year?/talk/:sessionId": {
+      params: {'year'?: string | number; 'sessionId': string | number},
+      query: ExportedQuery<import('app/routes/_layout.agenda.($year).talk.$sessionId.js').SearchParams>,
+    },
+    "/agenda/my": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.agenda.my.js').SearchParams>,
+    },
+    "/agenda/my.ics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/agenda.my[.ics].js').SearchParams>,
+    },
+    "/api/agenda/shortlist": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.agenda.shortlist.js').SearchParams>,
+    },
+    "/api/feedback/reviewed": {
+      params: never,
+      query: ExportedQuery<import('app/routes/api.feedback.reviewed.js').SearchParams>,
+    },
+    "/api/runsheets/session/:sessionId": {
+      params: {'sessionId': string | number},
+      query: ExportedQuery<import('app/routes/api.runsheets.session.$sessionId.js').SearchParams>,
     },
     "/api/theme": {
       params: never,
@@ -142,21 +210,25 @@ declare module "safe-routes" {
       params: never,
       query: ExportedQuery<import('app/routes/blog.rss[.xml].js').SearchParams>,
     },
-    "/portal": {
+    "/feedback": {
       params: never,
-      query: ExportedQuery<import('app/routes/portal._index.js').SearchParams>,
+      query: ExportedQuery<import('app/routes/_layout.feedback.js').SearchParams>,
     },
-    "/portal/logo/:issueKey": {
-      params: {'issueKey': string | number},
-      query: ExportedQuery<import('app/routes/portal.logo.$issueKey.js').SearchParams>,
-    },
-    "/portal/profile": {
-      params: never,
-      query: ExportedQuery<import('app/routes/portal.profile.js').SearchParams>,
+    "/portal/*": {
+      params: {'*': string | number},
+      query: ExportedQuery<import('app/routes/portal.$.js').SearchParams>,
     },
     "/robots.txt": {
       params: never,
       query: ExportedQuery<import('app/routes/[robots.txt].js').SearchParams>,
+    },
+    "/runsheets/:filter?": {
+      params: {'filter'?: string | number},
+      query: ExportedQuery<import('app/routes/_layout.runsheets.($filter).js').SearchParams>,
+    },
+    "/runsheets/bump-in": {
+      params: never,
+      query: ExportedQuery<import('app/routes/_layout.runsheets.bump-in.js').SearchParams>,
     },
     "/share": {
       params: never,
@@ -169,6 +241,26 @@ declare module "safe-routes" {
     "/speaker-portal": {
       params: never,
       query: ExportedQuery<import('app/routes/speaker-portal._index.js').SearchParams>,
+    },
+    "/sponsor-portal": {
+      params: never,
+      query: ExportedQuery<import('app/routes/sponsor-portal._index.js').SearchParams>,
+    },
+    "/sponsor-portal/feedback": {
+      params: never,
+      query: ExportedQuery<import('app/routes/sponsor-portal.feedback.js').SearchParams>,
+    },
+    "/sponsor-portal/logistics": {
+      params: never,
+      query: ExportedQuery<import('app/routes/sponsor-portal.logistics.js').SearchParams>,
+    },
+    "/sponsor-portal/logo/:issueKey": {
+      params: {'issueKey': string | number},
+      query: ExportedQuery<import('app/routes/sponsor-portal.logo.$issueKey.js').SearchParams>,
+    },
+    "/sponsor-portal/profile": {
+      params: never,
+      query: ExportedQuery<import('app/routes/sponsor-portal.profile.js').SearchParams>,
     },
     "/sponsors/:year?": {
       params: {'year'?: string | number},
@@ -189,17 +281,27 @@ declare module "safe-routes" {
 
   export type RouteId =
             | 'root'
+            | 'routes/api.runsheets.session.$sessionId'
+            | 'routes/api.feedback.reviewed'
             | 'routes/api.tito-registration'
+            | 'routes/api.agenda.shortlist'
             | 'routes/app-agenda-sessions'
             | 'routes/app-agenda-speakers'
             | 'routes/auth.verify.$token'
             | 'routes/app-announcements'
             | 'routes/api.voting.batch'
+            | 'routes/agenda.my[.ics]'
             | 'routes/api.voting.vote'
             | 'routes/app-agenda-grid'
             | 'routes/blog.rss[.xml]'
             | 'routes/speaker-portal'
             | 'routes/speaker-portal._index'
+            | 'routes/sponsor-portal'
+            | 'routes/sponsor-portal.logo.$issueKey'
+            | 'routes/sponsor-portal.logistics'
+            | 'routes/sponsor-portal.feedback'
+            | 'routes/sponsor-portal.profile'
+            | 'routes/sponsor-portal._index'
             | 'routes/app-content.$'
             | 'routes/sitemap[.xml]'
             | 'routes/[robots.txt]'
@@ -207,33 +309,46 @@ declare module "safe-routes" {
             | 'routes/app-config'
             | 'routes/auth.login'
             | 'routes/api.theme'
+            | 'routes/portal.$'
             | 'routes/_layout'
-            | 'routes/_layout.agenda.$year.talk.$sessionId'
+            | 'routes/_layout.runsheets.($filter)'
+            | 'routes/_layout.runsheets.bump-in'
             | 'routes/_layout.sponsors.($year)'
             | 'routes/_layout.agenda.($year)'
+            | 'routes/_layout.agenda.($year).talk.$sessionId'
             | 'routes/_layout.blog._index'
             | 'routes/_layout.blog.$slug'
+            | 'routes/_layout.agenda.my'
+            | 'routes/_layout.feedback'
             | 'routes/_layout._index'
             | 'routes/_layout.voting'
             | 'routes/_layout.share'
             | 'routes/_layout.app'
             | 'routes/_layout.$'
-            | 'routes/portal'
-            | 'routes/portal.logo.$issueKey'
-            | 'routes/portal.profile'
-            | 'routes/portal._index'
             | 'routes/admin'
             | 'routes/admin.voting-validation.stats.$runId'
             | 'routes/admin.voting-validation.stats.$runId.download'
+            | 'routes/admin.voting_.agenda.$runId_.save'
+            | 'routes/admin.agenda-shortlist.($year)'
             | 'routes/admin.voting_.agenda.$runId'
+            | 'routes/admin.settings_.volunteers'
+            | 'routes/admin.sponsors_.follow-up'
+            | 'routes/admin.settings_.speakers'
+            | 'routes/admin.sponsors_.feedback'
+            | 'routes/admin.feedback_.export'
+            | 'routes/admin.volunteers_.save'
+            | 'routes/admin.volunteers'
             | 'routes/admin.dashboard'
+            | 'routes/admin.feedback'
             | 'routes/admin.settings'
             | 'routes/admin.speakers'
             | 'routes/admin.speakers.$sessionizeId'
+            | 'routes/admin.speakers.experts_.save'
             | 'routes/admin.speakers.experts'
             | 'routes/admin.speakers._index'
             | 'routes/admin.speakers.export'
             | 'routes/admin.sponsors'
+            | 'routes/admin.sponsors.exhibitor-export'
             | 'routes/admin.content'
             | 'routes/admin._index'
             | 'routes/admin.voting';

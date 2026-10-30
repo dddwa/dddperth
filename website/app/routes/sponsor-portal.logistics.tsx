@@ -1,0 +1,558 @@
+import { conferenceManifest } from '@conference/manifest'
+import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
+import { AdminCard } from '~/components/admin-card'
+import { FieldError, fieldLabelClass, inputClass, PrimaryButton, textareaClass } from '~/components/portal-form'
+import { PortalSavedBanner } from '~/components/portal-saved-banner'
+import { isMeetTheExpertsOffered } from '~/lib/admin-settings/speakers.server'
+import { requireSponsorContact } from '~/lib/auth.server'
+import { parseFormData } from '~/lib/forms/parse-form.server'
+import {
+    BUMP_IN_SLOTS,
+    BUMP_OUT_WINDOWS,
+    filterByVisibility,
+    logisticsSchema,
+    logisticsVisibility,
+    LOGISTICS_KEYS,
+    PARKING_OPTIONS,
+    RAFFLE_LOCATIONS,
+    SCREEN_OPTIONS,
+    optionsIncludingStored,
+    prefilledLogistics,
+    readSubmittedLogistics,
+    visibleLogisticsKeys,
+    type LogisticsFields,
+} from '~/lib/sponsors/logistics'
+import { JiraFieldRejectedError } from '~/lib/sponsors/jira-client.server'
+import { logSponsorPortalEvent } from '~/lib/sponsors/log.server'
+import { nextIncompleteSection, sponsorProgress } from '~/lib/sponsors/progress'
+import { getServices } from '~/remix-app-load-context'
+import { Box, Flex, Grid, styled } from '~/styled-system/jsx'
+import type { Route } from './+types/sponsor-portal.logistics'
+
+/** Maps the sponsor's raw Jira tier through the manifest, so gating keys off
+ * the stable category (`platinum`) rather than the Jira option label. */
+function mappedTier(rawTier: string): string | undefined {
+    const tierMap = conferenceManifest.sponsorPortal?.jira.tierMap ?? {}
+    return tierMap[rawTier]
+}
+
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const { sponsor } = await requireSponsorContact(request, context)
+    const services = getServices(context)
+    const profile = await services.sponsors.getProfile(sponsor.issueKey)
+    const meetTheExpertsRegistration = await services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey)
+
+    const visibility = logisticsVisibility(mappedTier(sponsor.tier))
+    const sections = sponsorProgress({
+        profile,
+        sponsor,
+        visibility,
+        meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
+        meetTheExpertsOffered: await isMeetTheExpertsOffered(context),
+    })
+
+    return {
+        tier: sponsor.tier,
+        visibility,
+        // Display-only: nothing here is written back to D1 until the sponsor
+        // saves, so an unvisited form leaves both sides untouched.
+        logistics: prefilledLogistics({ profile, jiraLogistics: sponsor.jiraLogistics }),
+        nextSection: nextIncompleteSection(sections) ?? null,
+    }
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
+    const { user, sponsor } = await requireSponsorContact(request, context)
+    const services = getServices(context)
+
+    const formData = await request.formData()
+
+    // Collapses the checkbox groups and captures which fields the sponsor
+    // submitted — necessarily *before* the schema runs, which erases the
+    // difference between a cleared field and an absent one. See
+    // `readSubmittedLogistics` for why both halves matter.
+    const visibility = logisticsVisibility(mappedTier(sponsor.tier))
+    const submittedKeys = readSubmittedLogistics(formData)
+
+    const parsed = parseFormData(logisticsSchema, formData)
+    if (!parsed.ok) {
+        // Answered to the sponsor, not thrown, so nothing else would record it.
+        logSponsorPortalEvent({
+            event: 'portal.save_rejected',
+            issueKey: sponsor.issueKey,
+            form: 'logistics',
+            fields: Object.keys(parsed.fieldErrors),
+        })
+        return data({ fieldErrors: parsed.fieldErrors }, { status: 400 })
+    }
+
+    // Re-derive visibility server-side: a tier change (or a hand-crafted
+    // POST) must not write exhibition answers for a sponsor without a booth.
+    const visible = filterByVisibility(parsed.data, visibility)
+
+    const logistics: Record<string, string> = {}
+    for (const key of LOGISTICS_KEYS) {
+        const value = visible[key]
+        if (typeof value === 'string' && value !== '') logistics[key] = value
+    }
+
+    // Same server-side re-derivation for the submitted set: a crafted POST
+    // naming a hidden section's field must not clear it in Jira either.
+    const seeable = visibleLogisticsKeys(visibility)
+    const visibleSubmittedKeys = new Set([...submittedKeys].filter((key) => seeable.has(key)))
+
+    // Jira first: if it rejects the save, nothing is written to D1, so the
+    // sponsor sees a real error instead of a green banner over a lost answer.
+    try {
+        await services.sponsorSync.pushLogistics(sponsor.issueKey, logistics, visibleSubmittedKeys)
+    } catch (error) {
+        logSponsorPortalEvent({
+            event: 'portal.writeback_failed',
+            issueKey: sponsor.issueKey,
+            form: 'logistics',
+            error: error instanceof Error ? error.message : String(error),
+        })
+        const message =
+            error instanceof JiraFieldRejectedError
+                ? `Your changes were not saved. ${error.message}. Please correct the answer and try again.`
+                : 'Jira could not save your changes. Nothing was saved. Please try again or contact the sponsorship team.'
+        return data({ error: message }, { status: 502 })
+    }
+    await services.sponsors.saveLogistics(sponsor.issueKey, logistics, user.email)
+    // Logistics answers are what drive the exhibition, raffle and induction
+    // statuses (and the social one, via the social quote).
+    await services.sponsorSync.flipWorkstreamStatuses(sponsor.issueKey)
+
+    // Recomputed after the save — the loader's value predates it, so the
+    // banner would point at the page the sponsor is already on.
+    const savedProfile = await services.sponsors.getProfile(sponsor.issueKey)
+    const meetTheExpertsRegistration = await services.meetTheExperts.getRegistration('sponsor', sponsor.issueKey)
+    const next = nextIncompleteSection(
+        sponsorProgress({
+            profile: savedProfile,
+            sponsor,
+            visibility: logisticsVisibility(mappedTier(sponsor.tier)),
+            meetTheExpertsResponded: Boolean(meetTheExpertsRegistration),
+            meetTheExpertsOffered: await isMeetTheExpertsOffered(context),
+        }),
+    )
+
+    return data({ saved: true, nextSection: next ? { label: next.label, href: next.href } : null })
+}
+
+function Text({
+    name,
+    label,
+    hint,
+    value,
+    errors,
+    placeholder,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    errors: Record<string, string | undefined>
+    placeholder?: string
+}) {
+    return (
+        <Box>
+            <label htmlFor={name} className={fieldLabelClass}>
+                {label}
+            </label>
+            {hint && (
+                <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                    {hint}
+                </styled.p>
+            )}
+            <input id={name} name={name} defaultValue={value} placeholder={placeholder} className={inputClass} />
+            <FieldError message={errors[name]} />
+        </Box>
+    )
+}
+
+function Select({
+    name,
+    label,
+    hint,
+    value,
+    errors,
+    options,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    errors: Record<string, string | undefined>
+    options: readonly string[]
+}) {
+    return (
+        <Box>
+            <label htmlFor={name} className={fieldLabelClass}>
+                {label}
+            </label>
+            {hint && (
+                <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                    {hint}
+                </styled.p>
+            )}
+            <select id={name} name={name} defaultValue={value} className={inputClass}>
+                <option value="">— not sure yet —</option>
+                {optionsIncludingStored(options, [value]).map((option) => (
+                    <option key={option} value={option}>
+                        {option}
+                    </option>
+                ))}
+            </select>
+            <FieldError message={errors[name]} />
+        </Box>
+    )
+}
+
+/**
+ * Jira multi-checkbox fields. Rendered as checkboxes sharing one hidden input
+ * name, joined comma-separated — parseFormData keeps only the last value for a
+ * repeated key, so each box can't post under its own name.
+ */
+function CheckboxGroup({
+    name,
+    label,
+    hint,
+    value,
+    options,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    options: readonly string[]
+}) {
+    const selected = new Set(
+        value
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean),
+    )
+
+    return (
+        <Box>
+            <styled.fieldset border="none" p="0" m="0">
+                <styled.legend className={fieldLabelClass} p="0">
+                    {label}
+                </styled.legend>
+                {hint && (
+                    <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                        {hint}
+                    </styled.p>
+                )}
+                {/* An all-unticked group posts no `name[]` at all, which is
+                    indistinguishable from a form that never showed the group.
+                    This marker says "the sponsor saw this and chose nothing",
+                    so unticking everything clears Jira while an unrelated save
+                    leaves the committee's answer alone. */}
+                <input type="hidden" name={`${name}__present`} value="1" />
+                <Box display="grid" gap="1.5" mt="2">
+                    {optionsIncludingStored(options, [...selected]).map((option) => (
+                        <styled.label key={option} display="flex" gap="2" alignItems="center" fontSize="sm">
+                            <input
+                                type="checkbox"
+                                name={`${name}[]`}
+                                value={option}
+                                defaultChecked={selected.has(option)}
+                            />
+                            {option}
+                        </styled.label>
+                    ))}
+                </Box>
+            </styled.fieldset>
+        </Box>
+    )
+}
+
+function LongText({
+    name,
+    label,
+    hint,
+    value,
+    errors,
+    placeholder,
+}: {
+    name: keyof LogisticsFields
+    label: string
+    hint?: string
+    value: string
+    errors: Record<string, string | undefined>
+    placeholder?: string
+}) {
+    return (
+        <Box>
+            <label htmlFor={name} className={fieldLabelClass}>
+                {label}
+            </label>
+            {hint && (
+                <styled.p fontSize="xs" color="admin.600" mt="0.5">
+                    {hint}
+                </styled.p>
+            )}
+            <textarea
+                id={name}
+                name={name}
+                rows={3}
+                defaultValue={value}
+                placeholder={placeholder}
+                className={textareaClass}
+            />
+            <FieldError message={errors[name]} />
+        </Box>
+    )
+}
+
+function SectionHeading({ children, hint }: { children: string; hint?: string }) {
+    return (
+        <>
+            <styled.h3 fontSize="md" fontWeight="semibold" mt="8" mb="1" color="admin.900">
+                {children}
+            </styled.h3>
+            {hint && (
+                <styled.p fontSize="sm" color="admin.600" mb="3">
+                    {hint}
+                </styled.p>
+            )}
+        </>
+    )
+}
+
+export default function PortalLogistics() {
+    const { visibility, logistics, nextSection } = useLoaderData<typeof loader>()
+    const actionData = useActionData<typeof action>()
+    const navigation = useNavigation()
+    const isSubmitting = navigation.state === 'submitting'
+
+    const errors = actionData && 'fieldErrors' in actionData ? actionData.fieldErrors : {}
+    const saved = actionData && 'saved' in actionData
+    const saveError = actionData && 'error' in actionData ? actionData.error : null
+    const savedNextSection = actionData && 'nextSection' in actionData ? actionData.nextSection : nextSection
+    const value = (key: keyof LogisticsFields) => logistics[key] ?? ''
+
+    return (
+        <Box maxW="4xl" mx="auto">
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
+                    Event logistics
+                </styled.h2>
+                <styled.p fontSize="sm" color="admin.600" mb="4">
+                    Everything the venue and our logistics team need from you. Nothing here is required up front — save
+                    as much as you know now and come back to fill in the rest.
+                </styled.p>
+
+                {saved && <PortalSavedBanner message="Saved — thank you!" next={savedNextSection} />}
+                {saveError && (
+                    <Box mb="4" p="3" bg="status.danger.bg" borderRadius="md" fontSize="sm" color="status.danger.fg">
+                        {saveError}
+                    </Box>
+                )}
+
+                <Form method="post">
+                    {visibility.exhibition && (
+                        <>
+                            <SectionHeading hint="Who we should contact on the day about your exhibition space.">
+                                Exhibitor contact
+                            </SectionHeading>
+                            <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
+                                <Text
+                                    name="exhibitorContactName"
+                                    label="Contact name"
+                                    value={value('exhibitorContactName')}
+                                    errors={errors}
+                                />
+                                <Text
+                                    name="exhibitorContactPhone"
+                                    label="Contact phone"
+                                    hint="A mobile we can reach on the day"
+                                    value={value('exhibitorContactPhone')}
+                                    errors={errors}
+                                />
+                                <Text
+                                    name="exhibitorContactEmail"
+                                    label="Contact email"
+                                    value={value('exhibitorContactEmail')}
+                                    errors={errors}
+                                />
+                            </Grid>
+
+                            <SectionHeading hint="When you'll set up and pack down. The venue schedules the loading dock from these.">
+                                Bump in &amp; bump out
+                            </SectionHeading>
+                            <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
+                                <Select
+                                    name="bumpInSlot"
+                                    label="Bump-in day and time"
+                                    value={value('bumpInSlot')}
+                                    errors={errors}
+                                    options={BUMP_IN_SLOTS}
+                                />
+                                <Select
+                                    name="bumpOutWindow"
+                                    label="Bump-out window"
+                                    value={value('bumpOutWindow')}
+                                    errors={errors}
+                                    options={BUMP_OUT_WINDOWS}
+                                />
+                            </Grid>
+                            <Box mt="4">
+                                <CheckboxGroup
+                                    name="parking"
+                                    label="Under-stadium drop-off/pick-up needed?"
+                                    hint="Tick any that apply"
+                                    value={value('parking')}
+                                    options={PARKING_OPTIONS}
+                                />
+                            </Box>
+
+                            <SectionHeading hint="What you're bringing, and what you need to move it.">
+                                Equipment &amp; loading dock
+                            </SectionHeading>
+                            <Box display="grid" gap="4">
+                                <LongText
+                                    name="equipmentList"
+                                    label="Equipment list"
+                                    hint="Include approximate quantity and weight — the venue plans dock access from this"
+                                    placeholder="1x pop-up banner (5kg), 2x crates (20kg each)…"
+                                    value={value('equipmentList')}
+                                    errors={errors}
+                                />
+                                <LongText
+                                    name="nonLaptopElectrical"
+                                    label="Non-laptop electrical equipment"
+                                    hint="Anything needing power beyond laptops — these may need testing and tagging"
+                                    value={value('nonLaptopElectrical')}
+                                    errors={errors}
+                                />
+                                <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
+                                    <Text
+                                        name="trolleyOrForklift"
+                                        label="Trolley or forklift needed?"
+                                        value={value('trolleyOrForklift')}
+                                        errors={errors}
+                                    />
+                                    <Text
+                                        name="loadingDockAssistance"
+                                        label="Help moving from the loading dock?"
+                                        value={value('loadingDockAssistance')}
+                                        errors={errors}
+                                    />
+                                    <Text
+                                        name="porterAssistance"
+                                        label="Venue porter assistance needed?"
+                                        value={value('porterAssistance')}
+                                        errors={errors}
+                                    />
+                                </Grid>
+                                <LongText
+                                    name="additionalNotes"
+                                    label="Anything else the venue should know?"
+                                    value={value('additionalNotes')}
+                                    errors={errors}
+                                />
+                            </Box>
+                        </>
+                    )}
+
+                    {visibility.induction && (
+                        <>
+                            <SectionHeading hint="The venue requires a safety induction for anyone accessing the loading dock. We pass these names and emails to them for that purpose only.">
+                                Bump-in attendees
+                            </SectionHeading>
+                            <Box display="grid" gap="4">
+                                <LongText
+                                    name="bumpInAttendees"
+                                    label="Who's attending bump-in?"
+                                    hint="One name per line"
+                                    value={value('bumpInAttendees')}
+                                    errors={errors}
+                                />
+                                <LongText
+                                    name="loadingDockAttendees"
+                                    label="Who needs loading dock access?"
+                                    hint="One person per line, with their name and email — the venue sends each of them a safety induction"
+                                    value={value('loadingDockAttendees')}
+                                    errors={errors}
+                                />
+                            </Box>
+                        </>
+                    )}
+
+                    {visibility.screens && (
+                        <>
+                            <SectionHeading hint="Screens are supplied and invoiced by the venue, not by DDD Perth.">
+                                TV screen orders
+                            </SectionHeading>
+                            <Box display="grid" gap="4">
+                                <CheckboxGroup
+                                    name="screenOrders"
+                                    label="Screens required"
+                                    hint="Leave all unticked if you don't need any"
+                                    value={value('screenOrders')}
+                                    options={SCREEN_OPTIONS}
+                                />
+                                <Grid columns={{ base: 1, md: 2 }} columnGap="6" rowGap="4">
+                                    <Text
+                                        name="screenInvoicingEmail"
+                                        label="Invoicing email"
+                                        hint="Where the venue should send the screen invoice"
+                                        value={value('screenInvoicingEmail')}
+                                        errors={errors}
+                                    />
+                                </Grid>
+                            </Box>
+                        </>
+                    )}
+
+                    {visibility.raffle && (
+                        <>
+                            <SectionHeading hint="Optional — a prize for the end-of-day raffle.">
+                                Raffle prize
+                            </SectionHeading>
+                            <Box display="grid" gap="4">
+                                <LongText
+                                    name="rafflePrize"
+                                    label="Prize and approximate value"
+                                    placeholder="Mechanical keyboard (~$250)"
+                                    value={value('rafflePrize')}
+                                    errors={errors}
+                                />
+                                <Select
+                                    name="raffleLocation"
+                                    label="Where should it be given away?"
+                                    value={value('raffleLocation')}
+                                    errors={errors}
+                                    options={RAFFLE_LOCATIONS}
+                                />
+                            </Box>
+                        </>
+                    )}
+
+                    {visibility.socialQuote && (
+                        <>
+                            <SectionHeading hint="Used in our social posts announcing your sponsorship. This is separate from the website blurb on the Profile page.">
+                                Quote for social media
+                            </SectionHeading>
+                            <LongText
+                                name="socialQuote"
+                                label="Your quote"
+                                value={value('socialQuote')}
+                                errors={errors}
+                            />
+                        </>
+                    )}
+
+                    <Flex mt="8" justify="flex-end">
+                        <PrimaryButton disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving…' : 'Save logistics'}
+                        </PrimaryButton>
+                    </Flex>
+                </Form>
+            </AdminCard>
+        </Box>
+    )
+}

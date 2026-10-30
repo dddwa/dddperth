@@ -1,5 +1,6 @@
+import { SystemDateTimeProvider } from '~/lib/dates/system-date-time-provider.server'
+import { conferenceDayStart } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { Outlet, useLoaderData } from 'react-router'
 import { Acknowledgement } from '~/components/acknowledgement'
 import { AdminOverlay } from '~/components/admin-overlay'
@@ -9,7 +10,8 @@ import { Header } from '~/components/header/header'
 import { ContentPageLayout } from '~/components/page-layout'
 import { SkipToContent } from '~/components/skip-to-content'
 import { getUser, isAdminUser } from '~/lib/auth.server'
-import { getConferenceState, getConfig, getServices } from '~/remix-app-load-context'
+import { getVenueNavPlacement } from '~/lib/header-nav'
+import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 import { styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout'
 
@@ -27,14 +29,24 @@ export async function loader({ context, request }: Route.LoaderArgs) {
                 name: user.name,
             },
             overrideDate: overrideDate || null,
-            currentDate: DateTime.local({ zone: conferenceManifest.public.timezone }).toISO(),
+            currentDate: new SystemDateTimeProvider().nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             timezone: conferenceManifest.public.timezone,
         }
     }
 
+    const conferenceState = getConferenceState(context)
+
     return {
         conferenceDescription: conferenceManifest.public.description,
-        conferenceState: getConferenceState(context),
+        conferenceState,
+        venueNavPlacement: getVenueNavPlacement({
+            venuePublished: !!conferenceState.conference.venue,
+            replacesAboutNearConference: !!conferenceManifest.public.features?.venueReplacesAboutNearConference,
+            now: getDateTimeProvider(context).nowDate(),
+            conferenceDayStart: conferenceState.conference.date
+                ? conferenceDayStart(conferenceState.conference.date)
+                : undefined,
+        }),
         webUrl: getConfig(context).webUrl,
         adminData,
     }
@@ -42,11 +54,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
 export function meta({ loaderData: data, location }: Route.MetaArgs) {
     const title = data?.conferenceState.conference.date
-        ? `${conferenceManifest.public.name} | ${DateTime.fromISO(data.conferenceState.conference.date, {
-              zone: conferenceManifest.public.timezone,
-          }).toLocaleString(DateTime.DATE_HUGE, {
-              locale: 'en-AU',
-          })}`
+        ? `${conferenceManifest.public.name} | ${conferenceDayStart(data.conferenceState.conference.date).toLocaleString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
         : conferenceManifest.public.name
 
     const description = data?.conferenceDescription
@@ -68,7 +76,8 @@ export function meta({ loaderData: data, location }: Route.MetaArgs) {
 }
 
 export default function Index() {
-    const { conferenceDescription, conferenceState, webUrl, adminData } = useLoaderData<typeof loader>()
+    const { conferenceDescription, conferenceState, venueNavPlacement, webUrl, adminData } =
+        useLoaderData<typeof loader>()
     const conference = conferenceState.conference
     const venue = conference.venue
 
@@ -104,7 +113,7 @@ export default function Index() {
                 cfpOpen={conferenceState.callForPapers.state === 'open'}
                 votingOpen={conferenceState.talkVoting.state === 'open'}
                 ticketSalesOpen={conferenceState.ticketSales.state === 'open'}
-                venue={conferenceState.conference.venue}
+                venueNavPlacement={venueNavPlacement}
             />
 
             {venue && (
@@ -156,7 +165,7 @@ export function ErrorBoundary() {
     return (
         <div>
             <SkipToContent />
-            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venue={undefined} />
+            <Header cfpOpen={false} votingOpen={false} ticketSalesOpen={false} venueNavPlacement="hidden" />
 
             <styled.main id="main">
                 <ContentPageLayout>

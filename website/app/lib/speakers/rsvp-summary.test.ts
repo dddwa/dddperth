@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
-import { buildRsvpHeadcount } from './rsvp-summary'
+import { buildRsvpHeadcount, buildRsvpLists } from './rsvp-summary'
 
 function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
     return {
@@ -71,5 +71,72 @@ describe('buildRsvpHeadcount', () => {
             respondedCount: 3,
             notRespondedCount: 1,
         })
+    })
+})
+
+describe('buildRsvpLists', () => {
+    const speaker = (
+        sessionizeId: string,
+        fullName: string,
+        p: SpeakerProfile | null,
+        contacts = [`${sessionizeId}@example.com`],
+    ) => ({
+        sessionizeId,
+        fullName,
+        contacts,
+        profile: p,
+    })
+
+    it('puts each speaker in the same groups the headcount counts them in', () => {
+        const speakers = [
+            speaker(
+                'b',
+                'Bea',
+                profile({
+                    rsvpSpeakerTrainingRespondedAt: 1,
+                    rsvpSpeakerTraining: ['Session 1', 'Session 2'],
+                    rsvpSpeakersDinner: 'Yes',
+                    dietaryRequirements: 'Vegan',
+                }),
+            ),
+            speaker(
+                'a',
+                'Ash',
+                profile({
+                    rsvpSpeakerTrainingRespondedAt: 1,
+                    rsvpSpeakerTraining: [],
+                    rsvpSpeakersDinner: 'No',
+                    dietaryRequirements: 'None',
+                }),
+            ),
+            speaker('c', 'Cam', null, ['c1@example.com', 'c2@example.com']),
+        ]
+        const lists = buildRsvpLists(speakers, TRAINING_SESSIONS)
+        const headcount = buildRsvpHeadcount(
+            speakers.map((s) => s.profile),
+            TRAINING_SESSIONS,
+        )
+
+        expect(lists.training.map((g) => [g.label, g.people.map((p) => p.fullName)])).toEqual([
+            ['Planning', ['Bea']],
+            ['Presentation skills', ['Bea']],
+            ['Not attending any', ['Ash']],
+            ['Not yet responded', ['Cam']],
+        ])
+        expect(lists.dinner.map((g) => g.people.length)).toEqual([
+            headcount.dinner.yesCount,
+            headcount.dinner.maybeCount,
+            headcount.dinner.noCount,
+            headcount.dinner.notRespondedCount,
+        ])
+        expect(lists.dinner[0].people[0]).toEqual({
+            sessionizeId: 'b',
+            fullName: 'Bea',
+            emails: ['b@example.com'],
+            dietaryRequirements: 'Vegan',
+        })
+        // Dietary requirements only matter to people who might come.
+        expect(lists.dinner[2].people[0].dietaryRequirements).toBeUndefined()
+        expect(lists.dinner[3].people[0].emails).toEqual(['c1@example.com', 'c2@example.com'])
     })
 })

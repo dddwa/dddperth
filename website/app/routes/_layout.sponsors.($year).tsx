@@ -1,12 +1,14 @@
 import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceConfig } from '@ddd/conference-config'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
+import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getConferenceState, getConfig } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.sponsors.($year)'
 
@@ -24,9 +26,9 @@ function hasNoSponsors(sponsors: YearSponsors | undefined): boolean {
  * qualify: a current or future year, a year that has sponsors, and a
  * cancelled year (which has its own message to render) all stay put.
  */
-function shouldRedirectToAgenda(year: Year, currentYear: Year): boolean {
+function shouldRedirectToAgenda(conferences: ConferenceConfig, year: Year, currentYear: Year): boolean {
     if (parseInt(year) >= parseInt(currentYear)) return false
-    const yearConfig = conferenceManifest.conferences.conferences[year]
+    const yearConfig = conferences.conferences[year]
     if (!yearConfig || yearConfig.kind !== 'conference') return false
     return hasNoSponsors(yearConfig.sponsors)
 }
@@ -39,22 +41,23 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
     const sponsors = yearConfig.kind === 'conference' ? yearConfig.sponsors : {}
 
     const currentYear = getConferenceState(context).conference.year
     const redirectPastSponsors = conferenceManifest.public.features?.redirectPastSponsorsToAgenda === true
 
-    if (redirectPastSponsors && shouldRedirectToAgenda(year, currentYear)) {
+    const conferenceConfig = getConferences(context)
+    if (redirectPastSponsors && shouldRedirectToAgenda(conferenceConfig, year, currentYear)) {
         throw redirect($path('/agenda/:year?', { year }))
     }
 
-    const conferences = Object.values(conferenceManifest.conferences.conferences)
+    const conferences = Object.values(conferenceConfig.conferences)
         .filter((conf) => conf.kind === 'conference')
         // Don't list a year whose sponsors page would only bounce the visitor
         // on to an agenda — same predicate as the redirect above, so the link
         // list and the redirect can't disagree.
-        .filter((conf) => !redirectPastSponsors || !shouldRedirectToAgenda(conf.year, currentYear))
+        .filter((conf) => !redirectPastSponsors || !shouldRedirectToAgenda(conferenceConfig, conf.year, currentYear))
         .map((conf) => ({
             year: conf.year,
         }))
@@ -124,10 +127,30 @@ export default function Sponsors() {
                 <styled.h1 fontSize="5xl" textAlign="center" color="text.primary" mb="8" mt="8">
                     {conferenceManifest.public.name} {year} Sponsors
                 </styled.h1>
-                <styled.p fontSize="lg" textAlign="center" color="text.secondary" mb="8" maxWidth="[800px]" mx="auto">
+                <styled.p fontSize="lg" textAlign="center" color="text.secondary" mb="8" maxWidth="200" mx="auto">
                     We are grateful to all the sponsors who have supported {conferenceManifest.public.name} over the
                     years. Their contribution makes it possible for us to run this community-driven conference.
                 </styled.p>
+
+                {isLatestConference ? (
+                    <Box textAlign="center" mb="10">
+                        <AppLink
+                            to="/sponsorship"
+                            unstyled
+                            display="inline-flex"
+                            alignItems="center"
+                            bgColor="brand.primary"
+                            color="text.on-brand"
+                            fontWeight="semibold"
+                            paddingX="6"
+                            paddingY="3"
+                            rounded="md"
+                            _hover={{ bgColor: 'brand.secondary' }}
+                        >
+                            Sponsor {conferenceManifest.public.name}
+                        </AppLink>
+                    </Box>
+                ) : null}
 
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
 
@@ -145,7 +168,7 @@ function BecomeSponsorCta({ year }: { year: Year }) {
     return (
         <Box
             mx="auto"
-            maxWidth="[720px]"
+            maxWidth="180"
             bgColor="surface.elevated"
             borderWidth="1px"
             borderColor="border.default"

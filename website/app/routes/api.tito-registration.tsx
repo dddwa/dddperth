@@ -44,7 +44,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return data({ error: 'No Tito event configured' }, { status: 404 })
     }
 
-    const yearConfig = getYearConfig(conferenceState.conference.year)
+    const yearConfig = getYearConfig(context, conferenceState.conference.year)
     const titlePrefixes = yearConfig.kind === 'conference' ? yearConfig.sharecast?.releaseTitlePrefixes : undefined
 
     try {

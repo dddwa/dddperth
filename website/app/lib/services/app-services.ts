@@ -1,18 +1,23 @@
+import type { AdminSettingsStore } from './admin-settings-store'
 import type { AgendaPlanningStore } from './agenda-planning-store'
+import type { AgendaShortlistStore } from './agenda-shortlist-store'
 import type { AnnouncementsStore } from './announcements-store'
 import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { FeedbackStore } from './feedback-store'
 import type { MeetTheExpertsSchedulingStore } from './meet-the-experts-scheduling-store'
 import type { MeetTheExpertsStore } from './meet-the-experts-store'
 import type { NotificationLog } from './notification-log'
 import type { SessionStorages } from './session-storages'
 import type { SpeakerSyncService } from './speaker-sync-service'
 import type { SpeakersStore } from './speakers-store'
+import type { SponsorFeedbackStore } from './sponsor-feedback-store'
 import type { SponsorSyncService } from './sponsor-sync-service'
 import type { SponsorsStore } from './sponsors-store'
 import type { TicketsService } from './tickets-service'
+import type { VolunteersStore } from './volunteers-store'
 import type { VotingStore } from './voting-store'
 
 /**
@@ -25,6 +30,7 @@ import type { VotingStore } from './voting-store'
 export interface AppServices {
     voting: VotingStore
     agendaPlanning: AgendaPlanningStore
+    agendaShortlist: AgendaShortlistStore
     announcements: AnnouncementsStore
     content: ContentService
     tickets: TicketsService
@@ -39,4 +45,8 @@ export interface AppServices {
     speakerSync: SpeakerSyncService
     meetTheExperts: MeetTheExpertsStore
     meetTheExpertsScheduling: MeetTheExpertsSchedulingStore
+    adminSettings: AdminSettingsStore
+    volunteers: VolunteersStore
+    feedback: FeedbackStore
+    sponsorFeedback: SponsorFeedbackStore
 }

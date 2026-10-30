@@ -12,6 +12,7 @@ import type { FrontmatterProperties } from './mdx-types'
  *    to be honoured in both places — see `~/lib/seo`.
  */
 export function getContentPages() {
+    // eslint-disable-next-line dates/use-date-time-provider -- Sitemap metadata uses real time, independently of conference overrides.
     const today = new Date().toISOString().split('T')[0]
     return Object.entries(bundles.page)
         .filter(([slug]) => !slug.startsWith('_'))

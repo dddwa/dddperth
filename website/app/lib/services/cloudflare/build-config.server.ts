@@ -13,8 +13,23 @@ export function buildAppConfigFromEnv(env: CloudflareEnv): AppConfig {
     const fallbackEmailFrom = `${conferenceManifest.public.name} <${conferenceManifest.brand.noreplyEmail}>`
     return {
         webUrl: env.WEB_URL,
-        sessionSecret: env.SESSION_SECRET,
+        // Fresh worktrees have no `.dev.vars` (it's gitignored), and an empty
+        // secret fails every login with an opaque HMAC "key length (0)" error.
+        // Outside production an unset secret falls back to a fixed, public one.
+        // In a production build `import.meta.env.MODE` is statically
+        // "production", so the fallback and its literal are dropped: a
+        // deployment with no SESSION_SECRET stays broken, rather than signing
+        // sessions with a value anyone can read here. Kept statically
+        // evaluable, and checked by `dates/dev-date-override.test.ts`.
+        sessionSecret:
+            env.SESSION_SECRET ||
+            (import.meta.env.MODE !== 'production' ? 'local-dev-session-secret-not-for-deployment' : ''),
         websiteAuthRequired: env.WEBSITE_AUTH_REQUIRED === 'true',
+        // `import.meta.env.MODE` is statically replaced in a production build,
+        // so this folds to `false` and the fixture branch in
+        // `sponsor-fallback.server.ts` is dropped. Keep it statically
+        // evaluable — see `dates/dev-date-override.test.ts`.
+        useSponsorFixtures: import.meta.env.MODE !== 'production' && env.E2E_SPONSOR_FIXTURES === 'true',
         auth: {
             emailFrom: env.AUTH_EMAIL_FROM ?? fallbackEmailFrom,
             resendApiKey: env.RESEND_API_KEY,
@@ -61,7 +76,9 @@ function collectSpeakerTicketClaimUrls(env: CloudflareEnv): Record<string, strin
  * Bindings follow the pattern `SESSIONIZE_<YYYY>_SESSIONS` /
  * `SESSIONIZE_<YYYY>_ALL_SESSIONS`.
  */
-function collectSessionizeOverrides(env: CloudflareEnv): Record<string, { sessionsEndpoint?: string; allSessionsEndpoint?: string }> {
+function collectSessionizeOverrides(
+    env: CloudflareEnv,
+): Record<string, { sessionsEndpoint?: string; allSessionsEndpoint?: string }> {
     const result: Record<string, { sessionsEndpoint?: string; allSessionsEndpoint?: string }> = {}
 
     for (const [key, value] of Object.entries(env as unknown as Record<string, unknown>)) {

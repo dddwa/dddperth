@@ -12,6 +12,23 @@ export interface SponsorRecord {
     tier: string
     /** Website prefill from Jira, if the committee captured one. */
     website?: string
+    /**
+     * Blurb prefill from Jira's quote field — what the committee captured by
+     * email before the sponsor used the portal. Prefill only: the sponsor's
+     * own blurb wins as soon as they save one.
+     */
+    jiraQuote?: string
+    /** Social URL prefills from Jira, keyed by platform. Same rule as `jiraQuote`. */
+    jiraSocials?: Record<string, string>
+    /**
+     * Logistics prefills from Jira, keyed by portal field name — what the
+     * committee gathered by email before the sponsor opened the form. Same
+     * rule as `jiraQuote`, but authority flips wholesale on the profile's
+     * `logisticsUpdatedAt` rather than per field.
+     */
+    jiraLogistics?: Record<string, string>
+    /** Committee-assigned room, for room sponsors. Synced from Jira. */
+    exhibitorRoom?: string
     jiraStatus?: string
     active: boolean
     assetsTaskFlippedAt?: number
@@ -32,6 +49,19 @@ export interface SponsorProfile {
     websiteUrl?: string
     /** Platform → URL, e.g. { twitter: "https://…", linkedin: "https://…" }. */
     socials: Record<string, string>
+    /** Set after the sponsor has submitted the profile form. Before this,
+     * Jira values are display-only prefills; afterwards each Jira sync copies
+     * the canonical Jira values back into these fields. */
+    detailsUpdatedAt?: number
+    /**
+     * Sponsor-supplied logistics keyed by `LOGISTICS_KEYS` (bump-in, equipment,
+     * raffle, screens, induction). Sponsor-owned like the rest of the profile:
+     * pushed into Jira on every save. Absent keys mean "not answered yet".
+     */
+    logistics?: Record<string, string>
+    /** First/most recent full logistics form submission. Before this exists,
+     * Jira remains the export fallback for legacy committee-entered answers. */
+    logisticsUpdatedAt?: number
     logo?: SponsorLogoMeta
     /** First time the completion criteria were met; never unset. */
     completedAt?: number
@@ -49,6 +79,15 @@ export interface SponsorSyncPlan {
         tier: string
         website?: string
         jiraStatus?: string
+        quote?: string
+        socials?: Record<string, string>
+        logistics?: Record<string, string>
+        /** Every Jira-backed logistics key, including fields currently blank
+         * in Jira. Needed so a Jira-side clear removes the portal copy. */
+        logisticsKeys?: string[]
+        /** Jira-backed detail keys: blurb, websiteUrl and social_<platform>. */
+        detailsKeys?: string[]
+        exhibitorRoom?: string
     }>
     deactivateIssueKeys: string[]
     contactAdds: Array<{ email: string; issueKey: string }>
@@ -95,6 +134,8 @@ export interface SponsorsStore {
      * planner can deactivate anything that left the sync query. */
     getAllSponsorsForSync(): Promise<Array<{ issueKey: string; active: boolean }>>
     getAllContacts(): Promise<Array<{ email: string; issueKey: string }>>
+    /** Capture before the Jira read so reconciliation can reject concurrent portal saves. */
+    getProfilesForSync(): Promise<SponsorProfile[]>
 
     saveDetails(
         issueKey: string,
@@ -103,11 +144,22 @@ export interface SponsorsStore {
     ): Promise<void>
     saveLogo(issueKey: string, logo: Omit<SponsorLogoMeta, 'uploadedAt'>, updatedBy: string): Promise<void>
 
+    /**
+     * Replaces the sponsor's logistics answers wholesale. The portal always
+     * submits the full visible form, so a merge would strand a field the
+     * sponsor deliberately cleared.
+     */
+    saveLogistics(issueKey: string, logistics: Record<string, string>, updatedBy: string): Promise<void>
+
     /** Stamps completed_at if not already set. Returns true when this call
      * did the stamping (i.e. the profile just became complete). */
     markProfileCompleted(issueKey: string): Promise<boolean>
 
-    applySyncPlan(plan: SponsorSyncPlan): Promise<{
+    /** With a pre-read snapshot, only unchanged profile fields are reconciled. */
+    applySyncPlan(
+        plan: SponsorSyncPlan,
+        profilesBeforeRead?: SponsorProfile[],
+    ): Promise<{
         sponsorsUpserted: number
         sponsorsDeactivated: number
         contactsAdded: number
@@ -124,7 +176,7 @@ export interface SponsorsStore {
     ): Promise<void>
     getLatestSyncRun(): Promise<SponsorSyncRun | null>
 
-    /** Issue keys owing a Jira "Assets for Conference" flip. */
+    /** Issue keys owing a Jira assets-status write-back. */
     getPendingWritebacks(): Promise<string[]>
     markAssetsTaskPending(issueKey: string): Promise<void>
     markAssetsTaskFlipped(issueKey: string): Promise<void>

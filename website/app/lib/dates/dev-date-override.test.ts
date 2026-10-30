@@ -1,7 +1,9 @@
+import { conferenceConfigPublic } from '@conference/config/public'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { DEV_DATE_OVERRIDE_COOKIE } from './dev-date-time-provider.server'
+import { FIXTURE_CONFERENCE_COOKIE } from '../../../e2e/fixtures/conference-year'
+import { DEV_DATE_OVERRIDE_COOKIE, DevDateTimeProvider } from './dev-date-time-provider.server'
 
 /**
  * Marker strings that must never reach a production bundle. Both sit behind
@@ -13,6 +15,24 @@ const DEV_ONLY_MARKERS = [
     // it would let anyone who can set a Worker var silently reroute the site's
     // Sessionize traffic.
     { name: 'Sessionize fixture interceptor', value: 'SESSIONIZE_FIXTURE_URL', guard: 'workers/app.ts' },
+    // Sponsor fixtures replace the real sponsor strip. Shipping this would let
+    // anyone who can set a Worker var blank the site's sponsors — the people
+    // paying for the conference.
+    { name: 'sponsor fixtures', value: 'E2E_SPONSOR_FIXTURES', guard: 'cloudflare/build-config.server.ts' },
+    // The fixture conference replaces the site's whole conference calendar for
+    // any request carrying its cookie.
+    { name: 'fixture conference cookie', value: FIXTURE_CONFERENCE_COOKIE, guard: 'load-context.server.ts' },
+    // Fixture blog posts replace the real blog. Unlike the others this is a
+    // build-time switch, so a leak would publish the fixtures as the blog.
+    { name: 'fixture blog posts', value: 'Fixture Post: The Latest One', guard: 'vite.config.ts' },
+    // The local-dev session secret is public (it's in the repo). Shipping it
+    // as a fallback would let anyone forge an admin session cookie on a
+    // deployment whose SESSION_SECRET went missing.
+    {
+        name: 'local-dev session secret',
+        value: 'local-dev-session-secret-not-for-deployment',
+        guard: 'cloudflare/build-config.server.ts',
+    },
 ]
 
 /**
@@ -49,7 +69,7 @@ describe('dev-only seams are absent from production builds', () => {
         expect(
             files.length,
             'no built JS found. This test greps the production build, which is supplied by ' +
-                "nx (`test` dependsOn `build`) — run it via `nx test website`, not bare `vitest run`.",
+                'nx (`test` dependsOn `build`) — run it via `nx test website`, not bare `vitest run`.',
         ).toBeGreaterThan(0)
 
         const offenders = files.filter((file) => readFileSync(file, 'utf8').includes(value))
@@ -59,5 +79,27 @@ describe('dev-only seams are absent from production builds', () => {
             `"${value}" leaked into the production build. The production-mode guard in ` +
                 `${guard} must stay statically evaluable so Vite can drop the branch.`,
         ).toEqual([])
+    })
+})
+
+describe('dev override parsing', () => {
+    const headers = (value: string) => new Headers({ cookie: `${DEV_DATE_OVERRIDE_COOKIE}=${encodeURIComponent(value)}` })
+
+    it('keeps date-only visual fixtures at local midnight', () => {
+        const date = DevDateTimeProvider.fromRequest(headers('2026-10-03'))?.nowDate()
+        expect(date?.toPlainDate().toString()).toBe('2026-10-03')
+        expect(date?.hour).toBe(0)
+        expect(date?.timeZoneId).toBe(conferenceConfigPublic.timezone)
+    })
+
+    it('preserves offset-bearing override instants', () => {
+        const provider = DevDateTimeProvider.fromRequest(headers('2026-10-03T00:00Z'))
+        expect(provider?.now()).toBe(Date.parse('2026-10-03T00:00Z'))
+        expect(provider?.nowDate().timeZoneId).toBe(conferenceConfigPublic.timezone)
+    })
+
+    it('ignores impossible dates and malformed encodings', () => {
+        expect(DevDateTimeProvider.fromRequest(headers('2026-02-30'))).toBeNull()
+        expect(DevDateTimeProvider.fromRequest(new Headers({ cookie: `${DEV_DATE_OVERRIDE_COOKIE}=%invalid` }))).toBeNull()
     })
 })

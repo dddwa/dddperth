@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon'
+import type { Temporal } from '~/lib/dates/temporal'
 import { speakerChecklist, type SpeakerSessionChecklistInput } from './checklist'
 import type { ChecklistItemDefinition } from './checklist-items'
 import type { SpeakerListEntry } from '../services/speakers-store'
@@ -18,7 +18,7 @@ export interface FollowUpTarget {
 export function speakersMissingChecklistItem(
     speakers: SpeakerListEntry[],
     itemKey: ChecklistItemDefinition['key'],
-    now: DateTime,
+    now: Temporal.ZonedDateTime,
 ): FollowUpTarget[] {
     return speakers
         .filter((speaker) => speaker.active)

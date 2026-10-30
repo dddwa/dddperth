@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Flex, styled } from '~/styled-system/jsx'
+import type { SizeToken } from '~/styled-system/tokens'
 
 /**
  * Checkbox-dropdown filter used across the agenda table.
@@ -21,7 +22,7 @@ export function MultiSelectFilter({
     onChange,
     /** Renders the label above the control (top filter bar) vs inline (column header). */
     showLabel = false,
-    minWidth = '[150px]',
+    minWidth = '36',
     fontSize = 'xs',
 }: {
     label: string
@@ -29,7 +30,7 @@ export function MultiSelectFilter({
     options: MultiSelectOption[]
     onChange: (values: string[]) => void
     showLabel?: boolean
-    minWidth?: `[${string}]`
+    minWidth?: SizeToken
     fontSize?: 'xs' | 'sm'
 }) {
     const [open, setOpen] = useState(false)
@@ -110,7 +111,7 @@ export function MultiSelectFilter({
             {open && (
                 <Box
                     position="absolute"
-                    top="[100%]"
+                    top="full"
                     left="0"
                     mt="1"
                     zIndex="dropdown"
@@ -118,9 +119,9 @@ export function MultiSelectFilter({
                     border="admin-subtle"
                     borderRadius="md"
                     boxShadow="lg"
-                    minW="[220px]"
-                    maxW="[320px]"
-                    maxH="[300px]"
+                    minW="56"
+                    maxW="80"
+                    maxH="72"
                     overflowY="auto"
                     p="1"
                 >

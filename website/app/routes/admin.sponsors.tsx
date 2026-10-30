@@ -1,5 +1,5 @@
+import { conferenceInstant } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { data, Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import { AdminCard } from '~/components/admin-card'
 import { AdminLayout } from '~/components/admin-layout'
@@ -33,6 +33,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const tokenExpiry = tokenExpiresAt
         ? {
               expiresOn: new Date(tokenExpiresAt).toISOString().slice(0, 10),
+              // eslint-disable-next-line dates/use-date-time-provider -- External token expiry must follow real time, independently of conference overrides.
               daysLeft: Math.ceil((tokenExpiresAt - Date.now()) / (24 * 60 * 60 * 1000)),
           }
         : null
@@ -49,6 +50,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             issueKey: s.issueKey,
             companyName: s.companyName,
             tier: s.tier,
+            exhibitorRoom: s.exhibitorRoom,
             active: s.active,
             contacts: s.contacts,
             complete: isProfileComplete(s.profile),
@@ -73,7 +75,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     const outcome = await services.sponsorSync.syncNow('manual')
     if (outcome.ok) {
-        await services.sponsorSync.retryPendingWritebacks()
+        await services.sponsorSync.retryPendingStatusFlips()
         return data({ synced: true as const })
     }
 
@@ -87,9 +89,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 function formatRunTime(unixSeconds: number, timezone: string): string {
-    return DateTime.fromSeconds(unixSeconds, { zone: timezone }).toLocaleString(DateTime.DATETIME_SHORT, {
-        locale: 'en-AU',
-    })
+    return conferenceInstant(unixSeconds * 1000).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 export default function AdminSponsors() {
@@ -136,6 +136,34 @@ export default function AdminSponsors() {
                     </styled.p>
                 </Box>
             )}
+            <AdminCard>
+                <styled.h2 fontSize="xl" fontWeight="semibold" mb="4">
+                    Sponsor tools
+                </styled.h2>
+                <Flex gap="2" align="center" flexWrap="wrap">
+                    <Button asChild>
+                        <AppLink unstyled to="/admin/sponsors/follow-up">
+                            Follow-up list
+                        </AppLink>
+                    </Button>
+                    <Button asChild>
+                        <AppLink unstyled to="/admin/sponsors/feedback">
+                            Sponsor feedback
+                        </AppLink>
+                    </Button>
+                    <Button
+                        asChild
+                        variant="outline"
+                        color="admin.900"
+                        borderColor="admin.400"
+                        bg="white"
+                        _hover={{ bg: 'admin.100' }}
+                    >
+                        <a href="/admin/sponsors/exhibitor-export">Export exhibitor list</a>
+                    </Button>
+                </Flex>
+            </AdminCard>
+
             <AdminCard>
                 <Flex justify="space-between" align="center" flexWrap="wrap" gap="4" mb="4">
                     <Box>
@@ -200,6 +228,7 @@ export default function AdminSponsors() {
                                 <styled.tr textAlign="left" color="admin.600" borderBottom="admin-subtle">
                                     <styled.th py="2" pr="4">Sponsor</styled.th>
                                     <styled.th py="2" pr="4">Tier</styled.th>
+                                    <styled.th py="2" pr="4">Room</styled.th>
                                     <styled.th py="2" pr="4">Contacts</styled.th>
                                     <styled.th py="2" pr="4">Profile</styled.th>
                                     <styled.th py="2" pr="4">Logo</styled.th>
@@ -222,6 +251,10 @@ export default function AdminSponsors() {
                                             </styled.span>
                                         </styled.td>
                                         <styled.td py="2" pr="4">{sponsor.tier}</styled.td>
+                                        {/* Blank until the committee assigns one — the run sheets
+                                            are built from this list, so an unassigned room must
+                                            read as undecided rather than as a default. */}
+                                        <styled.td py="2" pr="4">{sponsor.exhibitorRoom ?? '—'}</styled.td>
                                         <styled.td py="2" pr="4">
                                             {sponsor.contacts.length > 0 ? sponsor.contacts.join(', ') : '—'}
                                         </styled.td>
@@ -229,7 +262,7 @@ export default function AdminSponsors() {
                                         <styled.td py="2" pr="4">
                                             {sponsor.hasLogo ? (
                                                 <styled.a
-                                                    href={`/portal/logo/${sponsor.issueKey}?download=1`}
+                                                    href={`/sponsor-portal/logo/${sponsor.issueKey}?download=1`}
                                                     textDecoration="underline"
                                                 >
                                                     Download

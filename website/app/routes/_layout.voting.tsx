@@ -1,5 +1,5 @@
+import { conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Await, useLoaderData } from 'react-router'
 import { SponsorAcknowledgement } from '~/components/sponsor-acknowledgement'
@@ -23,7 +23,7 @@ const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
 const CLIENT_VERSION = CURRENT_CLIENT_VERSION
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })
@@ -235,13 +235,7 @@ function VotingPageWithSession({
                 message="Talk Voting"
                 error={
                     data.talkVoting.opens
-                        ? `Voting opens ${DateTime.fromISO(data.talkVoting.opens, {
-                              zone: conferenceManifest.public.timezone,
-                          }).toLocaleString(DateTime.DATETIME_SHORT, {
-                              locale: 'en-AU',
-                          })} and closes ${DateTime.fromISO(data.talkVoting.closes, {
-                              zone: conferenceManifest.public.timezone,
-                          }).toLocaleString(DateTime.DATETIME_SHORT, { locale: 'en-AU' })}`
+                        ? `Voting opens ${conferenceTime(data.talkVoting.opens).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })} and closes ${conferenceTime(data.talkVoting.closes).toLocaleString('en-AU', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
                         : 'Voting is not available for this conference'
                 }
             />
@@ -318,7 +312,6 @@ function VotingPageWithSession({
                 <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="brand.primary"
                         onClick={() => void handleVote('A')}
                         disabled={!!voteSubmitted}
                     >
@@ -335,7 +328,6 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="brand.secondary"
                         onClick={() => void handleVote('B')}
                         disabled={!!voteSubmitted}
                     >
@@ -384,7 +376,6 @@ function VotingPageWithSession({
                 <HStack justify="center" gap="4">
                     <Button
                         size="lg"
-                        colorPalette="brand.primary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()
@@ -409,7 +400,6 @@ function VotingPageWithSession({
                     </Button>
                     <Button
                         size="lg"
-                        colorPalette="brand.secondary"
                         disabled={!!voteSubmitted}
                         onClick={(e) => {
                             e.currentTarget.blur()

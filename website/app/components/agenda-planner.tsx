@@ -132,7 +132,7 @@ function SignalBadge({
             flexShrink="0"
             {...(truncate
                 ? {
-                      maxW: '[130px]',
+                      maxW: '32',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap' as const,
@@ -503,7 +503,7 @@ export function AgendaPlanner({
                                 px="2"
                                 py="1"
                                 fontSize="sm"
-                                width="[110px]"
+                                width="28"
                             />
                             <styled.p fontSize="xs" color={over ? 'status.danger.fg' : 'admin.500'} mt="1">
                                 {created} created · {summary?.filled ?? 0} filled
@@ -579,7 +579,7 @@ export function AgendaPlanner({
                                 style={{ gridColumn: trackIndex + 1, gridRow: 1 }}
                                 px="3"
                                 pt="3"
-                                zIndex="[1]"
+                                zIndex="raised"
                             >
                                 <styled.input
                                     value={draftNames[track.trackId] ?? track.name}
@@ -625,7 +625,7 @@ export function AgendaPlanner({
                                                         gridRow: slotIndex + 2,
                                                     }}
                                                     mx="3"
-                                                    zIndex="[1]"
+                                                    zIndex="raised"
                                                     alignItems="center"
                                                     gap="1"
                                                     bg="admin.700"
@@ -696,7 +696,7 @@ export function AgendaPlanner({
                                                     gridRow: slotIndex + 2,
                                                 }}
                                                 mx="3"
-                                                zIndex="[1]"
+                                                zIndex="raised"
                                                 bg={isTentative ? 'status.warning.bg' : 'white'}
                                                 borderRadius="md"
                                                 border={
@@ -869,7 +869,7 @@ export function AgendaPlanner({
                                     mx="3"
                                     mb="3"
                                     mt="2"
-                                    zIndex="[1]"
+                                    zIndex="raised"
                                 >
                                     <styled.button
                                         type="button"
@@ -933,7 +933,7 @@ export function AgendaPlanner({
                         tentative talks are shaded orange. Chips show rank, length, level (B/I/A), topic, UM and how
                         often the speaker presents.
                     </styled.p>
-                    <Flex gap="2" flexWrap="wrap" maxH="[220px]" overflowY="auto">
+                    <Flex gap="2" flexWrap="wrap" maxH="56" overflowY="auto">
                         {unplacedTalks.length === 0 ? (
                             <styled.p fontSize="sm" color="admin.600">
                                 Every talk has been placed.
@@ -958,7 +958,7 @@ export function AgendaPlanner({
                                         borderRadius="md"
                                         px="2"
                                         py="1"
-                                        maxW="[240px]"
+                                        maxW="60"
                                         cursor="grab"
                                         opacity={draggingTalkId === talk.talkId ? '0.5' : '1'}
                                         title={`${talk.title} — ${talk.speakers}${isTentative ? ' (tentative)' : ''}`}

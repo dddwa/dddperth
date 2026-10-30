@@ -58,7 +58,7 @@ nx graph                           # workspace dependency graph
     - `app/theme/` — token primitives (colors, durations, shadows, recipes)
     - `vite-plugins/`, `panda.config.ts`, `vite.config.ts` — build pipeline
     - `tsconfig.json` — defines `@conference/*` path aliases (pointing at `../conference-stub/` here; forks override these to point at their own `/conference/`)
-- **`/libs/conference-config`** — types-only shared package (`@ddd/conference-config`). The manifest contract every conference satisfies.
+- **`/libs/conference-config`** — shared manifest types and Temporal constructors (`@ddd/conference-config`). The manifest contract every conference satisfies.
 - **`/conference-stub`** — working sample conference. Two jobs: (1) lets `ddd-core` build standalone; (2) is the seed that `/new-conference` copies into a new fork's `/conference/`.
 
 ## Working with the fork ecosystem
@@ -73,10 +73,15 @@ Read each skill's `SKILL.md` before changes that affect the cross-layer contract
 
 ## Key application patterns
 
+Before adding or reviewing dates, clocks, deadlines, date inputs, formatting, calendars, or time-dependent tests, read [Date and time patterns](docs/date-time.md).
+
 1. **Routing**: React Router v7 file-based routing in `website/app/routes/`. Layout routes use `_layout` prefix; dynamic segments use `$param` syntax.
 2. **Conference data**: Year-based. Each year config lives in the fork's `conference/config/years/`. The stub mirrors the same shape.
 3. **Content**: MDX compiled at build time via the `mdx-bundles` Vite plugin. Pages discovered from `conference/content/pages/` (path resolved through `@conference/build-manifest`).
 4. **Styling**: PandaCSS with Park UI preset. Recipes in `website/app/recipes/` and `website/app/theme/recipes`. Use `defineRecipe` in `panda.config.ts` rather than runtime `cva` so recipes win utility-prop cascade fights.
+    - **Don't use `[…]` escape-hatch values** (`maxW="[720px]"`, `aspectRatio="[16/9]"`, `lineHeight="[1]"`). Use a token instead. preset-panda already ships most of what's needed: the spacing and size scales (`4`, `3xl`, `prose`), `aspectRatio="wide"`, `lineHeight="none"`, and the theme's semantic colours and borders (`border="subtle"` rather than `[1px solid token(colors.border.subtle)]`). Check `app/styled-system/tokens/` before deciding nothing fits.
+    - If nothing fits, add a token under `theme.extend.tokens` in `panda.config.ts`, with a comment saying why it exists. `sizes.dvh` and `sizes.dialog-max-h` are the model. Add it to `themes/base.theme.ts` only when forks need to vary it, because every addition there is a contract change for every fork.
+    - Why: an escape skips the token types, so nothing ties it to the scale or the theme. The same magic number then gets copied file to file (`[120px]` appears 8 times), and every copy drifts on its own. The ~120 escapes already in `app/` are legacy. Don't copy them, and replace one with a token when you're editing that line anyway.
 5. **Data fetching**: Sessionize (agenda/speakers), Tito (ticketing), GitHub (some content).
 6. **Database**: Cloudflare D1 (SQLite). Schema migrations in `website/migrations/` (core). Helpers in `website/app/lib/d1.server.ts`.
 7. **Observability**: Cloudflare native — enabled via `observability.enabled` in each wrangler.jsonc.
@@ -121,6 +126,20 @@ The branch lives in the component because almost every href is a *runtime* value
 - Static assets: `website/public/` (core) + the conference layer's `public/` (declared via `content.publicDir` in the build manifest; overlaid onto the site root by the `conference-public` vite plugin)
 - Local env vars: `<conference-dir>/wrangler/.dev.vars` (`conference-stub/wrangler/.dev.vars` standalone, `conference/wrangler/.dev.vars` in a fork) — the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root
 - Local D1 data: `website/.wrangler/state/`
+- Visual baselines pin every input that moves on its own: the clock (`VISUAL_DATE`), Sessionize (fixture
+  interception) and now sponsors. `/` is the only baseline with no year in its path, so it renders the *current*
+  conference and its sponsor strip moved whenever a fork signed a sponsor — `E2E_SPONSOR_FIXTURES`, set by
+  `e2e/start-dev-server.mjs`, swaps in `e2e/fixtures/sponsors.ts`. Real sponsor rendering stays covered by the
+  year-pinned `/sponsors/<year>`. Note that `/` is a tall full-page capture against a *ratio* gate, so a sponsor
+  swap alone never tripped it — the seam carries its own assertion in `visual.spec.ts` rather than trusting the
+  baseline to notice it applied.
+- The blog is pinned the same way: `E2E_BLOG_FIXTURES` points the MDX plugin at `website/e2e/fixtures/blog/`
+  instead of the conference's posts. It's read in `vite.config.ts` (the content compiles before the Worker
+  exists), and a `vite build` with it set throws, so fixture posts can't ship as the blog.
+- The header has its own `#header` baseline plus an overflow sweep (320–1600px, every 8px and each Panda
+  breakpoint, across every state in `HEADER_DATE_STATES` in `e2e/routes.ts`). `/` alone let header regressions
+  through, being a small share of a tall capture. A bare `1fr` grid track can't shrink below its content; use
+  `minmax(0, 1fr)`.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

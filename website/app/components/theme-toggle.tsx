@@ -62,7 +62,7 @@ export function ThemeToggle({ initialTheme }: ThemeToggleProps) {
             cursor="pointer"
             borderRadius="md"
             _hover={{ bgColor: 'overlay.subtle' }}
-            _focus={{ outline: '[2px solid token(colors.indigo.7)]', outlineOffset: '[2px]' }}
+            _focus={{ outline: 'focus-chrome', outlineOffset: '0.5' }}
         >
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </styled.button>

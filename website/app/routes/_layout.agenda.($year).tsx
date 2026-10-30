@@ -1,21 +1,61 @@
+import { conferenceTime, Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
-import { DateTime } from 'luxon'
-import { Fragment } from 'react'
-import { data, redirect, useLoaderData } from 'react-router'
+import { Fragment, useMemo, useState } from 'react'
+import {
+    data,
+    matchPath,
+    Outlet,
+    redirect,
+    type ShouldRevalidateFunctionArgs,
+    useLoaderData,
+    useLocation,
+    useNavigate,
+    useNavigation,
+    useParams,
+    useRouteLoaderData,
+} from 'react-router'
 import { $path } from 'safe-routes'
-import type { TypeOf, z } from 'zod'
+import type { z } from 'zod'
 import { AppLink } from '~/components/app-link'
+import { FeedbackLink, useFeedbackClock, useReviewedFeedback } from '~/components/feedback-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
+import { SpeakerModal } from '~/components/speaker-modal'
+import { TalkDialog } from '~/components/talk-dialog'
+import { Button } from '~/components/ui/button'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
+import { hasTalkEnded } from '~/lib/feedback/talk-ended'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import type { MeetTheExpertsAgenda, MeetTheExpertsSeat } from '~/lib/meet-the-experts-agenda.server'
+import { getMeetTheExpertsAgenda } from '~/lib/meet-the-experts-agenda.server'
+import type { AgendaTalk } from '~/lib/my-agenda'
+import { getPublishedSchedule } from '~/lib/published-agenda.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import type { gridRoomSchema, gridSmartSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
-import { formatDate, getScheduleGrid } from '~/lib/sessionize.server'
+import type { gridRoomSchema, roomSchema, timeSlotSchema } from '~/lib/sessionize.server'
+import { formatDate } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { useMyAgenda } from '~/lib/use-my-agenda'
+import { getConferences, getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
+import type { loader as talkLoader } from './_layout.agenda.($year).talk.$sessionId'
+
+const TALK_ROUTE_ID = 'routes/_layout.agenda.($year).talk.$sessionId'
+const TALK_PATH = '/agenda/:year/talk/:sessionId'
+
+/** Set on the link that opens a talk, so closing it can step back in history. */
+interface TalkLinkState {
+    fromAgenda: true
+}
+
+/**
+ * `location.state` is `any` in React Router: it's whatever the history entry
+ * holds, which can come from another page, an older deploy, or a reload. So
+ * check its shape rather than asserting it.
+ */
+function isTalkLinkState(state: unknown): state is TalkLinkState {
+    return typeof state === 'object' && state !== null && 'fromAgenda' in state && state.fromAgenda === true
+}
 
 export async function loader({ params, context }: Route.LoaderArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
@@ -25,29 +65,33 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
-    const now = getDateTimeProvider(context).nowDate()
-    const agendaPublished = conferenceYearConfig
-        ? (conferenceYearConfig.agendaPublishedDateTime
-              ? now >= conferenceYearConfig.agendaPublishedDateTime
-              : false) ||
-          (!!conferenceYearConfig.conferenceDate && now >= conferenceYearConfig.conferenceDate)
-        : false
+    const schedule = await getPublishedSchedule(context, year)
+    // Held back with the rest of the agenda until it's published.
+    const meetTheExperts = schedule ? await getMeetTheExpertsAgenda(context, year) : undefined
 
-    const schedules: TypeOf<typeof gridSmartSchema> =
+    // Only the current conference's agenda can be built from, and only until
+    // the day is over: past years are an archive, and the shortlist counts
+    // are only useful while there is still a day to plan for.
+    const hasMyAgenda =
+        !!schedule &&
         conferenceYearConfig?.sessions?.kind === 'sessionize' &&
-        conferenceYearConfig.sessions.sessionizeEndpoint &&
-        agendaPublished
-            ? await getScheduleGrid({
-                  sessionizeEndpoint: conferenceYearConfig.sessions.sessionizeEndpoint,
-              })
-            : conferenceYearConfig?.sessions?.kind === 'session-data'
-              ? conferenceYearConfig.sessions.sessions
-              : []
-
-    const schedule = schedules[0]
+        year === getConferenceState(context).conference.year
+    const canPick = hasMyAgenda && getConferenceState(context).conferenceState !== 'conference-over'
+    // Once picking closes, the link to someone's agenda stays for those who
+    // built one; whether they did is only known in the browser.
+    const myAgendaClosed = hasMyAgenda && !canPick
+    // Feedback links go away again once the window closes (the page itself is
+    // cached for 5 minutes, so they can linger that long).
+    const feedbackOpen =
+        !!schedule &&
+        year === getConferenceState(context).conference.year &&
+        getConferenceState(context).feedback === 'open'
+    // Each talk's link waits until that talk has finished; the page works out
+    // when that is from here, so the date overrides apply to it too.
+    const now = feedbackOpen ? getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }) : undefined
 
     return data(
         {
@@ -55,11 +99,17 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // Talk-detail pages are only worth linking for live Sessionize years
             // (which fetch speaker profiles). Archived `session-data` years have no
             // speaker store, so their talk titles render as plain text instead of
-            // linking to a sparse detail page.
+            // linking to a sparse detail page — unless the talk has a recording.
             linkTalks: conferenceYearConfig?.sessions?.kind === 'sessionize',
+            recordings: conferenceYearConfig?.recordings ?? {},
+            canPick,
+            myAgendaClosed,
+            feedbackOpen,
+            now,
+            meetTheExperts,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
-            conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
+            conferences: Object.values(getConferences(context).conferences).map((conf) => ({
                 year: conf.year,
             })),
             schedule: schedule
@@ -88,9 +138,103 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     )
 }
 
+/**
+ * Opening or closing a talk only mounts or unmounts the child route; the
+ * agenda behind it doesn't change. Without this, opening a talk from the
+ * unpinned `/agenda` (talk links always carry the year) reads as a param
+ * change and refetches the whole agenda.
+ */
+export function shouldRevalidate({
+    currentParams,
+    nextParams,
+    formMethod,
+    defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) {
+    const togglingTalk =
+        !formMethod &&
+        (!!currentParams.sessionId || !!nextParams.sessionId) &&
+        (!currentParams.year || !nextParams.year || currentParams.year === nextParams.year)
+    return togglingTalk ? false : defaultShouldRevalidate
+}
+
 export default function Agenda() {
-    const { schedule, sponsors, conferences, year, cancelledMessage, linkTalks } = useLoaderData<typeof loader>()
+    const {
+        schedule,
+        sponsors,
+        conferences,
+        year,
+        cancelledMessage,
+        linkTalks,
+        recordings,
+        canPick,
+        myAgendaClosed,
+        feedbackOpen,
+        now,
+        meetTheExperts,
+    } = useLoaderData<typeof loader>()
+    const reviewedFeedback = useReviewedFeedback(feedbackOpen)
+    const feedbackNow = useFeedbackClock(now)
+    const canGiveFeedback = (session: { endsAt: string | null; isServiceSession: boolean }) =>
+        feedbackOpen &&
+        !session.isServiceSession &&
+        feedbackNow !== undefined &&
+        hasTalkEnded(session.endsAt, feedbackNow)
     const availableTimeSlots = schedule?.timeSlots.map((timeSlot) => timeSlot.slotStart.replace(/:/g, ''))
+
+    const sessionsById = useMemo(
+        () => new Map(schedule?.rooms.flatMap((room) => room.sessions.map((session) => [session.id, session])) ?? []),
+        [schedule],
+    )
+    const pickableTalks = useMemo(() => {
+        const talks = new Map<string, AgendaTalk>()
+        for (const session of sessionsById.values()) {
+            if (!session.isServiceSession && session.startsAt && session.endsAt) {
+                talks.set(session.id, { id: session.id, startsAt: session.startsAt, endsAt: session.endsAt })
+            }
+        }
+        return talks
+    }, [sessionsById])
+    const { picked, toggle } = useMyAgenda(year, pickableTalks)
+
+    // The talk dialog opens as soon as a talk link is clicked, from the
+    // session already on this page; the talk route's loader only fills in the
+    // speakers' profiles. With `prefetch="intent"` on the links that has
+    // usually finished before the click lands anyway.
+    const params = useParams()
+    const location = useLocation()
+    const navigation = useNavigation()
+    const navigate = useNavigate()
+    const talkData = useRouteLoaderData<typeof talkLoader>(TALK_ROUTE_ID)
+    const pendingTalkId = navigation.location
+        ? matchPath(TALK_PATH, navigation.location.pathname)?.params.sessionId
+        : undefined
+    // Mid-navigation, go by where we're heading so closing is instant too.
+    const openTalkId = navigation.location ? pendingTalkId : params.sessionId
+    const openTalk = openTalkId ? sessionsById.get(openTalkId) : undefined
+    const closeTalk = () => {
+        if (params.sessionId && isTalkLinkState(location.state)) {
+            void navigate(-1)
+        } else {
+            void navigate($path('/agenda/:year?', { year: params.year }), { preventScrollReset: true, replace: true })
+        }
+    }
+    const [announcement, setAnnouncement] = useState('')
+
+    const onToggle = (talk: AgendaTalk) => {
+        const title = (id: string) => sessionsById.get(id)?.title ?? 'a talk'
+        const outcome = toggle(talk)
+        if (!outcome.added) {
+            setAnnouncement(`Removed ${title(talk.id)} from your agenda.`)
+            return
+        }
+        const clashes = outcome.displaced.map(title)
+        setAnnouncement(
+            `Added ${title(talk.id)} to your agenda.` +
+                (clashes.length
+                    ? ` Removed ${clashes.join(' and ')}, which ${clashes.length > 1 ? 'clash' : 'clashes'} with it.`
+                    : ''),
+        )
+    }
 
     const isLatestConference = conferences.every((c) => c.year <= year)
 
@@ -137,6 +281,20 @@ export default function Agenda() {
     ) : (
         <PageLayout>
             {pageHeading}
+            {canPick ? (
+                // Picking a talk can silently unpick others that clash with it;
+                // this is the only place that is said in words.
+                <styled.div srOnly aria-live="polite" role="status">
+                    {announcement}
+                </styled.div>
+            ) : null}
+            {canPick || (myAgendaClosed && picked.length > 0) ? (
+                <Flex justifyContent="flex-end" px="1" py="2">
+                    <AppLink to="/agenda/my" unstyled color="text.highlight" textDecoration="underline" fontSize="sm">
+                        My agenda{picked.length ? ` (${picked.length})` : ''}
+                    </AppLink>
+                </Flex>
+            ) : null}
             <Box width="full" overflowX={{ base: 'auto', xl: 'visible' }}>
                 {conferenceManifest.public.features?.sponsorOverview ? <SponsorOverview sponsors={sponsors} /> : null}
                 <Box
@@ -184,10 +342,8 @@ export default function Agenda() {
                     })}
 
                     {schedule.timeSlots.map((timeSlot, timeSlotIndex) => {
-                        const startTime12 = DateTime.fromISO(timeSlot.slotStart, {
-                            zone: conferenceManifest.public.timezone,
-                        })
-                            .toFormat('h:mm a')
+                        const startTime12 = Temporal.PlainTime.from(timeSlot.slotStart)
+                            .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                             .toLowerCase()
                         const timeSlotSimple = timeSlot.slotStart.replace(/:/g, '')
                         const nextTimeSlot = schedule.timeSlots[timeSlotIndex + 1]
@@ -217,10 +373,8 @@ export default function Agenda() {
                                         <styled.span display={{ base: 'inline', xl: 'none' }}>
                                             {' '}
                                             -{' '}
-                                            {DateTime.fromISO(nextTimeSlot.slotStart, {
-                                                zone: conferenceManifest.public.timezone,
-                                            })
-                                                .toFormat('h:mm a')
+                                            {Temporal.PlainTime.from(nextTimeSlot.slotStart)
+                                                .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                                                 .toLowerCase()}
                                         </styled.span>
                                     ) : null}
@@ -238,9 +392,14 @@ export default function Agenda() {
                                             timeSlotSimple={timeSlotSimple}
                                             timeSlot={timeSlot}
                                             year={year}
-                                            linkTalks={linkTalks}
+                                            linkTalks={linkTalks || !!recordings[room.session.id]}
                                             startTime12={startTime12}
                                             timeSlotIndex={timeSlotIndex}
+                                            pickable={canPick ? pickableTalks.get(room.session.id) : undefined}
+                                            isPicked={picked.includes(room.session.id)}
+                                            onToggle={onToggle}
+                                            canGiveFeedback={canGiveFeedback}
+                                            reviewedFeedback={reviewedFeedback}
                                         />
                                     )
                                 })}
@@ -248,10 +407,163 @@ export default function Agenda() {
                         )
                     })}
                 </Box>
+                <TalkDialog
+                    session={openTalk ?? null}
+                    timeRange={openTalk ? talkTimeRange(openTalk.startsAt, openTalk.endsAt) : null}
+                    roomSponsor={openTalk ? sponsors.room?.find((r) => r.roomName === openTalk.room) : undefined}
+                    speakers={talkData?.sessionId === openTalkId ? talkData?.speakers : undefined}
+                    recordingVideoId={openTalk ? recordings[openTalk.id] : undefined}
+                    feedback={
+                        openTalk && canGiveFeedback(openTalk) ? (
+                            <FeedbackLink
+                                id={openTalk.id}
+                                title={openTalk.title}
+                                reviewed={reviewedFeedback.has(openTalk.id)}
+                                label="Give feedback on this talk"
+                            />
+                        ) : null
+                    }
+                    onClose={closeTalk}
+                />
+                <Outlet />
+                {meetTheExperts ? <MeetTheExperts grid={meetTheExperts} /> : null}
                 <SponsorSection sponsors={sponsors} year={year} />
                 <ConferenceBrowser conferences={conferences} />
             </Box>
         </PageLayout>
+    )
+}
+
+/**
+ * Laid out like the talk grid above it: tables stand in for rooms (sticky
+ * column headers), slots for time slots, and each seated person is a card
+ * whose "location" is their table. Stacks on small screens, same as the
+ * agenda. Empty seats are left out rather than drawn as blank cards.
+ * Each person's name opens their registration bio in a modal.
+ */
+function MeetTheExperts({ grid }: { grid: MeetTheExpertsAgenda }) {
+    const [selected, setSelected] = useState<{ seat: MeetTheExpertsSeat; where: string } | null>(null)
+
+    return (
+        <styled.section p="1" mt="8" color="text.secondary" fontSize="sm" aria-labelledby="meet-the-experts">
+            <styled.h2 id="meet-the-experts" color="text.primary" fontSize="xl" fontWeight="semibold" mb="2">
+                Meet the Experts
+            </styled.h2>
+            <Box
+                style={{ '--table-columns': `auto repeat(${grid.tableLabels.length}, 1fr)` } as React.CSSProperties}
+                xl={{ display: 'grid', gridTemplateColumns: 'var(--table-columns)', gap: '1' }}
+            >
+                {grid.tableLabels.map((label, i) => (
+                    <Box
+                        key={i}
+                        style={{ gridColumn: i + 2 }}
+                        gridRow="1"
+                        display="none"
+                        rounded="sm"
+                        bgColor="border.emphasis"
+                        color="surface.hero"
+                        fontWeight="semibold"
+                        textAlign="center"
+                        padding="2"
+                        xl={{ display: 'block', position: 'sticky', top: '4', zIndex: 'sticky' }}
+                    >
+                        {label}
+                    </Box>
+                ))}
+                {grid.rows.map((row, r) => (
+                    <Fragment key={r}>
+                        <styled.h3
+                            style={{ gridRow: r + 2 }}
+                            gridColumn="1"
+                            mt="2"
+                            xl={{ mt: '0' }}
+                            fontSize={{ base: 'sm', md: 'md' }}
+                            fontWeight="semibold"
+                        >
+                            {row.slotLabel}
+                        </styled.h3>
+                        <styled.ul
+                            style={{ gridRow: r + 2 }}
+                            gridColumn="2 / -1"
+                            listStyle="none"
+                            xl={{ display: 'grid', gridTemplateColumns: 'subgrid' }}
+                        >
+                            {row.cells.map((seat, i) =>
+                                seat ? (
+                                    <styled.li
+                                        key={i}
+                                        style={{ gridColumn: i + 1 }}
+                                        rounded="sm"
+                                        bgColor="surface.card"
+                                        padding="2"
+                                        mt="2"
+                                        xl={{ mt: '0' }}
+                                    >
+                                        <styled.button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelected({
+                                                    seat,
+                                                    where: `${row.slotLabel} · ${grid.tableLabels[i]}`,
+                                                })
+                                            }
+                                            aria-haspopup="dialog"
+                                            color="text.primary"
+                                            fontSize="md"
+                                            fontWeight="semibold"
+                                            lineHeight="tight"
+                                            textAlign="left"
+                                            cursor="pointer"
+                                            mb="2"
+                                            _hover={{ color: 'text.highlight' }}
+                                            _focusVisible={{
+                                                outline: 'focus',
+                                                outlineOffset: '0.5',
+                                            }}
+                                        >
+                                            {seat.displayName}
+                                        </styled.button>
+                                        <Flex alignItems="center" gap="2" fontSize={{ base: 'xs', xl: 'sm' }}>
+                                            <LocationIcon />
+                                            {grid.tableLabels[i]}
+                                        </Flex>
+                                    </styled.li>
+                                ) : null,
+                            )}
+                        </styled.ul>
+                    </Fragment>
+                ))}
+            </Box>
+            <SpeakerModal
+                title={selected?.seat.displayName ?? ''}
+                open={selected !== null}
+                onOpenChange={(open) => !open && setSelected(null)}
+            >
+                <styled.p fontSize="sm" mb="4">
+                    {selected?.where}
+                </styled.p>
+                <styled.p whiteSpace="pre-line">{selected?.seat.bio ?? 'No bio provided.'}</styled.p>
+            </SpeakerModal>
+        </styled.section>
+    )
+}
+
+function LocationIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            style={{ width: '16px', height: '16px' }}
+            aria-label="Location"
+            role="img"
+        >
+            <path
+                fillRule="evenodd"
+                d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                clipRule="evenodd"
+            />
+        </svg>
     )
 }
 
@@ -283,7 +595,7 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                 display: 'block',
                 position: 'sticky',
                 top: '4',
-                zIndex: 'modal',
+                zIndex: 'sticky',
             }}
         >
             {room.name}
@@ -307,8 +619,8 @@ function RoomTitle({ room, sponsors }: { room: z.infer<typeof gridRoomSchema>; s
                         src={roomSponsor.logoUrlDarkMode}
                         alt={roomSponsor.name}
                         title={roomSponsor.name}
-                        maxWidth="[110px]"
-                        maxHeight="[28px]"
+                        maxWidth="27.5"
+                        maxHeight="7"
                         mt="1"
                         display="inline-block"
                         objectFit="contain"
@@ -332,6 +644,11 @@ function RoomTimeSlot({
     linkTalks,
     startTime12,
     timeSlotIndex,
+    pickable,
+    isPicked,
+    onToggle,
+    canGiveFeedback,
+    reviewedFeedback,
 }: {
     schedule: NonNullable<Awaited<ReturnType<typeof useLoaderData<typeof loader>>>['schedule']>
     room: z.infer<typeof roomSchema>
@@ -344,18 +661,24 @@ function RoomTimeSlot({
     linkTalks: boolean
     startTime12: string
     timeSlotIndex: number
+    /** Set only for a talk that can go on the person's agenda. */
+    pickable: AgendaTalk | undefined
+    isPicked: boolean
+    onToggle: (talk: AgendaTalk) => void
+    canGiveFeedback: (session: { endsAt: string | null; isServiceSession: boolean }) => boolean
+    reviewedFeedback: ReadonlySet<string>
 }) {
     const fullSession = schedule.rooms
         .find((r) => r.id === room.id)
         ?.sessions.find((session) => session.id === room.session.id)
     const endsAtTime = fullSession?.endsAt ? fullSession.endsAt.replace(/\d{4}-\d{2}-\d{2}T/, '') : null
     const endTime12 = fullSession?.endsAt
-        ? DateTime.fromISO(fullSession.endsAt, { zone: conferenceManifest.public.timezone })
-              .toFormat('h:mm a')
+        ? conferenceTime(fullSession.endsAt)
+              .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
               .toLowerCase()
         : nextTimeSlotIso
-          ? DateTime.fromISO(nextTimeSlotIso, { zone: conferenceManifest.public.timezone })
-                .toFormat('h:mm a')
+          ? Temporal.PlainTime.from(nextTimeSlotIso)
+                .toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
                 .toLowerCase()
           : undefined
 
@@ -435,33 +758,54 @@ function RoomTimeSlot({
                 xl={{
                     mt: '0',
                 }}
+                outlineWidth="2px"
+                outlineStyle={isPicked ? 'solid' : 'none'}
+                outlineColor="border.emphasis"
             >
-                <styled.h3
-                    wordWrap="break-word"
-                    color="text.primary"
-                    fontSize="md"
-                    fontWeight="semibold"
-                    lineHeight="tight"
-                    mb="2"
-                >
-                    {fullSession?.isServiceSession || !linkTalks ? (
-                        fullSession?.title
-                    ) : (
-                        <AppLink
-                            to={$path('/agenda/:year/talk/:sessionId', {
-                                year,
-                                sessionId: fullSession?.id ?? '#',
-                            })}
-                            // The default `primary` nav variant paints `text.on-brand` (white),
-                            // which disappears on the card's `surface.card` background in light
-                            // theme. Override to body text so it tracks the surrounding card.
-                            color="text.primary"
-                            _hover={{ color: 'text.highlight' }}
+                <Flex alignItems="flex-start" justifyContent="space-between" gap="2" mb="2">
+                    <styled.h3
+                        wordWrap="break-word"
+                        color="text.primary"
+                        fontSize="md"
+                        fontWeight="semibold"
+                        lineHeight="tight"
+                    >
+                        {fullSession?.isServiceSession || !linkTalks ? (
+                            fullSession?.title
+                        ) : (
+                            <AppLink
+                                to={$path('/agenda/:year?/talk/:sessionId', {
+                                    year,
+                                    sessionId: fullSession?.id ?? '#',
+                                })}
+                                state={{ fromAgenda: true } satisfies TalkLinkState}
+                                preventScrollReset
+                                prefetch="intent"
+                                // The default `primary` nav variant paints `text.on-brand` (white),
+                                // which disappears on the card's `surface.card` background in light
+                                // theme. Override to body text so it tracks the surrounding card.
+                                color="text.primary"
+                                _hover={{ color: 'text.highlight' }}
+                            >
+                                {fullSession?.title}
+                            </AppLink>
+                        )}
+                    </styled.h3>
+                    {pickable ? (
+                        <Button
+                            size="xs"
+                            variant={isPicked ? 'solid' : 'outline'}
+                            onClick={() => onToggle(pickable)}
+                            aria-label={
+                                isPicked
+                                    ? `Remove ${fullSession?.title} from my agenda`
+                                    : `Add ${fullSession?.title} to my agenda`
+                            }
                         >
-                            {fullSession?.title}
-                        </AppLink>
-                    )}
-                </styled.h3>
+                            <span aria-hidden="true">{isPicked ? '✓' : '+'}</span>
+                        </Button>
+                    ) : null}
+                </Flex>
                 <styled.span
                     display="flex"
                     alignItems="center"
@@ -495,20 +839,7 @@ function RoomTimeSlot({
                         textWrap="nowrap"
                         fontSize={{ base: 'xs', xl: 'sm' }}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                            style={{ width: '16px', height: '16px' }}
-                            aria-label="Location"
-                            role="img"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
+                        <LocationIcon />
                         <styled.span display={{ base: 'inline', sm: 'inline' }}>{room.name}</styled.span>
                     </Flex>
                 )}
@@ -531,9 +862,23 @@ function RoomTimeSlot({
                         <styled.span>{fullSession?.speakers.map((speaker) => speaker.name)?.join(', ')}</styled.span>
                     </Flex>
                 ) : null}
+                {fullSession && canGiveFeedback(fullSession) ? (
+                    <FeedbackLink
+                        id={fullSession.id}
+                        title={fullSession.title}
+                        reviewed={reviewedFeedback.has(fullSession.id)}
+                    />
+                ) : null}
             </Box>
         </styled.div>
     )
+}
+
+function talkTimeRange(startsAt: string | null, endsAt: string | null) {
+    if (!startsAt || !endsAt) return null
+    const format = (iso: string) =>
+        conferenceTime(iso).toLocaleString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+    return `${format(startsAt)} - ${format(endsAt)}`
 }
 
 function ConferenceBrowser({ conferences }: { conferences: { year: Year }[] }) {
