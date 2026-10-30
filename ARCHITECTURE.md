@@ -19,7 +19,8 @@ Everything under `conference/`. Core never edits it, so a `/core-pull` won't tou
 ```
 conference/
   manifest.ts              runtime manifest: public, socials, brand, conferences, mobileApp
-  build-manifest.ts        build manifest: theme refs, content paths, deployment names
+  build-manifest.ts        build manifest: theme refs, content paths, brand assets, deployment names
+  brand/                   DDD PERTH wordmark + three hero Ds (SVG)
   config/                  public.ts, socials.ts, years-index.ts, years/, venues/
   content/                 pages/ (15+ MDX), blog/ (posts + authors.yml)
   public/                  static assets (sponsor logos, team photos) overlaid onto the site root

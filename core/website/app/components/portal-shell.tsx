@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Form } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { AppNavLink } from '~/components/app-nav-link'
-import Logo from '~/images/svg/logo.svg?react'
+import { Logo } from 'virtual:conference-brand'
 import { css } from '~/styled-system/css'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 

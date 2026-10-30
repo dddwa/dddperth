@@ -25,6 +25,7 @@ ddd-core/                    ← shared layer (its own repo)
     src/sessionize-schema.ts Zod schemas
   conference-stub/           "DevConf Example" — working sample conference
     manifest.ts, build-manifest.ts
+    brand/                   placeholder logo + hero marks
     config/                  public, socials, years/{2024,2025,2026}, venues
     content/                 pages/, blog/
     theme/                   example.theme.ts + example-light.theme.ts + index.ts
@@ -34,7 +35,8 @@ ddd-core/                    ← shared layer (its own repo)
   core/                      git subtree from ddd-core, never edited directly
   conference/                this fork's content + config
     manifest.ts              runtime manifest: public, socials, brand, conferences
-    build-manifest.ts        build manifest: theme refs, content paths, deployment names
+    build-manifest.ts        build manifest: theme refs, content paths, brand assets, deployment names
+    brand/                   logo + three hero marks (SVG), referenced by build-manifest brandAssets
     config/                  public.ts, socials.ts, years-index.ts, years/, venues/
     content/                 pages/ (15+ MDX), blog/ (posts + authors.yml)
     theme/                   <slug>.theme.ts + <slug>-light.theme.ts + index.ts

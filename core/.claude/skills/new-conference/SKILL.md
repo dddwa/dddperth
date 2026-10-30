@@ -51,7 +51,7 @@ The skill does NOT publish anything, push to GitHub, deploy to Cloudflare, or ru
 - **Node ≥ 22 is required.** The app builds on Vite 8, which uses `util.styleText` (Node 20.12+) and won't run on Node < 20.19 / < 22.12. On older Node the build fails with a confusing `does not provide an export named 'styleText'` error, often surfacing first as an Nx *"Failed to process project graph"* message. The scaffold writes a `.nvmrc` (`22`); make sure the active Node is ≥ 22 before `pnpm i` / build. A stale Nx daemon started under the wrong Node persists the error even after switching — clear it with `pnpm nx reset` (or run one-off with `NX_DAEMON=false`).
 - **Native bindings (`@swc/core`).** If `pnpm i` first ran under an older Node, you may hit `Cannot find native binding`; re-run `pnpm i` under Node ≥ 22 so the platform-specific optional dep resolves.
 - **Hardcoded DDD-Perth branding still in core** (not yet fork-parameterised — flag these in FORK_GUIDE; the real fixes belong upstream in ddd-core):
-  - **Logo wordmark.** The header renders `core/website/app/images/svg/logo.svg`, a vector "DDD PERTH" wordmark — the text is drawn as paths, so it can't be substituted. Every fork shows "PERTH" until core makes the logo fork-overridable (a manifest-driven wordmark, or a `/conference/`-supplied asset).
+  - **Logo wordmark and hero marks** *(fixed in current core)*. These used to live in `core/website/app/images/`, so a fork had to overwrite them inside `core/`. They now come from `brandAssets` in the fork's `build-manifest.ts` (`conference/brand/` in the stub). If working against an older core, the fork shows the "DDD PERTH" wordmark and Perth's coloured hero Ds.
   - **Hero venue** *(fixed in current core)*. The homepage hero used to hardcode "Optus Stadium, Perth"; it now renders `conferenceState.conference.venue.name`. If working against an older core, thread `venue` from `hero.tsx` into `HomepageHeroPanel` (`hero-panel.tsx`).
   - Minor: `_layout.tsx` meta keywords mention "DDD, Perth"; `app-config.ts` has a `DDD Perth <noreply@…>` fallback (overridden by the fork's manifest `noreplyEmail`).
 
@@ -339,7 +339,7 @@ Then repoint the date rules block at the fork: import from `./core/eslint-rules/
 **`FORK_GUIDE.md`** — a checklist. Key items:
 - Use **Node ≥ 22** (`.nvmrc`); `pnpm i`, then `pnpm nx d1-migrate-local website` and `pnpm nx build website`
 - Replace placeholder D1 database IDs in `conference/wrangler/{staging,production}.jsonc` after creating real Cloudflare D1 databases
-- **Header logo** still shows the "DDD PERTH" wordmark (hardcoded vector in `core/website/app/images/svg/logo.svg`) — supply a fork logo / upstream a fork-overridable logo to ddd-core
+- Replace the stub's placeholder `conference/brand/logo.svg` (header, footer and portal wordmark; `currentColor` fills follow the text colour) and the three `conference/brand/hero-mark-*.svg` parallax marks, then update the paths in `brandAssets` in `conference/build-manifest.ts` if you rename them
 - Replace the stub's placeholder sponsor logos in `conference/public/images/sponsors/` (devconf-*) with your own, prefixed with your slug
 - Replace the placeholder `conference/public/favicon.svg` and `conference/public/images/logo.png` — core references both by URL (favicon link, og:image meta)
 - Confirm the first year's dates, Sessionize URL/endpoint IDs, and Tito account/event in `conference/config/years/${FIRST_YEAR}.ts`

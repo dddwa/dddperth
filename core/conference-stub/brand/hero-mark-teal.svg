@@ -1,0 +1,19 @@
+<svg width="711" height="1034" viewBox="0 0 711 1034" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="hero-mark-teal-face" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#14b8a6"/>
+            <stop offset="1" stop-color="#0f766e"/>
+        </linearGradient>
+        <linearGradient id="hero-mark-teal-cap" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#5eead4"/>
+            <stop offset="1" stop-color="#14b8a6"/>
+        </linearGradient>
+        <linearGradient id="hero-mark-teal-side" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#0f766e"/>
+            <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+        </linearGradient>
+    </defs>
+    <path d="M0 0H430Q711 0 711 280H281Q281 0 0 0Z" fill="url(#hero-mark-teal-cap)"/>
+    <path d="M281 280H711V1034H281Z" fill="url(#hero-mark-teal-face)"/>
+    <path d="M0 0Q281 0 281 280V1034H0Z" fill="url(#hero-mark-teal-side)"/>
+</svg>

@@ -2,9 +2,7 @@ import { conferenceDayStart } from '~/lib/dates/temporal'
 import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
-import DGreen from '~/images/hero/d-green.svg?react'
-import DPink from '~/images/hero/d-pink.svg?react'
-import DPurple from '~/images/hero/d-purple.svg?react'
+import { heroMarks } from 'virtual:conference-brand'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
@@ -28,6 +26,7 @@ export function HomepageHeroPanel({
     conferenceDate: string | undefined
     venue: ConferenceVenue | undefined
 }) {
+    const [FrontMark, MiddleMark, BackMark] = heroMarks
     const { scrollY } = useScroll()
     const parallaxScale = useParallaxScale()
 
@@ -103,10 +102,10 @@ export function HomepageHeroPanel({
                 </styled.h1>
             </HeaderContainer>
             <Box width="full" position="relative" maxHeight={{ base: '35', md: '50', lg: '65', xl: '105' }}>
-                {/* Sizing element: the green D establishes the container height.
+                {/* Sizing element: the front mark establishes the container height.
                     Other Ds and the gradient overlay are absolutely positioned over it. */}
                 <Box width="[38%]" ml="[4%]" visibility="hidden" aria-hidden="true">
-                    <DGreen style={{ width: '100%', height: 'auto' }} />
+                    <FrontMark style={{ width: '100%', height: 'auto' }} />
                 </Box>
                 <Box
                     position="absolute"
@@ -126,7 +125,7 @@ export function HomepageHeroPanel({
                  * with the SVG as it translates on scroll.
                  */}
                 <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%', opacity: 0.7, ...DRIFT_MASK }}>
-                    <DGreen style={{ width: '100%', height: 'auto' }} />
+                    <FrontMark style={{ width: '100%', height: 'auto' }} />
                 </motion.div>
                 <motion.div
                     style={{
@@ -141,7 +140,7 @@ export function HomepageHeroPanel({
                         ...DRIFT_MASK,
                     }}
                 >
-                    <DPink style={{ width: '100%', height: 'auto' }} />
+                    <MiddleMark style={{ width: '100%', height: 'auto' }} />
                 </motion.div>
                 <motion.div
                     style={{
@@ -156,7 +155,7 @@ export function HomepageHeroPanel({
                         ...DRIFT_MASK,
                     }}
                 >
-                    <DPurple style={{ width: '100%', height: 'auto' }} />
+                    <BackMark style={{ width: '100%', height: 'auto' }} />
                 </motion.div>
             </Box>
         </Flex>
