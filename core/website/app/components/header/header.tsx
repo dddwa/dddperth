@@ -1,7 +1,6 @@
 import { Portal } from '@ark-ui/react/portal'
 import { useState } from 'react'
-import { useRouteLoaderData } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, useRouteLoaderData } from 'react-router'
 import { conferenceManifest } from '@conference/manifest'
 import { Logo } from 'virtual:conference-brand'
 import { getHeaderNavItems, type VenueNavPlacement } from '~/lib/header-nav'
@@ -37,7 +36,7 @@ export function Header({
     // - Otherwise: secondary square buttons left of a primary pill
     //   Primary pill is the rightmost. Order: [Propose Talk] [Buy Tickets→]
     const ctas: { to: string; label: string }[] = votingOpen
-        ? [{ to: $path('/voting'), label: 'Vote!' }]
+        ? [{ to: href('/voting'), label: 'Vote!' }]
         : [
               ...(cfpOpen ? [{ to: '/call-for-presentations', label: 'Propose a Talk' }] : []),
               ...(ticketSalesOpen ? [{ to: '/tickets', label: 'Buy Tickets' }] : []),

@@ -40,7 +40,7 @@
             "options": {
                 "commands": [
                     {
-                        "command": "pnpm exec park-ui",
+                        "command": "pnpm dlx @park-ui/cli@1.0.1",
                         "forwardAllArgs": true
                     }
                 ],
@@ -50,7 +50,7 @@
         },
         "setup-panda": {
             "executor": "nx:run-commands",
-            "// parallelism": "All four setup targets generate into website/, and `react-router typegen` clears and rewrites .react-router/types/ as it goes. Run concurrently (which `setup` did, having no ordering in its dependsOn) that rmdir races another generator repopulating the tree, and CI dies with ENOTEMPTY before the suite runs a single test. It hit three PRs in a row, each passing on a plain re-run, which is exactly what a race looks like.",
+            "// parallelism": "All three setup targets generate into website/, and `react-router typegen` clears and rewrites .react-router/types/ as it goes. Run concurrently (which `setup` did, having no ordering in its dependsOn) that rmdir races another generator repopulating the tree, and CI dies with ENOTEMPTY before the suite runs a single test. It hit three PRs in a row, each passing on a plain re-run, which is exactly what a race looks like.",
             "parallelism": false,
             "options": {
                 "command": "pnpm panda setup",
@@ -65,14 +65,6 @@
                 "cwd": "core/website"
             }
         },
-        "setup-safe-routes": {
-            "executor": "nx:run-commands",
-            "parallelism": false,
-            "options": {
-                "command": "pnpm safe-routes typegen",
-                "cwd": "core/website"
-            }
-        },
         "setup-cf-types": {
             "executor": "nx:run-commands",
             "parallelism": false,
@@ -83,7 +75,7 @@
         },
         "setup": {
             "executor": "nx:noop",
-            "dependsOn": ["setup-panda", "setup-react-router", "setup-safe-routes", "setup-cf-types"]
+            "dependsOn": ["setup-panda", "setup-react-router", "setup-cf-types"]
         },
         "typecheck": {
             "executor": "nx:run-commands",

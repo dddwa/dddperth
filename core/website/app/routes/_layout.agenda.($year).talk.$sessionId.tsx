@@ -1,6 +1,5 @@
 import { conferenceManifest } from '@conference/manifest'
-import { data, redirect } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, data, redirect } from 'react-router'
 import type { TalkDialogSpeaker } from '~/components/talk-dialog'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
@@ -22,7 +21,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const yearConfig = getYearConfig(context, year)
 
     if (yearConfig.kind === 'cancelled') {
-        throw redirect($path('/agenda/:year?', { year: undefined }))
+        throw redirect(href('/agenda/:year?', { year: undefined }))
     }
 
     // The same publication gate as the agenda, so a talk id can't be used to

@@ -1,5 +1,4 @@
-import { redirect, type RouterContext } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, redirect, type RouterContext } from 'react-router'
 import { getServices } from '~/remix-app-load-context'
 import { FairPairingGeneratorV5 } from './pairing-generator-v5'
 import type { AppServices } from './services/app-services'
@@ -134,7 +133,7 @@ export async function createUserVotingSessionAndRedirect(
     const votingStorageSession = await services.sessions.voting.getSession(request.headers.get('Cookie'))
     votingStorageSession.set('sessionId', sessionId)
 
-    throw redirect($path('/voting'), {
+    throw redirect(href('/voting'), {
         headers: {
             'Set-Cookie': await services.sessions.voting.commitSession(votingStorageSession),
         },

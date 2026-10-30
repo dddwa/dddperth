@@ -7,6 +7,5 @@ styled-system
 .react-router
 
 /.nx/workspace-data
-safe-routes.d.ts
 
 .nx/self-healing

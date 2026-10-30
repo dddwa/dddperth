@@ -2,7 +2,6 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { reactRouter } from '@react-router/dev/vite'
 import fs from 'node:fs'
 import path from 'node:path'
-import { safeRoutes } from 'safe-routes/vite.js'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig } from 'vite'
 import { conferenceBrandPlugin } from './vite-plugins/conference-brand.ts'
@@ -146,10 +145,6 @@ export default defineConfig({
             configPath: path.join(wranglerDir, process.env.WRANGLER_CONFIG ?? 'local.jsonc'),
         }),
         reactRouter(),
-        safeRoutes({
-            outDir: '.',
-            strict: true,
-        }),
         mdxBundlesPlugin({
             pagesDir: conferenceBuildManifest.content.pagesDir,
             ...blogContent,

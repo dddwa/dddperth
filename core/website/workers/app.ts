@@ -48,7 +48,7 @@ export default {
             newHeaders.set('Strict-Transport-Security', `max-age=${60 * 60 * 24 * 365 * 100}`)
 
             // React Router's production server build prepends the default "/"
-            // basename to $path()-derived redirect targets, yielding a
+            // basename to href()-derived redirect targets, yielding a
             // protocol-relative "//path" Location (e.g. "//agenda/2025") that
             // browsers resolve to a bogus host. The app never emits
             // protocol-relative redirects, so collapse a leading run of slashes
