@@ -45,7 +45,8 @@ describe('buildSponsorDetailsPayload', () => {
     })
 })
 
-describe('getExhibitorLogistics', () => {
+// Reads the conference's real Jira field mappings, so it only runs where a sponsor portal is configured.
+describe.runIf(conferenceManifest.sponsorPortal)('getExhibitorLogistics', () => {
     it('fails closed when Jira is not configured', async () => {
         expect(conferenceManifest.sponsorPortal).toBeDefined()
         const service = createJiraSponsorSyncService({
@@ -60,7 +61,8 @@ describe('getExhibitorLogistics', () => {
     })
 })
 
-describe('retryPendingStatusFlips', () => {
+// Reads the conference's real Jira field mappings, so it only runs where a sponsor portal is configured.
+describe.runIf(conferenceManifest.sponsorPortal)('retryPendingStatusFlips', () => {
     it('writes details only on explicit saves, not status retries or logo uploads', async () => {
         const profile = {
             issueKey: 'SPN-1',

@@ -106,7 +106,7 @@ Three skills live in `.claude/skills/`:
 `/core-push` and `/core-pull` are a pair: work is built in a fork, pushed up, then pulled down by the other forks.
 
 The skills are **authored in ddd-core** and travel down with the subtree as `core/.claude/skills/`. Claude Code
-only reads `.claude/skills/` at the repo root, so `scripts/sync-core-skills.mjs` copies them up on `pnpm i`. Edit
-them upstream, not here — a local edit is overwritten by the next install.
+only reads `.claude/skills/` at the repo root, so each one there is a symlink into `core/.claude/skills/`, and a pull
+updates the skills in effect. Edit them upstream, not here: an edit through the link is an edit inside `core/`.
 
 See each skill's `SKILL.md` for the full workflow.

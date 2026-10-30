@@ -7,17 +7,18 @@ import { CACHE_CONTROL } from '~/lib/http.server'
 import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { Hero } from '../components/hero/hero'
 import type { Route } from './+types/_layout._index'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
     const heroSponsors = resolveSponsorsWithFallback(
+        getConferences(context),
         getConferenceState(context).conference.year,
         getConferenceState(context).conference.sponsors,
         getConfig(context).useSponsorFixtures,

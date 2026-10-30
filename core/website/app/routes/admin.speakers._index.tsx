@@ -352,7 +352,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         }
 
         const speakers = await services.speakers.listSpeakers(portalConfig.year)
-        const yearConfig = isConferenceYear(portalConfig.year)
+        const yearConfig = isConferenceYear(conferenceManifest.conferences, portalConfig.year)
             ? conferenceManifest.conferences.conferences[portalConfig.year]
             : undefined
         const conferenceDate = yearConfig && 'conferenceDate' in yearConfig ? yearConfig.conferenceDate : undefined

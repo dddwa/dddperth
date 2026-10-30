@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
+import { FIXTURE_CONFERENCE_COOKIE, FIXTURE_YEAR } from './fixtures/conference-year'
 import { FIXTURE_DATE } from './fixtures/sessionize/model'
 
 /**
@@ -9,11 +10,15 @@ import { FIXTURE_DATE } from './fixtures/sessionize/model'
  *
  * The clock is the dev date override, set to just after the first track slot
  * (10:45-11:30 in the fixture timetable) ends and before the second
- * (11:40-12:25) does. The feedback window must already be open then, which
- * holds as long as the conference's date is the fixture date.
+ * (11:40-12:25) does.
+ *
+ * The conference is the synthetic one in `fixtures/conference-year.ts`, not
+ * whichever real year is current: these states only exist on conference day
+ * with the feedback window open, and no real year's config can be relied on
+ * to put that on the fixture date.
  */
 
-const AGENDA = '/agenda/2026'
+const AGENDA = `/agenda/${FIXTURE_YEAR}`
 const NOW = `${FIXTURE_DATE}T11:35:00`
 
 const KEYNOTE = '1276730' // 09:00-09:30
@@ -23,7 +28,11 @@ const SECOND_SLOT_TALK = '1271640' // 11:40-12:25
 const feedbackLink = (page: Page, talkId: string) => page.locator(`a[href="/feedback?talk=${talkId}"]`)
 
 test.beforeEach(async ({ context, baseURL }) => {
-    await context.addCookies([{ name: '__devDateOverride', value: NOW, url: baseURL ?? 'http://localhost:3800' }])
+    const url = baseURL ?? 'http://localhost:3800'
+    await context.addCookies([
+        { name: '__devDateOverride', value: NOW, url },
+        { name: FIXTURE_CONFERENCE_COOKIE, value: '1', url },
+    ])
 })
 
 test('finished talks offer feedback and talks still to come do not', async ({ page }) => {

@@ -148,7 +148,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     // Sessionize event it was voted on, not the current conference's.
     const year = runYear ?? getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })

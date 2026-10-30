@@ -121,7 +121,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const yearConfig = getYearConfig(year, getConfig(context))
+        const yearConfig = getYearConfig(context, year)
         if (
             yearConfig.kind === 'conference' &&
             yearConfig.sessions?.kind === 'sessionize' &&
@@ -161,7 +161,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 async function loadTalksForValidation(
     context: Route.ActionArgs['context'],
 ): Promise<{ talks: TalkVotingData[] } | { error: string }> {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
 
     if (yearConfig.kind === 'cancelled') {
         return { error: 'Conference cancelled this year' }

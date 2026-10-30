@@ -21,7 +21,7 @@ import type { Route } from './+types/agenda.my[.ics]'
 export async function loader({ request, context }: Route.LoaderArgs) {
     const year = getConferenceState(context).conference.year
     const schedule = await getPublishedSchedule(context, year)
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
 
     const url = new URL(request.url)
     const calendar = schedule

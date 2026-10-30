@@ -89,6 +89,11 @@ writeFileSync(
         // is signed, re-tiered or re-logoed. Real sponsor content stays
         // covered by the year-pinned /sponsors/<year> baseline.
         'E2E_SPONSOR_FIXTURES=true',
+        // Lets a test opt its browser context into the synthetic conference
+        // year in e2e/fixtures/conference-year.ts, via a cookie. Conference-day
+        // behaviour (feedback links) is then tested against the fixture day
+        // rather than whichever real year the conference happens to configure.
+        'E2E_FIXTURE_CONFERENCE=true',
         // Interception: the worker rewrites any sessionize.com request to the
         // fixtures (app/lib/sessionize-fixture-fetch.server.ts). Host-based, so
         // it covers every year — including 2021-2025, which hardcode their

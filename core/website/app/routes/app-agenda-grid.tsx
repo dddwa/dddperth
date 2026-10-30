@@ -7,7 +7,7 @@ import { getConferenceState, getConfig } from '~/remix-app-load-context'
 import type { Route } from './+types/app-agenda-grid'
 
 export async function loader({ context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'No sessionize endpoint for year' }), { status: 404 })

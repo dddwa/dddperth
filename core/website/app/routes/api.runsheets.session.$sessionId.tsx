@@ -44,7 +44,7 @@ async function loadSessionDetail(sessionId: string | undefined, context: LoaderF
         return data(null, { status: 404 })
     }
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
     const sessionizeEndpoint =
         yearConfig.kind === 'conference' && yearConfig.sessions?.kind === 'sessionize'
             ? yearConfig.sessions.sessionizeEndpoint

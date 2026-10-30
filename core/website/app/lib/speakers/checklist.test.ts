@@ -1,4 +1,4 @@
-import { conferenceTime } from '~/lib/dates/temporal'
+import { conferenceInstant, conferenceTime } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import type { SpeakerProfile } from '../services/speakers-store'
 import {
@@ -24,7 +24,9 @@ const DUE_DATES: ChecklistDueDates = {
     sessionDetails: conferenceTime('2026-09-25T22:00:00', { timeZone: 'Australia/Perth' }),
 }
 
-const NOW = conferenceTime('2026-08-20T09:00:00', { timeZone: 'Australia/Perth' })
+// The app's clock is always in the conference zone, whatever zone the due dates
+// were written in; Temporal refuses day arithmetic across zones.
+const NOW = conferenceInstant(conferenceTime('2026-08-20T09:00:00', { timeZone: 'Australia/Perth' }).epochMilliseconds)
 
 function profile(overrides: Partial<SpeakerProfile> = {}): SpeakerProfile {
     return {

@@ -1,4 +1,4 @@
-import { Temporal } from '~/lib/dates/temporal'
+import { conferenceTime, Temporal } from '~/lib/dates/temporal'
 import { describe, expect, it } from 'vitest'
 import { hasTalkEnded } from './talk-ended'
 
@@ -31,7 +31,7 @@ describe('hasTalkEnded', () => {
     })
 
     it('defaults to the configured conference timezone', () => {
-        expect(hasTalkEnded('2026-10-03T10:30:00', at('2026-10-03T10:29:59'))).toBe(false)
-        expect(hasTalkEnded('2026-10-03T10:30:00', at('2026-10-03T10:30:00'))).toBe(true)
+        expect(hasTalkEnded('2026-10-03T10:30:00', conferenceTime('2026-10-03T10:29:59').epochMilliseconds)).toBe(false)
+        expect(hasTalkEnded('2026-10-03T10:30:00', conferenceTime('2026-10-03T10:30:00').epochMilliseconds)).toBe(true)
     })
 })

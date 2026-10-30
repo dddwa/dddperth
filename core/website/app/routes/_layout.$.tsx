@@ -18,7 +18,13 @@ import { Box, Grid, styled } from '~/styled-system/jsx'
 import { prose } from '~/styled-system/recipes'
 import { ContentPageLayout, PageLayout } from '~/components/page-layout'
 import type { Route } from './+types/_layout.$'
-import { getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
+import {
+    getConferences,
+    getConferenceState,
+    getConfig,
+    getDateTimeProvider,
+    getServices,
+} from '~/remix-app-load-context'
 import { noIndexMeta } from '~/lib/seo'
 import { AppLink } from '~/components/app-link'
 
@@ -61,16 +67,17 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
         throw new Response('Not Found', { status: 404, statusText: 'Not Found' })
     }
 
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)
 
-    const sponsorPageData = getSponsorPageData()
+    const sponsorPageData = getSponsorPageData(getConferences(context))
 
     // Sponsors shown in the tickets-page acknowledgement. Platinum + Gold
     // from the current year if available, else the most recent prior year
     // (in which case the MDX component switches to "past supporters" copy
     // and adds a "Sponsor [year]" CTA — see lib/mdx.tsx).
     const ticketSponsorsResolved = resolveSponsorsWithFallback(
+        getConferences(context),
         getConferenceState(context).conference.year,
         getConferenceState(context).conference.sponsors,
         getConfig(context).useSponsorFixtures,

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { conferenceManifest } from '@conference/manifest'
 import { describe, expect, it } from 'vitest'
 import { FIXTURE_SPONSOR_NAME, FIXTURE_SPONSORS } from '../../e2e/fixtures/sponsors'
 import { resolveSponsorsWithFallback } from './sponsor-fallback.server'
@@ -10,7 +11,7 @@ const realSponsors = {
 
 describe('resolveSponsorsWithFallback', () => {
     it('uses the current year when it has sponsors', () => {
-        const resolved = resolveSponsorsWithFallback('2026', realSponsors)
+        const resolved = resolveSponsorsWithFallback(conferenceManifest.conferences, '2026', realSponsors)
 
         expect(resolved.kind).toBe('current')
         expect(resolved.kind !== 'empty' && resolved.sponsors).toEqual(realSponsors)
@@ -25,7 +26,7 @@ describe('resolveSponsorsWithFallback', () => {
     it('falls back to a prior year when the current one has no sponsors', () => {
         // A far-future year has no config of its own, so this exercises the
         // fallback without depending on which years are currently signed.
-        const resolved = resolveSponsorsWithFallback('2099', undefined)
+        const resolved = resolveSponsorsWithFallback(conferenceManifest.conferences, '2099', undefined)
 
         expect(resolved.kind).toBe('fallback')
         if (resolved.kind === 'fallback') {
@@ -48,14 +49,14 @@ describe('resolveSponsorsWithFallback', () => {
  */
 describe('sponsor fixtures', () => {
     it('replaces the real sponsor list when enabled', () => {
-        const resolved = resolveSponsorsWithFallback('2026', realSponsors, true)
+        const resolved = resolveSponsorsWithFallback(conferenceManifest.conferences, '2026', realSponsors, true)
 
         expect(resolved.kind).toBe('current')
         expect(resolved.kind !== 'empty' && resolved.sponsors).toEqual(FIXTURE_SPONSORS)
     })
 
     it('is off by default, so real sponsors render on the live site', () => {
-        const resolved = resolveSponsorsWithFallback('2026', realSponsors)
+        const resolved = resolveSponsorsWithFallback(conferenceManifest.conferences, '2026', realSponsors)
 
         expect(resolved.kind !== 'empty' && resolved.sponsors).toEqual(realSponsors)
     })

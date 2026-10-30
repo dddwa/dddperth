@@ -23,7 +23,7 @@ const PREFETCH_THRESHOLD = 10 // Start prefetching when 10 pairs left
 const CLIENT_VERSION = CURRENT_CLIENT_VERSION
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
 
     if (yearConfig.kind === 'cancelled') {
         throw new Response(JSON.stringify({ message: 'Conference cancelled this year' }), { status: 404 })

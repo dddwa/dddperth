@@ -35,7 +35,7 @@ import type { gridRoomSchema, roomSchema, timeSlotSchema } from '~/lib/sessioniz
 import { formatDate } from '~/lib/sessionize.server'
 import { slugify } from '~/lib/slugify'
 import { useMyAgenda } from '~/lib/use-my-agenda'
-import { getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.agenda.($year)'
 import type { loader as talkLoader } from './_layout.agenda.($year).talk.$sessionId'
@@ -65,7 +65,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
     const conferenceYearConfig = yearConfig.kind === 'conference' ? yearConfig : undefined
 
     const schedule = await getPublishedSchedule(context, year)
@@ -109,7 +109,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             meetTheExperts,
             cancelledMessage: yearConfig.kind === 'cancelled' ? yearConfig.cancelledMessage : undefined,
             sponsors: yearConfig.kind === 'conference' ? yearConfig.sponsors : {},
-            conferences: Object.values(conferenceManifest.conferences.conferences).map((conf) => ({
+            conferences: Object.values(getConferences(context).conferences).map((conf) => ({
                 year: conf.year,
             })),
             schedule: schedule

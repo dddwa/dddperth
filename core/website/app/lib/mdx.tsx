@@ -74,6 +74,9 @@ function wrapMdxComponent(
         h2: ({ ref, ...props }) => <styled.h2 fontSize="2xl" {...props} />,
         h3: ({ ref, ...props }) => <styled.h3 fontSize="xl" {...props} />,
         ul: ({ ref, ...props }) => <styled.ul {...props} listStyle="inside" />,
+        // A long code line scrolls inside the content column rather than
+        // widening the page, so keyboard users need focus to scroll it.
+        pre: ({ ref, ...props }) => <styled.pre tabIndex={0} {...props} />,
         img: MdxImage,
         Image: MdxImage,
         Hero,

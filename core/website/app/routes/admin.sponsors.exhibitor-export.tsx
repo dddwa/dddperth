@@ -44,7 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     // The portal year is a plain string; the years map is keyed by a
     // template-literal type, so narrow before indexing.
-    const conference = isConferenceYear(portalConfig.year)
+    const conference = isConferenceYear(conferenceManifest.conferences, portalConfig.year)
         ? conferenceManifest.conferences.conferences[portalConfig.year]
         : undefined
     const conferenceDate =
