@@ -45,12 +45,22 @@ it('imports conference configuration before initialization, then exposes real Te
     expect(Reflect.get(globalThis, 'Temporal')).toBeUndefined()
 })
 
+const client = join(import.meta.dirname, '../../../build/client')
+const javascriptFiles = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const file = join(dir, entry.name)
+    return entry.isDirectory() ? javascriptFiles(file) : file.endsWith('.js') ? [file] : []
+})
+
+// Dev never tree-shakes, so only the production build shows whether the
+// hydrateRoot call survived. Dropping it leaves a page with no interactivity and no error.
+it('ships a browser bundle that still hydrates the document', () => {
+    const files = javascriptFiles(client)
+    expect(files.length, 'Run via nx test website so the production build is supplied').toBeGreaterThan(0)
+    const hydrates = files.some((file) => /hydrateRoot\)?\(\s*document\b/.test(readFileSync(file, 'utf8')))
+    expect(hydrates, 'hydrateRoot(document, ...) is missing from build/client').toBe(true)
+})
+
 it('ships browser modules without top-level await', () => {
-    const client = join(import.meta.dirname, '../../../build/client')
-    const javascriptFiles = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-        const file = join(dir, entry.name)
-        return entry.isDirectory() ? javascriptFiles(file) : file.endsWith('.js') ? [file] : []
-    })
     const files = javascriptFiles(client)
     expect(files.length, 'Run via nx test website so the production build is supplied').toBeGreaterThan(0)
     const linter = new Linter()
