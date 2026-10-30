@@ -19,7 +19,7 @@ import type { Route } from './+types/_layout.agenda.($year).talk.$sessionId'
 export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
 
     if (yearConfig.kind === 'cancelled') {
         throw redirect($path('/agenda/:year?', { year: undefined }))

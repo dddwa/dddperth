@@ -37,6 +37,8 @@ A fork's layout:
   eslint.config.mjs     core's config + the theme-builder allow rule
   .nvmrc                22 (the build needs Node >= 22)
   .gitattributes        merge=ours on core/conference-stub/** and core/nx.json
+  .claude/skills/       core-pull, core-push, new-conference: symlinks into
+                        core/.claude/skills/, so each pull updates them
   FORK_GUIDE.md         manual TODOs (Cloudflare account, D1 IDs, etc.)
 ```
 
@@ -236,7 +238,14 @@ cp core/eslint.config.mjs eslint.config.mjs      # then: add the allow rule (bel
 cp core/vitest.workspace.ts vitest.workspace.ts  # then: ['website'] -> ['core/website']
 cp core/.gitignore .gitignore                    # already covers node_modules, .nx, conference/wrangler/.dev.vars
 cp core/.npmrc core/.prettierrc core/.prettierignore core/.editorconfig .  # pnpm + editor/formatter config
+
+mkdir -p .claude/skills
+for s in core-pull core-push new-conference; do
+  ln -s "../../core/.claude/skills/$s" ".claude/skills/$s"
+done
 ```
+
+The skills are **symlinks, not copies**. `/core-pull` updates `core/` and nothing else, so a copied skill stays at whatever version the fork was scaffolded from. The pull that changes how pulls work would then be run by the old instructions, which don't know about the change.
 
 Then adjust the copies and generate the genuinely-new files:
 
@@ -323,6 +332,8 @@ core/package.json
 ],
 ```
 
+Then repoint the date rules block at the fork: import from `./core/eslint-rules/date-time.mjs`, and change its `files` glob from `conference-stub/config/**/*.ts` to `conference/config/**/*.ts`. Left as copied, the import fails to resolve and the rules check nothing in the fork.
+
 (A future cleanup would move `defineTheme` into `@ddd/conference-config` so themes don't cross project boundaries — then the allow rule and this whole eslint duplication go away.)
 
 **`FORK_GUIDE.md`** — a checklist. Key items:
@@ -363,7 +374,7 @@ Sometimes the fork repo already exists as a *flat* ddd-core clone — e.g. someo
 3. **Add the `ddd-core` remote** for `/core-pull`: `git remote add ddd-core <url>` (or reuse the existing `upstream`, which already points at ddd-core — subtree tracks by commit, not remote name).
 4. **Remove the flat ddd-core source from the root**, keeping `.git`, the workspace configs, and any fork-owned files: `git rm -r website libs conference-stub docs ARCHITECTURE.md README.md pnpm-lock.yaml` (and root `CLAUDE.md` if you'll write a fork-specific one), then commit. **Keep** `package.json`, `nx.json`, `pnpm-workspace.yaml`, `tsconfig*.json`, `eslint.config.mjs`, `vitest.workspace.ts`, `.gitignore`, `.npmrc`, `.prettier*`, `.editorconfig`, `.claude/` — you'll edit these in step 7 rather than `cp` them up from `core/`.
 5. **Embed core as a subtree:** `git subtree add --prefix=core upstream main --squash`. Because HEAD == upstream/main, `core/` ends up byte-identical to what was at the root.
-6. Follow steps 5–8 as normal. In step 7, **edit the kept root configs** instead of copying them up: rename `package.json`'s `name`, repoint `pnpm-workspace.yaml`, point `tsconfig.json` at `core/`, add the eslint allow rule, set `vitest.workspace.ts` to `['core/website']`, and (still per step 6) delete `core/nx.json`.
+6. Follow steps 5–8 as normal. In step 7, **edit the kept root configs** instead of copying them up: rename `package.json`'s `name`, repoint `pnpm-workspace.yaml`, point `tsconfig.json` at `core/`, add the eslint allow rule, set `vitest.workspace.ts` to `['core/website']`, replace the kept `.claude/skills/{core-pull,core-push,new-conference}` directories with the symlinks from step 7, and (still per step 6) delete `core/nx.json`.
 
 Removing root source then re-adding it under `core/` is destructive — always tag first and confirm `git diff --stat upstream/main HEAD` is empty before deleting.
 

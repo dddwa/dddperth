@@ -1,4 +1,5 @@
 import ts from 'typescript-eslint'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { ESLint, Linter, RuleTester } from 'eslint'
 import { describe, expect, it } from 'vitest'
@@ -115,11 +116,14 @@ typedTester.run('no-temporal-coercion', plugin.rules['no-temporal-coercion'], {
 
 // Check the shipped configurations as well as the rules: an unregistered rule
 // silently leaves conference config outside the application enforcement.
-it.each([
-    ['../../../../..', 'conference/config/years/2026.ts'],
-    ['../../../..', 'conference-stub/config/years/2026.ts'],
-    ['../../..', 'app/lib/conference-state.server.ts'],
-])('enforces the date contract in %s/%s', async (root, file) => {
+// A fork's own conference/ sits above core/; ddd-core has only the stub.
+it.each(
+    [
+        ['../../../../..', 'conference/config/years/2026.ts'],
+        ['../../../..', 'conference-stub/config/years/2026.ts'],
+        ['../../..', 'app/lib/conference-state.server.ts'],
+    ].filter(([root, file]) => existsSync(path.resolve(import.meta.dirname, root, file))),
+)('enforces the date contract in %s/%s', async (root, file) => {
     const cwd = path.resolve(import.meta.dirname, root)
     const eslint = new ESLint({ cwd, overrideConfigFile: path.join(cwd, 'eslint.config.mjs') })
     const config = await eslint.calculateConfigForFile(path.join(cwd, file))

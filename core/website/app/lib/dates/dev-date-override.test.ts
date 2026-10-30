@@ -2,6 +2,7 @@ import { conferenceConfigPublic } from '@conference/config/public'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { FIXTURE_CONFERENCE_COOKIE } from '../../../e2e/fixtures/conference-year'
 import { DEV_DATE_OVERRIDE_COOKIE, DevDateTimeProvider } from './dev-date-time-provider.server'
 
 /**
@@ -18,6 +19,9 @@ const DEV_ONLY_MARKERS = [
     // anyone who can set a Worker var blank the site's sponsors — the people
     // paying for the conference.
     { name: 'sponsor fixtures', value: 'E2E_SPONSOR_FIXTURES', guard: 'cloudflare/build-config.server.ts' },
+    // The fixture conference replaces the site's whole conference calendar for
+    // any request carrying its cookie.
+    { name: 'fixture conference cookie', value: FIXTURE_CONFERENCE_COOKIE, guard: 'load-context.server.ts' },
     // Fixture blog posts replace the real blog. Unlike the others this is a
     // build-time switch, so a leak would publish the fixtures as the blog.
     { name: 'fixture blog posts', value: 'Fixture Post: The Latest One', guard: 'vite.config.ts' },

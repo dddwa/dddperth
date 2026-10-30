@@ -14,7 +14,7 @@
  * FooterSponsorRow / TicketSponsorAcknowledgement.
  */
 
-import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceConfig } from '@ddd/conference-config'
 import { FIXTURE_SPONSORS } from '../../e2e/fixtures/sponsors'
 import type { Year, YearSponsors } from './conference-state-client-safe'
 
@@ -34,6 +34,7 @@ function hasAnySponsors(sponsors: YearSponsors | undefined): boolean {
  * reported by `conferenceState.conference.year`.
  */
 export function resolveSponsorsWithFallback(
+    conferences: ConferenceConfig,
     currentYear: Year,
     currentSponsors: YearSponsors | undefined,
     useFixtures = false,
@@ -55,7 +56,7 @@ export function resolveSponsorsWithFallback(
     }
 
     const currentYearNum = parseInt(currentYear, 10)
-    const priorYears = Object.values(conferenceManifest.conferences.conferences)
+    const priorYears = Object.values(conferences.conferences)
         .filter((conf) => conf.kind === 'conference')
         .filter((conf) => parseInt(conf.year, 10) < currentYearNum)
         .sort((a, b) => parseInt(b.year, 10) - parseInt(a.year, 10))

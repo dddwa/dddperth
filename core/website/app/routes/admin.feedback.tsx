@@ -6,6 +6,7 @@ import { AppLink } from '~/components/app-link'
 import { requireAdmin } from '~/lib/auth.server'
 import type { RatingSummary } from '~/lib/feedback/feedback-report'
 import { feedbackYears, loadFeedbackReport, resolveFeedbackYear } from '~/lib/feedback/feedback-report.server'
+import { getConferences } from '~/remix-app-load-context'
 import { Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.feedback'
 
@@ -18,7 +19,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     return data({
         year,
-        years: feedbackYears(),
+        years: feedbackYears(getConferences(context)),
         conference: report.conference,
         conferenceResponses: report.conferenceResponses.map((response) => ({
             ...response,

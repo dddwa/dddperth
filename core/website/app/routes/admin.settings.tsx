@@ -20,7 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const session = await adminDateTimeSessionStorage.getSession(request.headers.get('cookie'))
     const overrideDate = session.get('adminDateOverride')
 
-    const yearConfig = getYearConfig(getConferenceState(context).conference.year, getConfig(context))
+    const yearConfig = getYearConfig(context, getConferenceState(context).conference.year)
     const year = getConferenceState(context).conference.year
 
     const importantDates = yearConfig.kind === 'cancelled' ? [] : calculateImportantDates(yearConfig)

@@ -165,7 +165,8 @@ describe('buildLogisticsPayload', () => {
     })
 })
 
-describe('pushLogistics', () => {
+// Reads the conference's real Jira field mappings, so it only runs where a sponsor portal is configured.
+describe.runIf(conferenceManifest.sponsorPortal)('pushLogistics', () => {
     afterEach(() => vi.unstubAllGlobals())
 
     it('rejects an invalid select before sending any Jira update', async () => {
@@ -190,7 +191,8 @@ describe('pushLogistics', () => {
     })
 })
 
-describe('getExhibitorLogistics', () => {
+// Reads the conference's real Jira field mappings, so it only runs where a sponsor portal is configured.
+describe.runIf(conferenceManifest.sponsorPortal)('getExhibitorLogistics', () => {
     afterEach(() => vi.unstubAllGlobals())
 
     it('adds the committee-assigned room and space number to each sponsor', async () => {
@@ -235,7 +237,8 @@ describe('getExhibitorLogistics', () => {
     })
 })
 
-describe('searchSponsorIssues', () => {
+// Reads the conference's real Jira field mappings, so it only runs where a sponsor portal is configured.
+describe.runIf(conferenceManifest.sponsorPortal)('searchSponsorIssues', () => {
     afterEach(() => vi.unstubAllGlobals())
 
     it('reads Jira field shapes and retains mapped blank keys for portal clears', async () => {

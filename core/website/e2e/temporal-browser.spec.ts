@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { FIXTURE_CONFERENCE_COOKIE, FIXTURE_YEAR } from './fixtures/conference-year'
 import { FIXTURE_DATE } from './fixtures/sessionize/model'
+
+// The synthetic conference year makes the fixture day the current conference,
+// with a published agenda, whatever years the running conference configures.
+const AGENDA = `/agenda/${FIXTURE_YEAR}`
 
 for (const forceFallback of [false, true]) {
     test(`date-dependent pages have no browser errors (${forceFallback ? 'forced polyfill' : 'native when available'})`, async ({ context, page, baseURL }) => {
@@ -10,8 +15,10 @@ for (const forceFallback of [false, true]) {
                 Object.defineProperty(globalThis, 'Temporal', { value: undefined, configurable: true })
             })
         }
+        const url = baseURL ?? 'http://localhost:3801'
         await context.addCookies([
-            { name: '__devDateOverride', value: `${FIXTURE_DATE}T11:35:00`, url: baseURL ?? 'http://localhost:3801' },
+            { name: '__devDateOverride', value: `${FIXTURE_DATE}T11:35:00`, url },
+            { name: FIXTURE_CONFERENCE_COOKIE, value: '1', url },
         ])
         const errors: string[] = []
         const fallbackRequests: string[] = []
@@ -26,7 +33,7 @@ for (const forceFallback of [false, true]) {
             if (response.status() >= 400) errors.push(`HTTP ${response.status()}: ${response.url()}`)
         })
 
-        for (const route of ['/', '/agenda/2026', '/agenda/my', '/feedback?talk=1271640']) {
+        for (const route of ['/', AGENDA, '/agenda/my', '/feedback?talk=1271640']) {
             const response = await page.goto(route)
             expect(response?.status(), route).toBe(200)
             await expect(page.locator('h1')).toBeVisible()
@@ -34,7 +41,7 @@ for (const forceFallback of [false, true]) {
             if (forceFallback) {
                 expect(await page.evaluate(() => typeof Reflect.get(globalThis, 'Temporal'))).toBe('undefined')
             }
-            if (route === '/agenda/2026') {
+            if (route === AGENDA) {
                 // A hydrated interaction proves that the client code ran;
                 // successful server-rendered HTML alone would miss failures.
                 await page.getByRole('button', { name: /^Add .+ to my agenda$/ }).first().click()

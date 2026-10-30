@@ -6,6 +6,7 @@ import { AdminDateTimeProvider } from './lib/dates/admin-date-time-provider.serv
 import { buildAppConfigFromEnv } from './lib/services/cloudflare/build-config.server'
 import { buildCloudflareServices } from './lib/services/cloudflare/build-services.server'
 import {
+    conferencesContext,
     conferenceStateContext,
     configContext,
     dateTimeProviderContext,
@@ -61,11 +62,22 @@ export async function getLoadContext({
 
     const dateTimeProvider = devDateTimeProvider ?? (await AdminDateTimeProvider.create(request.headers, services))
 
+    // A synthetic conference year for e2e tests that need conference-day
+    // behaviour without depending on any real year's dates. Same two guards as
+    // the date override above, for the same reasons; the cookie name is in the
+    // production-build grep in `dates/dev-date-override.test.ts`.
+    const fixtureConferences =
+        import.meta.env.MODE !== 'production' && env.E2E_FIXTURE_CONFERENCE === 'true'
+            ? (await import('./lib/e2e-fixture-conference.server')).fixtureConferencesFromRequest(request.headers)
+            : null
+    const conferences = fixtureConferences ?? conferenceManifest.conferences
+
     const context = new RouterContextProvider()
     context.set(configContext, config)
     context.set(servicesContext, services)
     context.set(dateTimeProviderContext, dateTimeProvider)
-    context.set(conferenceStateContext, getCurrentConferenceState(dateTimeProvider, conferenceManifest.conferences))
+    context.set(conferencesContext, conferences)
+    context.set(conferenceStateContext, getCurrentConferenceState(dateTimeProvider, conferences))
     context.set(executionContext, ctx)
 
     return context

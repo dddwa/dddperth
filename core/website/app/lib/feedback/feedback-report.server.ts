@@ -1,7 +1,7 @@
-import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceConfig } from '@ddd/conference-config'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { isConferenceYear } from '~/lib/get-year-config.server'
-import { getConferenceState, getServices } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getServices } from '~/remix-app-load-context'
 import { buildFeedbackReport, type FeedbackReport } from './feedback-report'
 import { getFeedbackTargets } from './feedback-targets.server'
 
@@ -10,7 +10,8 @@ type Context = Parameters<typeof getFeedbackTargets>[0] & Parameters<typeof getC
 /** `?year=` if it names a conference, else the current one. Unknown years 404. */
 export function resolveFeedbackYear(context: Context, requested: string | null): Year {
     if (requested === null) return getConferenceState(context).conference.year
-    if (!isConferenceYear(requested)) throw new Response('Unknown conference year', { status: 404 })
+    if (!isConferenceYear(getConferences(context), requested))
+        throw new Response('Unknown conference year', { status: 404 })
     return requested
 }
 
@@ -24,8 +25,8 @@ export async function loadFeedbackReport(context: Context, year: Year): Promise<
     return buildFeedbackReport(targets, conference, talks)
 }
 
-export function feedbackYears(): Year[] {
-    return Object.values(conferenceManifest.conferences.conferences)
+export function feedbackYears(conferences: ConferenceConfig): Year[] {
+    return Object.values(conferences.conferences)
         .filter((conference) => conference.kind === 'conference')
         .map((conference) => conference.year)
         .sort()

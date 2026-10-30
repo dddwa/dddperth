@@ -124,7 +124,89 @@ errors and explain:
 > need new fields. Look at `core/libs/conference-config/src/manifest.ts` and
 > `core/website/themes/base.theme.ts` for the new shape.
 
-### 6b. Verify the subtree split trailer survived
+If the errors say `DateTime` is not assignable to `Temporal.ZonedDateTime`, the
+fork's `conference/config/` still uses Luxon. Core moved to Temporal. Port it
+the way `core/conference-stub/config/` does, and read `core/docs/date-time.md`
+first:
+
+- Add `conference/config/dates.ts`, copied from the stub's. It exports
+  `conferenceTime`, bound to the conference's timezone.
+- Write each date as a getter: `get conferenceDate() { return conferenceTime('2026-10-17T08:00:00') }`.
+  Luxon's `.minus`/`.plus` become Temporal's `.subtract`/`.add`.
+- **Don't build them eagerly** (`conferenceDate: conferenceTime(...)`). That
+  typechecks, but the dev server dies at startup with `Call initializeTemporal()
+  before using conference dates`, because config modules load before Temporal
+  is initialised.
+- Drop `luxon` and `@types/luxon` from `conference/package.json` and the root
+  `package.json` once nothing imports them.
+
+### 6a. Link the fork's skills to core's
+
+```bash
+ls -l .claude/skills
+```
+
+`core-pull`, `core-push` and `new-conference` should be symlinks into
+`core/.claude/skills/`. If any is a plain directory, it's a copy from when the
+fork was scaffolded, and it has stopped getting updates: this pull just updated
+`core/.claude/skills/`, not the fork's copy. Replace each one:
+
+```bash
+for s in core-pull core-push new-conference; do
+  test -L ".claude/skills/$s" && continue
+  git rm -rq ".claude/skills/$s"
+  ln -s "../../core/.claude/skills/$s" ".claude/skills/$s"
+  git add ".claude/skills/$s"
+done
+```
+
+Before the loop, check the fork hasn't edited its copies. This compares each
+against core's version from before the pull, so it shows only fork edits:
+
+```bash
+for s in core-pull core-push new-conference; do
+  test -L ".claude/skills/$s" || git diff --stat "HEAD^1:core/.claude/skills/$s" "HEAD^1:.claude/skills/$s"
+done
+```
+
+Any output is a fork edit. Upstream it with `/core-push` rather than losing it. Then **re-read
+`core/.claude/skills/core-pull/SKILL.md`** and follow the rest of it from there.
+You're running the copy that was loaded before the pull, and the new one may
+have steps this one lacks.
+
+### 6b. Port changes to the fork's root configs
+
+`/new-conference` copied `core/eslint.config.mjs` (and the other workspace
+configs) up to the fork root once. A subtree pull updates `core/`'s copies, never
+the fork root's, so anything core adds there stops at `core/` silently. Nothing
+fails; the fork just doesn't get it.
+
+```bash
+git diff HEAD^1 HEAD -- core/eslint.config.mjs core/tsconfig.base.json core/package.json
+```
+
+Port each change into the fork's root file, rewriting paths from core's root to
+the fork's: `./eslint-rules/` becomes `./core/eslint-rules/`, and
+`conference-stub/` becomes `conference/`. For example, the date rules block:
+
+```js
+import dateRules from './core/eslint-rules/date-time.mjs'
+// ...
+{
+    files: ['conference/config/**/*.ts'],
+    plugins: { dates: dateRules },
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    rules: {
+        'dates/use-conference-date-time': ['error', { deferConstruction: true }],
+        // ...the rest of core's block
+    },
+},
+```
+
+Without that block, lint never checks the fork's config for eager date
+construction or Luxon. Commit the ports separately from the pull.
+
+### 6c. Verify the subtree split trailer survived
 
 ```bash
 git log --format=%B origin/main..HEAD | grep "git-subtree-split" | head -1
@@ -152,7 +234,7 @@ Summarise:
 - Number of upstream commits pulled
 - Whether there were conflicts (and where)
 - Whether the build passed
-- That the `git-subtree-split` trailer is present (step 6b)
+- That the `git-subtree-split` trailer is present (step 6c)
 - Suggested next step: push the branch and open a PR
 
 **If the fork reviews changes via PR, tell the user — in the report and in the

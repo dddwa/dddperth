@@ -9,14 +9,14 @@ import { requireAdmin } from '~/lib/auth.server'
 import type { Year } from '~/lib/conference-state-client-safe'
 import { isConferenceYear } from '~/lib/get-year-config.server'
 import { getPublishedSchedule, scheduleTalks } from '~/lib/published-agenda.server'
-import { getConferenceState, getServices } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getServices } from '~/remix-app-load-context'
 import { Flex, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/admin.agenda-shortlist.($year)'
 
 export async function loader({ request, context, params }: Route.LoaderArgs) {
     await requireAdmin(request, context)
 
-    if (params.year && !isConferenceYear(params.year)) {
+    if (params.year && !isConferenceYear(getConferences(context), params.year)) {
         throw new Response('Unknown conference year', { status: 404 })
     }
     const year = (params.year ?? getConferenceState(context).conference.year) as Year
@@ -46,7 +46,7 @@ export async function loader({ request, context, params }: Route.LoaderArgs) {
             : undefined,
     }))
 
-    const years = Object.values(conferenceManifest.conferences.conferences)
+    const years = Object.values(getConferences(context).conferences)
         .filter((conference) => conference.kind === 'conference')
         .map((conference) => conference.year)
         .sort()

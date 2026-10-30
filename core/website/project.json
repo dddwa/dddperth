@@ -50,6 +50,8 @@
         },
         "setup-panda": {
             "executor": "nx:run-commands",
+            "// parallelism": "All four setup targets generate into website/, and `react-router typegen` clears and rewrites .react-router/types/ as it goes. Run concurrently (which `setup` did, having no ordering in its dependsOn) that rmdir races another generator repopulating the tree, and CI dies with ENOTEMPTY before the suite runs a single test. It hit three PRs in a row, each passing on a plain re-run, which is exactly what a race looks like.",
+            "parallelism": false,
             "options": {
                 "command": "pnpm panda setup",
                 "cwd": "core/website"
@@ -57,6 +59,7 @@
         },
         "setup-react-router": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm react-router typegen",
                 "cwd": "core/website"
@@ -64,6 +67,7 @@
         },
         "setup-safe-routes": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm safe-routes typegen",
                 "cwd": "core/website"
@@ -71,6 +75,7 @@
         },
         "setup-cf-types": {
             "executor": "nx:run-commands",
+            "parallelism": false,
             "options": {
                 "command": "pnpm exec wrangler types -c ../../conference/wrangler/local.jsonc",
                 "cwd": "core/website"

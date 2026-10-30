@@ -1,4 +1,5 @@
 import { conferenceManifest } from '@conference/manifest'
+import type { ConferenceConfig } from '@ddd/conference-config'
 import { data, redirect, useLoaderData } from 'react-router'
 import { $path } from 'safe-routes'
 import { AppLink } from '~/components/app-link'
@@ -7,7 +8,7 @@ import { PageLayout } from '~/components/page-layout'
 import type { Year, YearSponsors } from '~/lib/conference-state-client-safe'
 import { getYearConfig } from '~/lib/get-year-config.server'
 import { CACHE_CONTROL } from '~/lib/http.server'
-import { getConferenceState, getConfig } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig } from '~/remix-app-load-context'
 import { Box, styled } from '~/styled-system/jsx'
 import type { Route } from './+types/_layout.sponsors.($year)'
 
@@ -25,9 +26,9 @@ function hasNoSponsors(sponsors: YearSponsors | undefined): boolean {
  * qualify: a current or future year, a year that has sponsors, and a
  * cancelled year (which has its own message to render) all stay put.
  */
-function shouldRedirectToAgenda(year: Year, currentYear: Year): boolean {
+function shouldRedirectToAgenda(conferences: ConferenceConfig, year: Year, currentYear: Year): boolean {
     if (parseInt(year) >= parseInt(currentYear)) return false
-    const yearConfig = conferenceManifest.conferences.conferences[year]
+    const yearConfig = conferences.conferences[year]
     if (!yearConfig || yearConfig.kind !== 'conference') return false
     return hasNoSponsors(yearConfig.sponsors)
 }
@@ -40,22 +41,23 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const year =
         params.year && /\d{4}/.test(params.year) ? (params.year as Year) : getConferenceState(context).conference.year
 
-    const yearConfig = getYearConfig(year, getConfig(context))
+    const yearConfig = getYearConfig(context, year)
     const sponsors = yearConfig.kind === 'conference' ? yearConfig.sponsors : {}
 
     const currentYear = getConferenceState(context).conference.year
     const redirectPastSponsors = conferenceManifest.public.features?.redirectPastSponsorsToAgenda === true
 
-    if (redirectPastSponsors && shouldRedirectToAgenda(year, currentYear)) {
+    const conferenceConfig = getConferences(context)
+    if (redirectPastSponsors && shouldRedirectToAgenda(conferenceConfig, year, currentYear)) {
         throw redirect($path('/agenda/:year?', { year }))
     }
 
-    const conferences = Object.values(conferenceManifest.conferences.conferences)
+    const conferences = Object.values(conferenceConfig.conferences)
         .filter((conf) => conf.kind === 'conference')
         // Don't list a year whose sponsors page would only bounce the visitor
         // on to an agenda — same predicate as the redirect above, so the link
         // list and the redirect can't disagree.
-        .filter((conf) => !redirectPastSponsors || !shouldRedirectToAgenda(conf.year, currentYear))
+        .filter((conf) => !redirectPastSponsors || !shouldRedirectToAgenda(conferenceConfig, conf.year, currentYear))
         .map((conf) => ({
             year: conf.year,
         }))
