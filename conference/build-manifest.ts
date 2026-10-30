@@ -44,4 +44,12 @@ export const conferenceBuildManifest: ConferenceBuildManifest<typeof dddPerthThe
         blogAuthorsFile: path.resolve(conferenceDir, 'content/blog/authors.yml'),
         publicDir: path.resolve(conferenceDir, 'public'),
     },
+    brandAssets: {
+        logo: path.resolve(conferenceDir, 'brand/logo.svg'),
+        heroMarks: [
+            path.resolve(conferenceDir, 'brand/d-green.svg'),
+            path.resolve(conferenceDir, 'brand/d-pink.svg'),
+            path.resolve(conferenceDir, 'brand/d-purple.svg'),
+        ],
+    },
 }

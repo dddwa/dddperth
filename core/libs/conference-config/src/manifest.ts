@@ -203,6 +203,31 @@ export interface ContentPaths {
 }
 
 /**
+ * Brand artwork that core renders as inline React components rather than
+ * fetching by URL, so `content.publicDir` can't reach it. Paths are absolute
+ * SVG files, resolved like `ContentPaths`. The `conference-brand` vite plugin
+ * compiles them through svgr and exposes them as `virtual:conference-brand`.
+ *
+ * Kept apart from the runtime `brand` block (contact emails, domain) because
+ * these are build-time file paths, which must stay out of the browser bundle.
+ */
+export interface BrandAssets {
+    /**
+     * Header, footer and portal wordmark. Any `currentColor` fill takes the
+     * surrounding text colour, so the wordmark can adapt to light and dark
+     * surfaces. Rendered at roughly 153x28; keep a similar aspect ratio.
+     */
+    logo: string
+    /**
+     * The three marks layered in the home-page hero parallax, left to right.
+     * Each is drawn at 38% of the panel width; the first sits in front and its
+     * height sets the panel's, so it should be the tallest. The layout was
+     * tuned for portrait marks of roughly 711x1034.
+     */
+    heroMarks: readonly [string, string, string]
+}
+
+/**
  * Optional homepage content slots. Each field names an MDX slug that the
  * fork ships in `conference/content/pages/`. When set, the corresponding
  * core component renders that MDX in place of its built-in copy.
@@ -835,4 +860,5 @@ export interface ConferenceBuildManifest<TTheme = unknown> extends ConferenceMan
     deployment: DeploymentConfig
     theme: ThemeRefs<TTheme>
     content: ContentPaths
+    brandAssets: BrandAssets
 }

@@ -29,3 +29,10 @@ declare module 'virtual:blog-authors' {
     const authorsYaml: string
     export default authorsYaml
 }
+
+declare module 'virtual:conference-brand' {
+    import type { ComponentType, SVGProps } from 'react'
+    type SvgComponent = ComponentType<SVGProps<SVGSVGElement> & { title?: string }>
+    export const Logo: SvgComponent
+    export const heroMarks: readonly [SvgComponent, SvgComponent, SvgComponent]
+}

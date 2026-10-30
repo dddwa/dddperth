@@ -46,4 +46,12 @@ export const conferenceBuildManifest: ConferenceBuildManifest<typeof exampleThem
         blogAuthorsFile: path.resolve(stubDir, 'content/blog/authors.yml'),
         publicDir: path.resolve(stubDir, 'public'),
     },
+    brandAssets: {
+        logo: path.resolve(stubDir, 'brand/logo.svg'),
+        heroMarks: [
+            path.resolve(stubDir, 'brand/hero-mark-teal.svg'),
+            path.resolve(stubDir, 'brand/hero-mark-slate.svg'),
+            path.resolve(stubDir, 'brand/hero-mark-amber.svg'),
+        ],
+    },
 }

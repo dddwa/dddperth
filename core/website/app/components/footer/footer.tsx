@@ -1,5 +1,5 @@
 import { conferenceManifest } from '@conference/manifest'
-import Logo from '~/images/svg/logo.svg?react'
+import { Logo } from 'virtual:conference-brand'
 import { css } from '~/styled-system/css'
 import { Divider, Flex, Grid, styled } from '~/styled-system/jsx'
 import { socialsData } from './socials-data'

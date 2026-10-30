@@ -124,6 +124,10 @@ The branch lives in the component because almost every href is a *runtime* value
 - pnpm is the package manager (enforced via corepack)
 - Build outputs: `website/build/`
 - Static assets: `website/public/` (core) + the conference layer's `public/` (declared via `content.publicDir` in the build manifest; overlaid onto the site root by the `conference-public` vite plugin)
+- Brand artwork compiled into components (header/footer/portal logo, the three hero marks) can't go through
+  that URL overlay, so it comes from `brandAssets` in the build manifest instead, exposed as
+  `virtual:conference-brand` by the `conference-brand` vite plugin. Don't add brand SVGs under
+  `website/app/images/` — a fork would have to overwrite them inside `core/`.
 - Local env vars: `<conference-dir>/wrangler/.dev.vars` (`conference-stub/wrangler/.dev.vars` standalone, `conference/wrangler/.dev.vars` in a fork) — the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root
 - Local D1 data: `website/.wrangler/state/`
 - Visual baselines pin every input that moves on its own: the clock (`VISUAL_DATE`), Sessionize (fixture

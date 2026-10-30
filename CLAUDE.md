@@ -103,6 +103,7 @@ This repo is split into a **core** layer (shared infrastructure) and a **fork** 
     - `config/` — public.ts, socials.ts, years/, venues/
     - `content/pages/`, `content/blog/` — MDX content
     - `theme/perth.theme.ts`, `theme/perth-light.theme.ts`
+    - `brand/` — the DDD PERTH wordmark and the three hero Ds, wired in via `brandAssets` in `build-manifest.ts`
     - `wrangler/{local,staging,production}.jsonc`
 - **`/conference-stub`** — CORE: working sample conference ("DevConf Example") shipped with `ddd-core`. Makes core runnable on its own (`pnpm nx dev website` in a fresh `ddd-core` clone) and is the source of truth that `/new-conference` copies as the seed for a new fork's `/conference/`.
 - **`/infra-archive`** — Archived Azure Bicep infrastructure (historical reference)
@@ -177,6 +178,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 - pnpm is the package manager (enforced via corepack)
 - Build outputs are in `core/website/build/` directory
 - Static assets served from core's `core/website/public/` plus `conference/public/` (conference-owned assets like sponsor logos; overlaid onto the site root at the same URLs)
+- Brand SVGs that render as components (logo, hero marks) live in `conference/brand/`, not `public/` — they're compiled in through `virtual:conference-brand`, so the URL overlay can't reach them
 - Environment variables for local dev go in `conference/wrangler/.dev.vars` (the `cloudflare()` vite plugin resolves `.dev.vars` relative to the active wrangler config's directory, not the vite root)
   - `.dev.vars` is gitignored, so a new worktree starts without one. `SESSION_SECRET` falls back to a fixed, public value outside production builds so magic-link login still works there (`build-config.server.ts`); a production build drops the fallback, and `dates/dev-date-override.test.ts` checks it isn't in the built worker. Real Sessionize data for the current year still needs `SESSIONIZE_<YYYY>_SESSIONS` in `.dev.vars`.
 - Local D1 data stored in `core/website/.wrangler/state/`
