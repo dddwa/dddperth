@@ -1,7 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
 import type { ConferenceConfig } from '@ddd/conference-config'
-import { data, redirect, useLoaderData } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, data, redirect, useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { SponsorOverview, SponsorSection } from '~/components/page-components/SponsorSection'
 import { PageLayout } from '~/components/page-layout'
@@ -35,7 +34,7 @@ function shouldRedirectToAgenda(conferences: ConferenceConfig, year: Year, curre
 
 export async function loader({ params, context }: Route.LoaderArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
-        throw redirect($path('/sponsors/:year?', { year: undefined }))
+        throw redirect(href('/sponsors/:year?', { year: undefined }))
     }
 
     const year =
@@ -49,7 +48,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
     const conferenceConfig = getConferences(context)
     if (redirectPastSponsors && shouldRedirectToAgenda(conferenceConfig, year, currentYear)) {
-        throw redirect($path('/agenda/:year?', { year }))
+        throw redirect(href('/agenda/:year?', { year }))
     }
 
     const conferences = Object.values(conferenceConfig.conferences)

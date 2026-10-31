@@ -2,6 +2,7 @@ import { conferenceTime, Temporal } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
 import { Fragment, useMemo, useState } from 'react'
 import {
+    href,
     data,
     matchPath,
     Outlet,
@@ -14,7 +15,6 @@ import {
     useParams,
     useRouteLoaderData,
 } from 'react-router'
-import { $path } from 'safe-routes'
 import type { z } from 'zod'
 import { AppLink } from '~/components/app-link'
 import { FeedbackLink, useFeedbackClock, useReviewedFeedback } from '~/components/feedback-link'
@@ -59,7 +59,7 @@ function isTalkLinkState(state: unknown): state is TalkLinkState {
 
 export async function loader({ params, context }: Route.LoaderArgs) {
     if (params.year && !/\d{4}/.test(params.year)) {
-        throw redirect($path('/agenda/:year?', { year: undefined }))
+        throw redirect(href('/agenda/:year?', { year: undefined }))
     }
 
     const year =
@@ -215,7 +215,7 @@ export default function Agenda() {
         if (params.sessionId && isTalkLinkState(location.state)) {
             void navigate(-1)
         } else {
-            void navigate($path('/agenda/:year?', { year: params.year }), { preventScrollReset: true, replace: true })
+            void navigate(href('/agenda/:year?', { year: params.year }), { preventScrollReset: true, replace: true })
         }
     }
     const [announcement, setAnnouncement] = useState('')
@@ -774,7 +774,7 @@ function RoomTimeSlot({
                             fullSession?.title
                         ) : (
                             <AppLink
-                                to={$path('/agenda/:year?/talk/:sessionId', {
+                                to={href('/agenda/:year?/talk/:sessionId', {
                                     year,
                                     sessionId: fullSession?.id ?? '#',
                                 })}

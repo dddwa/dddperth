@@ -93,6 +93,8 @@ Add components using the CLI:
 pnpm nx parkui website add <component>
 ```
 
+The generator downloads `@park-ui/cli@1.0.1` on demand; it is not installed with the workspace dependencies.
+
 ## Using Nx
 
 ### Running Tasks

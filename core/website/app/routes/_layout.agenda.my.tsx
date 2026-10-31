@@ -1,8 +1,7 @@
 import { conferenceTime } from '~/lib/dates/temporal'
 import { conferenceManifest } from '@conference/manifest'
 import { useMemo, useState } from 'react'
-import { data, useLoaderData } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, data, useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { PageLayout } from '~/components/page-layout'
 import { Button } from '~/components/ui/button'
@@ -74,7 +73,7 @@ export default function MyAgenda() {
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     const stale = picked.filter((id) => !talksById.has(id))
 
-    const agendaLink = $path('/agenda/:year?', { year: undefined })
+    const agendaLink = href('/agenda/:year?', { year: undefined })
 
     return (
         <PageLayout>
@@ -157,7 +156,7 @@ export default function MyAgenda() {
                                                     lineHeight="tight"
                                                 >
                                                     <AppLink
-                                                        to={$path('/agenda/:year?/talk/:sessionId', {
+                                                        to={href('/agenda/:year?/talk/:sessionId', {
                                                             year,
                                                             sessionId: talk.id,
                                                         })}

@@ -1,7 +1,6 @@
 import { conferenceManifest } from '@conference/manifest'
 import { useRef } from 'react'
 import { data, useLoaderData } from 'react-router'
-import invariant from 'tiny-invariant'
 import type { BlogAuthor } from '~/lib/authors.server'
 import { ContentPageLayout } from '~/components/page-layout'
 import { getAuthor, getValidAuthorNames } from '~/lib/authors.server'
@@ -14,7 +13,7 @@ import type { Route } from './+types/_layout.blog.$slug'
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
     const { slug } = params
-    invariant(!!slug, 'Expected slug param')
+    if (!slug) throw new Error('Expected slug param')
     const requestUrl = new URL(request.url)
     const siteUrl = requestUrl.protocol + '//' + requestUrl.host
 
@@ -45,7 +44,7 @@ export function headers({ loaderHeaders }: Route.HeadersArgs) {
 export function meta(args: Route.MetaArgs) {
     const { loaderData: data, params } = args
     const { slug } = params
-    invariant(!!slug, 'Expected slug param')
+    if (!slug) throw new Error('Expected slug param')
 
     const { siteUrl, frontmatter } = data || {}
     if (!frontmatter) {

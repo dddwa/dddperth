@@ -25,7 +25,6 @@ export default [
             'eslint.config.cjs',
             'vite.config.js',
             'mocks/index.js',
-            'safe-routes.d.ts',
             'postcss.config.cjs',
             'app/styled-system',
             'scripts/**',

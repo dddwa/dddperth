@@ -1,5 +1,4 @@
-import { redirect } from 'react-router'
-import { $path } from 'safe-routes'
+import { href, redirect } from 'react-router'
 import type { ConferenceYears } from '@conference/manifest'
 import type { ConferenceConfig } from '@ddd/conference-config'
 import type { AppConfig } from '~/lib/services/app-config'
@@ -17,7 +16,7 @@ export function getYearConfig(context: ContextReader, year: string) {
  */
 export function resolveYearConfig(conferences: ConferenceConfig, year: string, appConfig: AppConfig) {
     if (!isConferenceYear(conferences, year)) {
-        throw redirect($path('/agenda/:year?', { year: undefined }))
+        throw redirect(href('/agenda/:year?', { year: undefined }))
     }
 
     const yearConfig = conferences.conferences[year]

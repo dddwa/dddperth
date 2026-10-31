@@ -1,4 +1,3 @@
-import { serializeError } from 'serialize-error'
 import { resolveError } from './resolve-error'
 
 /**
@@ -10,19 +9,18 @@ export function recordException(
     opts?: { attributes?: Record<string, unknown>; isFailure?: boolean },
 ): void {
     const error = resolveError(err)
-    const serialized = serializeError(error)
 
     if (opts?.isFailure !== false) {
         console.error('Exception recorded:', {
-            name: serialized.name,
-            message: serialized.message,
-            stack: serialized.stack,
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
             ...opts?.attributes,
         })
     } else {
         console.warn('Exception recorded (non-failure):', {
-            name: serialized.name,
-            message: serialized.message,
+            name: error.name,
+            message: error.message,
             ...opts?.attributes,
         })
     }

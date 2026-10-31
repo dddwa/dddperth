@@ -80,6 +80,8 @@ pnpm nx parkui website add <name>  # Add a Park UI component
 nx graph                           # Workspace dependency graph
 ```
 
+The generator downloads `@park-ui/cli@1.0.1` on demand; it is not installed with the workspace dependencies.
+
 ## License
 
 MIT.
