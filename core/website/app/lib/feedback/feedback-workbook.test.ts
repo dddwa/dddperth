@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { read as readWorkbook, utils as sheetUtils } from 'xlsx'
 import { buildFeedbackReport } from './feedback-report'
+import { readXlsx, sheetRecords } from '../test-utils/read-xlsx'
 import { buildFeedbackWorkbook } from './feedback-workbook'
 
 describe('buildFeedbackWorkbook', () => {
@@ -32,17 +32,15 @@ describe('buildFeedbackWorkbook', () => {
             ],
         )
 
-        const workbook = readWorkbook(buildFeedbackWorkbook(report, 'Australia/Perth'))
-        expect(workbook.SheetNames).toEqual(['Conference', 'Talk summary', 'Talk feedback'])
+        const { sheetNames, sheets } = readXlsx(buildFeedbackWorkbook(report, 'Australia/Perth'))
+        expect(sheetNames).toEqual(['Conference', 'Talk summary', 'Talk feedback'])
 
-        const conference = workbook.Sheets.Conference
-        expect(conference.B2).toMatchObject({ t: 's', v: '=HYPERLINK("x")' })
-        expect(conference.B2.f).toBeUndefined()
+        expect(sheets.Conference.B2).toEqual({ type: 'string', value: '=HYPERLINK("x")', isFormula: false })
 
-        expect(sheetUtils.sheet_to_json(workbook.Sheets['Talk summary'])).toEqual([
+        expect(sheetRecords(sheets['Talk summary'])).toEqual([
             expect.objectContaining({ Talk: 'Talk', Responses: 1, Average: 4, '★4': 1 }),
         ])
-        expect(sheetUtils.sheet_to_json(workbook.Sheets['Talk feedback'])).toEqual([
+        expect(sheetRecords(sheets['Talk feedback'])).toEqual([
             expect.objectContaining({ Talk: 'Talk', Rating: 4, 'Feedback for speaker': 'Nice', Email: 'a@example.com' }),
         ])
     })

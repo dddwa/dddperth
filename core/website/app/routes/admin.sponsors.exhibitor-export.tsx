@@ -1,10 +1,10 @@
 import { conferenceManifest } from '@conference/manifest'
-import { utils as sheetUtils, write as writeWorkbook } from 'xlsx'
 import { requireAdmin } from '~/lib/auth.server'
 import { isConferenceYear } from '~/lib/get-year-config.server'
 import { buildExhibitorSheet, buildExhibitorSource } from '~/lib/sponsors/exhibitor-export'
 import { logisticsVisibility } from '~/lib/sponsors/logistics'
 import type { ExhibitorLogistics } from '~/lib/sponsors/jira-client.server'
+import { writeXlsx } from '~/lib/xlsx-writer'
 import { getServices } from '~/remix-app-load-context'
 import type { Route } from './+types/admin.sponsors.exhibitor-export'
 
@@ -52,17 +52,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     const sources = exhibitors.map((sponsor) => buildExhibitorSource(sponsor, logistics.get(sponsor.issueKey) ?? {}))
 
-    const sheet = sheetUtils.aoa_to_sheet(
-        buildExhibitorSheet({
-            sources,
-            conferenceName: conferenceManifest.public.name,
-            conferenceDate,
-        }),
-    )
-    const workbook = sheetUtils.book_new()
-    sheetUtils.book_append_sheet(workbook, sheet, 'Exhibitor List')
-
-    const bytes = writeWorkbook(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+    const bytes = writeXlsx([
+        {
+            name: 'Exhibitor List',
+            rows: buildExhibitorSheet({
+                sources,
+                conferenceName: conferenceManifest.public.name,
+                conferenceDate,
+            }),
+        },
+    ])
 
     return new Response(bytes, {
         headers: {
