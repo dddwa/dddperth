@@ -75,7 +75,7 @@ function worksheetXml(rows: XlsxCell[][]): string {
                     const ref = `${columnName(c)}${r + 1}`
                     if (typeof value === 'number' && Number.isFinite(value)) return `<c r="${ref}"><v>${value}</v></c>`
                     if (value === null || value === undefined || value === '') return ''
-                    return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(String(value))}</t></is></c>`
+                    return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escapeSpreadsheetText(String(value))}</t></is></c>`
                 })
                 .join('')
             return `<row r="${r + 1}">${cells}</row>`
@@ -100,6 +100,15 @@ function sheetName(name: string): string {
 
 function xml(body: string): Uint8Array {
     return strToU8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${body}`)
+}
+
+// SpreadsheetML decodes _xHHHH_ sequences in text after XML parsing.
+// Sanitize XML first so stripping a control cannot create an unescaped token.
+// Then escape literal tokens and encode CR to survive XML newline normalization.
+function escapeSpreadsheetText(text: string): string {
+    return escapeXml(text)
+        .replace(/_x[0-9a-f]{4}_/gi, (token) => `_x005F_${token.slice(1)}`)
+        .replace(/\r/g, '_x000D_')
 }
 
 function escapeXml(text: string): string {

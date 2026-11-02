@@ -15,7 +15,7 @@ import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
-import { computeContactImportPlan, parseSpeakerContactsCsv } from '~/lib/speakers/contact-import'
+import { computeContactImportPlan, parseSpeakerContactsFile } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
 import { recordingOptOuts, type RecordingOptOut } from '~/lib/speakers/recording-opt-outs'
 import { DAY_DETAILS_EMAIL, FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
@@ -197,16 +197,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!(file instanceof File) || file.size === 0) {
             return data({ _action: actionName, error: 'Choose a CSV file to upload' }, { status: 400 })
         }
-        if (/\.xlsx?$/i.test(file.name) || EXCEL_MIME_TYPES.has(file.type)) {
-            return data(
-                { _action: actionName, error: 'Excel files are no longer supported — export from Sessionize as CSV instead' },
-                { status: 400 },
-            )
-        }
 
         let rows
         try {
-            rows = parseSpeakerContactsCsv(await file.text())
+            rows = await parseSpeakerContactsFile(file)
         } catch (error) {
             return data(
                 { _action: actionName, error: error instanceof Error ? error.message : 'Could not parse file' },
@@ -404,11 +398,6 @@ async function loadFollowUpTargets(
     const conferenceName = conferenceManifest.public.name
     return { targets, portalUrl, conferenceName }
 }
-
-const EXCEL_MIME_TYPES = new Set([
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel',
-])
 
 const IMPORT_STATUS_LABEL: Record<string, string> = {
     granted: '✅ Granted',

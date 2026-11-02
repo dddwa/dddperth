@@ -3,8 +3,36 @@ import {
     computeContactImportPlan,
     parseCsv,
     parseSpeakerContactsCsv,
+    parseSpeakerContactsFile,
     type CsvSpeakerRow,
 } from './contact-import'
+
+describe('parseSpeakerContactsFile', () => {
+    const csv = 'Speaker Id,Email\nspk-1,ada@example.com'
+
+    it.each(['text/csv', 'application/vnd.ms-excel', ''])('accepts CSV with MIME type %j', async (type) => {
+        const file = new File([csv], 'sessionize.CSV', { type })
+        expect(await parseSpeakerContactsFile(file)).toEqual([
+            { sessionizeId: 'spk-1', sessionId: '', email: 'ada@example.com', sessionTitle: '', fullName: '' },
+        ])
+    })
+
+    it.each([
+        ['sessionize.xlsx', 'text/csv'],
+        ['sessionize.xls', ''],
+        ['upload', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ['upload', 'application/vnd.ms-excel'],
+    ])('rejects Excel metadata (%s, %s)', async (name, type) => {
+        await expect(parseSpeakerContactsFile(new File([csv], name, { type }))).rejects.toThrow(
+            /export from Sessionize as CSV/,
+        )
+    })
+
+    it('still validates CSV headers when the MIME type claims Excel', async () => {
+        const file = new File(['not a speaker export'], 'sessionize.csv', { type: 'application/vnd.ms-excel' })
+        await expect(parseSpeakerContactsFile(file)).rejects.toThrow(/required "Speaker Id"/)
+    })
+})
 
 describe('parseCsv', () => {
     it('splits simple rows', () => {

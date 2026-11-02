@@ -97,6 +97,7 @@ export default [
                         'lru-cache',
                         'msw',
                         'vitest',
+                        'read-excel-file', // Independent XLSX reader for tests only; keep out of production dependencies.
                         'eslint', // RuleTester is development tooling, declared at the workspace root.
                         'typescript-eslint', // Parser for typed date-rule regression tests, declared at the workspace root.
                         '@testing-library/react',

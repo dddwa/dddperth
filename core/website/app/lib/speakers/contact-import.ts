@@ -82,6 +82,22 @@ export function parseCsv(text: string): string[][] {
     return rows.filter((r) => !(r.length === 1 && r[0] === ''))
 }
 
+/** File metadata is only a format hint: Windows may label CSV as Excel.
+ * No spreadsheet reader is used, even when a file claims to be CSV. */
+export async function parseSpeakerContactsFile(file: File): Promise<CsvSpeakerRow[]> {
+    const isCsv = /\.csv$/i.test(file.name)
+    const isExcel = /\.xlsx?$/i.test(file.name) || (!isCsv && EXCEL_MIME_TYPES.has(file.type))
+    if (isExcel) {
+        throw new Error('Excel files are no longer supported — export from Sessionize as CSV instead')
+    }
+    return parseSpeakerContactsCsv(await file.text())
+}
+
+const EXCEL_MIME_TYPES = new Set([
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+])
+
 /** Parses Sessionize's flattened sessions export into one row per speaker.
  * Rows missing a Speaker Id or Email are dropped — everything else in the
  * export is sourced from the API instead. Throws if the required columns
