@@ -15,7 +15,7 @@ import { formatRelativeTime } from '~/lib/format-relative-time'
 import { recordException } from '~/lib/record-exception'
 import { dueDateRemainingLabel, urgencyFor, type ChecklistUrgency } from '~/lib/speakers/checklist'
 import { SPEAKER_CHECKLIST_ITEMS, type ChecklistItemDefinition } from '~/lib/speakers/checklist-items'
-import { computeContactImportPlan, parseSpeakerContactsCsv, parseSpeakerContactsExcel } from '~/lib/speakers/contact-import'
+import { computeContactImportPlan, parseSpeakerContactsFile } from '~/lib/speakers/contact-import'
 import { speakersMissingChecklistItem } from '~/lib/speakers/follow-up'
 import { recordingOptOuts, type RecordingOptOut } from '~/lib/speakers/recording-opt-outs'
 import { DAY_DETAILS_EMAIL, FOLLOW_UP_EMAIL_TEMPLATES } from '~/lib/speakers/follow-up-emails'
@@ -195,16 +195,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         const file = formData.get('csv')
         if (!(file instanceof File) || file.size === 0) {
-            return data({ _action: actionName, error: 'Choose a CSV or Excel file to upload' }, { status: 400 })
+            return data({ _action: actionName, error: 'Choose a CSV file to upload' }, { status: 400 })
         }
-
-        const isExcel = /\.xlsx?$/i.test(file.name) || EXCEL_MIME_TYPES.has(file.type)
 
         let rows
         try {
-            rows = isExcel
-                ? parseSpeakerContactsExcel(await file.arrayBuffer())
-                : parseSpeakerContactsCsv(await file.text())
+            rows = await parseSpeakerContactsFile(file)
         } catch (error) {
             return data(
                 { _action: actionName, error: error instanceof Error ? error.message : 'Could not parse file' },
@@ -403,11 +399,6 @@ async function loadFollowUpTargets(
     return { targets, portalUrl, conferenceName }
 }
 
-const EXCEL_MIME_TYPES = new Set([
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-excel',
-])
-
 const IMPORT_STATUS_LABEL: Record<string, string> = {
     granted: '✅ Granted',
     'already-granted': 'Already had access',
@@ -549,10 +540,10 @@ export default function AdminSpeakers() {
 
             <AdminCard>
                 <styled.h2 fontSize="xl" fontWeight="semibold" mb="2">
-                    Import portal access from CSV or Excel
+                    Import portal access from CSV
                 </styled.h2>
                 <styled.p fontSize="sm" color="admin.600" mb="4">
-                    Upload Sessionize's "flattened accepted sessions" export (CSV or Excel, first sheet only) to
+                    Upload Sessionize's "flattened accepted sessions" export as CSV to
                     grant portal access in bulk. Only Speaker Id, Session Id and Email are used — everything else
                     comes from the Sessionize sync above. Re-uploading the same file is safe; existing access is
                     never removed.
@@ -563,7 +554,7 @@ export default function AdminSpeakers() {
                         <styled.input
                             type="file"
                             name="csv"
-                            accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            accept=".csv,text/csv"
                             required
                             fontSize="sm"
                         />
