@@ -1,15 +1,13 @@
 import { conferenceDayStart } from '~/lib/dates/temporal'
-import { easeOut, motion, useScroll, useTransform } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ConferenceVenue } from '~/lib/conference-state-client-safe'
 import { heroMarks } from 'virtual:conference-brand'
 import { Box, Flex, styled } from '~/styled-system/jsx'
 import { AppLink } from '../app-link'
 import { HeaderContainer } from '../page-layout'
 
-// Reference viewport width that the parallax distances were tuned for.
-// Below this, distances scale down linearly so the Ds don't slide past each other on narrow screens.
-const PARALLAX_REFERENCE_WIDTH = 1280
+// The Ds finish drifting after this much page scroll, then hold.
+const PARALLAX_SCROLL_RANGE = 600
 
 // Vertical fade applied to each parallax D so the bottom of the SVG dissolves
 // into whatever surface sits beneath it. The Ds are taller than the panel and
@@ -27,15 +25,11 @@ export function HomepageHeroPanel({
     venue: ConferenceVenue | undefined
 }) {
     const [FrontMark, MiddleMark, BackMark] = heroMarks
-    const { scrollY } = useScroll()
-    const parallaxScale = useParallaxScale()
-
     // Extend parallax travel so the Ds keep moving as you scroll past the panel
     // and slide down behind the intro paragraph. Distances are intentionally subtle
     // so it reads as a gentle drift rather than a strong parallax.
-    // Floor distances ensure motion stays visible at narrow widths where parallaxScale shrinks.
-    const y2 = useTransform(scrollY, [0, 600], [0, Math.max(140 * parallaxScale, 160)], { ease: easeOut })
-    const y3 = useTransform(scrollY, [0, 600], [0, Math.max(260 * parallaxScale, 260)], { ease: easeOut })
+    const middleRef = useScrollDrift(160)
+    const backRef = useScrollDrift(260)
 
     return (
         <Flex
@@ -120,72 +114,94 @@ export function HomepageHeroPanel({
                 {/*
                  * Each parallax D carries a vertical fade mask + opacity so
                  * its lower edge dissolves into whatever surface sits below.
-                 * The mask + opacity are applied directly to the motion.div
-                 * (framer-motion preserves these style keys) so they travel
-                 * with the SVG as it translates on scroll.
+                 * The mask + opacity sit on the element that translates, so
+                 * they travel with the SVG as it drifts on scroll.
                  */}
-                <motion.div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%', opacity: 0.7, ...DRIFT_MASK }}>
+                <div style={{ position: 'absolute', top: '0', left: '4%', zIndex: 2, width: '38%', opacity: 0.7, ...DRIFT_MASK }}>
                     <FrontMark style={{ width: '100%', height: 'auto' }} />
-                </motion.div>
-                <motion.div
+                </div>
+                <div
+                    ref={middleRef}
                     style={{
                         position: 'absolute',
                         top: '0',
                         marginTop: '20px',
                         left: '30%',
                         zIndex: 1,
-                        y: y2,
                         width: '38%',
                         opacity: 0.7,
                         ...DRIFT_MASK,
                     }}
                 >
                     <MiddleMark style={{ width: '100%', height: 'auto' }} />
-                </motion.div>
-                <motion.div
+                </div>
+                <div
+                    ref={backRef}
                     style={{
                         position: 'absolute',
                         top: '0',
                         marginTop: '40px',
                         left: '56%',
-                        transform: 'translateX(-50%)',
-                        y: y3,
                         width: '38%',
                         opacity: 0.7,
                         ...DRIFT_MASK,
                     }}
                 >
                     <BackMark style={{ width: '100%', height: 'auto' }} />
-                </motion.div>
+                </div>
             </Box>
         </Flex>
     )
 }
 
-function useParallaxScale() {
-    // Start at 1 so SSR + first paint match the desktop look; refine on mount.
-    const [scale, setScale] = useState(1)
+/**
+ * Translates the element down by `distance` px as the page scrolls through the
+ * first PARALLAX_SCROLL_RANGE px, eased with CSS `ease-out`.
+ *
+ * Written to `style.transform` directly rather than scrubbing a paused Web
+ * Animation: Playwright's screenshot `animations: 'disabled'` fast-forwards
+ * finite Web Animations to their end state, which put the Ds at full drift in
+ * the visual baselines.
+ */
+function useScrollDrift(distance: number) {
+    const ref = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
+        const element = ref.current
+        if (!element) return
+
+        let frame = 0
         const update = () => {
-            const width = window.innerWidth
-            // Linear ramp: <=400px → 0.25, >=1280px → 1, smoothly between.
-            const minWidth = 400
-            const minScale = 0.25
-            if (width >= PARALLAX_REFERENCE_WIDTH) {
-                setScale(1)
-            } else if (width <= minWidth) {
-                setScale(minScale)
-            } else {
-                const t = (width - minWidth) / (PARALLAX_REFERENCE_WIDTH - minWidth)
-                setScale(minScale + t * (1 - minScale))
-            }
+            frame = 0
+            const progress = Math.min(Math.max(window.scrollY, 0), PARALLAX_SCROLL_RANGE) / PARALLAX_SCROLL_RANGE
+            element.style.transform = `translateY(${easeOut(progress) * distance}px)`
+        }
+        const onScroll = () => {
+            if (!frame) frame = requestAnimationFrame(update)
         }
 
         update()
-        window.addEventListener('resize', update)
-        return () => window.removeEventListener('resize', update)
-    }, [])
+        window.addEventListener('scroll', onScroll, { passive: true })
+        return () => {
+            window.removeEventListener('scroll', onScroll)
+            cancelAnimationFrame(frame)
+        }
+    }, [distance])
 
-    return scale
+    return ref
+}
+
+// cubic-bezier(0, 0, 0.58, 1), the CSS `ease-out` curve, solved for x by bisection.
+function easeOut(x: number) {
+    if (x <= 0) return 0
+    if (x >= 1) return 1
+    const bezier = (t: number, p1: number, p2: number) => 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t ** 2 * p2 + t ** 3
+    let lo = 0
+    let hi = 1
+    for (let i = 0; i < 20; i++) {
+        const mid = (lo + hi) / 2
+        if (bezier(mid, 0, 0.58) < x) lo = mid
+        else hi = mid
+    }
+    return bezier((lo + hi) / 2, 0, 1)
 }
