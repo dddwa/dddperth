@@ -43,7 +43,9 @@
     },
 
     "routes": [
-        { "pattern": "dddperth.com", "custom_domain": true }
+        { "pattern": "dddperth.com", "custom_domain": true },
+        // Legacy blog host; the app redirects it (see blog.legacyHosts in conference/manifest.ts).
+        { "pattern": "blog.dddperth.com", "custom_domain": true }
     ],
 
     "observability": {
