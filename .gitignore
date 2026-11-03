@@ -87,3 +87,4 @@ qa
 conference/wrangler/.wrangler/
 
 .nx/migrate-runs
+.vitest
