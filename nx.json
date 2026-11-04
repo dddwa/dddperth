@@ -24,6 +24,14 @@
             }
         },
         {
+            "plugin": "@nx/js/typescript",
+            "options": {
+                "typecheck": {
+                    "targetName": "typecheck"
+                }
+            }
+        },
+        {
             "plugin": "@nx/vite/plugin",
             "options": {
                 "buildTargetName": "vite:build",
@@ -50,7 +58,9 @@
                 "^default",
                 "{workspaceRoot}/eslint.config.mjs",
                 "{workspaceRoot}/core/eslint-rules/**/*",
-                { "externalDependencies": ["eslint"] }
+                {
+                    "externalDependencies": ["eslint"]
+                }
             ]
         }
     },
@@ -58,5 +68,8 @@
         "infra": "infra-archive"
     },
     "neverConnectToCloud": true,
-    "analytics": false
+    "analytics": false,
+    "affected": {
+        "legacy": true
+    }
 }
