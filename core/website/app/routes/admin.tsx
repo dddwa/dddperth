@@ -31,6 +31,8 @@ const ADMIN_NAV: Array<{ heading?: string; links: Array<{ to: string; label: str
             { to: '/admin/agenda-shortlist', label: 'Shortlist' },
             { to: '/admin/content', label: 'Content' },
             { to: '/admin/feedback', label: 'Feedback' },
+            { to: '/admin/competitions', label: 'Competitions' },
+            { to: '/admin/surveys', label: 'Surveys' },
         ],
     },
     {

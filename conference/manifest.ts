@@ -13,12 +13,14 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
+import { competitions } from './config/competitions.ts'
 import { nav } from './config/nav.ts'
 import { conferenceConfigPublic } from './config/public.ts'
 import { runsheets } from './config/runsheets.ts'
 import { speakerPortal } from './config/speaker-portal.ts'
 import { socials } from './config/socials.ts'
 import { sponsorPortal } from './config/sponsor-portal.ts'
+import { surveys } from './config/surveys.ts'
 import { conferenceConfig } from './config/years-index.ts'
 
 // Year keys this fork knows about. Re-exported so consumers can constrain
@@ -65,4 +67,6 @@ export const conferenceManifest: ConferenceManifest = {
         // so links shared before the move land on the migrated posts.
         legacyHosts: ['blog.dddperth.com'],
     },
+    competitions,
+    surveys,
 }
