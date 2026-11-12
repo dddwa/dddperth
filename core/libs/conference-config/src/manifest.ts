@@ -868,6 +868,13 @@ export interface SurveyConfig {
     questions: SurveyQuestion[]
     /** Offer an optional email field for follow-up. Defaults to true. */
     askForEmail?: boolean
+    /** Where the email field sits: before the questions or after them. Defaults to `'last'`. */
+    emailPosition?: 'first' | 'last'
+    /**
+     * Help text under the email field, replacing the default "follow up about
+     * your answers" note — e.g. to say it's needed to enter a prize draw.
+     */
+    emailHint?: string
     /** Responses accepted from `opens` (inclusive) until `closes` (exclusive). Define as getters. */
     opens: Temporal.ZonedDateTime
     closes: Temporal.ZonedDateTime
