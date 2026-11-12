@@ -60,6 +60,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             description: survey.description,
             questions: survey.questions,
             askForEmail: survey.askForEmail ?? true,
+            emailPosition: survey.emailPosition ?? 'last',
+            emailHint: survey.emailHint,
             status: openWindowStatus(survey, getDateTimeProvider(context).nowDate()),
             opensAt: formatWhen(survey.opens),
             // Rendered into the form for the minimum-fill-time check, so the page can't be cached.
@@ -155,6 +157,7 @@ export default function Survey() {
     }
 
     const fieldErrors: Record<string, string> = actionData && !actionData.ok ? actionData.fieldErrors : {}
+    const emailField = <EmailField error={fieldErrors[EMAIL_FIELD]} hint={loaderData.emailHint} />
 
     return (
         <PageLayout>
@@ -170,10 +173,11 @@ export default function Survey() {
                     <SpamCheckFields startedAt={loaderData.startedAt} />
                     <ErrorSummary fieldErrors={fieldErrors} />
                     <Flex direction="column" gap="8">
+                        {loaderData.askForEmail && loaderData.emailPosition === 'first' ? emailField : null}
                         {loaderData.questions.map((question) => (
                             <Question key={question.id} question={question} error={fieldErrors[fieldName(question)]} />
                         ))}
-                        {loaderData.askForEmail ? <EmailField error={fieldErrors[EMAIL_FIELD]} /> : null}
+                        {loaderData.askForEmail && loaderData.emailPosition === 'last' ? emailField : null}
                         <Box>
                             <Button type="submit" loading={navigation.state === 'submitting'}>
                                 Send my answers
@@ -367,7 +371,7 @@ function TextQuestion({ question, error }: { question: Extract<SurveyQuestion, {
     )
 }
 
-function EmailField({ error }: { error?: string }) {
+function EmailField({ error, hint }: { error?: string; hint?: string }) {
     const id = useId()
     const hintId = useId()
     const errorId = useId()
@@ -378,7 +382,8 @@ function EmailField({ error }: { error?: string }) {
                 Email (optional)
             </styled.label>
             <styled.p id={hintId} fontSize="sm" color="text.secondary" mb="2">
-                Only if you&apos;re happy for us to follow up about your answers. Leave it blank to stay anonymous.
+                {hint ??
+                    'Only if you’re happy for us to follow up about your answers. Leave it blank to stay anonymous.'}
             </styled.p>
             <styled.input
                 id={id}

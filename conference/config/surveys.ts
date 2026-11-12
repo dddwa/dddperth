@@ -15,6 +15,9 @@ export const surveys: SurveyConfig[] = [
         slug: 'perfect-ddd',
         title: 'Design your perfect DDD',
         description: [],
+        emailPosition: 'first',
+        emailHint:
+            'Fill this in to go in the prize draw. It’s still optional: leave it blank to stay anonymous.',
         questions: [
             {
                 id: 'attended',
