@@ -100,7 +100,16 @@ export default function CompetitionsAdmin() {
                                             textDecoration="underline"
                                         >
                                             /competition/{competition.slug}
+                                        </AppLink>{' '}
+                                        (
+                                        <AppLink
+                                            to={`/admin/qr-codes?url=${encodeURIComponent(`/competition/${competition.slug}`)}`}
+                                            unstyled
+                                            textDecoration="underline"
+                                        >
+                                            QR code
                                         </AppLink>
+                                        )
                                     </styled.td>
                                     <styled.td {...cell}>{STATUS_LABEL[competition.status]}</styled.td>
                                     <styled.td {...cell} whiteSpace="nowrap">
