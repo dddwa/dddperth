@@ -18,10 +18,12 @@
  */
 
 import type { ConferenceManifest } from '@ddd/conference-config'
+import { competitions } from './config/competitions.ts'
 import { nav } from './config/nav.ts'
 import { conferenceConfigPublic } from './config/public.ts'
 import { socials } from './config/socials.ts'
 import { speakerPortal } from './config/speaker-portal.ts'
+import { surveys } from './config/surveys.ts'
 import { conferenceConfig } from './config/years-index.ts'
 
 // Year keys this stub knows about. Re-exported so consumers can constrain
@@ -62,4 +64,6 @@ export const conferenceManifest: ConferenceManifest = {
     // committee's label vocabulary), none of which a stub can invent, so
     // /runsheets returns 404 here. A fork adds it once its board exists;
     // see /conference/config/runsheets.ts in DDD Perth's repo.
+    competitions,
+    surveys,
 }

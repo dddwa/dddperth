@@ -831,6 +831,99 @@ export interface ConferenceManifest {
     meetTheExperts?: MeetTheExpertsConfig
     /** Blog config. Optional — the blog works without it. */
     blog?: BlogConfig
+    /**
+     * Hidden competition entry forms, each served at `/competition/<slug>`.
+     * Omit (or leave empty) for none — every `/competition/*` URL is a 404 then.
+     */
+    competitions?: CompetitionConfig[]
+    /**
+     * Hidden surveys, each served at `/survey/<slug>`. Omit (or leave empty)
+     * for none — every `/survey/*` URL is a 404 then.
+     */
+    surveys?: SurveyConfig[]
+}
+
+/**
+ * A survey: a hidden page of questions, like a competition (no nav link, not
+ * in the sitemap, `noindex`). Responses are anonymous unless the respondent
+ * chooses to leave an email, and every response is kept. Answers appear,
+ * tallied, at /admin/surveys.
+ *
+ * Every question is optional for the respondent unless `required` is set.
+ */
+export interface SurveyConfig {
+    /**
+     * URL segment (`/survey/<slug>`): lowercase letters, digits and hyphens.
+     * Responses are stored under it, so **don't rename it once responses exist**.
+     */
+    slug: string
+    title: string
+    /** Intro paragraphs shown above the questions. */
+    description: string[]
+    /**
+     * Answers are stored by question `id`, so once responses exist: don't
+     * change a question's `id` or reuse it for a different question, and
+     * prefer adding options to renaming them (renamed options split the tally).
+     */
+    questions: SurveyQuestion[]
+    /** Offer an optional email field for follow-up. Defaults to true. */
+    askForEmail?: boolean
+    /** Responses accepted from `opens` (inclusive) until `closes` (exclusive). Define as getters. */
+    opens: Temporal.ZonedDateTime
+    closes: Temporal.ZonedDateTime
+}
+
+interface SurveyQuestionBase {
+    /** Stable key for the answer: lowercase letters, digits and hyphens. */
+    id: string
+    label: string
+    hint?: string
+    required?: boolean
+}
+
+export type SurveyQuestion =
+    /** Pick one. `allowOther` adds an "Other" choice with a text box. */
+    | (SurveyQuestionBase & { kind: 'single'; options: string[]; allowOther?: boolean })
+    /** Pick any. `maxChoices` caps how many. `allowOther` adds an "Other" choice with a text box. */
+    | (SurveyQuestionBase & { kind: 'multiple'; options: string[]; allowOther?: boolean; maxChoices?: number })
+    /** A 1–5 rating, with words for each end. */
+    | (SurveyQuestionBase & { kind: 'scale'; minLabel: string; maxLabel: string })
+    /** Free text. `long` gives a multi-line box. */
+    | (SurveyQuestionBase & { kind: 'text'; long?: boolean })
+
+/**
+ * A competition entry form. The page is deliberately hidden: it is never
+ * linked from the nav or listed in `sitemap.xml`, and it tells crawlers not
+ * to index it. People reach it from a link or QR code you hand out, so make
+ * `slug` hard to guess if it shouldn't be found by trying `/competition/x`.
+ *
+ * Entrants give a name, an email and an answer, and must tick the terms box.
+ * One entry per email per competition.
+ */
+export interface CompetitionConfig {
+    /**
+     * URL segment (`/competition/<slug>`): lowercase letters, digits and
+     * hyphens. Entries are stored under it, so **don't rename it once entries
+     * exist** — they'd stay under the old slug.
+     */
+    slug: string
+    /** Page heading, e.g. "Win a LEGO set". */
+    title: string
+    /** Intro paragraphs shown above the form: what's up for grabs and how to win. */
+    description: string[]
+    /** The label on the answer field, e.g. "In 25 words or less, why …?" */
+    question: string
+    /** Optional help text under the question. */
+    answerHint?: string
+    /** Link to the competition's terms and conditions, which entrants must accept. */
+    termsUrl: string
+    /**
+     * Entries are accepted from `opens` (inclusive) until `closes`
+     * (exclusive). Define these as getters calling `conferenceTime(...)`, like
+     * the year configs, so they're built after Temporal is initialised.
+     */
+    opens: Temporal.ZonedDateTime
+    closes: Temporal.ZonedDateTime
 }
 
 export interface BlogConfig {

@@ -4,6 +4,7 @@ import type { AgendaShortlistStore } from './agenda-shortlist-store'
 import type { AnnouncementsStore } from './announcements-store'
 import type { AssetStorage } from './asset-storage'
 import type { AuthService } from './auth-service'
+import type { CompetitionStore } from './competition-store'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
 import type { FeedbackStore } from './feedback-store'
@@ -16,6 +17,7 @@ import type { SpeakersStore } from './speakers-store'
 import type { SponsorFeedbackStore } from './sponsor-feedback-store'
 import type { SponsorSyncService } from './sponsor-sync-service'
 import type { SponsorsStore } from './sponsors-store'
+import type { SurveyStore } from './survey-store'
 import type { TicketsService } from './tickets-service'
 import type { VolunteersStore } from './volunteers-store'
 import type { VotingStore } from './voting-store'
@@ -49,4 +51,6 @@ export interface AppServices {
     volunteers: VolunteersStore
     feedback: FeedbackStore
     sponsorFeedback: SponsorFeedbackStore
+    competitions: CompetitionStore
+    surveys: SurveyStore
 }

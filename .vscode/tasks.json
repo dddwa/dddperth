@@ -1,21 +1,174 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
+    // Run with "Tasks: Run Task" (Ctrl/Cmd+Shift+P). Each wraps a package.json script or a
+    // script in /scripts — see scripts/README.md for what they do. The /scripts tasks need
+    // Node 26 (they import the config package's .ts files directly).
+    // See https://go.microsoft.com/fwlink/?LinkId=733558 for the tasks.json format.
     "version": "2.0.0",
     "tasks": [
         {
             "type": "typescript",
             "tsconfig": "tsconfig.json",
             "option": "watch",
-            "problemMatcher": [
-                "$tsc-watch"
-            ],
+            "problemMatcher": ["$tsc-watch"],
             "group": {
                 "isDefault": true,
                 "kind": "build"
             },
             "label": "tsc: watch - tsconfig.json",
             "isBackground": true
+        },
+
+        // ── Dev ────────────────────────────────────────────────────────────
+        {
+            "label": "Dev: start website (localhost:3800)",
+            "type": "shell",
+            "command": "pnpm start",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": { "panel": "dedicated", "group": "dev" }
+        },
+        {
+            "label": "Dev: apply D1 migrations (local)",
+            "type": "shell",
+            "command": "pnpm nx d1-migrate-local website",
+            "problemMatcher": []
+        },
+
+        // ── Checks ─────────────────────────────────────────────────────────
+        {
+            "label": "Check: unit tests",
+            "type": "shell",
+            "command": "pnpm test",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: lint",
+            "type": "shell",
+            "command": "pnpm lint",
+            "problemMatcher": ["$eslint-stylish"]
+        },
+        {
+            "label": "Check: typecheck",
+            "type": "shell",
+            "command": "pnpm nx typecheck website",
+            "problemMatcher": ["$tsc"]
+        },
+        {
+            "label": "Check: build",
+            "type": "shell",
+            "command": "pnpm build",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: a11y e2e suite",
+            "type": "shell",
+            "command": "pnpm nx e2e website",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: visual regression (Docker)",
+            "type": "shell",
+            "command": "pnpm vr",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: visual regression — update baselines (Docker)",
+            "detail": "Regenerates committed screenshots. Review the image diff before committing.",
+            "type": "shell",
+            "command": "pnpm vr --update-snapshots",
+            "problemMatcher": []
+        },
+
+        // ── Sponsors ───────────────────────────────────────────────────────
+        {
+            "label": "Sponsors: add/import (web UI, localhost:3802)",
+            "type": "shell",
+            "command": "pnpm sponsor:add",
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": { "panel": "dedicated", "group": "dev" }
+        },
+        {
+            "label": "Sponsors: list portal submissions",
+            "type": "shell",
+            "command": "pnpm sponsor:add portal list --env ${input:environment} --year ${input:year}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Sponsors: manage existing (interactive CLI)",
+            "type": "shell",
+            "command": "pnpm sponsor:cli",
+            "problemMatcher": [],
+            "presentation": { "focus": true, "panel": "dedicated" }
+        },
+        {
+            "label": "Sponsors: process a logo into light/dark variants",
+            "type": "shell",
+            "command": "node scripts/process-logo.mjs \"${input:logoFile}\" ${input:year} ${input:sponsorSlug}",
+            "problemMatcher": []
+        },
+
+        // ── Jira ───────────────────────────────────────────────────────────
+        {
+            "label": "Jira: set up credentials (local, portal-test issues only)",
+            "type": "shell",
+            "command": "pnpm jira:auth",
+            "problemMatcher": [],
+            "presentation": { "focus": true }
+        },
+        {
+            "label": "Jira: set up credentials (local, REAL sponsor list)",
+            "detail": "Syncs the real sponsor JQL into local dev. Use deliberately.",
+            "type": "shell",
+            "command": "pnpm jira:auth --full-sync",
+            "problemMatcher": [],
+            "presentation": { "focus": true }
+        },
+        {
+            "label": "Jira: push credentials as wrangler secrets",
+            "type": "shell",
+            "command": "pnpm jira:auth --secrets ${input:environment}",
+            "problemMatcher": [],
+            "presentation": { "focus": true }
+        },
+
+        // ── Cloudflare ─────────────────────────────────────────────────────
+        {
+            "label": "Cloudflare: provision D1 + GitHub secrets",
+            "detail": "Needs CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in the environment. Idempotent.",
+            "type": "shell",
+            "command": "pnpm provision:cloudflare",
+            "problemMatcher": [],
+            "presentation": { "focus": true }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "environment",
+            "type": "pickString",
+            "description": "Which environment?",
+            "options": ["staging", "production"],
+            "default": "staging"
+        },
+        {
+            "id": "year",
+            "type": "promptString",
+            "description": "Conference year",
+            "default": "2026"
+        },
+        {
+            "id": "logoFile",
+            "type": "promptString",
+            "description": "Path to the logo file (SVG or PNG)"
+        },
+        {
+            "id": "sponsorSlug",
+            "type": "promptString",
+            "description": "Sponsor slug, used in the file names (e.g. black-ocean)"
         }
     ]
 }

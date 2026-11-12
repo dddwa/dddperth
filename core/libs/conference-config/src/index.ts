@@ -27,6 +27,7 @@ export { MAJOR_SPONSOR_TIERS, MINOR_SPONSOR_TIERS, SPONSOR_TIERS } from './types
 export type {
     Brand,
     BrandAssets,
+    CompetitionConfig,
     ConferenceBuildManifest,
     ConferenceConfigPublic,
     ConferenceFeatures,
@@ -49,6 +50,8 @@ export type {
     SpeakerTrainingSessionConfig,
     SponsorPortalConfig,
     SponsorPortalJiraConfig,
+    SurveyConfig,
+    SurveyQuestion,
     ThemeRefs,
 } from './manifest.ts'
 
