@@ -205,18 +205,20 @@
         "deploy-staging": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs staging && wrangler deploy",
+                "command": "node scripts/prepare-deploy-config.mjs staging && wrangler deploy",
                 "cwd": "core/website",
                 "tty": true
-            }
+            },
+            "dependsOn": ["build"]
         },
         "deploy-production": {
             "executor": "nx:run-commands",
             "options": {
-                "command": "pnpm nx build website && node scripts/prepare-deploy-config.mjs production && wrangler deploy",
+                "command": "node scripts/prepare-deploy-config.mjs production && wrangler deploy",
                 "cwd": "core/website",
                 "tty": true
-            }
+            },
+            "dependsOn": ["build"]
         },
         "d1-migrate-local": {
             "executor": "nx:run-commands",
