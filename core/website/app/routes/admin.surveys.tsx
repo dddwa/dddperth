@@ -94,7 +94,16 @@ export default function SurveysAdmin() {
                                     <styled.td {...cell}>
                                         <AppLink to={`/survey/${survey.slug}`} unstyled textDecoration="underline">
                                             /survey/{survey.slug}
+                                        </AppLink>{' '}
+                                        (
+                                        <AppLink
+                                            to={`/admin/qr-codes?url=${encodeURIComponent(`/survey/${survey.slug}`)}`}
+                                            unstyled
+                                            textDecoration="underline"
+                                        >
+                                            QR code
                                         </AppLink>
+                                        )
                                     </styled.td>
                                     <styled.td {...cell}>{STATUS_LABEL[survey.status]}</styled.td>
                                     <styled.td {...cell} whiteSpace="nowrap">

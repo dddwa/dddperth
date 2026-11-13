@@ -33,6 +33,7 @@ const ADMIN_NAV: Array<{ heading?: string; links: Array<{ to: string; label: str
             { to: '/admin/feedback', label: 'Feedback' },
             { to: '/admin/competitions', label: 'Competitions' },
             { to: '/admin/surveys', label: 'Surveys' },
+            { to: '/admin/qr-codes', label: 'QR codes' },
         ],
     },
     {
