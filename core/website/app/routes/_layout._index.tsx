@@ -3,11 +3,13 @@ import type { HeadersFunction } from 'react-router'
 import { data, useLoaderData } from 'react-router'
 import { calculateImportantDates } from '~/lib/calculate-important-dates.server'
 import { getYearConfig } from '~/lib/get-year-config.server'
+import { formatEventWhen, upcomingEvents } from '~/lib/events/event-form'
 import { CACHE_CONTROL } from '~/lib/http.server'
+import { recordException } from '~/lib/record-exception'
 import { resolveSponsorsWithFallback } from '~/lib/sponsor-fallback.server'
 import { Hero } from '../components/hero/hero'
 import type { Route } from './+types/_layout._index'
-import { getConferences, getConferenceState, getConfig, getDateTimeProvider } from '~/remix-app-load-context'
+import { getConferences, getConferenceState, getConfig, getDateTimeProvider, getServices } from '~/remix-app-load-context'
 
 export const headers: HeadersFunction = () => {
     return { 'Cache-Control': CACHE_CONTROL.DEFAULT }
@@ -24,9 +26,25 @@ export async function loader({ context }: Route.LoaderArgs) {
         getConfig(context).useSponsorFixtures,
     )
 
+    const now = getDateTimeProvider(context).nowDate()
+    // Skipped under the e2e fixtures: the test servers share the developer's
+    // local D1, so events made while trying out /admin/events would otherwise
+    // land in the home page's visual baselines.
+    const events = getConfig(context).useSponsorFixtures
+        ? []
+        : upcomingEvents(await listEventsOrNone(context), now).map((event) => ({
+              id: event.id,
+              slug: event.slug,
+              title: event.title,
+              when: formatEventWhen(event),
+              location: event.location,
+              locationUrl: event.locationUrl,
+          }))
+
     return data(
         {
-            currentDate: getDateTimeProvider(context).nowDate().toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
+            events,
+            currentDate: now.toString({ timeZoneName: 'never', fractionalSecondDigits: 3 }),
             conferenceDate: getConferenceState(context).conference.date,
             importantDates,
             heroSponsors,
@@ -35,12 +53,25 @@ export async function loader({ context }: Route.LoaderArgs) {
             currentYear: getConferenceState(context).conference.year,
             conferenceState: getConferenceState(context),
         },
-        { headers: { 'Cache-Control': CACHE_CONTROL.conf } },
+        // Not `conf` (a day): events are edited in /admin, and a new one
+        // shouldn't take a day to show up on client-side navigation.
+        { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
     )
 }
 
+/** The home page must not 500 because the events table can't be read; it
+ * just loses that section. */
+async function listEventsOrNone(context: Route.LoaderArgs['context']) {
+    try {
+        return await getServices(context).events.list()
+    } catch (error) {
+        recordException(error, { attributes: { where: 'home page events' } })
+        return []
+    }
+}
+
 export default function Index() {
-    const { importantDates, currentDate, conferenceDate, heroSponsors, currentYear, conferenceState } =
+    const { events, importantDates, currentDate, conferenceDate, heroSponsors, currentYear, conferenceState } =
         useLoaderData<typeof loader>()
 
     return (
@@ -51,6 +82,7 @@ export default function Index() {
             sponsors={heroSponsors}
             currentYear={currentYear}
             conferenceState={conferenceState}
+            events={events}
         />
     )
 }
