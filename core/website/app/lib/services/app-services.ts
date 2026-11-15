@@ -7,6 +7,7 @@ import type { AuthService } from './auth-service'
 import type { CompetitionStore } from './competition-store'
 import type { ContentService } from './content-service'
 import type { EmailService } from './email-service'
+import type { EventsStore } from './events-store'
 import type { FeedbackStore } from './feedback-store'
 import type { MeetTheExpertsSchedulingStore } from './meet-the-experts-scheduling-store'
 import type { MeetTheExpertsStore } from './meet-the-experts-store'
@@ -53,4 +54,5 @@ export interface AppServices {
     sponsorFeedback: SponsorFeedbackStore
     competitions: CompetitionStore
     surveys: SurveyStore
+    events: EventsStore
 }

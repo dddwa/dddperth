@@ -8,6 +8,7 @@ import type { ResolvedSponsors } from '~/lib/sponsor-fallback.server'
 import { Box, Flex } from '~/styled-system/jsx'
 import { ImportantDates, Workshops } from '../page-components/important-dates'
 import { HeaderContainer } from '../page-layout'
+import { UpcomingEvents, type UpcomingEventView } from '../page-components/upcoming-events'
 import { HomepageHeroPanel } from './hero-panel'
 import { HeroSponsorStrip } from './hero-sponsor-strip'
 
@@ -18,6 +19,7 @@ export function Hero({
     sponsors,
     currentYear,
     conferenceState,
+    events,
 }: {
     currentDate: Temporal.ZonedDateTime
     conferenceDate: string | undefined
@@ -25,6 +27,7 @@ export function Hero({
     sponsors: ResolvedSponsors
     currentYear: Year
     conferenceState: ConferenceState
+    events: UpcomingEventView[]
 }) {
     return (
         <Box overflowX="hidden" position="relative">
@@ -71,6 +74,7 @@ export function Hero({
                         </Flex>
 
                         <ImportantDates currentDate={currentDate} importantDates={importantDates} />
+                        <UpcomingEvents events={events} />
                         {!conferenceManifest.public.features?.hideWorkshops && <Workshops />}
                         <HeroSponsorStrip sponsors={sponsors} currentYear={currentYear} />
                     </Flex>
