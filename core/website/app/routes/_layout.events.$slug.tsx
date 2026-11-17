@@ -2,6 +2,7 @@ import { conferenceManifest } from '@conference/manifest'
 import { data, useLoaderData } from 'react-router'
 import { AppLink } from '~/components/app-link'
 import { ContentPageLayout } from '~/components/page-layout'
+import { calendarEventDetails, googleCalendarUrl, outlookCalendarUrl } from '~/lib/events/event-calendar'
 import { eventStatus, formatEventWhen } from '~/lib/events/event-form'
 import { EventMarkdown } from '~/lib/events/event-markdown'
 import { eventSummary, renderEventMarkdown } from '~/lib/events/event-markdown.server'
@@ -18,6 +19,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
     const description = await renderEventMarkdown(event.description)
     const now = getDateTimeProvider(context).nowDate()
+    const siteOrigin = `https://${conferenceManifest.brand.domain}`
+    const summary = eventSummary(description)
+    const calendar = calendarEventDetails(event, { siteOrigin, summary: eventSummary(description, 500) })
 
     return data(
         {
@@ -29,8 +33,14 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             url: event.url,
             linkLabel: event.linkLabel,
             description,
-            summary: eventSummary(description),
-            canonicalUrl: `https://${conferenceManifest.brand.domain}/events/${event.slug}`,
+            summary,
+            canonicalUrl: calendar.pageUrl,
+            addToCalendar: {
+                ics: `/events/${event.slug}/calendar.ics`,
+                google: googleCalendarUrl(calendar),
+                outlook: outlookCalendarUrl(calendar, 'personal'),
+                office365: outlookCalendarUrl(calendar, 'work'),
+            },
         },
         // Short: the event is edited in /admin, and a fix shouldn't take long to show.
         { headers: { 'Cache-Control': CACHE_CONTROL.DEFAULT } },
@@ -61,7 +71,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export default function EventPage() {
-    const { title, when, finished, location, locationUrl, url, linkLabel, description } =
+    const { title, when, finished, location, locationUrl, url, linkLabel, description, addToCalendar } =
         useLoaderData<typeof loader>()
 
     return (
@@ -87,36 +97,37 @@ export default function EventPage() {
                         </styled.p>
                     )}
                     <styled.dl display="flex" flexDirection="column" gap="3">
-                    <div>
-                        <styled.dt fontSize="sm" color="text.secondary">
-                            When
-                        </styled.dt>
-                        <styled.dd fontWeight="medium">{when}</styled.dd>
-                    </div>
-                    {location && (
                         <div>
                             <styled.dt fontSize="sm" color="text.secondary">
-                                Where
+                                When
                             </styled.dt>
-                            <styled.dd fontWeight="medium">
-                                {locationUrl ? (
-                                    <AppLink
-                                        to={locationUrl}
-                                        unstyled
-                                        color="text.highlight"
-                                        textDecoration="underline"
-                                        textUnderlineOffset="4px"
-                                        _hover={{ color: 'brand.primary' }}
-                                    >
-                                        {location}
-                                    </AppLink>
-                                ) : (
-                                    location
-                                )}
-                            </styled.dd>
+                            <styled.dd fontWeight="medium">{when}</styled.dd>
                         </div>
-                    )}
+                        {location && (
+                            <div>
+                                <styled.dt fontSize="sm" color="text.secondary">
+                                    Where
+                                </styled.dt>
+                                <styled.dd fontWeight="medium">
+                                    {locationUrl ? (
+                                        <AppLink
+                                            to={locationUrl}
+                                            unstyled
+                                            color="text.highlight"
+                                            textDecoration="underline"
+                                            textUnderlineOffset="4px"
+                                            _hover={{ color: 'brand.primary' }}
+                                        >
+                                            {location}
+                                        </AppLink>
+                                    ) : (
+                                        location
+                                    )}
+                                </styled.dd>
+                            </div>
+                        )}
                     </styled.dl>
+                    {!finished && <AddToCalendar links={addToCalendar} />}
                     {url && !finished && (
                         <styled.p>
                             <AppLink
@@ -144,5 +155,55 @@ export default function EventPage() {
                 </Box>
             </Box>
         </ContentPageLayout>
+    )
+}
+
+const calendarLink = {
+    unstyled: true,
+    display: 'inline-block',
+    px: '3',
+    py: '1',
+    rounded: 'full',
+    fontSize: 'sm',
+    fontWeight: 'medium',
+    color: 'text.highlight',
+    border: 'default',
+    _hover: { color: 'brand.primary', borderColor: 'brand.primary' },
+} as const
+
+/**
+ * A file for Apple Calendar, desktop Outlook and anything else that opens
+ * `.ics`, plus compose links for the web calendars, which can't open a file
+ * straight from a download.
+ */
+function AddToCalendar({ links }: { links: { ics: string; google: string; outlook: string; office365: string } }) {
+    return (
+        <styled.div role="group" aria-labelledby="add-to-calendar">
+            <styled.p id="add-to-calendar" fontSize="sm" color="text.secondary" mb="2">
+                Add to calendar
+            </styled.p>
+            <styled.ul display="flex" gap="2" flexWrap="wrap" listStyle="none">
+                <li>
+                    <AppLink to={links.ics} download {...calendarLink}>
+                        Apple / other (.ics)
+                    </AppLink>
+                </li>
+                <li>
+                    <AppLink to={links.google} {...calendarLink}>
+                        Google Calendar
+                    </AppLink>
+                </li>
+                <li>
+                    <AppLink to={links.outlook} {...calendarLink}>
+                        Outlook.com
+                    </AppLink>
+                </li>
+                <li>
+                    <AppLink to={links.office365} {...calendarLink}>
+                        Microsoft 365
+                    </AppLink>
+                </li>
+            </styled.ul>
+        </styled.div>
     )
 }
